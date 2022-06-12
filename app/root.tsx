@@ -15,6 +15,7 @@ import {
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { getUser } from "./session.server";
+import NavBar from "./components/NavBar";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
@@ -38,12 +39,13 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function App() {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="dark h-full">
       <head>
         <Meta />
         <Links />
       </head>
       <body className="h-full">
+        <NavBar />
         <Outlet />
         <ScrollRestoration />
         <Scripts />
