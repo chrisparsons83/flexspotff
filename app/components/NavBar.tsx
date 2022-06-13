@@ -11,7 +11,8 @@ const NavBar = () => {
           <a href="/">Home</a>
           <a href="/leagues">Leagues</a>
           <a href="/podcast">Podcast</a>
-          <a href="/account">My Account</a>
+          <a href="/login">Log In</a>
+          <a href="/join">Sign Up</a>
         </nav>
       </div>
     </div>
