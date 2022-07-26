@@ -15,6 +15,7 @@ authenticator.use(
       clientID: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_SECRET,
       callbackURL: `http://localhost:3000/auth/${SocialsProvider.DISCORD}/callback`,
+      scope: ["identify"],
     },
     async ({ profile }) => {
       // here you would find or create a user in your database
