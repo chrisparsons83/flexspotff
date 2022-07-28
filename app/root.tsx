@@ -44,7 +44,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
+      <body className="h-full bg-slate-700 text-white">
         <NavBar />
         <Outlet />
         <ScrollRestoration />
