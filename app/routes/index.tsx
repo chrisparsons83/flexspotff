@@ -1,6 +1,6 @@
 export default function Index() {
   return (
-    <main className="container prose relative mx-auto min-h-screen p-4 lg:prose-xl">
+    <>
       <p>
         Hi, we're a Fantasy Football Discord community and have been around
         since 2016. We do fun things like running a small promo/relegation set
@@ -10,6 +10,6 @@ export default function Index() {
       <p>
         <a href="https://discord.gg/bJdbk4hewF">Join our Discord Server</a>
       </p>
-    </main>
+    </>
   );
 }

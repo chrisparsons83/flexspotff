@@ -18,6 +18,7 @@ authenticator.use(
       scope: ["identify"],
     },
     async ({ profile }) => {
+      console.log(profile);
       // here you would find or create a user in your database
       return profile;
     }

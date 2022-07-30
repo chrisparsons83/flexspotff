@@ -46,7 +46,9 @@ export default function App() {
       </head>
       <body className="h-full bg-slate-700 text-white">
         <NavBar />
-        <Outlet />
+        <main className="container prose relative mx-auto min-h-screen p-4 text-white lg:prose-xl">
+          <Outlet />
+        </main>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
