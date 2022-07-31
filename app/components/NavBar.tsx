@@ -1,9 +1,10 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { BellIcon, MenuIcon, XIcon } from "@heroicons/react/outline";
+import { MenuIcon, UserIcon, XIcon } from "@heroicons/react/outline";
 import clsx from "clsx";
 import { Form } from "@remix-run/react";
+import type { User } from "~/models/user.server";
 
 const navigation = [
   { name: "Home", href: "/", current: true },
@@ -15,7 +16,16 @@ const navigation = [
   { name: "Podcast", href: "/podcast", current: false },
 ];
 
-export default function Example() {
+interface Props {
+  user: User | null;
+}
+
+export default function NavBar({ user }: Props) {
+  const avatarImage =
+    user &&
+    user.discordAvatar &&
+    `https://cdn.discordapp.com/${user.discordAvatar}`;
+
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (
@@ -62,50 +72,20 @@ export default function Example() {
                 </div>
               </div>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                <button
-                  type="button"
-                  className="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                >
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
-
                 {/* Profile dropdown */}
                 <Menu as="div" className="relative ml-3">
                   <div>
                     <Menu.Button className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                       <span className="sr-only">Open user menu</span>
-                      <svg
-                        version="1.1"
-                        className="h-8 w-8"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 600 600"
-                        fill="white"
-                      >
-                        <title>User icon</title>
-                        <defs>
-                          <clipPath id="circular-border">
-                            <circle cx="300" cy="300" r="280"></circle>
-                          </clipPath>
-                          <clipPath id="avoid-antialiasing-bugs">
-                            <rect width="100%" height="498"></rect>
-                          </clipPath>
-                        </defs>
-                        <circle
-                          cx="300"
-                          cy="300"
-                          r="280"
-                          fill="black"
-                          clipPath="url(#avoid-antialiasing-bugs)"
-                        ></circle>
-                        <circle cx="300" cy="230" r="115"></circle>
-                        <circle
-                          cx="300"
-                          cy="550"
-                          r="205"
-                          clipPath="url(#circular-border)"
-                        ></circle>
-                      </svg>
+                      {user ? (
+                        <img
+                          src={avatarImage!}
+                          className="block h-8 w-8"
+                          alt={user.discordName}
+                        />
+                      ) : (
+                        <UserIcon className="block h-8 w-8" />
+                      )}
                     </Menu.Button>
                   </div>
                   <Transition
@@ -118,64 +98,57 @@ export default function Example() {
                     leaveTo="transform opacity-0 scale-95"
                   >
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <Form action={`/auth/discord`} method="post">
-                            <button
-                              className={clsx(
-                                active ? "bg-gray-100" : "",
-                                "block w-full px-4 py-2 text-left text-sm text-gray-700"
-                              )}
-                              tabIndex={-1}
-                              role="menuitem"
-                            >
-                              Login via Discord
-                            </button>
-                          </Form>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="/dashboard"
-                            className={clsx(
-                              active ? "bg-gray-100" : "",
-                              "block px-4 py-2 text-sm text-gray-700"
+                      {!user && (
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Form action={`/auth/discord`} method="post">
+                              <button
+                                className={clsx(
+                                  active ? "bg-gray-100" : "",
+                                  "block w-full px-4 py-2 text-left text-sm text-gray-700"
+                                )}
+                                tabIndex={-1}
+                                role="menuitem"
+                              >
+                                Login via Discord
+                              </button>
+                            </Form>
+                          )}
+                        </Menu.Item>
+                      )}
+                      {user && (
+                        <>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                href="/dashboard"
+                                className={clsx(
+                                  active ? "bg-gray-100" : "",
+                                  "block px-4 py-2 text-sm text-gray-700"
+                                )}
+                              >
+                                Dashboard
+                              </a>
                             )}
-                          >
-                            Your Profile
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <a
-                            href="/settings"
-                            className={clsx(
-                              active ? "bg-gray-100" : "",
-                              "block px-4 py-2 text-sm text-gray-700"
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Form action="/logout" method="post">
+                                <button
+                                  className={clsx(
+                                    active ? "bg-gray-100" : "",
+                                    "block w-full px-4 py-2 text-left text-sm text-gray-700"
+                                  )}
+                                  tabIndex={-1}
+                                  role="menuitem"
+                                >
+                                  Logout
+                                </button>
+                              </Form>
                             )}
-                          >
-                            Settings
-                          </a>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <Form action="/logout" method="post">
-                            <button
-                              className={clsx(
-                                active ? "bg-gray-100" : "",
-                                "block w-full px-4 py-2 text-left text-sm text-gray-700"
-                              )}
-                              tabIndex={-1}
-                              role="menuitem"
-                            >
-                              Logout
-                            </button>
-                          </Form>
-                        )}
-                      </Menu.Item>
+                          </Menu.Item>
+                        </>
+                      )}
                     </Menu.Items>
                   </Transition>
                 </Menu>

@@ -9,20 +9,16 @@ generator client {
 
 model User {
   id    String @id @default(cuid())
-  email String @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password Password?
+  discordId String @unique
+  discordName String
+  discordAvatar String
+
   notes    Note[]
-}
-
-model Password {
-  hash String
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
+  registrations Registration[]
 }
 
 model Note {
@@ -34,5 +30,16 @@ model Note {
   updatedAt DateTime @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+}
+
+model Registration {
+  id String @id @default(cuid())
+  year Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
 }
