@@ -26,7 +26,7 @@ export default function NotesPage() {
         <h1 className="text-3xl font-bold">
           <Link to=".">Notes</Link>
         </h1>
-        <p>{user.email}</p>
+        <p>{user.discordName}</p>
         <Form action="/logout" method="post">
           <button
             type="submit"
