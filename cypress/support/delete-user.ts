@@ -8,15 +8,15 @@ import { prisma } from "~/db.server";
 
 installGlobals();
 
-async function deleteUser(email: string) {
-  if (!email) {
+async function deleteUser(discordId: string) {
+  if (!discordId) {
     throw new Error("email required for login");
   }
-  if (!email.endsWith("@example.com")) {
+  if (!discordId.endsWith("@example.com")) {
     throw new Error("All test emails must end in @example.com");
   }
 
-  await prisma.user.delete({ where: { email } });
+  await prisma.user.delete({ where: { discordId } });
 }
 
 deleteUser(process.argv[2]);
