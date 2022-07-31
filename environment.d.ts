@@ -5,6 +5,7 @@ declare global {
       DISCORD_CLIENT_ID: string;
       DISCORD_SECRET: string;
       SESSION_SECRET: string;
+      WEBSITE_URL: string;
     }
   }
 }

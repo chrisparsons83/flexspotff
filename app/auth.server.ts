@@ -16,7 +16,7 @@ authenticator.use(
     {
       clientID: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_SECRET,
-      callbackURL: `http://localhost:3000/auth/${SocialsProvider.DISCORD}/callback`,
+      callbackURL: `${process.env.WEBSITE_URL}/auth/${SocialsProvider.DISCORD}/callback`,
       scope: ["identify", "guilds.members.read"],
     },
     async (props) => {
