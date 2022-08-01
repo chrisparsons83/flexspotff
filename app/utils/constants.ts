@@ -1,1 +1,2 @@
 export const CURRENT_YEAR = 2022;
+export const SERVER_DISCORD_ID = `214093545747906562`;
