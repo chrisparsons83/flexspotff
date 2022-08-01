@@ -32,6 +32,7 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
+      console.log(props);
       console.log(resGuildMember);
       console.log(jsonGuild);
 
