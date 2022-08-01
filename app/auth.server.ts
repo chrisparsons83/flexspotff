@@ -41,10 +41,15 @@ authenticator.use(
         ? `guilds/${SERVER_DISCORD_ID}/users/${props.profile.id}/avatars/${jsonGuild.avatar}.webp`
         : `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`;
 
+      console.log("avatar link created");
+
       let user = await getUserByDiscordId(props.profile.id);
+      console.log(user);
+      console.log("initial user check");
       if (!user) {
         user = await createUser(props.profile.id, jsonGuild.nick, avatarPath);
       }
+      console.log("second user check");
       return user;
     }
   )
