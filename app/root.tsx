@@ -1,5 +1,4 @@
 import type { LinksFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -7,13 +6,13 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
 } from "@remix-run/react";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
 import { authenticator } from "./auth.server";
 import type { User } from "./models/user.server";
+import { superjson, useSuperLoaderData } from "./utils/data";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
@@ -30,13 +29,16 @@ type LoaderData = {
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
-  return json<LoaderData>({
-    user: await authenticator.isAuthenticated(request),
-  });
+  return superjson<LoaderData>(
+    {
+      user: await authenticator.isAuthenticated(request),
+    },
+    { headers: { "x-superjson": "true" } }
+  );
 };
 
 export default function App() {
-  const { user } = useLoaderData() as LoaderData;
+  const { user } = useSuperLoaderData<typeof loader>();
 
   return (
     <html lang="en" className="dark h-full">
