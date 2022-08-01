@@ -1,3 +1,4 @@
+import { profile } from "console";
 import { Authenticator } from "remix-auth";
 import { SocialsProvider, DiscordStrategy } from "remix-auth-socials";
 import { sessionStorage } from "~/services/session.server";
@@ -39,6 +40,7 @@ authenticator.use(
       const avatarPath = jsonGuild.avatar
         ? `guilds/${SERVER_DISCORD_ID}/users/${props.profile.id}/avatars/${jsonGuild.avatar}.webp`
         : `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`;
+      const userName = jsonGuild.nick ?? props.profile.displayName;
 
       console.log("avatar link created");
 
@@ -46,7 +48,7 @@ authenticator.use(
       console.log(user);
       console.log("initial user check");
       if (!user) {
-        user = await createUser(props.profile.id, jsonGuild.nick, avatarPath);
+        user = await createUser(props.profile.id, userName, avatarPath);
       }
       console.log("second user check");
       return user;
