@@ -1,4 +1,3 @@
-import { profile } from "console";
 import { Authenticator } from "remix-auth";
 import { SocialsProvider, DiscordStrategy } from "remix-auth-socials";
 import { sessionStorage } from "~/services/session.server";
@@ -23,7 +22,6 @@ authenticator.use(
     },
     async (props) => {
       // TODO: Extract guild ID out to an environmental variable? Some sort of global at least.
-      console.log("this loaded");
       const resGuildMember = await fetch(
         `https://discord.com/api/users/@me/guilds/${SERVER_DISCORD_ID}/member`,
         {
@@ -33,8 +31,6 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
-      console.log(props);
-      console.log(jsonGuild);
 
       // TODO: Did you extract the guild ID to a global variable yet? Fix this then.
       const avatarPath = jsonGuild.avatar
@@ -42,15 +38,10 @@ authenticator.use(
         : `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`;
       const userName = jsonGuild.nick ?? props.profile.displayName;
 
-      console.log("avatar link created");
-
       let user = await getUserByDiscordId(props.profile.id);
-      console.log(user);
-      console.log("initial user check");
       if (!user) {
         user = await createUser(props.profile.id, userName, avatarPath);
       }
-      console.log("second user check");
       return user;
     }
   )
