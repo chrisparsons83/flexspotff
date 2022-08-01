@@ -31,9 +31,6 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
-      if (!jsonGuild.joined_at) {
-        throw new Error("Discord user not a member of server");
-      }
 
       // TODO: Did you extract the guild ID to a global variable yet? Fix this then.
       const avatarPath = jsonGuild.avatar
