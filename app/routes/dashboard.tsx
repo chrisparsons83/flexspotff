@@ -1,15 +1,12 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import { authenticator } from "~/auth.server";
 import type { Registration } from "~/models/registration.server";
 import { getRegistrationByUserAndYear } from "~/models/registration.server";
 import { createRegistration } from "~/models/registration.server";
 import type { User } from "~/models/user.server";
+import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-
-// TODO: Make this dynamic/pull into database/probably make actual seasons
-const CURRENT_YEAR = 2022;
 
 type ActionData = {
   formError?: string;
@@ -39,7 +36,7 @@ export const action = async ({
 
   let registration = await createRegistration(user.id, year);
 
-  return json({ registration });
+  return superjson<ActionData>({ registration });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {

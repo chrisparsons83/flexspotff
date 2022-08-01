@@ -28,3 +28,13 @@ export async function getRegistrationByUserAndYear(
     where: { year, userId },
   });
 }
+
+export async function getRegistrationsByYear(year: Registration["year"]) {
+  return prisma.registration.findMany({
+    where: { year },
+    include: {
+      user: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
