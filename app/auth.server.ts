@@ -22,6 +22,7 @@ authenticator.use(
     },
     async (props) => {
       // TODO: Extract guild ID out to an environmental variable? Some sort of global at least.
+      console.log("this loaded");
       const resGuildMember = await fetch(
         `https://discord.com/api/users/@me/guilds/${SERVER_DISCORD_ID}/member`,
         {
@@ -31,6 +32,8 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
+      console.log(resGuildMember);
+      console.log(jsonGuild);
 
       // TODO: Did you extract the guild ID to a global variable yet? Fix this then.
       const avatarPath = jsonGuild.avatar
