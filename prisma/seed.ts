@@ -12,27 +12,11 @@ async function seed() {
     // no worries if it doesn't exist yet
   });
 
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
       discordId,
       discordName,
       discordAvatar,
-    },
-  });
-
-  await prisma.note.create({
-    data: {
-      title: "My first note",
-      body: "Hello, world!",
-      userId: user.id,
-    },
-  });
-
-  await prisma.note.create({
-    data: {
-      title: "My second note",
-      body: "Hello, world!",
-      userId: user.id,
     },
   });
 
