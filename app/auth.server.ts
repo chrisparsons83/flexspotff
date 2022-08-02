@@ -60,6 +60,9 @@ authenticator.use(
 );
 
 export const isAdmin = (user: User) => {
+  if (!user.discordRoles || user.discordRoles.length === 0) {
+    return false;
+  }
   return user.discordRoles.includes(SERVER_DISCORD_ADMIN_ROLE_ID);
 };
 
