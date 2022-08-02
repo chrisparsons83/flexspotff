@@ -16,6 +16,7 @@ model User {
   discordId String @unique
   discordName String
   discordAvatar String
+  discordRoles String[]
 
   notes    Note[]
   registrations Registration[]

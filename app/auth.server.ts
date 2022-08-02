@@ -2,6 +2,7 @@ import { Authenticator } from "remix-auth";
 import { SocialsProvider, DiscordStrategy } from "remix-auth-socials";
 import { sessionStorage } from "~/services/session.server";
 import type { User } from "./models/user.server";
+import { updateUser } from "./models/user.server";
 import { createUser, getUserByDiscordId } from "./models/user.server";
 import { SERVER_DISCORD_ID } from "./utils/constants";
 
@@ -21,7 +22,6 @@ authenticator.use(
       scope: ["identify", "guilds.members.read"],
     },
     async (props) => {
-      // TODO: Extract guild ID out to an environmental variable? Some sort of global at least.
       const resGuildMember = await fetch(
         `https://discord.com/api/users/@me/guilds/${SERVER_DISCORD_ID}/member`,
         {
@@ -31,17 +31,26 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
+      console.log(jsonGuild);
 
-      // TODO: Did you extract the guild ID to a global variable yet? Fix this then.
       const avatarPath = jsonGuild.avatar
         ? `guilds/${SERVER_DISCORD_ID}/users/${props.profile.id}/avatars/${jsonGuild.avatar}.webp`
-        : `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`;
+        : props.profile.__json.avatar
+        ? `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`
+        : "";
       const userName = jsonGuild.nick ?? props.profile.displayName;
 
       let user = await getUserByDiscordId(props.profile.id);
       if (!user) {
         user = await createUser(props.profile.id, userName, avatarPath);
       }
+
+      user.discordName = userName;
+      user.discordAvatar = avatarPath;
+      user.discordRoles = jsonGuild.roles;
+
+      user = await updateUser(user);
+
       return user;
     }
   )

@@ -29,3 +29,16 @@ export async function createUser(
 export async function deleteUserByDiscordId(discordId: User["discordId"]) {
   return prisma.user.delete({ where: { discordId } });
 }
+
+export async function updateUser(user: User) {
+  return prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      discordName: user.discordName || undefined,
+      discordAvatar: user.discordAvatar || undefined,
+      discordRoles: user.discordRoles || undefined,
+    },
+  });
+}
