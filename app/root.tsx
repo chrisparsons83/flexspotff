@@ -53,9 +53,11 @@ export default function App() {
       </head>
       <body className="h-full bg-slate-700 text-white">
         <NavBar user={user} userIsAdmin={userIsAdmin} />
-        <main className="container prose relative mx-auto min-h-screen p-4 text-white dark:prose-invert lg:prose-xl">
-          <Outlet />
-        </main>
+        <div className="container relative mx-auto min-h-screen p-4 text-white">
+          <main className="prose dark:prose-invert lg:prose-xl">
+            <Outlet />
+          </main>
+        </div>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
