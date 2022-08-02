@@ -11,16 +11,16 @@ const navigation = [
   { name: "Standings", href: "/standings", current: false },
   { name: "Leaderboard", href: "/leaderboard", current: false },
   { name: "ADP", href: "/adp", current: false },
-  { name: "Past Winners", href: "/past-winners", current: false },
   { name: "Records", href: "/records", current: false },
   { name: "Podcast", href: "/podcast", current: false },
 ];
 
 interface Props {
   user: User | null;
+  userIsAdmin: boolean;
 }
 
-export default function NavBar({ user }: Props) {
+export default function NavBar({ user, userIsAdmin }: Props) {
   const avatarImage =
     user &&
     user.discordAvatar &&
@@ -127,10 +127,25 @@ export default function NavBar({ user }: Props) {
                                   "block px-4 py-2 text-sm text-gray-700"
                                 )}
                               >
-                                Dashboard
+                                User Dashboard
                               </a>
                             )}
                           </Menu.Item>
+                          {userIsAdmin && (
+                            <Menu.Item>
+                              {({ active }) => (
+                                <a
+                                  href="/admin"
+                                  className={clsx(
+                                    active ? "bg-gray-100" : "",
+                                    "block px-4 py-2 text-sm text-gray-700"
+                                  )}
+                                >
+                                  Admin Dashboard
+                                </a>
+                              )}
+                            </Menu.Item>
+                          )}
                           <Menu.Item>
                             {({ active }) => (
                               <Form action="/logout" method="post">

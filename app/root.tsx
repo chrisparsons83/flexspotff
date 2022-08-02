@@ -10,7 +10,7 @@ import {
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
-import { authenticator } from "./auth.server";
+import { authenticator, isAdmin } from "./auth.server";
 import type { User } from "./models/user.server";
 import { superjson, useSuperLoaderData } from "./utils/data";
 
@@ -26,19 +26,24 @@ export const meta: MetaFunction = () => ({
 
 type LoaderData = {
   user: User | null;
+  userIsAdmin: boolean;
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
+  const user = await authenticator.isAuthenticated(request);
+  const userIsAdmin = !user ? false : isAdmin(user);
+
   return superjson<LoaderData>(
     {
-      user: await authenticator.isAuthenticated(request),
+      user,
+      userIsAdmin,
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function App() {
-  const { user } = useSuperLoaderData<typeof loader>();
+  const { user, userIsAdmin } = useSuperLoaderData<typeof loader>();
 
   return (
     <html lang="en" className="dark h-full">
@@ -47,7 +52,7 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full bg-slate-700 text-white">
-        <NavBar user={user} />
+        <NavBar user={user} userIsAdmin={userIsAdmin} />
         <main className="container prose relative mx-auto min-h-screen p-4 text-white dark:prose-invert lg:prose-xl">
           <Outlet />
         </main>
@@ -56,5 +61,14 @@ export default function App() {
         <LiveReload />
       </body>
     </html>
+  );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <>
+      <h1>Error</h1>
+      <pre>{error.message}</pre>
+    </>
   );
 }

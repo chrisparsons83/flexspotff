@@ -4,7 +4,10 @@ import { sessionStorage } from "~/services/session.server";
 import type { User } from "./models/user.server";
 import { updateUser } from "./models/user.server";
 import { createUser, getUserByDiscordId } from "./models/user.server";
-import { SERVER_DISCORD_ID } from "./utils/constants";
+import {
+  SERVER_DISCORD_ADMIN_ROLE_ID,
+  SERVER_DISCORD_ID,
+} from "./utils/constants";
 
 // Create an instance of the authenticator
 export let authenticator = new Authenticator<User>(sessionStorage, {
@@ -55,3 +58,15 @@ authenticator.use(
     }
   )
 );
+
+export const isAdmin = (user: User) => {
+  return user.discordRoles.includes(SERVER_DISCORD_ADMIN_ROLE_ID);
+};
+
+export const requireAdmin = (user: User) => {
+  if (!isAdmin(user)) {
+    throw new Error("You do not have access to this page.");
+  }
+
+  return true;
+};
