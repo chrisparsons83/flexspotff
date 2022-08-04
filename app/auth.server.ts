@@ -34,7 +34,6 @@ authenticator.use(
         }
       );
       const jsonGuild = await resGuildMember.json();
-      console.log(jsonGuild);
 
       const avatarPath = jsonGuild.avatar
         ? `guilds/${SERVER_DISCORD_ID}/users/${props.profile.id}/avatars/${jsonGuild.avatar}.webp`
