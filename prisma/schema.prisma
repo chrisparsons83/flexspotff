@@ -7,6 +7,25 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Episode {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId String
+
+  description String
+  duration Int
+  episode Int
+  filepath String
+  filesize Int
+  filetype String @default("audio/mpeg")
+  publishDate DateTime
+  season Int
+  shownotes String
+  title String
+}
+
 model User {
   id    String @id @default(cuid())
 
@@ -19,6 +38,7 @@ model User {
   discordRoles String[]
 
   registrations Registration[]
+  episodes Episode[]
 }
 
 model Registration {

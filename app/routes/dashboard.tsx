@@ -1,6 +1,7 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import { authenticator } from "~/auth.server";
+import Button from "~/components/Button";
 import type { Registration } from "~/models/registration.server";
 import { getRegistrationByUserAndYear } from "~/models/registration.server";
 import { createRegistration } from "~/models/registration.server";
@@ -71,12 +72,7 @@ export default function Dashboard() {
           </p>
           <Form method="post">
             <input type="hidden" name="year" value={CURRENT_YEAR} />
-            <button
-              type="submit"
-              className="focus-visible:ring-offset-2zd inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
-              Register for 2022 Leagues
-            </button>
+            <Button type="submit">Register for 2022 Leagues</Button>
           </Form>
         </>
       )}
