@@ -362,7 +362,9 @@ export default function PodcastEpisodeCreate() {
                 {actionData.formError}
               </p>
             ) : null}
-            <Button type="submit">{buttonText}</Button>
+            <Button type="submit" disabled={transition.state !== "idle"}>
+              {buttonText}
+            </Button>
           </div>
         </Form>
       </div>
