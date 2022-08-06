@@ -121,6 +121,7 @@ jobs:
           wait-on: "http://localhost:8811"
         env:
           PORT: "8811"
+          AWS_ENDPOINT: "http://localhost"
 
   build:
     name: 🐳 Build
