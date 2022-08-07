@@ -39,7 +39,7 @@ export default function PodcastEpisodeList() {
               <td>{episode.season}</td>
               <td>{episode.episode}</td>
               <td>{episode.title}</td>
-              <td>{episode.publishDate.toLocaleString()}</td>
+              <td>{episode.publishDate.toLocaleDateString()}</td>
               <td>
                 <Link to={`./${episode.id}`}>Edit</Link>
               </td>
