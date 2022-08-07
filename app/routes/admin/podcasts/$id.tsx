@@ -5,11 +5,13 @@ import {
 } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import Button from "~/components/Button";
-import { redirect } from "~/utils/data";
+import { redirect, superjson, useSuperLoaderData } from "~/utils/data";
 import { podcastJsonSchema, s3UploadHandler } from "~/services/s3client.server";
-import { createEpisode } from "~/models/episode.server";
+import type { Episode } from "~/models/episode.server";
+import { updateEpisode } from "~/models/episode.server";
+import { createEpisode, getEpisode } from "~/models/episode.server";
 import { authenticator } from "~/auth.server";
-import type { ActionArgs, UploadHandler } from "@remix-run/node";
+import type { ActionArgs, UploadHandler, LoaderArgs } from "@remix-run/node";
 import type { S3FileUpload } from "~/services/s3client.server";
 
 type ActionData = {
@@ -34,6 +36,10 @@ type ActionData = {
   };
 };
 
+type LoaderData = {
+  episode?: Episode;
+};
+
 // TODO: Bring this into a settings page
 const SEASONS = [2, 1];
 
@@ -53,13 +59,20 @@ export const action = async ({
     uploadHandler
   );
 
+  // On all forms
   const title = formData.get("title");
   const season = formData.get("season");
   const episode = formData.get("episode");
   const description = formData.get("description");
   const showNotes = formData.get("showNotes");
   const publishDate = formData.get("publishDate");
+  // Only on new file submission
   const podcastFileJson = formData.get("podcastFile");
+  // Only on Edit Form
+  const id = formData.get("id");
+  const duration = formData.get("duration");
+  const filepath = formData.get("filepath");
+  const filesize = formData.get("filesize");
 
   if (
     typeof title !== "string" ||
@@ -68,12 +81,19 @@ export const action = async ({
     typeof description !== "string" ||
     typeof showNotes !== "string" ||
     typeof publishDate !== "string" ||
-    typeof podcastFileJson !== "string"
+    (typeof podcastFileJson !== "string" && typeof filepath !== "string")
   ) {
     throw new Error(`Form not submitted correctly.`);
   }
 
-  const podcastFileObject = JSON.parse(podcastFileJson) as S3FileUpload;
+  const podcastFileObject: S3FileUpload =
+    typeof podcastFileJson === "string"
+      ? JSON.parse(podcastFileJson)
+      : {
+          duration: Number.parseInt(String(duration)),
+          location: filepath,
+          size: Number.parseInt(String(filesize)),
+        };
   podcastJsonSchema.parse(podcastFileObject);
 
   if (!podcastFileObject.size) {
@@ -104,33 +124,72 @@ export const action = async ({
     return { fieldErrors, fields };
   }
 
-  await createEpisode({
-    title,
-    season: seasonNumber,
-    episode: episodeNumber,
-    description,
-    shownotes: showNotes,
-    publishDate: publishDateObject,
-    duration: podcastFileObject.duration,
-    filepath: podcastFileObject.location,
-    filesize: podcastFileObject.size,
-    filetype: "audio/mpeg",
-    authorId: user.id,
-  });
+  if (!id) {
+    await createEpisode({
+      title,
+      season: seasonNumber,
+      episode: episodeNumber,
+      description,
+      shownotes: showNotes,
+      publishDate: publishDateObject,
+      duration: podcastFileObject.duration,
+      filepath: podcastFileObject.location,
+      filesize: podcastFileObject.size,
+      filetype: "audio/mpeg",
+      authorId: user.id,
+    });
+  } else {
+    await updateEpisode({
+      id: String(id),
+      title,
+      season: seasonNumber,
+      episode: episodeNumber,
+      description,
+      shownotes: showNotes,
+      publishDate: publishDateObject,
+      duration: podcastFileObject.duration,
+      filepath: podcastFileObject.location,
+      filesize: podcastFileObject.size,
+      filetype: "audio/mpeg",
+      authorId: user.id,
+    });
+  }
 
   return redirect(`/admin/podcasts`);
 };
 
+export const loader = async ({ request, params }: LoaderArgs) => {
+  if (!params.id) {
+    throw new Error("Error building page.");
+  }
+
+  if (params.id === "new") {
+    return superjson<LoaderData>({}, { headers: { "x-superjson": "true" } });
+  }
+
+  const episode = await getEpisode(params.id);
+
+  if (!episode) {
+    throw new Error("Episode not found");
+  }
+
+  return superjson<LoaderData>(
+    { episode },
+    { headers: { "x-superjson": "true" } }
+  );
+};
+
 export default function PodcastEpisodeCreate() {
+  const { episode } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
 
   const buttonText =
     transition.state === "submitting"
-      ? "Adding..."
+      ? "Submitting..."
       : transition.state === "loading"
-      ? "Added!"
-      : "Add";
+      ? "Submitted!"
+      : "Submit";
 
   return (
     <>
@@ -141,13 +200,14 @@ export default function PodcastEpisodeCreate() {
           className="grid grid-cols-1 gap-6"
           encType="multipart/form-data"
         >
+          <input type="hidden" name="id" value={episode?.id} />
           <div>
             <label htmlFor="title">
               Title:
               <input
                 type="text"
                 required
-                defaultValue={actionData?.fields?.title}
+                defaultValue={episode?.title ?? actionData?.fields?.title}
                 name="title"
                 id="title"
                 aria-invalid={
@@ -174,7 +234,7 @@ export default function PodcastEpisodeCreate() {
               <label htmlFor="season">
                 Season:
                 <select
-                  defaultValue={actionData?.fields?.season}
+                  defaultValue={episode?.season ?? actionData?.fields?.season}
                   name="season"
                   required
                   aria-invalid={
@@ -211,7 +271,7 @@ export default function PodcastEpisodeCreate() {
                   type="number"
                   required
                   min="1"
-                  defaultValue={actionData?.fields?.episode}
+                  defaultValue={episode?.episode ?? actionData?.fields?.episode}
                   name="episode"
                   id="episode"
                   aria-invalid={
@@ -243,7 +303,9 @@ export default function PodcastEpisodeCreate() {
                 name="description"
                 required
                 id="description"
-                defaultValue={actionData?.fields?.description}
+                defaultValue={
+                  episode?.description ?? actionData?.fields?.description
+                }
                 aria-invalid={
                   Boolean(actionData?.fieldErrors?.description) || undefined
                 }
@@ -273,7 +335,9 @@ export default function PodcastEpisodeCreate() {
                 name="showNotes"
                 required
                 id="showNotes"
-                defaultValue={actionData?.fields?.showNotes}
+                defaultValue={
+                  episode?.shownotes ?? actionData?.fields?.showNotes
+                }
                 aria-invalid={
                   Boolean(actionData?.fieldErrors?.showNotes) || undefined
                 }
@@ -301,7 +365,11 @@ export default function PodcastEpisodeCreate() {
               Publish Date:
               <input
                 type="date"
-                defaultValue={actionData?.fields?.publishDate}
+                defaultValue={
+                  episode?.publishDate
+                    ? episode?.publishDate.toISOString().split("T")[0]
+                    : actionData?.fields?.publishDate
+                }
                 name="publishDate"
                 required
                 id="publishDate"
@@ -328,10 +396,30 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             <label htmlFor="podcastFile">
-              Podcast File:
+              Podcast File:{" "}
+              {episode && (
+                <>
+                  <a href={episode.filepath}>Current File</a>
+                  <input
+                    type="hidden"
+                    name="duration"
+                    value={episode.duration}
+                  />
+                  <input
+                    type="hidden"
+                    name="filepath"
+                    value={episode.filepath}
+                  />
+                  <input
+                    type="hidden"
+                    name="filesize"
+                    value={episode.filesize}
+                  />
+                </>
+              )}
               <input
                 type="file"
-                required
+                required={!episode}
                 defaultValue={actionData?.fields?.podcastFile}
                 name="podcastFile"
                 id="podcastFile"

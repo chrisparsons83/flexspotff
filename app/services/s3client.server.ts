@@ -83,7 +83,7 @@ const uploadImageToS3 = async (
 const s3UploadHandler = unstable_composeUploadHandlers(
   // our custom upload handler
   async ({ name, data, filename }) => {
-    if (name !== "podcastFile") {
+    if (name !== "podcastFile" || !filename) {
       return undefined;
     }
     const keyName = filename ?? `${name}${+new Date()}`;
