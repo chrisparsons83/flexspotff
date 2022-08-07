@@ -47,6 +47,7 @@ const uploadStream = (Key: string) => {
       Bucket: process.env.AWS_BUCKET,
       Key,
       Body: pass,
+      ACL: "public-read",
     },
     leavePartsOnError: false,
   });
