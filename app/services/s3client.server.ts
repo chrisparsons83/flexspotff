@@ -38,9 +38,9 @@ const s3Client = new S3Client({
   },
 });
 
-const uploadStream = (Key: string) => {
+const uploadStream = (Key: string, contentType: string) => {
   const pass = new PassThrough();
-  const metadata = parseStream(pass);
+  const metadata = parseStream(pass, { mimeType: contentType });
   const upload = new Upload({
     client: s3Client,
     params: {
@@ -61,9 +61,10 @@ const uploadStream = (Key: string) => {
 
 const uploadImageToS3 = async (
   data: AsyncIterable<Uint8Array>,
-  name: string
+  name: string,
+  contentType: string
 ) => {
-  const stream = uploadStream(name);
+  const stream = uploadStream(name, contentType);
   await writeAsyncIterableToWritable(data, stream.writeStream);
   const file = (await stream.promise) as S3FileData;
   const extraMetadata = await stream.metadata;
@@ -83,12 +84,16 @@ const uploadImageToS3 = async (
 
 const s3UploadHandler = unstable_composeUploadHandlers(
   // our custom upload handler
-  async ({ name, data, filename }) => {
+  async ({ name, contentType, data, filename }) => {
     if (name !== "podcastFile" || !filename) {
       return undefined;
     }
     const keyName = filename ?? `${name}${+new Date()}`;
-    const uploadedImage: any = await uploadImageToS3(data, keyName);
+    const uploadedImage: any = await uploadImageToS3(
+      data,
+      keyName,
+      contentType
+    );
     return JSON.stringify(uploadedImage);
   },
   // fallback to memory for everything else
