@@ -112,11 +112,9 @@ export const action = async ({
 
   const seasonNumber = Number.parseInt(season);
   const episodeNumber = Number.parseInt(episode);
-  console.log(publishDate);
   const publishDateObject = DateTime.fromISO(publishDate, {
     zone: "America/Los_Angeles",
   }).toJSDate();
-  console.log(publishDateObject);
 
   const fieldErrors = {
     title: title.length === 0 ? "Title has no content" : undefined,
