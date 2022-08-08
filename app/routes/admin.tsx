@@ -17,7 +17,7 @@ export default function Admin() {
     <>
       <h2>Admin</h2>
       <div className="grid md:grid-cols-12 md:gap-4">
-        <div className="not-prose text-sm md:col-span-4">
+        <div className="not-prose text-sm md:col-span-3">
           <section>
             <p
               id="admin-leagues-heading"
@@ -69,7 +69,7 @@ export default function Admin() {
             </ul>
           </section>
         </div>
-        <div className="md:col-span-8">
+        <div className="md:col-span-9">
           <Outlet />
         </div>
       </div>

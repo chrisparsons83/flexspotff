@@ -54,7 +54,7 @@ export default function App() {
       <body className="h-full bg-slate-700 text-white">
         <NavBar user={user} userIsAdmin={userIsAdmin} />
         <div className="container relative mx-auto min-h-screen p-4 text-white">
-          <main className="prose dark:prose-invert lg:prose-xl">
+          <main className="prose max-w-none dark:prose-invert lg:prose-xl">
             <Outlet />
           </main>
         </div>

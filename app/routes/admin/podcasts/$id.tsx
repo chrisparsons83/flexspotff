@@ -13,6 +13,7 @@ import { createEpisode, getEpisode } from "~/models/episode.server";
 import { authenticator } from "~/auth.server";
 import type { ActionArgs, UploadHandler, LoaderArgs } from "@remix-run/node";
 import type { S3FileUpload } from "~/services/s3client.server";
+import { DateTime } from "luxon";
 
 type ActionData = {
   formError?: string;
@@ -111,7 +112,10 @@ export const action = async ({
 
   const seasonNumber = Number.parseInt(season);
   const episodeNumber = Number.parseInt(episode);
-  const publishDateObject = new Date(publishDate);
+  console.log(publishDate);
+  const publishDateObject = DateTime.fromISO(publishDate)
+    .setZone("America/Los_Angeles")
+    .toJSDate();
 
   const fieldErrors = {
     title: title.length === 0 ? "Title has no content" : undefined,
@@ -270,7 +274,7 @@ export default function PodcastEpisodeCreate() {
                 <input
                   type="number"
                   required
-                  min="1"
+                  min="0"
                   defaultValue={episode?.episode ?? actionData?.fields?.episode}
                   name="episode"
                   id="episode"
