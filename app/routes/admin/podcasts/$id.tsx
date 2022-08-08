@@ -42,7 +42,7 @@ type LoaderData = {
 };
 
 // TODO: Bring this into a settings page
-const SEASONS = [2, 1];
+const SEASONS = [3, 2, 1];
 
 export const action = async ({
   request,
