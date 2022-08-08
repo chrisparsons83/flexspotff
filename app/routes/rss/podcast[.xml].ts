@@ -32,10 +32,15 @@ const feedOptions = {
 
 export async function loader() {
   const episodes = await getEpisodes();
+  const now = new Date();
 
   const podcast = new Podcast(feedOptions);
 
-  for (const episode of episodes) {
+  const episodesToPublish = episodes.filter(
+    (episode) => episode.publishDate <= now
+  );
+
+  for (const episode of episodesToPublish) {
     const episodeFormat = {
       ...episode,
       customElements: [{ "content:encoded": episode.shownotes }],

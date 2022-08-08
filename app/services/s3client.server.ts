@@ -74,7 +74,7 @@ const uploadImageToS3 = async (
     ? Math.floor(extraMetadata.format.duration)
     : 0;
   const returnObject: S3FileUpload = {
-    location: file.Location,
+    location: `https://${file.Location}`,
     size: metadata.ContentLength,
     duration,
   };
