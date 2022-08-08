@@ -17,10 +17,10 @@ const navigation = [
 
 interface Props {
   user: User | null;
-  userIsAdmin: boolean;
+  userIsEditor: boolean;
 }
 
-export default function NavBar({ user, userIsAdmin }: Props) {
+export default function NavBar({ user, userIsEditor }: Props) {
   const avatarImage =
     user &&
     user.discordAvatar &&
@@ -131,7 +131,7 @@ export default function NavBar({ user, userIsAdmin }: Props) {
                               </a>
                             )}
                           </Menu.Item>
-                          {userIsAdmin && (
+                          {userIsEditor && (
                             <Menu.Item>
                               {({ active }) => (
                                 <a

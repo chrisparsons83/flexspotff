@@ -7,6 +7,7 @@ import { createUser, getUserByDiscordId } from "./models/user.server";
 import {
   SERVER_DISCORD_ADMIN_ROLE_ID,
   SERVER_DISCORD_ID,
+  SERVER_DISCORD_PODCAST_ADMIN_ROLE_ID,
 } from "./utils/constants";
 
 // Create an instance of the authenticator
@@ -67,6 +68,38 @@ export const isAdmin = (user: User) => {
 
 export const requireAdmin = (user: User) => {
   if (!isAdmin(user)) {
+    throw new Error("You do not have access to this page.");
+  }
+
+  return true;
+};
+
+export const isPodcastEditor = (user: User) => {
+  if (!user.discordRoles || user.discordRoles.length === 0) {
+    return false;
+  }
+
+  if (isAdmin(user)) {
+    return true;
+  }
+
+  return user.discordRoles.includes(SERVER_DISCORD_PODCAST_ADMIN_ROLE_ID);
+};
+
+export const requirePodcastEditor = (user: User) => {
+  if (!isPodcastEditor(user)) {
+    throw new Error("You do not have access to this page.");
+  }
+
+  return true;
+};
+
+export const isEditor = (user: User) => {
+  return isAdmin(user) || isPodcastEditor(user);
+};
+
+export const requireEditor = (user: User) => {
+  if (!isEditor(user)) {
     throw new Error("You do not have access to this page.");
   }
 
