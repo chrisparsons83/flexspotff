@@ -37,6 +37,8 @@ model User {
   discordAvatar String
   discordRoles String[]
 
+  sleeperOwnerID String @default("")
+
   registrations Registration[]
   episodes Episode[]
 }

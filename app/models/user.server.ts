@@ -30,7 +30,19 @@ export async function deleteUserByDiscordId(discordId: User["discordId"]) {
   return prisma.user.delete({ where: { discordId } });
 }
 
-export async function updateUser(user: User) {
+export async function getUser(id: User["id"]) {
+  return prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
+export async function getUsers() {
+  return prisma.user.findMany();
+}
+
+export async function updateUser(user: Partial<User>) {
   return prisma.user.update({
     where: {
       id: user.id,
@@ -39,6 +51,7 @@ export async function updateUser(user: User) {
       discordName: user.discordName || undefined,
       discordAvatar: user.discordAvatar || undefined,
       discordRoles: user.discordRoles || undefined,
+      sleeperOwnerID: user.sleeperOwnerID || undefined,
     },
   });
 }
