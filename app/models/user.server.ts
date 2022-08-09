@@ -39,7 +39,11 @@ export async function getUser(id: User["id"]) {
 }
 
 export async function getUsers() {
-  return prisma.user.findMany();
+  return prisma.user.findMany({
+    orderBy: {
+      discordName: "asc",
+    },
+  });
 }
 
 export async function updateUser(user: Partial<User>) {
