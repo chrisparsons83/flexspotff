@@ -61,18 +61,17 @@ export default function Dashboard() {
       <h2>2022 League Registration</h2>
       {registration ? (
         <p>
-          Thanks for registering! You registered at{" "}
+          Thanks! You registered at{" "}
           {registration.createdAt.toLocaleString()}
         </p>
       ) : (
         <>
           <p>
-            You have not yet registered for the 2022 leagues. Click the button
-            below to confirm your interest!
+            You have not yet registered for the 2022 leagues. Currently, we are all filled, but clicking the button below will add you to the wait lists in case spots open up.
           </p>
           <Form method="post">
             <input type="hidden" name="year" value={CURRENT_YEAR} />
-            <Button type="submit">Register for 2022 Leagues</Button>
+            <Button type="submit">Register for wait lists for 2022 Leagues</Button>
           </Form>
         </>
       )}
