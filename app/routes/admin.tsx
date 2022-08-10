@@ -63,6 +63,22 @@ export default function Admin() {
                       Registration List
                     </Link>
                   </li>
+                  <li className="flow-root">
+                    <Link
+                      to="/admin/leagues"
+                      className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                    >
+                      Leagues
+                    </Link>
+                  </li>
+                  <li className="flow-root">
+                    <Link
+                      to="/admin/leagues/new"
+                      className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                    >
+                      Add League
+                    </Link>
+                  </li>
                 </ul>
               </section>
               <section>
