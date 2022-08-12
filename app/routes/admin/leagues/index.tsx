@@ -19,7 +19,7 @@ type ActionData = {
 const sleeperTeamJson = z.array(
   z.object({
     roster_id: z.number(),
-    owner_id: z.string(),
+    owner_id: z.string().nullable(),
     settings: z.object({
       wins: z.number(),
       losses: z.number(),
@@ -31,10 +31,12 @@ const sleeperTeamJson = z.array(
       fpts_against: z.number().optional(),
       fpts_against_decimal: z.number().optional(),
     }),
-    metadata: z.object({
-      streak: z.string(),
-      record: z.string(),
-    }),
+    metadata: z
+      .object({
+        streak: z.string(),
+        record: z.string(),
+      })
+      .nullable(),
   })
 );
 type SleeperTeamJson = z.infer<typeof sleeperTeamJson>;
@@ -64,7 +66,7 @@ export const action = async ({ request }: ActionArgs) => {
       const sleeperTeamsRes = await fetch(url);
       const sleeperTeams: SleeperTeamJson = sleeperTeamJson
         .parse(await sleeperTeamsRes.json())
-        .filter((team) => team.owner_id !== SLEEPER_ADMIN_ID);
+        .filter((team) => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
 
       const existingTeamsSleeperOwners = (await getTeams(leagueId)).map(
         (team) => [team.sleeperOwnerId, team.id]
@@ -83,7 +85,7 @@ export const action = async ({ request }: ActionArgs) => {
           wins: sleeperTeam.settings.wins,
           losses: sleeperTeam.settings.losses,
           ties: sleeperTeam.settings.ties,
-          sleeperOwnerId: sleeperTeam.owner_id,
+          sleeperOwnerId: sleeperTeam.owner_id!,
           pointsFor:
             (sleeperTeam.settings.fpts ?? 0) +
             0.01 * (sleeperTeam.settings.fpts_decimal ?? 0),
