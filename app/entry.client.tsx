@@ -5,14 +5,6 @@ import { useLocation, useMatches } from "@remix-run/react";
 import * as Sentry from "@sentry/remix";
 import { useEffect } from "react";
 
-declare global {
-  interface Window {
-    ENV: {
-      SENTRY_DSN: string;
-    };
-  }
-}
-
 Sentry.init({
   dsn: window.ENV.SENTRY_DSN,
   tracesSampleRate: 1,

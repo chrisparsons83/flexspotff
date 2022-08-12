@@ -14,6 +14,12 @@ declare global {
       WEBSITE_URL: string;
     }
   }
+
+  interface Window {
+    ENV: {
+      SENTRY_DSN: string;
+    };
+  }
 }
 
 // If this file has no import/export statements (i.e. is a script)

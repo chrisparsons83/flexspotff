@@ -85,11 +85,11 @@ export const action = async ({ request }: ActionArgs) => {
           ties: sleeperTeam.settings.ties,
           sleeperOwnerId: sleeperTeam.owner_id,
           pointsFor:
-            sleeperTeam.settings.fpts +
-            0.01 * sleeperTeam.settings.fpts_decimal,
+            (sleeperTeam.settings.fpts ?? 0) +
+            0.01 * (sleeperTeam.settings.fpts_decimal ?? 0),
           pointsAgainst:
-            sleeperTeam.settings.fpts_against +
-            0.01 * sleeperTeam.settings.fpts_against_decimal,
+            (sleeperTeam.settings.fpts_against ?? 0) +
+            0.01 * (sleeperTeam.settings.fpts_against_decimal ?? 0),
           rosterId: sleeperTeam.roster_id,
           leagueId,
           userId: systemUser.length > 0 ? systemUser[0].id : null,
