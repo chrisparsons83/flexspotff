@@ -8,6 +8,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import { withSentry } from "@sentry/remix";
+import { setUser } from "@sentry/browser";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
@@ -36,6 +37,10 @@ type LoaderData = {
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
+
+  if (user) {
+    setUser(user);
+  }
 
   return superjson<LoaderData>(
     {
