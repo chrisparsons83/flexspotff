@@ -10,6 +10,14 @@ export async function createLeague(league: LeagueCreateInput) {
   });
 }
 
+export async function getLeague(id: League["id"]) {
+  return prisma.league.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getLeagues() {
   return prisma.league.findMany({
     orderBy: [
