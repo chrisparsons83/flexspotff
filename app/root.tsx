@@ -87,7 +87,7 @@ function App() {
 export default withSentry(App);
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  Sentry.captureException(error);
+  captureException(error);
 
   return (
     <>
