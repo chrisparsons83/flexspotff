@@ -29,6 +29,7 @@ type LoaderData = {
   user: User | null;
   userIsEditor: boolean;
   ENV: {
+    NODE_ENV: string;
     SENTRY_DSN: string;
   };
 };
@@ -47,6 +48,7 @@ export const loader = async ({ request }: LoaderArgs) => {
       userIsEditor,
       ENV: {
         SENTRY_DSN: process.env.SENTRY_DSN,
+        NODE_ENV: process.env.NODE_ENV,
       },
     },
     { headers: { "x-superjson": "true" } }

@@ -17,6 +17,7 @@ declare global {
 
   interface Window {
     ENV: {
+      NODE_ENV: string;
       SENTRY_DSN: string;
     };
   }

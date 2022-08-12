@@ -94,6 +94,7 @@ export const action = async ({ request }: ActionArgs) => {
             0.01 * (sleeperTeam.settings.fpts_against_decimal ?? 0),
           rosterId: sleeperTeam.roster_id,
           leagueId,
+          draftPosition: null,
           userId: systemUser.length > 0 ? systemUser[0].id : null,
         };
         // if team exists, add ID and add update to promises array

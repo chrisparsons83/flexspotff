@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 Sentry.init({
   dsn: window.ENV.SENTRY_DSN,
+  environment: window.ENV.NODE_ENV,
   tracesSampleRate: 1,
   integrations: [
     new Sentry.BrowserTracing({

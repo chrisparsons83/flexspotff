@@ -85,6 +85,7 @@ model Team {
   pointsFor Float
   pointsAgainst Float
   rosterId Int
+  draftPosition Int?
 
   league League @relation(fields: [leagueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   leagueId String
