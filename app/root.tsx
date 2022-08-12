@@ -7,8 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { withSentry } from "@sentry/remix";
-import { setUser } from "@sentry/browser";
+import { setUser, withSentry } from "@sentry/remix";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
