@@ -7,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import { withSentry } from "@sentry/remix";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
@@ -27,6 +28,9 @@ export const meta: MetaFunction = () => ({
 type LoaderData = {
   user: User | null;
   userIsEditor: boolean;
+  ENV: {
+    SENTRY_DSN: string;
+  };
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -37,13 +41,16 @@ export const loader = async ({ request }: LoaderArgs) => {
     {
       user,
       userIsEditor,
+      ENV: {
+        SENTRY_DSN: process.env.SENTRY_DSN,
+      },
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
-export default function App() {
-  const { user, userIsEditor } = useSuperLoaderData<typeof loader>();
+function App() {
+  const { user, userIsEditor, ENV } = useSuperLoaderData<typeof loader>();
 
   return (
     <html lang="en" className="dark h-full">
@@ -59,12 +66,19 @@ export default function App() {
           </main>
         </div>
         <ScrollRestoration />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(ENV)}`,
+          }}
+        />
         <Scripts />
         <LiveReload />
       </body>
     </html>
   );
 }
+
+export default withSentry(App);
 
 export function ErrorBoundary({ error }: { error: Error }) {
   return (
