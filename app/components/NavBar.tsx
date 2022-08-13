@@ -7,11 +7,9 @@ import { Form } from "@remix-run/react";
 import type { User } from "~/models/user.server";
 
 const navigation = [
-  { name: "Home", href: "/", current: true },
-  { name: "Standings", href: "/standings", current: false },
-  { name: "Leaderboard", href: "/leaderboard", current: false },
-  { name: "ADP", href: "/adp", current: false },
-  { name: "Records", href: "/records", current: false },
+  { name: "Home", href: "/", current: false },
+  { name: "Leagues", href: "/leagues", current: false },
+  { name: "Games", href: "/games", current: false },
   { name: "Podcast", href: "/podcast", current: false },
 ];
 
