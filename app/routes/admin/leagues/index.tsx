@@ -132,7 +132,9 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  return json<ActionData>({ message: "League has been synced." });
+  return json<ActionData>({
+    message: `${league.year} ${league.name} League has been synced.`,
+  });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
