@@ -33,7 +33,7 @@ export default function FSquaredMyEntry() {
 
   return (
     <div>
-      <h2>My F2 Entry</h2>
+      <h2>My F² Entry</h2>
       <Form method="post">
         <div>
           {actionData?.formError ? (
