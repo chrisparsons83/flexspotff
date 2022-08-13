@@ -1,6 +1,7 @@
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
+import { authenticator } from "~/auth.server";
 import Button from "~/components/Button";
 
 type ActionData = {
@@ -18,6 +19,14 @@ export const action = async ({
   request,
 }: ActionArgs): Promise<Response | ActionData> => {
   return json<ActionData>({ successMessage: "Your entry has been updated." });
+};
+
+export const loader = async ({ request }: LoaderArgs) => {
+  await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
+  return {};
 };
 
 export default function FSquaredMyEntry() {
