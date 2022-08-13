@@ -7,7 +7,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function SentryBackendError() {
   return (
-    <Form>
+    <Form method="post">
       <button type="submit">Send Error</button>
     </Form>
   );

@@ -90,9 +90,22 @@ export function ErrorBoundary({ error }: { error: Error }) {
   captureException(error);
 
   return (
-    <>
-      <h1>Error</h1>
-      <pre>{error.message}</pre>
-    </>
+    <html>
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body className="h-full bg-slate-700 text-white">
+        <NavBar user={null} userIsEditor={false} />
+        <div className="container relative mx-auto min-h-screen p-4 text-white">
+          <main className="prose max-w-none dark:prose-invert lg:prose-xl">
+            <h1>Error</h1>
+            <pre>{error.message}</pre>
+          </main>
+        </div>
+        <Scripts />
+      </body>
+    </html>
   );
 }
