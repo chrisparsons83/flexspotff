@@ -7,7 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { setUser, withSentry, captureException } from "@sentry/remix";
+import { setUser, withSentry } from "@sentry/remix";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import NavBar from "./components/NavBar";
@@ -87,8 +87,6 @@ function App() {
 export default withSentry(App);
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  captureException(error);
-
   return (
     <html>
       <head>
