@@ -40,6 +40,12 @@ const sleeperTeamJson = z.array(
   })
 );
 type SleeperTeamJson = z.infer<typeof sleeperTeamJson>;
+const sleeperDraftJson = z.object({
+  status: z.string(),
+  season: z.string(),
+  draft_order: z.record(z.number()).nullable(),
+});
+type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
 
 type LoaderData = {
   leagues: League[];
@@ -62,11 +68,18 @@ export const action = async ({ request }: ActionArgs) => {
 
   switch (action) {
     case "sync": {
-      const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
-      const sleeperTeamsRes = await fetch(url);
+      const teamsUrl = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
+      const draftsUrl = `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}`;
+      const [sleeperTeamsRes, sleeperDraftRes] = await Promise.all([
+        fetch(teamsUrl),
+        fetch(draftsUrl),
+      ]);
       const sleeperTeams: SleeperTeamJson = sleeperTeamJson
         .parse(await sleeperTeamsRes.json())
         .filter((team) => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
+      const sleeperDraft: SleeperDraftJson = sleeperDraftJson.parse(
+        await sleeperDraftRes.json()
+      );
 
       const existingTeamsSleeperOwners = (await getTeams(leagueId)).map(
         (team) => [team.sleeperOwnerId, team.id]
@@ -77,6 +90,7 @@ export const action = async ({ request }: ActionArgs) => {
 
       const promises: any = [];
       for (const sleeperTeam of sleeperTeams) {
+        if (!sleeperTeam.owner_id) continue;
         // build team object
         const systemUser = existingUsersSleeperIds.filter(
           (team) => team.sleeperOwnerID === sleeperTeam.owner_id
@@ -94,7 +108,9 @@ export const action = async ({ request }: ActionArgs) => {
             0.01 * (sleeperTeam.settings.fpts_against_decimal ?? 0),
           rosterId: sleeperTeam.roster_id,
           leagueId,
-          draftPosition: null,
+          draftPosition: sleeperDraft.draft_order
+            ? sleeperDraft.draft_order[sleeperTeam.owner_id]
+            : null,
           userId: systemUser.length > 0 ? systemUser[0].id : null,
         };
         // if team exists, add ID and add update to promises array
