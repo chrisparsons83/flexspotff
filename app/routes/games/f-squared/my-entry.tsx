@@ -114,7 +114,8 @@ export default function FSquaredMyEntry() {
         points they earn during the season. Most combined points wins.
       </p>
       <p>
-        <i>Teams are listed by their draft order.</i>
+        You are able to change your picks for a league until that league's draft
+        starts. Teams are listed by their draft order.
       </p>
       <Form method="post">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

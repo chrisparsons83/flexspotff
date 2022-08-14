@@ -8,7 +8,7 @@ export default function FSquaredIndex() {
         <h3>My entry</h3>
         <p>Status: Not Entered</p>
         <p>
-          <Link to="my-entry">Edit My Entry</Link>
+          <Link to="my-entry">View/Edit My Entry</Link>
         </p>
       </div>
       <section>

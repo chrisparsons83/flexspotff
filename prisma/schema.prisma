@@ -11,6 +11,7 @@ model Episode {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   authorId String
 
@@ -28,7 +29,6 @@ model Episode {
 
 model User {
   id    String @id @default(cuid())
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -42,29 +42,29 @@ model User {
   registrations Registration[]
   episodes Episode[]
   teams Team[]
+  fSquaredEntries FSquaredEntry[]
 }
 
 model Registration {
   id String @id @default(cuid())
-  year Int
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  year Int
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
 }
 
 model League {
   id String @id @default(cuid())
-  year Int
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  year Int
   name String
   sleeperLeagueId String @unique
   sleeperDraftId String @unique
+  draftDateTime DateTime?
   tier Int
 
   isActive Boolean
@@ -74,7 +74,6 @@ model League {
 
 model Team {
   id String @id @default(cuid())
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -92,4 +91,21 @@ model Team {
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String?
+
+  FSquaredSelections FSquaredEntry[]
+}
+
+model FSquaredEntry {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  teams Team[]
+
+  @@unique([year, userId], name: "entryByUserAndYear")
 }

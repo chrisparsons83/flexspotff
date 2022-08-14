@@ -52,3 +52,12 @@ export async function getLeaguesByYear(year: League["year"]) {
     ],
   });
 }
+
+export async function updateLeague(league: Partial<League>) {
+  return prisma.league.update({
+    where: {
+      id: league.id,
+    },
+    data: league,
+  });
+}

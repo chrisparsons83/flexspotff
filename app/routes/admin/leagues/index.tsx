@@ -4,13 +4,16 @@ import { Form, useActionData } from "@remix-run/react";
 import { authenticator, requireAdmin } from "~/auth.server";
 import Button from "~/components/ui/Button";
 import type { League } from "~/models/league.server";
+import { updateLeague } from "~/models/league.server";
 import { getLeague } from "~/models/league.server";
 import { getLeagues } from "~/models/league.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 import z from "zod";
+import type { Team } from "~/models/team.server";
 import { createTeam, getTeams, updateTeam } from "~/models/team.server";
 import { SLEEPER_ADMIN_ID } from "~/utils/constants";
 import { getUsers } from "~/models/user.server";
+import { DateTime } from "luxon";
 
 type ActionData = {
   message?: string;
@@ -43,6 +46,7 @@ type SleeperTeamJson = z.infer<typeof sleeperTeamJson>;
 const sleeperDraftJson = z.object({
   status: z.string(),
   season: z.string(),
+  start_time: z.number().nullable(),
   draft_order: z.record(z.number()).nullable(),
 });
 type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
@@ -88,7 +92,16 @@ export const action = async ({ request }: ActionArgs) => {
         ({ id, sleeperOwnerID }) => ({ id, sleeperOwnerID })
       );
 
-      const promises: any = [];
+      if (sleeperDraft.start_time) {
+        console.log(sleeperDraft.start_time);
+        league.draftDateTime = DateTime.fromSeconds(
+          sleeperDraft.start_time / 1000
+        ).toJSDate();
+        console.log(league.draftDateTime);
+        await updateLeague(league);
+      }
+
+      const promises: Promise<Team>[] = [];
       for (const sleeperTeam of sleeperTeams) {
         if (!sleeperTeam.owner_id) continue;
         // build team object
@@ -196,6 +209,8 @@ export default function LeaguesList() {
                 >
                   Draft
                 </a>
+                <br />
+                {league.draftDateTime?.toLocaleString() || ""}
               </td>
               <td className="not-prose">
                 <Form method="post">
