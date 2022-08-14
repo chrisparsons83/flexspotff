@@ -11,6 +11,7 @@ import { getTeamsInSeason } from "~/models/team.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 import z from "zod";
+import Alert from "~/components/ui/Alert";
 
 type ActionData = {
   formError?: string;
@@ -20,7 +21,7 @@ type ActionData = {
   fields?: {
     userId: string;
   };
-  successMessage?: string;
+  message?: string;
 };
 
 type LoaderData = {
@@ -44,7 +45,7 @@ export const action = async ({
 
   console.log(fSquaredForm);
 
-  return json<ActionData>({ successMessage: "Your entry has been updated." });
+  return json<ActionData>({ message: "Your entry has been updated." });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -106,6 +107,7 @@ export default function FSquaredMyEntry() {
       ? "Submitted!"
       : "Submit";
 
+  // TODO: add reloadDocument to Form element
   return (
     <div>
       <h2>My F² Entry</h2>
@@ -117,6 +119,7 @@ export default function FSquaredMyEntry() {
         You are able to change your picks for a league until that league's draft
         starts. Teams are listed by their draft order.
       </p>
+      {actionData?.message && <Alert message={actionData.message} />}
       <Form method="post">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Object.entries(leagues).map(([leagueName, teams]) => (

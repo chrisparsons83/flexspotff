@@ -14,6 +14,7 @@ import { createTeam, getTeams, updateTeam } from "~/models/team.server";
 import { SLEEPER_ADMIN_ID } from "~/utils/constants";
 import { getUsers } from "~/models/user.server";
 import { DateTime } from "luxon";
+import Alert from "~/components/ui/Alert";
 
 type ActionData = {
   message?: string;
@@ -171,14 +172,7 @@ export default function LeaguesList() {
   return (
     <>
       <h2>League List</h2>
-      {actionData?.message && (
-        <div
-          className="border-l-4 border-green-500 bg-green-100 p-4 text-green-700"
-          role="dialog"
-        >
-          {actionData?.message}
-        </div>
-      )}
+      {actionData?.message && <Alert message={actionData.message} />}
       <table className="w-full">
         <thead>
           <tr>
