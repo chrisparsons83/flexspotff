@@ -10,7 +10,7 @@ import {
 import { setUser, withSentry } from "@sentry/remix";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
-import NavBar from "./components/NavBar";
+import NavBar from "./components/layout/NavBar";
 import { authenticator, isEditor } from "./auth.server";
 import type { User } from "./models/user.server";
 import { superjson, useSuperLoaderData } from "./utils/data";

@@ -2,7 +2,7 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { authenticator, requireAdmin } from "~/auth.server";
-import Button from "~/components/Button";
+import Button from "~/components/ui/Button";
 import type { League } from "~/models/league.server";
 import { getLeague } from "~/models/league.server";
 import { getLeagues } from "~/models/league.server";

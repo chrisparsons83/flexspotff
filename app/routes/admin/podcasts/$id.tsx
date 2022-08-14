@@ -4,7 +4,7 @@ import {
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
-import Button from "~/components/Button";
+import Button from "~/components/ui/Button";
 import { redirect, superjson, useSuperLoaderData } from "~/utils/data";
 import { podcastJsonSchema, s3UploadHandler } from "~/services/s3client.server";
 import type { Episode } from "~/models/episode.server";

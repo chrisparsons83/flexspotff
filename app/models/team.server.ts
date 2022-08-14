@@ -31,6 +31,44 @@ export async function getTeams(leagueId: League["id"]) {
   });
 }
 
+export async function getTeamsInSeason(year: League["year"]) {
+  return prisma.team.findMany({
+    where: {
+      league: {
+        year,
+      },
+    },
+    include: {
+      league: {
+        select: {
+          name: true,
+          tier: true,
+        },
+      },
+      user: {
+        select: {
+          discordName: true,
+        },
+      },
+    },
+    orderBy: [
+      {
+        league: {
+          tier: "asc",
+        },
+      },
+      {
+        league: {
+          name: "asc",
+        },
+      },
+      {
+        draftPosition: "asc",
+      },
+    ],
+  });
+}
+
 export async function updateTeam(team: TeamUpdateInput) {
   return prisma.team.update({
     where: {

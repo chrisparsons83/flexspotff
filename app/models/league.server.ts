@@ -33,3 +33,22 @@ export async function getLeagues() {
     ],
   });
 }
+
+export async function getLeaguesByYear(year: League["year"]) {
+  return prisma.league.findMany({
+    where: {
+      year,
+    },
+    orderBy: [
+      {
+        year: "desc",
+      },
+      {
+        tier: "asc",
+      },
+      {
+        name: "asc",
+      },
+    ],
+  });
+}
