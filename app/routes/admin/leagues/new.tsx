@@ -52,6 +52,7 @@ export const action = async ({ request }: ActionArgs) => {
     name: sleeperLeague.name.replace(/ League/i, ""),
     sleeperLeagueId,
     sleeperDraftId: sleeperLeague.draft_id,
+    draftDateTime: null,
     tier: sleeperLeague.name.match(/champion/i) ? 1 : 2,
     year,
   };
