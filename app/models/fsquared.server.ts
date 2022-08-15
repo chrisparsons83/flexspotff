@@ -40,6 +40,22 @@ export async function getEntryByUserAndYear(
   });
 }
 
+export async function getResultsForYear(year: FSquaredEntry["year"]) {
+  return prisma.fSquaredEntry.findMany({
+    where: {
+      year,
+    },
+    include: {
+      teams: {
+        select: {
+          pointsFor: true,
+        },
+      },
+      user: true,
+    },
+  });
+}
+
 export async function updateEntry(
   id: FSquaredEntry["id"],
   newEntries: Team["id"][],

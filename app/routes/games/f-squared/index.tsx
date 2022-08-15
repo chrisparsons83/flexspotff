@@ -1,11 +1,24 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { authenticator } from "~/auth.server";
-import { getEntryByUserAndYear } from "~/models/fsquared.server";
+import {
+  getEntryByUserAndYear,
+  getResultsForYear,
+} from "~/models/fsquared.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
+// Doing this because Prisma hates me actually aggregating a sum based on connected fields.
+type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
+  ? ElementType
+  : never;
+type currentResultsBase =
+  | ArrElement<Awaited<ReturnType<typeof getResultsForYear>>> & {
+      totalPoints: number;
+    };
+
 type LoaderData = {
+  currentResults: currentResultsBase[];
   existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null;
 };
 
@@ -16,14 +29,30 @@ export const loader = async ({ request }: LoaderArgs) => {
     ? await getEntryByUserAndYear(user.id, CURRENT_YEAR)
     : null;
 
+  const currentResults = (await getResultsForYear(CURRENT_YEAR))
+    .map((entry) => {
+      const totalPoints = entry.teams.reduce(
+        (prev, curr) => prev + curr.pointsFor,
+        0
+      );
+      return { ...entry, totalPoints };
+    })
+    .sort((a, b) => {
+      const pointsDiff = b.totalPoints - a.totalPoints;
+      if (pointsDiff !== 0) return pointsDiff;
+
+      return a.user.discordName.localeCompare(b.user.discordName);
+    });
+
   return superjson<LoaderData>(
-    { existingEntry },
+    { currentResults, existingEntry },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function FSquaredIndex() {
-  const { existingEntry } = useSuperLoaderData<typeof loader>();
+  const { currentResults, existingEntry } = useSuperLoaderData<typeof loader>();
+  console.log(currentResults);
 
   return (
     <>
@@ -46,6 +75,24 @@ export default function FSquaredIndex() {
       </div>
       <section>
         <h3>Standings</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentResults.map((result, index) => (
+              <tr key={result.id}>
+                <td>{index + 1}</td>
+                <td>{result.user.discordName}</td>
+                <td>{result.totalPoints}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </>
   );
