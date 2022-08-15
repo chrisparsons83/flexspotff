@@ -12,6 +12,11 @@ import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 import z from "zod";
 import Alert from "~/components/ui/Alert";
+import {
+  createEntry,
+  getEntryByUserAndYear,
+  updateEntry,
+} from "~/models/fsquared.server";
 
 type ActionData = {
   formError?: string;
@@ -34,18 +39,63 @@ type FormEntry = z.infer<typeof formEntry>;
 export const action = async ({
   request,
 }: ActionArgs): Promise<Response | ActionData> => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
   const leagues = await getLeaguesByYear(CURRENT_YEAR);
   const formData = await request.formData();
 
   const fSquaredForm: Record<string, FormEntry> = {};
-  leagues.forEach((league) => {
-    const entry = formEntry.parse(formData.getAll(league.name));
-    fSquaredForm[league.name] = entry;
+  leagues
+    .filter(
+      (league) => !league.draftDateTime || league.draftDateTime >= new Date()
+    )
+    .forEach((league) => {
+      const entry = formEntry.parse(formData.getAll(league.name));
+      fSquaredForm[league.name] = entry;
+    });
+
+  let existingEntry = await getEntryByUserAndYear(user.id, CURRENT_YEAR);
+  const newEntries: string[] = [];
+  for (const league of leagues) {
+    if (league.draftDateTime && league.draftDateTime < new Date()) {
+      // League has drafted, make sure to use existing entry.
+      if (!existingEntry) {
+        throw new Error(
+          `You don't have an existing entry and a league has drafted already.`
+        );
+      }
+      const entryTeamsFromLeague = existingEntry.teams
+        .filter((team) => team.league.name === league.name)
+        .map((team) => team.id);
+      newEntries.push(...entryTeamsFromLeague);
+    } else {
+      newEntries.push(...fSquaredForm[league.name]);
+    }
+  }
+
+  if (!existingEntry) {
+    const newEntry = await createEntry({
+      userId: user.id,
+      year: CURRENT_YEAR,
+    });
+    await updateEntry(newEntry.id, newEntries, []);
+  } else {
+    const originalEntries = existingEntry.teams.map((team) => team.id);
+    const addingEntries = newEntries.filter(
+      (team) => !originalEntries.includes(team)
+    );
+    const removingEntries = originalEntries.filter(
+      (team) => !newEntries.includes(team)
+    );
+    console.log({ addingEntries, removingEntries });
+    await updateEntry(existingEntry.id, addingEntries, removingEntries);
+  }
+
+  return json<ActionData>({
+    message: `Your entry has been ${existingEntry ? "updated" : "created"}.`,
   });
-
-  console.log(fSquaredForm);
-
-  return json<ActionData>({ message: "Your entry has been updated." });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -111,14 +161,6 @@ export default function FSquaredMyEntry() {
   return (
     <div>
       <h2>My F² Entry</h2>
-      <p>
-        Pick two teams from each league. Get points based on how many fantasy
-        points they earn during the season. Most combined points wins.
-      </p>
-      <p>
-        You are able to change your picks for a league until that league's draft
-        starts. Teams are listed by their draft order.
-      </p>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method="post">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

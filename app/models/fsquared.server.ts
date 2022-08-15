@@ -1,4 +1,4 @@
-import type { FSquaredEntry } from "@prisma/client";
+import type { FSquaredEntry, Team } from "@prisma/client";
 import { prisma } from "~/db.server";
 export type { FSquaredEntry } from "@prisma/client";
 
@@ -29,6 +29,31 @@ export async function getEntryByUserAndYear(
     where: {
       userId,
       year,
+    },
+    include: {
+      teams: {
+        include: {
+          league: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateEntry(
+  id: FSquaredEntry["id"],
+  newEntries: Team["id"][],
+  oldEntries: Team["id"][]
+) {
+  return prisma.fSquaredEntry.update({
+    where: {
+      id,
+    },
+    data: {
+      teams: {
+        disconnect: oldEntries.map((entry) => ({ id: entry })),
+        connect: newEntries.map((entry) => ({ id: entry })),
+      },
     },
   });
 }
