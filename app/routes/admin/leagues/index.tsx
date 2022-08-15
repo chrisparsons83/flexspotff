@@ -94,11 +94,9 @@ export const action = async ({ request }: ActionArgs) => {
       );
 
       if (sleeperDraft.start_time) {
-        console.log(sleeperDraft.start_time);
         league.draftDateTime = DateTime.fromSeconds(
           sleeperDraft.start_time / 1000
         ).toJSDate();
-        console.log(league.draftDateTime);
         await updateLeague(league);
       }
 
