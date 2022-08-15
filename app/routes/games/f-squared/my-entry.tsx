@@ -31,10 +31,25 @@ type ActionData = {
 
 type LoaderData = {
   leagues: Record<string, Awaited<ReturnType<typeof getTeamsInSeason>>>;
+  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null;
 };
 
 const formEntry = z.string().array().length(2);
 type FormEntry = z.infer<typeof formEntry>;
+
+function convertExistingEntryToInitialFormState(
+  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null
+) {
+  if (!existingEntry) return {};
+
+  const result: Record<string, boolean> = {};
+
+  for (const team of existingEntry.teams) {
+    result[team.league.name] = true;
+  }
+
+  return result;
+}
 
 export const action = async ({
   request,
@@ -89,7 +104,6 @@ export const action = async ({
     const removingEntries = originalEntries.filter(
       (team) => !newEntries.includes(team)
     );
-    console.log({ addingEntries, removingEntries });
     await updateEntry(existingEntry.id, addingEntries, removingEntries);
   }
 
@@ -109,6 +123,9 @@ export const loader = async ({ request }: LoaderArgs) => {
   // Get teams
   const teams = await getTeamsInSeason(CURRENT_YEAR);
 
+  // Get existing entry
+  const existingEntry = await getEntryByUserAndYear(user.id, CURRENT_YEAR);
+
   // Make record object for simplicity
   const leagues: LoaderData["leagues"] = {};
   for (const team of teams) {
@@ -120,18 +137,19 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
 
   return superjson<LoaderData>(
-    { leagues },
+    { leagues, existingEntry },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function FSquaredMyEntry() {
   const actionData = useActionData<ActionData>();
-  const { leagues } = useSuperLoaderData<typeof loader>();
+  const { leagues, existingEntry } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
+
   const [validLeagueCheck, setValidLeagueCheck] = useState<
     Record<string, boolean>
-  >({});
+  >(convertExistingEntryToInitialFormState(existingEntry));
 
   const numberOfLeagues = Object.keys(leagues).length;
 
@@ -157,12 +175,11 @@ export default function FSquaredMyEntry() {
       ? "Submitted!"
       : "Submit";
 
-  // TODO: add reloadDocument to Form element
   return (
     <div>
       <h2>My F² Entry</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="post" reloadDocument>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Object.entries(leagues).map(([leagueName, teams]) => (
             <FSquaredEntryFormSection
@@ -170,6 +187,12 @@ export default function FSquaredMyEntry() {
               leagueName={leagueName}
               teams={teams}
               isLeagueValid={handleValidFormChange}
+              existingPicks={
+                existingEntry &&
+                existingEntry.teams
+                  .filter((team) => team.league.name === leagueName)
+                  .map((team) => team.id)
+              }
             />
           ))}
         </div>

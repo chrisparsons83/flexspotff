@@ -43,6 +43,7 @@ export async function getTeamsInSeason(year: League["year"]) {
         select: {
           name: true,
           tier: true,
+          draftDateTime: true,
         },
       },
       user: {
