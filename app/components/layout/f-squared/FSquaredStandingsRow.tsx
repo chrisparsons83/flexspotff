@@ -58,7 +58,7 @@ export default function FSquaredStandingsRow({ rank, result }: Props) {
         <tr className="border-b-1 bg-gray-800">
           <td></td>
           <td>
-            <div className="grid grid-cols-2">
+            <div className="grid lg:grid-cols-2">
               {result.teams.map((team) => (
                 <div
                   key={team.id}
@@ -69,9 +69,16 @@ export default function FSquaredStandingsRow({ rank, result }: Props) {
                     "mb-1 border-l-8 pl-4"
                   )}
                 >
-                  {isPending(team.league.draftDateTime)
-                    ? `Pending`
-                    : team.user?.discordName}
+                  {isPending(team.league.draftDateTime) ? (
+                    `Pending`
+                  ) : (
+                    <div className="flex items-baseline gap-2">
+                      <div>{team.user?.discordName}</div>
+                      <div className="text-sm italic text-gray-400">
+                        {team.pointsFor} pts
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
