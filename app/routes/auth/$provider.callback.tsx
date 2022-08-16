@@ -1,10 +1,10 @@
 import type { LoaderArgs } from "@remix-run/node";
-import invariant from "tiny-invariant";
 import { authenticator } from "~/auth.server";
+import z from "zod";
 
 export let loader = ({ request, params }: LoaderArgs) => {
-  invariant(params.provider, "This is not a valid provider");
-  return authenticator.authenticate(params.provider, request, {
+  const provider = z.string().parse(params.provider);
+  return authenticator.authenticate(provider, request, {
     successRedirect: "/dashboard",
     failureRedirect: "/login",
   });

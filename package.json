@@ -56,7 +56,6 @@
     "remix-auth": "^3.2.2",
     "remix-auth-socials": "^1.0.2",
     "superjson": "^1.9.1",
-    "tiny-invariant": "^1.2.0",
     "zod": "^3.17.10"
   },
   "devDependencies": {
