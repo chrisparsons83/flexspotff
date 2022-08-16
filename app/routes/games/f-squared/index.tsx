@@ -52,7 +52,6 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 export default function FSquaredIndex() {
   const { currentResults, existingEntry } = useSuperLoaderData<typeof loader>();
-  console.log(currentResults);
 
   return (
     <>
@@ -61,10 +60,6 @@ export default function FSquaredIndex() {
         Pick two teams from each league before they draft. Get points based on
         how many fantasy points they earn during the season. Most combined
         points wins.
-      </p>
-      <p>
-        You are able to change your picks for a league until that league's draft
-        starts. Teams are listed by their draft order.
       </p>
       <div>
         <h3>My entry</h3>

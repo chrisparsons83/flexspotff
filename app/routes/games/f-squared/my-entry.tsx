@@ -178,6 +178,10 @@ export default function FSquaredMyEntry() {
   return (
     <div>
       <h2>My F² Entry</h2>
+      <p>
+        You are able to change your picks for a league until that league's draft
+        starts. Teams are listed by their draft order.
+      </p>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method="post" reloadDocument>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
