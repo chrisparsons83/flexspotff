@@ -7,6 +7,15 @@ type FSquaredEntryCreateInput = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
+// Doing this because Prisma hates me actually aggregating a sum based on connected fields.
+type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
+  ? ElementType
+  : never;
+export type currentResultsBase =
+  | ArrElement<Awaited<ReturnType<typeof getResultsForYear>>> & {
+      totalPoints: number;
+    };
+
 export async function createEntry(entry: FSquaredEntryCreateInput) {
   return prisma.fSquaredEntry.create({
     data: entry,
@@ -45,10 +54,24 @@ export async function getResultsForYear(year: FSquaredEntry["year"]) {
     where: {
       year,
     },
-    include: {
+    select: {
+      id: true,
       teams: {
         select: {
+          id: true,
+          league: {
+            select: {
+              name: true,
+              tier: true,
+              draftDateTime: true,
+            },
+          },
           pointsFor: true,
+          user: {
+            select: {
+              discordName: true,
+            },
+          },
         },
       },
       user: true,

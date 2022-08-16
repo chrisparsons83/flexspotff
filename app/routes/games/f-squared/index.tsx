@@ -1,21 +1,15 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import React from "react";
 import { authenticator } from "~/auth.server";
+import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
+import type { currentResultsBase } from "~/models/fsquared.server";
 import {
   getEntryByUserAndYear,
   getResultsForYear,
 } from "~/models/fsquared.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-
-// Doing this because Prisma hates me actually aggregating a sum based on connected fields.
-type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
-  ? ElementType
-  : never;
-type currentResultsBase =
-  | ArrElement<Awaited<ReturnType<typeof getResultsForYear>>> & {
-      totalPoints: number;
-    };
 
 type LoaderData = {
   currentResults: currentResultsBase[];
@@ -43,6 +37,17 @@ export const loader = async ({ request }: LoaderArgs) => {
 
       return a.user.discordName.localeCompare(b.user.discordName);
     });
+
+  // Sort the teams in each entry by league and name
+  for (const entry of currentResults) {
+    entry.teams.sort((a, b) => {
+      if (a.league.tier !== b.league.tier) {
+        return a.league.tier - b.league.tier;
+      }
+
+      return a.league.name.localeCompare(b.league.name);
+    });
+  }
 
   return superjson<LoaderData>(
     { currentResults, existingEntry },
@@ -80,11 +85,11 @@ export default function FSquaredIndex() {
           </thead>
           <tbody>
             {currentResults.map((result, index) => (
-              <tr key={result.id}>
-                <td>{index + 1}</td>
-                <td>{result.user.discordName}</td>
-                <td>{result.totalPoints}</td>
-              </tr>
+              <FSquaredStandingsRow
+                rank={index + 1}
+                result={result}
+                key={result.id}
+              />
             ))}
           </tbody>
         </table>

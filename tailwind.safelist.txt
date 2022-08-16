@@ -1,0 +1,5 @@
+border-admiral
+border-champions
+border-dragon
+border-galaxy
+border-monarch
