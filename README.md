@@ -1,5 +1,7 @@
 # Flex Spot FF Website Code
 
+This stack is built upon [Remix](https://remix.run/), so if you have questions, the [Remix documentation](https://remix.run/docs/en/v1) is your best bet.
+
 ## What's in the stack
 
 - [Multi-region Fly app deployment](https://fly.io/docs/reference/scaling/) with [Docker](https://www.docker.com/)
@@ -15,8 +17,6 @@
 - Code formatting with [Prettier](https://prettier.io)
 - Linting with [ESLint](https://eslint.org)
 - Static Types with [TypeScript](https://typescriptlang.org)
-
-Not a fan of bits of the stack? Fork it, change it, and use `npx create-remix --template your/repo`! Make it your own.
 
 ## Development
 
