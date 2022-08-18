@@ -109,3 +109,15 @@ model FSquaredEntry {
 
   @@unique([year, userId], name: "entryByUserAndYear")
 }
+
+model Player {
+  id String @id @default(cuid())
+
+  sleeperId String @unique
+
+  position String?
+  firstName String
+  lastName String
+  fullName String
+  nflTeam String?
+}
