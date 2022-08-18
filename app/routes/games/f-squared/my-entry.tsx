@@ -119,9 +119,6 @@ export const loader = async ({ request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  // TODO: REMOVE THIS WHEN GOING LIVE
-  requireAdmin(user);
-
   // Get teams
   const teams = await getTeamsInSeason(CURRENT_YEAR);
 
