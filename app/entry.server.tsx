@@ -1,10 +1,9 @@
 import type { EntryContext } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
+import * as Sentry from "@sentry/remix";
 import { renderToString } from "react-dom/server";
 
 import { prisma } from "~/db.server";
-
-import * as Sentry from "@sentry/remix";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,

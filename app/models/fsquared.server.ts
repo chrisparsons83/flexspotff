@@ -1,5 +1,7 @@
 import type { FSquaredEntry, Team } from "@prisma/client";
+
 import { prisma } from "~/db.server";
+
 export type { FSquaredEntry } from "@prisma/client";
 
 type FSquaredEntryCreateInput = Omit<

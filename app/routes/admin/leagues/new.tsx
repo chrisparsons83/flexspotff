@@ -1,10 +1,12 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { fetch } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
-import { authenticator, requireAdmin } from "~/auth.server";
-import Button from "~/components/ui/Button";
 import z from "zod";
+
 import { createLeague } from "~/models/league.server";
+
+import Button from "~/components/ui/Button";
+import { authenticator, requireAdmin } from "~/services/auth.server";
 import { redirect } from "~/utils/data";
 
 type ActionData = {

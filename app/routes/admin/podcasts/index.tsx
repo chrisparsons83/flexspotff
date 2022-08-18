@@ -1,8 +1,10 @@
-import { getEpisodes } from "~/models/episode.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
 import type { LoaderArgs } from "@remix-run/node";
-import type { Episode } from "~/models/episode.server";
 import { Link } from "@remix-run/react";
+
+import { getEpisodes } from "~/models/episode.server";
+import type { Episode } from "~/models/episode.server";
+
+import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
   episodes: Episode[];

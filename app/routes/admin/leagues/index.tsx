@@ -1,20 +1,22 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
-import { authenticator, requireAdmin } from "~/auth.server";
-import Button from "~/components/ui/Button";
+import { DateTime } from "luxon";
+import z from "zod";
+
 import type { League } from "~/models/league.server";
 import { updateLeague } from "~/models/league.server";
 import { getLeague } from "~/models/league.server";
 import { getLeagues } from "~/models/league.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
-import z from "zod";
 import type { Team } from "~/models/team.server";
 import { createTeam, getTeams, updateTeam } from "~/models/team.server";
-import { SLEEPER_ADMIN_ID } from "~/utils/constants";
 import { getUsers } from "~/models/user.server";
-import { DateTime } from "luxon";
+
 import Alert from "~/components/ui/Alert";
+import Button from "~/components/ui/Button";
+import { authenticator, requireAdmin } from "~/services/auth.server";
+import { SLEEPER_ADMIN_ID } from "~/utils/constants";
+import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type ActionData = {
   message?: string;

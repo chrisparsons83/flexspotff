@@ -1,6 +1,7 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
-import { authenticator, requireAdmin } from "~/auth.server";
+
+import { authenticator, requireAdmin } from "~/services/auth.server";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {

@@ -1,8 +1,9 @@
-import type { getTeamsInSeason, Team } from "~/models/team.server";
+import { LockClosedIcon } from "@heroicons/react/outline";
 import clsx from "clsx";
 import { useState } from "react";
+
 import type { League } from "~/models/league.server";
-import { LockClosedIcon } from "@heroicons/react/outline";
+import type { Team, getTeamsInSeason } from "~/models/team.server";
 
 type Props = {
   leagueName: string;

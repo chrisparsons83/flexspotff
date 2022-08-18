@@ -2,21 +2,23 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import { useState } from "react";
-import { authenticator, requireAdmin } from "~/auth.server";
-import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntryFormSection";
-import Button from "~/components/ui/Button";
-import type { League } from "~/models/league.server";
-import { getLeaguesByYear } from "~/models/league.server";
-import { getTeamsInSeason } from "~/models/team.server";
-import { CURRENT_YEAR } from "~/utils/constants";
-import { superjson, useSuperLoaderData } from "~/utils/data";
 import z from "zod";
-import Alert from "~/components/ui/Alert";
+
 import {
   createEntry,
   getEntryByUserAndYear,
   updateEntry,
 } from "~/models/fsquared.server";
+import type { League } from "~/models/league.server";
+import { getLeaguesByYear } from "~/models/league.server";
+import { getTeamsInSeason } from "~/models/team.server";
+
+import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntryFormSection";
+import Alert from "~/components/ui/Alert";
+import Button from "~/components/ui/Button";
+import { authenticator, requireAdmin } from "~/services/auth.server";
+import { CURRENT_YEAR } from "~/utils/constants";
+import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type ActionData = {
   formError?: string;

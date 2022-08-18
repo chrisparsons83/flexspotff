@@ -1,14 +1,16 @@
 import { Authenticator } from "remix-auth";
-import { SocialsProvider, DiscordStrategy } from "remix-auth-socials";
+import { DiscordStrategy, SocialsProvider } from "remix-auth-socials";
+
+import type { User } from "~/models/user.server";
+import { updateUser } from "~/models/user.server";
+import { createUser, getUserByDiscordId } from "~/models/user.server";
+
 import { sessionStorage } from "~/services/session.server";
-import type { User } from "./models/user.server";
-import { updateUser } from "./models/user.server";
-import { createUser, getUserByDiscordId } from "./models/user.server";
 import {
   SERVER_DISCORD_ADMIN_ROLE_ID,
   SERVER_DISCORD_ID,
   SERVER_DISCORD_PODCAST_ADMIN_ROLE_ID,
-} from "./utils/constants";
+} from "~/utils/constants";
 
 // Create an instance of the authenticator
 export let authenticator = new Authenticator<User>(sessionStorage, {

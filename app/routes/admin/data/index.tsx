@@ -1,13 +1,14 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
-import { authenticator, requireAdmin } from "~/auth.server";
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
 import z from "zod";
 
 import type { PlayerCreate } from "~/models/players.server";
 import { upsertPlayer } from "~/models/players.server";
+
+import Alert from "~/components/ui/Alert";
+import Button from "~/components/ui/Button";
+import { authenticator, requireAdmin } from "~/services/auth.server";
 
 type ActionData = {
   formError?: string;

@@ -9,11 +9,12 @@ import {
 } from "@remix-run/react";
 import { setUser, withSentry } from "@sentry/remix";
 
-import tailwindStylesheetUrl from "./styles/tailwind.css";
-import NavBar from "./components/layout/NavBar";
-import { authenticator, isEditor } from "./auth.server";
-import type { User } from "./models/user.server";
-import { superjson, useSuperLoaderData } from "./utils/data";
+import type { User } from "~/models/user.server";
+
+import NavBar from "~/components/layout/NavBar";
+import { authenticator, isEditor } from "~/services/auth.server";
+import tailwindStylesheetUrl from "~/styles/tailwind.css";
+import { superjson, useSuperLoaderData } from "~/utils/data";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];

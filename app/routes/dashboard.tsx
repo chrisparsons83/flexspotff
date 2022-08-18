@@ -1,11 +1,13 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { Form } from "@remix-run/react";
-import { authenticator } from "~/auth.server";
-import Button from "~/components/ui/Button";
+
 import type { Registration } from "~/models/registration.server";
 import { getRegistrationByUserAndYear } from "~/models/registration.server";
 import { createRegistration } from "~/models/registration.server";
 import type { User } from "~/models/user.server";
+
+import Button from "~/components/ui/Button";
+import { authenticator } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 

@@ -1,6 +1,8 @@
 import type { LoaderArgs } from "@remix-run/node";
-import { authenticator, requireAdmin } from "~/auth.server";
+
 import { getRegistrationsByYear } from "~/models/registration.server";
+
+import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {

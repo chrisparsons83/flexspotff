@@ -1,9 +1,10 @@
 /* This example requires Tailwind CSS v2.0+ */
-import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { MenuIcon, UserIcon, XIcon } from "@heroicons/react/outline";
-import clsx from "clsx";
 import { Form } from "@remix-run/react";
+import clsx from "clsx";
+import { Fragment } from "react";
+
 import type { User } from "~/models/user.server";
 
 const navigation = [

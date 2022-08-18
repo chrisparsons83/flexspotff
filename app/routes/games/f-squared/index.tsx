@@ -1,13 +1,15 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import React from "react";
-import { authenticator } from "~/auth.server";
-import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
+
 import type { currentResultsBase } from "~/models/fsquared.server";
 import {
   getEntryByUserAndYear,
   getResultsForYear,
 } from "~/models/fsquared.server";
+
+import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
+import { authenticator } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 

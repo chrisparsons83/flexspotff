@@ -1,5 +1,7 @@
 import type { Player } from "@prisma/client";
+
 import { prisma } from "~/db.server";
+
 export type { Player } from "@prisma/client";
 
 export type PlayerCreate = Omit<Player, "id">;
