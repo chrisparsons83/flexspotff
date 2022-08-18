@@ -7,6 +7,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model DraftPick {
+  id String @id @default(cuid())
+
+  pickNumber Int
+
+  Player Player @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  playerId String
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamId String
+}
+
 model Episode {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
@@ -27,32 +39,19 @@ model Episode {
   title String
 }
 
-model User {
-  id    String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  discordId String @unique
-  discordName String
-  discordAvatar String
-  discordRoles String[]
-
-  sleeperOwnerID String @default("")
-
-  registrations Registration[]
-  episodes Episode[]
-  teams Team[]
-  fSquaredEntries FSquaredEntry[]
-}
-
-model Registration {
+model FSquaredEntry {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   year Int
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
+
+  teams Team[]
+
+  @@unique([year, userId], name: "entryByUserAndYear")
 }
 
 model League {
@@ -70,6 +69,30 @@ model League {
   isActive Boolean
 
   teams Team[]
+}
+
+model Player {
+  id String @id @default(cuid())
+
+  sleeperId String @unique
+
+  position String?
+  firstName String
+  lastName String
+  fullName String
+  nflTeam String?
+
+  DraftPicks DraftPick[]
+}
+
+model Registration {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
 }
 
 model Team {
@@ -93,31 +116,23 @@ model Team {
   userId String?
 
   FSquaredSelections FSquaredEntry[]
+  DraftPicks DraftPick[]
 }
 
-model FSquaredEntry {
-  id String @id @default(cuid())
+model User {
+  id    String @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  year Int
+  discordId String @unique
+  discordName String
+  discordAvatar String
+  discordRoles String[]
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
+  sleeperOwnerID String @default("")
 
+  registrations Registration[]
+  episodes Episode[]
   teams Team[]
-
-  @@unique([year, userId], name: "entryByUserAndYear")
-}
-
-model Player {
-  id String @id @default(cuid())
-
-  sleeperId String @unique
-
-  position String?
-  firstName String
-  lastName String
-  fullName String
-  nflTeam String?
+  fSquaredEntries FSquaredEntry[]
 }
