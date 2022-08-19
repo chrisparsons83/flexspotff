@@ -54,10 +54,6 @@ If you'd prefer not to use Docker, you can also use Fly's Wireguard VPN to conne
 
 ## Deployment
 
-This Remix Stack comes with two GitHub Actions that handle automatically deploying your app to production and staging environments.
-
-## GitHub Actions
-
 We use GitHub Actions for continuous integration and deployment. Anything that gets into the `main` branch will be deployed to production after running tests/build/etc. Anything in the `dev` branch will be deployed to staging.
 
 ## Testing
