@@ -335,7 +335,10 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             <label htmlFor="showNotes">
-              Show Notes:
+              Long Description:{" "}
+              <span className="text-sm italic text-gray-400">
+                (can take HTML)
+              </span>
               <textarea
                 name="showNotes"
                 required
