@@ -18,6 +18,8 @@ model DraftPick {
 
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamId String
+
+  @@unique([pickNumber, teamId])
 }
 
 model Episode {

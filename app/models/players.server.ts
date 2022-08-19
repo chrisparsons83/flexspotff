@@ -6,6 +6,10 @@ export type { Player } from "@prisma/client";
 
 export type PlayerCreate = Omit<Player, "id">;
 
+export async function getPlayers() {
+  return prisma.player.findMany({});
+}
+
 export async function upsertPlayer(player: PlayerCreate) {
   return prisma.player.upsert({
     where: {

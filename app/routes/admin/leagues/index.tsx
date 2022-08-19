@@ -14,6 +14,7 @@ import { getUsers } from "~/models/user.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
+import { syncAdp } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { SLEEPER_ADMIN_ID } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
@@ -145,6 +146,8 @@ export const action = async ({ request }: ActionArgs) => {
       throw new Error(`Action not supported`);
     }
   }
+
+  await syncAdp(league);
 
   return json<ActionData>({
     message: `${league.year} ${league.name} League has been synced.`,
