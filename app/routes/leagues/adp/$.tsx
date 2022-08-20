@@ -94,7 +94,7 @@ export default function ADP() {
                     <div
                       className={clsx(
                         rankColors[playerInfo!.position!.toLowerCase()],
-                        "mx-auto w-8 h-8 flex justify-center items-center font-bold bg-rb text-sm"
+                        "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
                       )}
                     >
                       {index + 1}
