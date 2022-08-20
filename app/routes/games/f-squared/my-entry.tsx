@@ -16,7 +16,7 @@ import { getTeamsInSeason } from "~/models/team.server";
 import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntryFormSection";
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
+import { authenticator } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
