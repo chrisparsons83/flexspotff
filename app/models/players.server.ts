@@ -10,6 +10,16 @@ export async function getPlayers() {
   return prisma.player.findMany({});
 }
 
+export async function getPlayersByIDs(ids: Player["id"][]) {
+  return prisma.player.findMany({
+    where: {
+      id: {
+        in: ids,
+      },
+    },
+  });
+}
+
 export async function upsertPlayer(player: PlayerCreate) {
   return prisma.player.upsert({
     where: {

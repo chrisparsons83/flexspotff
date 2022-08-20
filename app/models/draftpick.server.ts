@@ -36,3 +36,40 @@ export async function getDraftPicks(id: League["id"]) {
     },
   });
 }
+
+export async function getAverageDraftPositionByYear(year: League["year"]) {
+  return prisma.draftPick.groupBy({
+    by: ["playerId"],
+    where: {
+      team: {
+        league: {
+          year,
+        },
+      },
+    },
+    _avg: {
+      pickNumber: true,
+    },
+    _min: {
+      pickNumber: true,
+    },
+    _max: {
+      pickNumber: true,
+    },
+    _count: {
+      pickNumber: true,
+    },
+    orderBy: [
+      {
+        _avg: {
+          pickNumber: "asc",
+        },
+      },
+      {
+        _min: {
+          pickNumber: "asc",
+        },
+      },
+    ],
+  });
+}
