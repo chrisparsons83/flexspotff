@@ -104,7 +104,11 @@ export default function ADP() {
                   <td>{playerInfo?.position}</td>
                   <td>{adpPlayer._avg.pickNumber?.toFixed(1)}</td>
                   <td>{adpPlayer._min.pickNumber}</td>
-                  <td>{adpPlayer._max.pickNumber}</td>
+                  <td>
+                    {adpPlayer._max.pickNumber === 181
+                      ? "UD"
+                      : adpPlayer._max.pickNumber}
+                  </td>
                 </tr>
               );
             })}
