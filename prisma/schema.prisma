@@ -74,6 +74,32 @@ model League {
   teams Team[]
 }
 
+model NFLGame {
+  id String @id @default(cuid())
+
+  status String
+
+  homeTeam NFLTeam @relation(name: "HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  homeTeamId String
+  homeTeamScore Int
+
+  awayTeam NFLTeam @relation(name: "AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  awayTeamId String
+  awayTeamScore Int
+}
+
+model NFLTeam {
+  id String @id @default(cuid())
+
+  name String
+  location String
+  mascot String
+  logo String?
+
+  HomeGames NFLGame[] @relation(name: "HomeTeam")
+  AwayGames NFLGame[] @relation(name: "AwayTeam")
+}
+
 model Player {
   id String @id @default(cuid())
 

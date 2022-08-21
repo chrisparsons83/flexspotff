@@ -4,6 +4,7 @@ const navigationLinks = [
   { name: "F²", href: "/games/f-squared", current: false },
   { name: "Streaming Challenge", href: "/games/streaming", current: false },
   { name: "Survivor", href: "/games/survivor", current: false },
+  { name: "Spread Pool", href: "/games/spread-pool", current: false },
 ];
 
 export default function GamesIndex() {
