@@ -76,8 +76,10 @@ model League {
 
 model NFLGame {
   id String @id @default(cuid())
+  sleeperGameId String @unique
 
   status String
+  gameStartTime DateTime
 
   homeTeam NFLTeam @relation(name: "HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   homeTeamId String
@@ -90,6 +92,7 @@ model NFLGame {
 
 model NFLTeam {
   id String @id @default(cuid())
+  sleeperId String @unique
 
   name String
   location String
