@@ -85,6 +85,27 @@ export default function Admin() {
               </section>
               <section>
                 <p
+                  id="admin-members-games"
+                  className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
+                >
+                  Games
+                </p>
+                <ul
+                  aria-labelledby="admin-members-games"
+                  className="mb-8 space-y-2 p-0"
+                >
+                  <li className="flow-root">
+                    <Link
+                      to="/admin/betting-pool"
+                      className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                    >
+                      Betting Pool
+                    </Link>
+                  </li>
+                </ul>
+              </section>
+              <section>
+                <p
                   id="admin-members-heading"
                   className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
                 >
