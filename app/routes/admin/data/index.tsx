@@ -13,6 +13,7 @@ import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { graphQLClient } from "~/services/sleeperGraphql.server";
+import { CURRENT_YEAR } from "~/utils/constants";
 
 type ActionData = {
   formError?: string;
@@ -105,6 +106,7 @@ export const action = async ({ request }: ActionArgs) => {
 
       const promises: Promise<SleeperGraphqlNflGames>[] = [];
       for (let i = 1; i <= 18; i++) {
+        // TODO: CURRENT_YEAR needs to be used in this query
         const query = `query scores {
           scores(sport: "nfl",season_type: "regular",season: "2022",week: ${i}){
             date
@@ -141,6 +143,7 @@ export const action = async ({ request }: ActionArgs) => {
           awayTeamId,
           awayTeamScore: game.metadata.away_score || 0,
           week: game.week,
+          year: CURRENT_YEAR,
         };
         gameUpdatePromises.push(upsertNflGame(gameUpsert));
       }

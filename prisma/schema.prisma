@@ -80,6 +80,7 @@ model NFLGame {
 
   status String
   gameStartTime DateTime
+  year Int @default(2022)
   week Int @default(0)
 
   homeTeam NFLTeam @relation(name: "HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
