@@ -80,6 +80,7 @@ model NFLGame {
 
   status String
   gameStartTime DateTime
+  week Int @default(0)
 
   homeTeam NFLTeam @relation(name: "HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   homeTeamId String
@@ -88,6 +89,8 @@ model NFLGame {
   awayTeam NFLTeam @relation(name: "AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   awayTeamId String
   awayTeamScore Int
+
+  poolGame PoolGame?
 }
 
 model NFLTeam {
@@ -101,6 +104,50 @@ model NFLTeam {
 
   HomeGames NFLGame[] @relation(name: "HomeTeam")
   AwayGames NFLGame[] @relation(name: "AwayTeam")
+
+  poolBets PoolGamePick[]
+}
+
+model PoolWeek {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year Int
+  weekNumber Int
+  isOpen Boolean @default(false)
+
+  @@unique([year, weekNumber], name: "yearAndWeek")
+}
+
+model PoolGame {
+  id String @id @default(cuid())
+
+  homeSpread Float
+
+  game NFLGame @relation(fields: [gameId], references: [id])
+  gameId String @unique
+
+  poolGamePicks PoolGamePick[]
+}
+
+model PoolGamePick {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  amountBet Int
+
+  teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamBetId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  poolGame PoolGame @relation(fields: [poolGameId], references: [id])
+  poolGameId String
+
+  @@unique([userId, poolGameId], name: "userAndGame")
 }
 
 model Player {
@@ -167,4 +214,5 @@ model User {
   episodes Episode[]
   teams Team[]
   fSquaredEntries FSquaredEntry[]
+  poolGamePicks PoolGamePick[]
 }

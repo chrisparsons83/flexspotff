@@ -140,6 +140,7 @@ export const action = async ({ request }: ActionArgs) => {
           homeTeamScore: game.metadata.home_score || 0,
           awayTeamId,
           awayTeamScore: game.metadata.away_score || 0,
+          week: game.week,
         };
         gameUpdatePromises.push(upsertNflGame(gameUpsert));
       }
