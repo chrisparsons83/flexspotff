@@ -150,7 +150,7 @@ export default function AdminBettingPoolYearWeek() {
                 <input
                   type="checkbox"
                   name="isOpen"
-                  checked={poolWeek?.isOpen}
+                  defaultChecked={poolWeek?.isOpen}
                 />{" "}
                 Publish week to group
               </td>
