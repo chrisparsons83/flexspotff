@@ -1,56 +1,123 @@
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { Form, useTransition } from "@remix-run/react";
 import { useState } from "react";
 
-export default function GamesSpreadPoolWeek() {
-  const initialBudget = 1200;
-  const teams = ["Denver (+4.5)", "Miami (-4.5)"];
-  const [betAmount, setBetAmount] = useState<{
-    teamName: string;
-    amount: number;
-  }>({ teamName: "", amount: 0 });
+import type { Bet } from "~/models/poolgame.server";
+import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
+import type { PoolWeek } from "~/models/poolweek.server";
+import { getPoolWeekByYearAndWeek } from "~/models/poolweek.server";
+import type { User } from "~/models/user.server";
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const actualValue = Number.parseInt(e.target.value);
-    const amount = Math.abs(actualValue);
-    const teamName =
-      actualValue > 0 ? teams[1] : actualValue < 0 ? teams[0] : "No Bet";
-    setBetAmount({
-      teamName,
-      amount,
+import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolGame";
+import Button from "~/components/ui/Button";
+import { authenticator, requireAdmin } from "~/services/auth.server";
+import { superjson, useSuperLoaderData } from "~/utils/data";
+
+type LoaderData = {
+  user?: User;
+  poolWeek?: PoolWeek;
+  poolGames?: Awaited<ReturnType<typeof getPoolGamesByYearAndWeek>>;
+  notOpenYet?: string;
+};
+
+export const action = async ({ params, request }: ActionArgs) => {
+  const formData = await request.formData();
+  for (const entry of formData.entries()) {
+    console.log(entry);
+  }
+
+  return {};
+};
+
+export const loader = async ({ params, request }: LoaderArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  requireAdmin(user);
+
+  const year = params.year;
+  const week = params.week;
+
+  if (!year) throw new Error(`No year set`);
+  if (!week) throw new Error(`No week set`);
+
+  const poolWeek = await getPoolWeekByYearAndWeek(+year, +week);
+
+  if (!poolWeek) {
+    return superjson<LoaderData>({
+      notOpenYet: "Week has not been created yet.",
+    });
+  }
+  if (!poolWeek.isOpen) {
+    return superjson<LoaderData>({
+      notOpenYet: "Lines have not been set for this week yet.",
+    });
+  }
+
+  const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
+
+  return superjson<LoaderData>(
+    { user, poolWeek, poolGames },
+    { headers: { "x-superjson": "true" } }
+  );
+};
+
+export default function GamesSpreadPoolWeek() {
+  const { notOpenYet, poolGames } = useSuperLoaderData<typeof loader>();
+  const transition = useTransition();
+
+  const initialBudget = 100;
+  const [bets, setBets] = useState<Bet[]>([]);
+
+  const handleChange = (bets: Bet[]) => {
+    console.log(bets);
+    setBets((prevBets) => {
+      const newBetTeamIds = bets.map((bet) => bet.teamId);
+      const cleanedBets = prevBets.filter(
+        (prevBet) => !newBetTeamIds.includes(prevBet.teamId)
+      );
+      return [...cleanedBets, ...bets];
     });
   };
 
-  const betDisplay =
-    betAmount.amount !== 0
-      ? `${betAmount.amount} on ${betAmount.teamName}`
-      : "No Bet";
+  const betAmount = bets.reduce((a, b) => a + b.amount, 0);
+  const availableToBet = initialBudget - betAmount;
+
+  const disableSubmit = transition.state !== "idle" || availableToBet < 0;
 
   return (
     <>
       <h2>Week Entry</h2>
-      <div className="mb-4">
-        <div>Available to bet: {initialBudget - betAmount.amount}</div>
-        <div>Amount currently bet: {betAmount.amount}</div>
-      </div>
-      <div className="grid md:grid-cols-2">
-        <div>
-          <div className="flex gap-2 justify-between">
-            <div className="w-1/3">{teams[0]}</div>
-            <div className="text-center">vs.</div>
-            <div className="w-1/3 text-right">{teams[1]}</div>
-          </div>
-          <input
-            type="range"
-            min="-50"
-            max="50"
-            step="10"
-            name="denverVsMiami"
-            defaultValue={0}
-            className="w-full"
-            onChange={handleChange}
-          />
-          <div>Current Bet: {betDisplay}</div>
-        </div>
-      </div>
+      <Form method="post">
+        {notOpenYet || (
+          <>
+            <div className="mb-4">
+              <div>Available to bet: {availableToBet}</div>
+              <div>Amount currently bet: {betAmount}</div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-12">
+              {poolGames?.map((poolGame) => (
+                <SpreadPoolGameComponent
+                  key={poolGame.id}
+                  handleChange={handleChange}
+                  poolGame={poolGame}
+                />
+              ))}
+            </div>
+            <div className="m-4">
+              {availableToBet < 0 && (
+                <p className="text-red-500">
+                  You cannot bet more than your available budget, which is
+                  currently {availableToBet}.
+                </p>
+              )}
+              <Button type="submit" disabled={disableSubmit}>
+                Update Picks
+              </Button>
+            </div>
+          </>
+        )}
+      </Form>
     </>
   );
 }
