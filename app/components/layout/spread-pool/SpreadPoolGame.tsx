@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 
+import type { NFLTeam } from "~/models/nflteam.server";
 import type {
   Bet,
   PoolGameByYearAndWeekElement,
@@ -22,26 +23,27 @@ export default function SpreadPoolGameComponent({
   handleChange,
   poolGame,
 }: Props) {
-  const [betTeam, setBetTeam] = useState("");
+  const [betTeam, setBetTeam] = useState<NFLTeam | null>(null);
   const [betAmount, setBetAmount] = useState(0);
 
-  const betDisplay = betAmount !== 0 ? `${betAmount} on ${betTeam}` : "No Bet";
+  const betDisplay =
+    betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : "No Bet";
 
   const onBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (+e.target.value > 0) {
-      setBetTeam(poolGame.game.homeTeam.mascot);
+      setBetTeam(poolGame.game.homeTeam);
       setBetAmount(+e.target.value);
       handleChange([
         { teamId: poolGame.game.homeTeam.id, amount: +e.target.value },
       ]);
     } else if (+e.target.value < 0) {
-      setBetTeam(poolGame.game.awayTeam.mascot);
+      setBetTeam(poolGame.game.awayTeam);
       setBetAmount(-1 * +e.target.value);
       handleChange([
         { teamId: poolGame.game.awayTeam.id, amount: -1 * +e.target.value },
       ]);
     } else {
-      setBetTeam("");
+      setBetTeam(null);
       setBetAmount(0);
       handleChange([
         { teamId: poolGame.game.homeTeam.id, amount: 0 },
@@ -68,7 +70,7 @@ export default function SpreadPoolGameComponent({
         min="-50"
         max="50"
         step="10"
-        name={poolGame.id}
+        name={`${poolGame.id}-${betTeam?.id}`}
         defaultValue={0}
         className="w-full"
         onChange={onBetChange}

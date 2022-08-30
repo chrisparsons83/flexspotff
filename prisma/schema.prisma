@@ -143,7 +143,7 @@ model PoolGamePick {
   updatedAt DateTime @updatedAt
 
   amountBet Int
-  resultWonLoss Int
+  resultWonLoss Int? @default(0)
 
   teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamBetId String
@@ -154,7 +154,7 @@ model PoolGamePick {
   poolGame PoolGame @relation(fields: [poolGameId], references: [id])
   poolGameId String
 
-  @@unique([userId, poolGameId], name: "userAndGame")
+  @@unique([userId, poolGameId, teamBetId], name: "userAndGameAndTeam")
 }
 
 model Player {
