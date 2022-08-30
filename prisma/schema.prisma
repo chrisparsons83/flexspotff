@@ -117,6 +117,7 @@ model PoolWeek {
   year Int
   weekNumber Int
   isOpen Boolean @default(false)
+  isWeekScored Boolean @default(false)
 
   poolGames PoolGame[]
 
