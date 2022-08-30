@@ -118,6 +118,8 @@ model PoolWeek {
   weekNumber Int
   isOpen Boolean @default(false)
 
+  poolGames PoolGame[]
+
   @@unique([year, weekNumber], name: "yearAndWeek")
 }
 
@@ -129,6 +131,9 @@ model PoolGame {
   game NFLGame @relation(fields: [gameId], references: [id])
   gameId String @unique
 
+  poolWeek PoolWeek? @relation(fields: [poolWeekId], references: [id])
+  poolWeekId String?
+
   poolGamePicks PoolGamePick[]
 }
 
@@ -138,6 +143,7 @@ model PoolGamePick {
   updatedAt DateTime @updatedAt
 
   amountBet Int
+  resultWonLoss Int
 
   teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamBetId String
