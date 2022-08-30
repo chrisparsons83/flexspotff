@@ -61,6 +61,7 @@ export const action = async ({ params, request }: ActionArgs) => {
     const poolGame: PoolGameCreate = {
       gameId: key,
       homeSpread: value,
+      poolWeekId: poolWeek.id,
     };
     promises.push(upsertPoolGame(poolGame));
   }
