@@ -4,7 +4,10 @@ import { useState } from "react";
 
 import type { Bet } from "~/models/poolgame.server";
 import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
-import type { PoolGamePickCreate } from "~/models/poolgamepicks.server";
+import type {
+  PoolGamePick,
+  PoolGamePickCreate,
+} from "~/models/poolgamepicks.server";
 import { createPoolGamePicks } from "~/models/poolgamepicks.server";
 import {
   deletePoolGamePicksForUserAndWeek,
@@ -32,6 +35,7 @@ type LoaderData = {
   user?: User;
   poolWeek?: PoolWeek;
   poolGames?: Awaited<ReturnType<typeof getPoolGamesByYearAndWeek>>;
+  poolGamePicks?: PoolGamePick[];
   notOpenYet?: string;
 };
 
@@ -49,7 +53,6 @@ export const action = async ({ params, request }: ActionArgs) => {
   const poolWeek = await getPoolWeekByYearAndWeek(+year, +week);
   if (!poolWeek) throw new Error(`Missing pool week.`);
   const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
-  console.log(poolGames);
 
   // Create map of all teams in week and set bet to 0
   const nflTeamIdToAmountBetMap: Map<string, number> = new Map();
@@ -90,7 +93,6 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Loop through map and build promises to send down for creates
   const dataToInsert: PoolGamePickCreate[] = [];
   for (const [key, amountBet] of nflTeamIdToAmountBetMap.entries()) {
-    console.log({ key, amountBet });
     const [poolGameId, teamBetId] = key.split("-");
     dataToInsert.push({
       userId: user.id,
@@ -137,21 +139,30 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     });
   }
 
+  const poolGamePicks = await getPoolGamePicksByUserAndPoolWeek(user, poolWeek);
+
   const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
 
   return superjson<LoaderData>(
-    { user, poolWeek, poolGames },
+    { user, poolWeek, poolGames, poolGamePicks },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function GamesSpreadPoolWeek() {
   const actionData = useSuperActionData<ActionData>();
-  const { notOpenYet, poolGames } = useSuperLoaderData<typeof loader>();
+  const { notOpenYet, poolGames, poolGamePicks } =
+    useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
+  const existingBets =
+    poolGamePicks?.map((poolGame) => ({
+      teamId: poolGame.teamBetId,
+      amount: poolGame.amountBet,
+    })) || [];
+
   const initialBudget = 1000;
-  const [bets, setBets] = useState<Bet[]>([]);
+  const [bets, setBets] = useState<Bet[]>(existingBets);
 
   const handleChange = (bets: Bet[]) => {
     setBets((prevBets) => {
@@ -171,7 +182,7 @@ export default function GamesSpreadPoolWeek() {
   return (
     <>
       <h2>Week Entry</h2>
-      <Form method="post">
+      <Form method="post" reloadDocument>
         {notOpenYet || (
           <>
             {actionData?.message && <Alert message={actionData.message} />}
@@ -180,13 +191,24 @@ export default function GamesSpreadPoolWeek() {
               <div>Amount currently bet: {betAmount}</div>
             </div>
             <div className="grid md:grid-cols-2 gap-12">
-              {poolGames?.map((poolGame) => (
-                <SpreadPoolGameComponent
-                  key={poolGame.id}
-                  handleChange={handleChange}
-                  poolGame={poolGame}
-                />
-              ))}
+              {poolGames?.map((poolGame) => {
+                const existingBet = existingBets.find(
+                  (existingBet) =>
+                    existingBet.amount > 0 &&
+                    [
+                      poolGame.game.awayTeamId,
+                      poolGame.game.homeTeamId,
+                    ].includes(existingBet.teamId)
+                );
+                return (
+                  <SpreadPoolGameComponent
+                    key={poolGame.id}
+                    handleChange={handleChange}
+                    poolGame={poolGame}
+                    existingBet={existingBet}
+                  />
+                );
+              })}
             </div>
             <div className="m-4">
               {availableToBet < 0 && (

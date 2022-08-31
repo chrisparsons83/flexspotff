@@ -22,7 +22,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function GamesSpreadPoolIndex() {
   const { poolWeeks } = useSuperLoaderData<typeof loader>();
-  console.log(poolWeeks);
 
   return (
     <>

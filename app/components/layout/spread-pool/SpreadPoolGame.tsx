@@ -17,17 +17,30 @@ const formatSpread = (amount: number, home: boolean) => {
 type Props = {
   handleChange: (bet: Bet[]) => void;
   poolGame: PoolGameByYearAndWeekElement;
+  existingBet?: Bet;
 };
 
 export default function SpreadPoolGameComponent({
   handleChange,
   poolGame,
+  existingBet,
 }: Props) {
-  const [betTeam, setBetTeam] = useState<NFLTeam | null>(null);
-  const [betAmount, setBetAmount] = useState(0);
+  const existingBetTeam =
+    [poolGame.game.homeTeam, poolGame.game.awayTeam].find(
+      (team) => team.id === existingBet?.teamId
+    ) || null;
+  const [betTeam, setBetTeam] = useState<NFLTeam | null>(existingBetTeam);
+  const [betAmount, setBetAmount] = useState(
+    Math.abs(existingBet?.amount || 0)
+  );
 
   const betDisplay =
     betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : "No Bet";
+  const betSliderDefault = !existingBet
+    ? 0
+    : existingBet.teamId === poolGame.game.awayTeamId
+    ? -1 * existingBet.amount
+    : existingBet.amount;
 
   const onBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (+e.target.value > 0) {
@@ -71,7 +84,7 @@ export default function SpreadPoolGameComponent({
         max="50"
         step="10"
         name={`${poolGame.id}-${betTeam?.id}`}
-        defaultValue={0}
+        defaultValue={betSliderDefault}
         className="w-full"
         onChange={onBetChange}
       />
