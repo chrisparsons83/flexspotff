@@ -42,6 +42,10 @@ export default function SpreadPoolGameComponent({
     ? -1 * existingBet.amount
     : existingBet.amount;
 
+  const gameDateTime = poolGame.game.gameStartTime;
+  const now = new Date();
+  const pickLocked = gameDateTime && gameDateTime < now;
+
   const onBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (+e.target.value > 0) {
       setBetTeam(poolGame.game.homeTeam);
@@ -87,6 +91,7 @@ export default function SpreadPoolGameComponent({
         defaultValue={betSliderDefault}
         className="w-full"
         onChange={onBetChange}
+        disabled={pickLocked}
       />
       <div>Current Bet: {betDisplay}</div>
     </div>
