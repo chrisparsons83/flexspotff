@@ -57,6 +57,7 @@ export const action = async ({ request }: ActionArgs) => {
     draftDateTime: null,
     tier: sleeperLeague.name.match(/champion/i) ? 1 : 2,
     year,
+    isDrafted: false,
   };
 
   await createLeague(league);

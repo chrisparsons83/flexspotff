@@ -39,6 +39,7 @@ export const action = async ({ request }: ActionArgs) => {
     year: CURRENT_YEAR,
     weekNumber: newWeek,
     isOpen: false,
+    isWeekScored: false,
   });
 
   return json<ActionData>({ message: "Week has been created" });
