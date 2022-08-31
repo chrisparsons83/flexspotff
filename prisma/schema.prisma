@@ -70,6 +70,7 @@ model League {
   tier Int
 
   isActive Boolean
+  isDrafted Boolean @default(false)
 
   teams Team[]
 }

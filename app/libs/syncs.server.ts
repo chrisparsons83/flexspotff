@@ -5,6 +5,7 @@ import { deleteDraftPicks } from "~/models/draftpick.server";
 import { getDraftPicks } from "~/models/draftpick.server";
 import { createDraftPick } from "~/models/draftpick.server";
 import type { League } from "~/models/league.server";
+import { updateLeague } from "~/models/league.server";
 import { getPlayers } from "~/models/players.server";
 import { getTeams } from "~/models/team.server";
 
@@ -26,6 +27,8 @@ export async function syncAdp(league: League) {
   const sleeperJson: SleeperADPJson = sleeperADPJson.parse(
     await sleeperLeagueRes.json()
   );
+
+  const isDrafted = sleeperJson.length === 180;
 
   // Delete out existing draft picks for a league
   const draftPicksQuery = await getDraftPicks(league.id);
@@ -66,6 +69,8 @@ export async function syncAdp(league: League) {
     promises.push(createDraftPick(draftPick));
   }
   await Promise.all(promises);
+
+  await updateLeague({ ...league, isDrafted });
 
   return true;
 }

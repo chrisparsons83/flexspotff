@@ -19,7 +19,9 @@ export const loader = async ({ params }: LoaderArgs) => {
   const year =
     params["*"] === "" ? CURRENT_YEAR : Number.parseInt(params["*"] || "");
 
-  const leagueCount = (await getLeaguesByYear(year)).length;
+  const leagueCount = (await getLeaguesByYear(year)).filter(
+    (league) => league.isDrafted
+  ).length;
   const adp = await getAverageDraftPositionByYear(year);
   const players = await getPlayersByIDs(adp.map((player) => player.playerId));
 
