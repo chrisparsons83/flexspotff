@@ -2,6 +2,8 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
 
+import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
+import { updatePoolGamePicksWithResults } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import {
   createPoolWeek,
@@ -11,6 +13,7 @@ import {
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
+import { syncNflGameWeek } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
@@ -30,19 +33,55 @@ export const action = async ({ request }: ActionArgs) => {
   });
   requireAdmin(user);
 
-  // Get max week of season, then add one
-  const latestWeek = await getNewestPoolWeekForYear(CURRENT_YEAR);
-  const newWeek = latestWeek ? latestWeek.weekNumber + 1 : 1;
+  const formData = await request.formData();
+  const action = formData.get("_action");
 
-  // Create new PoolWeek
-  await createPoolWeek({
-    year: CURRENT_YEAR,
-    weekNumber: newWeek,
-    isOpen: false,
-    isWeekScored: false,
-  });
+  switch (action) {
+    case "createNewWeek": {
+      // Get max week of season, then add one
+      const latestWeek = await getNewestPoolWeekForYear(CURRENT_YEAR);
+      const newWeek = latestWeek ? latestWeek.weekNumber + 1 : 1;
 
-  return json<ActionData>({ message: "Week has been created" });
+      // Create new PoolWeek
+      await createPoolWeek({
+        year: CURRENT_YEAR,
+        weekNumber: newWeek,
+        isOpen: false,
+        isWeekScored: false,
+      });
+
+      return json<ActionData>({ message: "Week has been created" });
+    }
+    case "scoreWeek": {
+      const weekNumberString = formData.get("weekNumber");
+      const yearString = formData.get("year");
+
+      if (
+        typeof weekNumberString !== "string" ||
+        typeof yearString !== "string"
+      ) {
+        throw new Error("Form has not been formed correctly");
+      }
+
+      const year = Number(yearString);
+      const weekNumber = Number(weekNumberString);
+
+      // Update NFL scores for the week
+      await syncNflGameWeek(year, [weekNumber]);
+
+      // Loop through each game and process
+      const poolGames = await getPoolGamesByYearAndWeek(year, weekNumber);
+      const poolGamePickPromises: Promise<number | [number, number]>[] = [];
+      for (const poolGame of poolGames) {
+        poolGamePickPromises.push(updatePoolGamePicksWithResults(poolGame));
+      }
+      await Promise.all(poolGamePickPromises);
+
+      return json<ActionData>({ message: "Week has been scored" });
+    }
+  }
+
+  return json<ActionData>({ message: "Nothing has happened." });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -75,7 +114,12 @@ export default function BettingPoolList() {
               {actionData.formError}
             </p>
           ) : null}
-          <Button type="submit" disabled={transition.state !== "idle"}>
+          <Button
+            type="submit"
+            name="_action"
+            value="createNewWeek"
+            disabled={transition.state !== "idle"}
+          >
             Create Next Week
           </Button>
         </div>
@@ -85,7 +129,8 @@ export default function BettingPoolList() {
           <tr>
             <th>Week</th>
             <th>Published?</th>
-            <th>Actions</th>
+            <th>Edit</th>
+            <th>Score</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +142,24 @@ export default function BettingPoolList() {
                 <Link to={`./${CURRENT_YEAR}/${poolWeek.weekNumber}`}>
                   Edit Week
                 </Link>
+              </td>
+              <td>
+                <Form method="post">
+                  <input
+                    type="hidden"
+                    name="weekNumber"
+                    value={poolWeek.weekNumber}
+                  />
+                  <input type="hidden" name="year" value={poolWeek.year} />
+                  <Button
+                    type="submit"
+                    name="_action"
+                    value="scoreWeek"
+                    disabled={transition.state !== "idle"}
+                  >
+                    Score Week
+                  </Button>
+                </Form>
               </td>
             </tr>
           ))}

@@ -3,16 +3,14 @@ import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import z from "zod";
 
-import type { GameCreate } from "~/models/nflgame.server";
-import { upsertNflGame } from "~/models/nflgame.server";
-import { createNflTeams, getNflTeams } from "~/models/nflteam.server";
+import { createNflTeams } from "~/models/nflteam.server";
 import type { PlayerCreate } from "~/models/players.server";
 import { upsertPlayer } from "~/models/players.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
+import { syncNflGameWeek } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { graphQLClient } from "~/services/sleeperGraphql.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 
 type ActionData = {
@@ -37,24 +35,6 @@ const sleeperJsonNflPlayers = z.record(
   })
 );
 type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
-
-const sleeperGraphqlNflGames = z.object({
-  scores: z.array(
-    z.object({
-      week: z.number(),
-      status: z.string(),
-      game_id: z.string(),
-      metadata: z.object({
-        home_team: z.string(),
-        home_score: z.number().optional(),
-        away_team: z.string(),
-        away_score: z.number().optional(),
-        date_time: z.string(),
-      }),
-    })
-  ),
-});
-type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
 
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -97,57 +77,11 @@ export const action = async ({ request }: ActionArgs) => {
       // Set up teams (this needs to be optimized to not do this)
       await createNflTeams();
 
-      // Doing this for speed, might be able to use Prisma connect to remove this
-      const sleeperTeamIdToID: Map<string, string> = new Map();
-      const nflTeams = await getNflTeams();
-      for (const nflTeam of nflTeams) {
-        sleeperTeamIdToID.set(nflTeam.sleeperId, nflTeam.id);
-      }
-
-      const promises: Promise<SleeperGraphqlNflGames>[] = [];
-      for (let i = 1; i <= 18; i++) {
-        // TODO: CURRENT_YEAR needs to be used in this query
-        const query = `query scores {
-          scores(sport: "nfl",season_type: "regular",season: "2022",week: ${i}){
-            date
-            game_id
-            metadata
-            season
-            season_type
-            sport
-            status
-            week
-          }
-        }`;
-        promises.push(graphQLClient.request<SleeperGraphqlNflGames>(query));
-      }
-      const games = (await Promise.all(promises)).flatMap(
-        (result) => result.scores
+      // The array one-liner there makes an array of numbers from 1 to 18.
+      await syncNflGameWeek(
+        CURRENT_YEAR,
+        Array.from({ length: 18 }, (_, i) => i + 1)
       );
-
-      const gameUpdatePromises: Promise<GameCreate>[] = [];
-      for (const game of games) {
-        const homeTeamId = sleeperTeamIdToID.get(game.metadata.home_team);
-        const awayTeamId = sleeperTeamIdToID.get(game.metadata.away_team);
-
-        // Doing this separate for typescript to not yell at me
-        if (!homeTeamId) continue;
-        if (!awayTeamId) continue;
-
-        const gameUpsert: GameCreate = {
-          sleeperGameId: game.game_id,
-          status: game.status,
-          gameStartTime: new Date(game.metadata.date_time),
-          homeTeamId,
-          homeTeamScore: game.metadata.home_score || 0,
-          awayTeamId,
-          awayTeamScore: game.metadata.away_score || 0,
-          week: game.week,
-          year: CURRENT_YEAR,
-        };
-        gameUpdatePromises.push(upsertNflGame(gameUpsert));
-      }
-      await Promise.all(gameUpdatePromises);
 
       return json<ActionData>({ message: "NFL Games have been updated." });
     }

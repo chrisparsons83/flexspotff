@@ -146,6 +146,7 @@ model PoolGamePick {
 
   amountBet Int
   resultWonLoss Int? @default(0)
+  isScored Boolean? @default(false)
 
   teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamBetId String

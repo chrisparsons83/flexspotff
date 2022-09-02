@@ -99,6 +99,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       amountBet,
       poolGameId,
       teamBetId,
+      isScored: false,
     });
   }
 
