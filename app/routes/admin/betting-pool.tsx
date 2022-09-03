@@ -12,7 +12,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   return {};
 };
 
-export default function AdminBettingPool() {
+export default function AdminSpreadPool() {
   return (
     <>
       <Outlet />

@@ -101,7 +101,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   );
 };
 
-export default function AdminBettingPoolYearWeek() {
+export default function AdminSpreadPoolYearWeek() {
   const { nflGames, poolGames, poolWeek } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 

@@ -98,14 +98,14 @@ export const loader = async ({ request }: LoaderArgs) => {
   );
 };
 
-export default function BettingPoolList() {
+export default function SpreadPoolList() {
   const { poolWeeks } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
 
   return (
     <div>
-      <h2>Betting Pool Lines by Week</h2>
+      <h2>Spread Pool Lines by Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method="post">
         <div>
