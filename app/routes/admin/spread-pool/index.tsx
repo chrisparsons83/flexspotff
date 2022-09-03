@@ -129,6 +129,7 @@ export default function SpreadPoolList() {
           <tr>
             <th>Week</th>
             <th>Published?</th>
+            <th>Scored?</th>
             <th>Edit</th>
             <th>Score</th>
           </tr>
@@ -138,6 +139,7 @@ export default function SpreadPoolList() {
             <tr key={poolWeek.id}>
               <td>{poolWeek.weekNumber}</td>
               <td>{poolWeek.isOpen ? "Yes" : "No"}</td>
+              <td>{poolWeek.isWeekScored ? "Yes" : "No"}</td>
               <td>
                 <Link to={`./${CURRENT_YEAR}/${poolWeek.weekNumber}`}>
                   Edit Week
