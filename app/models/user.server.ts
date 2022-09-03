@@ -38,6 +38,14 @@ export async function getUser(id: User["id"]) {
   });
 }
 
+export async function getUsersByIds(ids: User["id"][]) {
+  return prisma.user.findMany({
+    where: {
+      id: { in: ids },
+    },
+  });
+}
+
 export async function getUsers() {
   return prisma.user.findMany({
     orderBy: {

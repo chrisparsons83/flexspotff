@@ -13,6 +13,13 @@ export type PoolGamePickCreate = Omit<
   "id" | "createdAt" | "updatedAt" | "resultWonLoss"
 >;
 
+type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
+  ? ElementType
+  : never;
+export type PoolGamePicksWonLoss = ArrElement<
+  Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>
+>;
+
 export async function createPoolGamePick(poolGamePick: PoolGamePickCreate) {
   return prisma.poolGamePick.create({
     data: poolGamePick,
@@ -40,6 +47,24 @@ export async function deletePoolGamePicksForUserAndWeek(
   });
 }
 
+export async function getPoolGamesPicksByPoolWeek(poolWeek: PoolWeek) {
+  return prisma.poolGamePick.findMany({
+    where: {
+      poolGame: {
+        poolWeekId: poolWeek.id,
+      },
+    },
+    include: {
+      poolGame: {
+        include: {
+          game: true,
+        },
+      },
+      teamBet: true,
+    },
+  });
+}
+
 export async function getPoolGamePicksByUserAndPoolWeek(
   user: User,
   poolWeek: PoolWeek
@@ -49,6 +74,20 @@ export async function getPoolGamePicksByUserAndPoolWeek(
       userId: user.id,
       poolGame: {
         poolWeekId: poolWeek.id,
+      },
+    },
+  });
+}
+
+export async function getPoolGamePicksWonLoss() {
+  return prisma.poolGamePick.groupBy({
+    by: ["userId"],
+    _sum: {
+      resultWonLoss: true,
+    },
+    orderBy: {
+      _sum: {
+        resultWonLoss: "desc",
       },
     },
   });
