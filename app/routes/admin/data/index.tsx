@@ -149,10 +149,8 @@ export default function AdminDataIndex() {
             This will resync all NFL players in the system. You only really need
             to do this if there's a player that's not showing up for some
             reason, or if a player gets traded. Definitely not more than once a
-            day, and rarely even once a week. This command won't actually run on
-            production because of memory issues, currently you need to run it on
-            dev and sync the database table manually. Purging the promise table
-            after every 50ish players might be a better idea.
+            day, and rarely even once a week. This command takes like 30 seconds
+            to run, so be patient with it.
           </p>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
