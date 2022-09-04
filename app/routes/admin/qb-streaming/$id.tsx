@@ -6,7 +6,10 @@ import { getWeekNflGames } from "~/models/nflgame.server";
 import type { Player } from "~/models/players.server";
 import { getPlayer } from "~/models/players.server";
 import { getActivePlayersByPosition } from "~/models/players.server";
-import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
+import {
+  getQBStreamingWeek,
+  updateQBStreamingWeek,
+} from "~/models/qbstreamingweek.server";
 import {
   createQBStreamingWeekOption,
   deleteQBStreamingWeekOption,
@@ -87,6 +90,16 @@ export const action = async ({ params, request }: ActionArgs) => {
       return json<ActionData>({ message: "Player has been removed." });
     }
     case "updateWeek": {
+      const isOpen = formData.get("isOpen");
+
+      await updateQBStreamingWeek({
+        id: qbStreamingWeek.id,
+        year: qbStreamingWeek.year,
+        week: qbStreamingWeek.week,
+        isScored: qbStreamingWeek.isScored,
+        isOpen: isOpen ? true : false,
+      });
+
       return json<ActionData>({ message: "Week has been updated." });
     }
   }

@@ -54,3 +54,12 @@ export async function getQBStreamingWeeks(year: QBStreamingWeek["year"]) {
     },
   });
 }
+
+export async function updateQBStreamingWeek(qbStreamingWeek: QBStreamingWeek) {
+  return prisma.qBStreamingWeek.update({
+    where: {
+      id: qbStreamingWeek.id,
+    },
+    data: qbStreamingWeek,
+  });
+}
