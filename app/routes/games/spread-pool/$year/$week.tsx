@@ -20,7 +20,7 @@ import type { User } from "~/models/user.server";
 import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolGame";
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
+import { authenticator } from "~/services/auth.server";
 import {
   superjson,
   useSuperActionData,
@@ -118,8 +118,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
-  // TODO: Remove when going live
-  requireAdmin(user);
 
   const year = params.year;
   const week = params.week;
