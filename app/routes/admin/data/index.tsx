@@ -68,6 +68,11 @@ export const action = async ({ request }: ActionArgs) => {
           nflTeam: team,
         };
         promises.push(upsertPlayer(player));
+
+        if (promises.length >= 50) {
+          await Promise.all(promises);
+          promises.length = 0;
+        }
       }
       await Promise.all(promises);
 
