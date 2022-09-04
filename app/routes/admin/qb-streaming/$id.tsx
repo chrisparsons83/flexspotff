@@ -3,6 +3,8 @@ import { Form, useTransition } from "@remix-run/react";
 
 import type { Player } from "~/models/players.server";
 import { getActivePlayersByPosition } from "~/models/players.server";
+import type { QBStreamingWeek } from "~/models/qbstreamingweek.server";
+import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
@@ -10,6 +12,7 @@ import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
   activeQBs: Player[];
+  qbStreamingWeek: QBStreamingWeek;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -18,10 +21,16 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
+  const qbStreamingWeekId = params.id;
+  if (!qbStreamingWeekId) throw new Error(`Missing QB Streaming Week ID`);
+
+  const qbStreamingWeek = await getQBStreamingWeek(qbStreamingWeekId);
+  if (!qbStreamingWeek) throw new Error(`QB Streaming week does not exist`);
+
   const activeQBs = await getActivePlayersByPosition("QB");
 
   return superjson<LoaderData>(
-    { activeQBs },
+    { activeQBs, qbStreamingWeek },
     { headers: { "x-superjson": "true" } }
   );
 };
@@ -58,7 +67,7 @@ export default function AdminSpreadPoolYearWeek() {
             Available in deep player pool
           </label>
         </div>
-        <div>
+        <div className="pt-4">
           <Button
             type="submit"
             name="_action"

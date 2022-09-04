@@ -17,6 +17,14 @@ export async function createQBStreamingWeek(
   });
 }
 
+export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
+  return prisma.qBStreamingWeek.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getQBStreamingWeeks(year: QBStreamingWeek["year"]) {
   return prisma.qBStreamingWeek.findMany({
     where: {

@@ -105,9 +105,7 @@ export default function AdminQBStreaming() {
               <td>{qbStreamingWeek.isOpen ? "Yes" : "No"}</td>
               <td>{qbStreamingWeek.isScored ? "Yes" : "No"}</td>
               <td>
-                <Link to={`./${CURRENT_YEAR}/${qbStreamingWeek.week}`}>
-                  Edit Week
-                </Link>
+                <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
               </td>
               <td>
                 <Form method="post">
