@@ -7,7 +7,10 @@ import type { Player } from "~/models/players.server";
 import { getPlayer } from "~/models/players.server";
 import { getActivePlayersByPosition } from "~/models/players.server";
 import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
-import { createQBStreamingWeekOption } from "~/models/qbstreamingweekoption.server";
+import {
+  createQBStreamingWeekOption,
+  deleteQBStreamingWeekOption,
+} from "~/models/qbstreamingweekoption.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
@@ -73,6 +76,14 @@ export const action = async ({ params, request }: ActionArgs) => {
       return json<ActionData>({ message: "Player has been added." });
     }
     case "removePlayer": {
+      const qbStreamingWeekOptionId = formData.get("qbStreamingWeekOptionId");
+      if (typeof qbStreamingWeekOptionId !== "string")
+        throw new Error("Option does not exist");
+
+      console.log({ qbStreamingWeekOptionId });
+
+      await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
+
       return json<ActionData>({ message: "Player has been removed." });
     }
     case "updateWeek": {

@@ -16,3 +16,13 @@ export async function createQBStreamingWeekOption(
     data: qbStreamingWeekOption,
   });
 }
+
+export async function deleteQBStreamingWeekOption(
+  id: QBStreamingWeekOption["id"]
+) {
+  return prisma.qBStreamingWeekOption.delete({
+    where: {
+      id,
+    },
+  });
+}

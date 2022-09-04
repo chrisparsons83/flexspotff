@@ -27,6 +27,18 @@ export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
         include: {
           player: true,
         },
+        orderBy: [
+          {
+            player: {
+              lastName: "asc",
+            },
+          },
+          {
+            player: {
+              firstName: "asc",
+            },
+          },
+        ],
       },
     },
   });
