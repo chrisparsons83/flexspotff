@@ -102,6 +102,14 @@ export default function Admin() {
                       Spread Pool
                     </Link>
                   </li>
+                  <li className="flow-root">
+                    <Link
+                      to="/admin/qb-streaming"
+                      className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                    >
+                      QB Streaming
+                    </Link>
+                  </li>
                 </ul>
               </section>
               <section>

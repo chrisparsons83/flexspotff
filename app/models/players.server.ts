@@ -10,6 +10,19 @@ export async function getPlayers() {
   return prisma.player.findMany({});
 }
 
+export async function getActivePlayersByPosition(position: Player["position"]) {
+  return prisma.player.findMany({
+    where: {
+      position,
+      NOT: [
+        {
+          nflTeam: null,
+        },
+      ],
+    },
+  });
+}
+
 export async function getPlayersByIDs(ids: Player["id"][]) {
   return prisma.player.findMany({
     where: {
