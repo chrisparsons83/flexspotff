@@ -22,6 +22,13 @@ export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
     where: {
       id,
     },
+    include: {
+      QBStreamingWeekOptions: {
+        include: {
+          player: true,
+        },
+      },
+    },
   });
 }
 

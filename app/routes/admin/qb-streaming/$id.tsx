@@ -6,7 +6,6 @@ import { getWeekNflGames } from "~/models/nflgame.server";
 import type { Player } from "~/models/players.server";
 import { getPlayer } from "~/models/players.server";
 import { getActivePlayersByPosition } from "~/models/players.server";
-import type { QBStreamingWeek } from "~/models/qbstreamingweek.server";
 import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
 import { createQBStreamingWeekOption } from "~/models/qbstreamingweekoption.server";
 
@@ -22,7 +21,7 @@ type ActionData = {
 
 type LoaderData = {
   activeQBs: Player[];
-  qbStreamingWeek: QBStreamingWeek;
+  qbStreamingWeek: Awaited<ReturnType<typeof getQBStreamingWeek>>;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -106,8 +105,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function AdminSpreadPoolYearWeek() {
   const actionData = useActionData<ActionData>();
-  const { activeQBs } = useSuperLoaderData<typeof loader>();
+  const { activeQBs, qbStreamingWeek } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
+
+  if (!qbStreamingWeek) throw new Error("No information found for week");
 
   return (
     <div>
@@ -150,6 +151,44 @@ export default function AdminSpreadPoolYearWeek() {
         </div>
       </Form>
       <h3>Available Players</h3>
+      <table className="w-full">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Points</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody>
+          {qbStreamingWeek.QBStreamingWeekOptions.map(
+            (qbStreamingWeekOption) => (
+              <tr key={qbStreamingWeekOption.id}>
+                <td>{qbStreamingWeekOption.player.fullName}</td>
+                <td>{qbStreamingWeekOption.player.nflTeam}</td>
+                <td>{qbStreamingWeekOption.pointsScored}</td>
+                <td>
+                  <Form method="post">
+                    <input
+                      type="hidden"
+                      name="qbStreamingWeekOptionId"
+                      value={qbStreamingWeekOption.id}
+                    />
+                    <Button
+                      type="submit"
+                      name="_action"
+                      value="removePlayer"
+                      disabled={transition.state !== "idle"}
+                    >
+                      Remove
+                    </Button>
+                  </Form>
+                </td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
       <h3>Week Settings</h3>
       <Form method="post">
         <label htmlFor="isOpen">
