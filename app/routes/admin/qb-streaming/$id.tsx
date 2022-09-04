@@ -2,10 +2,13 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 
+import { getWeekNflGames } from "~/models/nflgame.server";
 import type { Player } from "~/models/players.server";
+import { getPlayer } from "~/models/players.server";
 import { getActivePlayersByPosition } from "~/models/players.server";
 import type { QBStreamingWeek } from "~/models/qbstreamingweek.server";
 import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
+import { createQBStreamingWeekOption } from "~/models/qbstreamingweekoption.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
@@ -22,17 +25,52 @@ type LoaderData = {
   qbStreamingWeek: QBStreamingWeek;
 };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
   requireAdmin(user);
+
+  const qbStreamingWeekId = params.id;
+  if (!qbStreamingWeekId) throw new Error(`Missing QB Streaming Week ID`);
+  const qbStreamingWeek = await getQBStreamingWeek(qbStreamingWeekId);
+  if (!qbStreamingWeek) throw new Error(`QB Streaming Week does not exist`);
 
   const formData = await request.formData();
   const action = formData.get("_action");
 
   switch (action) {
     case "addPlayer": {
+      const playerId = formData.get("playerId");
+      if (typeof playerId !== "string")
+        throw new Error("Player ID has been generated with an error.");
+
+      const isDeep = formData.get("isDeep");
+
+      // Get NFL team ID for the QB
+      const player = await getPlayer(playerId);
+      if (!player) throw new Error(`Player not found with id ${playerId}`);
+
+      // Get the NFL game where the team ID exists for the current week
+      const nflGames = await getWeekNflGames(
+        qbStreamingWeek.year,
+        qbStreamingWeek.week
+      );
+      const nflGame = nflGames.find(
+        (nflGame) =>
+          nflGame.awayTeamId === player.currentNFLTeamId ||
+          nflGame.homeTeamId === player.currentNFLTeamId
+      );
+      if (!nflGame) throw new Error(`Game not found for QB`);
+
+      await createQBStreamingWeekOption({
+        playerId,
+        isDeep: !!isDeep,
+        pointsScored: 0,
+        qbStreamingWeekId,
+        nflGameId: nflGame.id,
+      });
+
       return json<ActionData>({ message: "Player has been added." });
     }
     case "removePlayer": {

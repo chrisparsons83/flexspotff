@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import z from "zod";
 
-import { createNflTeams } from "~/models/nflteam.server";
+import { createNflTeams, getNflTeams } from "~/models/nflteam.server";
 import type { PlayerCreate } from "~/models/players.server";
 import { upsertPlayer } from "~/models/players.server";
 
@@ -54,6 +54,12 @@ export const action = async ({ request }: ActionArgs) => {
         await sleeperLeagueRes.json()
       );
 
+      const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
+      const nflTeams = await getNflTeams();
+      for (const nflTeam of nflTeams) {
+        nflTeamSleeperIdToLocalIdMap.set(nflTeam.sleeperId, nflTeam.id);
+      }
+
       const promises: Promise<PlayerCreate>[] = [];
       for (const [
         sleeperId,
@@ -66,6 +72,9 @@ export const action = async ({ request }: ActionArgs) => {
           lastName: last_name,
           fullName: full_name || `${first_name} ${last_name}`,
           nflTeam: team,
+          currentNFLTeamId: team
+            ? nflTeamSleeperIdToLocalIdMap.get(team) || null
+            : null,
         };
         promises.push(upsertPlayer(player));
 

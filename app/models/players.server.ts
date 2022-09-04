@@ -6,6 +6,14 @@ export type { Player } from "@prisma/client";
 
 export type PlayerCreate = Omit<Player, "id">;
 
+export async function getPlayer(id: Player["id"]) {
+  return prisma.player.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getPlayers() {
   return prisma.player.findMany({});
 }
