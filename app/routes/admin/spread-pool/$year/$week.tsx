@@ -148,12 +148,15 @@ export default function AdminSpreadPoolYearWeek() {
             })}
             <tr>
               <td colSpan={3}>
-                <input
-                  type="checkbox"
-                  name="isOpen"
-                  defaultChecked={poolWeek?.isOpen}
-                />{" "}
-                Publish week to group
+                <label htmlFor="isOpen">
+                  <input
+                    type="checkbox"
+                    name="isOpen"
+                    id="isOpen"
+                    defaultChecked={poolWeek?.isOpen}
+                  />{" "}
+                  Publish week to group
+                </label>
               </td>
             </tr>
           </tbody>

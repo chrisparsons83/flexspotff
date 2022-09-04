@@ -36,19 +36,51 @@ export default function AdminSpreadPoolYearWeek() {
       <Form method="post">
         <h3>Add Player</h3>
         <div>
-          <label htmlFor="player">
-            Name:
+          <select
+            name="playerId"
+            className="form-select mt-1 block w-full dark:border-0 dark:bg-slate-800"
+          >
+            {activeQBs.map((qb) => (
+              <option key={qb.id} value={qb.id}>
+                {qb.lastName}, {qb.firstName}: {qb.nflTeam}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="isDeep">
             <input
-              type="text"
-              name="title"
-              id="title"
-              className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
-            />
+              type="checkbox"
+              name="isDeep"
+              id="isDeep"
+              defaultChecked={true}
+            />{" "}
+            Available in deep player pool
           </label>
         </div>
-        <h3>Available Players</h3>
         <div>
-          <Button type="submit" disabled={transition.state !== "idle"}>
+          <Button
+            type="submit"
+            name="_action"
+            value="addPlayer"
+            disabled={transition.state !== "idle"}
+          >
+            Add Player
+          </Button>
+        </div>
+        <h3>Available Players</h3>
+        <h3>Week Settings</h3>
+        <label htmlFor="isOpen">
+          <input type="checkbox" name="isOpen" id="isOpen" /> Week is active for
+          selections
+        </label>
+        <div>
+          <Button
+            type="submit"
+            name="_action"
+            value="updateWeek"
+            disabled={transition.state !== "idle"}
+          >
             Update Week
           </Button>
         </div>

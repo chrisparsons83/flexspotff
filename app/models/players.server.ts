@@ -20,6 +20,12 @@ export async function getActivePlayersByPosition(position: Player["position"]) {
         },
       ],
     },
+    orderBy: [
+      {
+        lastName: "asc",
+      },
+      { firstName: "asc" },
+    ],
   });
 }
 
