@@ -83,8 +83,6 @@ export const action = async ({ params, request }: ActionArgs) => {
       if (typeof qbStreamingWeekOptionId !== "string")
         throw new Error("Option does not exist");
 
-      console.log({ qbStreamingWeekOptionId });
-
       await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
 
       return json<ActionData>({ message: "Player has been removed." });
@@ -160,7 +158,7 @@ export default function AdminSpreadPoolYearWeek() {
               id="isDeep"
               defaultChecked={true}
             />{" "}
-            Available in deep player pool
+            Available in both player pools
           </label>
         </div>
         <div className="pt-4">
@@ -180,6 +178,7 @@ export default function AdminSpreadPoolYearWeek() {
           <tr>
             <th>Player</th>
             <th>Team</th>
+            <th>Both Pools?</th>
             <th>Points</th>
             <th>Remove</th>
           </tr>
@@ -190,6 +189,7 @@ export default function AdminSpreadPoolYearWeek() {
               <tr key={qbStreamingWeekOption.id}>
                 <td>{qbStreamingWeekOption.player.fullName}</td>
                 <td>{qbStreamingWeekOption.player.nflTeam}</td>
+                <td>{qbStreamingWeekOption.isDeep ? "Yes" : "No"}</td>
                 <td>{qbStreamingWeekOption.pointsScored}</td>
                 <td>
                   <Form method="post">
@@ -216,8 +216,13 @@ export default function AdminSpreadPoolYearWeek() {
       <h3>Week Settings</h3>
       <Form method="post">
         <label htmlFor="isOpen">
-          <input type="checkbox" name="isOpen" id="isOpen" /> Week is active for
-          selections
+          <input
+            type="checkbox"
+            name="isOpen"
+            id="isOpen"
+            defaultChecked={qbStreamingWeek.isOpen}
+          />{" "}
+          Week is active for selections
         </label>
         <div>
           <Button

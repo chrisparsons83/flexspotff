@@ -29,8 +29,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 export default function QBStreamingIndex() {
   const { qbStreamingWeeks } = useSuperLoaderData<typeof loader>();
 
-  console.log(qbStreamingWeeks);
-
   return (
     <>
       <h2>QB Streaming Challenge</h2>
