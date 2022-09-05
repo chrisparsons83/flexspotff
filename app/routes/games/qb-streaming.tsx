@@ -5,6 +5,6 @@ export const loader = async ({ request }: LoaderArgs) => {
   return {};
 };
 
-export default function FSquaredIndex() {
+export default function QBStreaming() {
   return <Outlet />;
 }

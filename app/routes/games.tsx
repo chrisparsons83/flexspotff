@@ -2,7 +2,7 @@ import { Link, Outlet } from "@remix-run/react";
 
 const navigationLinks = [
   { name: "F²", href: "/games/f-squared", current: false },
-  { name: "Streaming Challenge", href: "/games/streaming", current: false },
+  { name: "Streaming Challenge", href: "/games/qb-streaming", current: false },
   { name: "Survivor", href: "/games/survivor", current: false },
   { name: "Spread Pool", href: "/games/spread-pool", current: false },
 ];
