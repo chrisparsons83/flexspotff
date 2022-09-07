@@ -26,6 +26,46 @@ export async function getQBSelection(
   });
 }
 
+export async function getQBSelectionsByWeek(
+  qbStreamingWeekId: QBStreamingWeek["id"]
+) {
+  return prisma.qBSelection.findMany({
+    where: {
+      qbStreamingWeekId,
+    },
+    include: {
+      standardPlayer: {
+        include: {
+          player: true,
+          nflGame: true,
+        },
+      },
+      deepPlayer: {
+        include: {
+          player: true,
+          nflGame: true,
+        },
+      },
+      user: true,
+    },
+  });
+}
+
+export async function getQBSelectionsByYear(year: QBStreamingWeek["year"]) {
+  return prisma.qBSelection.findMany({
+    where: {
+      qbStreamingWeek: {
+        year,
+      },
+    },
+    include: {
+      deepPlayer: true,
+      standardPlayer: true,
+      user: true,
+    },
+  });
+}
+
 export async function updateQBSelection(qbSelection: QBSelection) {
   return prisma.qBSelection.update({
     where: {
