@@ -147,15 +147,23 @@ export default function QBStreamingYearWeekEntry() {
               }
             >
               <option value=""></option>
-              {qbStreamingWeek?.QBStreamingWeekOptions.map((qbOption) => (
-                <option
-                  key={qbOption.id}
-                  value={qbOption.id}
-                  disabled={qbOption.nflGame.gameStartTime < new Date()}
-                >
-                  {qbOption.player.fullName}
-                </option>
-              ))}
+              {qbStreamingWeek?.QBStreamingWeekOptions.map((qbOption) => {
+                const matchup =
+                  qbOption.player.currentNFLTeamId ===
+                  qbOption.nflGame.homeTeamId
+                    ? `vs ${qbOption.nflGame.awayTeam.mascot}`
+                    : `@ ${qbOption.nflGame.homeTeam.mascot}`;
+
+                return (
+                  <option
+                    key={qbOption.id}
+                    value={qbOption.id}
+                    disabled={qbOption.nflGame.gameStartTime < new Date()}
+                  >
+                    {qbOption.player.fullName} {matchup}
+                  </option>
+                );
+              })}
             </select>
           </label>
         </div>
@@ -176,15 +184,23 @@ export default function QBStreamingYearWeekEntry() {
               <option value=""></option>
               {qbStreamingWeek?.QBStreamingWeekOptions.filter(
                 (qbOption) => qbOption.isDeep
-              ).map((qbOption) => (
-                <option
-                  key={qbOption.id}
-                  value={qbOption.id}
-                  disabled={qbOption.nflGame.gameStartTime < new Date()}
-                >
-                  {qbOption.player.fullName}
-                </option>
-              ))}
+              ).map((qbOption) => {
+                const matchup =
+                  qbOption.player.currentNFLTeamId ===
+                  qbOption.nflGame.homeTeamId
+                    ? `vs ${qbOption.nflGame.awayTeam.mascot}`
+                    : `@ ${qbOption.nflGame.homeTeam.mascot}`;
+
+                return (
+                  <option
+                    key={qbOption.id}
+                    value={qbOption.id}
+                    disabled={qbOption.nflGame.gameStartTime < new Date()}
+                  >
+                    {qbOption.player.fullName} {matchup}
+                  </option>
+                );
+              })}
             </select>
           </label>
         </div>
