@@ -26,6 +26,7 @@ export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
       QBStreamingWeekOptions: {
         include: {
           player: true,
+          nflGame: true,
         },
         orderBy: [
           {

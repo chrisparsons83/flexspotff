@@ -24,7 +24,7 @@ type ActionData = {
 type LoaderData = {
   user: User;
   qbStreamingWeek: Awaited<ReturnType<typeof getQBStreamingWeek>>;
-  qbSelection: QBSelection | null;
+  qbSelection: Awaited<ReturnType<typeof getQBSelection>>;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -80,10 +80,16 @@ export const action = async ({ params, request }: ActionArgs) => {
     newSelections.deepPlayerId = deepPlayerId;
   }
 
+  console.log(newSelections);
+
   // Update or create selection
   if (existingSelection) {
     await updateQBSelection({
-      ...existingSelection,
+      id: existingSelection.id,
+      qbStreamingWeekId: existingSelection.qbStreamingWeekId,
+      standardPlayerId: existingSelection.standardPlayerId,
+      deepPlayerId: existingSelection.deepPlayerId,
+      userId: existingSelection.userId,
       ...newSelections,
     });
     return json<ActionData>({ message: "Your picks have been updated." });
@@ -139,10 +145,18 @@ export default function QBStreamingYearWeekEntry() {
               id="standardPlayerId"
               required
               className="form-select mt-1 block w-full dark:border-0 dark:bg-slate-800"
+              disabled={
+                !!qbSelection &&
+                qbSelection?.standardPlayer.nflGame.gameStartTime < new Date()
+              }
             >
               <option value=""></option>
               {qbStreamingWeek?.QBStreamingWeekOptions.map((qbOption) => (
-                <option key={qbOption.id} value={qbOption.id}>
+                <option
+                  key={qbOption.id}
+                  value={qbOption.id}
+                  disabled={qbOption.nflGame.gameStartTime < new Date()}
+                >
                   {qbOption.player.fullName}
                 </option>
               ))}
@@ -158,12 +172,20 @@ export default function QBStreamingYearWeekEntry() {
               id="deepPlayerId"
               required
               className="form-select mt-1 block w-full dark:border-0 dark:bg-slate-800"
+              disabled={
+                !!qbSelection &&
+                qbSelection?.deepPlayer.nflGame.gameStartTime < new Date()
+              }
             >
               <option value=""></option>
               {qbStreamingWeek?.QBStreamingWeekOptions.filter(
                 (qbOption) => qbOption.isDeep
               ).map((qbOption) => (
-                <option key={qbOption.id} value={qbOption.id}>
+                <option
+                  key={qbOption.id}
+                  value={qbOption.id}
+                  disabled={qbOption.nflGame.gameStartTime < new Date()}
+                >
                   {qbOption.player.fullName}
                 </option>
               ))}

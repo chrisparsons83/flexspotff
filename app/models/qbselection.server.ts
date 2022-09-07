@@ -23,6 +23,18 @@ export async function getQBSelection(
       qbStreamingWeekId,
       userId,
     },
+    include: {
+      standardPlayer: {
+        include: {
+          nflGame: true,
+        },
+      },
+      deepPlayer: {
+        include: {
+          nflGame: true,
+        },
+      },
+    },
   });
 }
 
