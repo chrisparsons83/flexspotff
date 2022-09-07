@@ -79,8 +79,6 @@ export default function QBStreamingIndex() {
   const { qbStreamingWeeks, qbStreamingResults, currentWeekPicks } =
     useSuperLoaderData<typeof loader>();
 
-  console.log(currentWeekPicks);
-
   return (
     <>
       <h2>QB Streaming Challenge</h2>

@@ -63,7 +63,6 @@ export const action = async ({ params, request }: ActionArgs) => {
     standardQBStreamingOption.nflGameId
   );
   if (!standardNFLGame) throw new Error("Game not found");
-  console.log(standardNFLGame);
   if (standardNFLGame.gameStartTime > new Date()) {
     newSelections.standardPlayerId = standardPlayerId;
   }
@@ -75,12 +74,9 @@ export const action = async ({ params, request }: ActionArgs) => {
     throw new Error("Deep QB Streaming Option not found");
   const deepNFLGame = await getNflGameById(deepQBStreamingOption.nflGameId);
   if (!deepNFLGame) throw new Error("Game not found");
-  console.log(deepNFLGame);
   if (deepNFLGame.gameStartTime > new Date()) {
     newSelections.deepPlayerId = deepPlayerId;
   }
-
-  console.log(newSelections);
 
   // Update or create selection
   if (existingSelection) {
