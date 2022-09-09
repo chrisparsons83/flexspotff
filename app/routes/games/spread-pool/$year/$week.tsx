@@ -69,7 +69,7 @@ export const action = async ({ params, request }: ActionArgs) => {
 
   // Update map with existing bets
   const existingBets = await getPoolGamePicksByUserAndPoolWeek(user, poolWeek);
-  for (const existingBet of existingBets.filter((bet) => bet.amountBet > 0)) {
+  for (const existingBet of existingBets) {
     nflTeamIdToAmountBetMap.set(
       `${existingBet.poolGameId}-${existingBet.teamBetId}`,
       existingBet.amountBet
@@ -79,11 +79,23 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Update map with new bets that are eligible
   const newBetsForm = await request.formData();
   for (const [key, amount] of newBetsForm.entries()) {
+    console.log({ key, amount });
     const [poolGameId, teamId] = key.split("-");
-    if (!teamId || teamId === "undefined") continue;
 
     const poolGame = poolGames.find((poolGame) => poolGame.id === poolGameId);
     if (!poolGame) continue;
+
+    if (!teamId || teamId === "undefined") {
+      nflTeamIdToAmountBetMap.set(
+        `${poolGameId}-${poolGame.game.homeTeamId}`,
+        0
+      );
+      nflTeamIdToAmountBetMap.set(
+        `${poolGameId}-${poolGame.game.awayTeamId}`,
+        0
+      );
+      continue;
+    }
 
     if (poolGame.game.gameStartTime > new Date()) {
       nflTeamIdToAmountBetMap.set(key, Math.abs(+amount));
