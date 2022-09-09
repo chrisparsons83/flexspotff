@@ -93,6 +93,7 @@ export default function QBStreamingIndex() {
         <li>4 points per passing TD</li>
         <li>6 points per rushing/receiving TD</li>
         <li>-2 per interception/fumble</li>
+        <li>2 per 2-point conversion</li>
       </ul>
       <p>Highest score at the end of the season wins.</p>
       <h3>My Entries</h3>
