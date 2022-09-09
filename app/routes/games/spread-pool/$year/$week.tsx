@@ -79,7 +79,6 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Update map with new bets that are eligible
   const newBetsForm = await request.formData();
   for (const [key, amount] of newBetsForm.entries()) {
-    console.log({ key, amount });
     const [poolGameId, teamId] = key.split("-");
 
     const poolGame = poolGames.find((poolGame) => poolGame.id === poolGameId);
