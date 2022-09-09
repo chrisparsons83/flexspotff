@@ -69,10 +69,10 @@ export const action = async ({ params, request }: ActionArgs) => {
 
   // Update map with existing bets
   const existingBets = await getPoolGamePicksByUserAndPoolWeek(user, poolWeek);
-  for (const existingBet of existingBets) {
+  for (const existingBet of existingBets.filter((bet) => bet.amountBet > 0)) {
     nflTeamIdToAmountBetMap.set(
       `${existingBet.poolGameId}-${existingBet.teamBetId}`,
-      0
+      existingBet.amountBet
     );
   }
 
@@ -160,6 +160,7 @@ export default function GamesSpreadPoolWeek() {
       amount: poolGame.amountBet,
     })) || [];
 
+  // TODO: Make this dynamic based on past win/losses and potential deductions from missed weeks.
   const initialBudget = 1000;
   const [bets, setBets] = useState<Bet[]>(existingBets);
 
