@@ -26,3 +26,17 @@ export async function deleteQBStreamingWeekOption(
     },
   });
 }
+
+export async function updateQBStreamingWeekOptionScore(
+  id: QBStreamingWeekOption["id"],
+  pointsScored: QBStreamingWeekOption["pointsScored"]
+) {
+  return prisma.qBStreamingWeekOption.update({
+    where: {
+      id,
+    },
+    data: {
+      pointsScored,
+    },
+  });
+}
