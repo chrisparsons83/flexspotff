@@ -83,7 +83,7 @@ export async function getPoolGamePicksByUserAndYear(
   user: User,
   year: PoolWeek["year"]
 ) {
-  return prisma.poolGamePick.aggregate({
+  return prisma.poolGamePick.findMany({
     where: {
       userId: user.id,
       poolGame: {
@@ -91,9 +91,6 @@ export async function getPoolGamePicksByUserAndYear(
           year,
         },
       },
-    },
-    _sum: {
-      resultWonLoss: true,
     },
   });
 }

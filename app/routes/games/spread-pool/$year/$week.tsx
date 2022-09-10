@@ -39,6 +39,7 @@ type LoaderData = {
   poolGamePicks?: PoolGamePick[];
   notOpenYet?: string;
   amountWonLoss?: number | null;
+  newEntryDeduction?: number;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -156,6 +157,14 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
 
   const getAmountWonLoss = await getPoolGamePicksByUserAndYear(user, +year);
+  const amountWonLoss = getAmountWonLoss.reduce(
+    (a, b) => a + (b.resultWonLoss || 0),
+    0
+  );
+  const newEntryDeduction =
+    getAmountWonLoss.length === 0 ? -20 * (+week - 1) : 0;
+
+  // TODO: Get missed weeks calculation separate
 
   return superjson<LoaderData>(
     {
@@ -163,7 +172,8 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       poolWeek,
       poolGames,
       poolGamePicks,
-      amountWonLoss: getAmountWonLoss._sum.resultWonLoss,
+      amountWonLoss,
+      newEntryDeduction,
     },
     { headers: { "x-superjson": "true" } }
   );
@@ -171,8 +181,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function GamesSpreadPoolWeek() {
   const actionData = useSuperActionData<ActionData>();
-  const { notOpenYet, poolGames, poolGamePicks, amountWonLoss } =
-    useSuperLoaderData<typeof loader>();
+  const {
+    notOpenYet,
+    poolGames,
+    poolGamePicks,
+    amountWonLoss,
+    newEntryDeduction,
+  } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
   const existingBets =
@@ -182,7 +197,7 @@ export default function GamesSpreadPoolWeek() {
     })) || [];
 
   // TODO: Make this dynamic based on potential deductions from missed weeks.
-  const initialBudget = 1000 + (amountWonLoss || 0);
+  const initialBudget = 1000 + (amountWonLoss || 0) + (newEntryDeduction || 0);
   const [bets, setBets] = useState<Bet[]>(existingBets);
 
   const handleChange = (bets: Bet[]) => {
@@ -238,6 +253,11 @@ export default function GamesSpreadPoolWeek() {
                   currently {availableToBet}.
                 </p>
               )}
+              <input
+                type="hidden"
+                name="isNewEntry"
+                value={Number(newEntryDeduction) !== 0 ? "true" : "false"}
+              />
               <Button type="submit" disabled={disableSubmit}>
                 Update Picks
               </Button>
