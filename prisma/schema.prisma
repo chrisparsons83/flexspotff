@@ -123,6 +123,7 @@ model PoolWeek {
   isWeekScored Boolean @default(false)
 
   poolGames PoolGame[]
+  poolWeeksMissed PoolWeekMissed[]
 
   @@unique([year, weekNumber], name: "yearAndWeek")
 }
@@ -139,6 +140,18 @@ model PoolGame {
   poolWeekId String?
 
   poolGamePicks PoolGamePick[]
+}
+
+model PoolWeekMissed {
+  id String @id @default(cuid())
+
+  poolWeek PoolWeek? @relation(fields: [poolWeekId], references: [id])
+  poolWeekId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  resultWonLoss Int? @default(-20)
 }
 
 model PoolGamePick {
@@ -280,4 +293,5 @@ model User {
   fSquaredEntries FSquaredEntry[]
   poolGamePicks PoolGamePick[]
   QBSelections QBSelection[]
+  poolWeeksMissed PoolWeekMissed[]
 }

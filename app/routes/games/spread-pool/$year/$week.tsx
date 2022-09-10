@@ -8,6 +8,7 @@ import type {
   PoolGamePick,
   PoolGamePickCreate,
 } from "~/models/poolgamepicks.server";
+import { getPoolGamePicksByUserAndYear } from "~/models/poolgamepicks.server";
 import { createPoolGamePicks } from "~/models/poolgamepicks.server";
 import {
   deletePoolGamePicksForUserAndWeek,
@@ -37,6 +38,7 @@ type LoaderData = {
   poolGames?: Awaited<ReturnType<typeof getPoolGamesByYearAndWeek>>;
   poolGamePicks?: PoolGamePick[];
   notOpenYet?: string;
+  amountWonLoss?: number | null;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -153,15 +155,23 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
 
+  const getAmountWonLoss = await getPoolGamePicksByUserAndYear(user, +year);
+
   return superjson<LoaderData>(
-    { user, poolWeek, poolGames, poolGamePicks },
+    {
+      user,
+      poolWeek,
+      poolGames,
+      poolGamePicks,
+      amountWonLoss: getAmountWonLoss._sum.resultWonLoss,
+    },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function GamesSpreadPoolWeek() {
   const actionData = useSuperActionData<ActionData>();
-  const { notOpenYet, poolGames, poolGamePicks } =
+  const { notOpenYet, poolGames, poolGamePicks, amountWonLoss } =
     useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
@@ -171,8 +181,8 @@ export default function GamesSpreadPoolWeek() {
       amount: poolGame.amountBet,
     })) || [];
 
-  // TODO: Make this dynamic based on past win/losses and potential deductions from missed weeks.
-  const initialBudget = 1000;
+  // TODO: Make this dynamic based on potential deductions from missed weeks.
+  const initialBudget = 1000 + (amountWonLoss || 0);
   const [bets, setBets] = useState<Bet[]>(existingBets);
 
   const handleChange = (bets: Bet[]) => {
