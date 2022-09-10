@@ -94,7 +94,6 @@ export const action = async ({ request }: ActionArgs) => {
       );
       const promises: Promise<QBStreamingWeekOption>[] = [];
       for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
-        console.log(qbStreamingOption.player);
         const {
           pass_yd,
           pass_td,
