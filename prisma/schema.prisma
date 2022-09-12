@@ -273,6 +273,20 @@ model Team {
 
   FSquaredSelections FSquaredEntry[]
   DraftPicks DraftPick[]
+  TeamGames TeamGame[]
+}
+
+model TeamGame {
+  id String @id @default(cuid())
+
+  sleeperMatchupId Int
+  week Int
+
+  pointsScored Float
+  starters String[]
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamId String
 }
 
 model User {

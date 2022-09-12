@@ -52,6 +52,9 @@ export async function getLeaguesByYear(year: League["year"]) {
         name: "asc",
       },
     ],
+    include: {
+      teams: true,
+    },
   });
 }
 
