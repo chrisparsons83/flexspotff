@@ -59,18 +59,30 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     }
   }
 
-  const sortedResults = [...qbStreamingResults].sort(
-    (a, b) => b.pointsScored - a.pointsScored
-  );
-  for (let i = 0; i < qbStreamingResults.length; i++) {
-    qbStreamingResults[i].rank =
-      sortedResults.findIndex(
-        (result) => result.discordName === qbStreamingResults[i].discordName
+  const sortedResults = [...qbStreamingResults].sort((a, b) => {
+    if (a.pointsScored !== b.pointsScored) {
+      return b.pointsScored - a.pointsScored;
+    }
+
+    return a.discordName.localeCompare(b.discordName);
+  });
+
+  const rankArray = sortedResults.map((result) => result.pointsScored);
+
+  for (let i = 0; i < sortedResults.length; i++) {
+    sortedResults[i].rank =
+      rankArray.findIndex(
+        (result) => sortedResults[i].pointsScored === result
       ) + 1;
   }
 
   return superjson<LoaderData>(
-    { user, qbStreamingWeeks, qbStreamingResults, currentWeekPicks },
+    {
+      user,
+      qbStreamingWeeks,
+      qbStreamingResults: sortedResults,
+      currentWeekPicks,
+    },
     { headers: { "x-superjson": "true" } }
   );
 };

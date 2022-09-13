@@ -46,7 +46,7 @@ export default function QBStreamingStandingsRowComponent({
             />
           )}
         </td>
-        <td>{pointsScored}</td>
+        <td>{pointsScored.toFixed(2)}</td>
       </tr>
       {showDetails && (
         <tr className="border-b-1 bg-gray-800">

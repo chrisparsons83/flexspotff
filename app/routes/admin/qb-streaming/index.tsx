@@ -94,33 +94,21 @@ export const action = async ({ request }: ActionArgs) => {
       );
       const promises: Promise<QBStreamingWeekOption>[] = [];
       for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
-        const {
-          pass_yd,
-          pass_td,
-          rush_yd,
-          rush_td,
-          rec_yd,
-          rec_td,
-          fum_lost,
-          pass_int,
-          pass_2pt,
-          rush_2pt,
-          rec_2pt,
-        } = sleeperJson[qbStreamingOption.player.sleeperId];
+        const stats = sleeperJson[qbStreamingOption.player.sleeperId] || {};
         const score =
           Math.round(
             100 *
-              (0.04 * (pass_yd || 0) +
-                4 * (pass_td || 0) +
-                0.1 * (rush_yd || 0) +
-                6 * (rush_td || 0) +
-                0.1 * (rec_yd || 0) +
-                6 * (rec_td || 0) +
-                -2 * (fum_lost || 0) +
-                -2 * (pass_int || 0) +
-                2 * (pass_2pt || 0) +
-                2 * (rush_2pt || 0) +
-                2 * (rec_2pt || 0))
+              (0.04 * (stats.pass_yd || 0) +
+                4 * (stats.pass_td || 0) +
+                0.1 * (stats.rush_yd || 0) +
+                6 * (stats.rush_td || 0) +
+                0.1 * (stats.rec_yd || 0) +
+                6 * (stats.rec_td || 0) +
+                -2 * (stats.fum_lost || 0) +
+                -2 * (stats.pass_int || 0) +
+                2 * (stats.pass_2pt || 0) +
+                2 * (stats.rush_2pt || 0) +
+                2 * (stats.rec_2pt || 0))
           ) / 100;
         promises.push(
           updateQBStreamingWeekOptionScore(qbStreamingOption.id, score)
