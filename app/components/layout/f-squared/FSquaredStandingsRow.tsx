@@ -53,7 +53,7 @@ export default function FSquaredStandingsRow({ rank, result }: Props) {
             />
           )}
         </td>
-        <td>{result.totalPoints}</td>
+        <td>{result.totalPoints.toFixed(2)}</td>
       </tr>
       {showDetails && (
         <tr className="border-b-1 bg-gray-800">
