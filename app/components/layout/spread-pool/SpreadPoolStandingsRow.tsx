@@ -78,6 +78,15 @@ export default function SpreadPoolStandingsRow({
                     ? `+${spreadAmount}`
                     : `${spreadAmount}`;
 
+                const resultAction =
+                  pick.resultWonLoss! > 0
+                    ? "Won"
+                    : pick.resultWonLoss! < 0
+                    ? "Lost"
+                    : pick.isScored
+                    ? "Pushed"
+                    : "Bet";
+
                 return (
                   <div
                     key={pick.id}
@@ -87,7 +96,7 @@ export default function SpreadPoolStandingsRow({
                       pick.resultWonLoss! < 0 && "border-red-500"
                     )}
                   >
-                    Bet {pick.amountBet} on {pick.teamBet.mascot}{" "}
+                    {resultAction} {pick.amountBet} on {pick.teamBet.mascot}{" "}
                     {spreadDisplay}
                   </div>
                 );
