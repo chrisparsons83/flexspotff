@@ -152,6 +152,8 @@ model PoolWeekMissed {
   userId String
 
   resultWonLoss Int? @default(-20)
+
+  @@unique([userId, poolWeekId], name: "userAndPoolWeek")
 }
 
 model PoolGamePick {

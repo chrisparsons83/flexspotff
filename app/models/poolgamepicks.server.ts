@@ -92,6 +92,13 @@ export async function getPoolGamePicksByUserAndYear(
         },
       },
     },
+    include: {
+      poolGame: {
+        include: {
+          poolWeek: true,
+        },
+      },
+    },
   });
 }
 

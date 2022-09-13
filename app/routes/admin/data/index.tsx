@@ -132,7 +132,6 @@ export const action = async ({ request }: ActionArgs) => {
 
       const leagues = await getLeaguesByYear(CURRENT_YEAR);
       const teams = leagues.flatMap((league) => league.teams);
-      console.log(teams);
 
       const existingTeamGames = await getTeamGamesByYearAndWeek(
         CURRENT_YEAR,

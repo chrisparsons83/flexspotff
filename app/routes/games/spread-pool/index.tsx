@@ -7,6 +7,7 @@ import {
 } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import { getPoolWeeksByYear } from "~/models/poolweek.server";
+import { getPoolWeekMissedTotalByUserAndYear } from "~/models/poolweekmissed.server";
 import type { User } from "~/models/user.server";
 import { getUsersByIds } from "~/models/user.server";
 
@@ -38,6 +39,24 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     );
 
   const amountWonLoss = await getPoolGamePicksWonLoss();
+
+  // Update amountWonLoss based on missing week totals, then re-sort.
+  const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(
+    CURRENT_YEAR
+  );
+  if (missingWeekPenalties.length > 0) {
+    for (const missingWeekPenalty of missingWeekPenalties) {
+      const updateIndex = amountWonLoss.findIndex(
+        (amount) => amount.userId === missingWeekPenalty.userId
+      );
+      if (updateIndex !== 1) {
+        amountWonLoss[updateIndex]._sum.resultWonLoss =
+          (amountWonLoss[updateIndex]._sum.resultWonLoss || 0) +
+          (missingWeekPenalty._sum.resultWonLoss || 0);
+      }
+    }
+    amountWonLoss.sort((a, b) => b._sum.resultWonLoss! - a._sum.resultWonLoss!);
+  }
 
   const sortingOrderForRanks = amountWonLoss.map(
     (amount) => amount._sum.resultWonLoss

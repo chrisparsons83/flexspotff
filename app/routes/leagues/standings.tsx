@@ -13,8 +13,6 @@ type LoaderData = {
 export const loader = async ({ params }: LoaderArgs) => {
   const leagues = await getLeaguesByYear(CURRENT_YEAR);
 
-  console.log(leagues);
-
   return superjson<LoaderData>(
     { leagues },
     { headers: { "x-superjson": "true" } }

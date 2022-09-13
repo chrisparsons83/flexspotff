@@ -15,13 +15,19 @@ import {
   getPoolGamePicksByUserAndPoolWeek,
 } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
+import { getPoolWeeksByYear } from "~/models/poolweek.server";
 import { getPoolWeekByYearAndWeek } from "~/models/poolweek.server";
+import {
+  createPoolWeekMissed,
+  getPoolWeekMissedByUserAndYear,
+} from "~/models/poolweekmissed.server";
 import type { User } from "~/models/user.server";
 
 import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolGame";
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
+import { CURRENT_YEAR } from "~/utils/constants";
 import {
   superjson,
   useSuperActionData,
@@ -40,6 +46,7 @@ type LoaderData = {
   notOpenYet?: string;
   amountWonLoss?: number | null;
   newEntryDeduction?: number;
+  missedEntryDeduction?: number;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -122,6 +129,35 @@ export const action = async ({ params, request }: ActionArgs) => {
   await deletePoolGamePicksForUserAndWeek(user, poolWeek);
   await createPoolGamePicks(dataToInsert);
 
+  // Do a final check to see how many weeks this person has missed before this week, and insert in
+  // missing week penalties.
+  const existingMissingWeeksIds = (
+    await getPoolWeekMissedByUserAndYear(user.id, CURRENT_YEAR)
+  ).map((poolWeekMissed) => poolWeekMissed.poolWeek?.id);
+  const picks = await getPoolGamePicksByUserAndYear(user, CURRENT_YEAR);
+  const poolWeekIds = (await getPoolWeeksByYear(CURRENT_YEAR))
+    .map((poolWeek) => poolWeek.id)
+    .filter((poolWeekId) => poolWeekId !== poolWeek.id);
+
+  const weeksPicked = new Set();
+  picks
+    .filter((pick) => pick.amountBet > 0)
+    .forEach((pick) => {
+      weeksPicked.add(pick.poolGame.poolWeek?.id);
+    });
+  const missingWeeks = poolWeekIds.filter(
+    (poolWeekId) =>
+      ![...weeksPicked].includes(poolWeekId) &&
+      !existingMissingWeeksIds.includes(poolWeekId)
+  );
+  if (missingWeeks.length > 0) {
+    const missingWeekPromises: Promise<any>[] = [];
+    for (const missingWeekId of missingWeeks) {
+      missingWeekPromises.push(createPoolWeekMissed(user.id, missingWeekId));
+    }
+    await Promise.all(missingWeekPromises);
+  }
+
   return superjson<ActionData>(
     { message: "Your picks have been saved." },
     { headers: { "x-superjson": "true" } }
@@ -164,7 +200,9 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const newEntryDeduction =
     getAmountWonLoss.length === 0 ? -20 * (+week - 1) : 0;
 
-  // TODO: Get missed weeks calculation separate
+  const missedEntryDeduction = (
+    await getPoolWeekMissedByUserAndYear(user.id, CURRENT_YEAR)
+  ).reduce((a, b) => a + (b.resultWonLoss || 0), 0);
 
   return superjson<LoaderData>(
     {
@@ -174,6 +212,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       poolGamePicks,
       amountWonLoss,
       newEntryDeduction,
+      missedEntryDeduction,
     },
     { headers: { "x-superjson": "true" } }
   );
@@ -187,6 +226,7 @@ export default function GamesSpreadPoolWeek() {
     poolGamePicks,
     amountWonLoss,
     newEntryDeduction,
+    missedEntryDeduction,
   } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
@@ -196,8 +236,11 @@ export default function GamesSpreadPoolWeek() {
       amount: poolGame.amountBet,
     })) || [];
 
-  // TODO: Make this dynamic based on potential deductions from missed weeks.
-  const initialBudget = 1000 + (amountWonLoss || 0) + (newEntryDeduction || 0);
+  const initialBudget =
+    1000 +
+    (amountWonLoss || 0) +
+    (newEntryDeduction || 0) +
+    (missedEntryDeduction || 0);
   const [bets, setBets] = useState<Bet[]>(existingBets);
 
   const handleChange = (bets: Bet[]) => {
