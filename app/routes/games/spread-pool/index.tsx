@@ -107,14 +107,21 @@ export default function GamesSpreadPoolIndex() {
         season wins.
       </p>
       <h3>My Entries</h3>
-      {poolWeeks.map((poolWeek) => (
-        <li key={poolWeek.id}>
-          <Link to={`./${poolWeek.year}/${poolWeek.weekNumber}`}>
-            Week {poolWeek.weekNumber}
-            {!poolWeek.isOpen && ` - Not Open`}
-          </Link>
-        </li>
-      ))}
+      {poolWeeks.map((poolWeek) => {
+        const suffix = poolWeek.isWeekScored
+          ? " - Week Scored"
+          : !poolWeek.isOpen
+          ? " - Not Open"
+          : "";
+
+        return (
+          <li key={poolWeek.id}>
+            <Link to={`./${poolWeek.year}/${poolWeek.weekNumber}`}>
+              Week {poolWeek.weekNumber} {suffix}
+            </Link>
+          </li>
+        );
+      })}
       <section>
         <h3>Overall Standings</h3>
         <table>

@@ -271,6 +271,9 @@ export default function GamesSpreadPoolWeek() {
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               {poolGames?.map((poolGame) => {
+                const existingPoolGamePick = poolGamePicks?.find(
+                  (poolGamePick) => poolGamePick.poolGameId === poolGame.id
+                );
                 const existingBet = existingBets.find(
                   (existingBet) =>
                     existingBet.amount > 0 &&
@@ -285,6 +288,7 @@ export default function GamesSpreadPoolWeek() {
                     handleChange={handleChange}
                     poolGame={poolGame}
                     existingBet={existingBet}
+                    existingPoolGamePick={existingPoolGamePick}
                   />
                 );
               })}

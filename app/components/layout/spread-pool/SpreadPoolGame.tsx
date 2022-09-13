@@ -6,6 +6,7 @@ import type {
   Bet,
   PoolGameByYearAndWeekElement,
 } from "~/models/poolgame.server";
+import type { PoolGamePick } from "~/models/poolgamepicks.server";
 
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
@@ -18,12 +19,14 @@ type Props = {
   handleChange: (bet: Bet[]) => void;
   poolGame: PoolGameByYearAndWeekElement;
   existingBet?: Bet;
+  existingPoolGamePick?: PoolGamePick;
 };
 
 export default function SpreadPoolGameComponent({
   handleChange,
   poolGame,
   existingBet,
+  existingPoolGamePick,
 }: Props) {
   const existingBetTeam =
     [poolGame.game.homeTeam, poolGame.game.awayTeam].find(
@@ -45,6 +48,15 @@ export default function SpreadPoolGameComponent({
   const gameDateTime = poolGame.game.gameStartTime;
   const now = new Date();
   const pickLocked = gameDateTime && gameDateTime < now;
+
+  const wonGame =
+    existingPoolGamePick &&
+    existingPoolGamePick.resultWonLoss &&
+    existingPoolGamePick.resultWonLoss > 0;
+  const lostGame =
+    existingPoolGamePick &&
+    existingPoolGamePick.resultWonLoss &&
+    existingPoolGamePick.resultWonLoss < 0;
 
   const onBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (+e.target.value > 0) {
@@ -70,7 +82,14 @@ export default function SpreadPoolGameComponent({
   };
 
   return (
-    <div className={clsx("p-4", betAmount !== 0 && "bg-slate-800")}>
+    <div
+      className={clsx(
+        "p-4",
+        betAmount !== 0 && "bg-slate-800",
+        wonGame && "bg-green-900",
+        lostGame && "bg-red-900"
+      )}
+    >
       <div className="flex gap-2 justify-between">
         <div className="w-2/5">
           {poolGame.game.awayTeam.mascot} (

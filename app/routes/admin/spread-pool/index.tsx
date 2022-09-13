@@ -6,6 +6,10 @@ import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
 import { updatePoolGamePicksWithResults } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import {
+  getPoolWeekByYearAndWeek,
+  updatePoolWeek,
+} from "~/models/poolweek.server";
+import {
   createPoolWeek,
   getNewestPoolWeekForYear,
   getPoolWeeksByYear,
@@ -66,6 +70,9 @@ export const action = async ({ request }: ActionArgs) => {
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
 
+      const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
+      if (!poolWeek) throw new Error(`There's no pool week here`);
+
       // Update NFL scores for the week
       await syncNflGameWeek(year, [weekNumber]);
 
@@ -76,6 +83,11 @@ export const action = async ({ request }: ActionArgs) => {
         poolGamePickPromises.push(updatePoolGamePicksWithResults(poolGame));
       }
       await Promise.all(poolGamePickPromises);
+
+      await updatePoolWeek({
+        ...poolWeek,
+        isWeekScored: true,
+      });
 
       return json<ActionData>({ message: "Week has been scored" });
     }
