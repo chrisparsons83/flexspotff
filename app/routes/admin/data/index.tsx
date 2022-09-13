@@ -136,12 +136,12 @@ export const action = async ({ request }: ActionArgs) => {
 
       const existingTeamGames = await getTeamGamesByYearAndWeek(
         CURRENT_YEAR,
-        sleeperJson.week
+        sleeperJson.display_week
       );
 
       const leagueMatchupPromises: Promise<Response>[] = [];
       for (const league of leagues) {
-        const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${sleeperJson.week}`;
+        const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${sleeperJson.display_week}`;
         leagueMatchupPromises.push(fetch(url));
       }
       const leagueMatchupResponses = await Promise.all(leagueMatchupPromises);
@@ -165,14 +165,15 @@ export const action = async ({ request }: ActionArgs) => {
 
           const existingTeamGame = existingTeamGames.find(
             (teamGame) =>
-              teamGame.teamId === team.id && teamGame.week === sleeperJson.week
+              teamGame.teamId === team.id &&
+              teamGame.week === sleeperJson.display_week
           );
 
           teamGameUpserts.push(
             upsertTeamGame({
               id: existingTeamGame?.id,
               sleeperMatchupId: matchup.matchup_id,
-              week: sleeperJson.week,
+              week: sleeperJson.display_week,
               starters: matchup.starters,
               pointsScored: matchup.points,
               teamId: team.id,
