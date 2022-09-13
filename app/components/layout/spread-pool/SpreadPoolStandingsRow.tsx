@@ -1,4 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/outline";
+import clsx from "clsx";
 import { useState } from "react";
 
 import type {
@@ -64,14 +65,33 @@ export default function SpreadPoolStandingsRow({
               <div>No locked bets</div>
             )}
             {picksLocked &&
-              picksLocked.map((pick) => (
-                <div
-                  key={pick.id}
-                  className="mb-1 border-l-8 pl-4 border-gray-500"
-                >
-                  Bet {pick.amountBet} on {pick.teamBet.mascot}
-                </div>
-              ))}
+              picksLocked.map((pick) => {
+                const spreadAmount =
+                  pick.teamBetId === pick.poolGame.game.homeTeamId
+                    ? pick.poolGame.homeSpread
+                    : -1 * pick.poolGame.homeSpread;
+
+                const spreadDisplay =
+                  spreadAmount === 0
+                    ? "Even"
+                    : spreadAmount > 0
+                    ? `+${spreadAmount}`
+                    : `${spreadAmount}`;
+
+                return (
+                  <div
+                    key={pick.id}
+                    className={clsx(
+                      "mb-1 border-l-8 pl-4 border-gray-500",
+                      pick.resultWonLoss! > 0 && "border-emerald-500",
+                      pick.resultWonLoss! < 0 && "border-red-500"
+                    )}
+                  >
+                    Bet {pick.amountBet} on {pick.teamBet.mascot}{" "}
+                    {spreadDisplay}
+                  </div>
+                );
+              })}
           </td>
           <td></td>
         </tr>
