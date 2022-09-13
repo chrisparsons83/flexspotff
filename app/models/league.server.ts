@@ -6,6 +6,13 @@ export type { League } from "@prisma/client";
 
 type LeagueCreateInput = Omit<League, "id" | "createdAt" | "updatedAt">;
 
+type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
+  ? ElementType
+  : never;
+export type GetLeaguesByYearElement = ArrElement<
+  Awaited<ReturnType<typeof getLeaguesByYear>>
+>;
+
 export async function createLeague(league: LeagueCreateInput) {
   return prisma.league.create({
     data: league,
@@ -53,7 +60,19 @@ export async function getLeaguesByYear(year: League["year"]) {
       },
     ],
     include: {
-      teams: true,
+      teams: {
+        include: {
+          user: true,
+        },
+        orderBy: [
+          {
+            wins: "desc",
+          },
+          {
+            pointsFor: "desc",
+          },
+        ],
+      },
     },
   });
 }
