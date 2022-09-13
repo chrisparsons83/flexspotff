@@ -117,18 +117,18 @@ export async function updatePoolGamePicksWithResults(
     poolGame.game.awayTeamScore
   ) {
     return prisma.$transaction([
-      prisma.$executeRaw`UPDATE PoolGamePick SET resultWonLoss = amountBet, isScored = true WHERE poolGameId=${poolGame.id} AND teamBetId=${poolGame.game.homeTeamId}`,
-      prisma.$executeRaw`UPDATE PoolGamePick SET resultWonLoss = -1 * amountBet, isScored = true WHERE poolGameId=${poolGame.id} AND teamBetId=${poolGame.game.awayTeamId}`,
+      prisma.$executeRaw`UPDATE "PoolGamePick" SET "resultWonLoss" = "amountBet", "isScored" = true WHERE "poolGameId"=${poolGame.id} AND "teamBetId"=${poolGame.game.homeTeamId}`,
+      prisma.$executeRaw`UPDATE "PoolGamePick" SET "resultWonLoss" = -1 * "amountBet", "isScored" = true WHERE "poolGameId"=${poolGame.id} AND "teamBetId"=${poolGame.game.awayTeamId}`,
     ]);
   } else if (
     poolGame.game.homeTeamScore + poolGame.homeSpread <
     poolGame.game.awayTeamScore
   ) {
     return prisma.$transaction([
-      prisma.$executeRaw`UPDATE PoolGamePick SET resultWonLoss = amountBet, isScored = true WHERE poolGameId=${poolGame.id} AND teamBetId=${poolGame.game.awayTeamId}`,
-      prisma.$executeRaw`UPDATE PoolGamePick SET resultWonLoss = -1 * amountBet, isScored = true WHERE poolGameId=${poolGame.id} AND teamBetId=${poolGame.game.homeTeamId}`,
+      prisma.$executeRaw`UPDATE "PoolGamePick" SET "resultWonLoss" = "amountBet", "isScored" = true WHERE "poolGameId"=${poolGame.id} AND "teamBetId"=${poolGame.game.awayTeamId}`,
+      prisma.$executeRaw`UPDATE "PoolGamePick" SET "resultWonLoss" = -1 * "amountBet", "isScored" = true WHERE "poolGameId"=${poolGame.id} AND "teamBetId"=${poolGame.game.homeTeamId}`,
     ]);
   } else {
-    return prisma.$executeRaw`UPDATE PoolGamePick SET isScored = true WHERE poolGameId=${poolGame.id}`;
+    return prisma.$executeRaw`UPDATE "PoolGamePick" SET "isScored" = true WHERE "poolGameId"=${poolGame.id}`;
   }
 }
