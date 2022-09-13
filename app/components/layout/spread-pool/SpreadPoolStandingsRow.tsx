@@ -8,7 +8,7 @@ import type {
 import type { User } from "~/models/user.server";
 
 type Props = {
-  rank: number;
+  rank: number | undefined;
   user?: User;
   poolGameWonLoss: PoolGamePicksWonLoss;
   initialBudget?: number;

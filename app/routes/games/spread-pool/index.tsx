@@ -19,6 +19,7 @@ type LoaderData = {
   amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
   users: User[];
   weeklyPicks?: Awaited<ReturnType<typeof getPoolGamesPicksByPoolWeek>>;
+  userIdToRankMap: Map<string, number>;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -38,6 +39,19 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const amountWonLoss = await getPoolGamePicksWonLoss();
 
+  const sortingOrderForRanks = amountWonLoss.map(
+    (amount) => amount._sum.resultWonLoss
+  );
+  const userIdToRankMap: Map<string, number> = new Map();
+  for (const result of amountWonLoss) {
+    userIdToRankMap.set(
+      result.userId,
+      sortingOrderForRanks.findIndex(
+        (total) => result._sum.resultWonLoss === total
+      ) + 1
+    );
+  }
+
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
   const userIds = [
@@ -46,13 +60,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const users = await getUsersByIds(userIds);
 
   return superjson<LoaderData>(
-    { poolWeeks, amountWonLoss, users, weeklyPicks },
+    { poolWeeks, amountWonLoss, users, weeklyPicks, userIdToRankMap },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function GamesSpreadPoolIndex() {
-  const { poolWeeks, amountWonLoss, users, weeklyPicks } =
+  const { poolWeeks, amountWonLoss, users, weeklyPicks, userIdToRankMap } =
     useSuperLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
@@ -96,7 +110,7 @@ export default function GamesSpreadPoolIndex() {
             {amountWonLoss.map((result, index) => (
               <SpreadPoolStandingsRow
                 key={result.userId}
-                rank={index + 1}
+                rank={userIdToRankMap.get(result.userId)}
                 user={userIdToUserMap.get(result.userId)}
                 poolGameWonLoss={result}
                 picksLocked={weeklyPicks?.filter(
