@@ -110,13 +110,21 @@ export default function QBStreamingIndex() {
       <p>Highest score at the end of the season wins.</p>
       <h3>My Entries</h3>
       <ul>
-        {qbStreamingWeeks.map((qbStreamingWeek) => (
-          <li key={qbStreamingWeek.id}>
-            <Link to={`./${qbStreamingWeek.id}`}>
-              Week {qbStreamingWeek.week}
-            </Link>
-          </li>
-        ))}
+        {qbStreamingWeeks.map((qbStreamingWeek) => {
+          const suffix = qbStreamingWeek.isScored
+            ? "- Week Scored"
+            : !qbStreamingWeek.isOpen
+            ? "- Not Open"
+            : "";
+
+          return (
+            <li key={qbStreamingWeek.id}>
+              <Link to={`./${qbStreamingWeek.id}`}>
+                Week {qbStreamingWeek.week} {suffix}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
       <h3>Overall Standings</h3>
       <table>
