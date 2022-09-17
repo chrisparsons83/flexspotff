@@ -1,4 +1,4 @@
-import type { QBStreamingWeek } from "@prisma/client";
+import type { QBStreamingWeek, User } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
@@ -8,6 +8,13 @@ type QBStreamingWeekCreateInput = Omit<
   QBStreamingWeek,
   "id" | "createdAt" | "updatedAt"
 >;
+
+export type QBStreamingStandingsRow = {
+  rank?: number;
+  discordName: User["discordName"];
+  userId: User["id"];
+  pointsScored: number;
+};
 
 export async function createQBStreamingWeek(
   qbStreamingWeek: QBStreamingWeekCreateInput

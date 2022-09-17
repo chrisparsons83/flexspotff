@@ -1,14 +1,13 @@
 import type { LoaderArgs } from "@remix-run/node";
 
 import { getQBSelectionsByWeek } from "~/models/qbselection.server";
+import type { QBStreamingStandingsRow } from "~/models/qbstreamingweek.server";
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
 
 import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
 import GoBox from "~/components/ui/GoBox";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-
-import type { QBStreamingStandingsRow } from "../..";
 
 type LoaderData = {
   qbSelections: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
