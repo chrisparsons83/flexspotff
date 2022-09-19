@@ -32,7 +32,7 @@ export default function LeaguesIndex() {
       current: false,
     },
     {
-      name: "Weekly Leaderboard",
+      name: "Weekly Leaderboards",
       href: `/leagues/leaderboard/${CURRENT_YEAR}/${teamGameNewestWeek}`,
       current: false,
     },
