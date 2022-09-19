@@ -1,14 +1,47 @@
+import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
 
-const navigationLinks = [
-  { name: "Leaderboard", href: "/leagues/leaderboard", current: false },
-  { name: "Standings", href: "/leagues/standings", current: false },
-  { name: "ADP", href: "/leagues/adp", current: false },
-  { name: "Records", href: "/leagues/records", current: false },
-  { name: "Rules", href: "/leagues/rules", current: false },
-];
+import { getNewestWeekTeamGameByYear } from "~/models/teamgame.server";
+
+import { CURRENT_YEAR } from "~/utils/constants";
+import { superjson, useSuperLoaderData } from "~/utils/data";
+
+type LoaderData = {
+  teamGameNewestWeek: number;
+};
+
+export const loader = async ({ params, request }: LoaderArgs) => {
+  const teamGameNewestWeek =
+    (await getNewestWeekTeamGameByYear(CURRENT_YEAR))._max.week || 1;
+
+  return superjson<LoaderData>(
+    {
+      teamGameNewestWeek,
+    },
+    { headers: { "x-superjson": "true" } }
+  );
+};
 
 export default function LeaguesIndex() {
+  const { teamGameNewestWeek } = useSuperLoaderData<typeof loader>();
+
+  const navigationLinks = [
+    {
+      name: "Overall Leaderboard",
+      href: "/leagues/leaderboard",
+      current: false,
+    },
+    {
+      name: "Weekly Leaderboard",
+      href: `/leagues/leaderboard/${CURRENT_YEAR}/${teamGameNewestWeek}`,
+      current: false,
+    },
+    { name: "Standings", href: "/leagues/standings", current: false },
+    { name: "ADP", href: "/leagues/adp", current: false },
+    { name: "Records", href: "/leagues/records", current: false },
+    { name: "Rules", href: "/leagues/rules", current: false },
+  ];
+
   return (
     <>
       <h2>FlexSpotFF Leagues</h2>

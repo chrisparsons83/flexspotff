@@ -6,6 +6,24 @@ export type { TeamGame } from "@prisma/client";
 
 type TeamGameUpsert = Omit<TeamGame, "id"> & Partial<Pick<TeamGame, "id">>;
 
+export async function getNewestWeekTeamGameByYear(year: League["year"]) {
+  return prisma.teamGame.aggregate({
+    where: {
+      team: {
+        league: {
+          year,
+        },
+      },
+      pointsScored: {
+        gt: 0,
+      },
+    },
+    _max: {
+      week: true,
+    },
+  });
+}
+
 export async function getTeamGameYearlyTotals(year: League["year"]) {
   return prisma.teamGame.groupBy({
     by: ["teamId"],
@@ -30,6 +48,19 @@ export async function getTeamGamesByYearAndWeek(
       team: {
         league: {
           year,
+        },
+      },
+    },
+    orderBy: [
+      {
+        pointsScored: "desc",
+      },
+    ],
+    include: {
+      team: {
+        include: {
+          league: true,
+          user: true,
         },
       },
     },
