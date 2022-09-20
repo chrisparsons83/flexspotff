@@ -108,6 +108,19 @@ export const action = async ({ params, request }: ActionArgs) => {
 
     if (poolGame.game.gameStartTime > new Date()) {
       nflTeamIdToAmountBetMap.set(key, Math.abs(+amount));
+
+      // Get team that's the other side of this game and set to 0.
+      if (poolGame.game.awayTeamId === teamId) {
+        nflTeamIdToAmountBetMap.set(
+          `${poolGameId}-${poolGame.game.homeTeamId}`,
+          0
+        );
+      } else {
+        nflTeamIdToAmountBetMap.set(
+          `${poolGameId}-${poolGame.game.awayTeamId}`,
+          0
+        );
+      }
     }
   }
 
