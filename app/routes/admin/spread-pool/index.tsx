@@ -3,7 +3,11 @@ import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
 
 import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
-import { updatePoolGamePicksWithResults } from "~/models/poolgamepicks.server";
+import {
+  getPoolGamePicksWonLoss,
+  getPoolGamesPicksByPoolWeek,
+  updatePoolGamePicksWithResults,
+} from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import {
   getPoolWeekByYearAndWeek,
@@ -14,6 +18,7 @@ import {
   getNewestPoolWeekForYear,
   getPoolWeeksByYear,
 } from "~/models/poolweek.server";
+import { createPoolWeekMissed } from "~/models/poolweekmissed.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
@@ -75,6 +80,27 @@ export const action = async ({ request }: ActionArgs) => {
 
       // Update NFL scores for the week
       await syncNflGameWeek(year, [weekNumber]);
+
+      // TODO: Put check in here to cancel the process if all games aren't completed.
+
+      // Add people that did not put in a bet to penalties
+      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
+      const userIdsThatBet = [
+        ...new Set(
+          poolGamePicks
+            .filter((poolGamePick) => poolGamePick.amountBet > 0)
+            .map((poolGamePick) => poolGamePick.userId)
+        ),
+      ];
+      const existingUserIdsThatDidNotBet = (await getPoolGamePicksWonLoss())
+        .map((result) => result.userId)
+        .filter((userId) => !userIdsThatBet.includes(userId));
+
+      const poolGameMissedPromises: Promise<any>[] = [];
+      for (const userId of existingUserIdsThatDidNotBet) {
+        poolGameMissedPromises.push(createPoolWeekMissed(userId, poolWeek.id));
+      }
+      await Promise.all(poolGameMissedPromises);
 
       // Loop through each game and process
       const poolGames = await getPoolGamesByYearAndWeek(year, weekNumber);
