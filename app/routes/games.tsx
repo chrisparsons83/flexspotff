@@ -9,7 +9,6 @@ import { superjson, useSuperLoaderData } from "~/utils/data";
 const navigationLinks = [
   { name: "F²", href: "/games/f-squared", current: false },
   { name: "Survivor", href: "/games/survivor", current: false },
-  { name: "Spread Pool", href: "/games/spread-pool", current: false },
 ];
 
 type LoaderData = {
