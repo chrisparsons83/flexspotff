@@ -299,9 +299,6 @@ export default function GamesSpreadPoolWeek() {
                   (poolGamePick) =>
                     poolGamePick.teamBetId === existingBet?.teamId
                 );
-                if (existingBet && existingBet?.amount > 0) {
-                  console.log({ poolGames, existingPoolGamePick, existingBet });
-                }
                 return (
                   <SpreadPoolGameComponent
                     key={poolGame.id}

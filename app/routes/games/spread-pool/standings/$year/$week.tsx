@@ -49,7 +49,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     );
 
   const amountWonLoss = await getPoolGamePicksWonLossWeek(currentWeek);
-  console.log(amountWonLoss);
 
   // Update amountWonLoss based on missing week totals, then re-sort.
   const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYearAndWeek(
