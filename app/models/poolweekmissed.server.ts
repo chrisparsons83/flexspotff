@@ -44,3 +44,21 @@ export async function getPoolWeekMissedTotalByUserAndYear(
     },
   });
 }
+
+export async function getPoolWeekMissedTotalByUserAndYearAndWeek(
+  year: PoolWeek["year"],
+  weekNumber: PoolWeek["weekNumber"]
+) {
+  return prisma.poolWeekMissed.groupBy({
+    where: {
+      poolWeek: {
+        year,
+        weekNumber,
+      },
+    },
+    by: ["userId"],
+    _sum: {
+      resultWonLoss: true,
+    },
+  });
+}

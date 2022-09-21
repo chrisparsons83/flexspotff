@@ -15,8 +15,8 @@ import {
   getPoolGamePicksByUserAndPoolWeek,
 } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
+import { getPoolWeek } from "~/models/poolweek.server";
 import { getPoolWeeksByYear } from "~/models/poolweek.server";
-import { getPoolWeekByYearAndWeek } from "~/models/poolweek.server";
 import {
   createPoolWeekMissed,
   getPoolWeekMissedByUserAndYear,
@@ -54,15 +54,15 @@ export const action = async ({ params, request }: ActionArgs) => {
     failureRedirect: "/login",
   });
 
-  const year = params.year;
-  const week = params.week;
+  const poolWeekId = params.id;
+  if (!poolWeekId) throw new Error(`No pool week ID set`);
 
-  if (!year) throw new Error(`No year set`);
-  if (!week) throw new Error(`No week set`);
-
-  const poolWeek = await getPoolWeekByYearAndWeek(+year, +week);
+  const poolWeek = await getPoolWeek(poolWeekId);
   if (!poolWeek) throw new Error(`Missing pool week.`);
-  const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
+  const poolGames = await getPoolGamesByYearAndWeek(
+    poolWeek.year,
+    poolWeek.weekNumber
+  );
 
   // Create map of all teams in week and set bet to 0
   const nflTeamIdToAmountBetMap: Map<string, number> = new Map();
@@ -182,13 +182,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  const year = params.year;
-  const week = params.week;
+  const poolWeekId = params.id;
+  if (!poolWeekId) throw new Error(`No pool week ID set`);
 
-  if (!year) throw new Error(`No year set`);
-  if (!week) throw new Error(`No week set`);
-
-  const poolWeek = await getPoolWeekByYearAndWeek(+year, +week);
+  const poolWeek = await getPoolWeek(poolWeekId);
 
   if (!poolWeek) {
     return superjson<LoaderData>({
@@ -203,15 +200,21 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const poolGamePicks = await getPoolGamePicksByUserAndPoolWeek(user, poolWeek);
 
-  const poolGames = await getPoolGamesByYearAndWeek(+year, +week);
+  const poolGames = await getPoolGamesByYearAndWeek(
+    poolWeek.year,
+    poolWeek.weekNumber
+  );
 
-  const getAmountWonLoss = await getPoolGamePicksByUserAndYear(user, +year);
+  const getAmountWonLoss = await getPoolGamePicksByUserAndYear(
+    user,
+    poolWeek.year
+  );
   const amountWonLoss = getAmountWonLoss.reduce(
     (a, b) => a + (b.resultWonLoss || 0),
     0
   );
   const newEntryDeduction =
-    getAmountWonLoss.length === 0 ? -20 * (+week - 1) : 0;
+    getAmountWonLoss.length === 0 ? -20 * (poolWeek.weekNumber - 1) : 0;
 
   const missedEntryDeduction = (
     await getPoolWeekMissedByUserAndYear(user.id, CURRENT_YEAR)
@@ -284,9 +287,6 @@ export default function GamesSpreadPoolWeek() {
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               {poolGames?.map((poolGame) => {
-                const existingPoolGamePick = poolGamePicks?.find(
-                  (poolGamePick) => poolGamePick.poolGameId === poolGame.id
-                );
                 const existingBet = existingBets.find(
                   (existingBet) =>
                     existingBet.amount > 0 &&
@@ -295,6 +295,13 @@ export default function GamesSpreadPoolWeek() {
                       poolGame.game.homeTeamId,
                     ].includes(existingBet.teamId)
                 );
+                const existingPoolGamePick = poolGamePicks?.find(
+                  (poolGamePick) =>
+                    poolGamePick.teamBetId === existingBet?.teamId
+                );
+                if (existingBet && existingBet?.amount > 0) {
+                  console.log({ poolGames, existingPoolGamePick, existingBet });
+                }
                 return (
                   <SpreadPoolGameComponent
                     key={poolGame.id}

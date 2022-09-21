@@ -116,6 +116,25 @@ export async function getPoolGamePicksWonLoss() {
   });
 }
 
+export async function getPoolGamePicksWonLossWeek(poolWeek: PoolWeek) {
+  return prisma.poolGamePick.groupBy({
+    where: {
+      poolGame: {
+        poolWeekId: poolWeek.id,
+      },
+    },
+    by: ["userId"],
+    _sum: {
+      resultWonLoss: true,
+    },
+    orderBy: {
+      _sum: {
+        resultWonLoss: "desc",
+      },
+    },
+  });
+}
+
 export async function updatePoolGamePicksWithResults(
   poolGame: PoolGameByYearAndWeekElement
 ) {

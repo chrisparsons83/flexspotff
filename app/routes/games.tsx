@@ -46,6 +46,21 @@ export default function GamesIndex() {
     },
   ];
 
+  const spreadPoolLinks = [
+    { name: "Rules", href: "/games/spread-pool/rules", current: false },
+    { name: "My Entries", href: "/games/spread-pool/entries", current: false },
+    {
+      name: "Overall Standings",
+      href: `/games/spread-pool/standings/${CURRENT_YEAR}`,
+      current: false,
+    },
+    {
+      name: "Weekly Standings",
+      href: `/games/spread-pool/standings/${CURRENT_YEAR}/${qbStreamingCurrentWeek}`,
+      current: false,
+    },
+  ];
+
   return (
     <>
       <h2>FlexSpotFF Games</h2>
@@ -63,6 +78,29 @@ export default function GamesIndex() {
               className="mb-8 space-y-2 p-0"
             >
               {navigationLinks.map((navLink) => (
+                <li key={navLink.name} className="flow-root">
+                  <Link
+                    to={navLink.href}
+                    className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                  >
+                    {navLink.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <p
+              id="games-spreadPool-heading"
+              className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
+            >
+              Spread Pool
+            </p>
+            <ul
+              aria-labelledby="games-spreadPool-heading"
+              className="mb-8 space-y-2 p-0"
+            >
+              {spreadPoolLinks.map((navLink) => (
                 <li key={navLink.name} className="flow-root">
                   <Link
                     to={navLink.href}

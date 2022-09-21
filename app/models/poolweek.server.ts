@@ -12,6 +12,14 @@ export async function createPoolWeek(poolWeek: PoolWeekCreateInput) {
   });
 }
 
+export async function getPoolWeek(id: PoolWeek["id"]) {
+  return prisma.poolWeek.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getPoolWeekByYearAndWeek(
   year: PoolWeek["year"],
   weekNumber: PoolWeek["weekNumber"]
@@ -21,6 +29,11 @@ export async function getPoolWeekByYearAndWeek(
       year,
       weekNumber,
     },
+    orderBy: [
+      {
+        weekNumber: "desc",
+      },
+    ],
   });
 }
 
