@@ -23,7 +23,7 @@ export async function getCupWeeks(cupId: Cup["id"]) {
   });
 }
 
-export async function updateCupWeek(id: Cup["id"], data: Partial<CupWeek>) {
+export async function updateCupWeek(id: CupWeek["id"], data: Partial<CupWeek>) {
   return prisma.cupWeek.update({
     where: {
       id,

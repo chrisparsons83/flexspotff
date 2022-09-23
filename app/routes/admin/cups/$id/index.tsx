@@ -1,9 +1,11 @@
-import type { LoaderArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 
 import type { Cup } from "~/models/cup.server";
 import { getCup } from "~/models/cup.server";
 import type { CupWeek } from "~/models/cupweek.server";
+import { updateCupWeek } from "~/models/cupweek.server";
 import { getCupWeeks } from "~/models/cupweek.server";
 
 import Button from "~/components/ui/Button";
@@ -14,6 +16,10 @@ type LoaderData = {
   message?: string;
   cup: Cup;
   cupWeeks: CupWeek[];
+};
+
+type ActionData = {
+  message?: string;
 };
 
 type CupMappingOptions = {
@@ -27,6 +33,40 @@ type CupMappingOptions = {
     | "ROUND_OF_8"
     | "ROUND_OF_4"
     | "ROUND_OF_2";
+};
+
+export const action = async ({ params, request }: ActionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  requireAdmin(user);
+
+  const formData = await request.formData();
+  const action = formData.get("_action");
+
+  switch (action) {
+    case "updateCup": {
+      const promises: Promise<CupWeek>[] = [];
+      for (const [key, mapping] of formData.entries()) {
+        const id = key.replace("week-", "");
+
+        if (id === "_action") {
+          continue;
+        }
+
+        if (mapping && typeof mapping === "string") {
+          promises.push(updateCupWeek(id, { mapping }));
+        }
+      }
+      await Promise.all(promises);
+
+      return json<ActionData>({
+        message: "Cup week mappings have been updated.",
+      });
+    }
+  }
+
+  return json<ActionData>({ message: "Nothing has happened." });
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
