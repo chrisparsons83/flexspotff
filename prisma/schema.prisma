@@ -17,6 +17,31 @@ model Cup {
 
   cupTeams CupTeam[]
   cupWeeks CupWeek[]
+  cupGames CupGame[]
+}
+
+model CupGame {
+  id String @id @default(cuid())
+
+  cup Cup @relation(fields: [cupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cupId String
+
+  round String
+  roundSort Int
+  insideRoundSort Int
+  containsBye Boolean @default(false)
+
+  topTeam CupTeam? @relation(name: "TopTeam", fields: [topTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topTeamId String?
+
+  bottomTeam CupTeam? @relation(name: "BottomTeam", fields: [bottomTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  bottomTeamId String?
+
+  winnerToGame CupGame? @relation("WinnerToGame", fields: [winnerToGameId], references: [id])
+  winnerToGameId String?
+  winnerToTop Boolean @default(true)
+
+  ReferenceGames CupGame[] @relation("WinnerToGame")
 }
 
 model CupTeam {
@@ -29,6 +54,9 @@ model CupTeam {
   teamId String @unique
 
   seed Int
+
+  TopTeamGames CupGame[] @relation(name: "TopTeam")
+  BottomTeamGames CupGame[] @relation(name: "BottomTeam")
 
   @@unique([cupId, seed])
 }

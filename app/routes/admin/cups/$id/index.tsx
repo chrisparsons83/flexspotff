@@ -4,7 +4,11 @@ import { Form, useActionData } from "@remix-run/react";
 
 import type { Cup } from "~/models/cup.server";
 import { getCup } from "~/models/cup.server";
+import type { CupGame } from "~/models/cupgame.server";
+import { getCupGamesByCup, updateCupGame } from "~/models/cupgame.server";
+import { createCupGame } from "~/models/cupgame.server";
 import type { CupTeam } from "~/models/cupteam.server";
+import { getCupTeamsByCup } from "~/models/cupteam.server";
 import { createCupTeam } from "~/models/cupteam.server";
 import type { CupWeek } from "~/models/cupweek.server";
 import { updateCupWeek } from "~/models/cupweek.server";
@@ -75,6 +79,49 @@ const selectOptions: CupMappingOptions[] = [
   },
 ];
 
+const rounds = [
+  "ROUND_OF_2",
+  "ROUND_OF_4",
+  "ROUND_OF_8",
+  "ROUND_OF_16",
+  "ROUND_OF_32",
+  "ROUND_OF_64",
+];
+const roundOf64Matches = [
+  [1, 64],
+  [32, 33],
+  [17, 48],
+  [16, 49],
+  [9, 56],
+  [24, 41],
+  [25, 40],
+  [8, 57],
+  [4, 61],
+  [29, 36],
+  [20, 45],
+  [13, 52],
+  [12, 53],
+  [21, 44],
+  [28, 37],
+  [5, 60],
+  [2, 63],
+  [31, 34],
+  [18, 47],
+  [15, 50],
+  [10, 55],
+  [23, 42],
+  [26, 39],
+  [7, 58],
+  [3, 62],
+  [30, 35],
+  [19, 46],
+  [14, 51],
+  [11, 54],
+  [22, 43],
+  [27, 38],
+  [6, 59],
+];
+
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
@@ -129,6 +176,125 @@ export const action = async ({ params, request }: ActionArgs) => {
         seed++;
       }
       await Promise.all(promises);
+
+      // Get all the teams now, we'll need this to reference later
+      const cupTeams = await getCupTeamsByCup(cup.id);
+
+      // Create all the matches
+      const lastRoundMatchIds = [];
+      for (const [index, round] of rounds.entries()) {
+        const matchIdsToLoop = [...lastRoundMatchIds];
+        lastRoundMatchIds.length = 0;
+
+        const numberOfMatchesToCreate = Math.pow(2, index);
+
+        if (numberOfMatchesToCreate === 1) {
+          const cupGame = await createCupGame({
+            cupId: cup.id,
+            round,
+            roundSort: index,
+            insideRoundSort: 0,
+            winnerToTop: false,
+            topTeamId: null,
+            bottomTeamId: null,
+            winnerToGameId: null,
+            containsBye: false,
+          });
+          lastRoundMatchIds.push(cupGame.id);
+        } else if (numberOfMatchesToCreate !== 32) {
+          for (let i = 0; i < numberOfMatchesToCreate; i += 2) {
+            const prevIndex = i / 2;
+            const upperCupGame: CupGame = await createCupGame({
+              cupId: cup.id,
+              round,
+              roundSort: index,
+              insideRoundSort: i,
+              winnerToTop: true,
+              topTeamId: null,
+              bottomTeamId: null,
+              winnerToGameId: matchIdsToLoop[prevIndex],
+              containsBye: false,
+            });
+            const lowerCupGame: CupGame = await createCupGame({
+              cupId: cup.id,
+              round,
+              roundSort: index,
+              insideRoundSort: i + 1,
+              winnerToTop: false,
+              topTeamId: null,
+              bottomTeamId: null,
+              winnerToGameId: matchIdsToLoop[prevIndex],
+              containsBye: false,
+            });
+            lastRoundMatchIds.push(upperCupGame.id, lowerCupGame.id);
+          }
+        } else {
+          for (let i = 0; i < numberOfMatchesToCreate; i += 2) {
+            const prevIndex = i / 2;
+            const getMatchOne = roundOf64Matches[i];
+            const getMatchTwo = roundOf64Matches[i + 1];
+            const upperCupGame: CupGame = await createCupGame({
+              cupId: cup.id,
+              round,
+              roundSort: index,
+              insideRoundSort: i,
+              winnerToTop: true,
+              topTeamId:
+                cupTeams.find((cupTeam) => cupTeam.seed === getMatchOne[0])
+                  ?.id || null,
+              bottomTeamId:
+                cupTeams.find((cupTeam) => cupTeam.seed === getMatchOne[1])
+                  ?.id || null,
+              winnerToGameId: matchIdsToLoop[prevIndex],
+              containsBye: cupTeams.find(
+                (cupTeam) => cupTeam.seed === getMatchOne[1]
+              )?.id
+                ? false
+                : true,
+            });
+            const lowerCupGame: CupGame = await createCupGame({
+              cupId: cup.id,
+              round,
+              roundSort: index,
+              insideRoundSort: i + 1,
+              winnerToTop: false,
+              topTeamId:
+                cupTeams.find((cupTeam) => cupTeam.seed === getMatchTwo[0])
+                  ?.id || null,
+              bottomTeamId:
+                cupTeams.find((cupTeam) => cupTeam.seed === getMatchTwo[1])
+                  ?.id || null,
+              winnerToGameId: matchIdsToLoop[prevIndex],
+              containsBye: cupTeams.find(
+                (cupTeam) => cupTeam.seed === getMatchTwo[1]
+              )?.id
+                ? false
+                : true,
+            });
+            lastRoundMatchIds.push(upperCupGame.id, lowerCupGame.id);
+          }
+        }
+      }
+
+      // Automatically advance bye winners for round one.
+      const cupGamesWithBye = (await getCupGamesByCup(cup.id)).filter(
+        (cupGame) => cupGame.containsBye
+      );
+
+      const updates: Promise<CupGame>[] = [];
+      for (const cupGame of cupGamesWithBye) {
+        // We won't do this for the final, but this is byes so whatever
+        const updateCupGameData: Partial<CupGame> = {
+          id: cupGame.winnerToGameId!,
+        };
+        if (cupGame.winnerToTop) {
+          updateCupGameData.topTeamId = cupGame.topTeamId;
+        } else {
+          updateCupGameData.bottomTeamId = cupGame.topTeamId;
+        }
+        updates.push(updateCupGame(cupGame.winnerToGameId!, updateCupGameData));
+      }
+      await Promise.all(updates);
 
       return json<ActionData>({
         message: "Seeding created.",

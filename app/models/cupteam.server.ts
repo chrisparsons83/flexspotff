@@ -1,4 +1,4 @@
-import type { CupTeam } from "@prisma/client";
+import type { Cup, CupTeam } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
@@ -9,5 +9,13 @@ type CupTeamCreate = Omit<CupTeam, "id">;
 export async function createCupTeam(data: CupTeamCreate) {
   return prisma.cupTeam.create({
     data,
+  });
+}
+
+export async function getCupTeamsByCup(cupId: Cup["id"]) {
+  return prisma.cupTeam.findMany({
+    where: {
+      cupId,
+    },
   });
 }
