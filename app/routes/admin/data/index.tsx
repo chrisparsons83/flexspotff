@@ -3,17 +3,13 @@ import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import z from "zod";
 
-import { getLeaguesByYear } from "~/models/league.server";
 import { createNflTeams, getNflTeams } from "~/models/nflteam.server";
 import type { PlayerCreate } from "~/models/players.server";
 import { upsertPlayer } from "~/models/players.server";
-import type { TeamGame } from "~/models/teamgame.server";
-import { getTeamGamesByYearAndWeek } from "~/models/teamgame.server";
-import { upsertTeamGame } from "~/models/teamgame.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import { syncNflGameWeek } from "~/libs/syncs.server";
+import { syncNflGameWeek, syncSleeperWeeklyScores } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 
@@ -39,25 +35,6 @@ const sleeperJsonNflPlayers = z.record(
   })
 );
 type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
-
-const sleeperJsonNflState = z.object({
-  week: z.number(),
-  season_type: z.string(),
-  season_start_date: z.string(),
-  season: z.string(),
-  display_week: z.number(),
-});
-type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
-
-const sleeperJsonWeeklyMatchup = z.array(
-  z.object({
-    starters: z.array(z.string()),
-    roster_id: z.number(),
-    points: z.number(),
-    matchup_id: z.number(),
-  })
-);
-type SleeperJsonWeeklyMatchup = z.infer<typeof sleeperJsonWeeklyMatchup>;
 
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -123,64 +100,7 @@ export const action = async ({ request }: ActionArgs) => {
       return json<ActionData>({ message: "NFL Games have been updated." });
     }
     case "resyncCurrentWeekScores": {
-      const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/state/nfl`
-      );
-      const sleeperJson: SleeperJsonNflState = sleeperJsonNflState.parse(
-        await sleeperLeagueRes.json()
-      );
-
-      const leagues = await getLeaguesByYear(CURRENT_YEAR);
-      const teams = leagues.flatMap((league) => league.teams);
-
-      const existingTeamGames = await getTeamGamesByYearAndWeek(
-        CURRENT_YEAR,
-        sleeperJson.display_week
-      );
-
-      const leagueMatchupPromises: Promise<Response>[] = [];
-      for (const league of leagues) {
-        const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${sleeperJson.display_week}`;
-        leagueMatchupPromises.push(fetch(url));
-      }
-      const leagueMatchupResponses = await Promise.all(leagueMatchupPromises);
-
-      const teamGameUpserts: Promise<TeamGame>[] = [];
-      for (const response of leagueMatchupResponses) {
-        const sleeperLeagueId = new URL(response.url).pathname.split("/")[3];
-        const matchups: SleeperJsonWeeklyMatchup =
-          sleeperJsonWeeklyMatchup.parse(await response.json());
-        for (const matchup of matchups) {
-          const league = leagues.find(
-            (league) => league.sleeperLeagueId === sleeperLeagueId
-          );
-          if (!league) continue;
-
-          const team = teams.find(
-            (team) =>
-              team.leagueId === league.id && team.rosterId === matchup.roster_id
-          );
-          if (!team) continue;
-
-          const existingTeamGame = existingTeamGames.find(
-            (teamGame) =>
-              teamGame.teamId === team.id &&
-              teamGame.week === sleeperJson.display_week
-          );
-
-          teamGameUpserts.push(
-            upsertTeamGame({
-              id: existingTeamGame?.id,
-              sleeperMatchupId: matchup.matchup_id,
-              week: sleeperJson.display_week,
-              starters: matchup.starters,
-              pointsScored: matchup.points,
-              teamId: team.id,
-            })
-          );
-        }
-      }
-      await Promise.all(teamGameUpserts);
+      await syncSleeperWeeklyScores();
 
       return json<ActionData>({ message: "League games have been synced." });
     }

@@ -1,8 +1,9 @@
-import path from "path";
-import express from "express";
-import compression from "compression";
-import morgan from "morgan";
 import { createRequestHandler } from "@remix-run/express";
+import Bree from "bree";
+import compression from "compression";
+import express from "express";
+import morgan from "morgan";
+import path from "path";
 
 const app = express();
 
@@ -103,3 +104,23 @@ function purgeRequireCache() {
     }
   }
 }
+
+const bree = new Bree({
+  root: path.resolve(__dirname, "jobs"),
+  defaultExtension: process.env.TS_NODE ? "ts" : "js",
+  jobs: [
+    { name: "weekly-leaderboard-update", interval: "01 5 * * *" },
+    { name: "weekly-leaderboard-update", cron: "* 17-23 * * 7" },
+    { name: "weekly-leaderboard-update", cron: "* 0-3 * * 1" },
+    { name: "weekly-leaderboard-update", cron: "* 0-3 * * 2" },
+    { name: "weekly-leaderboard-update", cron: "* 0-3 * * 5" },
+  ],
+});
+(async () => {
+  if (!process.env.BREE_RUN || process.env.BREE_RUN === "on") {
+    await bree.start();
+    console.log("Bree has been started.");
+  } else {
+    console.log("Bree has been disabled.");
+  }
+})();
