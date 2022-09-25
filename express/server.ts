@@ -109,31 +109,10 @@ const bree = new Bree({
   root: path.resolve(__dirname, "jobs"),
   defaultExtension: process.env.TS_NODE ? "ts" : "js",
   jobs: [
-    { name: "sync-nfl-players-db", cron: "08 5 * * *" },
+    { name: "sync-nfl-players-db", interval: "1d" },
     {
-      name: "weekly-leaderboard-update-daily",
-      path: path.join(__dirname, "jobs", "weekly-leaderboard-update.js"),
-      cron: "01 5 * * *",
-    },
-    {
-      name: "weekly-leaderboard-update-sunday-early",
-      path: path.join(__dirname, "jobs", "weekly-leaderboard-update.js"),
-      cron: "* 17-23 * * 7",
-    },
-    {
-      name: "weekly-leaderboard-update-sunday-late",
-      path: path.join(__dirname, "jobs", "weekly-leaderboard-update.js"),
-      cron: "* 0-3 * * 1",
-    },
-    {
-      name: "weekly-leaderboard-update-monday",
-      path: path.join(__dirname, "jobs", "weekly-leaderboard-update.js"),
-      cron: "* 0-3 * * 2",
-    },
-    {
-      name: "weekly-leaderboard-update-thursday",
-      path: path.join(__dirname, "jobs", "weekly-leaderboard-update.js"),
-      cron: "* 0-3 * * 5",
+      name: "weekly-leaderboard-update",
+      interval: "1m",
     },
   ],
 });
