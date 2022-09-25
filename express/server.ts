@@ -109,11 +109,11 @@ const bree = new Bree({
   root: path.resolve(__dirname, "jobs"),
   defaultExtension: process.env.TS_NODE ? "ts" : "js",
   jobs: [
-    { name: "sync-nfl-players-db", interval: "1d" },
-    {
-      name: "weekly-leaderboard-update",
-      interval: "1m",
-    },
+    // { name: "sync-nfl-players-db", interval: "1d" },
+    // {
+    //   name: "weekly-leaderboard-update",
+    //   interval: "1m",
+    // },
   ],
 });
 (async () => {
