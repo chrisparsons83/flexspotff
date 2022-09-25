@@ -10,7 +10,8 @@ import { updateLeague } from "~/models/league.server";
 import type { GameCreate } from "~/models/nflgame.server";
 import { upsertNflGame } from "~/models/nflgame.server";
 import { getNflTeams } from "~/models/nflteam.server";
-import { getPlayers } from "~/models/players.server";
+import type { PlayerCreate } from "~/models/players.server";
+import { getPlayers, upsertPlayer } from "~/models/players.server";
 import { getTeams } from "~/models/team.server";
 import type { TeamGame } from "~/models/teamgame.server";
 import { upsertTeamGame } from "~/models/teamgame.server";
@@ -66,6 +67,18 @@ const sleeperJsonWeeklyMatchup = z.array(
   })
 );
 type SleeperJsonWeeklyMatchup = z.infer<typeof sleeperJsonWeeklyMatchup>;
+
+const sleeperJsonNflPlayers = z.record(
+  z.object({
+    team: z.string().nullable(),
+    position: z.string().nullable(),
+    player_id: z.string(),
+    first_name: z.string(),
+    last_name: z.string(),
+    full_name: z.string().optional(),
+  })
+);
+type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
 
 export async function syncAdp(league: League) {
   const sleeperLeagueRes = await fetch(
@@ -233,4 +246,44 @@ export async function syncSleeperWeeklyScores() {
     }
   }
   await Promise.all(teamGameUpserts);
+}
+
+export async function syncNflPlayers() {
+  const sleeperLeagueRes = await fetch(
+    `https://api.sleeper.app/v1/players/nfl`
+  );
+  const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
+    await sleeperLeagueRes.json()
+  );
+
+  const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
+  const nflTeams = await getNflTeams();
+  for (const nflTeam of nflTeams) {
+    nflTeamSleeperIdToLocalIdMap.set(nflTeam.sleeperId, nflTeam.id);
+  }
+
+  const promises: Promise<PlayerCreate>[] = [];
+  for (const [
+    sleeperId,
+    { position, first_name, last_name, full_name, team },
+  ] of Object.entries(sleeperJson)) {
+    const player: PlayerCreate = {
+      sleeperId,
+      position: position,
+      firstName: first_name,
+      lastName: last_name,
+      fullName: full_name || `${first_name} ${last_name}`,
+      nflTeam: team,
+      currentNFLTeamId: team
+        ? nflTeamSleeperIdToLocalIdMap.get(team) || null
+        : null,
+    };
+    promises.push(upsertPlayer(player));
+
+    if (promises.length >= 50) {
+      await Promise.all(promises);
+      promises.length = 0;
+    }
+  }
+  await Promise.all(promises);
 }

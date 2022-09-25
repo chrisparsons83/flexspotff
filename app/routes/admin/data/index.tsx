@@ -1,15 +1,16 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
-import z from "zod";
 
-import { createNflTeams, getNflTeams } from "~/models/nflteam.server";
-import type { PlayerCreate } from "~/models/players.server";
-import { upsertPlayer } from "~/models/players.server";
+import { createNflTeams } from "~/models/nflteam.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import { syncNflGameWeek, syncSleeperWeeklyScores } from "~/libs/syncs.server";
+import {
+  syncNflGameWeek,
+  syncNflPlayers,
+  syncSleeperWeeklyScores,
+} from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 
@@ -24,18 +25,6 @@ type ActionData = {
   message?: string;
 };
 
-const sleeperJsonNflPlayers = z.record(
-  z.object({
-    team: z.string().nullable(),
-    position: z.string().nullable(),
-    player_id: z.string(),
-    first_name: z.string(),
-    last_name: z.string(),
-    full_name: z.string().optional(),
-  })
-);
-type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
-
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
@@ -47,43 +36,7 @@ export const action = async ({ request }: ActionArgs) => {
 
   switch (action) {
     case "resyncNflPlayers": {
-      const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/players/nfl`
-      );
-      const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
-        await sleeperLeagueRes.json()
-      );
-
-      const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
-      const nflTeams = await getNflTeams();
-      for (const nflTeam of nflTeams) {
-        nflTeamSleeperIdToLocalIdMap.set(nflTeam.sleeperId, nflTeam.id);
-      }
-
-      const promises: Promise<PlayerCreate>[] = [];
-      for (const [
-        sleeperId,
-        { position, first_name, last_name, full_name, team },
-      ] of Object.entries(sleeperJson)) {
-        const player: PlayerCreate = {
-          sleeperId,
-          position: position,
-          firstName: first_name,
-          lastName: last_name,
-          fullName: full_name || `${first_name} ${last_name}`,
-          nflTeam: team,
-          currentNFLTeamId: team
-            ? nflTeamSleeperIdToLocalIdMap.get(team) || null
-            : null,
-        };
-        promises.push(upsertPlayer(player));
-
-        if (promises.length >= 50) {
-          await Promise.all(promises);
-          promises.length = 0;
-        }
-      }
-      await Promise.all(promises);
+      await syncNflPlayers();
 
       return json<ActionData>({ message: "NFL Players have been updated." });
     }
