@@ -105,7 +105,9 @@ export default function AdminDataIndex() {
           <h3>Update Current Week Scores</h3>
           <p>
             This will resync all current week scores in the system. This can be
-            run at any time safely.
+            run at any time safely. This does run every minute during when most
+            games are normally playing. Weird Saturday games may be the
+            exception.
           </p>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
@@ -126,9 +128,7 @@ export default function AdminDataIndex() {
           <p>
             This will resync all NFL players in the system. You only really need
             to do this if there's a player that's not showing up for some
-            reason, or if a player gets traded. Definitely not more than once a
-            day, and rarely even once a week. This command takes like 30 seconds
-            to run, so be patient with it.
+            reason. It runs at 10:08 PT daily.
           </p>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
