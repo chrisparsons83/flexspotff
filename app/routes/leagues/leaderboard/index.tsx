@@ -68,7 +68,7 @@ export default function LeaderboardIndex() {
                   </div>
                 </td>
                 <td>{team.user?.discordName || "Missing user"}</td>
-                <td>{position._sum.pointsScored}</td>
+                <td>{position._sum.pointsScored?.toFixed(2)}</td>
               </tr>
             );
           })}

@@ -88,7 +88,7 @@ export default function LeaderboardYearWeek() {
                   </div>
                 </td>
                 <td>{position.team.user?.discordName || "Missing user"}</td>
-                <td>{position.pointsScored}</td>
+                <td>{position.pointsScored?.toFixed(2)}</td>
               </tr>
             );
           })}
