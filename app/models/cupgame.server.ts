@@ -17,6 +17,34 @@ export async function getCupGamesByCup(cupId: Cup["id"]) {
     where: {
       cupId,
     },
+    include: {
+      bottomTeam: {
+        include: {
+          team: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+      topTeam: {
+        include: {
+          team: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: [
+      {
+        roundSort: "desc",
+      },
+      {
+        insideRoundSort: "asc",
+      },
+    ],
   });
 }
 

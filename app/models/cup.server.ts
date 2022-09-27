@@ -20,6 +20,14 @@ export async function getCup(id: Cup["id"]) {
   });
 }
 
+export async function getCupByYear(year: Cup["year"]) {
+  return prisma.cup.findFirst({
+    where: {
+      year,
+    },
+  });
+}
+
 export async function getCups() {
   return prisma.cup.findMany({});
 }

@@ -64,7 +64,7 @@ export default function GamesIndex() {
     <>
       <h2>FlexSpotFF Games</h2>
       <div className="grid md:grid-cols-12 md:gap-4">
-        <div className="not-prose text-sm md:col-span-3">
+        <div className="not-prose text-sm md:col-span-2">
           <section>
             <p
               id="admin-leagues-heading"
@@ -135,7 +135,7 @@ export default function GamesIndex() {
             </ul>
           </section>
         </div>
-        <div className="md:col-span-9">
+        <div className="md:col-span-10">
           <Outlet />
         </div>
       </div>

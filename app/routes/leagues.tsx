@@ -37,6 +37,7 @@ export default function LeaguesIndex() {
       current: false,
     },
     { name: "Standings", href: "/leagues/standings", current: false },
+    // { name: "Cup", href: `/leagues/cup/${CURRENT_YEAR}`, current: false },
     { name: "ADP", href: "/leagues/adp", current: false },
     { name: "Records", href: "/leagues/records", current: false },
     { name: "Rules", href: "/leagues/rules", current: false },
@@ -46,7 +47,7 @@ export default function LeaguesIndex() {
     <>
       <h2>FlexSpotFF Leagues</h2>
       <div className="grid md:grid-cols-12 md:gap-4">
-        <div className="not-prose text-sm md:col-span-3">
+        <div className="not-prose text-sm md:col-span-2">
           <section>
             <p
               id="admin-leagues-heading"
@@ -71,7 +72,7 @@ export default function LeaguesIndex() {
             </ul>
           </section>
         </div>
-        <div className="md:col-span-9">
+        <div className="md:col-span-10">
           <Outlet />
         </div>
       </div>
