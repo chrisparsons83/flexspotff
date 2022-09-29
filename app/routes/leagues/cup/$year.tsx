@@ -100,10 +100,14 @@ export default function CupYear() {
               <ul className="grid grid-cols-2 gap-1 lg:gap-0 lg:flex lg:flex-row lg:flex-wrap lg:justify-center lg:h-full lg:min-h-full">
                 {gamesInRound.map((game) => {
                   const topTeamScore = scoreArray.find(
-                    (score) => score.teamId === game.topTeam?.teamId
+                    (score) =>
+                      score.teamId === game.topTeam?.teamId &&
+                      score.mapping === roundName.key
                   )?.pointsScored;
                   const bottomTeamScore = scoreArray.find(
-                    (score) => score.teamId === game.bottomTeam?.teamId
+                    (score) =>
+                      score.teamId === game.bottomTeam?.teamId &&
+                      score.mapping === roundName.key
                   )?.pointsScored;
 
                   return (
