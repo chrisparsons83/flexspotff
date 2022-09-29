@@ -37,6 +37,12 @@ model CupGame {
   bottomTeam CupTeam? @relation(name: "BottomTeam", fields: [bottomTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   bottomTeamId String?
 
+  winningTeam CupTeam? @relation(name: "WinningTeam", fields: [winningTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  winningTeamId String?
+
+  losingTeam CupTeam? @relation(name: "LosingTeam", fields: [losingTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  losingTeamId String?
+
   winnerToGame CupGame? @relation("WinnerToGame", fields: [winnerToGameId], references: [id])
   winnerToGameId String?
   winnerToTop Boolean @default(true)
@@ -57,6 +63,8 @@ model CupTeam {
 
   TopTeamGames CupGame[] @relation(name: "TopTeam")
   BottomTeamGames CupGame[] @relation(name: "BottomTeam")
+  WinningTeamGames CupGame[] @relation(name: "WinningTeam")
+  LosingTeamGames CupGame[] @relation(name: "LosingTeam")
 
   @@unique([cupId, seed])
 }

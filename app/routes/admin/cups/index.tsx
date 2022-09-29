@@ -75,7 +75,6 @@ export default function QBStreamingStandingsYearIndex() {
   const { cups } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
-  console.log(cups);
 
   return (
     <>

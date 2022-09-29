@@ -1,7 +1,10 @@
 import type { LoaderArgs } from "@remix-run/node";
+import clsx from "clsx";
 
 import { getCupByYear } from "~/models/cup.server";
 import { getCupGamesByCup } from "~/models/cupgame.server";
+import { getCupWeeks } from "~/models/cupweek.server";
+import { getTeamGameMultiweekTotalsSeparated } from "~/models/teamgame.server";
 
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
@@ -19,15 +22,15 @@ const roundNameMapping: RoundName[] = [
   { key: "ROUND_OF_2", label: "Finals" },
 ];
 
-const trimName = (name: string | undefined): string => {
-  if (!name) return "";
-  if (name.length <= 16) return name;
-
-  return name.slice(0, 14) + "...";
+type ScoreArray = {
+  teamId: string;
+  mapping: string;
+  pointsScored: number;
 };
 
 type LoaderData = {
   cupGames: Awaited<ReturnType<typeof getCupGamesByCup>>;
+  scoreArray: ScoreArray[];
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -36,55 +39,118 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const cupGames = await getCupGamesByCup(cup.id);
 
+  const cupWeeks = (await getCupWeeks(cup.id)).filter(
+    (cupWeek) => cupWeek.mapping !== "SEEDING"
+  );
+
+  // Get all weekly scores and then map them into [{userId, ROUND_OF_64, ROUND_OF_32, etc}]
+  const scores = await getTeamGameMultiweekTotalsSeparated(
+    cupWeeks.map((cupWeek) => cupWeek.week)
+  );
+
+  const scoreArray: ScoreArray[] = [];
+  for (const score of scores) {
+    const roundToAddTo = cupWeeks.find(
+      (cupWeek) => cupWeek.week === score.week
+    );
+    if (!roundToAddTo) {
+      continue;
+    }
+    const index = scoreArray.findIndex(
+      (player) =>
+        player.teamId === score.teamId &&
+        player.mapping === roundToAddTo.mapping
+    );
+    if (index !== -1) {
+      scoreArray[index]["pointsScored"] += score.pointsScored;
+    } else {
+      scoreArray.push({
+        teamId: score.teamId,
+        mapping: roundToAddTo.mapping,
+        pointsScored: score.pointsScored,
+      });
+    }
+  }
+
   return superjson<LoaderData>(
-    { cupGames },
+    { cupGames, scoreArray },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function CupYear() {
-  const { cupGames } = useSuperLoaderData<typeof loader>();
+  const { cupGames, scoreArray } = useSuperLoaderData<typeof loader>();
 
   return (
     <>
       <h2>2022 Cup</h2>
-      <div className="flex flex-row not-prose text-xs">
+      <div className="lg:flex lg:flex-row not-prose lg:text-xs">
         {roundNameMapping.map((roundName) => {
           const gamesInRound = cupGames.filter(
             (cupGame) => cupGame.round === roundName.key
           );
-          console.log(gamesInRound);
           return (
-            <div key={roundName.key} className="block flex-1">
-              <h3 className="text-center">{roundName.label}</h3>
-              <ul className="flex flex-row flex-wrap justify-center h-full min-h-full">
+            <div
+              key={roundName.key}
+              className="mb-8 lg:mb-0 lg:block lg:flex-1"
+            >
+              <h3 className="text-md font-bold lg:font-normal lg:text-center">
+                {roundName.label}
+              </h3>
+              <ul className="grid grid-cols-2 gap-1 lg:gap-0 lg:flex lg:flex-row lg:flex-wrap lg:justify-center lg:h-full lg:min-h-full">
                 {gamesInRound.map((game) => {
-                  console.log(game);
+                  const topTeamScore = scoreArray.find(
+                    (score) => score.teamId === game.topTeam?.teamId
+                  )?.pointsScored;
+                  const bottomTeamScore = scoreArray.find(
+                    (score) => score.teamId === game.bottomTeam?.teamId
+                  )?.pointsScored;
+
                   return (
                     <li
                       key={game.id}
-                      className="flex flex-initial flex-col justify-center w-full p-1"
+                      className="lg:flex lg:flex-initial lg:flex-col lg:justify-center lg:w-full lg:p-1"
                     >
-                      <div className="game bg-slate-800 p-1">
-                        <div className="flex font-bold">
-                          <div className="basis-1/6">{game.topTeam?.seed}</div>
-                          <div className="basis-1/2">
-                            {trimName(game.topTeam?.team.user?.discordName)}
+                      <div className="bg-slate-800 p-1">
+                        <div
+                          className={clsx(
+                            game.winningTeamId === game.topTeamId &&
+                              "font-bold",
+                            game.losingTeamId === game.topTeamId &&
+                              "text-gray-400",
+                            "flex"
+                          )}
+                        >
+                          <div className="flex-none w-1/6 min-h-[2em]">
+                            {game.topTeam?.seed}
                           </div>
-                          <div className="basis-1/3 text-right">200.32</div>
+                          <div className="flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis">
+                            {game.topTeam?.team.user?.discordName}
+                          </div>
+                          <div className="flex-none w-1/3 text-right">
+                            {topTeamScore && topTeamScore.toFixed(2)}
+                          </div>
                         </div>
-                        <div className="flex text-gray-400">
-                          <div className="basis-1/6">
+                        <div
+                          className={clsx(
+                            game.winningTeamId === game.bottomTeamId &&
+                              "font-bold",
+                            game.losingTeamId === game.bottomTeamId &&
+                              "text-gray-400",
+                            "flex"
+                          )}
+                        >
+                          <div className="flex-none w-1/6 min-h-[1em]">
                             {game.bottomTeam?.seed}
                           </div>
-                          <div className="basis-1/2">
+                          <div className="flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis">
                             {game.containsBye
                               ? "Bye"
-                              : trimName(
-                                  game.bottomTeam?.team.user?.discordName
-                                )}
+                              : game.bottomTeam?.team.user?.discordName}
                           </div>
-                          <div className="basis-1/3 text-right">132.25</div>
+                          <div className="flex-none w-1/3 text-right">
+                            {bottomTeamScore && bottomTeamScore.toFixed(2)}
+                          </div>
                         </div>
                       </div>
                     </li>
