@@ -197,6 +197,8 @@ export const action = async ({ params, request }: ActionArgs) => {
             winnerToTop: false,
             topTeamId: null,
             bottomTeamId: null,
+            winningTeamId: null,
+            losingTeamId: null,
             winnerToGameId: null,
             containsBye: false,
           });
@@ -212,6 +214,8 @@ export const action = async ({ params, request }: ActionArgs) => {
               winnerToTop: true,
               topTeamId: null,
               bottomTeamId: null,
+              winningTeamId: null,
+              losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: false,
             });
@@ -223,6 +227,8 @@ export const action = async ({ params, request }: ActionArgs) => {
               winnerToTop: false,
               topTeamId: null,
               bottomTeamId: null,
+              winningTeamId: null,
+              losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: false,
             });
@@ -245,6 +251,8 @@ export const action = async ({ params, request }: ActionArgs) => {
               bottomTeamId:
                 cupTeams.find((cupTeam) => cupTeam.seed === getMatchOne[1])
                   ?.id || null,
+              winningTeamId: null,
+              losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: cupTeams.find(
                 (cupTeam) => cupTeam.seed === getMatchOne[1]
@@ -264,6 +272,8 @@ export const action = async ({ params, request }: ActionArgs) => {
               bottomTeamId:
                 cupTeams.find((cupTeam) => cupTeam.seed === getMatchTwo[1])
                   ?.id || null,
+              winningTeamId: null,
+              losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: cupTeams.find(
                 (cupTeam) => cupTeam.seed === getMatchTwo[1]
@@ -283,6 +293,12 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       const updates: Promise<CupGame>[] = [];
       for (const cupGame of cupGamesWithBye) {
+        updates.push(
+          updateCupGame(cupGame.id, {
+            id: cupGame.id,
+            winningTeamId: cupGame.topTeamId,
+          })
+        );
         // We won't do this for the final, but this is byes so whatever
         const updateCupGameData: Partial<CupGame> = {
           id: cupGame.winnerToGameId!,

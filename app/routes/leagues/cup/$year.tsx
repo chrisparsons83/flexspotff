@@ -140,7 +140,7 @@ export default function CupYear() {
                             game.winningTeamId === game.bottomTeamId &&
                               "font-bold",
                             game.losingTeamId === game.bottomTeamId &&
-                              "text-gray-400",
+                              "text-gray-500",
                             "flex"
                           )}
                         >
