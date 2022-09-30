@@ -22,7 +22,7 @@ const roundNameMapping: RoundName[] = [
   { key: "ROUND_OF_2", label: "Finals" },
 ];
 
-type ScoreArray = {
+export type ScoreArray = {
   teamId: string;
   mapping: string;
   pointsScored: number;

@@ -13,10 +13,14 @@ import { createCupTeam } from "~/models/cupteam.server";
 import type { CupWeek } from "~/models/cupweek.server";
 import { updateCupWeek } from "~/models/cupweek.server";
 import { getCupWeeks } from "~/models/cupweek.server";
-import { getTeamGameMultiweekTotals } from "~/models/teamgame.server";
+import {
+  getTeamGameMultiweekTotals,
+  getTeamGameMultiweekTotalsSeparated,
+} from "~/models/teamgame.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
+import type { ScoreArray } from "~/routes/leagues/cup/$year";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
@@ -317,8 +321,92 @@ export const action = async ({ params, request }: ActionArgs) => {
       });
     }
     default: {
+      console.log({ action });
+      const cupWeeks = (await getCupWeeks(cup.id)).filter(
+        (cupWeek) => cupWeek.mapping === action
+      );
+
+      const cupGames = (await getCupGamesByCup(cup.id)).filter(
+        (cupGame) => cupGame.round === action
+      );
+
+      const scores = await getTeamGameMultiweekTotalsSeparated(
+        cupWeeks.map((cupWeek) => cupWeek.week)
+      );
+
+      const scoreArray: ScoreArray[] = [];
+      for (const score of scores) {
+        const roundToAddTo = cupWeeks.find(
+          (cupWeek) => cupWeek.week === score.week
+        );
+        if (!roundToAddTo) {
+          continue;
+        }
+        const index = scoreArray.findIndex(
+          (player) =>
+            player.teamId === score.teamId &&
+            player.mapping === roundToAddTo.mapping
+        );
+        if (index !== -1) {
+          scoreArray[index]["pointsScored"] += score.pointsScored;
+        } else {
+          scoreArray.push({
+            teamId: score.teamId,
+            mapping: roundToAddTo.mapping,
+            pointsScored: score.pointsScored,
+          });
+        }
+      }
+
+      const promises: Promise<CupGame>[] = [];
+      for (const cupGame of cupGames) {
+        if (cupGame.containsBye) {
+          continue;
+        }
+        const tiebreaker =
+          !cupGame.bottomTeam ||
+          cupGame.topTeam!.seed > cupGame.bottomTeam!.seed
+            ? 0.001
+            : -0.001;
+        const topTeamScore =
+          (scoreArray.find(
+            (scoreObject) => scoreObject.teamId === cupGame.topTeam?.teamId
+          )?.pointsScored || 0) + tiebreaker;
+        const bottomTeamScore =
+          scoreArray.find(
+            (scoreObject) => scoreObject.teamId === cupGame.bottomTeam?.teamId
+          )?.pointsScored || 0;
+        const [winningTeamId, losingTeamId] =
+          topTeamScore > bottomTeamScore
+            ? [cupGame.topTeamId, cupGame.bottomTeamId]
+            : [cupGame.bottomTeamId, cupGame.topTeamId];
+        promises.push(
+          updateCupGame(cupGame.id, {
+            id: cupGame.id,
+            winningTeamId,
+            losingTeamId,
+          })
+        );
+        if (cupGame.winnerToTop && cupGame.winnerToGameId) {
+          promises.push(
+            updateCupGame(cupGame.winnerToGameId!, {
+              id: cupGame.winnerToGameId,
+              topTeamId: winningTeamId,
+            })
+          );
+        } else if (cupGame.winnerToGameId) {
+          promises.push(
+            updateCupGame(cupGame.winnerToGameId!, {
+              id: cupGame.winnerToGameId,
+              bottomTeamId: winningTeamId,
+            })
+          );
+        }
+      }
+      await Promise.all(promises);
+
       return json<ActionData>({
-        message: "Default thing happened.",
+        message: "This week was scored.",
       });
     }
   }
