@@ -81,6 +81,14 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 export default function CupYear() {
   const { cupGames, scoreArray } = useSuperLoaderData<typeof loader>();
 
+  const rankColors: Record<string, string> = {
+    admiral: "bg-admiral text-gray-900",
+    champions: "bg-champions text-gray-900",
+    dragon: "bg-dragon text-gray-900",
+    galaxy: "bg-galaxy text-gray-900",
+    monarch: "bg-monarch text-gray-900",
+  };
+
   return (
     <>
       <h2>2022 Cup</h2>
@@ -126,7 +134,20 @@ export default function CupYear() {
                           )}
                         >
                           <div className="flex-none w-1/6 min-h-[2em]">
-                            {game.topTeam?.seed}
+                            {game.topTeam?.seed ? (
+                              <div
+                                className={clsx(
+                                  rankColors[
+                                    game.topTeam.team.league.name.toLocaleLowerCase()
+                                  ],
+                                  "md:mx-1 lg:mx-0 w-6 lg:w-5 text-center"
+                                )}
+                              >
+                                {game.topTeam?.seed}
+                              </div>
+                            ) : (
+                              ""
+                            )}
                           </div>
                           <div className="flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis">
                             {game.topTeam?.team.user?.discordName}
@@ -145,7 +166,20 @@ export default function CupYear() {
                           )}
                         >
                           <div className="flex-none w-1/6 min-h-[1em]">
-                            {game.bottomTeam?.seed}
+                            {game.bottomTeam?.seed ? (
+                              <div
+                                className={clsx(
+                                  rankColors[
+                                    game.bottomTeam.team.league.name.toLocaleLowerCase()
+                                  ],
+                                  "md:mx-1 lg:mx-0 w-6 lg:w-5 text-center"
+                                )}
+                              >
+                                {game.bottomTeam?.seed}
+                              </div>
+                            ) : (
+                              ""
+                            )}
                           </div>
                           <div className="flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis">
                             {game.containsBye

@@ -23,6 +23,7 @@ export async function getCupGamesByCup(cupId: Cup["id"]) {
           team: {
             include: {
               user: true,
+              league: true,
             },
           },
         },
@@ -32,6 +33,7 @@ export async function getCupGamesByCup(cupId: Cup["id"]) {
           team: {
             include: {
               user: true,
+              league: true,
             },
           },
         },
