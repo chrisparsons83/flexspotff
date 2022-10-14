@@ -14,11 +14,10 @@ import type { PlayerCreate } from "~/models/players.server";
 import { getPlayers, upsertPlayer } from "~/models/players.server";
 import { getTeams } from "~/models/team.server";
 import type { TeamGame } from "~/models/teamgame.server";
-import { upsertTeamGame } from "~/models/teamgame.server";
+import { createTeamGame, updateTeamGame } from "~/models/teamgame.server";
 import { getTeamGamesByYearAndWeek } from "~/models/teamgame.server";
 
 import { graphQLClient } from "~/services/sleeperGraphql.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 
 const sleeperADPJson = z.array(
   z.object({
@@ -49,21 +48,13 @@ const sleeperGraphqlNflGames = z.object({
 });
 type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
 
-const sleeperJsonNflState = z.object({
-  week: z.number(),
-  season_type: z.string(),
-  season_start_date: z.string(),
-  season: z.string(),
-  display_week: z.number(),
-});
-type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
-
 const sleeperJsonWeeklyMatchup = z.array(
   z.object({
     starters: z.array(z.string()),
     roster_id: z.number(),
     points: z.number(),
     matchup_id: z.number(),
+    starters_points: z.array(z.number()),
   })
 );
 type SleeperJsonWeeklyMatchup = z.infer<typeof sleeperJsonWeeklyMatchup>;
@@ -188,23 +179,15 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
   return Promise.all(gameUpdatePromises);
 }
 
-export async function syncSleeperWeeklyScores() {
-  const sleeperLeagueRes = await fetch(`https://api.sleeper.app/v1/state/nfl`);
-  const sleeperJson: SleeperJsonNflState = sleeperJsonNflState.parse(
-    await sleeperLeagueRes.json()
-  );
-
-  const leagues = await getLeaguesByYear(CURRENT_YEAR);
+export async function syncSleeperWeeklyScores(year: number, week: number) {
+  const leagues = await getLeaguesByYear(year);
   const teams = leagues.flatMap((league) => league.teams);
 
-  const existingTeamGames = await getTeamGamesByYearAndWeek(
-    CURRENT_YEAR,
-    sleeperJson.display_week
-  );
+  const existingTeamGames = await getTeamGamesByYearAndWeek(year, week);
 
   const leagueMatchupPromises: Promise<Response>[] = [];
   for (const league of leagues) {
-    const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${sleeperJson.display_week}`;
+    const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${week}`;
     leagueMatchupPromises.push(fetch(url));
   }
   const leagueMatchupResponses = await Promise.all(leagueMatchupPromises);
@@ -228,21 +211,35 @@ export async function syncSleeperWeeklyScores() {
       if (!team) continue;
 
       const existingTeamGame = existingTeamGames.find(
-        (teamGame) =>
-          teamGame.teamId === team.id &&
-          teamGame.week === sleeperJson.display_week
+        (teamGame) => teamGame.teamId === team.id && teamGame.week === week
       );
 
-      teamGameUpserts.push(
-        upsertTeamGame({
-          id: existingTeamGame?.id,
-          sleeperMatchupId: matchup.matchup_id,
-          week: sleeperJson.display_week,
-          starters: matchup.starters,
-          pointsScored: matchup.points,
-          teamId: team.id,
-        })
-      );
+      console.log(matchup.starters);
+
+      if (existingTeamGame) {
+        teamGameUpserts.push(
+          updateTeamGame({
+            id: existingTeamGame.id,
+            sleeperMatchupId: matchup.matchup_id,
+            week,
+            starters: matchup.starters,
+            pointsScored: matchup.points,
+            teamId: team.id,
+            startingPlayerPoints: matchup.starters_points,
+          })
+        );
+      } else {
+        teamGameUpserts.push(
+          createTeamGame({
+            sleeperMatchupId: matchup.matchup_id,
+            week,
+            starters: matchup.starters,
+            pointsScored: matchup.points,
+            teamId: team.id,
+            startingPlayerPoints: matchup.starters_points,
+          })
+        );
+      }
     }
   }
   await Promise.all(teamGameUpserts);

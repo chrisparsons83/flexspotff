@@ -4,6 +4,7 @@ import { prisma } from "~/db.server";
 
 export type { TeamGame } from "@prisma/client";
 
+type TeamGameCreate = Omit<TeamGame, "id">;
 type TeamGameUpsert = Omit<TeamGame, "id"> & Partial<Pick<TeamGame, "id">>;
 
 export async function getNewestWeekTeamGameByYear(year: League["year"]) {
@@ -94,6 +95,7 @@ export async function getTeamGamesByYearAndWeek(
           user: true,
         },
       },
+      startingPlayers: true,
     },
   });
 }
@@ -111,4 +113,37 @@ export async function upsertTeamGame(teamGame: TeamGameUpsert) {
       data: teamGame,
     });
   }
+}
+
+export async function createTeamGame(teamGame: TeamGameCreate) {
+  const connect = teamGame.starters
+    ?.filter((starter) => starter !== "0")
+    .map((starter) => ({ sleeperId: starter }));
+
+  return prisma.teamGame.create({
+    data: {
+      ...teamGame,
+      startingPlayers: {
+        connect,
+      },
+    },
+  });
+}
+
+export async function updateTeamGame(teamGame: Partial<TeamGame>) {
+  const connect = teamGame.starters
+    ?.filter((starter) => starter !== "0")
+    .map((starter) => ({ sleeperId: starter }));
+
+  return prisma.teamGame.update({
+    where: {
+      id: teamGame.id,
+    },
+    data: {
+      ...teamGame,
+      startingPlayers: {
+        connect,
+      },
+    },
+  });
 }

@@ -1,6 +1,7 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
+import z from "zod";
 
 import { createNflTeams } from "~/models/nflteam.server";
 
@@ -13,6 +14,15 @@ import {
 } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
+
+const sleeperJsonNflState = z.object({
+  week: z.number(),
+  season_type: z.string(),
+  season_start_date: z.string(),
+  season: z.string(),
+  display_week: z.number(),
+});
+type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
 
 type ActionData = {
   formError?: string;
@@ -53,9 +63,25 @@ export const action = async ({ request }: ActionArgs) => {
       return json<ActionData>({ message: "NFL Games have been updated." });
     }
     case "resyncCurrentWeekScores": {
-      await syncSleeperWeeklyScores();
+      const sleeperLeagueRes = await fetch(
+        `https://api.sleeper.app/v1/state/nfl`
+      );
+      const sleeperJson: SleeperJsonNflState = sleeperJsonNflState.parse(
+        await sleeperLeagueRes.json()
+      );
+
+      await syncSleeperWeeklyScores(CURRENT_YEAR, sleeperJson.display_week);
 
       return json<ActionData>({ message: "League games have been synced." });
+    }
+    case "resyncCurrentYearScores": {
+      for (let i = 1; i <= 17; i++) {
+        await syncSleeperWeeklyScores(CURRENT_YEAR, i);
+      }
+
+      return json<ActionData>({
+        message: "League games have been synced for the year.",
+      });
     }
   }
 
@@ -121,6 +147,27 @@ export default function AdminDataIndex() {
             disabled={transition.state !== "idle"}
           >
             Resync Current Week Scores
+          </Button>
+        </section>
+        <section>
+          <h3>Update Current Year Scores</h3>
+          <p>
+            This will resync all week scores in the system. Only do this once in
+            a while, generally the resync current week score should be all you
+            need.
+          </p>
+          {actionData?.formError ? (
+            <p className="form-validation-error" role="alert">
+              {actionData.formError}
+            </p>
+          ) : null}
+          <Button
+            type="submit"
+            name="_action"
+            value="resyncCurrentYearScores"
+            disabled={transition.state !== "idle"}
+          >
+            Resync Current Year Scores
           </Button>
         </section>
         <section>

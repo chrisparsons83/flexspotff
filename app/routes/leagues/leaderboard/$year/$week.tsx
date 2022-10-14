@@ -1,11 +1,11 @@
 import type { LoaderArgs } from "@remix-run/node";
-import clsx from "clsx";
 
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
 } from "~/models/teamgame.server";
 
+import LeaderboardRow from "~/components/layout/leaderboard/LeaderboardRow";
 import GoBox from "~/components/ui/GoBox";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
@@ -36,14 +36,6 @@ export default function LeaderboardYearWeek() {
   const { leaderboard, week, maxWeek, year } =
     useSuperLoaderData<typeof loader>();
 
-  const rankColors: Record<string, string> = {
-    admiral: "bg-admiral text-gray-900",
-    champions: "bg-champions text-gray-900",
-    dragon: "bg-dragon text-gray-900",
-    galaxy: "bg-galaxy text-gray-900",
-    monarch: "bg-monarch text-gray-900",
-  };
-
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()
     .map((weekNumber) => ({
@@ -68,30 +60,13 @@ export default function LeaderboardYearWeek() {
           </tr>
         </thead>
         <tbody>
-          {leaderboard.map((position, index) => {
-            return (
-              <tr
-                key={position.teamId}
-                className={clsx(
-                  index % 2 === 0 ? "bg-gray-900" : "bg-gray-800",
-                  "p-2"
-                )}
-              >
-                <td className="pl-1">
-                  <div
-                    className={clsx(
-                      rankColors[position.team.league.name.toLocaleLowerCase()],
-                      "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
-                    )}
-                  >
-                    {index + 1}
-                  </div>
-                </td>
-                <td>{position.team.user?.discordName || "Missing user"}</td>
-                <td>{position.pointsScored?.toFixed(2)}</td>
-              </tr>
-            );
-          })}
+          {leaderboard.map((position, index) => (
+            <LeaderboardRow
+              key={position.id}
+              position={position}
+              rank={index + 1}
+            />
+          ))}
         </tbody>
       </table>
     </>
