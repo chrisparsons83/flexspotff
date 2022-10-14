@@ -37,7 +37,7 @@ export default function LeaguesIndex() {
       current: false,
     },
     { name: "Standings", href: "/leagues/standings", current: false },
-    // { name: "Cup", href: `/leagues/cup/${CURRENT_YEAR}`, current: false },
+    { name: "Cup", href: `/leagues/cup/${CURRENT_YEAR}`, current: false },
     { name: "ADP", href: "/leagues/adp", current: false },
     { name: "Records", href: "/leagues/records", current: false },
     { name: "Rules", href: "/leagues/rules", current: false },
