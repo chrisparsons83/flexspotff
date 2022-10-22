@@ -114,10 +114,10 @@ const bree = new Bree({
     //   name: "weekly-leaderboard-update",
     //   interval: "1m",
     // },
-    {
-      name: "sync-nfl-game-status",
-      interval: "5m",
-    },
+    // {
+    //   name: "sync-nfl-game-status",
+    //   interval: "5m",
+    // },
   ],
 });
 (async () => {
