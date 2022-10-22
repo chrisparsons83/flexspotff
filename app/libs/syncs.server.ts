@@ -71,6 +71,15 @@ const sleeperJsonNflPlayers = z.record(
 );
 type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
 
+const sleeperJsonNflState = z.object({
+  week: z.number(),
+  season_type: z.string(),
+  season_start_date: z.string(),
+  season: z.string(),
+  display_week: z.number(),
+});
+type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
+
 export async function syncAdp(league: League) {
   const sleeperLeagueRes = await fetch(
     `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}/picks`
@@ -176,7 +185,9 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
     };
     gameUpdatePromises.push(upsertNflGame(gameUpsert));
   }
-  return Promise.all(gameUpdatePromises);
+  await Promise.all(gameUpdatePromises);
+
+  return true;
 }
 
 export async function syncSleeperWeeklyScores(year: number, week: number) {
@@ -281,4 +292,13 @@ export async function syncNflPlayers() {
     }
   }
   await Promise.all(promises);
+}
+
+export async function getNflState() {
+  const sleeperLeagueRes = await fetch(`https://api.sleeper.app/v1/state/nfl`);
+  const nflState: SleeperJsonNflState = sleeperJsonNflState.parse(
+    await sleeperLeagueRes.json()
+  );
+
+  return nflState;
 }

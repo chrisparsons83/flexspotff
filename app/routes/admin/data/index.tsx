@@ -1,28 +1,19 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
-import z from "zod";
 
 import { createNflTeams } from "~/models/nflteam.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import {
+  getNflState,
   syncNflGameWeek,
   syncNflPlayers,
   syncSleeperWeeklyScores,
 } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
-
-const sleeperJsonNflState = z.object({
-  week: z.number(),
-  season_type: z.string(),
-  season_start_date: z.string(),
-  season: z.string(),
-  display_week: z.number(),
-});
-type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
 
 type ActionData = {
   formError?: string;
@@ -63,14 +54,9 @@ export const action = async ({ request }: ActionArgs) => {
       return json<ActionData>({ message: "NFL Games have been updated." });
     }
     case "resyncCurrentWeekScores": {
-      const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/state/nfl`
-      );
-      const sleeperJson: SleeperJsonNflState = sleeperJsonNflState.parse(
-        await sleeperLeagueRes.json()
-      );
+      const nflGameState = await getNflState();
 
-      await syncSleeperWeeklyScores(CURRENT_YEAR, sleeperJson.display_week);
+      await syncSleeperWeeklyScores(CURRENT_YEAR, nflGameState.display_week);
 
       return json<ActionData>({ message: "League games have been synced." });
     }
