@@ -321,7 +321,6 @@ export const action = async ({ params, request }: ActionArgs) => {
       });
     }
     default: {
-      console.log({ action });
       const cupWeeks = (await getCupWeeks(cup.id)).filter(
         (cupWeek) => cupWeek.mapping === action
       );

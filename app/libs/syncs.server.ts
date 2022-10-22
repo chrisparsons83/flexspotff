@@ -214,8 +214,6 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
         (teamGame) => teamGame.teamId === team.id && teamGame.week === week
       );
 
-      console.log(matchup.starters);
-
       if (existingTeamGame) {
         teamGameUpserts.push(
           updateTeamGame({
