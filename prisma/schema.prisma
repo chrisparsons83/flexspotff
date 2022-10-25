@@ -222,7 +222,11 @@ model PoolWeekMissed {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
 
+  amountBet Int? @default(0)
   resultWonLoss Int? @default(-20)
+  isWin Int @default(0)
+  isTie Int @default(0)
+  isLoss Int @default(0)
 
   @@unique([userId, poolWeekId], name: "userAndPoolWeek")
 }
@@ -235,6 +239,9 @@ model PoolGamePick {
   amountBet Int
   resultWonLoss Int? @default(0)
   isScored Boolean? @default(false)
+  isWin Int @default(0)
+  isTie Int @default(0)
+  isLoss Int @default(0)
 
   teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamBetId String

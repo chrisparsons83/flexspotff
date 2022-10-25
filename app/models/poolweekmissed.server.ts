@@ -58,7 +58,11 @@ export async function getPoolWeekMissedTotalByUserAndYearAndWeek(
     },
     by: ["userId"],
     _sum: {
+      amountBet: true,
       resultWonLoss: true,
+      isLoss: true,
+      isTie: true,
+      isWin: true,
     },
   });
 }

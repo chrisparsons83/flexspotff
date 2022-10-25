@@ -31,6 +31,14 @@ export default function SpreadPoolStandingsRow({
 
   if (!user) return null;
 
+  const returnOnEquity = poolGameWonLoss._sum.amountBet
+    ? `${(
+        ((poolGameWonLoss._sum.resultWonLoss || 0) /
+          (poolGameWonLoss._sum.amountBet || 1)) *
+        100
+      ).toFixed(2)}%`
+    : "No bets";
+
   return (
     <>
       <tr>
@@ -56,6 +64,11 @@ export default function SpreadPoolStandingsRow({
           )}
         </td>
         <td>{initialBudget + (poolGameWonLoss._sum.resultWonLoss || 0)}</td>
+        <td>
+          {poolGameWonLoss._sum.isWin}-{poolGameWonLoss._sum.isLoss}-
+          {poolGameWonLoss._sum.isTie}
+        </td>
+        <td>{returnOnEquity}</td>
       </tr>
       {showDetails && (
         <tr className="border-b-1 bg-gray-800">
@@ -102,6 +115,7 @@ export default function SpreadPoolStandingsRow({
                 );
               })}
           </td>
+          <td></td>
           <td></td>
         </tr>
       )}

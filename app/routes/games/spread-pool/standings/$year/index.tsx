@@ -99,6 +99,8 @@ export default function QBStreamingStandingsYearIndex() {
             <th>Rank</th>
             <th>Name</th>
             <th>Bank</th>
+            <th>W-L-T</th>
+            <th>ROE</th>
           </tr>
         </thead>
         <tbody>
