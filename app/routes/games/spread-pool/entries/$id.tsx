@@ -134,6 +134,9 @@ export const action = async ({ params, request }: ActionArgs) => {
       poolGameId,
       teamBetId,
       isScored: false,
+      isLoss: 0,
+      isTie: 0,
+      isWin: 0,
     });
   }
 
