@@ -108,6 +108,7 @@ export async function getPoolGamePicksWonLoss() {
       amountBet: {
         gt: 0,
       },
+      isScored: true,
     },
     by: ["userId"],
     _sum: {
@@ -134,6 +135,7 @@ export async function getPoolGamePicksWonLossWeek(poolWeek: PoolWeek) {
       amountBet: {
         gt: 0,
       },
+      isScored: true,
     },
     by: ["userId"],
     _sum: {
