@@ -46,7 +46,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       const updateIndex = amountWonLoss.findIndex(
         (amount) => amount.userId === missingWeekPenalty.userId
       );
-      if (updateIndex !== 1) {
+      if (updateIndex !== -1) {
         amountWonLoss[updateIndex]._sum.resultWonLoss =
           (amountWonLoss[updateIndex]._sum.resultWonLoss || 0) +
           (missingWeekPenalty._sum.resultWonLoss || 0);
