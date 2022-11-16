@@ -29,7 +29,7 @@ export default function Records() {
 
       <h2>Trash Turtle Football</h2>
 
-      <img alt="podcast img" src="/theflexspotlogo.svg" className="float-right w-56 h-56 ml-4 mb-4"></img>
+      <img alt="podcast img" src="/theflexspotlogo.svg" className="float-right h-36 w-36 lg:w-56 lg:h-56 ml-4 mb-4"></img>
       <p className="my-1 font-semibold">DrTrashdad and Bootzfantasy</p>
 
       <p>Unleashed from the iconic Flexspot Fantasy Football Discord server, Dr. Trashdad and Bootz bring the next generation of a fantasy football podcast.
