@@ -19,20 +19,18 @@ export const loader = async ({ request }: LoaderArgs) => {
   );
 };
 
+
 export default function Records() {
   const { episodes } = useSuperLoaderData<typeof loader>();
   return (
-    <>
-      {/* <a href="//podcasts.apple.com/ph/podcast/trash-turtle-football/id1586577488">
-        Go listen and subscribe for now.
-      </a> */}
+    <div className="text-center md:text-left">
 
-      <h2>Trash Turtle Football</h2>
+      <h2 id="Title">Trash Turtle Football</h2>
 
-      <img alt="podcast img" src="/theflexspotlogo.svg" className="float-right h-36 w-36 lg:w-56 lg:h-56 ml-4 mb-4"></img>
-      <p className="my-1 font-semibold">DrTrashdad and Bootzfantasy</p>
+      <img alt="podcast image" src="/theflexspotlogo.svg" className="h-36 w-36 lg:w-56 lg:h-56 mx-auto md:ml-4 mb-4 float-none md:float-right"></img>
+      <p className="my-1 font-semibold" id='Hosts'>DrTrashdad and Bootzfantasy</p>
 
-      <p>Unleashed from the iconic Flexspot Fantasy Football Discord server, Dr. Trashdad and Bootz bring the next generation of a fantasy football podcast.
+      <p id='Decription'>Unleashed from the iconic Flexspot Fantasy Football Discord server, Dr. Trashdad and Bootz bring the next generation of a fantasy football podcast.
         A conversation between a numbers and spreadsheets analyst and a film room or gut drafter, Bootz and Trashdad talk about fantasy
         relevant topics to help you get the edge you need in your league. Redraft, dynasty, bestball, and even some sportsbetting are common topics.
         Listen to us to get in-depth and less talked-about fantasy knowledge without the fluff.
@@ -44,6 +42,6 @@ export default function Records() {
           <p className="mt-1">{episode.publishDate.toLocaleDateString()}</p>
         </div>
       ))}
-    </>
+    </div>
   );
 }
