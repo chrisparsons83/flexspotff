@@ -11,12 +11,9 @@ describe("Podcasts Loader", () => {
     expect(responseData).toBeInstanceOf(Object);
     expect(responseData.json.episodes).toBeInstanceOf(Array);
   });
-});
 
-describe("Podcasts loader returns episode data", () => {
-  it("should return a response", async () => {
+  it("should return a returns episode data", async () => {
     const responseData = await loader({
-      // contents of loaderArgs (request, params, context) not actually used
       request: new Request("http://localhost:3000/podcast"),
       params: {},
       context: {},
