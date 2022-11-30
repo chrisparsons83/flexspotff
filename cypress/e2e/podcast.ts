@@ -24,7 +24,4 @@ describe("podcast tests", () => {
  relevant topics to help you get the edge you need in your league. Redraft, dynasty, bestball, and even some sportsbetting are common topics.\
  Listen to us to get in-depth and less talked-about fantasy knowledge without the fluff.')
   });
-
-
-
 });
