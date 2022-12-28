@@ -3,10 +3,10 @@ import { loader } from "./podcast";
 describe("Podcasts Loader", () => {
   it("should return a response", async () => {
     const responseData = await loader({
-      request: new Request("http://localhost:3000/podcasts"),
+      request: new Request("http://localhost:8811/podcast"),
       params: {},
       context: {},
-    }).then(response => response.json());
+    }).then((response) => response.json());
 
     expect(responseData).toBeInstanceOf(Object);
     expect(responseData.json.episodes).toBeInstanceOf(Array);
@@ -14,10 +14,10 @@ describe("Podcasts Loader", () => {
 
   it("should return a returns episode data", async () => {
     const responseData = await loader({
-      request: new Request("http://localhost:3000/podcast"),
+      request: new Request("http://localhost:8811/podcast"),
       params: {},
       context: {},
-    }).then(response => response.json());
+    }).then((response) => response.json());
 
     responseData.json.episodes.forEach((episode: Object) => {
       expect(episode).toHaveProperty("id");
@@ -34,6 +34,6 @@ describe("Podcasts Loader", () => {
       expect(episode).toHaveProperty("season");
       expect(episode).toHaveProperty("shownotes");
       expect(episode).toHaveProperty("title");
-    })
+    });
   });
 });
