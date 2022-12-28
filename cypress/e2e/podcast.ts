@@ -4,7 +4,7 @@ describe("podcast tests", () => {
 
     // podcasts page will be the third link in nav bar
     cy.get("nav").find("a").contains("Podcast").click();
-    cy.url().should("eq", "/podcast");
+    cy.url().should("include", "/podcast");
   });
 
   it("Check Title", () => {
