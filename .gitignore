@@ -2,7 +2,7 @@ node_modules
 
 /build
 /public/build
-.env
+.env*
 
 /cypress/screenshots
 /cypress/videos

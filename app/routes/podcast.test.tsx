@@ -1,6 +1,12 @@
+import { truncateDB } from "~/utils/vitest";
+
 import { loader } from "./podcast";
 
 describe("Podcasts Loader", () => {
+  beforeEach(async () => {
+    await truncateDB();
+  });
+
   it("should return a response", async () => {
     const responseData = await loader({
       request: new Request("http://localhost:8811/podcast"),
