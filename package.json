@@ -25,7 +25,7 @@
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "test": "run-s db:migrate:test test:unit",
-    "test:unit": "dotenv -e .env.test -- vitest --no-threads",
+    "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"npx cypress open\"",
     "pretest:e2e:run": "npm run build",
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"npx cypress run\"",
