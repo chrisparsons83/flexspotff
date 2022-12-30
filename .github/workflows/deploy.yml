@@ -79,6 +79,12 @@ jobs:
         with:
           useLockFile: false
 
+      - name: 🐳 Docker compose
+        # the sleep is just there to give time for postgres to get started
+        run: docker-compose up -d && sleep 3
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/flexspotff_test"
+
       - name: ⚡ Run vitest
         run: npm run test
 
@@ -109,7 +115,7 @@ jobs:
         # the sleep is just there to give time for postgres to get started
         run: docker-compose up -d && sleep 3
         env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/flexspotff"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/flexspotff_test"
 
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
