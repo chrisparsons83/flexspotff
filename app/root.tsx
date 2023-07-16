@@ -7,7 +7,6 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { setUser, withSentry } from "@sentry/remix";
 
 import type { User } from "~/models/user.server";
 
@@ -31,7 +30,6 @@ type LoaderData = {
   userIsEditor: boolean;
   ENV: {
     NODE_ENV: string;
-    SENTRY_DSN: string;
   };
 };
 
@@ -39,16 +37,11 @@ export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
 
-  if (user) {
-    setUser(user);
-  }
-
   return superjson<LoaderData>(
     {
       user,
       userIsEditor,
       ENV: {
-        SENTRY_DSN: process.env.SENTRY_DSN,
         NODE_ENV: process.env.NODE_ENV,
       },
     },
@@ -85,7 +78,7 @@ function App() {
   );
 }
 
-export default withSentry(App);
+export default App;
 
 export function ErrorBoundary({ error }: { error: Error }) {
   return (
