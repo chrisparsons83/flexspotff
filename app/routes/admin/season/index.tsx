@@ -31,9 +31,8 @@ export const action = async ({ request }: ActionArgs) => {
 
   const formData = await request.formData();
   const action = formData.get("_action");
-  const seasonId = formData.get("seasonId");
 
-  if (typeof action !== "string" || typeof seasonId !== "string") {
+  if (typeof action !== "string") {
     throw new Error(`Form not generated correctly.`);
   }
 
@@ -50,6 +49,10 @@ export const action = async ({ request }: ActionArgs) => {
       });
     }
     case "setActive": {
+      const seasonId = formData.get("seasonId");
+      if (typeof seasonId !== "string") {
+        throw new Error(`Form not generated correctly.`);
+      }
       const [, season] = await updateActiveSeason(seasonId);
 
       return json<ActionData>({
@@ -57,9 +60,9 @@ export const action = async ({ request }: ActionArgs) => {
       });
     }
     case "setRegistration": {
-      console.log("setReg");
+      const seasonId = formData.get("seasonId");
       const actionToSeason = formData.get("actionToSeason");
-      if (typeof actionToSeason !== "string") {
+      if (typeof seasonId !== "string" || typeof actionToSeason !== "string") {
         throw new Error(`Form not generated correctly.`);
       }
 
