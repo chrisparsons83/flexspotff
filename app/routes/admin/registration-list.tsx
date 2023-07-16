@@ -3,6 +3,7 @@ import type { LoaderArgs } from "@remix-run/node";
 import { getRegistrationsByYear } from "~/models/registration.server";
 
 import { authenticator, requireAdmin } from "~/services/auth.server";
+import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -15,7 +16,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
-  let registrations = await getRegistrationsByYear(2022);
+  let registrations = await getRegistrationsByYear(CURRENT_YEAR);
 
   return superjson<LoaderData>(
     { registrations },

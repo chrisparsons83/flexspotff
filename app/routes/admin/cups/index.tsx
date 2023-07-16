@@ -3,8 +3,7 @@ import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
 
 import type { Cup } from "~/models/cup.server";
-import { createCup } from "~/models/cup.server";
-import { getCups } from "~/models/cup.server";
+import { createCup, getCups } from "~/models/cup.server";
 import type { CupWeek } from "~/models/cupweek.server";
 import { createCupWeek } from "~/models/cupweek.server";
 

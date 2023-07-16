@@ -332,6 +332,16 @@ model Registration {
   userId String
 }
 
+model Season {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  year Int
+  isCurrent Boolean
+  isOpenForRegistration Boolean
+}
+
 model Team {
   id String @id @default(cuid())
   createdAt DateTime @default(now())

@@ -2,14 +2,15 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 
 import type { Registration } from "~/models/registration.server";
-import { getRegistrationByUserAndYear } from "~/models/registration.server";
-import { createRegistration } from "~/models/registration.server";
+import { getRegistrationByUserAndYear , createRegistration } from "~/models/registration.server";
 import type { User } from "~/models/user.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
 import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { Season} from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -19,6 +20,7 @@ type ActionData = {
 type LoaderData = {
   user: User;
   registration: Registration | null;
+  currentSeason: Season;
 };
 
 export const action = async ({
@@ -47,20 +49,27 @@ export const loader = async ({ request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  let registration = await getRegistrationByUserAndYear(user.id, CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error('No active season currently');
+  }
+
+  let registration = await getRegistrationByUserAndYear(user.id, currentSeason?.year);
 
   return superjson<LoaderData>(
-    { user, registration },
+    { user, registration, currentSeason },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function Dashboard() {
-  const { registration } = useSuperLoaderData<typeof loader>();
+  const { registration, currentSeason } = useSuperLoaderData<typeof loader>();
+
+  const buttonText = `Register for ${CURRENT_YEAR.toString()} Leagues`
 
   return (
     <div>
-      <h2>2022 League Registration</h2>
+      <h2>{currentSeason.year} League Registration</h2>
       {registration ? (
         <p>
           Thanks! You registered at {registration.createdAt.toLocaleString()}
@@ -68,16 +77,17 @@ export default function Dashboard() {
       ) : (
         <>
           <p>
-            You have not yet registered for the 2022 leagues. Currently, we are
-            all filled, but clicking the button below will add you to the wait
-            lists in case spots open up.
+            You have not yet registered for the {currentSeason.year} leagues.
           </p>
-          <Form method="post">
-            <input type="hidden" name="year" value={CURRENT_YEAR} />
+          {currentSeason.isOpenForRegistration ? (<Form method="post">
+            <input type="hidden" name="year" value={currentSeason.year} />
             <Button type="submit">
-              Register for wait lists for 2022 Leagues
+              {buttonText}
             </Button>
-          </Form>
+          </Form>) : (
+            <p>Registration is not currently open.</p>
+          )}
+          
         </>
       )}
     </div>
