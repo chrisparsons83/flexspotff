@@ -4,8 +4,7 @@ import { Form, useActionData, useTransition } from "@remix-run/react";
 
 import { getWeekNflGames } from "~/models/nflgame.server";
 import type { Player } from "~/models/players.server";
-import { getPlayer } from "~/models/players.server";
-import { getActivePlayersByPosition } from "~/models/players.server";
+import { getActivePlayersByPosition, getPlayer } from "~/models/players.server";
 import {
   getQBStreamingWeek,
   updateQBStreamingWeek,

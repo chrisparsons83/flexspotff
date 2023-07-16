@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import z from "zod";
 
 import type { League } from "~/models/league.server";
-import { updateLeague, getLeague, getLeagues } from "~/models/league.server";
+import { getLeague, getLeagues, updateLeague } from "~/models/league.server";
 import type { Team } from "~/models/team.server";
 import { createTeam, getTeams, updateTeam } from "~/models/team.server";
 import { getUsers } from "~/models/user.server";

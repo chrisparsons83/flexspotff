@@ -3,12 +3,12 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import * as _superjson from "superjson";
 
-export type SuperJsonFunction = <Data extends unknown>(
+export type SuperJsonFunction = <Data>(
   data: Data,
   init?: number | ResponseInit
 ) => SuperTypedResponse<Data>;
 
-export declare type SuperTypedResponse<T extends unknown = unknown> =
+export declare type SuperTypedResponse<T = unknown> =
   Response & {
     superjson(): Promise<T>;
   };

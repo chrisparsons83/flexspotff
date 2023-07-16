@@ -1,9 +1,16 @@
-import { json, type ActionArgs, type LoaderArgs } from "@remix-run/node";
+import { type ActionArgs, type LoaderArgs, json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
+
+import type { Season } from "~/models/season.server";
+import {
+  createSeason,
+  getSeasons,
+  updateActiveSeason,
+  updateSeason,
+} from "~/models/season.server";
+
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import type { Season} from "~/models/season.server";
-import { createSeason, getSeasons, updateActiveSeason, updateSeason } from "~/models/season.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
@@ -35,26 +42,37 @@ export const action = async ({ request }: ActionArgs) => {
       const season = await createSeason({
         year: new Date().getFullYear(),
         isCurrent: false,
-        isOpenForRegistration: false
+        isOpenForRegistration: false,
       });
 
-      return json<ActionData>({ message: `${season.year} season has been created` });
+      return json<ActionData>({
+        message: `${season.year} season has been created`,
+      });
     }
     case "setActive": {
       const [, season] = await updateActiveSeason(seasonId);
 
-      return json<ActionData>({ message: `${season.year} season has been made active` });
+      return json<ActionData>({
+        message: `${season.year} season has been made active`,
+      });
     }
     case "setRegistration": {
-      console.log("setReg")
+      console.log("setReg");
       const actionToSeason = formData.get("actionToSeason");
       if (typeof actionToSeason !== "string") {
         throw new Error(`Form not generated correctly.`);
       }
 
-      const season = await updateSeason({id: seasonId, isOpenForRegistration: actionToSeason === "openReg"})
+      const season = await updateSeason({
+        id: seasonId,
+        isOpenForRegistration: actionToSeason === "openReg",
+      });
 
-      return json<ActionData>({ message: `${season.year} season registration is now ${season.isOpenForRegistration ? 'open' : 'closed'}.` });
+      return json<ActionData>({
+        message: `${season.year} season registration is now ${
+          season.isOpenForRegistration ? "open" : "closed"
+        }.`,
+      });
     }
   }
 
@@ -79,8 +97,9 @@ export default function SeasonIndex() {
   const { seasons } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
-  
-  return <>
+
+  return (
+    <>
       <h2 className="mt-0">Season List</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <table className="w-full">
@@ -94,29 +113,44 @@ export default function SeasonIndex() {
         </thead>
         <tbody>
           {seasons.map((season) => {
-            const {id, year, isCurrent, isOpenForRegistration} = season;
+            const { id, year, isCurrent, isOpenForRegistration } = season;
 
-            return <tr key={id}>
-              <td>{year}</td>
-              <td>{isCurrent ? 'Yes' : 'No'}</td>
-              <td>{isOpenForRegistration ? 'Yes' : 'No'}</td>
-              <td className="not-prose">
-                {!isCurrent && (<Form method="post">
-                  <input type="hidden" name="seasonId" value={id} />
-                  <Button type="submit" name="_action" value="setActive">
-                    Set Active
-                  </Button>
-                </Form>)}
-                {isCurrent && (<Form method="post">
-                  <input type="hidden" name="seasonId" value={id} />
-                  <input type="hidden" name="actionToSeason" value={!isOpenForRegistration ? 'openReg' : 'closeReg'} />
-                  <Button type="submit" name="_action" value="setRegistration">
-                    {isOpenForRegistration ? 'Close Registration' : 'Open Registration'}
-                  </Button>
-                </Form>)}
-                
-              </td>
-            </tr>
+            return (
+              <tr key={id}>
+                <td>{year}</td>
+                <td>{isCurrent ? "Yes" : "No"}</td>
+                <td>{isOpenForRegistration ? "Yes" : "No"}</td>
+                <td className="not-prose">
+                  {!isCurrent && (
+                    <Form method="post">
+                      <input type="hidden" name="seasonId" value={id} />
+                      <Button type="submit" name="_action" value="setActive">
+                        Set Active
+                      </Button>
+                    </Form>
+                  )}
+                  {isCurrent && (
+                    <Form method="post">
+                      <input type="hidden" name="seasonId" value={id} />
+                      <input
+                        type="hidden"
+                        name="actionToSeason"
+                        value={!isOpenForRegistration ? "openReg" : "closeReg"}
+                      />
+                      <Button
+                        type="submit"
+                        name="_action"
+                        value="setRegistration"
+                      >
+                        {isOpenForRegistration
+                          ? "Close Registration"
+                          : "Open Registration"}
+                      </Button>
+                    </Form>
+                  )}
+                </td>
+              </tr>
+            );
           })}
         </tbody>
       </table>
@@ -138,4 +172,5 @@ export default function SeasonIndex() {
         </div>
       </Form>
     </>
+  );
 }

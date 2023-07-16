@@ -6,9 +6,9 @@ import { getNflGameById } from "~/models/nflgame.server";
 import type { QBSelection } from "~/models/qbselection.server";
 import {
   createQBSelection,
+  getQBSelection,
   updateQBSelection,
 } from "~/models/qbselection.server";
-import { getQBSelection } from "~/models/qbselection.server";
 import { getQBStreamingWeek } from "~/models/qbstreamingweek.server";
 import type { User } from "~/models/user.server";
 

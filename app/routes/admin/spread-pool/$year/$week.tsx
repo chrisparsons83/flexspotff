@@ -4,8 +4,7 @@ import { DateTime } from "luxon";
 
 import { getWeekNflGames } from "~/models/nflgame.server";
 import type { PoolGame, PoolGameCreate } from "~/models/poolgame.server";
-import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
-import { upsertPoolGame } from "~/models/poolgame.server";
+import { getPoolGamesByYearAndWeek, upsertPoolGame } from "~/models/poolgame.server";
 import {
   getPoolWeekByYearAndWeek,
   updatePoolWeek,

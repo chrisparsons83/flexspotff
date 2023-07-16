@@ -1,7 +1,11 @@
 import z from "zod";
 
 import type { DraftPickCreate } from "~/models/draftpick.server";
-import { deleteDraftPicks, getDraftPicks, createDraftPick} from "~/models/draftpick.server";
+import {
+  createDraftPick,
+  deleteDraftPicks,
+  getDraftPicks,
+} from "~/models/draftpick.server";
 import type { League } from "~/models/league.server";
 import { getLeaguesByYear, updateLeague } from "~/models/league.server";
 import type { GameCreate } from "~/models/nflgame.server";
@@ -11,7 +15,11 @@ import type { PlayerCreate } from "~/models/players.server";
 import { getPlayers, upsertPlayer } from "~/models/players.server";
 import { getTeams } from "~/models/team.server";
 import type { TeamGame } from "~/models/teamgame.server";
-import { createTeamGame, updateTeamGame, getTeamGamesByYearAndWeek } from "~/models/teamgame.server";
+import {
+  createTeamGame,
+  getTeamGamesByYearAndWeek,
+  updateTeamGame,
+} from "~/models/teamgame.server";
 
 import { graphQLClient } from "~/services/sleeperGraphql.server";
 

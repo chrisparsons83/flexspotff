@@ -10,13 +10,11 @@ import {
 } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import {
-  getPoolWeekByYearAndWeek,
-  updatePoolWeek,
-} from "~/models/poolweek.server";
-import {
   createPoolWeek,
   getNewestPoolWeekForYear,
+  getPoolWeekByYearAndWeek,
   getPoolWeeksByYear,
+  updatePoolWeek,
 } from "~/models/poolweek.server";
 import { createPoolWeekMissed } from "~/models/poolweekmissed.server";
 

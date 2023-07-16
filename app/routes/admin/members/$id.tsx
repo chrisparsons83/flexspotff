@@ -3,8 +3,7 @@ import { redirect } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 
 import type { User } from "~/models/user.server";
-import { updateUser } from "~/models/user.server";
-import { getUser } from "~/models/user.server";
+import { getUser, updateUser } from "~/models/user.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";

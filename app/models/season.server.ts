@@ -1,4 +1,5 @@
 import type { Season } from "@prisma/client";
+
 import { prisma } from "~/db.server";
 
 export type { Season } from "@prisma/client";
@@ -14,9 +15,9 @@ export async function createSeason(data: SeasonCreate) {
 export async function getCurrentSeason() {
   return prisma.season.findFirst({
     where: {
-      isCurrent: true
-    }
-  })
+      isCurrent: true,
+    },
+  });
 }
 
 export async function getSeasons() {
@@ -32,10 +33,10 @@ export async function getSeasons() {
 export async function updateSeason(season: Partial<Season>) {
   return prisma.season.update({
     where: {
-      id: season.id
+      id: season.id,
     },
-    data: season
-  })
+    data: season,
+  });
 }
 
 export async function updateActiveSeason(id: Season["id"]) {
@@ -43,15 +44,15 @@ export async function updateActiveSeason(id: Season["id"]) {
     prisma.season.updateMany({
       data: {
         isCurrent: false,
-      }
+      },
     }),
     prisma.season.update({
       where: {
-        id: id
+        id: id,
       },
       data: {
         isCurrent: true,
-      }
+      },
     }),
-  ])
+  ]);
 }
