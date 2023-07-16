@@ -5,14 +5,10 @@ import { Form, useActionData } from "@remix-run/react";
 import type { Cup } from "~/models/cup.server";
 import { getCup } from "~/models/cup.server";
 import type { CupGame } from "~/models/cupgame.server";
-import { getCupGamesByCup, updateCupGame } from "~/models/cupgame.server";
-import { createCupGame } from "~/models/cupgame.server";
-import type { CupTeam } from "~/models/cupteam.server";
-import { getCupTeamsByCup } from "~/models/cupteam.server";
-import { createCupTeam } from "~/models/cupteam.server";
+import { getCupGamesByCup, updateCupGame, createCupGame } from "~/models/cupgame.server";
+import { createCupTeam, getCupTeamsByCup, type CupTeam } from "~/models/cupteam.server";
 import type { CupWeek } from "~/models/cupweek.server";
-import { updateCupWeek } from "~/models/cupweek.server";
-import { getCupWeeks } from "~/models/cupweek.server";
+import { updateCupWeek, getCupWeeks } from "~/models/cupweek.server";
 import {
   getTeamGameMultiweekTotals,
   getTeamGameMultiweekTotalsSeparated,
