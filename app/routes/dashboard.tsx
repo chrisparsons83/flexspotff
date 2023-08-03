@@ -86,7 +86,7 @@ export default function Dashboard() {
             You have not yet registered for the {currentSeason.year} leagues.
           </p>
           {currentSeason.isOpenForRegistration ? (
-            <Form method="post">
+            <Form method="POST">
               <input type="hidden" name="year" value={currentSeason.year} />
               <Button type="submit">{buttonText}</Button>
             </Form>

@@ -452,7 +452,7 @@ export default function CupAdministerPage() {
     <>
       <h2>Administer {cup.year} Cup</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post" reloadDocument>
+      <Form method="POST" reloadDocument>
         <table>
           <thead>
             <tr>

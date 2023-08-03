@@ -91,7 +91,7 @@ export default function EditUser() {
   return (
     <>
       <h2>Edit User {user.discordName}</h2>
-      <Form method="post" className="grid grid-cols-1 gap-6">
+      <Form method="POST" className="grid grid-cols-1 gap-6">
         <div>
           <label htmlFor="sleeperOwnerID">
             Sleeper Owner ID:

@@ -18,7 +18,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 };
 
 const SocialButton: React.FC<SocialButtonProps> = ({ provider, label }) => (
-  <Form action={`/auth/${provider}`} method="post">
+  <Form action={`/auth/${provider}`} method="POST">
     <button className="focus-visible:ring-offset-2zd inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
       {label}
     </button>

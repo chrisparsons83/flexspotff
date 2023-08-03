@@ -92,7 +92,7 @@ export default function AdminDataIndex() {
       <h2>Data Updates</h2>
       <p>This is a good list of things to eventually automate.</p>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <section>
           <h3>Update NFL Games</h3>
           <p>

@@ -131,7 +131,7 @@ export default function QBStreamingYearWeekEntry() {
     <>
       <h2>Edit Streaming Picks for Week {qbStreamingWeek?.week}</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <div className="mb-4">
           <label htmlFor="standardPlayerId">
             Standard Selection:

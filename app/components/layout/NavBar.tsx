@@ -100,7 +100,7 @@ export default function NavBar({ user, userIsEditor }: Props) {
                       {!user && (
                         <Menu.Item>
                           {({ active }) => (
-                            <Form action={`/auth/discord`} method="post">
+                            <Form action={`/auth/discord`} method="POST">
                               <button
                                 className={clsx(
                                   active ? "bg-gray-100" : "",
@@ -147,7 +147,7 @@ export default function NavBar({ user, userIsEditor }: Props) {
                           )}
                           <Menu.Item>
                             {({ active }) => (
-                              <Form action="/logout" method="post">
+                              <Form action="/logout" method="POST">
                                 <button
                                   className={clsx(
                                     active ? "bg-gray-100" : "",

@@ -182,7 +182,7 @@ export default function FSquaredMyEntry() {
         starts. Teams are listed by their draft order.
       </p>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post" reloadDocument>
+      <Form method="POST" reloadDocument>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Object.entries(leagues).map(([leagueName, teams]) => (
             <FSquaredEntryFormSection

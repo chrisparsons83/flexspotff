@@ -204,7 +204,7 @@ export default function PodcastEpisodeCreate() {
       <h2 className="mt-0">Add Podcast Episode</h2>
       <div>
         <Form
-          method="post"
+          method="POST"
           className="grid grid-cols-1 gap-6"
           encType="multipart/form-data"
         >

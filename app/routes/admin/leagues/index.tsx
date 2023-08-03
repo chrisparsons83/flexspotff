@@ -208,7 +208,7 @@ export default function LeaguesList() {
                 {league.draftDateTime?.toLocaleString() || ""}
               </td>
               <td className="not-prose">
-                <Form method="post">
+                <Form method="POST">
                   <input type="hidden" name="leagueId" value={league.id} />
                   <Button type="submit" name="action" value="sync">
                     Sync

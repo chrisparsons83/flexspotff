@@ -154,7 +154,7 @@ export default function AdminQBStreaming() {
     <>
       <h2>QB Streaming</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <div>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
@@ -191,7 +191,7 @@ export default function AdminQBStreaming() {
                 <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
               </td>
               <td>
-                <Form method="post">
+                <Form method="POST">
                   <input
                     type="hidden"
                     name="weekNumber"

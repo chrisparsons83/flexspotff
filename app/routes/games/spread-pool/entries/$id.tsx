@@ -279,7 +279,7 @@ export default function GamesSpreadPoolWeek() {
   return (
     <>
       <h2>Week Entry</h2>
-      <Form method="post" reloadDocument>
+      <Form method="POST" reloadDocument>
         {notOpenYet || (
           <>
             {actionData?.message && <Alert message={actionData.message} />}

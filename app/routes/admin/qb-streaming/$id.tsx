@@ -135,7 +135,7 @@ export default function AdminSpreadPoolYearWeek() {
     <div>
       <h2>Edit Picks for Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <h3>Add Player</h3>
         <div>
           <select
@@ -191,7 +191,7 @@ export default function AdminSpreadPoolYearWeek() {
                 <td>{qbStreamingWeekOption.isDeep ? "Yes" : "No"}</td>
                 <td>{qbStreamingWeekOption.pointsScored}</td>
                 <td>
-                  <Form method="post">
+                  <Form method="POST">
                     <input
                       type="hidden"
                       name="qbStreamingWeekOptionId"
@@ -213,7 +213,7 @@ export default function AdminSpreadPoolYearWeek() {
         </tbody>
       </table>
       <h3>Week Settings</h3>
-      <Form method="post">
+      <Form method="POST">
         <label htmlFor="isOpen">
           <input
             type="checkbox"

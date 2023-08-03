@@ -107,7 +107,7 @@ export default function AdminSpreadPoolYearWeek() {
   return (
     <div>
       <h2>Edit Picks for Week {nflGames[0].week}</h2>
-      <Form method="post" reloadDocument>
+      <Form method="POST" reloadDocument>
         <table>
           <thead>
             <tr>

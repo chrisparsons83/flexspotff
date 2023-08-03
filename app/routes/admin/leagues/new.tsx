@@ -88,7 +88,7 @@ export default function LeagueNew() {
   return (
     <>
       <h2>Add New League</h2>
-      <Form method="post" className="grid grid-cols-1 gap-6">
+      <Form method="POST" className="grid grid-cols-1 gap-6">
         <div>
           <label htmlFor="url">
             League URL:

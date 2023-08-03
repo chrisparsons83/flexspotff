@@ -125,7 +125,7 @@ export default function SeasonIndex() {
                 <td>{isOpenForRegistration ? "Yes" : "No"}</td>
                 <td className="not-prose">
                   {!isCurrent && (
-                    <Form method="post">
+                    <Form method="POST">
                       <input type="hidden" name="seasonId" value={id} />
                       <Button type="submit" name="_action" value="setActive">
                         Set Active
@@ -133,7 +133,7 @@ export default function SeasonIndex() {
                     </Form>
                   )}
                   {isCurrent && (
-                    <Form method="post">
+                    <Form method="POST">
                       <input type="hidden" name="seasonId" value={id} />
                       <input
                         type="hidden"
@@ -157,7 +157,7 @@ export default function SeasonIndex() {
           })}
         </tbody>
       </table>
-      <Form method="post">
+      <Form method="POST">
         <div>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">

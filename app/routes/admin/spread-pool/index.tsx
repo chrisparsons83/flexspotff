@@ -143,7 +143,7 @@ export default function SpreadPoolList() {
     <div>
       <h2>Spread Pool Lines by Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <div>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
@@ -182,7 +182,7 @@ export default function SpreadPoolList() {
                 </Link>
               </td>
               <td>
-                <Form method="post">
+                <Form method="POST">
                   <input
                     type="hidden"
                     name="weekNumber"

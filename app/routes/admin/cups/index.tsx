@@ -79,7 +79,7 @@ export default function QBStreamingStandingsYearIndex() {
     <>
       <h2>Cups</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="post">
+      <Form method="POST">
         <div>
           {actionData?.formError ? (
             <p className="form-validation-error" role="alert">
