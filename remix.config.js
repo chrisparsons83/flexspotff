@@ -13,4 +13,7 @@ module.exports = {
     "file-type",
     "token-types",
   ],
+  future: {
+    v2_errorBoundary: true,
+  },
 };

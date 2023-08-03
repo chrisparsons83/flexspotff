@@ -1,5 +1,4 @@
 import { createCookieSessionStorage } from "@remix-run/node";
-import { DateTime } from "luxon";
 import { DAYS_AHEAD } from "~/utils/constants";
 
 // export the whole sessionStorage object
@@ -12,7 +11,6 @@ export let sessionStorage = createCookieSessionStorage({
     secrets: [process.env.SESSION_SECRET],
     secure: process.env.NODE_ENV === "production", // enable this in prod only
     maxAge: 60 * 60 * 24 * DAYS_AHEAD, // 30 days
-    expires: DateTime.now().plus({days: DAYS_AHEAD}).toJSDate(),
   },
 });
 

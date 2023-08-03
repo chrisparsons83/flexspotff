@@ -6,6 +6,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
 } from "@remix-run/react";
 
 import type { User } from "~/models/user.server";
@@ -80,7 +81,16 @@ function App() {
 
 export default App;
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  // Don't forget to typecheck with your own logic.
+  // Any value can be thrown, not just errors!
+  let errorMessage = "Unknown error";
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+
   return (
     <html>
       <head>
@@ -93,7 +103,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
         <div className="container relative mx-auto min-h-screen p-4 text-white">
           <main className="prose max-w-none dark:prose-invert lg:prose-xl">
             <h1>Error</h1>
-            <pre>{error.message}</pre>
+            <pre>{errorMessage}</pre>
           </main>
         </div>
         <Scripts />
