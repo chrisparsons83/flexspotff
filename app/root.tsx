@@ -1,4 +1,4 @@
-import type { LinksFunction, LoaderArgs, MetaFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -20,11 +20,13 @@ export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
 };
 
-export const meta: MetaFunction = () => ({
-  charset: "utf-8",
-  title: "Flex Spot FF",
-  viewport: "width=device-width,initial-scale=1",
-});
+export const meta = () => {
+  return [
+    {charset: "utf-8"},
+    {title: "Flex Spot FF"},
+    {name: "viewport", content: "width=device-width,initial-scale=1"},
+  ]
+};
 
 type LoaderData = {
   user: User | null;
