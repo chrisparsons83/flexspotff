@@ -1,7 +1,6 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 import { DateTime } from "luxon";
-
-const DAYS_AHEAD = 30;
+import { DAYS_AHEAD } from "~/utils/constants";
 
 // export the whole sessionStorage object
 export let sessionStorage = createCookieSessionStorage({
