@@ -2,7 +2,7 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 
-import type { Cup } from "~/models/cup.server";
+import type { Cup, ScoreArray } from "~/models/cup.server";
 import { getCup } from "~/models/cup.server";
 import type { CupGame } from "~/models/cupgame.server";
 import {
@@ -24,7 +24,6 @@ import {
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
-import type { ScoreArray } from "~/routes/leagues/cup/$year";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 

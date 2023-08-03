@@ -5,6 +5,11 @@ import { prisma } from "~/db.server";
 export type { Cup } from "@prisma/client";
 
 export type CupCreate = Omit<Cup, "id" | "createdAt" | "updatedAt">;
+export type ScoreArray = {
+  teamId: string;
+  mapping: string;
+  pointsScored: number;
+};
 
 export async function createCup(data: CupCreate) {
   return prisma.cup.create({

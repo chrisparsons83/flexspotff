@@ -1,6 +1,7 @@
 import type { LoaderArgs } from "@remix-run/node";
 import clsx from "clsx";
 
+import type { ScoreArray} from "~/models/cup.server";
 import { getCupByYear } from "~/models/cup.server";
 import { getCupGamesByCup } from "~/models/cupgame.server";
 import { getCupWeeks } from "~/models/cupweek.server";
@@ -21,12 +22,6 @@ const roundNameMapping: RoundName[] = [
   { key: "ROUND_OF_4", label: "Semifinals" },
   { key: "ROUND_OF_2", label: "Finals" },
 ];
-
-export type ScoreArray = {
-  teamId: string;
-  mapping: string;
-  pointsScored: number;
-};
 
 type LoaderData = {
   cupGames: Awaited<ReturnType<typeof getCupGamesByCup>>;
