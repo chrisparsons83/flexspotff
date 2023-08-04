@@ -3,9 +3,9 @@ import { Link } from "@remix-run/react";
 
 import type { PoolWeek } from "~/models/poolweek.server";
 import { getPoolWeeksByYear } from "~/models/poolweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -17,7 +17,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  const poolWeeks = await getPoolWeeksByYear(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
     {

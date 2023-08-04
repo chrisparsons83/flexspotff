@@ -10,8 +10,8 @@ import {
 
 import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   currentResults: currentResultsBase[];
@@ -21,11 +21,16 @@ type LoaderData = {
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request);
 
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
   const existingEntry = user
-    ? await getEntryByUserAndYear(user.id, CURRENT_YEAR)
+    ? await getEntryByUserAndYear(user.id, currentSeason.year)
     : null;
 
-  const currentResults = (await getResultsForYear(CURRENT_YEAR))
+  const currentResults = (await getResultsForYear(currentSeason.year))
     .map((entry) => {
       const totalPoints = entry.teams.reduce(
         (prev, curr) => prev + curr.pointsFor,

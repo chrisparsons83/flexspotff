@@ -13,7 +13,7 @@ import {
   syncSleeperWeeklyScores,
 } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -35,6 +35,11 @@ export const action = async ({ request }: ActionArgs) => {
   const formData = await request.formData();
   const action = formData.get("_action");
 
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
   switch (action) {
     case "resyncNflPlayers": {
       await syncNflPlayers();
@@ -47,7 +52,7 @@ export const action = async ({ request }: ActionArgs) => {
 
       // The array one-liner there makes an array of numbers from 1 to 18.
       await syncNflGameWeek(
-        CURRENT_YEAR,
+        currentSeason.year,
         Array.from({ length: 18 }, (_, i) => i + 1)
       );
 
@@ -56,13 +61,13 @@ export const action = async ({ request }: ActionArgs) => {
     case "resyncCurrentWeekScores": {
       const nflGameState = await getNflState();
 
-      await syncSleeperWeeklyScores(CURRENT_YEAR, nflGameState.display_week);
+      await syncSleeperWeeklyScores(currentSeason.year, nflGameState.display_week);
 
       return json<ActionData>({ message: "League games have been synced." });
     }
     case "resyncCurrentYearScores": {
       for (let i = 1; i <= 17; i++) {
-        await syncSleeperWeeklyScores(CURRENT_YEAR, i);
+        await syncSleeperWeeklyScores(currentSeason.year, i);
       }
 
       return json<ActionData>({

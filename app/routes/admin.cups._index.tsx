@@ -10,8 +10,8 @@ import { createCupWeek } from "~/models/cupweek.server";
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -33,8 +33,13 @@ export const action = async ({ request }: ActionArgs) => {
 
   switch (action) {
     case "createNewWeek": {
+      let currentSeason = await getCurrentSeason();
+      if (!currentSeason) {
+        throw new Error("No active season currently");
+      }
+
       const cup = await createCup({
-        year: CURRENT_YEAR,
+        year: currentSeason.year,
       });
 
       const promises: Promise<CupWeek>[] = [];

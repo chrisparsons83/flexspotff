@@ -7,8 +7,8 @@ import {
 
 import LeaderboardRow from "~/components/layout/leaderboard/LeaderboardRow";
 import GoBox from "~/components/ui/GoBox";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   leaderboard: Awaited<ReturnType<typeof getTeamGamesByYearAndWeek>>;
@@ -23,8 +23,13 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   const leaderboard = await getTeamGamesByYearAndWeek(year, week);
 
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
   const maxWeek =
-    (await getNewestWeekTeamGameByYear(CURRENT_YEAR))._max.week || 1;
+    (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
 
   return superjson<LoaderData>(
     { leaderboard, week, maxWeek, year },

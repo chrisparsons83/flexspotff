@@ -6,8 +6,8 @@ import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
 
 import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
 import GoBox from "~/components/ui/GoBox";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   qbSelections: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
@@ -18,7 +18,12 @@ type LoaderData = {
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
-  const year = params.year || `${CURRENT_YEAR}`;
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+  
+  const year = params.year || `${currentSeason.year}`;
   const week = Number(params.week || "1");
 
   const streamingWeeks = await getQBStreamingWeeks(+year);

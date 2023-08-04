@@ -1,10 +1,10 @@
 import type { LoaderArgs } from "@remix-run/node";
 import clsx from "clsx";
+import { getCurrentSeason } from "~/models/season.server";
 
 import { getTeamsInSeason } from "~/models/team.server";
 import { getTeamGameYearlyTotals } from "~/models/teamgame.server";
 
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -13,8 +13,13 @@ type LoaderData = {
 };
 
 export const loader = async ({ params }: LoaderArgs) => {
-  const leaderboard = await getTeamGameYearlyTotals(CURRENT_YEAR);
-  const teams = await getTeamsInSeason(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const leaderboard = await getTeamGameYearlyTotals(currentSeason.year);
+  const teams = await getTeamsInSeason(currentSeason.year);
 
   return superjson<LoaderData>(
     { leaderboard, teams },

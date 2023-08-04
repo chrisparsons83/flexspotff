@@ -22,8 +22,9 @@ import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { syncNflGameWeek } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { Season} from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -32,6 +33,7 @@ type ActionData = {
 
 type LoaderData = {
   poolWeeks: PoolWeek[];
+  currentSeason: Season;
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -45,13 +47,18 @@ export const action = async ({ request }: ActionArgs) => {
 
   switch (action) {
     case "createNewWeek": {
+      let currentSeason = await getCurrentSeason();
+      if (!currentSeason) {
+        throw new Error("No active season currently");
+      }
+
       // Get max week of season, then add one
-      const latestWeek = await getNewestPoolWeekForYear(CURRENT_YEAR);
+      const latestWeek = await getNewestPoolWeekForYear(currentSeason.year);
       const newWeek = latestWeek ? latestWeek.weekNumber + 1 : 1;
 
       // Create new PoolWeek
       await createPoolWeek({
-        year: CURRENT_YEAR,
+        year: currentSeason.year,
         weekNumber: newWeek,
         isOpen: false,
         isWeekScored: false,
@@ -126,16 +133,21 @@ export const loader = async ({ request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
-  const poolWeeks = await getPoolWeeksByYear(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
-    { poolWeeks },
+    { poolWeeks, currentSeason },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function SpreadPoolList() {
-  const { poolWeeks } = useSuperLoaderData<typeof loader>();
+  const { poolWeeks, currentSeason } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
 
@@ -177,7 +189,7 @@ export default function SpreadPoolList() {
               <td>{poolWeek.isOpen ? "Yes" : "No"}</td>
               <td>{poolWeek.isWeekScored ? "Yes" : "No"}</td>
               <td>
-                <Link to={`./${CURRENT_YEAR}/${poolWeek.weekNumber}`}>
+                <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
                   Edit Week
                 </Link>
               </td>

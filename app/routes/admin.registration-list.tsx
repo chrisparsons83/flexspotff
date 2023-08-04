@@ -1,9 +1,9 @@
 import type { LoaderArgs } from "@remix-run/node";
 
 import { getRegistrationsByYear } from "~/models/registration.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -16,7 +16,12 @@ export const loader = async ({ request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
-  let registrations = await getRegistrationsByYear(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  let registrations = await getRegistrationsByYear(currentSeason.year);
 
   return superjson<LoaderData>(
     { registrations },

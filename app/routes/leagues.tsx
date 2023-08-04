@@ -1,29 +1,37 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
+import type { Season} from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import { getNewestWeekTeamGameByYear } from "~/models/teamgame.server";
 
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
   teamGameNewestWeek: number;
+  currentSeason: Season;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+  
   const teamGameNewestWeek =
-    (await getNewestWeekTeamGameByYear(CURRENT_YEAR))._max.week || 1;
+    (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
 
   return superjson<LoaderData>(
     {
       teamGameNewestWeek,
+      currentSeason
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function LeaguesIndex() {
-  const { teamGameNewestWeek } = useSuperLoaderData<typeof loader>();
+  const { teamGameNewestWeek, currentSeason } = useSuperLoaderData<typeof loader>();
 
   const navigationLinks = [
     {
@@ -33,11 +41,11 @@ export default function LeaguesIndex() {
     },
     {
       name: "Weekly Leaderboards",
-      href: `/leagues/leaderboard/${CURRENT_YEAR}/${teamGameNewestWeek}`,
+      href: `/leagues/leaderboard/${currentSeason.year}/${teamGameNewestWeek}`,
       current: false,
     },
     { name: "Standings", href: "/leagues/standings", current: false },
-    { name: "Cup", href: `/leagues/cup/${CURRENT_YEAR}`, current: false },
+    { name: "Cup", href: `/leagues/cup/${currentSeason.year}`, current: false },
     { name: "ADP", href: "/leagues/adp", current: false },
     { name: "Records", href: "/leagues/records", current: false },
     { name: "Rules", href: "/leagues/rules", current: false },

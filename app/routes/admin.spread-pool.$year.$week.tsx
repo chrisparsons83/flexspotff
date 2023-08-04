@@ -12,8 +12,8 @@ import {
 
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   message?: string;
@@ -83,16 +83,21 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
   const week = Number(params.week);
 
   // Get pool week
-  const poolWeek = await getPoolWeekByYearAndWeek(CURRENT_YEAR, week);
+  const poolWeek = await getPoolWeekByYearAndWeek(currentSeason.year, week);
 
   // Get games
-  const nflGames = await getWeekNflGames(CURRENT_YEAR, week);
+  const nflGames = await getWeekNflGames(currentSeason.year, week);
 
   // Get existing lines
-  const poolGames = await getPoolGamesByYearAndWeek(CURRENT_YEAR, week);
+  const poolGames = await getPoolGamesByYearAndWeek(currentSeason.year, week);
 
   return superjson<LoaderData>(
     { nflGames, poolGames, poolWeek },

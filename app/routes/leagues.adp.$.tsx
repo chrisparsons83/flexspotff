@@ -5,8 +5,8 @@ import { getAverageDraftPositionByYear } from "~/models/draftpick.server";
 import { getLeaguesByYear } from "~/models/league.server";
 import type { Player } from "~/models/players.server";
 import { getPlayersByIDs } from "~/models/players.server";
+import { getCurrentSeason } from "~/models/season.server";
 
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -16,8 +16,13 @@ type LoaderData = {
 };
 
 export const loader = async ({ params }: LoaderArgs) => {
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+  
   const year =
-    params["*"] === "" ? CURRENT_YEAR : Number.parseInt(params["*"] || "");
+    params["*"] === "" ? currentSeason.year : Number.parseInt(params["*"] || "");
 
   const leagueCount = (await getLeaguesByYear(year)).filter(
     (league) => league.isDrafted

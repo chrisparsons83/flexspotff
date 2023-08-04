@@ -1,14 +1,14 @@
 import { parentPort } from "node:worker_threads";
 
 import { getNflState, syncNflGameWeek } from "~/libs/syncs.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 
+// TODO: Make this not hardcoded to 2023.
 (async () => {
   if (parentPort) {
     const nflState = await getNflState();
-    await syncNflGameWeek(CURRENT_YEAR, [nflState.display_week]);
+    await syncNflGameWeek(2023, [nflState.display_week]);
     parentPort.postMessage(
-      `${CURRENT_YEAR} NFL Week ${nflState.display_week} games updated`
+      `${2023} NFL Week ${nflState.display_week} games updated`
     );
   } else process.exit(0);
 })();

@@ -2,8 +2,9 @@ import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
 
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
+import type { Season} from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 const navigationLinks = [
@@ -13,34 +14,41 @@ const navigationLinks = [
 
 type LoaderData = {
   qbStreamingCurrentWeek: number;
+  currentSeason: Season;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
-  const qbStreamingCurrentWeek = (await getQBStreamingWeeks(CURRENT_YEAR))[0]
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+  
+  const qbStreamingCurrentWeek = (await getQBStreamingWeeks(currentSeason.year))[0]
     .week;
 
   return superjson<LoaderData>(
     {
       qbStreamingCurrentWeek,
+      currentSeason
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function GamesIndex() {
-  const { qbStreamingCurrentWeek } = useSuperLoaderData<typeof loader>();
+  const { qbStreamingCurrentWeek, currentSeason } = useSuperLoaderData<typeof loader>();
 
   const qbStreamingLinks = [
     { name: "Rules", href: "/games/qb-streaming/rules", current: false },
     { name: "My Entries", href: "/games/qb-streaming/entries", current: false },
     {
       name: "Overall Standings",
-      href: `/games/qb-streaming/standings/${CURRENT_YEAR}`,
+      href: `/games/qb-streaming/standings/${currentSeason.year}`,
       current: false,
     },
     {
       name: "Weekly Standings",
-      href: `/games/qb-streaming/standings/${CURRENT_YEAR}/${qbStreamingCurrentWeek}`,
+      href: `/games/qb-streaming/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
       current: false,
     },
   ];
@@ -50,12 +58,12 @@ export default function GamesIndex() {
     { name: "My Entries", href: "/games/spread-pool/entries", current: false },
     {
       name: "Overall Standings",
-      href: `/games/spread-pool/standings/${CURRENT_YEAR}`,
+      href: `/games/spread-pool/standings/${currentSeason.year}`,
       current: false,
     },
     {
       name: "Weekly Standings",
-      href: `/games/spread-pool/standings/${CURRENT_YEAR}/${qbStreamingCurrentWeek}`,
+      href: `/games/spread-pool/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
       current: false,
     },
   ];

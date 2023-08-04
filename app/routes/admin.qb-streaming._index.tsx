@@ -16,8 +16,8 @@ import { updateQBStreamingWeekOptionScore } from "~/models/qbstreamingweekoption
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -53,13 +53,18 @@ export const action = async ({ request }: ActionArgs) => {
 
   switch (action) {
     case "createNewWeek": {
+      let currentSeason = await getCurrentSeason();
+      if (!currentSeason) {
+        throw new Error("No active season currently");
+      }
+
       // Get max week of season, then add one
-      const latestWeek = await getQBStreamingWeeks(CURRENT_YEAR);
+      const latestWeek = await getQBStreamingWeeks(currentSeason.year);
       const newWeek = latestWeek.length > 0 ? latestWeek[0].week + 1 : 1;
 
       // Create new PoolWeek
       await createQBStreamingWeek({
-        year: CURRENT_YEAR,
+        year: currentSeason.year,
         week: newWeek,
         isOpen: false,
         isScored: false,
@@ -137,7 +142,12 @@ export const loader = async ({ request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
-  const qbStreamingWeeks = await getQBStreamingWeeks(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
 
   return superjson<LoaderData>(
     { qbStreamingWeeks },

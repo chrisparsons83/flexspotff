@@ -17,8 +17,8 @@ import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntr
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -60,7 +60,12 @@ export const action = async ({
     failureRedirect: "/login",
   });
 
-  const leagues = await getLeaguesByYear(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const leagues = await getLeaguesByYear(currentSeason.year);
   const formData = await request.formData();
 
   const fSquaredForm: Record<string, FormEntry> = {};
@@ -73,7 +78,7 @@ export const action = async ({
       fSquaredForm[league.name] = entry;
     });
 
-  let existingEntry = await getEntryByUserAndYear(user.id, CURRENT_YEAR);
+  let existingEntry = await getEntryByUserAndYear(user.id, currentSeason.year);
   const newEntries: string[] = [];
   for (const league of leagues) {
     if (league.draftDateTime && league.draftDateTime < new Date()) {
@@ -95,7 +100,7 @@ export const action = async ({
   if (!existingEntry) {
     const newEntry = await createEntry({
       userId: user.id,
-      year: CURRENT_YEAR,
+      year: currentSeason.year,
     });
     await updateEntry(newEntry.id, newEntries, []);
   } else {
@@ -119,11 +124,16 @@ export const loader = async ({ request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
   // Get teams
-  const teams = await getTeamsInSeason(CURRENT_YEAR);
+  const teams = await getTeamsInSeason(currentSeason.year);
 
   // Get existing entry
-  const existingEntry = await getEntryByUserAndYear(user.id, CURRENT_YEAR);
+  const existingEntry = await getEntryByUserAndYear(user.id, currentSeason.year);
 
   // Make record object for simplicity
   const leagues: LoaderData["leagues"] = {};

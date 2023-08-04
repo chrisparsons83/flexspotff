@@ -26,12 +26,12 @@ import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolG
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import {
   superjson,
   useSuperActionData,
   useSuperLoaderData,
 } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   message?: string;
@@ -52,6 +52,11 @@ export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
 
   const poolWeekId = params.id;
   if (!poolWeekId) throw new Error(`No pool week ID set`);
@@ -147,10 +152,10 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Do a final check to see how many weeks this person has missed before this week, and insert in
   // missing week penalties.
   const existingMissingWeeksIds = (
-    await getPoolWeekMissedByUserAndYear(user.id, CURRENT_YEAR)
+    await getPoolWeekMissedByUserAndYear(user.id, currentSeason.year)
   ).map((poolWeekMissed) => poolWeekMissed.poolWeek?.id);
-  const picks = await getPoolGamePicksByUserAndYear(user, CURRENT_YEAR);
-  const poolWeekIds = (await getPoolWeeksByYear(CURRENT_YEAR))
+  const picks = await getPoolGamePicksByUserAndYear(user, currentSeason.year);
+  const poolWeekIds = (await getPoolWeeksByYear(currentSeason.year))
     .map((poolWeek) => poolWeek.id)
     .filter((poolWeekId) => poolWeekId !== poolWeek.id);
 
@@ -183,6 +188,11 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
 
   const poolWeekId = params.id;
   if (!poolWeekId) throw new Error(`No pool week ID set`);
@@ -219,7 +229,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     getAmountWonLoss.length === 0 ? -20 * (poolWeek.weekNumber - 1) : 0;
 
   const missedEntryDeduction = (
-    await getPoolWeekMissedByUserAndYear(user.id, CURRENT_YEAR)
+    await getPoolWeekMissedByUserAndYear(user.id, currentSeason.year)
   ).reduce((a, b) => a + (b.resultWonLoss || 0), 0);
 
   return superjson<LoaderData>(

@@ -10,8 +10,8 @@ import type { User } from "~/models/user.server";
 import { getUsersByIds } from "~/models/user.server";
 
 import SpreadPoolStandingsRow from "~/components/layout/spread-pool/SpreadPoolStandingsRow";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
@@ -21,7 +21,12 @@ type LoaderData = {
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
-  const poolWeeks = await getPoolWeeksByYear(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+  
+  const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   // Get the most active week
   const currentWeek = poolWeeks.find((poolWeek) => poolWeek.isOpen === true);
@@ -39,7 +44,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   // Update amountWonLoss based on missing week totals, then re-sort.
   const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(
-    CURRENT_YEAR
+    currentSeason.year
   );
   if (missingWeekPenalties.length > 0) {
     for (const missingWeekPenalty of missingWeekPenalties) {

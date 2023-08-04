@@ -9,13 +9,15 @@ import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
 
 import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { Season} from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   qbStreamingResults: QBStreamingStandingsRow[];
   currentWeekPicks: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
   year: string;
+  currentSeason: Season;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -23,11 +25,16 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  const year = params.year ?? `${CURRENT_YEAR}`;
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
 
-  const qbStreamingWeeks = await getQBStreamingWeeks(CURRENT_YEAR);
+  const year = params.year ?? `${currentSeason.year}`;
 
-  const qbSelections = await getQBSelectionsByYear(CURRENT_YEAR);
+  const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
+
+  const qbSelections = await getQBSelectionsByYear(currentSeason.year);
 
   const currentWeekPicks = await getQBSelectionsByWeek(qbStreamingWeeks[0].id);
 
@@ -74,16 +81,17 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       qbStreamingResults: sortedResults,
       currentWeekPicks,
       year,
+      currentSeason
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function QBStreamingStandingsYearIndex() {
-  const { year, qbStreamingResults, currentWeekPicks } =
+  const { year, qbStreamingResults, currentWeekPicks, currentSeason } =
     useSuperLoaderData<typeof loader>();
 
-  const displayYear = +year !== CURRENT_YEAR ? year : "";
+  const displayYear = +year !== currentSeason.year ? year : "";
 
   return (
     <>

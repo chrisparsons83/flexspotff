@@ -2,9 +2,9 @@ import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
@@ -16,7 +16,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  const qbStreamingWeeks = await getQBStreamingWeeks(CURRENT_YEAR);
+  let currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error("No active season currently");
+  }
+
+  const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
 
   return superjson<LoaderData>(
     {

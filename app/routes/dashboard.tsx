@@ -12,7 +12,6 @@ import type { User } from "~/models/user.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
-import { CURRENT_YEAR } from "~/utils/constants";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type ActionData = {
@@ -71,7 +70,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 export default function Dashboard() {
   const { registration, currentSeason } = useSuperLoaderData<typeof loader>();
 
-  const buttonText = `Register for ${CURRENT_YEAR.toString()} Leagues`;
+  const buttonText = `Register for ${currentSeason.year} Leagues`;
 
   return (
     <div>
