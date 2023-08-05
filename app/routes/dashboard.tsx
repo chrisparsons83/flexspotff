@@ -5,6 +5,7 @@ import type { Registration } from "~/models/registration.server";
 import {
   createRegistration,
   getRegistrationByUserAndYear,
+  getRegistrationsByYear,
 } from "~/models/registration.server";
 import type { Season } from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
@@ -22,6 +23,7 @@ type ActionData = {
 type LoaderData = {
   user: User;
   registration: Registration | null;
+  registrationsCount: number;
   currentSeason: Season;
 };
 
@@ -61,29 +63,37 @@ export const loader = async ({ request }: LoaderArgs) => {
     currentSeason?.year
   );
 
+  let registrations = await getRegistrationsByYear(currentSeason.year);
+  const registrationsCount = registrations.length;
+
   return superjson<LoaderData>(
-    { user, registration, currentSeason },
+    { user, registration, currentSeason, registrationsCount },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function Dashboard() {
-  const { registration, currentSeason } = useSuperLoaderData<typeof loader>();
+  const { registration, currentSeason, registrationsCount } = useSuperLoaderData<typeof loader>();
 
-  const buttonText = `Register for ${currentSeason.year} Leagues`;
+  const isRegistrationFull = currentSeason.registrationSize <= registrationsCount;
+
+  const buttonText = `${isRegistrationFull ? 'Join wait list' : 'Register'} for ${currentSeason.year} Leagues`;
 
   return (
     <div>
       <h2>{currentSeason.year} League Registration</h2>
       {registration ? (
         <p>
-          Thanks! You registered at {registration.createdAt.toLocaleString()}
+          Thanks! You signed up at {registration.createdAt.toLocaleString()}
         </p>
       ) : (
         <>
           <p>
             You have not yet registered for the {currentSeason.year} leagues.
           </p>
+          {isRegistrationFull && (
+            <p>The current season is fully subscribed. You can register below for the wait list but a spot is not guaranteed.</p>
+          )}
           {currentSeason.isOpenForRegistration ? (
             <Form method="POST">
               <input type="hidden" name="year" value={currentSeason.year} />
