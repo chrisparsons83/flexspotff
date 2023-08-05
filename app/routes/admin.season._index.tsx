@@ -42,6 +42,7 @@ export const action = async ({ request }: ActionArgs) => {
         year: new Date().getFullYear(),
         isCurrent: false,
         isOpenForRegistration: false,
+        registrationSize: 60,
       });
 
       return json<ActionData>({
