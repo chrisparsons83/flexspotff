@@ -14,15 +14,14 @@ export default function RulesPage() {
       <h3 id="2-commissioners">2. Commissioners</h3>
 
       <p>
-        2.1. The commissioners are the following users: Christhrowsrocks
-        (Parsons#9571), IceMaine (IceMaine#7407), Madmike (madmike577#1108),
-        Noro (noro#1869).
+        2.1. The commissioners are the following users: Christhrowsrocks, IceMaine,
+        Madmike, and Noro.
       </p>
 
       <p>
         2.2. Changes to the commissioners are determined by the current body of
         commissioners, and are limited to members with the Administrator role
-        within the FFDiscord server.
+        within the Flex Spot Football server.
       </p>
 
       <h3 id="3-membership">3. Membership</h3>
@@ -165,7 +164,7 @@ export default function RulesPage() {
 
       <p>6.4. The draft will be 15 rounds in a snake format.</p>
 
-      <p>6.5. All drafts will be run using a 60-second pick timer.</p>
+      <p>6.5. All drafts will be run using a 90-second pick timer.</p>
 
       <p>6.6. Draft picks cannot be traded.</p>
 
