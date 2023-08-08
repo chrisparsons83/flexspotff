@@ -6,12 +6,12 @@ import {
 } from "~/models/poolgamepicks.server";
 import { getPoolWeeksByYear } from "~/models/poolweek.server";
 import { getPoolWeekMissedTotalByUserAndYear } from "~/models/poolweekmissed.server";
+import { getCurrentSeason } from "~/models/season.server";
 import type { User } from "~/models/user.server";
 import { getUsersByIds } from "~/models/user.server";
 
 import SpreadPoolStandingsRow from "~/components/layout/spread-pool/SpreadPoolStandingsRow";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
@@ -25,7 +25,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
+
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   // Get the most active week

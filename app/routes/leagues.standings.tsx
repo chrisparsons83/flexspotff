@@ -1,10 +1,10 @@
 import type { LoaderArgs } from "@remix-run/node";
 
 import { getLeaguesByYear } from "~/models/league.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import LeagueTable from "~/components/layout/standings/LeagueTable";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   leagues: Awaited<ReturnType<typeof getLeaguesByYear>>;
@@ -15,7 +15,7 @@ export const loader = async ({ params }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
+
   const leagues = await getLeaguesByYear(currentSeason.year);
 
   return superjson<LoaderData>(

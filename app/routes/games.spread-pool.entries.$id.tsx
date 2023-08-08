@@ -11,8 +11,8 @@ import type {
 import {
   createPoolGamePicks,
   deletePoolGamePicksForUserAndWeek,
-  getPoolGamePicksByUserAndYear,
   getPoolGamePicksByUserAndPoolWeek,
+  getPoolGamePicksByUserAndYear,
 } from "~/models/poolgamepicks.server";
 import type { PoolWeek } from "~/models/poolweek.server";
 import { getPoolWeek, getPoolWeeksByYear } from "~/models/poolweek.server";
@@ -20,6 +20,7 @@ import {
   createPoolWeekMissed,
   getPoolWeekMissedByUserAndYear,
 } from "~/models/poolweekmissed.server";
+import { getCurrentSeason } from "~/models/season.server";
 import type { User } from "~/models/user.server";
 
 import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolGame";
@@ -31,7 +32,6 @@ import {
   useSuperActionData,
   useSuperLoaderData,
 } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   message?: string;

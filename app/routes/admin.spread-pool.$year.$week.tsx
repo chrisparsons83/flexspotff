@@ -4,16 +4,19 @@ import { DateTime } from "luxon";
 
 import { getWeekNflGames } from "~/models/nflgame.server";
 import type { PoolGame, PoolGameCreate } from "~/models/poolgame.server";
-import { getPoolGamesByYearAndWeek, upsertPoolGame } from "~/models/poolgame.server";
+import {
+  getPoolGamesByYearAndWeek,
+  upsertPoolGame,
+} from "~/models/poolgame.server";
 import {
   getPoolWeekByYearAndWeek,
   updatePoolWeek,
 } from "~/models/poolweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   message?: string;

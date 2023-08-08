@@ -3,11 +3,11 @@ import type { LoaderArgs } from "@remix-run/node";
 import { getQBSelectionsByWeek } from "~/models/qbselection.server";
 import type { QBStreamingStandingsRow } from "~/models/qbstreamingweek.server";
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
 import GoBox from "~/components/ui/GoBox";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   qbSelections: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
@@ -22,7 +22,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
+
   const year = params.year || `${currentSeason.year}`;
   const week = Number(params.week || "1");
 

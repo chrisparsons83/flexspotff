@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import z from "zod";
 
 import { getUserById } from "~/models/user.server";
+
 import { DAYS_AHEAD } from "./utils/constants";
 
 const SESSION_SECRET = z.string().parse(process.env.SESSION_SECRET);
@@ -79,11 +80,9 @@ export async function createUserSession({
   return redirect(redirectTo, {
     headers: {
       "Set-Cookie": await sessionStorage.commitSession(session, {
-        maxAge: remember
-          ? 60 * 60 * 24 * DAYS_AHEAD
-          : undefined,
+        maxAge: remember ? 60 * 60 * 24 * DAYS_AHEAD : undefined,
         expires: remember
-          ? DateTime.now().plus({days: DAYS_AHEAD}).toJSDate()
+          ? DateTime.now().plus({ days: DAYS_AHEAD }).toJSDate()
           : undefined,
       }),
     },

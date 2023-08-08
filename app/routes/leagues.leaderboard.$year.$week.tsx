@@ -1,5 +1,6 @@
 import type { LoaderArgs } from "@remix-run/node";
 
+import { getCurrentSeason } from "~/models/season.server";
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
@@ -8,7 +9,6 @@ import {
 import LeaderboardRow from "~/components/layout/leaderboard/LeaderboardRow";
 import GoBox from "~/components/ui/GoBox";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   leaderboard: Awaited<ReturnType<typeof getTeamGamesByYearAndWeek>>;

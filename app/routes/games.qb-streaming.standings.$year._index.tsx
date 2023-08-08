@@ -6,12 +6,12 @@ import {
 } from "~/models/qbselection.server";
 import type { QBStreamingStandingsRow } from "~/models/qbstreamingweek.server";
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
+import type { Season } from "~/models/season.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
 import { authenticator } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import type { Season} from "~/models/season.server";
-import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   qbStreamingResults: QBStreamingStandingsRow[];
@@ -81,7 +81,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       qbStreamingResults: sortedResults,
       currentWeekPicks,
       year,
-      currentSeason
+      currentSeason,
     },
     { headers: { "x-superjson": "true" } }
   );

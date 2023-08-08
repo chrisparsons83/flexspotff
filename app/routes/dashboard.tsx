@@ -73,11 +73,15 @@ export const loader = async ({ request }: LoaderArgs) => {
 };
 
 export default function Dashboard() {
-  const { registration, currentSeason, registrationsCount } = useSuperLoaderData<typeof loader>();
+  const { registration, currentSeason, registrationsCount } =
+    useSuperLoaderData<typeof loader>();
 
-  const isRegistrationFull = currentSeason.registrationSize <= registrationsCount;
+  const isRegistrationFull =
+    currentSeason.registrationSize <= registrationsCount;
 
-  const buttonText = `${isRegistrationFull ? 'Join wait list' : 'Register'} for ${currentSeason.year} Leagues`;
+  const buttonText = `${
+    isRegistrationFull ? "Join wait list" : "Register"
+  } for ${currentSeason.year} Leagues`;
 
   return (
     <div>
@@ -92,7 +96,10 @@ export default function Dashboard() {
             You have not yet registered for the {currentSeason.year} leagues.
           </p>
           {isRegistrationFull && (
-            <p>The current season is fully subscribed. You can register below for the wait list but a spot is not guaranteed.</p>
+            <p>
+              The current season is fully subscribed. You can register below for
+              the wait list but a spot is not guaranteed.
+            </p>
           )}
           {currentSeason.isOpenForRegistration ? (
             <Form method="POST">

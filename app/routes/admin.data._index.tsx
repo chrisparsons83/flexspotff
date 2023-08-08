@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 
 import { createNflTeams } from "~/models/nflteam.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
@@ -13,7 +14,6 @@ import {
   syncSleeperWeeklyScores,
 } from "~/libs/syncs.server";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -61,7 +61,10 @@ export const action = async ({ request }: ActionArgs) => {
     case "resyncCurrentWeekScores": {
       const nflGameState = await getNflState();
 
-      await syncSleeperWeeklyScores(currentSeason.year, nflGameState.display_week);
+      await syncSleeperWeeklyScores(
+        currentSeason.year,
+        nflGameState.display_week
+      );
 
       return json<ActionData>({ message: "League games have been synced." });
     }

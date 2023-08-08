@@ -20,9 +20,11 @@ export const loader = async ({ params }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
+
   const year =
-    params["*"] === "" ? currentSeason.year : Number.parseInt(params["*"] || "");
+    params["*"] === ""
+      ? currentSeason.year
+      : Number.parseInt(params["*"] || "");
 
   const leagueCount = (await getLeaguesByYear(year)).filter(
     (league) => league.isDrafted

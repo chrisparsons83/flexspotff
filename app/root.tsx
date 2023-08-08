@@ -22,10 +22,10 @@ export const links: LinksFunction = () => {
 
 export const meta = () => {
   return [
-    {charset: "utf-8"},
-    {title: "Flex Spot FF"},
-    {name: "viewport", content: "width=device-width,initial-scale=1"},
-  ]
+    { charset: "utf-8" },
+    { title: "Flex Spot FF" },
+    { name: "viewport", content: "width=device-width,initial-scale=1" },
+  ];
 };
 
 type LoaderData = {

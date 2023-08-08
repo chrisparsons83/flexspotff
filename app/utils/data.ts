@@ -8,10 +8,9 @@ export type SuperJsonFunction = <Data>(
   init?: number | ResponseInit
 ) => SuperTypedResponse<Data>;
 
-export declare type SuperTypedResponse<T = unknown> =
-  Response & {
-    superjson(): Promise<T>;
-  };
+export declare type SuperTypedResponse<T = unknown> = Response & {
+  superjson(): Promise<T>;
+};
 
 type AppData = any;
 type DataFunction = (...args: any[]) => unknown; // matches any function

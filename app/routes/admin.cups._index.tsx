@@ -6,12 +6,12 @@ import type { Cup } from "~/models/cup.server";
 import { createCup, getCups } from "~/models/cup.server";
 import type { CupWeek } from "~/models/cupweek.server";
 import { createCupWeek } from "~/models/cupweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 
 import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;

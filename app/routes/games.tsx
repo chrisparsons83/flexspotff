@@ -2,7 +2,7 @@ import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
 
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
-import type { Season} from "~/models/season.server";
+import type { Season } from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
 
 import { superjson, useSuperLoaderData } from "~/utils/data";
@@ -22,21 +22,23 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
-  const qbStreamingCurrentWeek = (await getQBStreamingWeeks(currentSeason.year))[0]
-    .week;
+
+  const qbStreamingCurrentWeek = (
+    await getQBStreamingWeeks(currentSeason.year)
+  )[0].week;
 
   return superjson<LoaderData>(
     {
       qbStreamingCurrentWeek,
-      currentSeason
+      currentSeason,
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function GamesIndex() {
-  const { qbStreamingCurrentWeek, currentSeason } = useSuperLoaderData<typeof loader>();
+  const { qbStreamingCurrentWeek, currentSeason } =
+    useSuperLoaderData<typeof loader>();
 
   const qbStreamingLinks = [
     { name: "Rules", href: "/games/qb-streaming/rules", current: false },

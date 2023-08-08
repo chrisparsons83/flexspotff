@@ -11,6 +11,7 @@ import {
 } from "~/models/fsquared.server";
 import type { League } from "~/models/league.server";
 import { getLeaguesByYear } from "~/models/league.server";
+import { getCurrentSeason } from "~/models/season.server";
 import { getTeamsInSeason } from "~/models/team.server";
 
 import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntryFormSection";
@@ -18,7 +19,6 @@ import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
-import { getCurrentSeason } from "~/models/season.server";
 
 type ActionData = {
   formError?: string;
@@ -133,7 +133,10 @@ export const loader = async ({ request }: LoaderArgs) => {
   const teams = await getTeamsInSeason(currentSeason.year);
 
   // Get existing entry
-  const existingEntry = await getEntryByUserAndYear(user.id, currentSeason.year);
+  const existingEntry = await getEntryByUserAndYear(
+    user.id,
+    currentSeason.year
+  );
 
   // Make record object for simplicity
   const leagues: LoaderData["leagues"] = {};

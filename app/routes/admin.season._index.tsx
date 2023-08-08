@@ -137,7 +137,13 @@ export default function SeasonIndex() {
         </thead>
         <tbody>
           {seasons.map((season) => {
-            const { id, year, isCurrent, isOpenForRegistration, isOpenForFSquared } = season;
+            const {
+              id,
+              year,
+              isCurrent,
+              isOpenForRegistration,
+              isOpenForFSquared,
+            } = season;
 
             return (
               <tr key={id}>
@@ -161,7 +167,9 @@ export default function SeasonIndex() {
                         <input
                           type="hidden"
                           name="actionToSeason"
-                          value={!isOpenForRegistration ? "openReg" : "closeReg"}
+                          value={
+                            !isOpenForRegistration ? "openReg" : "closeReg"
+                          }
                         />
                         <Button
                           type="submit"
@@ -178,16 +186,18 @@ export default function SeasonIndex() {
                         <input
                           type="hidden"
                           name="actionToSeason"
-                          value={!isOpenForFSquared ? "openFSquared" : "closeFSquared"}
+                          value={
+                            !isOpenForFSquared
+                              ? "openFSquared"
+                              : "closeFSquared"
+                          }
                         />
                         <Button
                           type="submit"
                           name="_action"
                           value="setFSquared"
                         >
-                          {isOpenForFSquared
-                            ? "Close F²"
-                            : "Open F²"}
+                          {isOpenForFSquared ? "Close F²" : "Open F²"}
                         </Button>
                       </Form>
                     </>

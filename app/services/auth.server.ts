@@ -2,7 +2,11 @@ import { Authenticator } from "remix-auth";
 import { DiscordStrategy, SocialsProvider } from "remix-auth-socials";
 
 import type { User } from "~/models/user.server";
-import { createUser, getUserByDiscordId, updateUser } from "~/models/user.server";
+import {
+  createUser,
+  getUserByDiscordId,
+  updateUser,
+} from "~/models/user.server";
 
 import { sessionStorage } from "~/services/session.server";
 import {

@@ -1,7 +1,7 @@
 import type { LoaderArgs } from "@remix-run/node";
 import clsx from "clsx";
 
-import type { ScoreArray} from "~/models/cup.server";
+import type { ScoreArray } from "~/models/cup.server";
 import { getCupByYear } from "~/models/cup.server";
 import { getCupGamesByCup } from "~/models/cupgame.server";
 import { getCupWeeks } from "~/models/cupweek.server";
@@ -33,7 +33,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   if (!currentSeason) {
     throw new Error("No active season currently");
   }
-  
+
   const cup = await getCupByYear(currentSeason.year);
   if (!cup) throw new Error("No cup found for this year");
 

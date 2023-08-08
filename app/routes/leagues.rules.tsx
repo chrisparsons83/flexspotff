@@ -14,8 +14,8 @@ export default function RulesPage() {
       <h3 id="2-commissioners">2. Commissioners</h3>
 
       <p>
-        2.1. The commissioners are the following users: Christhrowsrocks, IceMaine,
-        Madmike, and Noro.
+        2.1. The commissioners are the following users: Christhrowsrocks,
+        IceMaine, Madmike, and Noro.
       </p>
 
       <p>
