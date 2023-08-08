@@ -40,6 +40,9 @@ export async function getLeagues() {
         name: "asc",
       },
     ],
+    include: {
+      teams: true,
+    },
   });
 }
 

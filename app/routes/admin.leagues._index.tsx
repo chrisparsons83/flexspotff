@@ -4,7 +4,6 @@ import { Form, useActionData } from "@remix-run/react";
 import { DateTime } from "luxon";
 import z from "zod";
 
-import type { League } from "~/models/league.server";
 import { getLeague, getLeagues, updateLeague } from "~/models/league.server";
 import type { Team } from "~/models/team.server";
 import { createTeam, getTeams, updateTeam } from "~/models/team.server";
@@ -54,7 +53,7 @@ const sleeperDraftJson = z.object({
 type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
 
 type LoaderData = {
-  leagues: League[];
+  leagues: Awaited<ReturnType<typeof getLeagues>>;
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -202,7 +201,7 @@ export default function LeaguesList() {
                 <a
                   href={`https://sleeper.com/draft/nfl/${league.sleeperDraftId}`}
                 >
-                  Draft
+                  Draft ({league.teams.length} / 12)
                 </a>
                 <br />
                 {league.draftDateTime?.toLocaleString() || ""}
