@@ -42,6 +42,7 @@ export const action = async ({ request }: ActionArgs) => {
         year: new Date().getFullYear(),
         isCurrent: false,
         isOpenForRegistration: false,
+        isOpenForFSquared: false,
         registrationSize: 60,
       });
 
@@ -75,6 +76,24 @@ export const action = async ({ request }: ActionArgs) => {
       return json<ActionData>({
         message: `${season.year} season registration is now ${
           season.isOpenForRegistration ? "open" : "closed"
+        }.`,
+      });
+    }
+    case "setFSquared": {
+      const seasonId = formData.get("seasonId");
+      const actionToSeason = formData.get("actionToSeason");
+      if (typeof seasonId !== "string" || typeof actionToSeason !== "string") {
+        throw new Error(`Form not generated correctly.`);
+      }
+
+      const season = await updateSeason({
+        id: seasonId,
+        isOpenForFSquared: actionToSeason === "openFSquared",
+      });
+
+      return json<ActionData>({
+        message: `${season.year} F² is now ${
+          season.isOpenForFSquared ? "open" : "closed"
         }.`,
       });
     }
@@ -112,18 +131,20 @@ export default function SeasonIndex() {
             <th>Year</th>
             <th>Active?</th>
             <th>Open Registration?</th>
+            <th>Open F²?</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {seasons.map((season) => {
-            const { id, year, isCurrent, isOpenForRegistration } = season;
+            const { id, year, isCurrent, isOpenForRegistration, isOpenForFSquared } = season;
 
             return (
               <tr key={id}>
                 <td>{year}</td>
                 <td>{isCurrent ? "Yes" : "No"}</td>
                 <td>{isOpenForRegistration ? "Yes" : "No"}</td>
+                <td>{isOpenForFSquared ? "Yes" : "No"}</td>
                 <td className="not-prose">
                   {!isCurrent && (
                     <Form method="POST">
@@ -134,23 +155,42 @@ export default function SeasonIndex() {
                     </Form>
                   )}
                   {isCurrent && (
-                    <Form method="POST">
-                      <input type="hidden" name="seasonId" value={id} />
-                      <input
-                        type="hidden"
-                        name="actionToSeason"
-                        value={!isOpenForRegistration ? "openReg" : "closeReg"}
-                      />
-                      <Button
-                        type="submit"
-                        name="_action"
-                        value="setRegistration"
-                      >
-                        {isOpenForRegistration
-                          ? "Close Registration"
-                          : "Open Registration"}
-                      </Button>
-                    </Form>
+                    <>
+                      <Form method="POST">
+                        <input type="hidden" name="seasonId" value={id} />
+                        <input
+                          type="hidden"
+                          name="actionToSeason"
+                          value={!isOpenForRegistration ? "openReg" : "closeReg"}
+                        />
+                        <Button
+                          type="submit"
+                          name="_action"
+                          value="setRegistration"
+                        >
+                          {isOpenForRegistration
+                            ? "Close Registration"
+                            : "Open Registration"}
+                        </Button>
+                      </Form>
+                      <Form method="POST">
+                        <input type="hidden" name="seasonId" value={id} />
+                        <input
+                          type="hidden"
+                          name="actionToSeason"
+                          value={!isOpenForFSquared ? "openFSquared" : "closeFSquared"}
+                        />
+                        <Button
+                          type="submit"
+                          name="_action"
+                          value="setFSquared"
+                        >
+                          {isOpenForFSquared
+                            ? "Close F²"
+                            : "Open F²"}
+                        </Button>
+                      </Form>
+                    </>
                   )}
                 </td>
               </tr>

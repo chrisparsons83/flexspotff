@@ -11,11 +11,13 @@ import {
 import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
 import { authenticator } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { Season} from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
 
 type LoaderData = {
   currentResults: currentResultsBase[];
   existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null;
+  currentSeason: Season;
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -57,13 +59,13 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
 
   return superjson<LoaderData>(
-    { currentResults, existingEntry },
+    { currentResults, existingEntry, currentSeason },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function FSquaredIndex() {
-  const { currentResults, existingEntry } = useSuperLoaderData<typeof loader>();
+  const { currentResults, existingEntry, currentSeason } = useSuperLoaderData<typeof loader>();
 
   return (
     <>
@@ -77,7 +79,7 @@ export default function FSquaredIndex() {
         <h3>My entry</h3>
         <p>Status: {existingEntry ? `Submitted` : `Not Submitted`}</p>
         <p>
-          <Link to="my-entry">View/Edit My Entry</Link>
+          {currentSeason.isOpenForFSquared ? <Link to="my-entry">View/Edit My Entry</Link> : <p>Season not yet opened for entries.</p>}
         </p>
       </div>
       <section>
