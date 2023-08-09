@@ -37,8 +37,8 @@ const sleeperTeamJson = z.array(
     }),
     metadata: z
       .object({
-        streak: z.string(),
-        record: z.string(),
+        streak: z.string().optional(),
+        record: z.string().optional(),
       })
       .nullable(),
   })
@@ -79,6 +79,7 @@ export const action = async ({ request }: ActionArgs) => {
         fetch(teamsUrl),
         fetch(draftsUrl),
       ]);
+
       const sleeperTeams: SleeperTeamJson = sleeperTeamJson
         .parse(await sleeperTeamsRes.json())
         .filter((team) => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
