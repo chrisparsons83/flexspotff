@@ -19,6 +19,7 @@ import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
+import { shuffleArray } from "~/utils/helpers";
 
 type ActionData = {
   formError?: string;
@@ -40,14 +41,23 @@ const formEntry = z.string().array().length(2);
 type FormEntry = z.infer<typeof formEntry>;
 
 function convertExistingEntryToInitialFormState(
-  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null
+  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null,
+  leagues: Record<string, Awaited<ReturnType<typeof getTeamsInSeason>>>
 ) {
-  if (!existingEntry) return {};
-
   const result: Record<string, boolean> = {};
+  const now = new Date();
 
-  for (const team of existingEntry.teams) {
-    result[team.league.name] = true;
+  if (existingEntry) {
+    for (const team of existingEntry.teams) {
+      result[team.league.name] = true;
+    }
+  }
+
+  for (const leagueName in leagues) {
+    const league = leagues[leagueName][0].league;
+    if (league.draftDateTime && league.draftDateTime < now) {
+      result[leagueName] = true;
+    }
   }
 
   return result;
@@ -82,16 +92,18 @@ export const action = async ({
   const newEntries: string[] = [];
   for (const league of leagues) {
     if (league.draftDateTime && league.draftDateTime < new Date()) {
-      // League has drafted, make sure to use existing entry.
+      // League has drafted and there's no entry, so you need to pick two at random.
       if (!existingEntry) {
-        throw new Error(
-          `You don't have an existing entry and a league has drafted already.`
-        );
+        const twoRandomTeams = shuffleArray(
+          league.teams.map((team) => team.id)
+        ).slice(0, 2);
+        newEntries.push(...twoRandomTeams);
+      } else {
+        const entryTeamsFromLeague = existingEntry.teams
+          .filter((team) => team.league.name === league.name)
+          .map((team) => team.id);
+        newEntries.push(...entryTeamsFromLeague);
       }
-      const entryTeamsFromLeague = existingEntry.teams
-        .filter((team) => team.league.name === league.name)
-        .map((team) => team.id);
-      newEntries.push(...entryTeamsFromLeague);
     } else {
       newEntries.push(...fSquaredForm[league.name]);
     }
@@ -161,7 +173,7 @@ export default function FSquaredMyEntry() {
 
   const [validLeagueCheck, setValidLeagueCheck] = useState<
     Record<string, boolean>
-  >(convertExistingEntryToInitialFormState(existingEntry));
+  >(convertExistingEntryToInitialFormState(existingEntry, leagues));
 
   const numberOfLeagues = Object.keys(leagues).length;
 
@@ -191,8 +203,13 @@ export default function FSquaredMyEntry() {
     <div>
       <h2>My F² Entry</h2>
       <p>
-        You are able to change your picks for a league until that league's draft
-        starts. Teams are listed by their draft order.
+        Pick two teams from each league. Teams are listed by their draft order.
+      </p>
+      <p>You can change your picks for a league until their draft begins.</p>
+      <p>
+        If you have not submitted an entry yet and a league has already drafted,
+        you can pick the rest of the leagues, and you will be assigned teams at
+        random from leagues that have drafted.
       </p>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method="POST" reloadDocument>

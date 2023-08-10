@@ -27,7 +27,7 @@ export default function FSquaredEntryFormSection({
   const handleChangeCheck = (event: React.ChangeEvent<HTMLInputElement>) => {
     const change = event.target.checked ? 1 : -1;
     const total = selected.length + change;
-    const isLeagueFull = total === 2;
+    const isLeagueFull = total === 2 || Boolean(leagueLocked);
     if (event.target.checked) {
       setSelected((prevState) => [...prevState, event.target.value]);
     } else {
