@@ -8,6 +8,8 @@ import type {
 } from "~/models/poolgame.server";
 import type { PoolGamePick } from "~/models/poolgamepicks.server";
 
+import Button from "~/components/ui/Button";
+
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
   const displayAmount = home ? amount : -1 * amount;
@@ -36,6 +38,7 @@ export default function SpreadPoolGameComponent({
   const [betAmount, setBetAmount] = useState(
     Math.abs(existingBet?.amount || 0)
   );
+  const [showSlider, setShowSlider] = useState(false);
 
   const betDisplay =
     betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : "No Bet";
@@ -81,6 +84,21 @@ export default function SpreadPoolGameComponent({
     }
   };
 
+  const displayBetInput = () => {
+    console.log("hello");
+    setShowSlider(true);
+  };
+
+  const resetBet = () => {
+    setBetTeam(null);
+    setBetAmount(0);
+    handleChange([
+      { teamId: poolGame.game.homeTeam.id, amount: 0 },
+      { teamId: poolGame.game.awayTeam.id, amount: 0 },
+    ]);
+    setShowSlider(false);
+  };
+
   return (
     <div
       className={clsx(
@@ -101,18 +119,36 @@ export default function SpreadPoolGameComponent({
           {formatSpread(poolGame.homeSpread, true)})
         </div>
       </div>
-      <input
-        type="range"
-        min="-50"
-        max="50"
-        step="10"
-        name={`${poolGame.id}-${betTeam?.id}`}
-        defaultValue={betSliderDefault}
-        className="w-full"
-        onChange={onBetChange}
-        disabled={pickLocked}
-      />
-      <div>Current Bet: {betDisplay}</div>
+      {showSlider && (
+        <>
+          <input
+            type="range"
+            min="-50"
+            max="50"
+            step="10"
+            name={`${poolGame.id}-${betTeam?.id}`}
+            defaultValue={betSliderDefault}
+            className="w-full"
+            onChange={onBetChange}
+            disabled={pickLocked}
+          />
+          <div className="flex justify-between">
+            <div>Current Bet: {betDisplay}</div>
+            <div>
+              <Button type="button" onClick={resetBet}>
+                Reset Bet
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      {!showSlider && (
+        <div className="text-center">
+          <Button type="button" className="w-full" onClick={displayBetInput}>
+            Place bet on game
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
