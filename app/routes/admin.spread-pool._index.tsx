@@ -97,7 +97,7 @@ export const action = async ({ request }: ActionArgs) => {
             .map((poolGamePick) => poolGamePick.userId)
         ),
       ];
-      const existingUserIdsThatDidNotBet = (await getPoolGamePicksWonLoss())
+      const existingUserIdsThatDidNotBet = (await getPoolGamePicksWonLoss(year))
         .map((result) => result.userId)
         .filter((userId) => !userIdsThatBet.includes(userId));
 
