@@ -40,7 +40,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
         poolGamePick.amountBet !== 0
     );
 
-  const amountWonLoss = await getPoolGamePicksWonLoss();
+  const amountWonLoss = await getPoolGamePicksWonLoss(currentSeason.year);
 
   // Update amountWonLoss based on missing week totals, then re-sort.
   const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(

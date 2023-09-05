@@ -102,9 +102,14 @@ export async function getPoolGamePicksByUserAndYear(
   });
 }
 
-export async function getPoolGamePicksWonLoss() {
+export async function getPoolGamePicksWonLoss(year: PoolWeek["year"]) {
   return prisma.poolGamePick.groupBy({
     where: {
+      poolGame: {
+        poolWeek: {
+          year,
+        },
+      },
       amountBet: {
         gt: 0,
       },

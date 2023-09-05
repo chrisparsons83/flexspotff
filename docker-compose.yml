@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_MULTIPLE_DATABASES=flexspotff,flexspotff_test
+      - POSTGRES_MULTIPLE_DATABASES=flexspotff,flexspotff_test,flexspotff_com_d1f3
     ports:
       - "5432:5432"
     volumes:
