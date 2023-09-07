@@ -17,6 +17,7 @@ export const sessionStorage = createCookieSessionStorage({
     sameSite: "lax",
     secrets: [SESSION_SECRET],
     secure: process.env.NODE_ENV === "production",
+    domain: process.env.NODE_ENV === "production" ? 'flexspot.com' : 'localhost'
   },
 });
 
