@@ -145,7 +145,7 @@ export default function SpreadPoolGameComponent({
       {!showSlider && (
         <div className="text-center">
           <Button type="button" className="w-full" onClick={displayBetInput}>
-            Place bet on game
+            {betAmount !== 0 ? "Bet placed on game" : "Place bet on game"}
           </Button>
         </div>
       )}
