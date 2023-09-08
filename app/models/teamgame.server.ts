@@ -27,6 +27,13 @@ export async function getNewestWeekTeamGameByYear(year: League["year"]) {
 
 export async function getTeamGameYearlyTotals(year: League["year"]) {
   return prisma.teamGame.groupBy({
+    where: {
+      team: {
+        league: {
+          year,
+        },
+      },
+    },
     by: ["teamId"],
     _sum: {
       pointsScored: true,
