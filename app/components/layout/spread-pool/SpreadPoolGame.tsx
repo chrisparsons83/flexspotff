@@ -135,7 +135,7 @@ export default function SpreadPoolGameComponent({
           <div className="flex justify-between">
             <div>Current Bet: {betDisplay}</div>
             <div>
-              <Button type="button" onClick={resetBet}>
+              <Button type="button" onClick={resetBet} disabled={pickLocked}>
                 Reset Bet
               </Button>
             </div>
