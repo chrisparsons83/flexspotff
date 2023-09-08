@@ -12,7 +12,6 @@ export let sessionStorage = createCookieSessionStorage({
     secrets: [process.env.SESSION_SECRET],
     secure: process.env.NODE_ENV === "production", // enable this in prod only
     maxAge: 60 * 60 * 24 * DAYS_AHEAD, // 30 days
-    domain: process.env.NODE_ENV === "production" ? 'flexspot.com' : 'localhost'
   },
 });
 
