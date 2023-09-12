@@ -80,10 +80,8 @@ export default function FSquaredIndex() {
         <h3>My entry</h3>
         <p>Status: {existingEntry ? `Submitted` : `Not Submitted`}</p>
         <p>
-          {currentSeason.isOpenForFSquared ? (
+          {currentSeason.isOpenForFSquared && (
             <Link to="my-entry">View/Edit My Entry</Link>
-          ) : (
-            <p>Season not yet opened for entries.</p>
           )}
         </p>
       </div>
