@@ -73,7 +73,6 @@ export const isAdmin = (user: User) => {
 
 export const requireAdmin = (user: User) => {
   if (process.env.FORCE_ADMIN === "on") {
-    console.log("admin forced");
     return true;
   }
 
