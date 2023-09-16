@@ -43,6 +43,12 @@ This stack is built upon [Remix](https://remix.run/), so if you have questions, 
   - DISCORD_SECRET: On the same page as above, use the client secret (you may need to reset yours)
   - SESSION_SECRET: Not required but does set a different string for encrypting
 
+- While you're in the discord developer settings, you'll also want to set redirects to the following if you want to test Discord authentication
+
+```
+http://localhost:3000/auth/discord/callback
+```
+
 - Initial setup:
 
   ```sh
