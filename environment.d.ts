@@ -10,6 +10,7 @@ declare global {
       DATABASE_URL: string;
       DISCORD_CLIENT_ID: string;
       DISCORD_SECRET: string;
+      FORCE_ADMIN: string;
       SENTRY_DSN: string;
       SESSION_SECRET: string;
       WEBSITE_URL: string;
