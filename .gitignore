@@ -11,3 +11,5 @@ node_modules
 /app/styles/tailwind.css
 
 /coverage
+
+/*.sql

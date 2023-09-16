@@ -20,6 +20,14 @@ This stack is built upon [Remix](https://remix.run/), so if you have questions, 
 
 ## Development
 
+### Initial Setup
+
+- Install your NPM modules
+
+  ```sh
+  npm install
+  ```
+
 - Start the Postgres Database in [Docker](https://www.docker.com/get-started):
 
   ```sh
@@ -28,13 +36,31 @@ This stack is built upon [Remix](https://remix.run/), so if you have questions, 
 
   > **Note:** The npm script will complete while Docker sets up the container in the background. Ensure that Docker has finished and your container is running before proceeding.
 
+- Copy .env.example to .env, and update the following:
+
+  - DATABASE_URL to remove the \_test at the end, as that's used for the testing pipeline
+  - DISCORD_CLIENT_ID: Go to discord.com/developers, create an application, and then under the OAuth2 tab in settings, use the client ID
+  - DISCORD_SECRET: On the same page as above, use the client secret (you may need to reset yours)
+  - SESSION_SECRET: Not required but does set a different string for encrypting
+
 - Initial setup:
 
   ```sh
   npm run setup
   ```
-  
-- TODO: Explain ENV variables that need to be set, including how to set up a personal Discord developer account for testing
+
+- Load database dump if you have one.
+
+```sh
+cat NAME_OF_BACKUP_FILE | docker exec -i NAME_OF_DOCKER_CONTAINER psql -U postgres flexspotff
+```
+
+(you may need to drop/create the db if that gives you a bunch of errors, you can do this to solve it)
+
+```sh
+docker exec -i flexspotff-postgres-1 dropdb -U postgres flexspotff
+docker exec -i flexspotff-postgres-1 createdb -U postgres flexspotff
+```
 
 - Run the first build:
 
