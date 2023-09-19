@@ -70,6 +70,21 @@ export default function GamesIndex() {
     },
   ];
 
+  const nflLocksChallengeLinks = [
+    { name: "Rules", href: "/games/locks-challenge/rules", current: false },
+    { name: "My Entries", href: "/games/locks-challenge/entries", current: false },
+    {
+      name: "Overall Standings",
+      href: `/games/locks-challenge/standings/${currentSeason.year}`,
+      current: false,
+    },
+    {
+      name: "Weekly Standings",
+      href: `/games/locks-challenge/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
+      current: false,
+    },
+  ]
+
   return (
     <>
       <h2>FlexSpotFF Games</h2>
@@ -133,6 +148,29 @@ export default function GamesIndex() {
               className="mb-8 space-y-2 p-0"
             >
               {qbStreamingLinks.map((navLink) => (
+                <li key={navLink.name} className="flow-root">
+                  <Link
+                    to={navLink.href}
+                    className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                  >
+                    {navLink.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <p
+              id="games-spreadPool-heading"
+              className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
+            >
+              Locks Challenge
+            </p>
+            <ul
+              aria-labelledby="games-spreadPool-heading"
+              className="mb-8 space-y-2 p-0"
+            >
+              {nflLocksChallengeLinks.map((navLink) => (
                 <li key={navLink.name} className="flow-root">
                   <Link
                     to={navLink.href}

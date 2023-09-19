@@ -146,6 +146,72 @@ model League {
   teams Team[]
 }
 
+model LocksWeek {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year Int
+  weekNumber Int
+  isOpen Boolean @default(false)
+  isWeekScored Boolean @default(false)
+
+  locksGames LocksGame[]
+  locksWeekMissed LocksWeekMissed[]
+
+  @@unique([year, weekNumber], name: "locksYearAndWeek")
+}
+
+model LocksGame {
+  id String @id @default(cuid())
+
+  game NFLGame @relation(fields: [gameId], references: [id])
+  gameId String @unique
+
+  locksWeek LocksWeek? @relation(fields: [locksWeekId], references: [id])
+  locksWeekId String?
+
+  locksGamePicks LocksGamePick[]
+}
+
+model LocksWeekMissed {
+  id String @id @default(cuid())
+
+  locksWeek LocksWeek? @relation(fields: [locksWeekId], references: [id])
+  locksWeekId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  isWin Int @default(0)
+  isTie Int @default(0)
+  isLoss Int @default(0)
+
+  @@unique([userId, locksWeekId], name: "userAndLocksWeek")
+}
+
+model LocksGamePick {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isScored Boolean? @default(false)
+  isWin Int @default(0)
+  isTie Int @default(0)
+  isLoss Int @default(0)
+
+  teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamBetId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  locksGame LocksGame @relation(fields: [locksGameId], references: [id])
+  locksGameId String
+
+  @@unique([userId, locksGameId, teamBetId], name: "locksUserAndGameAndTeam")
+}
+
 model NFLGame {
   id String @id @default(cuid())
   sleeperGameId String @unique
@@ -164,6 +230,7 @@ model NFLGame {
   awayTeamScore Int
 
   poolGame PoolGame?
+  locksGame LocksGame?
   QBStreamingWeekOption QBStreamingWeekOption[]
 }
 
@@ -180,6 +247,7 @@ model NFLTeam {
   AwayGames NFLGame[] @relation(name: "AwayTeam")
 
   poolBets PoolGamePick[]
+  locksPicks LocksGamePick[]
   nflPlayers Player[]
 }
 
@@ -404,4 +472,6 @@ model User {
   poolGamePicks PoolGamePick[]
   QBSelections QBSelection[]
   poolWeeksMissed PoolWeekMissed[]
+  locksGamePick LocksGamePick[]
+  locksWeekMissed LocksWeekMissed[]
 }
