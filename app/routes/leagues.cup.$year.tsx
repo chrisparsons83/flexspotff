@@ -26,6 +26,7 @@ const roundNameMapping: RoundName[] = [
 type LoaderData = {
   cupGames: Awaited<ReturnType<typeof getCupGamesByCup>>;
   scoreArray: ScoreArray[];
+  year: string;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -34,7 +35,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     throw new Error("No active season currently");
   }
 
-  const cup = await getCupByYear(currentSeason.year);
+  const year = params.year;
+  if (!year) throw new Error("What happened to the year");
+
+  const cup = await getCupByYear(Number.parseInt(year));
   if (!cup) throw new Error("No cup found for this year");
 
   const cupGames = await getCupGamesByCup(cup.id);
@@ -73,13 +77,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   }
 
   return superjson<LoaderData>(
-    { cupGames, scoreArray },
+    { cupGames, scoreArray, year },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function CupYear() {
-  const { cupGames, scoreArray } = useSuperLoaderData<typeof loader>();
+  const { cupGames, scoreArray, year } = useSuperLoaderData<typeof loader>();
 
   const rankColors: Record<string, string> = {
     admiral: "bg-admiral text-gray-900",
@@ -91,7 +95,7 @@ export default function CupYear() {
 
   return (
     <>
-      <h2>2022 Cup</h2>
+      <h2>{year} Cup</h2>
       <div className="lg:flex lg:flex-row not-prose lg:text-xs">
         {roundNameMapping.map((roundName) => {
           const gamesInRound = cupGames.filter(

@@ -17,6 +17,7 @@ import {
 } from "~/models/cupteam.server";
 import type { CupWeek } from "~/models/cupweek.server";
 import { getCupWeeks, updateCupWeek } from "~/models/cupweek.server";
+import { getCurrentSeason } from "~/models/season.server";
 import {
   getTeamGameMultiweekTotals,
   getTeamGameMultiweekTotalsSeparated,
@@ -144,6 +145,9 @@ export const action = async ({ params, request }: ActionArgs) => {
   const formData = await request.formData();
   const action = formData.get("_action");
 
+  const currentSeason = await getCurrentSeason();
+  if (!currentSeason) throw new Error("No current season");
+
   switch (action) {
     case "updateCup": {
       const promises: Promise<CupWeek>[] = [];
@@ -169,10 +173,18 @@ export const action = async ({ params, request }: ActionArgs) => {
         .filter((cupWeek) => cupWeek.mapping === "SEEDING")
         .map((cupWeek) => cupWeek.week);
 
-      const scores = await getTeamGameMultiweekTotals(weeksToScore);
+      const scores = await getTeamGameMultiweekTotals(
+        weeksToScore,
+        currentSeason?.year
+      );
       const promises: Promise<CupTeam>[] = [];
       let seed = 1;
       for (const { teamId } of scores) {
+        console.log({
+          cupId,
+          teamId,
+          seed,
+        });
         promises.push(
           createCupTeam({
             cupId,
