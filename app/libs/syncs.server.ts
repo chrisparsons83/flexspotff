@@ -259,18 +259,19 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 }
 
 export async function syncNflPlayers() {
-  const sleeperLeagueRes = await fetch(
-    `https://api.sleeper.app/v1/players/nfl`
-  );
   const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
-    await sleeperLeagueRes.json()
+    await (await fetch(`https://api.sleeper.app/v1/players/nfl`)).json()
   );
+
+  console.log("players downloaded");
 
   const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
   const nflTeams = await getNflTeams();
   for (const nflTeam of nflTeams) {
     nflTeamSleeperIdToLocalIdMap.set(nflTeam.sleeperId, nflTeam.id);
   }
+
+  console.log("teams mapped");
 
   const promises: Promise<PlayerCreate>[] = [];
   for (const [
@@ -291,6 +292,7 @@ export async function syncNflPlayers() {
     promises.push(upsertPlayer(player));
 
     if (promises.length >= 50) {
+      console.log({ player_mapped: full_name });
       await Promise.all(promises);
       promises.length = 0;
     }
