@@ -1,15 +1,15 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 
-import type { PoolWeek } from "~/models/poolweek.server";
-import { getPoolWeeksByYear } from "~/models/poolweek.server";
+import type { LocksWeek } from "~/models/locksweek.server";
+import { getLocksWeeksByYear } from "~/models/locksweek.server";
 import { getCurrentSeason } from "~/models/season.server";
 
 import { authenticator } from "~/services/auth.server";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
-  poolWeeks: PoolWeek[];
+  locksWeeks: LocksWeek[];
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -22,34 +22,34 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     throw new Error("No active season currently");
   }
 
-  const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
+  const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
     {
-      poolWeeks,
+      locksWeeks,
     },
     { headers: { "x-superjson": "true" } }
   );
 };
 
-export default function GamesQBStreamingMyEntries() {
-  const { poolWeeks } = useSuperLoaderData<typeof loader>();
+export default function GamesLocksMyEntries() {
+  const { locksWeeks } = useSuperLoaderData<typeof loader>();
 
   return (
     <>
       <h2>My Entries</h2>
       <ul>
-        {poolWeeks.map((poolWeek) => {
-          const suffix = poolWeek.isWeekScored
+        {locksWeeks.map((locksWeek) => {
+          const suffix = locksWeek.isWeekScored
             ? " - Week Scored"
-            : !poolWeek.isOpen
+            : !locksWeek.isOpen
             ? " - Not Open"
             : "";
 
           return (
-            <li key={poolWeek.id}>
-              <Link to={`./${poolWeek.id}`}>
-                Week {poolWeek.weekNumber} {suffix}
+            <li key={locksWeek.id}>
+              <Link to={`./${locksWeek.id}`}>
+                Week {locksWeek.weekNumber} {suffix}
               </Link>
             </li>
           );

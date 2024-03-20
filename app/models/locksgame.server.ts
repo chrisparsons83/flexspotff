@@ -4,7 +4,7 @@ import { prisma } from "~/db.server";
 
 export type { LocksGame } from "@prisma/client";
 
-//export type Bet = { teamId: string; amount: number };
+export type TeamPick = { teamId: string };
 
 export type LocksGameCreate = Omit<LocksGame, "id">;
 
