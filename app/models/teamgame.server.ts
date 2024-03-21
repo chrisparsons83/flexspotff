@@ -46,11 +46,19 @@ export async function getTeamGameYearlyTotals(year: League["year"]) {
   });
 }
 
-export async function getTeamGameMultiweekTotals(weeks: TeamGame["week"][]) {
+export async function getTeamGameMultiweekTotals(
+  weeks: TeamGame["week"][],
+  year: League["year"]
+) {
   return prisma.teamGame.groupBy({
     where: {
       week: {
         in: weeks,
+      },
+      team: {
+        league: {
+          year,
+        },
       },
     },
     by: ["teamId"],
