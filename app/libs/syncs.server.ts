@@ -259,11 +259,8 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 }
 
 export async function syncNflPlayers() {
-  const sleeperLeagueRes = await fetch(
-    `https://api.sleeper.app/v1/players/nfl`
-  );
   const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
-    await sleeperLeagueRes.json()
+    await (await fetch(`https://api.sleeper.app/v1/players/nfl`)).json()
   );
 
   const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
