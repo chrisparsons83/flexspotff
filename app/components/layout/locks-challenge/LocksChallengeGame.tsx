@@ -10,12 +10,12 @@ import type { LocksGamePick } from "~/models/locksgamepicks.server";
 import Button from "~/components/ui/Button";
 import { Team } from "@prisma/client";
 
-// const formatSpread = (amount: number, home: boolean) => {
-//   if (amount === 0) return `Even`;
-//   const displayAmount = home ? amount : -1 * amount;
-//   const prefix = displayAmount > 0 ? "+" : "";
-//   return `${prefix}${displayAmount}`;
-// };
+const formatSpread = (amount: number, home: boolean) => {
+  if (amount === 0) return `Even`;
+  const displayAmount = home ? amount : -1 * amount;
+  const prefix = displayAmount > 0 ? "+" : "";
+  return `${prefix}${displayAmount}`;
+};
 
 type Props = {
   handleChange: (teamPick: TeamPick[]) => void;
@@ -104,11 +104,13 @@ export default function LocksChallengeGameComponent({
     >
       <div className="flex gap-2 justify-between">
         <div className="w-2/5">
-          {locksGame.game.awayTeam.mascot}
+          {locksGame.game.awayTeam.mascot} (
+          {formatSpread(locksGame.homeSpread, false)})
         </div>
         <div className="text-center">vs.</div>
         <div className="w-2/5 text-right">
-          {locksGame.game.homeTeam.mascot}
+          {locksGame.game.homeTeam.mascot} (
+          {formatSpread(locksGame.homeSpread, true)})
         </div>
       </div>
       {showSlider && (

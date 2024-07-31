@@ -32,6 +32,7 @@ import {
   useSuperActionData,
   useSuperLoaderData,
 } from "~/utils/data";
+import type { TeamPick } from "~/models/poolgame.server";
 
 type ActionData = {
   message?: string;
@@ -68,42 +69,43 @@ export const action = async ({ params, request }: ActionArgs) => {
     locksWeek.weekNumber
   );
 
-  // Create map of all teams in week and set picks to 0
-  const nflTeamIdToAmountBetMap: Map<string, number> = new Map();
-  for (const locksGame of locksGames) {
-    nflTeamIdToAmountBetMap.set(
-      `${locksGame.id}-${locksGame.game.homeTeamId}`,
-      0
-    );
-    nflTeamIdToAmountBetMap.set(
-      `${locksGame.id}-${locksGame.game.awayTeamId}`,
-      0
-    );
-  }
-
-  // Update map with existing picks
-  const existingPicks = await getLocksGamePicksByUserAndLocksWeek(user, locksWeek);
-  for (const existingPick of existingPicks) {
-    nflTeamIdToAmountBetMap.set(
-      `${existingPick.locksGameId}-${existingPick.teamBetId}`,
-      1
-    );
-  }
+    // Create map of all teams in week and set bet to 0
+    const nflTeamsPicked: Map<string, number> = new Map();
+    for (const locksGame of locksGames) {
+      nflTeamsPicked.set(
+        `${locksGame.id}-${locksGame.game.homeTeamId}`,
+        0
+      );
+      nflTeamsPicked.set(
+        `${locksGame.id}-${locksGame.game.awayTeamId}`,
+        0
+      );
+    }
+  
+    // Update map with existing bets
+    const existingPicks = await getLocksGamePicksByUserAndLocksWeek(user, locksWeek);
+    for (const existingPick of existingPicks) {
+      nflTeamsPicked.set(
+        `${existingPick.locksGameId}-${existingPick.teamBetId}`,
+        1
+      );
+    }
+  
 
   // Update map with new picks that are eligible
   const newPicksForm = await request.formData();
   for (const [key] of newPicksForm.entries()) {
-    const [locksGameId, teamId] = key.split("-");
+    const [locksGameId, teamBetId] = key.split("-");
 
     const locksGame = locksGames.find((locksGame) => locksGame.id === locksGameId);
     if (!locksGame) continue;
 
-    if (!teamId || teamId === "undefined") {
-      nflTeamIdToAmountBetMap.set(
+    if (!teamBetId || teamBetId === "undefined") {
+      nflTeamsPicked.set(
         `${locksGameId}-${locksGame.game.homeTeamId}`,
         0
       );
-      nflTeamIdToAmountBetMap.set(
+      nflTeamsPicked.set(
         `${locksGameId}-${locksGame.game.awayTeamId}`,
         0
       );
@@ -111,16 +113,17 @@ export const action = async ({ params, request }: ActionArgs) => {
     }
 
     if (locksGame.game.gameStartTime > new Date()) {
-      nflTeamIdToAmountBetMap.set(key, (teamId === locksGame.game.homeTeamId ? 1 : 0));
+      // Add the bet team to the list
+      nflTeamsPicked.set(key, (teamBetId === locksGame.game.homeTeamId ? 1 : 0));
 
-      // Get team that's the other side of this game and set to 0.
-      if (locksGame.game.awayTeamId === teamId) {
-        nflTeamIdToAmountBetMap.set(
+      // Remove the opposing team if they are also selected ??
+      if (locksGame.game.awayTeamId === teamBetId) {
+        nflTeamsPicked.set(
           `${locksGameId}-${locksGame.game.homeTeamId}`,
           0
         );
       } else {
-        nflTeamIdToAmountBetMap.set(
+        nflTeamsPicked.set(
           `${locksGameId}-${locksGame.game.awayTeamId}`,
           0
         );
@@ -130,18 +133,21 @@ export const action = async ({ params, request }: ActionArgs) => {
 
   // Loop through map and build promises to send down for creates
   const dataToInsert: LocksGamePickCreate[] = [];
-  for (const [key, teamPicked] of nflTeamIdToAmountBetMap.entries()) {
+  for (const [key, picked] of nflTeamsPicked.entries()) {
     const [locksGameId, teamBetId] = key.split("-");
-    const locksGame = locksGames.find((locksGame) => locksGame.id === locksGameId);
-    dataToInsert.push({
-      userId: user.id,
-      isScored: false,
-      isLoss: 0,
-      isTie: 0,
-      isWin: 0,
-      teamBetId: locksGame && teamBetId === key && teamPicked === 1 ? String(teamBetId) : String(locksGame?.game.awayTeamId),
-      locksGameId: locksGameId,
-    });
+    if (picked === 1)
+    {
+      const locksGame = locksGames.find((locksGame) => locksGame.id === locksGameId);
+      dataToInsert.push({
+        userId: user.id,
+        isScored: false,
+        isLoss: 0,
+        isTie: 0,
+        isWin: 0,
+        teamBetId: teamBetId,
+        locksGameId: locksGameId,
+      });
+    }
   }
 
   // Delete existing bets and wholesale replace them with the insert
@@ -259,33 +265,24 @@ export default function GamesLocksChallengeWeek() {
   } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
-  const existingBets =
-    poolGamePicks?.map((poolGame) => ({
-      teamId: poolGame.teamBetId,
-      amount: poolGame.amountBet,
+  const existingPicks: TeamPick[] = 
+    locksGamePicks?.flat().map(lockGame => ({ 
+      teamId: lockGame.teamBetId 
     })) || [];
 
-  const initialBudget =
-    1000 +
-    (amountWonLoss || 0) +
-    (newEntryDeduction || 0) +
-    (missedEntryDeduction || 0);
-  const [bets, setBets] = useState<Bet[]>(existingBets);
+  const [picks, setPicks] = useState<TeamPick[]>(existingPicks);
 
-  const handleChange = (bets: Bet[]) => {
-    setBets((prevBets) => {
-      const newBetTeamIds = bets.map((bet) => bet.teamId);
-      const cleanedBets = prevBets.filter(
-        (prevBet) => !newBetTeamIds.includes(prevBet.teamId)
+  const handleChange = (picks: TeamPick[]) => {
+    setPicks((prevPicks) => {
+      const newBetTeamIds = picks.map((pick) => pick.teamId);
+      const cleanedBets = prevPicks.filter(
+        (prevPick) => !newBetTeamIds.includes(prevPick.teamId)
       );
-      return [...cleanedBets, ...bets];
+      return [...cleanedBets, ...picks];
     });
   };
 
-  const betAmount = bets.reduce((a, b) => a + b.amount, 0);
-  const availableToBet = initialBudget - betAmount;
-
-  const disableSubmit = transition.state !== "idle" || availableToBet < 0;
+  const disableSubmit = transition.state !== "idle";
 
   const currentPoints = 5;
   const gamesBetOn = 4;
@@ -299,45 +296,33 @@ export default function GamesLocksChallengeWeek() {
             {actionData?.message && <Alert message={actionData.message} />}
             <div className="mb-4">
               <div>Current Points {currentPoints}</div>
-              <div>Games Currently Bet On {gamesBetOn}</div>
+              <div>Games Currently Picked On {gamesBetOn}</div>
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               {locksGames?.map((locksGame) => {
-                const existingBet = existingBets.find(
-                  (existingBet) =>
-                    existingBet.amount > 0 &&
+                const existingPick = existingPicks.find(
+                  (existingPick) =>
                     [
-                      poolGame.game.awayTeamId,
-                      poolGame.game.homeTeamId,
-                    ].includes(existingBet.teamId)
+                      locksGame.game.awayTeamId,
+                      locksGame.game.homeTeamId,
+                    ].includes(existingPick.teamId)
                 );
                 const existingLocksGamePick = locksGamePicks?.find(
                   (locksGamePick) =>
-                    locksGamePick.teamBetId === existingBet?.teamId
+                    locksGamePick.teamBetId === existingPick?.teamId
                 );
                 return (
                   <LocksChallengeGameComponent
                     key={locksGame.id}
                     handleChange={handleChange}
                     locksGame={locksGame}
-                    existingPick={existingBet}
+                    existingPick={existingPick}
                     existingLocksGamePick={existingLocksGamePick}
                   />
                 );
               })}
             </div>
             <div className="m-4">
-              {availableToBet < 0 && (
-                <p className="text-red-500">
-                  You cannot bet more than your available budget, which is
-                  currently {availableToBet}.
-                </p>
-              )}
-              <input
-                type="hidden"
-                name="isNewEntry"
-                value={Number(newEntryDeduction) !== 0 ? "true" : "false"}
-              />
               <Button type="submit" disabled={disableSubmit}>
                 Update Picks
               </Button>
