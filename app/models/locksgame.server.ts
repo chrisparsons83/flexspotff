@@ -19,7 +19,7 @@ export async function getLocksGamesByYearAndWeek(
   year: NFLGame["year"],
   week: NFLGame["week"]
 ) {
-  return prisma.poolGame.findMany({
+  return prisma.locksGame.findMany({
     where: {
       game: {
         year,

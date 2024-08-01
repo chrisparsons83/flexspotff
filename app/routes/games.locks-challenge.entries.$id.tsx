@@ -32,7 +32,6 @@ import {
   useSuperActionData,
   useSuperLoaderData,
 } from "~/utils/data";
-import type { TeamPick } from "~/models/poolgame.server";
 
 type ActionData = {
   message?: string;
@@ -227,23 +226,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     user,
     locksWeek.year
   );
-
-  /*
-  const amountWonLoss = getAmountWonLoss.reduce(
-    (a, b) => a + (b.resultWonLoss || 0),
-    0
-  );
-  */
-
-  /*
-  const newEntryDeduction =
-    getAmountWonLoss.length === 0 ? -20 * (poolWeek.weekNumber - 1) : 0;
-
-  const missedEntryDeduction = (
-    await getPoolWeekMissedByUserAndYear(user.id, currentSeason.year)
-  ).reduce((a, b) => a + (b.resultWonLoss || 0), 0);
-
-  */
 
   return superjson<LoaderData>(
     {

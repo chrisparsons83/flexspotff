@@ -171,6 +171,8 @@ model LocksGame {
   locksWeek LocksWeek? @relation(fields: [locksWeekId], references: [id])
   locksWeekId String?
 
+  homeSpread Float
+
   locksGamePicks LocksGamePick[]
 }
 
