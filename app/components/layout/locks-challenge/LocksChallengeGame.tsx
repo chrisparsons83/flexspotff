@@ -36,13 +36,16 @@ export default function LocksChallengeGameComponent({
   const [pickedTeam, setPickedTeam] = useState<NFLTeam | null>(existingTeamPick);
   const [showSlider, setShowSlider] = useState(false);
 
-  const pickedTeamDisplay =
-  existingPick?.teamId !== null ? `${pickedTeam?.mascot}` : "No Selection";
-  const pickSliderDefault = !existingPick
+  let pickSliderDefault_0 = !existingPick
     ? 0
     : existingPick.teamId === locksGame.game.awayTeamId
     ? -1
     : 1;
+
+  const [pickSliderDefault, setPickSldierDefault] = useState(pickSliderDefault_0);
+
+  const pickedTeamDisplay =
+  existingPick?.teamId !== null ? `${pickedTeam?.mascot}` : "No Selection";
 
   const gameDateTime = locksGame.game.gameStartTime;
   const now = new Date();
@@ -87,6 +90,7 @@ export default function LocksChallengeGameComponent({
         { teamId: locksGame.game.awayTeam.id },
       ]);
     setShowSlider(false);
+    setPickSldierDefault(0);
   };
 
   return (
@@ -120,11 +124,12 @@ export default function LocksChallengeGameComponent({
             defaultValue={pickSliderDefault}
             className="w-full"
             onChange={onPickChange}
+            disabled={pickLocked}
           />
           <div className="flex justify-between">
             <div>Current Pick: {pickedTeamDisplay !== "undefined" ? pickedTeamDisplay : "No Selection"}</div>
             <div>
-              <Button type="button" onClick={resetPick}>
+              <Button type="button" onClick={resetPick} disabled={pickLocked}>
                 Reset Pick
               </Button>
             </div>
@@ -134,9 +139,7 @@ export default function LocksChallengeGameComponent({
       {!showSlider && (
         <div className="text-center">
           <Button type="button" className="w-full" onClick={displayPickInput}>
-            {((existingLocksGamePick?.teamBetId === locksGame.game.homeTeam.id) || 
-              (existingLocksGamePick?.teamBetId === locksGame.game.awayTeam.id)
-             ) ? "Team has been picked" : "No team selected"}
+            {pickSliderDefault !== 0 ? "Team has been picked" : "No team selected"}
           </Button>
         </div>
       )}

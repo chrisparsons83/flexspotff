@@ -201,6 +201,7 @@ model LocksGamePick {
   isWin Int @default(0)
   isTie Int @default(0)
   isLoss Int @default(0)
+  isActive Boolean? @default(false)
 
   teamBet NFLTeam @relation(fields: [teamBetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamBetId String

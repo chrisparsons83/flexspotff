@@ -152,7 +152,7 @@ export default function SpreadLocksList() {
 
   return (
     <div>
-      <h2>Spread Locks Lines by Week</h2>
+      <h2>Locks Challenge Lines by Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method="POST">
         <div>

@@ -87,15 +87,15 @@ export const action = async ({ params, request }: ActionArgs) => {
 
     if (!teamBetId || teamBetId === "undefined") continue;
 
-    //if (locksGame.game.gameStartTime > new Date()) {
+    if (locksGame.game.gameStartTime > new Date()) {
       // Add the bet team to the list
       // Add the bet team if the opposite team is not in the game
-      if (nflTeamsPicked.includes(locksGame.game.homeTeamId) && teamBetId === locksGame.game.awayTeamId) {
-        nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.homeTeamId}`);
+      if (nflTeamsPicked.includes(`${locksGameId}-${locksGame.game.homeTeamId}`) && teamBetId === locksGame.game.awayTeamId) {
+        nflTeamsPicked.splice(nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.homeTeamId}`), 1);
         nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
       }
-      if (nflTeamsPicked.includes(locksGame.game.awayTeamId) && teamBetId === locksGame.game.homeTeamId) {
-        nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.awayTeamId}`);
+      if (nflTeamsPicked.includes(`${locksGameId}-${locksGame.game.awayTeamId}`) && teamBetId === locksGame.game.homeTeamId) {
+        nflTeamsPicked.splice(nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.awayTeamId}`), 1);
         nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
       }
       else {
@@ -103,6 +103,8 @@ export const action = async ({ params, request }: ActionArgs) => {
           nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
         }
       }
+      console.log(teamBetId);
+    }
 
   }
 
@@ -136,7 +138,6 @@ export const action = async ({ params, request }: ActionArgs) => {
     .map((locksWeek) => locksWeek.id)
     .filter((locksWeekId) => locksWeekId !== locksWeek.id);
 
-    //*
   const weeksPicked = new Set();
   picks
     .forEach((pick) => {
@@ -224,14 +225,18 @@ export default function GamesLocksChallengeWeek() {
       teamId: lockGame.teamBetId 
     })) || [];
 
+
   const [picks, setPicks] = useState<TeamPick[]>(existingPicks);
 
   const handleChange = (picks: TeamPick[]) => {
     setPicks((prevPicks) => {
       const newBetTeamIds = picks.map((pick) => pick.teamId);
+      
+      // Make sure there is no duplicate
       const cleanedBets = prevPicks.filter(
-        (prevPick) => !newBetTeamIds.includes(prevPick.teamId)
+        (prevPick) => (!newBetTeamIds.includes(prevPick.teamId))
       );
+
       return [...cleanedBets, ...picks];
     });
   };
