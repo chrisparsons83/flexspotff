@@ -68,75 +68,48 @@ export const action = async ({ params, request }: ActionArgs) => {
     locksWeek.weekNumber
   );
 
-    // Create map of all teams in week and set bet to 0
-    const nflTeamsPicked: Map<string, number> = new Map();
-    for (const locksGame of locksGames) {
-      nflTeamsPicked.set(
-        `${locksGame.id}-${locksGame.game.homeTeamId}`,
-        0
-      );
-      nflTeamsPicked.set(
-        `${locksGame.id}-${locksGame.game.awayTeamId}`,
-        0
-      );
-    }
-  
-    // Update map with existing bets
-    const existingPicks = await getLocksGamePicksByUserAndLocksWeek(user, locksWeek);
-    for (const existingPick of existingPicks) {
-      nflTeamsPicked.set(
-        `${existingPick.locksGameId}-${existingPick.teamBetId}`,
-        1
-      );
-    }
-  
+  // Create list to hold all selected teams
+  const nflTeamsPicked: string[] = [];
+
+  // Update map with existing bets
+  const existingPicks = await getLocksGamePicksByUserAndLocksWeek(user, locksWeek);
+  for (const existingPick of existingPicks) {
+    nflTeamsPicked.push(`${existingPick.locksGameId}-${existingPick.teamBetId}`);
+  }
 
   // Update map with new picks that are eligible
   const newPicksForm = await request.formData();
-  for (const [key] of newPicksForm.entries()) {
+  for (const [key, amount] of newPicksForm.entries()) {
     const [locksGameId, teamBetId] = key.split("-");
 
     const locksGame = locksGames.find((locksGame) => locksGame.id === locksGameId);
     if (!locksGame) continue;
 
-    if (!teamBetId || teamBetId === "undefined") {
-      nflTeamsPicked.set(
-        `${locksGameId}-${locksGame.game.homeTeamId}`,
-        0
-      );
-      nflTeamsPicked.set(
-        `${locksGameId}-${locksGame.game.awayTeamId}`,
-        0
-      );
-      continue;
-    }
+    if (!teamBetId || teamBetId === "undefined") continue;
 
-    if (locksGame.game.gameStartTime > new Date()) {
+    //if (locksGame.game.gameStartTime > new Date()) {
       // Add the bet team to the list
-      nflTeamsPicked.set(key, (teamBetId === locksGame.game.homeTeamId ? 1 : 0));
-
-      // Remove the opposing team if they are also selected ??
-      if (locksGame.game.awayTeamId === teamBetId) {
-        nflTeamsPicked.set(
-          `${locksGameId}-${locksGame.game.homeTeamId}`,
-          0
-        );
-      } else {
-        nflTeamsPicked.set(
-          `${locksGameId}-${locksGame.game.awayTeamId}`,
-          0
-        );
+      // Add the bet team if the opposite team is not in the game
+      if (nflTeamsPicked.includes(locksGame.game.homeTeamId) && teamBetId === locksGame.game.awayTeamId) {
+        nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.homeTeamId}`);
+        nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
       }
-    }
+      if (nflTeamsPicked.includes(locksGame.game.awayTeamId) && teamBetId === locksGame.game.homeTeamId) {
+        nflTeamsPicked.findIndex(item => item === `${locksGameId}-${locksGame.game.awayTeamId}`);
+        nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
+      }
+      else {
+        if (!nflTeamsPicked.includes(`${locksGameId}-${teamBetId}`)) {
+          nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
+        }
+      }
+
   }
 
   // Loop through map and build promises to send down for creates
   const dataToInsert: LocksGamePickCreate[] = [];
   for (const [key, picked] of nflTeamsPicked.entries()) {
-    const [locksGameId, teamBetId] = key.split("-");
-    if (picked === 1)
-    {
-      const locksGame = locksGames.find((locksGame) => locksGame.id === locksGameId);
+    const [locksGameId, teamBetId] = picked.split("-");
       dataToInsert.push({
         userId: user.id,
         isScored: false,
@@ -146,7 +119,6 @@ export const action = async ({ params, request }: ActionArgs) => {
         teamBetId: teamBetId,
         locksGameId: locksGameId,
       });
-    }
   }
 
   // Delete existing bets and wholesale replace them with the insert
@@ -278,7 +250,7 @@ export default function GamesLocksChallengeWeek() {
             {actionData?.message && <Alert message={actionData.message} />}
             <div className="mb-4">
               <div>Current Points {currentPoints}</div>
-              <div>Games Currently Picked On {gamesBetOn}</div>
+              <div>Teams Currently Picked {gamesBetOn}</div>
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               {locksGames?.map((locksGame) => {

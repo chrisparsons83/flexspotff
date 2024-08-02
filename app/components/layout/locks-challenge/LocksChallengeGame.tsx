@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import type { NFLTeam } from "~/models/nflteam.server";
 import type { 
@@ -8,7 +8,6 @@ import type {
 import type { LocksGamePick } from "~/models/locksgamepicks.server";
 
 import Button from "~/components/ui/Button";
-import { Team } from "@prisma/client";
 
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
@@ -35,9 +34,6 @@ export default function LocksChallengeGameComponent({
       (team) => team.id === existingPick?.teamId
     ) || null;
   const [pickedTeam, setPickedTeam] = useState<NFLTeam | null>(existingTeamPick);
-//   const [betAmount, setBetAmount] = useState(
-//     Math.abs(existingBet?.amount || 0)
-//   );
   const [showSlider, setShowSlider] = useState(false);
 
   const pickedTeamDisplay =
@@ -117,20 +113,19 @@ export default function LocksChallengeGameComponent({
         <>
           <input
             type="range"
-            min="-50"
-            max="50"
-            step="10"
+            min="-1"
+            max="1"
+            step="1"
             name={`${locksGame.id}-${pickedTeam?.id}`}
             defaultValue={pickSliderDefault}
             className="w-full"
             onChange={onPickChange}
-            disabled={pickLocked}
           />
           <div className="flex justify-between">
-            <div>Current Bet: {pickedTeamDisplay}</div>
+            <div>Current Pick: {pickedTeamDisplay !== "undefined" ? pickedTeamDisplay : "No Selection"}</div>
             <div>
-              <Button type="button" onClick={resetPick} disabled={pickLocked}>
-                Reset Bet
+              <Button type="button" onClick={resetPick}>
+                Reset Pick
               </Button>
             </div>
           </div>
@@ -139,7 +134,9 @@ export default function LocksChallengeGameComponent({
       {!showSlider && (
         <div className="text-center">
           <Button type="button" className="w-full" onClick={displayPickInput}>
-            {existingLocksGamePick?.teamBetId !== null ? "Team has been picked" : "No team selected"}
+            {((existingLocksGamePick?.teamBetId === locksGame.game.homeTeam.id) || 
+              (existingLocksGamePick?.teamBetId === locksGame.game.awayTeam.id)
+             ) ? "Team has been picked" : "No team selected"}
           </Button>
         </div>
       )}
