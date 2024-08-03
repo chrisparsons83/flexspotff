@@ -35,8 +35,9 @@ export default function LocksChallengeGameComponent({
     ) || null;
   const [pickedTeam, setPickedTeam] = useState<NFLTeam | null>(existingTeamPick);
   const [showSlider, setShowSlider] = useState(false);
+  const [isBetActive, setIsBetActive] = useState(existingLocksGamePick?.isActive);
 
-  let pickSliderDefault_0 = !existingPick
+  let pickSliderDefault_0 = (!existingPick || !isBetActive)
     ? 0
     : existingPick.teamId === locksGame.game.awayTeamId
     ? -1
@@ -45,7 +46,7 @@ export default function LocksChallengeGameComponent({
   const [pickSliderDefault, setPickSldierDefault] = useState(pickSliderDefault_0);
 
   const pickedTeamDisplay =
-  existingPick?.teamId !== null ? `${pickedTeam?.mascot}` : "No Selection";
+  (existingPick?.teamId !== null  && existingLocksGamePick?.isActive) ? `${pickedTeam?.mascot}` : "No Selection";
 
   const gameDateTime = locksGame.game.gameStartTime;
   const now = new Date();
@@ -63,19 +64,36 @@ export default function LocksChallengeGameComponent({
     if (+e.target.value > 0) {
       setPickedTeam(locksGame.game.homeTeam);
       handleChange([
-        { teamId: locksGame.game.homeTeam.id },
+        { teamId: locksGame.game.homeTeam.id,
+          isActive: 1
+        },
+        { teamId: locksGame.game.awayTeam.id,
+          isActive: 0
+        },
       ]);
+      setIsBetActive(1);
     } else if (+e.target.value < 0) {
       setPickedTeam(locksGame.game.awayTeam);
       handleChange([
-        { teamId: locksGame.game.awayTeam.id },
+        { teamId: locksGame.game.awayTeam.id,
+          isActive: 1
+        },
+        { teamId: locksGame.game.homeTeam.id,
+          isActive: 0
+        },
       ]);
+      setIsBetActive(1);
     } else {
       setPickedTeam(null);
       handleChange([
-        { teamId: locksGame.game.homeTeam.id },
-        { teamId: locksGame.game.awayTeam.id },
+        { teamId: locksGame.game.homeTeam.id,
+          isActive: 0
+        },
+        { teamId: locksGame.game.awayTeam.id,
+          isActive: 0
+        },
       ]);
+      setIsBetActive(0);
     }
   };
 
@@ -86,11 +104,16 @@ export default function LocksChallengeGameComponent({
   const resetPick = () => {
     setPickedTeam(null);
     handleChange([
-        { teamId: locksGame.game.homeTeam.id },
-        { teamId: locksGame.game.awayTeam.id },
+        { teamId: locksGame.game.homeTeam.id,
+          isActive: 0
+        },
+        { teamId: locksGame.game.awayTeam.id,
+          isActive: 0
+        },
       ]);
     setShowSlider(false);
     setPickSldierDefault(0);
+    setIsBetActive(0);
   };
 
   return (
