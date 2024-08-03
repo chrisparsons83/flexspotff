@@ -79,13 +79,6 @@ export const action = async ({ params, request }: ActionArgs) => {
     }
   }
 
-  console.log("Begin existingPicks");
-  for (const entry of nflTeamsPicked) {
-    console.log(entry);
-    console.log("---------------");
-  }
-  console.log("End existingPicks");
-
   // Update map with new picks that are eligible
   const newPicksForm = await request.formData();
   for (const [key, amount] of newPicksForm.entries()) {
@@ -100,9 +93,6 @@ export const action = async ({ params, request }: ActionArgs) => {
         nflTeamsPicked.splice(nflTeamsPicked.findIndex(item => item.includes(`${locksGameId}`)), 1);
       } 
     }
-
-    console.log(amount);
-    console.log(typeof amount);
 
     if (locksGame.game.gameStartTime > new Date()) {
       // If isActive flag is 0 then do not add to nflTeamsPicked
@@ -125,13 +115,6 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
     }
   }
-
-  console.log("Begin nflTeamsPicked");
-  for (const entry of nflTeamsPicked) {
-    console.log(entry);
-    console.log("---------------");
-  }
-  console.log("End nflTeamsPicked");
 
   // Loop through map and build promises to send down for creates
   const dataToInsert: LocksGamePickCreate[] = [];
@@ -160,12 +143,6 @@ export const action = async ({ params, request }: ActionArgs) => {
         locksGameId: locksGameId,
         isActive: 0,
       });
-  }
-
-  for (const entry of dataToInsert) {
-    console.log(entry.teamBetId);
-    console.log(entry.isActive);
-    console.log("---------------");
   }
 
   // Find all the locksGame that were not created and add them to the data as inactive
@@ -313,24 +290,6 @@ export default function GamesLocksChallengeWeek() {
         (prevPick) => !newBetTeamIds.includes(prevPick.teamId)
       );
       return [...cleanedBets, ...picks];
-
-      // const picksMap = new Map<string, number>(
-      //   picks.map((pick) => [pick.teamId, pick.isActive])
-      // );
-
-      // // Update prevPicks based on the values in picksMap
-      // const updatedPicks = prevPicks.map(prevPick => {
-      //   const isActive = picksMap.get(prevPick.teamId);
-      //   return {
-      //     ...prevPick,
-      //     isActive: isActive !== undefined ? isActive : prevPick.isActive
-      //   };
-      // });
-
-      // const picksTeamIds = new Set(picks.map(pick => pick.teamId));
-      // const cleanedBets = updatedPicks.filter(prevPick => picksTeamIds.has(prevPick.teamId));
-
-      // return [...cleanedBets, ...picks.filter(pick => !picksTeamIds.has(pick.teamId))];
     });
   };
 

@@ -37,16 +37,14 @@ export default function LocksChallengeGameComponent({
   const [showSlider, setShowSlider] = useState(false);
   const [isBetActive, setIsBetActive] = useState(existingLocksGamePick?.isActive);
 
-  let pickSliderDefault_0 = (!existingPick || !isBetActive)
+  const pickSliderDefault = (!existingPick || !isBetActive)
     ? 0
     : existingPick.teamId === locksGame.game.awayTeamId
     ? -1
     : 1;
 
-  const [pickSliderDefault, setPickSldierDefault] = useState(pickSliderDefault_0);
-
   const pickedTeamDisplay =
-  (existingPick?.teamId !== null  && existingLocksGamePick?.isActive) ? `${pickedTeam?.mascot}` : "No Selection";
+  (existingPick?.teamId !== null  && isBetActive) ? `${pickedTeam?.mascot}` : "No Selection";
 
   const gameDateTime = locksGame.game.gameStartTime;
   const now = new Date();
@@ -104,16 +102,15 @@ export default function LocksChallengeGameComponent({
   const resetPick = () => {
     setPickedTeam(null);
     handleChange([
-        { teamId: locksGame.game.homeTeam.id,
-          isActive: 0
-        },
-        { teamId: locksGame.game.awayTeam.id,
-          isActive: 0
-        },
-      ]);
-    setShowSlider(false);
-    setPickSldierDefault(0);
+      { teamId: locksGame.game.homeTeam.id,
+        isActive: 0
+      },
+      { teamId: locksGame.game.awayTeam.id,
+        isActive: 0
+      },
+    ]);
     setIsBetActive(0);
+    setShowSlider(false);
   };
 
   return (
