@@ -2,6 +2,9 @@ import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet } from "@remix-run/react";
 
 import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
+import { getPoolWeeksByYear } from "~/models/poolweek.server";
+import { getLocksWeeksByYear } from "~/models/locksweek.server";
+
 import type { Season } from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
 
@@ -14,6 +17,8 @@ const navigationLinks = [
 
 type LoaderData = {
   qbStreamingCurrentWeek: number;
+  spreadPoolCurrentWeek: number;
+  locksChallengeCurrentWeek: number;
   currentSeason: Season;
 };
 
@@ -27,9 +32,19 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     await getQBStreamingWeeks(currentSeason.year)
   )[0].week;
 
+  const spreadPoolCurrentWeek = (
+    await getPoolWeeksByYear(currentSeason.year)
+  )[0].weekNumber;
+
+  const locksChallengeCurrentWeek = (
+    await getLocksWeeksByYear(currentSeason.year)
+  )[0].weekNumber;
+
   return superjson<LoaderData>(
     {
       qbStreamingCurrentWeek,
+      spreadPoolCurrentWeek,
+      locksChallengeCurrentWeek,
       currentSeason,
     },
     { headers: { "x-superjson": "true" } }
@@ -37,7 +52,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 };
 
 export default function GamesIndex() {
-  const { qbStreamingCurrentWeek, currentSeason } =
+  const { qbStreamingCurrentWeek, spreadPoolCurrentWeek, locksChallengeCurrentWeek, currentSeason } =
     useSuperLoaderData<typeof loader>();
 
   const qbStreamingLinks = [
@@ -65,7 +80,7 @@ export default function GamesIndex() {
     },
     {
       name: "Weekly Standings",
-      href: `/games/spread-pool/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
+      href: `/games/spread-pool/standings/${currentSeason.year}/${spreadPoolCurrentWeek}`,
       current: false,
     },
   ];
@@ -80,7 +95,7 @@ export default function GamesIndex() {
     },
     {
       name: "Weekly Standings",
-      href: `/games/locks-challenge/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
+      href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
       current: false,
     },
   ]
@@ -161,13 +176,13 @@ export default function GamesIndex() {
           </section>
           <section>
             <p
-              id="games-spreadPool-heading"
+              id="games-locksChallenge-heading"
               className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
             >
               Locks Challenge
             </p>
             <ul
-              aria-labelledby="games-spreadPool-heading"
+              aria-labelledby="games-locksChallenge-heading"
               className="mb-8 space-y-2 p-0"
             >
               {nflLocksChallengeLinks.map((navLink) => (

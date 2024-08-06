@@ -7,6 +7,7 @@ import {
   getLocksGamePicksWonLoss,
   getLocksGamesPicksByLocksWeek,
   updateLocksGamePicksWithResults,
+  deleteLocksGamePicksNotActive
 } from "~/models/locksgamepicks.server";
 import type { LocksWeek } from "~/models/locksweek.server";
 import {
@@ -16,7 +17,6 @@ import {
   getLocksWeeksByYear,
   updateLocksWeek,
 } from "~/models/locksweek.server";
-import { createLocksWeekMissed } from "~/models/locksweekmissed.server";
 import type { Season } from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
 
@@ -88,23 +88,8 @@ export const action = async ({ request }: ActionArgs) => {
 
       // TODO: Put check in here to cancel the process if all games aren't completed.
 
-      // Add people that did not put in a bet to penalties
+      // Get all the picks for the week
       const locksGamePicks = await getLocksGamesPicksByLocksWeek(locksWeek);
-      const userIdsThatBet = [
-        ...new Set(
-          locksGamePicks
-            .map((locksGamePick) => locksGamePick.userId)
-        ),
-      ];
-      const existingUserIdsThatDidNotBet = (await getLocksGamePicksWonLoss(year))
-        .map((result) => result.userId)
-        .filter((userId) => !userIdsThatBet.includes(userId));
-
-      const locksGameMissedPromises: Promise<any>[] = [];
-      for (const userId of existingUserIdsThatDidNotBet) {
-        locksGameMissedPromises.push(createLocksWeekMissed(userId, locksWeek.id));
-      }
-      await Promise.all(locksGameMissedPromises);
 
       // Loop through each game and process
       const locksGames = await getLocksGamesByYearAndWeek(year, weekNumber);
@@ -113,6 +98,12 @@ export const action = async ({ request }: ActionArgs) => {
         locksGamePickPromises.push(updateLocksGamePicksWithResults(locksGame));
       }
       await Promise.all(locksGamePickPromises);
+      
+      const locksGameDeletePromises: Promise<any>[] = [];
+      for (const locksGame of locksGames) {
+        locksGameDeletePromises.push(deleteLocksGamePicksNotActive(locksGame));
+      }
+      await Promise.all(locksGameDeletePromises);
 
       await updateLocksWeek({
         ...locksWeek,

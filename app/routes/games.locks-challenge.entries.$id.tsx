@@ -16,10 +16,6 @@ import {
 } from "~/models/locksgamepicks.server";
 import type { LocksWeek } from "~/models/locksweek.server";
 import { getLocksWeek, getLocksWeeksByYear } from "~/models/locksweek.server";
-import {
-  createLocksWeekMissed,
-  getLocksWeekMissedByUserAndYear,
-} from "~/models/locksweekmissed.server";
 import { getCurrentSeason } from "~/models/season.server";
 import type { User } from "~/models/user.server";
 
@@ -94,7 +90,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       } 
     }
 
-    if (locksGame.game.gameStartTime > new Date()) {
+    //if (locksGame.game.gameStartTime > new Date()) {
       // If isActive flag is 0 then do not add to nflTeamsPicked
       if (!(amount === "0")) {
         //If homeTeam is bet on previously and the awayTeam is selected
@@ -113,7 +109,7 @@ export const action = async ({ params, request }: ActionArgs) => {
           }
         }
       }
-    }
+    //}
   }
 
   // Loop through map and build promises to send down for creates
@@ -180,34 +176,6 @@ export const action = async ({ params, request }: ActionArgs) => {
   // I think this is actually quicker than upserting and there's no harm in recreating this data
   await deleteLocksGamePicksForUserAndWeek(user, locksWeek);
   await createLocksGamePicks(dataToInsert);
-
-  // Do a final check to see how many weeks this person has missed before this week, and insert in
-  // missing week penalties.
-  const existingMissingWeeksIds = (
-    await getLocksWeekMissedByUserAndYear(user.id, currentSeason.year)
-  ).map((locksWeekMissed) => locksWeekMissed.locksWeek?.id);
-  const picks = await getLocksGamePicksByUserAndYear(user, currentSeason.year);
-  const locksWeekIds = (await getLocksWeeksByYear(currentSeason.year))
-    .map((locksWeek) => locksWeek.id)
-    .filter((locksWeekId) => locksWeekId !== locksWeek.id);
-
-  const weeksPicked = new Set();
-  picks
-    .forEach((pick) => {
-      weeksPicked.add(pick.locksGame.locksWeek?.id);
-    });
-  const missingWeeks = locksWeekIds.filter(
-    (locksWeekId) =>
-      ![...weeksPicked].includes(locksWeekId) &&
-      !existingMissingWeeksIds.includes(locksWeekId)
-  );
-  if (missingWeeks.length > 0) {
-    const missingWeekPromises: Promise<any>[] = [];
-    for (const missingWeekId of missingWeeks) {
-      missingWeekPromises.push(createLocksWeekMissed(user.id, missingWeekId));
-    }
-    await Promise.all(missingWeekPromises);
-  }
 
   return superjson<ActionData>(
     { message: "Your picks have been saved." },

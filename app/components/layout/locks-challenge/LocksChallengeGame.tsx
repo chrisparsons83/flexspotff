@@ -144,12 +144,11 @@ export default function LocksChallengeGameComponent({
             defaultValue={pickSliderDefault}
             className="w-full"
             onChange={onPickChange}
-            disabled={pickLocked}
           />
           <div className="flex justify-between">
             <div>Current Pick: {pickedTeamDisplay !== "undefined" ? pickedTeamDisplay : "No Selection"}</div>
             <div>
-              <Button type="button" onClick={resetPick} disabled={pickLocked}>
+              <Button type="button" onClick={resetPick}>
                 Reset Pick
               </Button>
             </div>

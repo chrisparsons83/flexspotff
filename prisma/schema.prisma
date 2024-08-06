@@ -157,7 +157,6 @@ model LocksWeek {
   isWeekScored Boolean @default(false)
 
   locksGames LocksGame[]
-  locksWeekMissed LocksWeekMissed[]
 
   @@unique([year, weekNumber], name: "locksYearAndWeek")
 }
@@ -174,22 +173,6 @@ model LocksGame {
   homeSpread Float
 
   locksGamePicks LocksGamePick[]
-}
-
-model LocksWeekMissed {
-  id String @id @default(cuid())
-
-  locksWeek LocksWeek? @relation(fields: [locksWeekId], references: [id])
-  locksWeekId String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
-
-  isWin Int @default(0)
-  isTie Int @default(0)
-  isLoss Int @default(0)
-
-  @@unique([userId, locksWeekId], name: "userAndLocksWeek")
 }
 
 model LocksGamePick {
@@ -476,5 +459,4 @@ model User {
   QBSelections QBSelection[]
   poolWeeksMissed PoolWeekMissed[]
   locksGamePick LocksGamePick[]
-  locksWeekMissed LocksWeekMissed[]
 }

@@ -138,6 +138,18 @@ export async function getLocksGamePicksWonLossWeek(locksWeek: LocksWeek) {
   });
 }
 
+export async function deleteLocksGamePicksNotActive(
+  locksGame: LocksGameByYearAndWeekElement
+) {
+  const deleteInactivePicks = await prisma.locksGamePick.deleteMany({
+    where: {
+      locksGameId: locksGame.id,
+      isScored: true,
+      isActive: 0,
+  },
+  });
+}
+
 export async function updateLocksGamePicksWithResults(
   locksGame: LocksGameByYearAndWeekElement
 ) {
