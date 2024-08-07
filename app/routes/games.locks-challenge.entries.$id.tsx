@@ -247,6 +247,7 @@ export default function GamesLocksChallengeWeek() {
       isActive: lockGame.isActive, 
     })) || [];
   
+  const gamesBetOn = existingPicks.filter((pick) => pick.isActive === 1).length;
 
   const [picks, setPicks] = useState<TeamPick[]>(existingPicks);
 
@@ -264,7 +265,6 @@ export default function GamesLocksChallengeWeek() {
   const disableSubmit = transition.state !== "idle";
 
   const currentPoints = 5;
-  const gamesBetOn = 4;
 
   return (
     <>
@@ -284,8 +284,10 @@ export default function GamesLocksChallengeWeek() {
                     [
                       locksGame.game.awayTeamId,
                       locksGame.game.homeTeamId,
-                    ].includes(existingPick.teamId)
+                    ].includes(existingPick.teamId) &&
+                    existingPick.isActive === 1
                 );
+                console.log(existingPick);
                 const existingLocksGamePick = locksGamePicks?.find(
                   (locksGamePick) =>
                     locksGamePick.teamBetId === existingPick?.teamId
