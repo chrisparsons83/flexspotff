@@ -8,6 +8,7 @@ import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
   registrations: Awaited<ReturnType<typeof getRegistrationsByYear>>;
+  notYetSignedUp: Awaited<ReturnType<typeof getRegistrationsByYear>>;
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -22,15 +23,25 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
 
   let registrations = await getRegistrationsByYear(currentSeason.year);
+  let lastYearRegistrations = await getRegistrationsByYear(
+    currentSeason.year - 1
+  );
+
+  let registrationsUserArray = registrations.map(
+    (registration) => registration.userId
+  );
+  let notYetSignedUp = lastYearRegistrations.filter(
+    (registration) => !registrationsUserArray.includes(registration.userId)
+  );
 
   return superjson<LoaderData>(
-    { registrations },
+    { registrations, notYetSignedUp },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function RegistrationList() {
-  const { registrations } = useSuperLoaderData<typeof loader>();
+  const { registrations, notYetSignedUp } = useSuperLoaderData<typeof loader>();
 
   return (
     <>
@@ -40,6 +51,12 @@ export default function RegistrationList() {
           <li key={registration.id}>{registration.user.discordName}</li>
         ))}
       </ol>
+      <h3>Missing from last year</h3>
+      <ul>
+        {notYetSignedUp.map((registration) => (
+          <li key={registration.id}>{registration.user.discordName}</li>
+        ))}
+      </ul>
     </>
   );
 }
