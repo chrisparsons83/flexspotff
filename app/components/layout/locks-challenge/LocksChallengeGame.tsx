@@ -9,6 +9,10 @@ import type { LocksGamePick } from "~/models/locksgamepicks.server";
 
 import Button from "~/components/ui/Button";
 
+import { Label } from "~/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
+
+
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
   const displayAmount = home ? amount : -1 * amount;
