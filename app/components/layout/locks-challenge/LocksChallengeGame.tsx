@@ -139,7 +139,7 @@ export default function LocksChallengeGameComponent({
       </div>
       {showSlider && (
         <>
-          <input
+          {/* <input
             type="range"
             min="-1"
             max="1"
@@ -148,7 +148,19 @@ export default function LocksChallengeGameComponent({
             defaultValue={pickSliderDefault}
             className="w-full"
             onChange={onPickChange}
-          />
+          /> */}
+          {
+            <RadioGroup defaultValue="option-one">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="option-one" id="option-one" />
+              <Label htmlFor="option-one">Option One</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="option-two" id="option-two" />
+              <Label htmlFor="option-two">Option Two</Label>
+            </div>
+          </RadioGroup>          
+          }
           <div className="flex justify-between">
             <div>Current Pick: {pickedTeamDisplay !== "undefined" ? pickedTeamDisplay : "No Selection"}</div>
             <div>
