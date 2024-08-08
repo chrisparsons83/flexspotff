@@ -25,6 +25,7 @@
     "setup": "prisma migrate dev && prisma db seed",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
+    "start:production": "prisma migrate deploy && npm run start",
     "test": "run-s db:migrate:test test:unit",
     "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"npx cypress open\"",
