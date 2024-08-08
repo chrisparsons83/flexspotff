@@ -42,6 +42,7 @@ type LoaderData = {
   amountWonLoss?: number | null;
   newEntryDeduction?: number;
   missedEntryDeduction?: number;
+  weekNumber?: number;
 };
 
 export const action = async ({ params, request }: ActionArgs) => {
@@ -221,12 +222,15 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     locksWeek.year
   );
 
+  const weekNumber = locksWeek.weekNumber;
+
   return superjson<LoaderData>(
     {
       user,
       locksWeek,
       locksGames,
       locksGamePicks,
+      weekNumber
     },
     { headers: { "x-superjson": "true" } }
   );
@@ -238,6 +242,7 @@ export default function GamesLocksChallengeWeek() {
     notOpenYet,
     locksGames,
     locksGamePicks,
+    weekNumber
   } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
@@ -264,18 +269,15 @@ export default function GamesLocksChallengeWeek() {
 
   const disableSubmit = transition.state !== "idle";
 
-  const currentPoints = 5;
-
   return (
     <>
-      <h2>Week Entry</h2>
+      <h2>Week {weekNumber} Entry</h2>
       <Form method="POST" reloadDocument>
         {notOpenYet || (
           <>
             {actionData?.message && <Alert message={actionData.message} />}
             <div className="mb-4">
-              <div>Current Points {currentPoints}</div>
-              <div>Teams Currently Picked {gamesBetOn}</div>
+              <div>Teams Currently Picked: {gamesBetOn}</div>
             </div>
             <div className="grid md:grid-cols-2 gap-12">
               {locksGames?.map((locksGame) => {
@@ -287,7 +289,6 @@ export default function GamesLocksChallengeWeek() {
                     ].includes(existingPick.teamId) &&
                     existingPick.isActive === 1
                 );
-                console.log(existingPick);
                 const existingLocksGamePick = locksGamePicks?.find(
                   (locksGamePick) =>
                     locksGamePick.teamBetId === existingPick?.teamId

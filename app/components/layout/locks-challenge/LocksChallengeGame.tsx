@@ -37,8 +37,6 @@ export default function LocksChallengeGameComponent({
   const [showSlider, setShowSlider] = useState(false);
   const [isBetActive, setIsBetActive] = useState(existingLocksGamePick?.isActive);
 
-  console.log(existingLocksGamePick?.isActive);
-
   const pickSliderDefault = (!existingPick || !isBetActive)
     ? 0
     : existingPick.teamId === locksGame.game.awayTeamId
