@@ -12,6 +12,7 @@ import Button from "~/components/ui/Button";
 import { Label } from "~/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
 
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
@@ -62,8 +63,13 @@ export default function LocksChallengeGameComponent({
     existingLocksGamePick &&
     existingLocksGamePick.isLoss;
 
-  const onPickChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (+e.target.value > 0) {
+  const displayPickInput = () => {
+    setShowSlider(true);
+  };
+
+  const handleTabTriggerPress = (value: string) => {
+
+    if (value === "homeTeamPick") {
       setPickedTeam(locksGame.game.homeTeam);
       handleChange([
         { teamId: locksGame.game.homeTeam.id,
@@ -74,7 +80,8 @@ export default function LocksChallengeGameComponent({
         },
       ]);
       setIsBetActive(1);
-    } else if (+e.target.value < 0) {
+    }
+    else if (value === "awayTeamPick") {
       setPickedTeam(locksGame.game.awayTeam);
       handleChange([
         { teamId: locksGame.game.awayTeam.id,
@@ -85,7 +92,8 @@ export default function LocksChallengeGameComponent({
         },
       ]);
       setIsBetActive(1);
-    } else {
+    }
+    else if (value === "noTeamPick") {
       setPickedTeam(null);
       handleChange([
         { teamId: locksGame.game.homeTeam.id,
@@ -99,24 +107,6 @@ export default function LocksChallengeGameComponent({
     }
   };
 
-  const displayPickInput = () => {
-    setShowSlider(true);
-  };
-
-  const resetPick = () => {
-    setPickedTeam(null);
-    handleChange([
-      { teamId: locksGame.game.homeTeam.id,
-        isActive: 0
-      },
-      { teamId: locksGame.game.awayTeam.id,
-        isActive: 0
-      },
-    ]);
-    setIsBetActive(0);
-    setShowSlider(false);
-  };
-
   return (
     <div
       className={clsx(
@@ -126,58 +116,21 @@ export default function LocksChallengeGameComponent({
         lostGame && "bg-red-900"
       )}
     >
-      <div className="flex gap-2 justify-between">
-        <div className="w-2/5">
-          {locksGame.game.awayTeam.mascot} (
-          {formatSpread(locksGame.homeSpread, false)})
-        </div>
-        <div className="text-center">vs.</div>
-        <div className="w-2/5 text-right">
-          {locksGame.game.homeTeam.mascot} (
-          {formatSpread(locksGame.homeSpread, true)})
-        </div>
-      </div>
-      {showSlider && (
+      {
         <>
-          {/* <input
-            type="range"
-            min="-1"
-            max="1"
-            step="1"
-            name={`${locksGame.id}-${pickedTeam?.id}`}
-            defaultValue={pickSliderDefault}
-            className="w-full"
-            onChange={onPickChange}
-          /> */}
           {
-            <RadioGroup defaultValue="option-one">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="option-one" id="option-one" />
-              <Label htmlFor="option-one">Option One</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="option-two" id="option-two" />
-              <Label htmlFor="option-two">Option Two</Label>
-            </div>
-          </RadioGroup>          
-          }
-          <div className="flex justify-between">
-            <div>Current Pick: {pickedTeamDisplay !== "undefined" ? pickedTeamDisplay : "No Selection"}</div>
-            <div>
-              <Button type="button" onClick={resetPick}>
-                Reset Pick
-              </Button>
-            </div>
+          <div className="mt-4">
+            <Tabs defaultValue="noTeamPick">
+              <TabsList className="flex justify-between">
+                <TabsTrigger value="awayTeamPick" className={clsx("bg-slate-800 rounded-md py-2 px-4 text-white", pickedTeam === locksGame.game.awayTeam && "bg-blue-100 text-blue-900")} onClick={() => handleTabTriggerPress("awayTeamPick")}>{locksGame.game.awayTeam.mascot}</TabsTrigger>
+                <TabsTrigger value="noTeamPick" className={clsx("bg-slate-800 rounded-md py-2 px-4 text-white", pickedTeam === null && "bg-blue-100 text-blue-900")} onClick={() => handleTabTriggerPress("noTeamPick")}>No Pick</TabsTrigger>
+                <TabsTrigger value="homeTeamPick" className={clsx("bg-slate-800 rounded-md py-2 px-4 text-white", pickedTeam === locksGame.game.homeTeam && "bg-blue-100 text-blue-900")} onClick={() => handleTabTriggerPress("homeTeamPick")}>{locksGame.game.homeTeam.mascot}</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
+          }
         </>
-      )}
-      {!showSlider && (
-        <div className="text-center">
-          <Button type="button" className="w-full" onClick={displayPickInput}>
-            {pickSliderDefault !== 0 ? "Team has been picked" : "No team selected"}
-          </Button>
-        </div>
-      )}
+      }
     </div>
   );
 }
