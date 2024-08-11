@@ -20,5 +20,7 @@ module.exports = {
     v2_meta: true,
     v2_routeConvention: true,
   },
-  serverModuleFormat: "cjs"
+  serverModuleFormat: "cjs",
+  tailwind: true,
+  postcss: true,
 };

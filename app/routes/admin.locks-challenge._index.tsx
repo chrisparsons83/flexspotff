@@ -1,8 +1,8 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-
-import { getLocksGamesByYearAndWeek } from "~/models/locksgame.server";
+import { getWeekNflGames } from "~/models/nflgame.server";
+import { getLocksGamesByYearAndWeek, LocksGameCreate, upsertLocksGame } from "~/models/locksgame.server";
 import {
   getLocksGamePicksWonLoss,
   getLocksGamesPicksByLocksWeek,
@@ -112,6 +112,42 @@ export const action = async ({ request }: ActionArgs) => {
 
       return json<ActionData>({ message: "Week has been scored" });
     }
+    case "publishWeek": {
+      const weekNumberString = formData.get("weekNumber");
+      const yearString = formData.get("year");
+
+      if (
+        typeof weekNumberString !== "string" ||
+        typeof yearString !== "string"
+      ) {
+        throw new Error("Form has not been formed correctly");
+      }
+
+      const year = Number(yearString);
+      const weekNumber = Number(weekNumberString);
+
+      const locksWeek = await getLocksWeekByYearAndWeek(+year, +weekNumber);
+      if (!locksWeek) throw new Error(`There's no locks week here`);
+
+      // Create LocksGames for the week
+      const nflGames = await getWeekNflGames(+year, +weekNumber);
+      const promises: Promise<any>[] = [];
+      for (const nflGame of nflGames) {
+        const locksGame: LocksGameCreate = {
+          gameId: nflGame.id,
+          locksWeekId: locksWeek.id,
+        }
+        promises.push(upsertLocksGame(locksGame));
+      }
+      await Promise.all(promises);
+
+      await updateLocksWeek({
+        ...locksWeek,
+        isOpen: true,
+      });
+
+      return json<ActionData>({ message: "Week has been published" });
+    }
   }
 
   return json<ActionData>({ message: "Nothing has happened." });
@@ -168,7 +204,7 @@ export default function SpreadLocksList() {
             <th>Week</th>
             <th>Published?</th>
             <th>Scored?</th>
-            <th>Edit</th>
+            <th>Publish Week?</th>
             <th>Score</th>
           </tr>
         </thead>
@@ -179,9 +215,22 @@ export default function SpreadLocksList() {
               <td>{locksWeek.isOpen ? "Yes" : "No"}</td>
               <td>{locksWeek.isWeekScored ? "Yes" : "No"}</td>
               <td>
-                <Link to={`./${currentSeason.year}/${locksWeek.weekNumber}`}>
-                  Edit Week
-                </Link>
+                <Form method="POST">
+                  <input
+                    type="hidden"
+                    name="weekNumber"
+                    value={locksWeek.weekNumber}
+                  />
+                  <input type="hidden" name="year" value={locksWeek.year} />
+                  <Button
+                    type="submit"
+                    name="_action"
+                    value="publishWeek"
+                    disabled={transition.state !== "idle"}
+                  >
+                    Publish Week
+                  </Button>
+                </Form>
               </td>
               <td>
                 <Form method="POST">
