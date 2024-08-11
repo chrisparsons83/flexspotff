@@ -1,11 +1,9 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useTransition } from "@remix-run/react";
+import { Form, useActionData, useTransition } from "@remix-run/react";
 import { getWeekNflGames } from "~/models/nflgame.server";
 import { getLocksGamesByYearAndWeek, LocksGameCreate, upsertLocksGame } from "~/models/locksgame.server";
 import {
-  getLocksGamePicksWonLoss,
-  getLocksGamesPicksByLocksWeek,
   updateLocksGamePicksWithResults,
   deleteLocksGamePicksNotActive
 } from "~/models/locksgamepicks.server";
@@ -87,9 +85,6 @@ export const action = async ({ request }: ActionArgs) => {
       await syncNflGameWeek(year, [weekNumber]);
 
       // TODO: Put check in here to cancel the process if all games aren't completed.
-
-      // Get all the picks for the week
-      const locksGamePicks = await getLocksGamesPicksByLocksWeek(locksWeek);
 
       // Loop through each game and process
       const locksGames = await getLocksGamesByYearAndWeek(year, weekNumber);

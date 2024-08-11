@@ -30,15 +30,15 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const qbStreamingCurrentWeek = (
     await getQBStreamingWeeks(currentSeason.year)
-  )[0].week;
+  )[0]?.week;
 
   const spreadPoolCurrentWeek = (
     await getPoolWeeksByYear(currentSeason.year)
-  )[0].weekNumber;
+  )[0]?.weekNumber;
 
   const locksChallengeCurrentWeek = (
     await getLocksWeeksByYear(currentSeason.year)
-  )[0].weekNumber;
+  )[0]?.weekNumber;
 
   return superjson<LoaderData>(
     {

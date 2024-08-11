@@ -39,9 +39,6 @@ type LoaderData = {
   locksGames?: Awaited<ReturnType<typeof getLocksGamesByYearAndWeek>>;
   locksGamePicks?: LocksGamePick[];
   notOpenYet?: string;
-  amountWonLoss?: number | null;
-  newEntryDeduction?: number;
-  missedEntryDeduction?: number;
   weekNumber?: number;
 };
 
@@ -254,8 +251,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     locksWeek.weekNumber
   );
 
-  const b = await getLocksGamePicksByUserAndYear(user, locksWeek.year);
-
   const weekNumber = locksWeek.weekNumber;
 
   return superjson<LoaderData>(
@@ -296,7 +291,10 @@ export default function GamesLocksChallengeWeek() {
     });
   };
 
-  const disableSubmit = transition.state !== "idle";
+
+  const now = new Date();
+  const gameDateTime = locksGames?.[0]?.game?.gameStartTime;
+  const disableSubmit = transition.state !== "idle" || locksGamePicks?.[0]?.isScored || (gameDateTime && gameDateTime < now);
 
   return (
     <>
@@ -306,7 +304,7 @@ export default function GamesLocksChallengeWeek() {
           <>
             {actionData?.message && <Alert message={actionData.message} />}
             <div className="mb-4">
-              <div>Teams Currently Picked: {gamesBetOn}</div>
+              <div>Teams Picked: {gamesBetOn}</div>
             </div>
             <div className="md:w-1/2">
               {locksGames?.map((locksGame) => {
@@ -334,7 +332,10 @@ export default function GamesLocksChallengeWeek() {
               })}
             </div>
             <div className="m-4">
-              <Button type="submit" disabled={disableSubmit}>
+              <Button 
+                type="submit" 
+                disabled={disableSubmit || false}
+              >
                 Update Picks
               </Button>
             </div>
