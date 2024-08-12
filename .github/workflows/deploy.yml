@@ -213,6 +213,7 @@ jobs:
       - name: 🗄️ Save to Vultr Container Registry
         uses: docker/build-push-action@v5
         with:
+          context: .
           push: true
           tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
           cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
