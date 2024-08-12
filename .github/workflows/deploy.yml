@@ -209,7 +209,7 @@ jobs:
           username: ${{ secrets.VULTR_USERNAME }}
           password: ${{ secrets.VULTR_API_KEY }}
 
-      - name: 🗄️ Save to Vultr Container Registryflexspotff
+      - name: 🗄️ Save to Vultr Container Registry
         uses: docker/build-push-action@v5
         with:
           push: true
