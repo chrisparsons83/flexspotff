@@ -209,12 +209,12 @@ jobs:
           username: ${{ secrets.VULTR_USERNAME }}
           password: ${{ secrets.VULTR_API_KEY }}
 
-      - name: 🗄️ Save to Vultr Container Registry
+      - name: 🗄️ Save to Vultr Container Registryflexspotff
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: sjc.vultrcr.com/chrisparsons/jasonbot:latest
-          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/jasonbot:latest
+          tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
+          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
 
       - name: Deploy app to Vultr VPS
         uses: appleboy/ssh-action@master
@@ -228,4 +228,4 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           envs: VULTR_USERNAME, VULTR_API_KEY
           script: |
-            docker login sjc.vultrcr.com/chrisparsons -u $VULTR_USERNAME -p $VULTR_API_KEY && cd jasonbot && docker compose pull && docker compose up -d
+            docker login sjc.vultrcr.com/chrisparsons -u $VULTR_USERNAME -p $VULTR_API_KEY && cd flexspotff && docker compose pull && docker compose up -d
