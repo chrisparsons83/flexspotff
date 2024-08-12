@@ -8,7 +8,7 @@ import type {
 import type { LocksGamePick } from "~/models/locksgamepicks.server";
 import type { NFLTeam } from "~/models/nflteam.server";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 type Props = {
   handleChange: (teamPick: TeamPick[]) => void;

@@ -2,7 +2,8 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import { getWeekNflGames } from "~/models/nflgame.server";
-import { getLocksGamesByYearAndWeek, LocksGameCreate, upsertLocksGame } from "~/models/locksgame.server";
+import type { LocksGameCreate} from "~/models/locksgame.server";
+import { getLocksGamesByYearAndWeek, upsertLocksGame } from "~/models/locksgame.server";
 import {
   updateLocksGamePicksWithResults,
   deleteLocksGamePicksNotActive
@@ -15,7 +16,6 @@ import {
   getLocksWeeksByYear,
   updateLocksWeek,
 } from "~/models/locksweek.server";
-import type { Season } from "~/models/season.server";
 import { getCurrentSeason } from "~/models/season.server";
 
 import Alert from "~/components/ui/Alert";
@@ -31,7 +31,6 @@ type ActionData = {
 
 type LoaderData = {
   locksWeeks: LocksWeek[];
-  currentSeason: Season;
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -162,13 +161,13 @@ export const loader = async ({ request }: LoaderArgs) => {
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
-    { locksWeeks, currentSeason },
+    { locksWeeks },
     { headers: { "x-superjson": "true" } }
   );
 };
 
 export default function SpreadLocksList() {
-  const { locksWeeks, currentSeason } = useSuperLoaderData<typeof loader>();
+  const { locksWeeks } = useSuperLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
 

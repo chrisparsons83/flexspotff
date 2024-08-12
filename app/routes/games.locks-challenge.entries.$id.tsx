@@ -12,10 +12,9 @@ import {
   createLocksGamePicks,
   deleteLocksGamePicksForUserAndWeek,
   getLocksGamePicksByUserAndLocksWeek,
-  getLocksGamePicksByUserAndYear,
 } from "~/models/locksgamepicks.server";
 import type { LocksWeek } from "~/models/locksweek.server";
-import { getLocksWeek, getLocksWeeksByYear } from "~/models/locksweek.server";
+import { getLocksWeek } from "~/models/locksweek.server";
 import { getCurrentSeason } from "~/models/season.server";
 import type { User } from "~/models/user.server";
 
@@ -141,7 +140,7 @@ export const action = async ({ params, request }: ActionArgs) => {
 
   // Loop through map and build promises to send down for creates
   const dataToInsert: LocksGamePickCreate[] = [];
-  for (const [key, picked] of nflTeamsPicked.entries()) {
+  for (const [, picked] of nflTeamsPicked.entries()) {
     const [locksGameId, teamBetId] = picked.split("-");
     const locksGame = locksGames.find(
       (locksGame) => locksGame.id === locksGameId
@@ -279,7 +278,7 @@ export default function GamesLocksChallengeWeek() {
 
   const gamesBetOn = existingPicks.filter((pick) => pick.isActive === 1).length;
 
-  const [picks, setPicks] = useState<TeamPick[]>(existingPicks);
+  const [, setPicks] = useState<TeamPick[]>(existingPicks);
 
   const handleChange = (picks: TeamPick[]) => {
     setPicks((prevPicks) => {
