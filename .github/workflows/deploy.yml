@@ -215,6 +215,8 @@ jobs:
           push: true
           tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
           cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
+          build-args: |
+            PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
 
       - name: Deploy app to Vultr VPS
         uses: appleboy/ssh-action@master

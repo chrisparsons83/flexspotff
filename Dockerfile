@@ -1,8 +1,11 @@
 # base node image
 FROM node:18-bullseye-slim as base
 
+ARG PROD_DATABASE_URL
+
 # set for base and all layer that inherit from it
 ENV NODE_ENV production
+ENV DATABASE_URL $PROD_DATABASE_URL
 
 # Install openssl for Prisma
 RUN apt-get update && apt-get install -y openssl
