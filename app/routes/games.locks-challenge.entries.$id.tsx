@@ -331,14 +331,14 @@ export default function GamesLocksChallengeWeek() {
                 );
               })}
             </div>
-            <div className="m-4">
-              <Button 
-                type="submit" 
-                disabled={disableSubmit || false}
-              >
-                Update Picks
-              </Button>
-            </div>
+            <div style={{ height: '1em' }}></div>
+            <Button 
+              type="submit" 
+              disabled={disableSubmit || false}
+              className="!ml-0"
+            >
+              Update Picks
+            </Button>
           </>
         )}
       </Form>

@@ -78,7 +78,7 @@ export default function LocksChallengeStandingsRow({
           <td></td>
           <td>
             {picksLocked && picksLocked.length === 0 && (
-              <div>No locked bets</div>
+              <div>No locked picks</div>
             )}
             {picksLocked &&
               picksLocked.map((pick) => {
@@ -97,7 +97,7 @@ export default function LocksChallengeStandingsRow({
                     key={pick.id}
                     className={clsx(
                       "mb-1 border-l-8 pl-4 border-gray-500",
-                      pick.isWin === 1 && "border-emerald-500",
+                      pick.isWin === 1 && "border-green-500",
                       pick.isLoss === 1 && "border-red-500"
                     )}
                   >
