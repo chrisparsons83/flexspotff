@@ -178,6 +178,7 @@ jobs:
           tags: registry.fly.io/${{ steps.app_name.outputs.value }}:${{ github.ref_name }}-${{ github.sha }}
           build-args: |
             COMMIT_SHA=${{ github.sha }}
+            PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
 
@@ -213,8 +214,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: sjc.vultrcr.com/chrisparsons/jasonbot:latest
-          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/jasonbot:latest
+          tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
+          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
+          build-args: |
+            PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
 
       - name: Deploy app to Vultr VPS
         uses: appleboy/ssh-action@master
@@ -228,4 +231,4 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           envs: VULTR_USERNAME, VULTR_API_KEY
           script: |
-            docker login sjc.vultrcr.com/chrisparsons -u $VULTR_USERNAME -p $VULTR_API_KEY && cd jasonbot && docker compose pull && docker compose up -d
+            docker login sjc.vultrcr.com/chrisparsons -u $VULTR_USERNAME -p $VULTR_API_KEY && cd flexspotff && docker compose pull && docker compose up -d
