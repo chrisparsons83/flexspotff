@@ -38,7 +38,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     currentWeek &&
     (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
       (locksGamePick) =>
-        //locksGamePick.locksGame.game.gameStartTime < new Date() &&
+        locksGamePick.locksGame.game.gameStartTime < new Date() &&
         locksGamePick.isActive !== 0
     );
   

@@ -97,45 +97,45 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
     }
 
-    //if (locksGame.game.gameStartTime > new Date()) {
-    // If isActive flag is 0 then do not add to nflTeamsPicked
-    if (amount !== "0") {
-      //If homeTeam is bet on previously and the awayTeam is selected
-      if (
-        nflTeamsPicked.includes(
-          `${locksGameId}-${locksGame.game.homeTeamId}`
-        ) &&
-        teamBetId === locksGame.game.awayTeamId
-      ) {
-        nflTeamsPicked.splice(
-          nflTeamsPicked.findIndex(
-            (item) => item === `${locksGameId}-${locksGame.game.homeTeamId}`
-          ),
-          1
-        );
-        nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
-      }
-      //If awayTeam is bet on previously and the homeTeam is selected
-      if (
-        nflTeamsPicked.includes(
-          `${locksGameId}-${locksGame.game.awayTeamId}`
-        ) &&
-        teamBetId === locksGame.game.homeTeamId
-      ) {
-        nflTeamsPicked.splice(
-          nflTeamsPicked.findIndex(
-            (item) => item === `${locksGameId}-${locksGame.game.awayTeamId}`
-          ),
-          1
-        );
-        nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
-      } else {
-        if (!nflTeamsPicked.includes(`${locksGameId}-${teamBetId}`)) {
+    if (locksGame.game.gameStartTime > new Date()) {
+      // If isActive flag is 0 then do not add to nflTeamsPicked
+      if (amount !== "0") {
+        //If homeTeam is bet on previously and the awayTeam is selected
+        if (
+          nflTeamsPicked.includes(
+            `${locksGameId}-${locksGame.game.homeTeamId}`
+          ) &&
+          teamBetId === locksGame.game.awayTeamId
+        ) {
+          nflTeamsPicked.splice(
+            nflTeamsPicked.findIndex(
+              (item) => item === `${locksGameId}-${locksGame.game.homeTeamId}`
+            ),
+            1
+          );
           nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
+        }
+        //If awayTeam is bet on previously and the homeTeam is selected
+        if (
+          nflTeamsPicked.includes(
+            `${locksGameId}-${locksGame.game.awayTeamId}`
+          ) &&
+          teamBetId === locksGame.game.homeTeamId
+        ) {
+          nflTeamsPicked.splice(
+            nflTeamsPicked.findIndex(
+              (item) => item === `${locksGameId}-${locksGame.game.awayTeamId}`
+            ),
+            1
+          );
+          nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
+        } else {
+          if (!nflTeamsPicked.includes(`${locksGameId}-${teamBetId}`)) {
+            nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
+          }
         }
       }
     }
-    //}
   }
 
   // Loop through map and build promises to send down for creates
