@@ -166,7 +166,7 @@ export default function RulesPage() {
 
       <p>6.5. All drafts will be run using a 90-second pick timer.</p>
 
-      <p>6.6. Draft picks cannot be traded.</p>
+      <p>6.6. Draft picks cannot be traded individually.</p>
 
       <p>6.7. There are no requirements to fill every starting position.</p>
 
