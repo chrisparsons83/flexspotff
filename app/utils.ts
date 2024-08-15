@@ -1,7 +1,12 @@
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
-
 import type { User } from "~/models/user.server";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 const DEFAULT_REDIRECT = "/";
 

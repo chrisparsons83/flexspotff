@@ -16,10 +16,12 @@ import { getCurrentSeason } from "~/models/season.server";
 
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import { superjson, useSuperActionData, useSuperLoaderData } from "~/utils/data";
+import Alert from "~/components/ui/Alert";
 
 type ActionData = {
   message?: string;
+  updatedNflGames?: Map<string, number>;
 };
 
 type LoaderData = {
@@ -43,39 +45,121 @@ export const action = async ({ params, request }: ActionArgs) => {
   }
 
   const formData = await request.formData();
+  const action = formData.get("_action");
 
-  // Create map of games and spreads
-  let isOpen = false;
-  const spreads: Map<string, number> = new Map();
-  for (const [key, value] of formData.entries()) {
-    if (key === "isOpen") {
-      isOpen = true;
-      continue;
+  switch (action) {
+    case "updateSpreads": {
+      // Create map of games and spreads
+      let isOpen = false;
+      const spreads: Map<string, number> = new Map();
+      for (const [key, value] of formData.entries()) {
+        if (key === "isOpen") {
+          isOpen = true;
+          continue;
+        }
+        const gameId = key.match(/homeSpread\[(?<gameId>[a-z0-9)]*)\]/);
+        if (gameId && gameId.groups?.gameId) {
+          spreads.set(gameId.groups?.gameId, Number(value));
+        }
+      }
+
+      const promises: Promise<PoolGame>[] = [];
+      for (const [key, value] of spreads.entries()) {
+        const poolGame: PoolGameCreate = {
+          gameId: key,
+          homeSpread: value,
+          poolWeekId: poolWeek.id,
+        };
+        promises.push(upsertPoolGame(poolGame));
+      }
+      await Promise.all(promises);
+
+      await updatePoolWeek({
+        ...poolWeek,
+        isOpen,
+      });
     }
-    const gameId = key.match(/homeSpread\[(?<gameId>[a-z0-9)]*)\]/);
-    if (gameId && gameId.groups?.gameId) {
-      spreads.set(gameId.groups?.gameId, Number(value));
+
+    return superjson<ActionData>(
+      { message: "This week has been updated." },
+      { headers: { "x-superjson": "true" } }
+    );
+  
+    case "getSpreads": {
+      
+      //Call the API to get the spreads for each game
+      const axios = require('axios');
+      const apiKey = process.env.SPREADS_API_KEY;
+      const sportKey = 'americanfootball_nfl';
+      const regions = 'us';
+      const markets = 'spreads';
+      const oddsFormat = 'american';
+      const dateFormat = 'iso';
+      const bookmakers = 'draftkings';
+
+      // Get Nfl Games for the current year and week
+      const nflGames = await getWeekNflGames(year, weekNumber);
+
+      // Find the earliest starting game in nflGames and latest starting game
+      const earliestGame = nflGames.reduce((prev, current) => 
+        prev.gameStartTime < current.gameStartTime ? prev : current
+      );
+      let latestGame = nflGames.reduce((prev, current) => 
+        prev.gameStartTime > current.gameStartTime ? prev : current
+      );
+
+      // Add an hour to the latest game start time cause the API is weird
+      const gameStartTime = new Date(latestGame.gameStartTime);
+      gameStartTime.setHours(gameStartTime.getHours() + 1);
+
+      // Get the start and end dates for the API call
+      const commenceTimeFrom = earliestGame.gameStartTime.toISOString().slice(0, -5) + 'Z';
+      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + 'Z';
+
+      let spreadMapping = new Map<string, number>();
+
+      const response = await axios.get(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds`, {
+        params: {
+        apiKey,
+        regions,
+        markets,
+        oddsFormat,
+        dateFormat,
+        bookmakers,
+        commenceTimeFrom,
+        commenceTimeTo
+        }
+      });
+
+      // response.data.data contains a list of live and 
+      //   upcoming events and odds for different bookmakers.
+      // Events are ordered by start time (live events are first)
+      // console.log(JSON.stringify(response.data))
+      
+      // Check your usage
+      console.log('Remaining requests',response.headers['x-requests-remaining'])
+      console.log('Used requests',response.headers['x-requests-used'])
+
+      // Create a map of team names to their spread points
+      response.data.forEach((game: any) => {
+        const draftkings = game.bookmakers.find((b: any) => b.key === "draftkings");
+        if (draftkings) {
+          draftkings.markets[0].outcomes.forEach((outcome: any) => {
+            spreadMapping.set(outcome.name as string, outcome.point);
+          });
+        }
+      });
+
+      return superjson<ActionData>(
+        { message: "Game spreads have been populated.",
+          updatedNflGames: spreadMapping },
+        { headers: { "x-superjson": "true" } }
+      );
     }
   }
-
-  const promises: Promise<PoolGame>[] = [];
-  for (const [key, value] of spreads.entries()) {
-    const poolGame: PoolGameCreate = {
-      gameId: key,
-      homeSpread: value,
-      poolWeekId: poolWeek.id,
-    };
-    promises.push(upsertPoolGame(poolGame));
-  }
-  await Promise.all(promises);
-
-  await updatePoolWeek({
-    ...poolWeek,
-    isOpen,
-  });
 
   return superjson<ActionData>(
-    { message: "This week has been updated." },
+    { message: "There was an error with something" },
     { headers: { "x-superjson": "true" } }
   );
 };
@@ -110,11 +194,14 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function AdminSpreadPoolYearWeek() {
   const { nflGames, poolGames, poolWeek } = useSuperLoaderData<typeof loader>();
+  const actionData = useSuperActionData<ActionData>()
   const transition = useTransition();
-
+  //console.log(nflGames);
+  //console.log(actionData?.updatedNflGames?.get('Baltimore Ravens') ?? "No data");
   return (
     <div>
       <h2>Edit Picks for Week {nflGames[0].week}</h2>
+      {actionData?.message && <Alert message={actionData.message} />}
       <Form method="POST" reloadDocument>
         <table>
           <thead>
@@ -127,7 +214,6 @@ export default function AdminSpreadPoolYearWeek() {
           <tbody>
             {nflGames.map((game) => {
               const gameStart = DateTime.fromJSDate(game.gameStartTime);
-
               return (
                 <tr key={game.id}>
                   <td>
@@ -144,9 +230,11 @@ export default function AdminSpreadPoolYearWeek() {
                       name={`homeSpread[${game.id}]`}
                       className="dark:border-0 dark:bg-slate-800"
                       defaultValue={
-                        poolGames.find(
-                          (poolGame) => poolGame.gameId === game.id
-                        )?.homeSpread
+                        actionData?.updatedNflGames?.get(game.homeTeam.name) ? 
+                          actionData?.updatedNflGames?.get(game.homeTeam.name) :
+                          poolGames.find(
+                            (poolGame) => poolGame.gameId === game.id
+                          )?.homeSpread
                       }
                     />
                   </td>
@@ -169,8 +257,20 @@ export default function AdminSpreadPoolYearWeek() {
           </tbody>
         </table>
         <div>
-          <Button type="submit" disabled={transition.state !== "idle"}>
+          <Button 
+            type="submit" 
+            name="_action"
+            value="updateSpreads"
+            disabled={transition.state !== "idle"}>
             Update Week
+          </Button>
+          <span style={{ marginRight: "10px" }}></span>
+          <Button 
+            type="submit" 
+            name="_action" 
+            value="getSpreads"
+            disabled={transition.state !== "idle"}>
+            Get Spreads
           </Button>
         </div>
       </Form>

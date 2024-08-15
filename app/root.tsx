@@ -14,10 +14,14 @@ import type { User } from "~/models/user.server";
 import NavBar from "~/components/layout/NavBar";
 import { authenticator, isEditor } from "~/services/auth.server";
 import tailwindStylesheetUrl from "~/styles/tailwind.css";
+import cssVariables from "~/styles/variables.css";
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
+  return [
+    { rel: "stylesheet", href: cssVariables },
+    { rel: "stylesheet", href: tailwindStylesheetUrl },
+  ];
 };
 
 export const meta = () => {

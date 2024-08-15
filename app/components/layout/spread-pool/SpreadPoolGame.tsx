@@ -85,7 +85,6 @@ export default function SpreadPoolGameComponent({
   };
 
   const displayBetInput = () => {
-    console.log("hello");
     setShowSlider(true);
   };
 

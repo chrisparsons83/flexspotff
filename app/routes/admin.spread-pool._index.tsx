@@ -79,6 +79,7 @@ export const action = async ({ request }: ActionArgs) => {
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
+      console.log(year, weekNumber);
 
       const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
       if (!poolWeek) throw new Error(`There's no pool week here`);
