@@ -8,6 +8,8 @@ import type { Team } from "~/models/team.server";
 import type { TeamGame } from "~/models/teamgame.server";
 import type { User } from "~/models/user.server";
 
+import { RANK_COLORS, isLeagueName } from "~/utils/constants";
+
 // TODO: Clean up this typing.
 type Props = {
   position: TeamGame & {
@@ -27,15 +29,6 @@ export default function LeaderboardRow({ position, rank }: Props) {
     setShowDetails((prevState) => !prevState);
   };
 
-  // TODO: Export this from a single location, it gets used elsewhere.
-  const rankColors: Record<string, string> = {
-    admiral: "bg-admiral text-gray-900",
-    champions: "bg-champions text-gray-900",
-    dragon: "bg-dragon text-gray-900",
-    galaxy: "bg-galaxy text-gray-900",
-    monarch: "bg-monarch text-gray-900",
-  };
-
   const positionColors: Record<string, string> = {
     qb: "border-qb",
     rb: "border-rb",
@@ -44,6 +37,8 @@ export default function LeaderboardRow({ position, rank }: Props) {
     def: "border-def",
     empty: "border-gray-500",
   };
+
+  const leagueName = position.team.league.name.toLocaleLowerCase();
 
   return (
     <>
@@ -54,7 +49,7 @@ export default function LeaderboardRow({ position, rank }: Props) {
         <td className="pl-1">
           <div
             className={clsx(
-              rankColors[position.team.league.name.toLocaleLowerCase()],
+              isLeagueName(leagueName) && RANK_COLORS[leagueName],
               "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
             )}
           >
