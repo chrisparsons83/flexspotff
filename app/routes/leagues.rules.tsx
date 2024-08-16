@@ -552,7 +552,7 @@ export default function RulesPage() {
       </p>
 
       <p>
-        19.2. Failure to comply with rule 18.1 is grounds for removal from the
+        19.2. Failure to comply with rule 19.1 is grounds for removal from the
         league. Warnings can optionally be provided by commissioners, but are
         not required to be removed from the league.
       </p>
