@@ -2,18 +2,14 @@ import clsx from "clsx";
 
 import type { GetLeaguesByYearElement } from "~/models/league.server";
 
+import { RANK_COLORS, isLeagueName } from "~/utils/constants";
+
 type Props = {
   league: GetLeaguesByYearElement;
 };
 
 export default function LeagueTable({ league }: Props) {
-  const rankColors: Record<string, string> = {
-    admiral: "bg-admiral text-gray-900",
-    champions: "bg-champions text-gray-900",
-    dragon: "bg-dragon text-gray-900",
-    galaxy: "bg-galaxy text-gray-900",
-    monarch: "bg-monarch text-gray-900",
-  };
+  const leagueName = league.name.toLocaleLowerCase();
 
   return (
     <section>
@@ -37,7 +33,7 @@ export default function LeagueTable({ league }: Props) {
               <td>
                 <div
                   className={clsx(
-                    rankColors[league.name.toLocaleLowerCase()],
+                    isLeagueName(leagueName) && RANK_COLORS[leagueName],
                     "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
                   )}
                 >
