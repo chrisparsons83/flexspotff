@@ -51,6 +51,9 @@ export async function getUsers() {
     orderBy: {
       discordName: "asc",
     },
+    include: {
+      sleeperUsers: true,
+    },
   });
 }
 
@@ -63,7 +66,6 @@ export async function updateUser(user: Partial<User>) {
       discordName: user.discordName || undefined,
       discordAvatar: user.discordAvatar || undefined,
       discordRoles: user.discordRoles || undefined,
-      sleeperOwnerID: user.sleeperOwnerID || undefined,
     },
   });
 }

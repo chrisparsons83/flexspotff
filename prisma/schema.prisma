@@ -396,6 +396,13 @@ model Season {
   registrationSize Int @default(60)
 }
 
+model SleeperUser {
+  sleeperOwnerID String @unique
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+}
+
 model Team {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
@@ -447,8 +454,6 @@ model User {
   discordAvatar String
   discordRoles String[]
 
-  sleeperOwnerID String @default("")
-
   registrations Registration[]
   episodes Episode[]
   teams Team[]
@@ -457,4 +462,5 @@ model User {
   QBSelections QBSelection[]
   poolWeeksMissed PoolWeekMissed[]
   locksGamePick LocksGamePick[]
+  sleeperUsers SleeperUser[]
 }

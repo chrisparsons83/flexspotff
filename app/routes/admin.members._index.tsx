@@ -1,13 +1,16 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 
+import type { SleeperUser } from "~/models/sleeperUser.server";
 import type { User } from "~/models/user.server";
 import { getUsers } from "~/models/user.server";
 
 import { superjson, useSuperLoaderData } from "~/utils/data";
 
 type LoaderData = {
-  users: User[];
+  users: (User & {
+    sleeperUsers: SleeperUser[];
+  })[];
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -29,7 +32,7 @@ export default function PodcastEpisodeList() {
         <thead>
           <tr>
             <th>Member</th>
-            <th>Sleeper ID</th>
+            <th>Sleeper IDs</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -37,7 +40,15 @@ export default function PodcastEpisodeList() {
           {users.map((user) => (
             <tr key={user.id}>
               <td>{user.discordName}</td>
-              <td>{user.sleeperOwnerID}</td>
+              <td>
+                <ul className="!my-0">
+                  {user.sleeperUsers.map((sleeperUser) => (
+                    <li key={sleeperUser.sleeperOwnerID} className="!my-1">
+                      {sleeperUser.sleeperOwnerID}
+                    </li>
+                  ))}
+                </ul>
+              </td>
               <td>
                 <Link to={`./${user.id}`}>Edit</Link>
               </td>
