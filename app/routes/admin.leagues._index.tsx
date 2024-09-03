@@ -90,8 +90,12 @@ export const action = async ({ request }: ActionArgs) => {
       const existingTeamsSleeperOwners = (await getTeams(leagueId)).map(
         (team) => [team.sleeperOwnerId, team.id]
       );
-      const existingUsersSleeperIds = (await getUsers()).map(
-        ({ id, sleeperOwnerID }) => ({ id, sleeperOwnerID })
+      const existingUsersSleeperIds = (await getUsers()).flatMap(
+        ({ id, sleeperUsers }) =>
+          sleeperUsers.map((sleeperUser) => ({
+            id,
+            sleeperOwnerID: sleeperUser.sleeperOwnerID,
+          }))
       );
 
       if (sleeperDraft.start_time) {
