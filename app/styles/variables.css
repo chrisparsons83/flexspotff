@@ -1,5 +1,4 @@
 /* Trying to solve a safari bug, in theory root should equal html */
-:root, html {
+:root {
   --radius: 8px;
-  --background: 215 25 27;
 }
