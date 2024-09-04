@@ -2,10 +2,10 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx,jsx,js}',
-    './components/**/*.{ts,tsx,jsx,js}',
-    './app/**/*.{ts,tsx,jsx,js}',
-    './src/**/*.{ts,tsx,jsx,js}',
+    "./pages/**/*.{ts,tsx,jsx,js}",
+    "./components/**/*.{ts,tsx,jsx,js}",
+    "./app/**/*.{ts,tsx,jsx,js}",
+    "./src/**/*.{ts,tsx,jsx,js}",
   ],
   prefix: "",
   theme: {
@@ -37,7 +37,7 @@ module.exports = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: "#334155",
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -89,5 +89,9 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography"), require("@tailwindcss/forms")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/forms"),
+  ],
 };
