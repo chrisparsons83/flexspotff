@@ -255,6 +255,7 @@ export default function GamesSpreadPoolWeek() {
     amountWonLoss,
     newEntryDeduction,
     missedEntryDeduction,
+    poolWeek,
   } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
@@ -284,7 +285,8 @@ export default function GamesSpreadPoolWeek() {
   const betAmount = bets.reduce((a, b) => a + b.amount, 0);
   const availableToBet = initialBudget - betAmount;
 
-  const disableSubmit = transition.state !== "idle" || availableToBet < 0;
+  const disableSubmit =
+    transition.state !== "idle" || availableToBet < 0 || poolWeek?.isWeekScored;
 
   return (
     <>
