@@ -266,7 +266,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function GamesLocksChallengeWeek() {
   const actionData = useSuperActionData<ActionData>();
-  const { notOpenYet, locksGames, locksGamePicks, weekNumber } =
+  const { notOpenYet, locksWeek, locksGames, locksGamePicks, weekNumber } =
     useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
@@ -290,11 +290,7 @@ export default function GamesLocksChallengeWeek() {
     });
   };
 
-
-  const now = new Date();
-  const gameDateTime = locksGames?.[0]?.game?.gameStartTime;
-  const disableSubmit = transition.state !== "idle" || locksGamePicks?.[0]?.isScored || (gameDateTime && gameDateTime < now);
-
+  const disableSubmit = transition.state !== "idle" || locksWeek?.isWeekScored;
   return (
     <>
       <h2>Week {weekNumber} Entry</h2>
@@ -330,9 +326,9 @@ export default function GamesLocksChallengeWeek() {
                 );
               })}
             </div>
-            <div style={{ height: '1em' }}></div>
-            <Button 
-              type="submit" 
+            <div style={{ height: "1em" }}></div>
+            <Button
+              type="submit"
               disabled={disableSubmit || false}
               className="!ml-0"
             >
