@@ -1,6 +1,7 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { Form, useTransition } from "@remix-run/react";
 import { DateTime } from "luxon";
+import { z } from "zod";
 
 import { getWeekNflGames } from "~/models/nflgame.server";
 import type { PoolGame, PoolGameCreate } from "~/models/poolgame.server";
@@ -14,10 +15,44 @@ import {
 } from "~/models/poolweek.server";
 import { getCurrentSeason } from "~/models/season.server";
 
+import Alert from "~/components/ui/Alert";
 import Button from "~/components/ui/Button";
 import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperActionData, useSuperLoaderData } from "~/utils/data";
-import Alert from "~/components/ui/Alert";
+import {
+  superjson,
+  useSuperActionData,
+  useSuperLoaderData,
+} from "~/utils/data";
+
+const oddsApiData = z.array(
+  z.object({
+    id: z.string(),
+    sport_key: z.string(),
+    sport_title: z.string(),
+    commence_time: z.string(),
+    home_team: z.string(),
+    away_team: z.string(),
+    bookmakers: z.array(
+      z.object({
+        key: z.string(),
+        title: z.string(),
+        last_update: z.string(),
+        markets: z.array(
+          z.object({
+            key: z.string(),
+            outcomes: z.array(
+              z.object({
+                name: z.string(),
+                price: z.number().optional(),
+                point: z.number().optional(),
+              })
+            ),
+          })
+        ),
+      })
+    ),
+  })
+);
 
 type ActionData = {
   message?: string;
@@ -48,63 +83,66 @@ export const action = async ({ params, request }: ActionArgs) => {
   const action = formData.get("_action");
 
   switch (action) {
-    case "updateSpreads": {
-      // Create map of games and spreads
-      let isOpen = false;
-      const spreads: Map<string, number> = new Map();
-      for (const [key, value] of formData.entries()) {
-        if (key === "isOpen") {
-          isOpen = true;
-          continue;
+    case "updateSpreads":
+      {
+        // Create map of games and spreads
+        let isOpen = false;
+        const spreads: Map<string, number> = new Map();
+        for (const [key, value] of formData.entries()) {
+          if (key === "isOpen") {
+            isOpen = true;
+            continue;
+          }
+          const gameId = key.match(/homeSpread\[(?<gameId>[a-z0-9)]*)\]/);
+          if (gameId && gameId.groups?.gameId) {
+            spreads.set(gameId.groups?.gameId, Number(value));
+          }
         }
-        const gameId = key.match(/homeSpread\[(?<gameId>[a-z0-9)]*)\]/);
-        if (gameId && gameId.groups?.gameId) {
-          spreads.set(gameId.groups?.gameId, Number(value));
+
+        const promises: Promise<PoolGame>[] = [];
+        for (const [key, value] of spreads.entries()) {
+          const poolGame: PoolGameCreate = {
+            gameId: key,
+            homeSpread: value,
+            poolWeekId: poolWeek.id,
+          };
+          promises.push(upsertPoolGame(poolGame));
         }
+        await Promise.all(promises);
+
+        await updatePoolWeek({
+          ...poolWeek,
+          isOpen,
+        });
       }
 
-      const promises: Promise<PoolGame>[] = [];
-      for (const [key, value] of spreads.entries()) {
-        const poolGame: PoolGameCreate = {
-          gameId: key,
-          homeSpread: value,
-          poolWeekId: poolWeek.id,
-        };
-        promises.push(upsertPoolGame(poolGame));
-      }
-      await Promise.all(promises);
+      return superjson<ActionData>(
+        { message: "This week has been updated." },
+        { headers: { "x-superjson": "true" } }
+      );
 
-      await updatePoolWeek({
-        ...poolWeek,
-        isOpen,
-      });
-    }
-
-    return superjson<ActionData>(
-      { message: "This week has been updated." },
-      { headers: { "x-superjson": "true" } }
-    );
-  
     case "getSpreads": {
-      
       //Call the API to get the spreads for each game
-      const axios = require('axios');
       const apiKey = process.env.SPREADS_API_KEY;
-      const sportKey = 'americanfootball_nfl';
-      const regions = 'us';
-      const markets = 'spreads';
-      const oddsFormat = 'american';
-      const dateFormat = 'iso';
-      const bookmakers = 'draftkings';
+      const sportKey = "americanfootball_nfl";
+      const regions = "us";
+      const markets = "spreads";
+      const oddsFormat = "american";
+      const dateFormat = "iso";
+      const bookmakers = "draftkings";
+
+      if (!apiKey) {
+        throw new Error(`SPREADS_API_KEY is missing.`);
+      }
 
       // Get Nfl Games for the current year and week
       const nflGames = await getWeekNflGames(year, weekNumber);
 
       // Find the earliest starting game in nflGames and latest starting game
-      const earliestGame = nflGames.reduce((prev, current) => 
+      const earliestGame = nflGames.reduce((prev, current) =>
         prev.gameStartTime < current.gameStartTime ? prev : current
       );
-      let latestGame = nflGames.reduce((prev, current) => 
+      let latestGame = nflGames.reduce((prev, current) =>
         prev.gameStartTime > current.gameStartTime ? prev : current
       );
 
@@ -113,46 +151,53 @@ export const action = async ({ params, request }: ActionArgs) => {
       gameStartTime.setHours(gameStartTime.getHours() + 1);
 
       // Get the start and end dates for the API call
-      const commenceTimeFrom = earliestGame.gameStartTime.toISOString().slice(0, -5) + 'Z';
-      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + 'Z';
+      const commenceTimeFrom =
+        earliestGame.gameStartTime.toISOString().slice(0, -5) + "Z";
+      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + "Z";
 
       let spreadMapping = new Map<string, number>();
 
-      const response = await axios.get(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds`, {
-        params: {
-        apiKey,
-        regions,
-        markets,
-        oddsFormat,
-        dateFormat,
-        bookmakers,
-        commenceTimeFrom,
-        commenceTimeTo
-        }
-      });
+      const newFetch = await fetch(
+        `https://api.the-odds-api.com/v4/sports/${sportKey}/odds?` +
+          new URLSearchParams({
+            apiKey,
+            regions,
+            markets,
+            oddsFormat,
+            dateFormat,
+            bookmakers,
+            commenceTimeFrom,
+            commenceTimeTo,
+          }).toString()
+      );
+      const odds = oddsApiData.parse(await newFetch.json());
 
-      // response.data.data contains a list of live and 
-      //   upcoming events and odds for different bookmakers.
+      // odds contains a list of live and upcoming events and odds for different bookmakers.
       // Events are ordered by start time (live events are first)
       // console.log(JSON.stringify(response.data))
-      
+
       // Check your usage
-      console.log('Remaining requests',response.headers['x-requests-remaining'])
-      console.log('Used requests',response.headers['x-requests-used'])
+      // console.log(
+      //   "Remaining requests",
+      //   response.headers["x-requests-remaining"]
+      // );
+      // console.log("Used requests", response.headers["x-requests-used"]);
 
       // Create a map of team names to their spread points
-      response.data.forEach((game: any) => {
-        const draftkings = game.bookmakers.find((b: any) => b.key === "draftkings");
+      odds.forEach((game) => {
+        const draftkings = game.bookmakers.find((b) => b.key === "draftkings");
         if (draftkings) {
-          draftkings.markets[0].outcomes.forEach((outcome: any) => {
-            spreadMapping.set(outcome.name as string, outcome.point);
+          draftkings.markets[0].outcomes.forEach((outcome) => {
+            spreadMapping.set(outcome.name, outcome.point || 0);
           });
         }
       });
 
       return superjson<ActionData>(
-        { message: "Game spreads have been populated.",
-          updatedNflGames: spreadMapping },
+        {
+          message: "Game spreads have been populated.",
+          updatedNflGames: spreadMapping,
+        },
         { headers: { "x-superjson": "true" } }
       );
     }
@@ -194,7 +239,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export default function AdminSpreadPoolYearWeek() {
   const { nflGames, poolGames, poolWeek } = useSuperLoaderData<typeof loader>();
-  const actionData = useSuperActionData<ActionData>()
+  const actionData = useSuperActionData<ActionData>();
   const transition = useTransition();
   //console.log(nflGames);
   //console.log(actionData?.updatedNflGames?.get('Baltimore Ravens') ?? "No data");
@@ -230,11 +275,11 @@ export default function AdminSpreadPoolYearWeek() {
                       name={`homeSpread[${game.id}]`}
                       className="dark:border-0 dark:bg-slate-800"
                       defaultValue={
-                        actionData?.updatedNflGames?.get(game.homeTeam.name) ? 
-                          actionData?.updatedNflGames?.get(game.homeTeam.name) :
-                          poolGames.find(
-                            (poolGame) => poolGame.gameId === game.id
-                          )?.homeSpread
+                        actionData?.updatedNflGames?.get(game.homeTeam.name)
+                          ? actionData?.updatedNflGames?.get(game.homeTeam.name)
+                          : poolGames.find(
+                              (poolGame) => poolGame.gameId === game.id
+                            )?.homeSpread
                       }
                     />
                   </td>
@@ -257,19 +302,21 @@ export default function AdminSpreadPoolYearWeek() {
           </tbody>
         </table>
         <div>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             name="_action"
             value="updateSpreads"
-            disabled={transition.state !== "idle"}>
+            disabled={transition.state !== "idle"}
+          >
             Update Week
           </Button>
           <span style={{ marginRight: "10px" }}></span>
-          <Button 
-            type="submit" 
-            name="_action" 
+          <Button
+            type="submit"
+            name="_action"
             value="getSpreads"
-            disabled={transition.state !== "idle"}>
+            disabled={transition.state !== "idle"}
+          >
             Get Spreads
           </Button>
         </div>
