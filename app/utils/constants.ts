@@ -4,6 +4,8 @@ export const SERVER_DISCORD_ADMIN_ROLE_ID = `214097556051984385`;
 export const SERVER_DISCORD_PODCAST_ADMIN_ROLE_ID = `1006075042293108746`;
 export const SLEEPER_ADMIN_ID = `329096543967641600`;
 
+export const FIRST_YEAR = 2018;
+
 export enum Leagues {
   admiral = 'admiral',
   champions = 'champions',
