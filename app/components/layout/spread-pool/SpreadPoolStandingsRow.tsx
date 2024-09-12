@@ -105,7 +105,7 @@ export default function SpreadPoolStandingsRow({
                     key={pick.id}
                     className={clsx(
                       "mb-1 border-l-8 pl-4 border-gray-500",
-                      pick.resultWonLoss! > 0 && "border-emerald-500",
+                      pick.resultWonLoss! > 0 && "border-green-500",
                       pick.resultWonLoss! < 0 && "border-red-500"
                     )}
                   >
