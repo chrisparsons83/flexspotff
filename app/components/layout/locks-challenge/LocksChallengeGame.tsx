@@ -1,14 +1,12 @@
-import clsx from "clsx";
-import { useState } from "react";
-
+import clsx from 'clsx';
+import { useState } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import type {
   LocksGameByYearAndWeekElement,
   TeamPick,
-} from "~/models/locksgame.server";
-import type { LocksGamePick } from "~/models/locksgamepicks.server";
-import type { NFLTeam } from "~/models/nflteam.server";
-
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+} from '~/models/locksgame.server';
+import type { LocksGamePick } from '~/models/locksgamepicks.server';
+import type { NFLTeam } from '~/models/nflteam.server';
 
 type Props = {
   handleChange: (teamPick: TeamPick[]) => void;
@@ -25,13 +23,18 @@ export default function LocksChallengeGameComponent({
 }: Props) {
   const existingTeamPick =
     [locksGame.game.homeTeam, locksGame.game.awayTeam].find(
-      (team) => team.id === existingPick?.teamId
+      team => team.id === existingPick?.teamId,
     ) || null;
   const [pickedTeam, setPickedTeam] = useState<NFLTeam | null>(
-    existingTeamPick
+    existingTeamPick,
   );
 
-  const defaultTabValue = existingTeamPick === locksGame.game.homeTeam ? "homeTeamPick" : existingTeamPick === locksGame.game.awayTeam ? "awayTeamPick" : "noTeamPick";
+  const defaultTabValue =
+    existingTeamPick === locksGame.game.homeTeam
+      ? 'homeTeamPick'
+      : existingTeamPick === locksGame.game.awayTeam
+      ? 'awayTeamPick'
+      : 'noTeamPick';
 
   const gameDateTime = locksGame.game.gameStartTime;
   const now = new Date();
@@ -43,19 +46,19 @@ export default function LocksChallengeGameComponent({
   const lostGame = existingLocksGamePick && existingLocksGamePick.isLoss;
 
   const handleTabTriggerPress = (value: string) => {
-    if (value === "homeTeamPick") {
+    if (value === 'homeTeamPick') {
       setPickedTeam(locksGame.game.homeTeam);
       handleChange([
         { teamId: locksGame.game.homeTeam.id, isActive: 1 },
         { teamId: locksGame.game.awayTeam.id, isActive: 0 },
       ]);
-    } else if (value === "awayTeamPick") {
+    } else if (value === 'awayTeamPick') {
       setPickedTeam(locksGame.game.awayTeam);
       handleChange([
         { teamId: locksGame.game.awayTeam.id, isActive: 1 },
         { teamId: locksGame.game.homeTeam.id, isActive: 0 },
       ]);
-    } else if (value === "noTeamPick") {
+    } else if (value === 'noTeamPick') {
       setPickedTeam(null);
       handleChange([
         { teamId: locksGame.game.homeTeam.id, isActive: 0 },
@@ -65,38 +68,48 @@ export default function LocksChallengeGameComponent({
   };
   return (
     <div>
-      <input type="hidden" name={`${locksGame.id}-${pickedTeam?.id}`} value={pickedTeam?.id ? 1 : 0} />
-      <div className="mt-4 bg-slate-800 rounded-md">
+      <input
+        type='hidden'
+        name={`${locksGame.id}-${pickedTeam?.id}`}
+        value={pickedTeam?.id ? 1 : 0}
+      />
+      <div className='mt-4 bg-slate-800 rounded-md'>
         <Tabs defaultValue={defaultTabValue}>
-          <TabsList className={`grid w-full grid-cols-3`}>            
+          <TabsList className={`grid w-full grid-cols-3`}>
             <TabsTrigger
-              value="awayTeamPick"
-              onClick={() => handleTabTriggerPress("awayTeamPick")}
+              value='awayTeamPick'
+              onClick={() => handleTabTriggerPress('awayTeamPick')}
               className={clsx({
-                '!bg-green-900': wonGame === 1 && defaultTabValue === 'awayTeamPick',
-                '!bg-red-900': lostGame === 1 && defaultTabValue === 'awayTeamPick',
+                '!bg-green-900':
+                  wonGame === 1 && defaultTabValue === 'awayTeamPick',
+                '!bg-red-900':
+                  lostGame === 1 && defaultTabValue === 'awayTeamPick',
               })}
               disabled={pickLocked || false}
             >
               {locksGame.game.awayTeam.mascot}
             </TabsTrigger>
             <TabsTrigger
-              value="noTeamPick"
-              onClick={() => handleTabTriggerPress("noTeamPick")}
+              value='noTeamPick'
+              onClick={() => handleTabTriggerPress('noTeamPick')}
               className={clsx({
-                '!bg-green-900': wonGame === 1 && defaultTabValue === 'noTeamPick',
-                '!bg-red-900': lostGame === 1 && defaultTabValue === 'noTeamPick',
+                '!bg-green-900':
+                  wonGame === 1 && defaultTabValue === 'noTeamPick',
+                '!bg-red-900':
+                  lostGame === 1 && defaultTabValue === 'noTeamPick',
               })}
               disabled={pickLocked || false}
             >
               No Pick
             </TabsTrigger>
             <TabsTrigger
-              value="homeTeamPick"
-              onClick={() => handleTabTriggerPress("homeTeamPick")}
+              value='homeTeamPick'
+              onClick={() => handleTabTriggerPress('homeTeamPick')}
               className={clsx({
-                '!bg-green-900': wonGame === 1 && defaultTabValue === 'homeTeamPick',
-                '!bg-red-900': lostGame === 1 && defaultTabValue === 'homeTeamPick',
+                '!bg-green-900':
+                  wonGame === 1 && defaultTabValue === 'homeTeamPick',
+                '!bg-red-900':
+                  lostGame === 1 && defaultTabValue === 'homeTeamPick',
               })}
               disabled={pickLocked || false}
             >

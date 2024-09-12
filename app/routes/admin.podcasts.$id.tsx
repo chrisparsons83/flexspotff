@@ -2,23 +2,21 @@ import {
   unstable_composeUploadHandlers,
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
-} from "@remix-run/node";
-import type { ActionArgs, LoaderArgs, UploadHandler } from "@remix-run/node";
-import { Form, useActionData, useTransition } from "@remix-run/react";
-import { DateTime } from "luxon";
-
-import type { Episode } from "~/models/episode.server";
+} from '@remix-run/node';
+import type { ActionArgs, LoaderArgs, UploadHandler } from '@remix-run/node';
+import { Form, useActionData, useTransition } from '@remix-run/react';
+import { DateTime } from 'luxon';
+import Button from '~/components/ui/Button';
+import type { Episode } from '~/models/episode.server';
 import {
   createEpisode,
   getEpisode,
   updateEpisode,
-} from "~/models/episode.server";
-
-import Button from "~/components/ui/Button";
-import { authenticator } from "~/services/auth.server";
-import { podcastJsonSchema, s3UploadHandler } from "~/services/s3client.server";
-import type { S3FileUpload } from "~/services/s3client.server";
-import { redirect, superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/episode.server';
+import { authenticator } from '~/services/auth.server';
+import { podcastJsonSchema, s3UploadHandler } from '~/services/s3client.server';
+import type { S3FileUpload } from '~/services/s3client.server';
+import { redirect, superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -53,47 +51,47 @@ export const action = async ({
   request,
 }: ActionArgs): Promise<Response | ActionData> => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   const uploadHandler: UploadHandler = unstable_composeUploadHandlers(
     s3UploadHandler,
-    unstable_createMemoryUploadHandler()
+    unstable_createMemoryUploadHandler(),
   );
   const formData = await unstable_parseMultipartFormData(
     request,
-    uploadHandler
+    uploadHandler,
   );
 
   // On all forms
-  const title = formData.get("title");
-  const season = formData.get("season");
-  const episode = formData.get("episode");
-  const description = formData.get("description");
-  const showNotes = formData.get("showNotes");
-  const publishDate = formData.get("publishDate");
+  const title = formData.get('title');
+  const season = formData.get('season');
+  const episode = formData.get('episode');
+  const description = formData.get('description');
+  const showNotes = formData.get('showNotes');
+  const publishDate = formData.get('publishDate');
   // Only on new file submission
-  const podcastFileJson = formData.get("podcastFile");
+  const podcastFileJson = formData.get('podcastFile');
   // Only on Edit Form
-  const id = formData.get("id");
-  const duration = formData.get("duration");
-  const filepath = formData.get("filepath");
-  const filesize = formData.get("filesize");
+  const id = formData.get('id');
+  const duration = formData.get('duration');
+  const filepath = formData.get('filepath');
+  const filesize = formData.get('filesize');
 
   if (
-    typeof title !== "string" ||
-    typeof season !== "string" ||
-    typeof episode !== "string" ||
-    typeof description !== "string" ||
-    typeof showNotes !== "string" ||
-    typeof publishDate !== "string" ||
-    (typeof podcastFileJson !== "string" && typeof filepath !== "string")
+    typeof title !== 'string' ||
+    typeof season !== 'string' ||
+    typeof episode !== 'string' ||
+    typeof description !== 'string' ||
+    typeof showNotes !== 'string' ||
+    typeof publishDate !== 'string' ||
+    (typeof podcastFileJson !== 'string' && typeof filepath !== 'string')
   ) {
     throw new Error(`Form not submitted correctly.`);
   }
 
   const podcastFileObject: S3FileUpload =
-    typeof podcastFileJson === "string"
+    typeof podcastFileJson === 'string'
       ? JSON.parse(podcastFileJson)
       : {
           duration: Number.parseInt(String(duration)),
@@ -118,14 +116,14 @@ export const action = async ({
   const seasonNumber = Number.parseInt(season);
   const episodeNumber = Number.parseInt(episode);
   const publishDateObject = DateTime.fromISO(publishDate, {
-    zone: "America/Los_Angeles",
+    zone: 'America/Los_Angeles',
   }).toJSDate();
 
   const fieldErrors = {
-    title: title.length === 0 ? "Title has no content" : undefined,
+    title: title.length === 0 ? 'Title has no content' : undefined,
     description:
-      description.length === 0 ? "Description has no content" : undefined,
-    showNotes: showNotes.length === 0 ? "Show Notes has no content" : undefined,
+      description.length === 0 ? 'Description has no content' : undefined,
+    showNotes: showNotes.length === 0 ? 'Show Notes has no content' : undefined,
   };
 
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -143,7 +141,7 @@ export const action = async ({
       duration: podcastFileObject.duration,
       filepath: podcastFileObject.location,
       filesize: podcastFileObject.size,
-      filetype: "audio/mpeg",
+      filetype: 'audio/mpeg',
       authorId: user.id,
     });
   } else {
@@ -158,7 +156,7 @@ export const action = async ({
       duration: podcastFileObject.duration,
       filepath: podcastFileObject.location,
       filesize: podcastFileObject.size,
-      filetype: "audio/mpeg",
+      filetype: 'audio/mpeg',
       authorId: user.id,
     });
   }
@@ -168,22 +166,22 @@ export const action = async ({
 
 export const loader = async ({ request, params }: LoaderArgs) => {
   if (!params.id) {
-    throw new Error("Error building page.");
+    throw new Error('Error building page.');
   }
 
-  if (params.id === "new") {
-    return superjson<LoaderData>({}, { headers: { "x-superjson": "true" } });
+  if (params.id === 'new') {
+    return superjson<LoaderData>({}, { headers: { 'x-superjson': 'true' } });
   }
 
   const episode = await getEpisode(params.id);
 
   if (!episode) {
-    throw new Error("Episode not found");
+    throw new Error('Episode not found');
   }
 
   return superjson<LoaderData>(
     { episode },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -193,67 +191,67 @@ export default function PodcastEpisodeCreate() {
   const transition = useTransition();
 
   const buttonText =
-    transition.state === "submitting"
-      ? "Submitting..."
-      : transition.state === "loading"
-      ? "Submitted!"
-      : "Submit";
+    transition.state === 'submitting'
+      ? 'Submitting...'
+      : transition.state === 'loading'
+      ? 'Submitted!'
+      : 'Submit';
 
   return (
     <>
-      <h2 className="mt-0">Add Podcast Episode</h2>
+      <h2 className='mt-0'>Add Podcast Episode</h2>
       <div>
         <Form
-          method="POST"
-          className="grid grid-cols-1 gap-6"
-          encType="multipart/form-data"
+          method='POST'
+          className='grid grid-cols-1 gap-6'
+          encType='multipart/form-data'
         >
-          <input type="hidden" name="id" value={episode?.id} />
+          <input type='hidden' name='id' value={episode?.id} />
           <div>
-            <label htmlFor="title">
+            <label htmlFor='title'>
               Title:
               <input
-                type="text"
+                type='text'
                 required
                 defaultValue={episode?.title ?? actionData?.fields?.title}
-                name="title"
-                id="title"
+                name='title'
+                id='title'
                 aria-invalid={
                   Boolean(actionData?.fieldErrors?.title) || undefined
                 }
                 aria-errormessage={
-                  actionData?.fieldErrors?.title ? "title-error" : undefined
+                  actionData?.fieldErrors?.title ? 'title-error' : undefined
                 }
-                className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               />
             </label>
             {actionData?.fieldErrors?.title ? (
               <p
-                className="form-validation-error"
-                role="alert"
-                id="title-error"
+                className='form-validation-error'
+                role='alert'
+                id='title-error'
               >
                 {actionData.fieldErrors.title}
               </p>
             ) : null}
           </div>
-          <div className="flex gap-4">
-            <div className="w-1/2 shrink">
-              <label htmlFor="season">
+          <div className='flex gap-4'>
+            <div className='w-1/2 shrink'>
+              <label htmlFor='season'>
                 Season:
                 <select
                   defaultValue={episode?.season ?? actionData?.fields?.season}
-                  name="season"
+                  name='season'
                   required
                   aria-invalid={
                     Boolean(actionData?.fieldErrors?.season) || undefined
                   }
                   aria-errormessage={
-                    actionData?.fieldErrors?.season ? "season-error" : undefined
+                    actionData?.fieldErrors?.season ? 'season-error' : undefined
                   }
-                  className="form-select mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                  className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 >
-                  {SEASONS.map((season) => {
+                  {SEASONS.map(season => {
                     return (
                       <option value={season} key={season}>
                         {season}
@@ -264,40 +262,40 @@ export default function PodcastEpisodeCreate() {
               </label>
               {actionData?.fieldErrors?.season ? (
                 <p
-                  className="form-validation-error"
-                  role="alert"
-                  id="season-error"
+                  className='form-validation-error'
+                  role='alert'
+                  id='season-error'
                 >
                   {actionData.fieldErrors.season}
                 </p>
               ) : null}
             </div>
-            <div className="w-1/2 shrink">
-              <label htmlFor="episode">
+            <div className='w-1/2 shrink'>
+              <label htmlFor='episode'>
                 Episode:
                 <input
-                  type="number"
+                  type='number'
                   required
-                  min="0"
+                  min='0'
                   defaultValue={episode?.episode ?? actionData?.fields?.episode}
-                  name="episode"
-                  id="episode"
+                  name='episode'
+                  id='episode'
                   aria-invalid={
                     Boolean(actionData?.fieldErrors?.episode) || undefined
                   }
                   aria-errormessage={
                     actionData?.fieldErrors?.episode
-                      ? "episode-error"
+                      ? 'episode-error'
                       : undefined
                   }
-                  className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                  className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 />
               </label>
               {actionData?.fieldErrors?.episode ? (
                 <p
-                  className="form-validation-error"
-                  role="alert"
-                  id="episode-error"
+                  className='form-validation-error'
+                  role='alert'
+                  id='episode-error'
                 >
                   {actionData.fieldErrors.episode}
                 </p>
@@ -305,12 +303,12 @@ export default function PodcastEpisodeCreate() {
             </div>
           </div>
           <div>
-            <label htmlFor="description">
+            <label htmlFor='description'>
               Description:
               <textarea
-                name="description"
+                name='description'
                 required
-                id="description"
+                id='description'
                 defaultValue={
                   episode?.description ?? actionData?.fields?.description
                 }
@@ -319,33 +317,33 @@ export default function PodcastEpisodeCreate() {
                 }
                 aria-errormessage={
                   actionData?.fieldErrors?.description
-                    ? "description-error"
+                    ? 'description-error'
                     : undefined
                 }
-                className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 rows={3}
               ></textarea>
             </label>
             {actionData?.fieldErrors?.description ? (
               <p
-                className="form-validation-error"
-                role="alert"
-                id="description-error"
+                className='form-validation-error'
+                role='alert'
+                id='description-error'
               >
                 {actionData.fieldErrors.description}
               </p>
             ) : null}
           </div>
           <div>
-            <label htmlFor="showNotes">
-              Long Description:{" "}
-              <span className="text-sm italic text-gray-400">
+            <label htmlFor='showNotes'>
+              Long Description:{' '}
+              <span className='text-sm italic text-gray-400'>
                 (can take HTML)
               </span>
               <textarea
-                name="showNotes"
+                name='showNotes'
                 required
-                id="showNotes"
+                id='showNotes'
                 defaultValue={
                   episode?.shownotes ?? actionData?.fields?.showNotes
                 }
@@ -354,102 +352,102 @@ export default function PodcastEpisodeCreate() {
                 }
                 aria-errormessage={
                   actionData?.fieldErrors?.showNotes
-                    ? "showNotes-error"
+                    ? 'showNotes-error'
                     : undefined
                 }
-                className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 rows={3}
               ></textarea>
             </label>
             {actionData?.fieldErrors?.showNotes ? (
               <p
-                className="form-validation-error"
-                role="alert"
-                id="showNotes-error"
+                className='form-validation-error'
+                role='alert'
+                id='showNotes-error'
               >
                 {actionData.fieldErrors.showNotes}
               </p>
             ) : null}
           </div>
           <div>
-            <label htmlFor="publishDate">
+            <label htmlFor='publishDate'>
               Publish Date:
               <input
-                type="date"
+                type='date'
                 defaultValue={
                   episode?.publishDate
-                    ? episode?.publishDate.toISOString().split("T")[0]
+                    ? episode?.publishDate.toISOString().split('T')[0]
                     : actionData?.fields?.publishDate
                 }
-                name="publishDate"
+                name='publishDate'
                 required
-                id="publishDate"
+                id='publishDate'
                 aria-invalid={
                   Boolean(actionData?.fieldErrors?.publishDate) || undefined
                 }
                 aria-errormessage={
                   actionData?.fieldErrors?.publishDate
-                    ? "publishDate-error"
+                    ? 'publishDate-error'
                     : undefined
                 }
-                className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               />
             </label>
             {actionData?.fieldErrors?.publishDate ? (
               <p
-                className="form-validation-error"
-                role="alert"
-                id="publishDate-error"
+                className='form-validation-error'
+                role='alert'
+                id='publishDate-error'
               >
                 {actionData.fieldErrors.publishDate}
               </p>
             ) : null}
           </div>
           <div>
-            <label htmlFor="podcastFile">
-              Podcast File:{" "}
+            <label htmlFor='podcastFile'>
+              Podcast File:{' '}
               {episode && (
                 <>
                   <a href={episode.filepath}>Current File</a>
                   <input
-                    type="hidden"
-                    name="duration"
+                    type='hidden'
+                    name='duration'
                     value={episode.duration}
                   />
                   <input
-                    type="hidden"
-                    name="filepath"
+                    type='hidden'
+                    name='filepath'
                     value={episode.filepath}
                   />
                   <input
-                    type="hidden"
-                    name="filesize"
+                    type='hidden'
+                    name='filesize'
                     value={episode.filesize}
                   />
                 </>
               )}
               <input
-                type="file"
+                type='file'
                 required={!episode}
                 defaultValue={actionData?.fields?.podcastFile}
-                name="podcastFile"
-                id="podcastFile"
+                name='podcastFile'
+                id='podcastFile'
                 aria-invalid={
                   Boolean(actionData?.fieldErrors?.podcastFile) || undefined
                 }
                 aria-errormessage={
                   actionData?.fieldErrors?.podcastFile
-                    ? "podcastFile-error"
+                    ? 'podcastFile-error'
                     : undefined
                 }
-                className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               />
             </label>
             {actionData?.fieldErrors?.podcastFile ? (
               <p
-                className="form-validation-error"
-                role="alert"
-                id="podcastFile-error"
+                className='form-validation-error'
+                role='alert'
+                id='podcastFile-error'
               >
                 {actionData.fieldErrors.podcastFile}
               </p>
@@ -457,11 +455,11 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             {actionData?.formError ? (
-              <p className="form-validation-error" role="alert">
+              <p className='form-validation-error' role='alert'>
                 {actionData.formError}
               </p>
             ) : null}
-            <Button type="submit" disabled={transition.state !== "idle"}>
+            <Button type='submit' disabled={transition.state !== 'idle'}>
               {buttonText}
             </Button>
           </div>

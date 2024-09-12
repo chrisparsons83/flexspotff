@@ -1,5 +1,5 @@
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/outline";
-import { useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
+import { useState } from 'react';
 
 type Props = {
   rank?: number;
@@ -19,43 +19,43 @@ export default function QBStreamingStandingsRowComponent({
   const [showDetails, setShowDetails] = useState(false);
 
   const handleAccordion = () => {
-    setShowDetails((prevState) => !prevState);
+    setShowDetails(prevState => !prevState);
   };
 
   return (
     <>
       <tr>
         <td>{rank}</td>
-        <td className="flex items-center gap-3">
-          {discordName}{" "}
+        <td className='flex items-center gap-3'>
+          {discordName}{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}
               height={20}
               onClick={handleAccordion}
-              className="cursor-pointer"
-              aria-label="Hide Details"
+              className='cursor-pointer'
+              aria-label='Hide Details'
             />
           ) : (
             <ChevronDownIcon
               width={20}
               height={20}
               onClick={handleAccordion}
-              className="cursor-pointer"
-              aria-label="Show Details"
+              className='cursor-pointer'
+              aria-label='Show Details'
             />
           )}
         </td>
         <td>{pointsScored.toFixed(2)}</td>
       </tr>
       {showDetails && (
-        <tr className="border-b-1 bg-gray-800">
+        <tr className='border-b-1 bg-gray-800'>
           <td></td>
           <td>
-            <div className="mb-1 border-l-8 pl-4 border-gray-500">
+            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
               Standard: {standardPlayer}
             </div>
-            <div className="mb-1 border-l-8 pl-4 border-gray-500">
+            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
               Deep: {deepPlayer}
             </div>
           </td>

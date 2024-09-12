@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function seed() {
-  const discordId = "1111";
-  const discordName = "JoshGordon";
-  const discordAvatar = "";
+  const discordId = '1111';
+  const discordName = 'JoshGordon';
+  const discordAvatar = '';
 
   // cleanup the existing database
   await prisma.user.delete({ where: { discordId } }).catch(() => {
@@ -24,7 +24,7 @@ async function seed() {
 }
 
 seed()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

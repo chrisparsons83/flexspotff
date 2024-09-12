@@ -1,10 +1,8 @@
-import type { LoaderArgs } from "@remix-run/node";
-
-import { getRegistrationsByYear } from "~/models/registration.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { LoaderArgs } from '@remix-run/node';
+import { getRegistrationsByYear } from '~/models/registration.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   registrations: Awaited<ReturnType<typeof getRegistrationsByYear>>;
@@ -13,30 +11,30 @@ type LoaderData = {
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   let registrations = await getRegistrationsByYear(currentSeason.year);
   let lastYearRegistrations = await getRegistrationsByYear(
-    currentSeason.year - 1
+    currentSeason.year - 1,
   );
 
   let registrationsUserArray = registrations.map(
-    (registration) => registration.userId
+    registration => registration.userId,
   );
   let notYetSignedUp = lastYearRegistrations.filter(
-    (registration) => !registrationsUserArray.includes(registration.userId)
+    registration => !registrationsUserArray.includes(registration.userId),
   );
 
   return superjson<LoaderData>(
     { registrations, notYetSignedUp },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -45,15 +43,15 @@ export default function RegistrationList() {
 
   return (
     <>
-      <h2 className="mt-0">Registration List</h2>
+      <h2 className='mt-0'>Registration List</h2>
       <ol>
-        {registrations.map((registration) => (
+        {registrations.map(registration => (
           <li key={registration.id}>{registration.user.discordName}</li>
         ))}
       </ol>
       <h3>Missing from last year</h3>
       <ul>
-        {notYetSignedUp.map((registration) => (
+        {notYetSignedUp.map(registration => (
           <li key={registration.id}>{registration.user.discordName}</li>
         ))}
       </ul>

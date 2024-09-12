@@ -1,20 +1,18 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
-import { DateTime } from "luxon";
-import z from "zod";
-
-import { getLeague, getLeagues, updateLeague } from "~/models/league.server";
-import type { Team } from "~/models/team.server";
-import { createTeam, getTeams, updateTeam } from "~/models/team.server";
-import { getUsers } from "~/models/user.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { syncAdp } from "~/libs/syncs.server";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { SLEEPER_ADMIN_ID } from "~/utils/constants";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, useActionData } from '@remix-run/react';
+import { DateTime } from 'luxon';
+import z from 'zod';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { syncAdp } from '~/libs/syncs.server';
+import { getLeague, getLeagues, updateLeague } from '~/models/league.server';
+import type { Team } from '~/models/team.server';
+import { createTeam, getTeams, updateTeam } from '~/models/team.server';
+import { getUsers } from '~/models/user.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { SLEEPER_ADMIN_ID } from '~/utils/constants';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   message?: string;
@@ -41,7 +39,7 @@ const sleeperTeamJson = z.array(
         record: z.string().optional(),
       })
       .nullable(),
-  })
+  }),
 );
 type SleeperTeamJson = z.infer<typeof sleeperTeamJson>;
 const sleeperDraftJson = z.object({
@@ -59,10 +57,10 @@ type LoaderData = {
 export const action = async ({ request }: ActionArgs) => {
   const formData = await request.formData();
 
-  const action = formData.get("action");
-  const leagueId = formData.get("leagueId");
+  const action = formData.get('action');
+  const leagueId = formData.get('leagueId');
 
-  if (typeof action !== "string" || typeof leagueId !== "string") {
+  if (typeof action !== 'string' || typeof leagueId !== 'string') {
     throw new Error(`Form not generated correctly.`);
   }
 
@@ -72,7 +70,7 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   switch (action) {
-    case "sync": {
+    case 'sync': {
       const teamsUrl = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
       const draftsUrl = `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}`;
       const [sleeperTeamsRes, sleeperDraftRes] = await Promise.all([
@@ -82,25 +80,25 @@ export const action = async ({ request }: ActionArgs) => {
 
       const sleeperTeams: SleeperTeamJson = sleeperTeamJson
         .parse(await sleeperTeamsRes.json())
-        .filter((team) => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
+        .filter(team => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
       const sleeperDraft: SleeperDraftJson = sleeperDraftJson.parse(
-        await sleeperDraftRes.json()
+        await sleeperDraftRes.json(),
       );
 
       const existingTeamsSleeperOwners = (await getTeams(leagueId)).map(
-        (team) => [team.sleeperOwnerId, team.id]
+        team => [team.sleeperOwnerId, team.id],
       );
       const existingUsersSleeperIds = (await getUsers()).flatMap(
         ({ id, sleeperUsers }) =>
-          sleeperUsers.map((sleeperUser) => ({
+          sleeperUsers.map(sleeperUser => ({
             id,
             sleeperOwnerID: sleeperUser.sleeperOwnerID,
-          }))
+          })),
       );
 
       if (sleeperDraft.start_time) {
         league.draftDateTime = DateTime.fromSeconds(
-          sleeperDraft.start_time / 1000
+          sleeperDraft.start_time / 1000,
         ).toJSDate();
         await updateLeague(league);
       }
@@ -110,7 +108,7 @@ export const action = async ({ request }: ActionArgs) => {
         if (!sleeperTeam.owner_id) continue;
         // build team object
         const systemUser = existingUsersSleeperIds.filter(
-          (team) => team.sleeperOwnerID === sleeperTeam.owner_id
+          team => team.sleeperOwnerID === sleeperTeam.owner_id,
         );
         const team = {
           wins: sleeperTeam.settings.wins,
@@ -133,7 +131,7 @@ export const action = async ({ request }: ActionArgs) => {
         // if team exists, add ID and add update to promises array
         // else, add create to promises array
         const existingTeam = existingTeamsSleeperOwners.filter(
-          (team) => team[0] === sleeperTeam.owner_id
+          team => team[0] === sleeperTeam.owner_id,
         );
         if (existingTeam.length > 0) {
           promises.push(updateTeam({ id: existingTeam[0][1], ...team }));
@@ -158,7 +156,7 @@ export const action = async ({ request }: ActionArgs) => {
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
@@ -166,7 +164,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { leagues },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -178,7 +176,7 @@ export default function LeaguesList() {
     <>
       <h2>League List</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Year</th>
@@ -190,7 +188,7 @@ export default function LeaguesList() {
           </tr>
         </thead>
         <tbody>
-          {leagues.map((league) => (
+          {leagues.map(league => (
             <tr key={league.id}>
               <td>{league.year}</td>
               <td>{league.name}</td>
@@ -209,12 +207,12 @@ export default function LeaguesList() {
                   Draft ({league.teams.length} / 12)
                 </a>
                 <br />
-                {league.draftDateTime?.toLocaleString() || ""}
+                {league.draftDateTime?.toLocaleString() || ''}
               </td>
-              <td className="not-prose">
-                <Form method="POST">
-                  <input type="hidden" name="leagueId" value={league.id} />
-                  <Button type="submit" name="action" value="sync">
+              <td className='not-prose'>
+                <Form method='POST'>
+                  <input type='hidden' name='leagueId' value={league.id} />
+                  <Button type='submit' name='action' value='sync'>
                     Sync
                   </Button>
                 </Form>

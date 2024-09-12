@@ -1,13 +1,11 @@
-import type { LoaderArgs } from "@remix-run/node";
-import clsx from "clsx";
-
-import { getAverageDraftPositionByYear } from "~/models/draftpick.server";
-import { getLeaguesByYear } from "~/models/league.server";
-import type { Player } from "~/models/players.server";
-import { getPlayersByIDs } from "~/models/players.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { LoaderArgs } from '@remix-run/node';
+import clsx from 'clsx';
+import { getAverageDraftPositionByYear } from '~/models/draftpick.server';
+import { getLeaguesByYear } from '~/models/league.server';
+import type { Player } from '~/models/players.server';
+import { getPlayersByIDs } from '~/models/players.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   adp: Awaited<ReturnType<typeof getAverageDraftPositionByYear>>;
@@ -18,19 +16,19 @@ type LoaderData = {
 export const loader = async ({ params }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const year =
-    params["*"] === ""
+    params['*'] === ''
       ? currentSeason.year
-      : Number.parseInt(params["*"] || "");
+      : Number.parseInt(params['*'] || '');
 
   const leagueCount = (await getLeaguesByYear(year)).filter(
-    (league) => league.isDrafted
+    league => league.isDrafted,
   ).length;
   const adp = await getAverageDraftPositionByYear(year);
-  const players = await getPlayersByIDs(adp.map((player) => player.playerId));
+  const players = await getPlayersByIDs(adp.map(player => player.playerId));
 
   // Creating a map for speed purposes
   const playersMap: Map<string, Player> = new Map();
@@ -55,7 +53,7 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { adp, playersMap, year },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -64,11 +62,11 @@ export default function ADP() {
 
   // We do this because tailwind HATES dynamic class names
   const rankColors: Record<string, string> = {
-    qb: "bg-qb",
-    rb: "bg-rb",
-    wr: "bg-wr",
-    te: "bg-te",
-    def: "bg-def",
+    qb: 'bg-qb',
+    rb: 'bg-rb',
+    wr: 'bg-wr',
+    te: 'bg-te',
+    def: 'bg-def',
   };
 
   return (
@@ -95,15 +93,15 @@ export default function ADP() {
                 <tr
                   key={adpPlayer.playerId}
                   className={clsx(
-                    index % 2 === 0 ? "bg-gray-900" : "bg-gray-800",
-                    "p-2"
+                    index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+                    'p-2',
                   )}
                 >
-                  <td className="pl-1">
+                  <td className='pl-1'>
                     <div
                       className={clsx(
                         rankColors[playerInfo!.position!.toLowerCase()],
-                        "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
+                        'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
                       )}
                     >
                       {index + 1}
@@ -115,7 +113,7 @@ export default function ADP() {
                   <td>{adpPlayer._min.pickNumber}</td>
                   <td>
                     {adpPlayer._max.pickNumber === 181
-                      ? "UD"
+                      ? 'UD'
                       : adpPlayer._max.pickNumber}
                   </td>
                 </tr>

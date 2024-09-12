@@ -1,17 +1,15 @@
-import type { LoaderArgs } from "@remix-run/node";
-
+import type { LoaderArgs } from '@remix-run/node';
+import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import {
   getPoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
-} from "~/models/poolgamepicks.server";
-import { getPoolWeeksByYear } from "~/models/poolweek.server";
-import { getPoolWeekMissedTotalByUserAndYear } from "~/models/poolweekmissed.server";
-import { getCurrentSeason } from "~/models/season.server";
-import type { User } from "~/models/user.server";
-import { getUsersByIds } from "~/models/user.server";
-
-import SpreadPoolStandingsRow from "~/components/layout/spread-pool/SpreadPoolStandingsRow";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/poolgamepicks.server';
+import { getPoolWeeksByYear } from '~/models/poolweek.server';
+import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.server';
+import { getCurrentSeason } from '~/models/season.server';
+import type { User } from '~/models/user.server';
+import { getUsersByIds } from '~/models/user.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
@@ -23,33 +21,33 @@ type LoaderData = {
 export const loader = async ({ params, request }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   // Get the most active week
-  const currentWeek = poolWeeks.find((poolWeek) => poolWeek.isOpen === true);
+  const currentWeek = poolWeeks.find(poolWeek => poolWeek.isOpen === true);
 
   // Get current picks for the week
   const weeklyPicks =
     currentWeek &&
     (await getPoolGamesPicksByPoolWeek(currentWeek)).filter(
-      (poolGamePick) =>
+      poolGamePick =>
         poolGamePick.poolGame.game.gameStartTime < new Date() &&
-        poolGamePick.amountBet !== 0
+        poolGamePick.amountBet !== 0,
     );
 
   const amountWonLoss = await getPoolGamePicksWonLoss(currentSeason.year);
 
   // Update amountWonLoss based on missing week totals, then re-sort.
   const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(
-    currentSeason.year
+    currentSeason.year,
   );
   if (missingWeekPenalties.length > 0) {
     for (const missingWeekPenalty of missingWeekPenalties) {
       const updateIndex = amountWonLoss.findIndex(
-        (amount) => amount.userId === missingWeekPenalty.userId
+        amount => amount.userId === missingWeekPenalty.userId,
       );
       if (updateIndex !== -1) {
         amountWonLoss[updateIndex]._sum.resultWonLoss =
@@ -61,28 +59,28 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   }
 
   const sortingOrderForRanks = amountWonLoss.map(
-    (amount) => amount._sum.resultWonLoss
+    amount => amount._sum.resultWonLoss,
   );
   const userIdToRankMap: Map<string, number> = new Map();
   for (const result of amountWonLoss) {
     userIdToRankMap.set(
       result.userId,
       sortingOrderForRanks.findIndex(
-        (total) => result._sum.resultWonLoss === total
-      ) + 1
+        total => result._sum.resultWonLoss === total,
+      ) + 1,
     );
   }
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
   const userIds = [
-    ...new Set(amountWonLoss.map((poolGameSum) => poolGameSum.userId)),
+    ...new Set(amountWonLoss.map(poolGameSum => poolGameSum.userId)),
   ];
   const users = await getUsersByIds(userIds);
 
   return superjson<LoaderData>(
     { amountWonLoss, users, userIdToRankMap, weeklyPicks },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -116,7 +114,7 @@ export default function QBStreamingStandingsYearIndex() {
               user={userIdToUserMap.get(result.userId)}
               poolGameWonLoss={result}
               picksLocked={weeklyPicks?.filter(
-                (pick) => pick.userId === result.userId
+                pick => pick.userId === result.userId,
               )}
             />
           ))}

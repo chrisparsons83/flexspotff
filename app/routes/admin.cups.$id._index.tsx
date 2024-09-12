@@ -1,32 +1,30 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
-
-import type { Cup, ScoreArray } from "~/models/cup.server";
-import { getCup } from "~/models/cup.server";
-import type { CupGame } from "~/models/cupgame.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, useActionData } from '@remix-run/react';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import type { Cup, ScoreArray } from '~/models/cup.server';
+import { getCup } from '~/models/cup.server';
+import type { CupGame } from '~/models/cupgame.server';
 import {
   createCupGame,
   getCupGamesByCup,
   updateCupGame,
-} from "~/models/cupgame.server";
+} from '~/models/cupgame.server';
 import {
   type CupTeam,
   createCupTeam,
   getCupTeamsByCup,
-} from "~/models/cupteam.server";
-import type { CupWeek } from "~/models/cupweek.server";
-import { getCupWeeks, updateCupWeek } from "~/models/cupweek.server";
-import { getCurrentSeason } from "~/models/season.server";
+} from '~/models/cupteam.server';
+import type { CupWeek } from '~/models/cupweek.server';
+import { getCupWeeks, updateCupWeek } from '~/models/cupweek.server';
+import { getCurrentSeason } from '~/models/season.server';
 import {
   getTeamGameMultiweekTotals,
   getTeamGameMultiweekTotalsSeparated,
-} from "~/models/teamgame.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/teamgame.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   message?: string;
@@ -42,58 +40,58 @@ type ActionData = {
 type CupMappingOptions = {
   label: string;
   value:
-    | "PENDING"
-    | "SEEDING"
-    | "ROUND_OF_64"
-    | "ROUND_OF_32"
-    | "ROUND_OF_16"
-    | "ROUND_OF_8"
-    | "ROUND_OF_4"
-    | "ROUND_OF_2";
+    | 'PENDING'
+    | 'SEEDING'
+    | 'ROUND_OF_64'
+    | 'ROUND_OF_32'
+    | 'ROUND_OF_16'
+    | 'ROUND_OF_8'
+    | 'ROUND_OF_4'
+    | 'ROUND_OF_2';
 };
 
 const selectOptions: CupMappingOptions[] = [
   {
-    label: "Pending",
-    value: "PENDING",
+    label: 'Pending',
+    value: 'PENDING',
   },
   {
-    label: "Seeding Week",
-    value: "SEEDING",
+    label: 'Seeding Week',
+    value: 'SEEDING',
   },
   {
-    label: "Round of 64",
-    value: "ROUND_OF_64",
+    label: 'Round of 64',
+    value: 'ROUND_OF_64',
   },
   {
-    label: "Round of 32",
-    value: "ROUND_OF_32",
+    label: 'Round of 32',
+    value: 'ROUND_OF_32',
   },
   {
-    label: "Round of 16",
-    value: "ROUND_OF_16",
+    label: 'Round of 16',
+    value: 'ROUND_OF_16',
   },
   {
-    label: "Quarterfinals",
-    value: "ROUND_OF_8",
+    label: 'Quarterfinals',
+    value: 'ROUND_OF_8',
   },
   {
-    label: "Semifinals",
-    value: "ROUND_OF_4",
+    label: 'Semifinals',
+    value: 'ROUND_OF_4',
   },
   {
-    label: "Finals",
-    value: "ROUND_OF_2",
+    label: 'Finals',
+    value: 'ROUND_OF_2',
   },
 ];
 
 const rounds = [
-  "ROUND_OF_2",
-  "ROUND_OF_4",
-  "ROUND_OF_8",
-  "ROUND_OF_16",
-  "ROUND_OF_32",
-  "ROUND_OF_64",
+  'ROUND_OF_2',
+  'ROUND_OF_4',
+  'ROUND_OF_8',
+  'ROUND_OF_16',
+  'ROUND_OF_32',
+  'ROUND_OF_64',
 ];
 const roundOf64Matches = [
   [1, 64],
@@ -132,50 +130,50 @@ const roundOf64Matches = [
 
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const cupId = params.id;
-  if (!cupId) throw new Error("Missing cup id");
+  if (!cupId) throw new Error('Missing cup id');
 
   const cup = await getCup(cupId);
-  if (!cup) throw new Error("Invalid cup");
+  if (!cup) throw new Error('Invalid cup');
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   const currentSeason = await getCurrentSeason();
-  if (!currentSeason) throw new Error("No current season");
+  if (!currentSeason) throw new Error('No current season');
 
   switch (action) {
-    case "updateCup": {
+    case 'updateCup': {
       const promises: Promise<CupWeek>[] = [];
       for (const [key, mapping] of formData.entries()) {
-        const id = key.replace("week-", "");
+        const id = key.replace('week-', '');
 
-        if (id === "_action") {
+        if (id === '_action') {
           continue;
         }
 
-        if (mapping && typeof mapping === "string") {
+        if (mapping && typeof mapping === 'string') {
           promises.push(updateCupWeek(id, { mapping }));
         }
       }
       await Promise.all(promises);
 
       return json<ActionData>({
-        message: "Cup week mappings have been updated.",
+        message: 'Cup week mappings have been updated.',
       });
     }
-    case "SEEDING": {
+    case 'SEEDING': {
       const weeksToScore = (await getCupWeeks(cupId))
-        .filter((cupWeek) => cupWeek.mapping === "SEEDING")
-        .map((cupWeek) => cupWeek.week);
+        .filter(cupWeek => cupWeek.mapping === 'SEEDING')
+        .map(cupWeek => cupWeek.week);
 
       const scores = await getTeamGameMultiweekTotals(
         weeksToScore,
-        currentSeason?.year
+        currentSeason?.year,
       );
       const promises: Promise<CupTeam>[] = [];
       let seed = 1;
@@ -190,7 +188,7 @@ export const action = async ({ params, request }: ActionArgs) => {
             cupId,
             teamId,
             seed,
-          })
+          }),
         );
         seed++;
       }
@@ -265,16 +263,16 @@ export const action = async ({ params, request }: ActionArgs) => {
               insideRoundSort: i,
               winnerToTop: true,
               topTeamId:
-                cupTeams.find((cupTeam) => cupTeam.seed === getMatchOne[0])
-                  ?.id || null,
+                cupTeams.find(cupTeam => cupTeam.seed === getMatchOne[0])?.id ||
+                null,
               bottomTeamId:
-                cupTeams.find((cupTeam) => cupTeam.seed === getMatchOne[1])
-                  ?.id || null,
+                cupTeams.find(cupTeam => cupTeam.seed === getMatchOne[1])?.id ||
+                null,
               winningTeamId: null,
               losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: cupTeams.find(
-                (cupTeam) => cupTeam.seed === getMatchOne[1]
+                cupTeam => cupTeam.seed === getMatchOne[1],
               )?.id
                 ? false
                 : true,
@@ -286,16 +284,16 @@ export const action = async ({ params, request }: ActionArgs) => {
               insideRoundSort: i + 1,
               winnerToTop: false,
               topTeamId:
-                cupTeams.find((cupTeam) => cupTeam.seed === getMatchTwo[0])
-                  ?.id || null,
+                cupTeams.find(cupTeam => cupTeam.seed === getMatchTwo[0])?.id ||
+                null,
               bottomTeamId:
-                cupTeams.find((cupTeam) => cupTeam.seed === getMatchTwo[1])
-                  ?.id || null,
+                cupTeams.find(cupTeam => cupTeam.seed === getMatchTwo[1])?.id ||
+                null,
               winningTeamId: null,
               losingTeamId: null,
               winnerToGameId: matchIdsToLoop[prevIndex],
               containsBye: cupTeams.find(
-                (cupTeam) => cupTeam.seed === getMatchTwo[1]
+                cupTeam => cupTeam.seed === getMatchTwo[1],
               )?.id
                 ? false
                 : true,
@@ -307,7 +305,7 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       // Automatically advance bye winners for round one.
       const cupGamesWithBye = (await getCupGamesByCup(cup.id)).filter(
-        (cupGame) => cupGame.containsBye
+        cupGame => cupGame.containsBye,
       );
 
       const updates: Promise<CupGame>[] = [];
@@ -316,7 +314,7 @@ export const action = async ({ params, request }: ActionArgs) => {
           updateCupGame(cupGame.id, {
             id: cupGame.id,
             winningTeamId: cupGame.topTeamId,
-          })
+          }),
         );
         // We won't do this for the final, but this is byes so whatever
         const updateCupGameData: Partial<CupGame> = {
@@ -332,37 +330,37 @@ export const action = async ({ params, request }: ActionArgs) => {
       await Promise.all(updates);
 
       return json<ActionData>({
-        message: "Seeding created.",
+        message: 'Seeding created.',
       });
     }
     default: {
       const cupWeeks = (await getCupWeeks(cup.id)).filter(
-        (cupWeek) => cupWeek.mapping === action
+        cupWeek => cupWeek.mapping === action,
       );
 
       const cupGames = (await getCupGamesByCup(cup.id)).filter(
-        (cupGame) => cupGame.round === action
+        cupGame => cupGame.round === action,
       );
 
       const scores = await getTeamGameMultiweekTotalsSeparated(
-        cupWeeks.map((cupWeek) => cupWeek.week)
+        cupWeeks.map(cupWeek => cupWeek.week),
       );
 
       const scoreArray: ScoreArray[] = [];
       for (const score of scores) {
         const roundToAddTo = cupWeeks.find(
-          (cupWeek) => cupWeek.week === score.week
+          cupWeek => cupWeek.week === score.week,
         );
         if (!roundToAddTo) {
           continue;
         }
         const index = scoreArray.findIndex(
-          (player) =>
+          player =>
             player.teamId === score.teamId &&
-            player.mapping === roundToAddTo.mapping
+            player.mapping === roundToAddTo.mapping,
         );
         if (index !== -1) {
-          scoreArray[index]["pointsScored"] += score.pointsScored;
+          scoreArray[index]['pointsScored'] += score.pointsScored;
         } else {
           scoreArray.push({
             teamId: score.teamId,
@@ -384,11 +382,11 @@ export const action = async ({ params, request }: ActionArgs) => {
             : -0.001;
         const topTeamScore =
           (scoreArray.find(
-            (scoreObject) => scoreObject.teamId === cupGame.topTeam?.teamId
+            scoreObject => scoreObject.teamId === cupGame.topTeam?.teamId,
           )?.pointsScored || 0) + tiebreaker;
         const bottomTeamScore =
           scoreArray.find(
-            (scoreObject) => scoreObject.teamId === cupGame.bottomTeam?.teamId
+            scoreObject => scoreObject.teamId === cupGame.bottomTeam?.teamId,
           )?.pointsScored || 0;
         const [winningTeamId, losingTeamId] =
           topTeamScore > bottomTeamScore
@@ -399,28 +397,28 @@ export const action = async ({ params, request }: ActionArgs) => {
             id: cupGame.id,
             winningTeamId,
             losingTeamId,
-          })
+          }),
         );
         if (cupGame.winnerToTop && cupGame.winnerToGameId) {
           promises.push(
             updateCupGame(cupGame.winnerToGameId!, {
               id: cupGame.winnerToGameId,
               topTeamId: winningTeamId,
-            })
+            }),
           );
         } else if (cupGame.winnerToGameId) {
           promises.push(
             updateCupGame(cupGame.winnerToGameId!, {
               id: cupGame.winnerToGameId,
               bottomTeamId: winningTeamId,
-            })
+            }),
           );
         }
       }
       await Promise.all(promises);
 
       return json<ActionData>({
-        message: "This week was scored.",
+        message: 'This week was scored.',
       });
     }
   }
@@ -428,15 +426,15 @@ export const action = async ({ params, request }: ActionArgs) => {
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const id = params.id;
-  if (!id) throw new Error("Missing ID");
+  if (!id) throw new Error('Missing ID');
 
   const cup = await getCup(id);
-  if (!cup) throw new Error("No cup found");
+  if (!cup) throw new Error('No cup found');
 
   const cupWeeks = await getCupWeeks(cup.id);
 
@@ -451,7 +449,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { cup, cupWeeks, actionWeeks },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -463,7 +461,7 @@ export default function CupAdministerPage() {
     <>
       <h2>Administer {cup.year} Cup</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST" reloadDocument>
+      <Form method='POST' reloadDocument>
         <table>
           <thead>
             <tr>
@@ -479,7 +477,7 @@ export default function CupAdministerPage() {
                   ? cupWeek.mapping
                   : undefined;
               const buttonText =
-                action === "SEEDING" ? "Set Seeds" : "Score Week";
+                action === 'SEEDING' ? 'Set Seeds' : 'Score Week';
 
               return (
                 <tr key={cupWeek.id}>
@@ -489,9 +487,9 @@ export default function CupAdministerPage() {
                       name={`week-${cupWeek.id}`}
                       id={`week-${cupWeek.id}`}
                       defaultValue={cupWeek.mapping}
-                      className="form-select dark:border-0 dark:bg-slate-800"
+                      className='form-select dark:border-0 dark:bg-slate-800'
                     >
-                      {selectOptions.map((option) => (
+                      {selectOptions.map(option => (
                         <option value={option.value} key={option.value}>
                           {option.label}
                         </option>
@@ -501,8 +499,8 @@ export default function CupAdministerPage() {
                   <td>
                     {action && (
                       <Button
-                        type="submit"
-                        name="_action"
+                        type='submit'
+                        name='_action'
                         value={cupWeek.mapping}
                       >
                         {buttonText}
@@ -515,7 +513,7 @@ export default function CupAdministerPage() {
           </tbody>
         </table>
         <div>
-          <Button type="submit" name="_action" value="updateCup">
+          <Button type='submit' name='_action' value='updateCup'>
             Update Mapping
           </Button>
         </div>

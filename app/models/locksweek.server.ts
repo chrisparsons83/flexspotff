@@ -1,10 +1,9 @@
-import type { LocksWeek } from "@prisma/client";
+import type { LocksWeek } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { LocksWeek } from '@prisma/client';
 
-export type { LocksWeek } from "@prisma/client";
-
-type LocksWeekCreateInput = Omit<LocksWeek, "id" | "createdAt" | "updatedAt">;
+type LocksWeekCreateInput = Omit<LocksWeek, 'id' | 'createdAt' | 'updatedAt'>;
 
 export async function createLocksWeek(locksWeek: LocksWeekCreateInput) {
   return prisma.locksWeek.create({
@@ -12,7 +11,7 @@ export async function createLocksWeek(locksWeek: LocksWeekCreateInput) {
   });
 }
 
-export async function getLocksWeek(id: LocksWeek["id"]) {
+export async function getLocksWeek(id: LocksWeek['id']) {
   return prisma.locksWeek.findUnique({
     where: {
       id,
@@ -21,8 +20,8 @@ export async function getLocksWeek(id: LocksWeek["id"]) {
 }
 
 export async function getLocksWeekByYearAndWeek(
-  year: LocksWeek["year"],
-  weekNumber: LocksWeek["weekNumber"]
+  year: LocksWeek['year'],
+  weekNumber: LocksWeek['weekNumber'],
 ) {
   return prisma.locksWeek.findFirst({
     where: {
@@ -31,30 +30,30 @@ export async function getLocksWeekByYearAndWeek(
     },
     orderBy: [
       {
-        weekNumber: "desc",
+        weekNumber: 'desc',
       },
     ],
   });
 }
 
-export async function getLocksWeeksByYear(year: LocksWeek["year"]) {
+export async function getLocksWeeksByYear(year: LocksWeek['year']) {
   return prisma.locksWeek.findMany({
     where: {
       year,
     },
     orderBy: {
-      weekNumber: "desc",
+      weekNumber: 'desc',
     },
   });
 }
 
-export async function getNewestLocksWeekForYear(year: LocksWeek["year"]) {
+export async function getNewestLocksWeekForYear(year: LocksWeek['year']) {
   return prisma.locksWeek.findFirst({
     where: {
       year,
     },
     orderBy: {
-      weekNumber: "desc",
+      weekNumber: 'desc',
     },
   });
 }

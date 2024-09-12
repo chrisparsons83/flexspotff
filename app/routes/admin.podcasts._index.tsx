@@ -1,10 +1,8 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
-
-import { getEpisodes } from "~/models/episode.server";
-import type { Episode } from "~/models/episode.server";
-
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
+import { getEpisodes } from '~/models/episode.server';
+import type { Episode } from '~/models/episode.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   episodes: Episode[];
@@ -15,7 +13,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { episodes },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -24,8 +22,8 @@ export default function PodcastEpisodeList() {
 
   return (
     <>
-      <h2 className="mt-0">Podcasts</h2>
-      <table className="w-full">
+      <h2 className='mt-0'>Podcasts</h2>
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Season</th>
@@ -36,7 +34,7 @@ export default function PodcastEpisodeList() {
           </tr>
         </thead>
         <tbody>
-          {episodes.map((episode) => (
+          {episodes.map(episode => (
             <tr key={episode.id}>
               <td>{episode.season}</td>
               <td>{episode.episode}</td>

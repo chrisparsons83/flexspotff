@@ -1,23 +1,21 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-import z from "zod";
-
-import type { QBStreamingWeek } from "~/models/qbstreamingweek.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import z from 'zod';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import type { QBStreamingWeek } from '~/models/qbstreamingweek.server';
 import {
   createQBStreamingWeek,
   getQBStreamingWeek,
   getQBStreamingWeeks,
   updateQBStreamingWeek,
-} from "~/models/qbstreamingweek.server";
-import type { QBStreamingWeekOption } from "~/models/qbstreamingweekoption.server";
-import { updateQBStreamingWeekOptionScore } from "~/models/qbstreamingweekoption.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/qbstreamingweek.server';
+import type { QBStreamingWeekOption } from '~/models/qbstreamingweekoption.server';
+import { updateQBStreamingWeekOptionScore } from '~/models/qbstreamingweekoption.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -43,19 +41,19 @@ const sleeperJsonStats = z.record(
     rush_2pt: z.number().optional(),
     rec_2pt: z.number().optional(),
     pass_2pt: z.number().optional(),
-  })
+  }),
 );
 type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
 
 export const action = async ({ request }: ActionArgs) => {
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "createNewWeek": {
+    case 'createNewWeek': {
       let currentSeason = await getCurrentSeason();
       if (!currentSeason) {
-        throw new Error("No active season currently");
+        throw new Error('No active season currently');
       }
 
       // Get max week of season, then add one
@@ -70,32 +68,32 @@ export const action = async ({ request }: ActionArgs) => {
         isScored: false,
       });
 
-      return json<ActionData>({ message: "Week has been created." });
+      return json<ActionData>({ message: 'Week has been created.' });
     }
-    case "scoreWeek": {
-      const weekNumberString = formData.get("weekNumber");
-      const yearString = formData.get("year");
-      const id = formData.get("id");
+    case 'scoreWeek': {
+      const weekNumberString = formData.get('weekNumber');
+      const yearString = formData.get('year');
+      const id = formData.get('id');
 
       if (
-        typeof weekNumberString !== "string" ||
-        typeof yearString !== "string" ||
-        typeof id !== "string"
+        typeof weekNumberString !== 'string' ||
+        typeof yearString !== 'string' ||
+        typeof id !== 'string'
       ) {
-        throw new Error("Form has not been formed correctly");
+        throw new Error('Form has not been formed correctly');
       }
 
       const qbStreamingWeek = await getQBStreamingWeek(id);
-      if (!qbStreamingWeek) throw new Error("QB Streaming Week not found");
+      if (!qbStreamingWeek) throw new Error('QB Streaming Week not found');
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
 
       const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/stats/nfl/regular/${year}/${weekNumber}?position[]=QB`
+        `https://api.sleeper.app/v1/stats/nfl/regular/${year}/${weekNumber}?position[]=QB`,
       );
       const sleeperJson: SleeperJsonStats = sleeperJsonStats.parse(
-        await sleeperLeagueRes.json()
+        await sleeperLeagueRes.json(),
       );
       const promises: Promise<QBStreamingWeekOption>[] = [];
       for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
@@ -113,10 +111,10 @@ export const action = async ({ request }: ActionArgs) => {
                 -2 * (stats.pass_int || 0) +
                 2 * (stats.pass_2pt || 0) +
                 2 * (stats.rush_2pt || 0) +
-                2 * (stats.rec_2pt || 0))
+                2 * (stats.rec_2pt || 0)),
           ) / 100;
         promises.push(
-          updateQBStreamingWeekOptionScore(qbStreamingOption.id, score)
+          updateQBStreamingWeekOptionScore(qbStreamingOption.id, score),
         );
       }
       await Promise.all(promises);
@@ -129,29 +127,29 @@ export const action = async ({ request }: ActionArgs) => {
         week: qbStreamingWeek.week,
       });
 
-      return json<ActionData>({ message: "Week has been scored." });
+      return json<ActionData>({ message: 'Week has been scored.' });
     }
   }
 
-  return json<ActionData>({ message: "Nothing has happened." });
+  return json<ActionData>({ message: 'Nothing has happened.' });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
 
   return superjson<LoaderData>(
     { qbStreamingWeeks },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -164,24 +162,24 @@ export default function AdminQBStreaming() {
     <>
       <h2>QB Streaming</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST">
+      <Form method='POST'>
         <div>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            name="_action"
-            value="createNewWeek"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='createNewWeek'
+            disabled={transition.state !== 'idle'}
           >
             Create Next Week
           </Button>
         </div>
       </Form>
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Week</th>
@@ -192,32 +190,32 @@ export default function AdminQBStreaming() {
           </tr>
         </thead>
         <tbody>
-          {qbStreamingWeeks.map((qbStreamingWeek) => (
+          {qbStreamingWeeks.map(qbStreamingWeek => (
             <tr key={qbStreamingWeek.id}>
               <td>{qbStreamingWeek.week}</td>
-              <td>{qbStreamingWeek.isOpen ? "Yes" : "No"}</td>
-              <td>{qbStreamingWeek.isScored ? "Yes" : "No"}</td>
+              <td>{qbStreamingWeek.isOpen ? 'Yes' : 'No'}</td>
+              <td>{qbStreamingWeek.isScored ? 'Yes' : 'No'}</td>
               <td>
                 <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
               </td>
               <td>
-                <Form method="POST">
+                <Form method='POST'>
                   <input
-                    type="hidden"
-                    name="weekNumber"
+                    type='hidden'
+                    name='weekNumber'
                     value={qbStreamingWeek.week}
                   />
                   <input
-                    type="hidden"
-                    name="year"
+                    type='hidden'
+                    name='year'
                     value={qbStreamingWeek.year}
                   />
-                  <input type="hidden" name="id" value={qbStreamingWeek.id} />
+                  <input type='hidden' name='id' value={qbStreamingWeek.id} />
                   <Button
-                    type="submit"
-                    name="_action"
-                    value="scoreWeek"
-                    disabled={transition.state !== "idle"}
+                    type='submit'
+                    name='_action'
+                    value='scoreWeek'
+                    disabled={transition.state !== 'idle'}
                   >
                     Score Week
                   </Button>

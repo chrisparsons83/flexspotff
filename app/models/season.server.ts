@@ -1,10 +1,9 @@
-import type { Season } from "@prisma/client";
+import type { Season } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { Season } from '@prisma/client';
 
-export type { Season } from "@prisma/client";
-
-export type SeasonCreate = Omit<Season, "id" | "createdAt" | "updatedAt">;
+export type SeasonCreate = Omit<Season, 'id' | 'createdAt' | 'updatedAt'>;
 
 export async function createSeason(data: SeasonCreate) {
   return prisma.season.create({
@@ -24,7 +23,7 @@ export async function getSeasons() {
   return prisma.season.findMany({
     orderBy: [
       {
-        year: "desc",
+        year: 'desc',
       },
     ],
   });
@@ -39,7 +38,7 @@ export async function updateSeason(season: Partial<Season>) {
   });
 }
 
-export async function updateActiveSeason(id: Season["id"]) {
+export async function updateActiveSeason(id: Season['id']) {
   return prisma.$transaction([
     prisma.season.updateMany({
       data: {

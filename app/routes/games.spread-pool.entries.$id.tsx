@@ -1,37 +1,35 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { Form, useTransition } from "@remix-run/react";
-import { useState } from "react";
-
-import type { Bet } from "~/models/poolgame.server";
-import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { Form, useTransition } from '@remix-run/react';
+import { useState } from 'react';
+import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import type { Bet } from '~/models/poolgame.server';
+import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import type {
   PoolGamePick,
   PoolGamePickCreate,
-} from "~/models/poolgamepicks.server";
+} from '~/models/poolgamepicks.server';
 import {
   createPoolGamePicks,
   deletePoolGamePicksForUserAndWeek,
   getPoolGamePicksByUserAndPoolWeek,
   getPoolGamePicksByUserAndYear,
-} from "~/models/poolgamepicks.server";
-import type { PoolWeek } from "~/models/poolweek.server";
-import { getPoolWeek, getPoolWeeksByYear } from "~/models/poolweek.server";
+} from '~/models/poolgamepicks.server';
+import type { PoolWeek } from '~/models/poolweek.server';
+import { getPoolWeek, getPoolWeeksByYear } from '~/models/poolweek.server';
 import {
   createPoolWeekMissed,
   getPoolWeekMissedByUserAndYear,
-} from "~/models/poolweekmissed.server";
-import { getCurrentSeason } from "~/models/season.server";
-import type { User } from "~/models/user.server";
-
-import SpreadPoolGameComponent from "~/components/layout/spread-pool/SpreadPoolGame";
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator } from "~/services/auth.server";
+} from '~/models/poolweekmissed.server';
+import { getCurrentSeason } from '~/models/season.server';
+import type { User } from '~/models/user.server';
+import { authenticator } from '~/services/auth.server';
 import {
   superjson,
   useSuperActionData,
   useSuperLoaderData,
-} from "~/utils/data";
+} from '~/utils/data';
 
 type ActionData = {
   message?: string;
@@ -50,12 +48,12 @@ type LoaderData = {
 
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const poolWeekId = params.id;
@@ -65,7 +63,7 @@ export const action = async ({ params, request }: ActionArgs) => {
   if (!poolWeek) throw new Error(`Missing pool week.`);
   const poolGames = await getPoolGamesByYearAndWeek(
     poolWeek.year,
-    poolWeek.weekNumber
+    poolWeek.weekNumber,
   );
 
   // Create map of all teams in week and set bet to 0
@@ -73,11 +71,11 @@ export const action = async ({ params, request }: ActionArgs) => {
   for (const poolGame of poolGames) {
     nflTeamIdToAmountBetMap.set(
       `${poolGame.id}-${poolGame.game.homeTeamId}`,
-      0
+      0,
     );
     nflTeamIdToAmountBetMap.set(
       `${poolGame.id}-${poolGame.game.awayTeamId}`,
-      0
+      0,
     );
   }
 
@@ -86,26 +84,26 @@ export const action = async ({ params, request }: ActionArgs) => {
   for (const existingBet of existingBets) {
     nflTeamIdToAmountBetMap.set(
       `${existingBet.poolGameId}-${existingBet.teamBetId}`,
-      existingBet.amountBet
+      existingBet.amountBet,
     );
   }
 
   // Update map with new bets that are eligible
   const newBetsForm = await request.formData();
   for (const [key, amount] of newBetsForm.entries()) {
-    const [poolGameId, teamId] = key.split("-");
+    const [poolGameId, teamId] = key.split('-');
 
-    const poolGame = poolGames.find((poolGame) => poolGame.id === poolGameId);
+    const poolGame = poolGames.find(poolGame => poolGame.id === poolGameId);
     if (!poolGame) continue;
 
-    if (!teamId || teamId === "undefined") {
+    if (!teamId || teamId === 'undefined') {
       nflTeamIdToAmountBetMap.set(
         `${poolGameId}-${poolGame.game.homeTeamId}`,
-        0
+        0,
       );
       nflTeamIdToAmountBetMap.set(
         `${poolGameId}-${poolGame.game.awayTeamId}`,
-        0
+        0,
       );
       continue;
     }
@@ -117,12 +115,12 @@ export const action = async ({ params, request }: ActionArgs) => {
       if (poolGame.game.awayTeamId === teamId) {
         nflTeamIdToAmountBetMap.set(
           `${poolGameId}-${poolGame.game.homeTeamId}`,
-          0
+          0,
         );
       } else {
         nflTeamIdToAmountBetMap.set(
           `${poolGameId}-${poolGame.game.awayTeamId}`,
-          0
+          0,
         );
       }
     }
@@ -131,7 +129,7 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Loop through map and build promises to send down for creates
   const dataToInsert: PoolGamePickCreate[] = [];
   for (const [key, amountBet] of nflTeamIdToAmountBetMap.entries()) {
-    const [poolGameId, teamBetId] = key.split("-");
+    const [poolGameId, teamBetId] = key.split('-');
     dataToInsert.push({
       userId: user.id,
       amountBet,
@@ -153,22 +151,22 @@ export const action = async ({ params, request }: ActionArgs) => {
   // missing week penalties.
   const existingMissingWeeksIds = (
     await getPoolWeekMissedByUserAndYear(user.id, currentSeason.year)
-  ).map((poolWeekMissed) => poolWeekMissed.poolWeek?.id);
+  ).map(poolWeekMissed => poolWeekMissed.poolWeek?.id);
   const picks = await getPoolGamePicksByUserAndYear(user, currentSeason.year);
   const poolWeekIds = (await getPoolWeeksByYear(currentSeason.year))
-    .map((poolWeek) => poolWeek.id)
-    .filter((poolWeekId) => poolWeekId !== poolWeek.id);
+    .map(poolWeek => poolWeek.id)
+    .filter(poolWeekId => poolWeekId !== poolWeek.id);
 
   const weeksPicked = new Set();
   picks
-    .filter((pick) => pick.amountBet > 0)
-    .forEach((pick) => {
+    .filter(pick => pick.amountBet > 0)
+    .forEach(pick => {
       weeksPicked.add(pick.poolGame.poolWeek?.id);
     });
   const missingWeeks = poolWeekIds.filter(
-    (poolWeekId) =>
+    poolWeekId =>
       ![...weeksPicked].includes(poolWeekId) &&
-      !existingMissingWeeksIds.includes(poolWeekId)
+      !existingMissingWeeksIds.includes(poolWeekId),
   );
   if (missingWeeks.length > 0) {
     const missingWeekPromises: Promise<any>[] = [];
@@ -179,19 +177,19 @@ export const action = async ({ params, request }: ActionArgs) => {
   }
 
   return superjson<ActionData>(
-    { message: "Your picks have been saved." },
-    { headers: { "x-superjson": "true" } }
+    { message: 'Your picks have been saved.' },
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const poolWeekId = params.id;
@@ -201,12 +199,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   if (!poolWeek) {
     return superjson<LoaderData>({
-      notOpenYet: "Week has not been created yet.",
+      notOpenYet: 'Week has not been created yet.',
     });
   }
   if (!poolWeek.isOpen) {
     return superjson<LoaderData>({
-      notOpenYet: "Lines have not been set for this week yet.",
+      notOpenYet: 'Lines have not been set for this week yet.',
     });
   }
 
@@ -214,16 +212,16 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const poolGames = await getPoolGamesByYearAndWeek(
     poolWeek.year,
-    poolWeek.weekNumber
+    poolWeek.weekNumber,
   );
 
   const getAmountWonLoss = await getPoolGamePicksByUserAndYear(
     user,
-    poolWeek.year
+    poolWeek.year,
   );
   const amountWonLoss = getAmountWonLoss.reduce(
     (a, b) => a + (b.resultWonLoss || 0),
-    0
+    0,
   );
   const newEntryDeduction =
     getAmountWonLoss.length === 0 ? -20 * (poolWeek.weekNumber - 1) : 0;
@@ -242,7 +240,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       newEntryDeduction,
       missedEntryDeduction,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -260,7 +258,7 @@ export default function GamesSpreadPoolWeek() {
   const transition = useTransition();
 
   const existingBets =
-    poolGamePicks?.map((poolGame) => ({
+    poolGamePicks?.map(poolGame => ({
       teamId: poolGame.teamBetId,
       amount: poolGame.amountBet,
     })) || [];
@@ -273,10 +271,10 @@ export default function GamesSpreadPoolWeek() {
   const [bets, setBets] = useState<Bet[]>(existingBets);
 
   const handleChange = (bets: Bet[]) => {
-    setBets((prevBets) => {
-      const newBetTeamIds = bets.map((bet) => bet.teamId);
+    setBets(prevBets => {
+      const newBetTeamIds = bets.map(bet => bet.teamId);
       const cleanedBets = prevBets.filter(
-        (prevBet) => !newBetTeamIds.includes(prevBet.teamId)
+        prevBet => !newBetTeamIds.includes(prevBet.teamId),
       );
       return [...cleanedBets, ...bets];
     });
@@ -286,32 +284,32 @@ export default function GamesSpreadPoolWeek() {
   const availableToBet = initialBudget - betAmount;
 
   const disableSubmit =
-    transition.state !== "idle" || availableToBet < 0 || poolWeek?.isWeekScored;
+    transition.state !== 'idle' || availableToBet < 0 || poolWeek?.isWeekScored;
 
   return (
     <>
       <h2>Week Entry</h2>
-      <Form method="POST" reloadDocument>
+      <Form method='POST' reloadDocument>
         {notOpenYet || (
           <>
             {actionData?.message && <Alert message={actionData.message} />}
-            <div className="mb-4">
+            <div className='mb-4'>
               <div>Available to bet: {availableToBet}</div>
               <div>Amount currently bet: {betAmount}</div>
             </div>
-            <div className="grid md:grid-cols-2 gap-12">
-              {poolGames?.map((poolGame) => {
+            <div className='grid md:grid-cols-2 gap-12'>
+              {poolGames?.map(poolGame => {
                 const existingBet = existingBets.find(
-                  (existingBet) =>
+                  existingBet =>
                     existingBet.amount > 0 &&
                     [
                       poolGame.game.awayTeamId,
                       poolGame.game.homeTeamId,
-                    ].includes(existingBet.teamId)
+                    ].includes(existingBet.teamId),
                 );
                 const existingPoolGamePick = poolGamePicks?.find(
-                  (poolGamePick) =>
-                    poolGamePick.teamBetId === existingBet?.teamId
+                  poolGamePick =>
+                    poolGamePick.teamBetId === existingBet?.teamId,
                 );
                 return (
                   <SpreadPoolGameComponent
@@ -324,19 +322,19 @@ export default function GamesSpreadPoolWeek() {
                 );
               })}
             </div>
-            <div className="m-4">
+            <div className='m-4'>
               {availableToBet < 0 && (
-                <p className="text-red-500">
+                <p className='text-red-500'>
                   You cannot bet more than your available budget, which is
                   currently {availableToBet}.
                 </p>
               )}
               <input
-                type="hidden"
-                name="isNewEntry"
-                value={Number(newEntryDeduction) !== 0 ? "true" : "false"}
+                type='hidden'
+                name='isNewEntry'
+                value={Number(newEntryDeduction) !== 0 ? 'true' : 'false'}
               />
-              <Button type="submit" disabled={disableSubmit}>
+              <Button type='submit' disabled={disableSubmit}>
                 Update Picks
               </Button>
             </div>

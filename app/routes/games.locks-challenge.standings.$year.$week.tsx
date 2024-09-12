@@ -1,22 +1,18 @@
-import type { LoaderArgs } from "@remix-run/node";
-
-import type { getLocksGamePicksWonLoss } from "~/models/locksgamepicks.server";
+import type { LoaderArgs } from '@remix-run/node';
+import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import GoBox from '~/components/ui/GoBox';
+import type { getLocksGamePicksWonLoss } from '~/models/locksgamepicks.server';
 import {
-    getLocksGamesPicksByLocksWeek,
-    getLocksGamePicksWonLossWeek,
-} from "~/models/locksgamepicks.server";
-
+  getLocksGamePicksWonLossWeek,
+  getLocksGamesPicksByLocksWeek,
+} from '~/models/locksgamepicks.server';
 import {
-    getLocksWeekByYearAndWeek,
+  getLocksWeekByYearAndWeek,
   getLocksWeeksByYear,
-} from "~/models/locksweek.server";
-
-import type { User } from "~/models/user.server";
-import { getUsersByIds } from "~/models/user.server";
-
-import LocksChallengeStandingsRow from "~/components/layout/locks-challenge/LocksChallengeStandingsRow";
-import GoBox from "~/components/ui/GoBox";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/locksweek.server';
+import type { User } from '~/models/user.server';
+import { getUsersByIds } from '~/models/user.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   totalPoints: Awaited<ReturnType<typeof getLocksGamePicksWonLoss>>;
@@ -32,30 +28,29 @@ type LoaderData = {
 export const loader = async ({ params, request }: LoaderArgs) => {
   const yearParam = params.year;
   const weekParam = params.week;
-  if (!yearParam) throw new Error("No year existing");
-  if (!weekParam) throw new Error("No week existing");
+  if (!yearParam) throw new Error('No year existing');
+  if (!weekParam) throw new Error('No week existing');
   const year = +yearParam;
   const week = +weekParam;
 
   // Get this week
   const currentWeek = await getLocksWeekByYearAndWeek(year, week);
-  if (!currentWeek) throw new Error("Week does not exist");
+  if (!currentWeek) throw new Error('Week does not exist');
 
   // Get current picks for the week
   const weeklyPicks =
     currentWeek &&
     (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
-      (locksGamePick) =>
-      locksGamePick.locksGame.game.gameStartTime < new Date() &&
-      locksGamePick.isActive !== 0
+      locksGamePick =>
+        locksGamePick.locksGame.game.gameStartTime < new Date() &&
+        locksGamePick.isActive !== 0,
     );
-
 
   // Find the max week number
   const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
 
   let userIdToPointsMap: Map<string, number> = new Map();
-  
+
   // Get the locks week for that week
   const locksWeek = await getLocksWeekByYearAndWeek(year, week);
 
@@ -64,22 +59,21 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     const locksWeekResults = await getLocksGamePicksWonLossWeek(locksWeek);
 
     // If a user got a loss for the week, set their wins to 0
-    const filteredPoints = locksWeekResults.map( (amount) => {
-        return {
+    const filteredPoints = locksWeekResults.map(amount => {
+      return {
         userId: amount.userId,
         _sum: {
-            isWin: amount._sum.isLoss !== 0 ? 0 : amount._sum.isWin,
-            isLoss: amount._sum.isLoss,
-            isTie: amount._sum.isTie
-        }
-        }
-    }
-    );
+          isWin: amount._sum.isLoss !== 0 ? 0 : amount._sum.isWin,
+          isLoss: amount._sum.isLoss,
+          isTie: amount._sum.isTie,
+        },
+      };
+    });
 
-    filteredPoints.forEach((amount) => {
-        const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
-        const weekPoints = amount._sum.isWin || 0;
-        userIdToPointsMap.set(amount.userId, currentPoints + weekPoints);
+    filteredPoints.forEach(amount => {
+      const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
+      const weekPoints = amount._sum.isWin || 0;
+      userIdToPointsMap.set(amount.userId, currentPoints + weekPoints);
     });
   }
 
@@ -107,24 +101,33 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   // Get an array of user IDs sorted by rank
   const sortedUserIds = Array.from(userIdToRankMap.entries())
-    .sort((a, b) => a[1] - b[1])  // Sort by rank
-    .map(([userId]) => userId);    // Extract user IDs
+    .sort((a, b) => a[1] - b[1]) // Sort by rank
+    .map(([userId]) => userId); // Extract user IDs
 
   // Create a map of totalPoints by userId for quick lookup
   const totalPointsMap = new Map<string, any>(
-    totalPointsRaw.map(point => [point.userId, point])
+    totalPointsRaw.map(point => [point.userId, point]),
   );
 
   const totalPoints = sortedUserIds.map(userId => totalPointsMap.get(userId));
 
   const userIds = [
-    ...new Set(totalPointsRaw.map((locksGameSum) => locksGameSum.userId)),
+    ...new Set(totalPointsRaw.map(locksGameSum => locksGameSum.userId)),
   ];
   const users = await getUsersByIds(userIds);
 
   return superjson<LoaderData>(
-    { totalPoints, users, userIdToRankMap, weeklyPicks, userIdToPointsMap, maxWeek, year, week },
-    { headers: { "x-superjson": "true" } }
+    {
+      totalPoints,
+      users,
+      userIdToRankMap,
+      weeklyPicks,
+      userIdToPointsMap,
+      maxWeek,
+      year,
+      week,
+    },
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -147,7 +150,7 @@ export default function SpreadPoolStandingsYearWeekIndex() {
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()
-    .map((weekNumber) => ({
+    .map(weekNumber => ({
       label: `Week ${weekNumber}`,
       url: `/games/locks-challenge/standings/${year}/${weekNumber}`,
     }));
@@ -157,8 +160,8 @@ export default function SpreadPoolStandingsYearWeekIndex() {
       <h2>
         {year} Standings for Week {week}
       </h2>
-      <div className="float-right mb-4">
-        <GoBox options={weekArray} buttonText="Choose Week" />
+      <div className='float-right mb-4'>
+        <GoBox options={weekArray} buttonText='Choose Week' />
       </div>
       <table>
         <thead>
@@ -179,7 +182,7 @@ export default function SpreadPoolStandingsYearWeekIndex() {
               points={userIdToPointsMap.get(result.userId)}
               locksChallengeWonLoss={result}
               picksLocked={weeklyPicks?.filter(
-                (pick) => pick.userId === result.userId
+                pick => pick.userId === result.userId,
               )}
             />
           ))}

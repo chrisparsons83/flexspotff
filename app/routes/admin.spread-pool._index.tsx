@@ -1,30 +1,28 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-
-import { getPoolGamesByYearAndWeek } from "~/models/poolgame.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { syncNflGameWeek } from '~/libs/syncs.server';
+import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import {
   getPoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
   updatePoolGamePicksWithResults,
-} from "~/models/poolgamepicks.server";
-import type { PoolWeek } from "~/models/poolweek.server";
+} from '~/models/poolgamepicks.server';
+import type { PoolWeek } from '~/models/poolweek.server';
 import {
   createPoolWeek,
   getNewestPoolWeekForYear,
   getPoolWeekByYearAndWeek,
   getPoolWeeksByYear,
   updatePoolWeek,
-} from "~/models/poolweek.server";
-import { createPoolWeekMissed } from "~/models/poolweekmissed.server";
-import type { Season } from "~/models/season.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { syncNflGameWeek } from "~/libs/syncs.server";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/poolweek.server';
+import { createPoolWeekMissed } from '~/models/poolweekmissed.server';
+import type { Season } from '~/models/season.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -38,18 +36,18 @@ type LoaderData = {
 
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "createNewWeek": {
+    case 'createNewWeek': {
       let currentSeason = await getCurrentSeason();
       if (!currentSeason) {
-        throw new Error("No active season currently");
+        throw new Error('No active season currently');
       }
 
       // Get max week of season, then add one
@@ -64,17 +62,17 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: false,
       });
 
-      return json<ActionData>({ message: "Week has been created" });
+      return json<ActionData>({ message: 'Week has been created' });
     }
-    case "scoreWeek": {
-      const weekNumberString = formData.get("weekNumber");
-      const yearString = formData.get("year");
+    case 'scoreWeek': {
+      const weekNumberString = formData.get('weekNumber');
+      const yearString = formData.get('year');
 
       if (
-        typeof weekNumberString !== "string" ||
-        typeof yearString !== "string"
+        typeof weekNumberString !== 'string' ||
+        typeof yearString !== 'string'
       ) {
-        throw new Error("Form has not been formed correctly");
+        throw new Error('Form has not been formed correctly');
       }
 
       const year = Number(yearString);
@@ -94,13 +92,13 @@ export const action = async ({ request }: ActionArgs) => {
       const userIdsThatBet = [
         ...new Set(
           poolGamePicks
-            .filter((poolGamePick) => poolGamePick.amountBet > 0)
-            .map((poolGamePick) => poolGamePick.userId)
+            .filter(poolGamePick => poolGamePick.amountBet > 0)
+            .map(poolGamePick => poolGamePick.userId),
         ),
       ];
       const existingUserIdsThatDidNotBet = (await getPoolGamePicksWonLoss(year))
-        .map((result) => result.userId)
-        .filter((userId) => !userIdsThatBet.includes(userId));
+        .map(result => result.userId)
+        .filter(userId => !userIdsThatBet.includes(userId));
 
       const poolGameMissedPromises: Promise<any>[] = [];
       for (const userId of existingUserIdsThatDidNotBet) {
@@ -121,29 +119,29 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: true,
       });
 
-      return json<ActionData>({ message: "Week has been scored" });
+      return json<ActionData>({ message: 'Week has been scored' });
     }
   }
 
-  return json<ActionData>({ message: "Nothing has happened." });
+  return json<ActionData>({ message: 'Nothing has happened.' });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
     { poolWeeks, currentSeason },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -156,24 +154,24 @@ export default function SpreadPoolList() {
     <div>
       <h2>Spread Pool Lines by Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST">
+      <Form method='POST'>
         <div>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            name="_action"
-            value="createNewWeek"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='createNewWeek'
+            disabled={transition.state !== 'idle'}
           >
             Create Next Week
           </Button>
         </div>
       </Form>
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Week</th>
@@ -184,29 +182,29 @@ export default function SpreadPoolList() {
           </tr>
         </thead>
         <tbody>
-          {poolWeeks.map((poolWeek) => (
+          {poolWeeks.map(poolWeek => (
             <tr key={poolWeek.id}>
               <td>{poolWeek.weekNumber}</td>
-              <td>{poolWeek.isOpen ? "Yes" : "No"}</td>
-              <td>{poolWeek.isWeekScored ? "Yes" : "No"}</td>
+              <td>{poolWeek.isOpen ? 'Yes' : 'No'}</td>
+              <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
               <td>
                 <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
                   Edit Week
                 </Link>
               </td>
               <td>
-                <Form method="POST">
+                <Form method='POST'>
                   <input
-                    type="hidden"
-                    name="weekNumber"
+                    type='hidden'
+                    name='weekNumber'
                     value={poolWeek.weekNumber}
                   />
-                  <input type="hidden" name="year" value={poolWeek.year} />
+                  <input type='hidden' name='year' value={poolWeek.year} />
                   <Button
-                    type="submit"
-                    name="_action"
-                    value="scoreWeek"
-                    disabled={transition.state !== "idle"}
+                    type='submit'
+                    name='_action'
+                    value='scoreWeek'
+                    disabled={transition.state !== 'idle'}
                   >
                     Score Week
                   </Button>

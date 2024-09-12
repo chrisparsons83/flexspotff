@@ -1,8 +1,6 @@
-import clsx from "clsx";
-
-import type { GetLeaguesByYearElement } from "~/models/league.server";
-
-import { RANK_COLORS, isLeagueName } from "~/utils/constants";
+import clsx from 'clsx';
+import type { GetLeaguesByYearElement } from '~/models/league.server';
+import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 type Props = {
   league: GetLeaguesByYearElement;
@@ -28,13 +26,13 @@ export default function LeagueTable({ league }: Props) {
           {league.teams.map((team, index) => (
             <tr
               key={team.id}
-              className={clsx(index % 2 === 0 ? "bg-gray-900" : "bg-gray-800")}
+              className={clsx(index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800')}
             >
               <td>
                 <div
                   className={clsx(
                     isLeagueName(leagueName) && RANK_COLORS[leagueName],
-                    "mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm"
+                    'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
                   )}
                 >
                   {index + 1}

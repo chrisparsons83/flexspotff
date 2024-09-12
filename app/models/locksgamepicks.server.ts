@@ -1,16 +1,14 @@
-import type { LocksGamePick } from "~/models/locksgamepicks.server";
-import type { LocksWeek } from "~/models/locksweek.server";
-import type { User } from "~/models/user.server";
+import type { LocksGameByYearAndWeekElement } from './locksgame.server';
+import { prisma } from '~/db.server';
+import type { LocksGamePick } from '~/models/locksgamepicks.server';
+import type { LocksWeek } from '~/models/locksweek.server';
+import type { User } from '~/models/user.server';
 
-import { prisma } from "~/db.server";
-
-import type { LocksGameByYearAndWeekElement } from "./locksgame.server";
-
-export type { LocksGamePick } from "@prisma/client";
+export type { LocksGamePick } from '@prisma/client';
 
 export type LocksGamePickCreate = Omit<
-LocksGamePick,
-  "id" | "createdAt" | "updatedAt" | "resultWonLoss"
+  LocksGamePick,
+  'id' | 'createdAt' | 'updatedAt' | 'resultWonLoss'
 >;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
@@ -26,7 +24,9 @@ export async function createLocksGamePick(locksGamePick: LocksGamePickCreate) {
   });
 }
 
-export async function createLocksGamePicks(locksGamePicks: LocksGamePickCreate[]) {
+export async function createLocksGamePicks(
+  locksGamePicks: LocksGamePickCreate[],
+) {
   return prisma.locksGamePick.createMany({
     data: locksGamePicks,
     skipDuplicates: true,
@@ -35,7 +35,7 @@ export async function createLocksGamePicks(locksGamePicks: LocksGamePickCreate[]
 
 export async function deleteLocksGamePicksForUserAndWeek(
   user: User,
-  locksWeek: LocksWeek
+  locksWeek: LocksWeek,
 ) {
   return prisma.locksGamePick.deleteMany({
     where: {
@@ -67,7 +67,7 @@ export async function getLocksGamesPicksByLocksWeek(locksWeek: LocksWeek) {
 
 export async function getLocksGamePicksByUserAndLocksWeek(
   user: User,
-  locksWeek: LocksWeek
+  locksWeek: LocksWeek,
 ) {
   return prisma.locksGamePick.findMany({
     where: {
@@ -81,7 +81,7 @@ export async function getLocksGamePicksByUserAndLocksWeek(
 
 export async function getLocksGamePicksByUserAndYear(
   user: User,
-  year: LocksWeek["year"]
+  year: LocksWeek['year'],
 ) {
   return prisma.locksGamePick.findMany({
     where: {
@@ -102,7 +102,7 @@ export async function getLocksGamePicksByUserAndYear(
   });
 }
 
-export async function getLocksGamePicksWonLoss(year: LocksWeek["year"]) {
+export async function getLocksGamePicksWonLoss(year: LocksWeek['year']) {
   return prisma.locksGamePick.groupBy({
     where: {
       locksGame: {
@@ -112,7 +112,7 @@ export async function getLocksGamePicksWonLoss(year: LocksWeek["year"]) {
       },
       isScored: true,
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       isWin: true,
       isLoss: true,
@@ -129,7 +129,7 @@ export async function getLocksGamePicksWonLossWeek(locksWeek: LocksWeek) {
       },
       isScored: true,
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       isWin: true,
       isLoss: true,
@@ -139,30 +139,26 @@ export async function getLocksGamePicksWonLossWeek(locksWeek: LocksWeek) {
 }
 
 export async function deleteLocksGamePicksNotActive(
-  locksGame: LocksGameByYearAndWeekElement
+  locksGame: LocksGameByYearAndWeekElement,
 ) {
   await prisma.locksGamePick.deleteMany({
     where: {
       locksGameId: locksGame.id,
       isScored: true,
       isActive: 0,
-  },
+    },
   });
 }
 
 export async function updateLocksGamePicksWithResults(
-  locksGame: LocksGameByYearAndWeekElement
+  locksGame: LocksGameByYearAndWeekElement,
 ) {
-  if (
-    locksGame.game.homeTeamScore > locksGame.game.awayTeamScore
-  ) {
+  if (locksGame.game.homeTeamScore > locksGame.game.awayTeamScore) {
     return prisma.$transaction([
       prisma.$executeRaw`UPDATE "LocksGamePick" SET "isScored" = true, "isWin" = 1, "isTie" = 0, "isLoss" = 0 WHERE "locksGameId"=${locksGame.id} AND "teamBetId"=${locksGame.game.homeTeamId}`,
       prisma.$executeRaw`UPDATE "LocksGamePick" SET "isScored" = true, "isWin" = 0, "isTie" = 0, "isLoss" = 1 WHERE "locksGameId"=${locksGame.id} AND "teamBetId"=${locksGame.game.awayTeamId}`,
     ]);
-  } else if (
-    locksGame.game.homeTeamScore < locksGame.game.awayTeamScore
-  ) {
+  } else if (locksGame.game.homeTeamScore < locksGame.game.awayTeamScore) {
     return prisma.$transaction([
       prisma.$executeRaw`UPDATE "LocksGamePick" SET "isScored" = true, "isWin" = 1, "isTie" = 0, "isLoss" = 0 WHERE "locksGameId"=${locksGame.id} AND "teamBetId"=${locksGame.game.awayTeamId}`,
       prisma.$executeRaw`UPDATE "LocksGamePick" SET "isScored" = true, "isWin" = 0, "isTie" = 0, "isLoss" = 1 WHERE "locksGameId"=${locksGame.id} AND "teamBetId"=${locksGame.game.homeTeamId}`,

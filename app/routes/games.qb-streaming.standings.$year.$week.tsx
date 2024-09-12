@@ -1,13 +1,11 @@
-import type { LoaderArgs } from "@remix-run/node";
-
-import { getQBSelectionsByWeek } from "~/models/qbselection.server";
-import type { QBStreamingStandingsRow } from "~/models/qbstreamingweek.server";
-import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import QBStreamingStandingsRowComponent from "~/components/layout/qb-streaming/QBStreamingStandingsRow";
-import GoBox from "~/components/ui/GoBox";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { LoaderArgs } from '@remix-run/node';
+import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
+import GoBox from '~/components/ui/GoBox';
+import { getQBSelectionsByWeek } from '~/models/qbselection.server';
+import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
+import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   qbSelections: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
@@ -20,17 +18,17 @@ type LoaderData = {
 export const loader = async ({ params, request }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const year = params.year || `${currentSeason.year}`;
-  const week = Number(params.week || "1");
+  const week = Number(params.week || '1');
 
   const streamingWeeks = await getQBStreamingWeeks(+year);
   const streamingWeek = streamingWeeks.find(
-    (streamingWeek) => streamingWeek.week === week
+    streamingWeek => streamingWeek.week === week,
   );
-  if (!streamingWeek) throw new Error("No streaming week found");
+  if (!streamingWeek) throw new Error('No streaming week found');
 
   const maxWeek = streamingWeeks[0].week;
 
@@ -49,12 +47,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   rankings.sort((a, b) => b.pointsScored - a.pointsScored);
 
-  const rankingScoreArray = rankings.map((ranking) => ranking.pointsScored);
+  const rankingScoreArray = rankings.map(ranking => ranking.pointsScored);
 
   for (let i = 0; i < rankings.length; i++) {
     rankings[i].rank =
       rankingScoreArray.findIndex(
-        (rankingScore) => rankingScore === rankings[i].pointsScored
+        rankingScore => rankingScore === rankings[i].pointsScored,
       ) + 1;
   }
 
@@ -66,7 +64,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       week,
       maxWeek,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -76,7 +74,7 @@ export default function QBStreamingStandingsYearWeek() {
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()
-    .map((weekNumber) => ({
+    .map(weekNumber => ({
       label: `Week ${weekNumber}`,
       url: `/games/qb-streaming/standings/${year}/${weekNumber}`,
     }));
@@ -87,8 +85,8 @@ export default function QBStreamingStandingsYearWeek() {
         {year} Standings for Week {week}
       </h2>
 
-      <div className="float-right mb-4">
-        <GoBox options={weekArray} buttonText="Choose Week" />
+      <div className='float-right mb-4'>
+        <GoBox options={weekArray} buttonText='Choose Week' />
       </div>
 
       <table>
@@ -100,22 +98,22 @@ export default function QBStreamingStandingsYearWeek() {
           </tr>
         </thead>
         <tbody>
-          {rankings.map((result) => {
+          {rankings.map(result => {
             const currentWeekPick = qbSelections.find(
-              (pick) => pick.userId === result.userId
+              pick => pick.userId === result.userId,
             );
             const standardPlayer = !currentWeekPick
-              ? "No pick"
+              ? 'No pick'
               : currentWeekPick.standardPlayer.nflGame.gameStartTime <
                 new Date()
               ? currentWeekPick.standardPlayer.player.fullName
-              : "Pending";
+              : 'Pending';
 
             const deepPlayer = !currentWeekPick
-              ? "No pick"
+              ? 'No pick'
               : currentWeekPick.deepPlayer.nflGame.gameStartTime < new Date()
               ? currentWeekPick.deepPlayer.player.fullName
-              : "Pending";
+              : 'Pending';
             return (
               <QBStreamingStandingsRowComponent
                 key={result.userId}

@@ -1,14 +1,12 @@
-import type { LoaderArgs } from "@remix-run/node";
-
-import { getCurrentSeason } from "~/models/season.server";
+import type { LoaderArgs } from '@remix-run/node';
+import LeaderboardRow from '~/components/layout/leaderboard/LeaderboardRow';
+import GoBox from '~/components/ui/GoBox';
+import { getCurrentSeason } from '~/models/season.server';
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
-} from "~/models/teamgame.server";
-
-import LeaderboardRow from "~/components/layout/leaderboard/LeaderboardRow";
-import GoBox from "~/components/ui/GoBox";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+} from '~/models/teamgame.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   leaderboard: Awaited<ReturnType<typeof getTeamGamesByYearAndWeek>>;
@@ -25,7 +23,7 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const maxWeek =
@@ -33,7 +31,7 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { leaderboard, week, maxWeek, year },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -43,7 +41,7 @@ export default function LeaderboardYearWeek() {
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()
-    .map((weekNumber) => ({
+    .map(weekNumber => ({
       label: `Week ${weekNumber}`,
       url: `/leagues/leaderboard/${year}/${weekNumber}`,
     }));
@@ -52,8 +50,8 @@ export default function LeaderboardYearWeek() {
     <>
       <h2>Week {week} Leaderboard</h2>
 
-      <div className="float-right mb-4">
-        <GoBox options={weekArray} buttonText="Choose Week" />
+      <div className='float-right mb-4'>
+        <GoBox options={weekArray} buttonText='Choose Week' />
       </div>
 
       <table>

@@ -1,17 +1,15 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useTransition } from "@remix-run/react";
-
-import type { Cup } from "~/models/cup.server";
-import { createCup, getCups } from "~/models/cup.server";
-import type { CupWeek } from "~/models/cupweek.server";
-import { createCupWeek } from "~/models/cupweek.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import type { Cup } from '~/models/cup.server';
+import { createCup, getCups } from '~/models/cup.server';
+import type { CupWeek } from '~/models/cupweek.server';
+import { createCupWeek } from '~/models/cupweek.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -24,18 +22,18 @@ type LoaderData = {
 
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "createNewWeek": {
+    case 'createNewWeek': {
       let currentSeason = await getCurrentSeason();
       if (!currentSeason) {
-        throw new Error("No active season currently");
+        throw new Error('No active season currently');
       }
 
       const cup = await createCup({
@@ -48,8 +46,8 @@ export const action = async ({ request }: ActionArgs) => {
           createCupWeek({
             cupId: cup.id,
             week: i,
-            mapping: "PENDING",
-          })
+            mapping: 'PENDING',
+          }),
         );
       }
       await Promise.all(promises);
@@ -58,12 +56,12 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  return json<ActionData>({ message: "Nothing has happened." });
+  return json<ActionData>({ message: 'Nothing has happened.' });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
@@ -71,7 +69,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { cups },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -84,24 +82,24 @@ export default function QBStreamingStandingsYearIndex() {
     <>
       <h2>Cups</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST">
+      <Form method='POST'>
         <div>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            name="_action"
-            value="createNewWeek"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='createNewWeek'
+            disabled={transition.state !== 'idle'}
           >
             Create Cup
           </Button>
         </div>
       </Form>
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Year</th>
@@ -109,7 +107,7 @@ export default function QBStreamingStandingsYearIndex() {
           </tr>
         </thead>
         <tbody>
-          {cups.map((cup) => (
+          {cups.map(cup => (
             <tr key={cup.id}>
               <td>{cup.year}</td>
               <td>

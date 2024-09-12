@@ -1,30 +1,29 @@
-import type { QBStreamingWeek, User } from "@prisma/client";
+import type { QBStreamingWeek, User } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
-
-export type { QBStreamingWeek } from "@prisma/client";
+export type { QBStreamingWeek } from '@prisma/client';
 
 type QBStreamingWeekCreateInput = Omit<
   QBStreamingWeek,
-  "id" | "createdAt" | "updatedAt"
+  'id' | 'createdAt' | 'updatedAt'
 >;
 
 export type QBStreamingStandingsRow = {
   rank?: number;
-  discordName: User["discordName"];
-  userId: User["id"];
+  discordName: User['discordName'];
+  userId: User['id'];
   pointsScored: number;
 };
 
 export async function createQBStreamingWeek(
-  qbStreamingWeek: QBStreamingWeekCreateInput
+  qbStreamingWeek: QBStreamingWeekCreateInput,
 ) {
   return prisma.qBStreamingWeek.create({
     data: qbStreamingWeek,
   });
 }
 
-export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
+export async function getQBStreamingWeek(id: QBStreamingWeek['id']) {
   return prisma.qBStreamingWeek.findUnique({
     where: {
       id,
@@ -43,12 +42,12 @@ export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
         orderBy: [
           {
             player: {
-              lastName: "asc",
+              lastName: 'asc',
             },
           },
           {
             player: {
-              firstName: "asc",
+              firstName: 'asc',
             },
           },
         ],
@@ -57,13 +56,13 @@ export async function getQBStreamingWeek(id: QBStreamingWeek["id"]) {
   });
 }
 
-export async function getQBStreamingWeeks(year: QBStreamingWeek["year"]) {
+export async function getQBStreamingWeeks(year: QBStreamingWeek['year']) {
   return prisma.qBStreamingWeek.findMany({
     where: {
       year,
     },
     orderBy: {
-      week: "desc",
+      week: 'desc',
     },
   });
 }

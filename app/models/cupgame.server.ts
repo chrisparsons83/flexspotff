@@ -1,10 +1,9 @@
-import type { Cup, CupGame } from "@prisma/client";
+import type { Cup, CupGame } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { CupGame } from '@prisma/client';
 
-export type { CupGame } from "@prisma/client";
-
-type CupGameCreate = Omit<CupGame, "id">;
+type CupGameCreate = Omit<CupGame, 'id'>;
 
 export async function createCupGame(data: CupGameCreate) {
   return prisma.cupGame.create({
@@ -12,7 +11,7 @@ export async function createCupGame(data: CupGameCreate) {
   });
 }
 
-export async function getCupGamesByCup(cupId: Cup["id"]) {
+export async function getCupGamesByCup(cupId: Cup['id']) {
   return prisma.cupGame.findMany({
     where: {
       cupId,
@@ -41,16 +40,16 @@ export async function getCupGamesByCup(cupId: Cup["id"]) {
     },
     orderBy: [
       {
-        roundSort: "desc",
+        roundSort: 'desc',
       },
       {
-        insideRoundSort: "asc",
+        insideRoundSort: 'asc',
       },
     ],
   });
 }
 
-export async function updateCupGame(id: CupGame["id"], data: Partial<CupGame>) {
+export async function updateCupGame(id: CupGame['id'], data: Partial<CupGame>) {
   return prisma.cupGame.update({
     where: {
       id,

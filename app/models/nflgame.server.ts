@@ -1,12 +1,11 @@
-import type { NFLGame } from "@prisma/client";
+import type { NFLGame } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { NFLGame } from '@prisma/client';
 
-export type { NFLGame } from "@prisma/client";
+export type GameCreate = Omit<NFLGame, 'id'>;
 
-export type GameCreate = Omit<NFLGame, "id">;
-
-export async function getNflGameById(id: NFLGame["id"]) {
+export async function getNflGameById(id: NFLGame['id']) {
   return prisma.nFLGame.findUnique({
     where: {
       id,
@@ -15,8 +14,8 @@ export async function getNflGameById(id: NFLGame["id"]) {
 }
 
 export async function getWeekNflGames(
-  year: NFLGame["year"],
-  week: NFLGame["week"]
+  year: NFLGame['year'],
+  week: NFLGame['week'],
 ) {
   return prisma.nFLGame.findMany({
     where: {
@@ -28,7 +27,7 @@ export async function getWeekNflGames(
       awayTeam: true,
     },
     orderBy: {
-      gameStartTime: "asc",
+      gameStartTime: 'asc',
     },
   });
 }

@@ -1,12 +1,11 @@
-import type { Player } from "@prisma/client";
+import type { Player } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { Player } from '@prisma/client';
 
-export type { Player } from "@prisma/client";
+export type PlayerCreate = Omit<Player, 'id'>;
 
-export type PlayerCreate = Omit<Player, "id">;
-
-export async function getPlayer(id: Player["id"]) {
+export async function getPlayer(id: Player['id']) {
   return prisma.player.findUnique({
     where: {
       id,
@@ -18,7 +17,7 @@ export async function getPlayers() {
   return prisma.player.findMany({});
 }
 
-export async function getActivePlayersByPosition(position: Player["position"]) {
+export async function getActivePlayersByPosition(position: Player['position']) {
   return prisma.player.findMany({
     where: {
       position,
@@ -30,14 +29,14 @@ export async function getActivePlayersByPosition(position: Player["position"]) {
     },
     orderBy: [
       {
-        lastName: "asc",
+        lastName: 'asc',
       },
-      { firstName: "asc" },
+      { firstName: 'asc' },
     ],
   });
 }
 
-export async function getPlayersByIDs(ids: Player["id"][]) {
+export async function getPlayersByIDs(ids: Player['id'][]) {
   return prisma.player.findMany({
     where: {
       id: {

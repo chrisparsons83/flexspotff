@@ -1,11 +1,9 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link, Outlet } from "@remix-run/react";
-
-import type { Season } from "~/models/season.server";
-import { getCurrentSeason } from "~/models/season.server";
-import { getNewestWeekTeamGameByYear } from "~/models/teamgame.server";
-
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link, Outlet } from '@remix-run/react';
+import type { Season } from '~/models/season.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   teamGameNewestWeek: number;
@@ -15,7 +13,7 @@ type LoaderData = {
 export const loader = async ({ params, request }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const teamGameNewestWeek =
@@ -26,7 +24,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       teamGameNewestWeek,
       currentSeason,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -36,43 +34,43 @@ export default function LeaguesIndex() {
 
   const navigationLinks = [
     {
-      name: "Overall Leaderboard",
-      href: "/leagues/leaderboard",
+      name: 'Overall Leaderboard',
+      href: '/leagues/leaderboard',
       current: false,
     },
     {
-      name: "Weekly Leaderboards",
+      name: 'Weekly Leaderboards',
       href: `/leagues/leaderboard/${currentSeason.year}/${teamGameNewestWeek}`,
       current: false,
     },
-    { name: "Standings", href: "/leagues/standings", current: false },
-    { name: "Cup", href: `/leagues/cup/${currentSeason.year}`, current: false },
-    { name: "ADP", href: "/leagues/adp", current: false },
-    { name: "Records", href: "/leagues/records", current: false },
-    { name: "Rules", href: "/leagues/rules", current: false },
+    { name: 'Standings', href: '/leagues/standings', current: false },
+    { name: 'Cup', href: `/leagues/cup/${currentSeason.year}`, current: false },
+    { name: 'ADP', href: '/leagues/adp', current: false },
+    { name: 'Records', href: '/leagues/records', current: false },
+    { name: 'Rules', href: '/leagues/rules', current: false },
   ];
 
   return (
     <>
       <h2>FlexSpotFF Leagues</h2>
-      <div className="grid md:grid-cols-12 md:gap-4">
-        <div className="not-prose text-sm md:col-span-2">
+      <div className='grid md:grid-cols-12 md:gap-4'>
+        <div className='not-prose text-sm md:col-span-2'>
           <section>
             <p
-              id="admin-leagues-heading"
-              className="mb-3 font-semibold text-slate-900 dark:text-slate-500"
+              id='admin-leagues-heading'
+              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
             >
               Leagues
             </p>
             <ul
-              aria-labelledby="admin-leagues-heading"
-              className="mb-8 space-y-2 p-0"
+              aria-labelledby='admin-leagues-heading'
+              className='mb-8 space-y-2 p-0'
             >
-              {navigationLinks.map((navLink) => (
-                <li key={navLink.name} className="flow-root">
+              {navigationLinks.map(navLink => (
+                <li key={navLink.name} className='flow-root'>
                   <Link
                     to={navLink.href}
-                    className="block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300"
+                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
                   >
                     {navLink.name}
                   </Link>
@@ -81,7 +79,7 @@ export default function LeaguesIndex() {
             </ul>
           </section>
         </div>
-        <div className="md:col-span-10">
+        <div className='md:col-span-10'>
           <Outlet />
         </div>
       </div>

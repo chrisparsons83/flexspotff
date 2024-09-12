@@ -1,8 +1,7 @@
-import type { SleeperUser } from "@prisma/client";
+import type { SleeperUser } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
-
-export type { SleeperUser } from "@prisma/client";
+export type { SleeperUser } from '@prisma/client';
 
 export async function createOrUpdateSleeperUser(sleeperUser: SleeperUser) {
   return prisma.sleeperUser.upsert({
@@ -17,7 +16,7 @@ export async function createOrUpdateSleeperUser(sleeperUser: SleeperUser) {
 }
 
 export async function deleteSleeperUser(
-  sleeperOwnerID: SleeperUser["sleeperOwnerID"]
+  sleeperOwnerID: SleeperUser['sleeperOwnerID'],
 ) {
   return prisma.sleeperUser.delete({
     where: {
@@ -26,7 +25,7 @@ export async function deleteSleeperUser(
   });
 }
 
-export async function getSleeperOwnerIdsByUserId(id: SleeperUser["userId"]) {
+export async function getSleeperOwnerIdsByUserId(id: SleeperUser['userId']) {
   return prisma.sleeperUser.findMany({
     where: {
       userId: id,

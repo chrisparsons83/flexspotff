@@ -1,28 +1,26 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { Form, useTransition } from "@remix-run/react";
-import { DateTime } from "luxon";
-import { z } from "zod";
-
-import { getWeekNflGames } from "~/models/nflgame.server";
-import type { PoolGame, PoolGameCreate } from "~/models/poolgame.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { Form, useTransition } from '@remix-run/react';
+import { DateTime } from 'luxon';
+import { z } from 'zod';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { getWeekNflGames } from '~/models/nflgame.server';
+import type { PoolGame, PoolGameCreate } from '~/models/poolgame.server';
 import {
   getPoolGamesByYearAndWeek,
   upsertPoolGame,
-} from "~/models/poolgame.server";
+} from '~/models/poolgame.server';
 import {
   getPoolWeekByYearAndWeek,
   updatePoolWeek,
-} from "~/models/poolweek.server";
-import { getCurrentSeason } from "~/models/season.server";
-
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
+} from '~/models/poolweek.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 import {
   superjson,
   useSuperActionData,
   useSuperLoaderData,
-} from "~/utils/data";
+} from '~/utils/data';
 
 const oddsApiData = z.array(
   z.object({
@@ -45,13 +43,13 @@ const oddsApiData = z.array(
                 name: z.string(),
                 price: z.number().optional(),
                 point: z.number().optional(),
-              })
+              }),
             ),
-          })
+          }),
         ),
-      })
+      }),
     ),
-  })
+  }),
 );
 
 type ActionData = {
@@ -67,7 +65,7 @@ type LoaderData = {
 
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
@@ -80,16 +78,16 @@ export const action = async ({ params, request }: ActionArgs) => {
   }
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "updateSpreads":
+    case 'updateSpreads':
       {
         // Create map of games and spreads
         let isOpen = false;
         const spreads: Map<string, number> = new Map();
         for (const [key, value] of formData.entries()) {
-          if (key === "isOpen") {
+          if (key === 'isOpen') {
             isOpen = true;
             continue;
           }
@@ -117,19 +115,19 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
 
       return superjson<ActionData>(
-        { message: "This week has been updated." },
-        { headers: { "x-superjson": "true" } }
+        { message: 'This week has been updated.' },
+        { headers: { 'x-superjson': 'true' } },
       );
 
-    case "getSpreads": {
+    case 'getSpreads': {
       //Call the API to get the spreads for each game
       const apiKey = process.env.SPREADS_API_KEY;
-      const sportKey = "americanfootball_nfl";
-      const regions = "us";
-      const markets = "spreads";
-      const oddsFormat = "american";
-      const dateFormat = "iso";
-      const bookmakers = "draftkings";
+      const sportKey = 'americanfootball_nfl';
+      const regions = 'us';
+      const markets = 'spreads';
+      const oddsFormat = 'american';
+      const dateFormat = 'iso';
+      const bookmakers = 'draftkings';
 
       if (!apiKey) {
         throw new Error(`SPREADS_API_KEY is missing.`);
@@ -140,10 +138,10 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       // Find the earliest starting game in nflGames and latest starting game
       const earliestGame = nflGames.reduce((prev, current) =>
-        prev.gameStartTime < current.gameStartTime ? prev : current
+        prev.gameStartTime < current.gameStartTime ? prev : current,
       );
       let latestGame = nflGames.reduce((prev, current) =>
-        prev.gameStartTime > current.gameStartTime ? prev : current
+        prev.gameStartTime > current.gameStartTime ? prev : current,
       );
 
       // Add an hour to the latest game start time cause the API is weird
@@ -152,8 +150,8 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       // Get the start and end dates for the API call
       const commenceTimeFrom =
-        earliestGame.gameStartTime.toISOString().slice(0, -5) + "Z";
-      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + "Z";
+        earliestGame.gameStartTime.toISOString().slice(0, -5) + 'Z';
+      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + 'Z';
 
       let spreadMapping = new Map<string, number>();
 
@@ -168,7 +166,7 @@ export const action = async ({ params, request }: ActionArgs) => {
             bookmakers,
             commenceTimeFrom,
             commenceTimeTo,
-          }).toString()
+          }).toString(),
       );
       const odds = oddsApiData.parse(await newFetch.json());
 
@@ -184,10 +182,10 @@ export const action = async ({ params, request }: ActionArgs) => {
       // console.log("Used requests", response.headers["x-requests-used"]);
 
       // Create a map of team names to their spread points
-      odds.forEach((game) => {
-        const draftkings = game.bookmakers.find((b) => b.key === "draftkings");
+      odds.forEach(game => {
+        const draftkings = game.bookmakers.find(b => b.key === 'draftkings');
         if (draftkings) {
-          draftkings.markets[0].outcomes.forEach((outcome) => {
+          draftkings.markets[0].outcomes.forEach(outcome => {
             spreadMapping.set(outcome.name, outcome.point || 0);
           });
         }
@@ -195,29 +193,29 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       return superjson<ActionData>(
         {
-          message: "Game spreads have been populated.",
+          message: 'Game spreads have been populated.',
           updatedNflGames: spreadMapping,
         },
-        { headers: { "x-superjson": "true" } }
+        { headers: { 'x-superjson': 'true' } },
       );
     }
   }
 
   return superjson<ActionData>(
-    { message: "There was an error with something" },
-    { headers: { "x-superjson": "true" } }
+    { message: 'There was an error with something' },
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const week = Number(params.week);
@@ -233,7 +231,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { nflGames, poolGames, poolWeek },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -247,7 +245,7 @@ export default function AdminSpreadPoolYearWeek() {
     <div>
       <h2>Edit Picks for Week {nflGames[0].week}</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST" reloadDocument>
+      <Form method='POST' reloadDocument>
         <table>
           <thead>
             <tr>
@@ -257,12 +255,12 @@ export default function AdminSpreadPoolYearWeek() {
             </tr>
           </thead>
           <tbody>
-            {nflGames.map((game) => {
+            {nflGames.map(game => {
               const gameStart = DateTime.fromJSDate(game.gameStartTime);
               return (
                 <tr key={game.id}>
                   <td>
-                    {gameStart.weekdayShort}{" "}
+                    {gameStart.weekdayShort}{' '}
                     {gameStart.toLocaleString(DateTime.TIME_SIMPLE)}
                   </td>
                   <td>
@@ -270,15 +268,15 @@ export default function AdminSpreadPoolYearWeek() {
                   </td>
                   <td>
                     <input
-                      type="number"
-                      step="0.5"
+                      type='number'
+                      step='0.5'
                       name={`homeSpread[${game.id}]`}
-                      className="dark:border-0 dark:bg-slate-800"
+                      className='dark:border-0 dark:bg-slate-800'
                       defaultValue={
                         actionData?.updatedNflGames?.get(game.homeTeam.name)
                           ? actionData?.updatedNflGames?.get(game.homeTeam.name)
                           : poolGames.find(
-                              (poolGame) => poolGame.gameId === game.id
+                              poolGame => poolGame.gameId === game.id,
                             )?.homeSpread
                       }
                     />
@@ -288,13 +286,13 @@ export default function AdminSpreadPoolYearWeek() {
             })}
             <tr>
               <td colSpan={3}>
-                <label htmlFor="isOpen">
+                <label htmlFor='isOpen'>
                   <input
-                    type="checkbox"
-                    name="isOpen"
-                    id="isOpen"
+                    type='checkbox'
+                    name='isOpen'
+                    id='isOpen'
                     defaultChecked={poolWeek?.isOpen}
-                  />{" "}
+                  />{' '}
                   Publish week to group
                 </label>
               </td>
@@ -303,19 +301,19 @@ export default function AdminSpreadPoolYearWeek() {
         </table>
         <div>
           <Button
-            type="submit"
-            name="_action"
-            value="updateSpreads"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='updateSpreads'
+            disabled={transition.state !== 'idle'}
           >
             Update Week
           </Button>
-          <span style={{ marginRight: "10px" }}></span>
+          <span style={{ marginRight: '10px' }}></span>
           <Button
-            type="submit"
-            name="_action"
-            value="getSpreads"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='getSpreads'
+            disabled={transition.state !== 'idle'}
           >
             Get Spreads
           </Button>

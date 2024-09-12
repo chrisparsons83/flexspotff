@@ -1,25 +1,23 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useActionData, useTransition } from "@remix-run/react";
-import { useState } from "react";
-import z from "zod";
-
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, useActionData, useTransition } from '@remix-run/react';
+import { useState } from 'react';
+import z from 'zod';
+import FSquaredEntryFormSection from '~/components/layout/f-squared/FSquaredEntryFormSection';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import {
   createEntry,
   getEntryByUserAndYear,
   updateEntry,
-} from "~/models/fsquared.server";
-import type { League } from "~/models/league.server";
-import { getLeaguesByYear } from "~/models/league.server";
-import { getCurrentSeason } from "~/models/season.server";
-import { getTeamsInSeason } from "~/models/team.server";
-
-import FSquaredEntryFormSection from "~/components/layout/f-squared/FSquaredEntryFormSection";
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
-import { shuffleArray } from "~/utils/helpers";
+} from '~/models/fsquared.server';
+import type { League } from '~/models/league.server';
+import { getLeaguesByYear } from '~/models/league.server';
+import { getCurrentSeason } from '~/models/season.server';
+import { getTeamsInSeason } from '~/models/team.server';
+import { authenticator } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
+import { shuffleArray } from '~/utils/helpers';
 
 type ActionData = {
   formError?: string;
@@ -42,7 +40,7 @@ type FormEntry = z.infer<typeof formEntry>;
 
 function convertExistingEntryToInitialFormState(
   existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null,
-  leagues: Record<string, Awaited<ReturnType<typeof getTeamsInSeason>>>
+  leagues: Record<string, Awaited<ReturnType<typeof getTeamsInSeason>>>,
 ) {
   const result: Record<string, boolean> = {};
   const now = new Date();
@@ -67,12 +65,12 @@ export const action = async ({
   request,
 }: ActionArgs): Promise<Response | ActionData> => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const leagues = await getLeaguesByYear(currentSeason.year);
@@ -81,9 +79,9 @@ export const action = async ({
   const fSquaredForm: Record<string, FormEntry> = {};
   leagues
     .filter(
-      (league) => !league.draftDateTime || league.draftDateTime >= new Date()
+      league => !league.draftDateTime || league.draftDateTime >= new Date(),
     )
-    .forEach((league) => {
+    .forEach(league => {
       const entry = formEntry.parse(formData.getAll(league.name));
       fSquaredForm[league.name] = entry;
     });
@@ -95,13 +93,13 @@ export const action = async ({
       // League has drafted and there's no entry, so you need to pick two at random.
       if (!existingEntry) {
         const twoRandomTeams = shuffleArray(
-          league.teams.map((team) => team.id)
+          league.teams.map(team => team.id),
         ).slice(0, 2);
         newEntries.push(...twoRandomTeams);
       } else {
         const entryTeamsFromLeague = existingEntry.teams
-          .filter((team) => team.league.name === league.name)
-          .map((team) => team.id);
+          .filter(team => team.league.name === league.name)
+          .map(team => team.id);
         newEntries.push(...entryTeamsFromLeague);
       }
     } else {
@@ -116,29 +114,29 @@ export const action = async ({
     });
     await updateEntry(newEntry.id, newEntries, []);
   } else {
-    const originalEntries = existingEntry.teams.map((team) => team.id);
+    const originalEntries = existingEntry.teams.map(team => team.id);
     const addingEntries = newEntries.filter(
-      (team) => !originalEntries.includes(team)
+      team => !originalEntries.includes(team),
     );
     const removingEntries = originalEntries.filter(
-      (team) => !newEntries.includes(team)
+      team => !newEntries.includes(team),
     );
     await updateEntry(existingEntry.id, addingEntries, removingEntries);
   }
 
   return json<ActionData>({
-    message: `Your entry has been ${existingEntry ? "updated" : "created"}.`,
+    message: `Your entry has been ${existingEntry ? 'updated' : 'created'}.`,
   });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   // Get teams
@@ -147,11 +145,11 @@ export const loader = async ({ request }: LoaderArgs) => {
   // Get existing entry
   const existingEntry = await getEntryByUserAndYear(
     user.id,
-    currentSeason.year
+    currentSeason.year,
   );
 
   // Make record object for simplicity
-  const leagues: LoaderData["leagues"] = {};
+  const leagues: LoaderData['leagues'] = {};
   for (const team of teams) {
     if (leagues[team.league.name]) {
       leagues[team.league.name].push(team);
@@ -162,7 +160,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { leagues, existingEntry },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -178,10 +176,10 @@ export default function FSquaredMyEntry() {
   const numberOfLeagues = Object.keys(leagues).length;
 
   const handleValidFormChange = (
-    leagueName: League["id"],
-    isValid: boolean
+    leagueName: League['id'],
+    isValid: boolean,
   ) => {
-    setValidLeagueCheck((prevState) => {
+    setValidLeagueCheck(prevState => {
       const state = { ...prevState };
       state[leagueName] = isValid;
       return state;
@@ -193,11 +191,11 @@ export default function FSquaredMyEntry() {
     Object.values(validLeagueCheck).every(Boolean);
 
   const buttonText =
-    transition.state === "submitting"
-      ? "Submitting..."
-      : transition.state === "loading"
-      ? "Submitted!"
-      : "Submit";
+    transition.state === 'submitting'
+      ? 'Submitting...'
+      : transition.state === 'loading'
+      ? 'Submitted!'
+      : 'Submit';
 
   return (
     <div>
@@ -212,8 +210,8 @@ export default function FSquaredMyEntry() {
         random from leagues that have drafted.
       </p>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST" reloadDocument>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <Form method='POST' reloadDocument>
+        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {Object.entries(leagues).map(([leagueName, teams]) => (
             <FSquaredEntryFormSection
               key={leagueName}
@@ -223,21 +221,21 @@ export default function FSquaredMyEntry() {
               existingPicks={
                 existingEntry &&
                 existingEntry.teams
-                  .filter((team) => team.league.name === leagueName)
-                  .map((team) => team.id)
+                  .filter(team => team.league.name === leagueName)
+                  .map(team => team.id)
               }
             />
           ))}
         </div>
-        <div className="block p-4">
+        <div className='block p-4'>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            disabled={!isValidForm || transition.state !== "idle"}
+            type='submit'
+            disabled={!isValidForm || transition.state !== 'idle'}
           >
             {buttonText}
           </Button>

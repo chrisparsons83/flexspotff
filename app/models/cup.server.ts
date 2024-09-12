@@ -1,10 +1,9 @@
-import type { Cup } from "@prisma/client";
+import type { Cup } from '@prisma/client';
+import { prisma } from '~/db.server';
 
-import { prisma } from "~/db.server";
+export type { Cup } from '@prisma/client';
 
-export type { Cup } from "@prisma/client";
-
-export type CupCreate = Omit<Cup, "id" | "createdAt" | "updatedAt">;
+export type CupCreate = Omit<Cup, 'id' | 'createdAt' | 'updatedAt'>;
 export type ScoreArray = {
   teamId: string;
   mapping: string;
@@ -17,7 +16,7 @@ export async function createCup(data: CupCreate) {
   });
 }
 
-export async function getCup(id: Cup["id"]) {
+export async function getCup(id: Cup['id']) {
   return prisma.cup.findUnique({
     where: {
       id,
@@ -25,7 +24,7 @@ export async function getCup(id: Cup["id"]) {
   });
 }
 
-export async function getCupByYear(year: Cup["year"]) {
+export async function getCupByYear(year: Cup['year']) {
   return prisma.cup.findFirst({
     where: {
       year,
