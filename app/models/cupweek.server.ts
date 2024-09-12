@@ -1,10 +1,10 @@
-import type { Cup, CupWeek } from "@prisma/client";
+import type { Cup, CupWeek } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { CupWeek } from "@prisma/client";
+export type { CupWeek } from '@prisma/client';
 
-type CupWeekCreate = Omit<CupWeek, "id">;
+type CupWeekCreate = Omit<CupWeek, 'id'>;
 
 export async function createCupWeek(data: CupWeekCreate) {
   return prisma.cupWeek.create({
@@ -12,18 +12,18 @@ export async function createCupWeek(data: CupWeekCreate) {
   });
 }
 
-export async function getCupWeeks(cupId: Cup["id"]) {
+export async function getCupWeeks(cupId: Cup['id']) {
   return prisma.cupWeek.findMany({
     where: {
       cupId,
     },
     orderBy: {
-      week: "asc",
+      week: 'asc',
     },
   });
 }
 
-export async function updateCupWeek(id: CupWeek["id"], data: Partial<CupWeek>) {
+export async function updateCupWeek(id: CupWeek['id'], data: Partial<CupWeek>) {
   return prisma.cupWeek.update({
     where: {
       id,

@@ -1,19 +1,19 @@
-import clsx from "clsx";
-import { useState } from "react";
+import clsx from 'clsx';
+import { useState } from 'react';
 
-import type { NFLTeam } from "~/models/nflteam.server";
+import type { NFLTeam } from '~/models/nflteam.server';
 import type {
   Bet,
   PoolGameByYearAndWeekElement,
-} from "~/models/poolgame.server";
-import type { PoolGamePick } from "~/models/poolgamepicks.server";
+} from '~/models/poolgame.server';
+import type { PoolGamePick } from '~/models/poolgamepicks.server';
 
-import Button from "~/components/ui/Button";
+import Button from '~/components/ui/Button';
 
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
   const displayAmount = home ? amount : -1 * amount;
-  const prefix = displayAmount > 0 ? "+" : "";
+  const prefix = displayAmount > 0 ? '+' : '';
   return `${prefix}${displayAmount}`;
 };
 
@@ -32,21 +32,21 @@ export default function SpreadPoolGameComponent({
 }: Props) {
   const existingBetTeam =
     [poolGame.game.homeTeam, poolGame.game.awayTeam].find(
-      (team) => team.id === existingBet?.teamId
+      team => team.id === existingBet?.teamId,
     ) || null;
   const [betTeam, setBetTeam] = useState<NFLTeam | null>(existingBetTeam);
   const [betAmount, setBetAmount] = useState(
-    Math.abs(existingBet?.amount || 0)
+    Math.abs(existingBet?.amount || 0),
   );
   const [showSlider, setShowSlider] = useState(false);
 
   const betDisplay =
-    betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : "No Bet";
+    betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : 'No Bet';
   const betSliderDefault = !existingBet
     ? 0
     : existingBet.teamId === poolGame.game.awayTeamId
-    ? -1 * existingBet.amount
-    : existingBet.amount;
+      ? -1 * existingBet.amount
+      : existingBet.amount;
 
   const gameDateTime = poolGame.game.gameStartTime;
   const now = new Date();
@@ -101,19 +101,19 @@ export default function SpreadPoolGameComponent({
   return (
     <div
       className={clsx(
-        "p-4",
-        betAmount !== 0 && "bg-slate-800",
-        wonGame && "bg-green-900",
-        lostGame && "bg-red-900"
+        'p-4',
+        betAmount !== 0 && 'bg-slate-800',
+        wonGame && 'bg-green-900',
+        lostGame && 'bg-red-900',
       )}
     >
-      <div className="flex gap-2 justify-between">
-        <div className="w-2/5">
+      <div className='flex gap-2 justify-between'>
+        <div className='w-2/5'>
           {poolGame.game.awayTeam.mascot} (
           {formatSpread(poolGame.homeSpread, false)})
         </div>
-        <div className="text-center">vs.</div>
-        <div className="w-2/5 text-right">
+        <div className='text-center'>vs.</div>
+        <div className='w-2/5 text-right'>
           {poolGame.game.homeTeam.mascot} (
           {formatSpread(poolGame.homeSpread, true)})
         </div>
@@ -121,20 +121,20 @@ export default function SpreadPoolGameComponent({
       {showSlider && (
         <>
           <input
-            type="range"
-            min="-50"
-            max="50"
-            step="10"
+            type='range'
+            min='-50'
+            max='50'
+            step='10'
             name={`${poolGame.id}-${betTeam?.id}`}
             defaultValue={betSliderDefault}
-            className="w-full"
+            className='w-full'
             onChange={onBetChange}
             disabled={pickLocked}
           />
-          <div className="flex justify-between">
+          <div className='flex justify-between'>
             <div>Current Bet: {betDisplay}</div>
             <div>
-              <Button type="button" onClick={resetBet} disabled={pickLocked}>
+              <Button type='button' onClick={resetBet} disabled={pickLocked}>
                 Reset Bet
               </Button>
             </div>
@@ -142,9 +142,9 @@ export default function SpreadPoolGameComponent({
         </>
       )}
       {!showSlider && (
-        <div className="text-center">
-          <Button type="button" className="w-full" onClick={displayBetInput}>
-            {betAmount !== 0 ? "Bet placed on game" : "Place bet on game"}
+        <div className='text-center'>
+          <Button type='button' className='w-full' onClick={displayBetInput}>
+            {betAmount !== 0 ? 'Bet placed on game' : 'Place bet on game'}
           </Button>
         </div>
       )}

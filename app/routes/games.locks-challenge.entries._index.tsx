@@ -1,12 +1,12 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
 
-import type { LocksWeek } from "~/models/locksweek.server";
-import { getLocksWeeksByYear } from "~/models/locksweek.server";
-import { getCurrentSeason } from "~/models/season.server";
+import type { LocksWeek } from '~/models/locksweek.server';
+import { getLocksWeeksByYear } from '~/models/locksweek.server';
+import { getCurrentSeason } from '~/models/season.server';
 
-import { authenticator } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import { authenticator } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   locksWeeks: LocksWeek[];
@@ -14,12 +14,12 @@ type LoaderData = {
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
@@ -28,7 +28,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     {
       locksWeeks,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -39,12 +39,12 @@ export default function GamesLocksMyEntries() {
     <>
       <h2>My Entries</h2>
       <ul>
-        {locksWeeks.map((locksWeek) => {
+        {locksWeeks.map(locksWeek => {
           const suffix = locksWeek.isWeekScored
-            ? " - Week Scored"
+            ? ' - Week Scored'
             : !locksWeek.isOpen
-            ? " - Not Open"
-            : "";
+              ? ' - Not Open'
+              : '';
 
           return (
             <li key={locksWeek.id}>

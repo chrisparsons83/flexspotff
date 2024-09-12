@@ -1,27 +1,27 @@
-import z from "zod";
+import z from 'zod';
 
-import type { DraftPickCreate } from "~/models/draftpick.server";
+import type { DraftPickCreate } from '~/models/draftpick.server';
 import {
   createDraftPick,
   deleteDraftPicks,
   getDraftPicks,
-} from "~/models/draftpick.server";
-import type { League } from "~/models/league.server";
-import { getLeaguesByYear, updateLeague } from "~/models/league.server";
-import type { GameCreate } from "~/models/nflgame.server";
-import { upsertNflGame } from "~/models/nflgame.server";
-import { getNflTeams } from "~/models/nflteam.server";
-import type { PlayerCreate } from "~/models/players.server";
-import { getPlayers, upsertPlayer } from "~/models/players.server";
-import { getTeams } from "~/models/team.server";
-import type { TeamGame } from "~/models/teamgame.server";
+} from '~/models/draftpick.server';
+import type { League } from '~/models/league.server';
+import { getLeaguesByYear, updateLeague } from '~/models/league.server';
+import type { GameCreate } from '~/models/nflgame.server';
+import { upsertNflGame } from '~/models/nflgame.server';
+import { getNflTeams } from '~/models/nflteam.server';
+import type { PlayerCreate } from '~/models/players.server';
+import { getPlayers, upsertPlayer } from '~/models/players.server';
+import { getTeams } from '~/models/team.server';
+import type { TeamGame } from '~/models/teamgame.server';
 import {
   createTeamGame,
   getTeamGamesByYearAndWeek,
   updateTeamGame,
-} from "~/models/teamgame.server";
+} from '~/models/teamgame.server';
 
-import { graphQLClient } from "~/services/sleeperGraphql.server";
+import { graphQLClient } from '~/services/sleeperGraphql.server';
 
 const sleeperADPJson = z.array(
   z.object({
@@ -30,7 +30,7 @@ const sleeperADPJson = z.array(
     player_id: z.string(),
     picked_by: z.string().nullable(),
     pick_no: z.number(),
-  })
+  }),
 );
 type SleeperADPJson = z.infer<typeof sleeperADPJson>;
 
@@ -47,7 +47,7 @@ const sleeperGraphqlNflGames = z.object({
         away_score: z.number().optional(),
         date_time: z.string(),
       }),
-    })
+    }),
   ),
 });
 type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
@@ -59,7 +59,7 @@ const sleeperJsonWeeklyMatchup = z.array(
     points: z.number(),
     matchup_id: z.number(),
     starters_points: z.array(z.number()),
-  })
+  }),
 );
 type SleeperJsonWeeklyMatchup = z.infer<typeof sleeperJsonWeeklyMatchup>;
 
@@ -71,7 +71,7 @@ const sleeperJsonNflPlayers = z.record(
     first_name: z.string(),
     last_name: z.string(),
     full_name: z.string().optional(),
-  })
+  }),
 );
 type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
 
@@ -86,10 +86,10 @@ type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
 
 export async function syncAdp(league: League) {
   const sleeperLeagueRes = await fetch(
-    `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}/picks`
+    `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}/picks`,
   );
   const sleeperJson: SleeperADPJson = sleeperADPJson.parse(
-    await sleeperLeagueRes.json()
+    await sleeperLeagueRes.json(),
   );
 
   const isDrafted = sleeperJson.length === 180;
@@ -98,8 +98,8 @@ export async function syncAdp(league: League) {
   const draftPicksQuery = await getDraftPicks(league.id);
   if (draftPicksQuery?.teams) {
     const draftPicksArray = draftPicksQuery?.teams
-      .flatMap((team) => team.DraftPicks)
-      .map((team) => team.id);
+      .flatMap(team => team.DraftPicks)
+      .map(team => team.id);
     await deleteDraftPicks(draftPicksArray);
   }
 
@@ -120,15 +120,15 @@ export async function syncAdp(league: League) {
   const promises: Promise<DraftPickCreate>[] = [];
   for (const { pick_no, player_id, picked_by } of sleeperJson) {
     if (
-      !ownerTeamIdMap.get(picked_by || "") ||
-      !playerSleeperInternalMap.get(player_id || "")
+      !ownerTeamIdMap.get(picked_by || '') ||
+      !playerSleeperInternalMap.get(player_id || '')
     ) {
       continue;
     }
     const draftPick: DraftPickCreate = {
       pickNumber: pick_no,
-      playerId: playerSleeperInternalMap.get(player_id || "")!,
-      teamId: ownerTeamIdMap.get(picked_by || "")!,
+      playerId: playerSleeperInternalMap.get(player_id || '')!,
+      teamId: ownerTeamIdMap.get(picked_by || '')!,
     };
     promises.push(createDraftPick(draftPick));
   }
@@ -163,9 +163,7 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
         }`;
     promises.push(graphQLClient.request<SleeperGraphqlNflGames>(query));
   }
-  const games = (await Promise.all(promises)).flatMap(
-    (result) => result.scores
-  );
+  const games = (await Promise.all(promises)).flatMap(result => result.scores);
 
   const gameUpdatePromises: Promise<GameCreate>[] = [];
   for (const game of games) {
@@ -196,7 +194,7 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
 
 export async function syncSleeperWeeklyScores(year: number, week: number) {
   const leagues = await getLeaguesByYear(year);
-  const teams = leagues.flatMap((league) => league.teams);
+  const teams = leagues.flatMap(league => league.teams);
 
   const existingTeamGames = await getTeamGamesByYearAndWeek(year, week);
 
@@ -209,24 +207,24 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 
   const teamGameUpserts: Promise<TeamGame>[] = [];
   for (const response of leagueMatchupResponses) {
-    const sleeperLeagueId = new URL(response.url).pathname.split("/")[3];
+    const sleeperLeagueId = new URL(response.url).pathname.split('/')[3];
     const matchups: SleeperJsonWeeklyMatchup = sleeperJsonWeeklyMatchup.parse(
-      await response.json()
+      await response.json(),
     );
     for (const matchup of matchups) {
       const league = leagues.find(
-        (league) => league.sleeperLeagueId === sleeperLeagueId
+        league => league.sleeperLeagueId === sleeperLeagueId,
       );
       if (!league) continue;
 
       const team = teams.find(
-        (team) =>
-          team.leagueId === league.id && team.rosterId === matchup.roster_id
+        team =>
+          team.leagueId === league.id && team.rosterId === matchup.roster_id,
       );
       if (!team) continue;
 
       const existingTeamGame = existingTeamGames.find(
-        (teamGame) => teamGame.teamId === team.id && teamGame.week === week
+        teamGame => teamGame.teamId === team.id && teamGame.week === week,
       );
 
       if (existingTeamGame) {
@@ -239,7 +237,7 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
             pointsScored: matchup.points,
             teamId: team.id,
             startingPlayerPoints: matchup.starters_points,
-          })
+          }),
         );
       } else {
         teamGameUpserts.push(
@@ -250,7 +248,7 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
             pointsScored: matchup.points,
             teamId: team.id,
             startingPlayerPoints: matchup.starters_points,
-          })
+          }),
         );
       }
     }
@@ -260,7 +258,7 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 
 export async function syncNflPlayers() {
   const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
-    await (await fetch(`https://api.sleeper.app/v1/players/nfl`)).json()
+    await (await fetch(`https://api.sleeper.app/v1/players/nfl`)).json(),
   );
 
   const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
@@ -298,7 +296,7 @@ export async function syncNflPlayers() {
 export async function getNflState() {
   const sleeperLeagueRes = await fetch(`https://api.sleeper.app/v1/state/nfl`);
   const nflState: SleeperJsonNflState = sleeperJsonNflState.parse(
-    await sleeperLeagueRes.json()
+    await sleeperLeagueRes.json(),
   );
 
   return nflState;

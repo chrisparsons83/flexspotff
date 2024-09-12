@@ -1,16 +1,16 @@
-describe("smoke tests", () => {
+describe('smoke tests', () => {
   // afterEach(() => {
   //   cy.cleanupUser();
   // });
 
-  it("should allow you to register and login", () => {
+  it('should allow you to register and login', () => {
     // const loginForm = {
     //   email: `${faker.internet.userName()}@example.com`,
     //   password: faker.internet.password(),
     // };
     // cy.then(() => ({ email: loginForm.email })).as("user");
 
-    cy.visit("/");
+    cy.visit('/');
     // cy.findByRole("link", { name: /sign up/i }).click();
 
     // cy.findByRole("textbox", { name: /email/i }).type(loginForm.email);

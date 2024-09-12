@@ -1,6 +1,6 @@
-import { parentPort } from "node:worker_threads";
+import { parentPort } from 'node:worker_threads';
 
-import { syncNflPlayers } from "~/libs/syncs.server";
+import { syncNflPlayers } from '~/libs/syncs.server';
 
 (async () => {
   if (parentPort) {

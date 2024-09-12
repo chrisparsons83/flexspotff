@@ -1,12 +1,12 @@
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/outline";
-import clsx from "clsx";
-import { useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
+import clsx from 'clsx';
+import { useState } from 'react';
 
 import type {
   PoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
-} from "~/models/poolgamepicks.server";
-import type { User } from "~/models/user.server";
+} from '~/models/poolgamepicks.server';
+import type { User } from '~/models/user.server';
 
 type Props = {
   rank: number | undefined;
@@ -26,7 +26,7 @@ export default function SpreadPoolStandingsRow({
   const [showDetails, setShowDetails] = useState(false);
 
   const handleAccordion = () => {
-    setShowDetails((prevState) => !prevState);
+    setShowDetails(prevState => !prevState);
   };
 
   if (!user) return null;
@@ -37,29 +37,29 @@ export default function SpreadPoolStandingsRow({
           (poolGameWonLoss._sum.amountBet || 1)) *
         100
       ).toFixed(2)}%`
-    : "No bets";
+    : 'No bets';
 
   return (
     <>
       <tr>
         <td>{rank}</td>
-        <td className="flex items-center gap-3">
-          {user.discordName}{" "}
+        <td className='flex items-center gap-3'>
+          {user.discordName}{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}
               height={20}
               onClick={handleAccordion}
-              className="cursor-pointer"
-              aria-label="Hide Details"
+              className='cursor-pointer'
+              aria-label='Hide Details'
             />
           ) : (
             <ChevronDownIcon
               width={20}
               height={20}
               onClick={handleAccordion}
-              className="cursor-pointer"
-              aria-label="Show Details"
+              className='cursor-pointer'
+              aria-label='Show Details'
             />
           )}
         </td>
@@ -71,14 +71,14 @@ export default function SpreadPoolStandingsRow({
         <td>{returnOnEquity}</td>
       </tr>
       {showDetails && (
-        <tr className="border-b-1 bg-gray-800">
+        <tr className='border-b-1 bg-gray-800'>
           <td></td>
           <td>
             {picksLocked && picksLocked.length === 0 && (
               <div>No locked bets</div>
             )}
             {picksLocked &&
-              picksLocked.map((pick) => {
+              picksLocked.map(pick => {
                 const spreadAmount =
                   pick.teamBetId === pick.poolGame.game.homeTeamId
                     ? pick.poolGame.homeSpread
@@ -86,30 +86,30 @@ export default function SpreadPoolStandingsRow({
 
                 const spreadDisplay =
                   spreadAmount === 0
-                    ? "Even"
+                    ? 'Even'
                     : spreadAmount > 0
-                    ? `+${spreadAmount}`
-                    : `${spreadAmount}`;
+                      ? `+${spreadAmount}`
+                      : `${spreadAmount}`;
 
                 const resultAction =
                   pick.resultWonLoss! > 0
-                    ? "Won"
+                    ? 'Won'
                     : pick.resultWonLoss! < 0
-                    ? "Lost"
-                    : pick.isScored
-                    ? "Pushed"
-                    : "Bet";
+                      ? 'Lost'
+                      : pick.isScored
+                        ? 'Pushed'
+                        : 'Bet';
 
                 return (
                   <div
                     key={pick.id}
                     className={clsx(
-                      "mb-1 border-l-8 pl-4 border-gray-500",
-                      pick.resultWonLoss! > 0 && "border-green-500",
-                      pick.resultWonLoss! < 0 && "border-red-500"
+                      'mb-1 border-l-8 pl-4 border-gray-500',
+                      pick.resultWonLoss! > 0 && 'border-green-500',
+                      pick.resultWonLoss! < 0 && 'border-red-500',
                     )}
                   >
-                    {resultAction} {pick.amountBet} on {pick.teamBet.mascot}{" "}
+                    {resultAction} {pick.amountBet} on {pick.teamBet.mascot}{' '}
                     {spreadDisplay}
                   </div>
                 );

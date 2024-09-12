@@ -1,11 +1,11 @@
-import type { League, Team } from "@prisma/client";
+import type { League, Team } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { Team } from "@prisma/client";
+export type { Team } from '@prisma/client';
 
-type TeamCreateInput = Omit<Team, "id" | "createdAt" | "updatedAt">;
-type TeamUpdateInput = Omit<Team, "createdAt" | "updatedAt">;
+type TeamCreateInput = Omit<Team, 'id' | 'createdAt' | 'updatedAt'>;
+type TeamUpdateInput = Omit<Team, 'createdAt' | 'updatedAt'>;
 
 export async function createTeam(team: TeamCreateInput) {
   return prisma.team.create({
@@ -15,7 +15,7 @@ export async function createTeam(team: TeamCreateInput) {
 
 export async function getTeamBySleeperOwnerLeagueId(
   sleeperOwnerId: string,
-  leagueId: string
+  leagueId: string,
 ) {
   return prisma.team.findFirst({
     where: {
@@ -25,7 +25,7 @@ export async function getTeamBySleeperOwnerLeagueId(
   });
 }
 
-export async function getTeams(leagueId: League["id"]) {
+export async function getTeams(leagueId: League['id']) {
   return prisma.team.findMany({
     where: {
       leagueId,
@@ -33,7 +33,7 @@ export async function getTeams(leagueId: League["id"]) {
   });
 }
 
-export async function getTeamsInSeason(year: League["year"]) {
+export async function getTeamsInSeason(year: League['year']) {
   return prisma.team.findMany({
     where: {
       league: {
@@ -57,16 +57,16 @@ export async function getTeamsInSeason(year: League["year"]) {
     orderBy: [
       {
         league: {
-          tier: "asc",
+          tier: 'asc',
         },
       },
       {
         league: {
-          name: "asc",
+          name: 'asc',
         },
       },
       {
-        draftPosition: "asc",
+        draftPosition: 'asc',
       },
     ],
   });

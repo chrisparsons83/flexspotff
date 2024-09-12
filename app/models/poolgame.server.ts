@@ -1,12 +1,12 @@
-import type { NFLGame, PoolGame } from "@prisma/client";
+import type { NFLGame, PoolGame } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { PoolGame } from "@prisma/client";
+export type { PoolGame } from '@prisma/client';
 
 export type Bet = { teamId: string; amount: number };
 
-export type PoolGameCreate = Omit<PoolGame, "id">;
+export type PoolGameCreate = Omit<PoolGame, 'id'>;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
   ? ElementType
@@ -16,8 +16,8 @@ export type PoolGameByYearAndWeekElement = ArrElement<
 >;
 
 export async function getPoolGamesByYearAndWeek(
-  year: NFLGame["year"],
-  week: NFLGame["week"]
+  year: NFLGame['year'],
+  week: NFLGame['week'],
 ) {
   return prisma.poolGame.findMany({
     where: {
@@ -36,7 +36,7 @@ export async function getPoolGamesByYearAndWeek(
     },
     orderBy: {
       game: {
-        gameStartTime: "asc",
+        gameStartTime: 'asc',
       },
     },
   });

@@ -1,16 +1,16 @@
-import type { PoolGamePick } from "~/models/poolgamepicks.server";
-import type { PoolWeek } from "~/models/poolweek.server";
-import type { User } from "~/models/user.server";
+import type { PoolGamePick } from '~/models/poolgamepicks.server';
+import type { PoolWeek } from '~/models/poolweek.server';
+import type { User } from '~/models/user.server';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-import type { PoolGameByYearAndWeekElement } from "./poolgame.server";
+import type { PoolGameByYearAndWeekElement } from './poolgame.server';
 
-export type { PoolGamePick } from "@prisma/client";
+export type { PoolGamePick } from '@prisma/client';
 
 export type PoolGamePickCreate = Omit<
   PoolGamePick,
-  "id" | "createdAt" | "updatedAt" | "resultWonLoss"
+  'id' | 'createdAt' | 'updatedAt' | 'resultWonLoss'
 >;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
@@ -35,7 +35,7 @@ export async function createPoolGamePicks(poolGamePicks: PoolGamePickCreate[]) {
 
 export async function deletePoolGamePicksForUserAndWeek(
   user: User,
-  poolWeek: PoolWeek
+  poolWeek: PoolWeek,
 ) {
   return prisma.poolGamePick.deleteMany({
     where: {
@@ -67,7 +67,7 @@ export async function getPoolGamesPicksByPoolWeek(poolWeek: PoolWeek) {
 
 export async function getPoolGamePicksByUserAndPoolWeek(
   user: User,
-  poolWeek: PoolWeek
+  poolWeek: PoolWeek,
 ) {
   return prisma.poolGamePick.findMany({
     where: {
@@ -81,7 +81,7 @@ export async function getPoolGamePicksByUserAndPoolWeek(
 
 export async function getPoolGamePicksByUserAndYear(
   user: User,
-  year: PoolWeek["year"]
+  year: PoolWeek['year'],
 ) {
   return prisma.poolGamePick.findMany({
     where: {
@@ -102,7 +102,7 @@ export async function getPoolGamePicksByUserAndYear(
   });
 }
 
-export async function getPoolGamePicksWonLoss(year: PoolWeek["year"]) {
+export async function getPoolGamePicksWonLoss(year: PoolWeek['year']) {
   return prisma.poolGamePick.groupBy({
     where: {
       poolGame: {
@@ -115,7 +115,7 @@ export async function getPoolGamePicksWonLoss(year: PoolWeek["year"]) {
       },
       isScored: true,
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       amountBet: true,
       resultWonLoss: true,
@@ -125,7 +125,7 @@ export async function getPoolGamePicksWonLoss(year: PoolWeek["year"]) {
     },
     orderBy: {
       _sum: {
-        resultWonLoss: "desc",
+        resultWonLoss: 'desc',
       },
     },
   });
@@ -142,7 +142,7 @@ export async function getPoolGamePicksWonLossWeek(poolWeek: PoolWeek) {
       },
       isScored: true,
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       amountBet: true,
       resultWonLoss: true,
@@ -152,14 +152,14 @@ export async function getPoolGamePicksWonLossWeek(poolWeek: PoolWeek) {
     },
     orderBy: {
       _sum: {
-        resultWonLoss: "desc",
+        resultWonLoss: 'desc',
       },
     },
   });
 }
 
 export async function updatePoolGamePicksWithResults(
-  poolGame: PoolGameByYearAndWeekElement
+  poolGame: PoolGameByYearAndWeekElement,
 ) {
   if (
     poolGame.game.homeTeamScore + poolGame.homeSpread >

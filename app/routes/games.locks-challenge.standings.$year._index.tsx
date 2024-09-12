@@ -1,17 +1,20 @@
-import type { LoaderArgs } from "@remix-run/node";
+import type { LoaderArgs } from '@remix-run/node';
 
 import {
   getLocksGamePicksWonLoss,
+  getLocksGamePicksWonLossWeek,
   getLocksGamesPicksByLocksWeek,
-  getLocksGamePicksWonLossWeek
-} from "~/models/locksgamepicks.server";
-import { getLocksWeeksByYear, getLocksWeekByYearAndWeek } from "~/models/locksweek.server";
-import { getCurrentSeason } from "~/models/season.server";
-import type { User } from "~/models/user.server";
-import { getUsersByIds } from "~/models/user.server";
+} from '~/models/locksgamepicks.server';
+import {
+  getLocksWeekByYearAndWeek,
+  getLocksWeeksByYear,
+} from '~/models/locksweek.server';
+import { getCurrentSeason } from '~/models/season.server';
+import type { User } from '~/models/user.server';
+import { getUsersByIds } from '~/models/user.server';
 
-import LocksChallengeStandingsRow from "~/components/layout/locks-challenge/LocksChallengeStandingsRow";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   totalPoints: Awaited<ReturnType<typeof getLocksGamePicksWonLoss>>;
@@ -25,26 +28,26 @@ type LoaderData = {
 export const loader = async ({ params, request }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
   // Get the most active week
-  const currentWeek = locksWeeks.find((locksWeek) => locksWeek.isOpen === true);
+  const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
 
   // Get current picks for the week
   const weeklyPicks =
     currentWeek &&
     (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
-      (locksGamePick) =>
+      locksGamePick =>
         locksGamePick.locksGame.game.gameStartTime < new Date() &&
-        locksGamePick.isActive !== 0
+        locksGamePick.isActive !== 0,
     );
-  
+
   // Find the max week number
   const maxWeek = (await getLocksWeeksByYear(currentSeason.year))[0].weekNumber;
-  
+
   let userIdToPointsMap: Map<string, number> = new Map();
 
   // loop through all the completed weeks for the season
@@ -57,19 +60,18 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       const locksWeekResults = await getLocksGamePicksWonLossWeek(locksWeek);
 
       // If a user got a loss for the week, set their wins to 0
-      const filteredPoints = locksWeekResults.map( (amount) => {
+      const filteredPoints = locksWeekResults.map(amount => {
         return {
           userId: amount.userId,
           _sum: {
             isWin: amount._sum.isLoss !== 0 ? 0 : amount._sum.isWin,
             isLoss: amount._sum.isLoss,
-            isTie: amount._sum.isTie
-          }
-        }
-      }
-      );
+            isTie: amount._sum.isTie,
+          },
+        };
+      });
 
-      filteredPoints.forEach((amount) => {
+      filteredPoints.forEach(amount => {
         const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
         const weekPoints = amount._sum.isWin || 0;
         userIdToPointsMap.set(amount.userId, currentPoints + weekPoints);
@@ -82,7 +84,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const totalPointsRaw = await getLocksGamePicksWonLoss(currentSeason.year);
 
   // Add points to _sum in totalPointsRaw
-  const totalPointsRawWithPoints = totalPointsRaw.map((point) => ({
+  const totalPointsRawWithPoints = totalPointsRaw.map(point => ({
     ...point,
     _sum: {
       ...point._sum,
@@ -97,7 +99,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   });
 
   const totalPoints = totalPointsRawWithPoints
-    .filter((point) => userIdToPointsMap.has(point.userId))
+    .filter(point => userIdToPointsMap.has(point.userId))
     .sort((a, b) => {
       // Compare _sum points
       if (a._sum.points !== b._sum.points) {
@@ -108,48 +110,61 @@ export const loader = async ({ params, request }: LoaderArgs) => {
         return (a._sum.isLoss || 0) - (b._sum.isLoss || 0); // Ascending order
       }
     });
-    // Assign ranks
-    let currentRank = 1;
-    let currentRankPoints = -1;
-    let currentRankWins = -1;
-    let currentRankLosses = Infinity; // Initialize with highest possible value
-    totalPoints.forEach((point, index) => {
-      // If points change, update the rank
-      if (
-        point._sum.points !== currentRankPoints ||
-        point._sum.isWin !== currentRankWins ||
-        (point._sum.isLoss || 0) < currentRankLosses // Check if current losses are fewer
-      ) {
-        currentRank = index + 1;
-        currentRankPoints = point._sum.points;
-        currentRankWins = point._sum.isWin || 0;
-        currentRankLosses = point._sum.isLoss || 0;
-      }
-      point._sum.rank = currentRank;
-    });
-  
+  // Assign ranks
+  let currentRank = 1;
+  let currentRankPoints = -1;
+  let currentRankWins = -1;
+  let currentRankLosses = Infinity; // Initialize with highest possible value
+  totalPoints.forEach((point, index) => {
+    // If points change, update the rank
+    if (
+      point._sum.points !== currentRankPoints ||
+      point._sum.isWin !== currentRankWins ||
+      (point._sum.isLoss || 0) < currentRankLosses // Check if current losses are fewer
+    ) {
+      currentRank = index + 1;
+      currentRankPoints = point._sum.points;
+      currentRankWins = point._sum.isWin || 0;
+      currentRankLosses = point._sum.isLoss || 0;
+    }
+    point._sum.rank = currentRank;
+  });
+
   // Create userIdToRankMap
   let userIdToRankMap: Map<string, number> = new Map();
-  totalPoints.forEach((point) => {
+  totalPoints.forEach(point => {
     userIdToRankMap.set(point.userId, point._sum.rank);
   });
 
   const userIds = [
-    ...new Set(totalPointsRaw.map((locksGameSum) => locksGameSum.userId)),
+    ...new Set(totalPointsRaw.map(locksGameSum => locksGameSum.userId)),
   ];
   const users = await getUsersByIds(userIds);
 
   const year = currentSeason.year;
 
   return superjson<LoaderData>(
-    { totalPoints, users, userIdToRankMap, weeklyPicks, userIdToPointsMap, year },
-    { headers: { "x-superjson": "true" } }
+    {
+      totalPoints,
+      users,
+      userIdToRankMap,
+      weeklyPicks,
+      userIdToPointsMap,
+      year,
+    },
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
 export default function LockChallengeStandingsYearIndex() {
-  const { totalPoints, users, userIdToRankMap, weeklyPicks, userIdToPointsMap, year } =
-    useSuperLoaderData<typeof loader>();
+  const {
+    totalPoints,
+    users,
+    userIdToRankMap,
+    weeklyPicks,
+    userIdToPointsMap,
+    year,
+  } = useSuperLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
   for (const user of users) {
@@ -178,7 +193,7 @@ export default function LockChallengeStandingsYearIndex() {
               points={userIdToPointsMap.get(result.userId)}
               locksChallengeWonLoss={result}
               picksLocked={weeklyPicks?.filter(
-                (pick) => pick.userId === result.userId
+                pick => pick.userId === result.userId,
               )}
             />
           ))}

@@ -1,12 +1,12 @@
-import type { QBSelection, QBStreamingWeek } from "@prisma/client";
+import type { QBSelection, QBStreamingWeek } from '@prisma/client';
 
-import type { User } from "~/models/user.server";
+import type { User } from '~/models/user.server';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { QBSelection } from "@prisma/client";
+export type { QBSelection } from '@prisma/client';
 
-type QBSelectionCreate = Omit<QBSelection, "id">;
+type QBSelectionCreate = Omit<QBSelection, 'id'>;
 
 export async function createQBSelection(qbSelection: QBSelectionCreate) {
   return prisma.qBSelection.create({
@@ -15,8 +15,8 @@ export async function createQBSelection(qbSelection: QBSelectionCreate) {
 }
 
 export async function getQBSelection(
-  qbStreamingWeekId: QBStreamingWeek["id"],
-  userId: User["id"]
+  qbStreamingWeekId: QBStreamingWeek['id'],
+  userId: User['id'],
 ) {
   return prisma.qBSelection.findFirst({
     where: {
@@ -39,7 +39,7 @@ export async function getQBSelection(
 }
 
 export async function getQBSelectionsByWeek(
-  qbStreamingWeekId: QBStreamingWeek["id"]
+  qbStreamingWeekId: QBStreamingWeek['id'],
 ) {
   return prisma.qBSelection.findMany({
     where: {
@@ -63,7 +63,7 @@ export async function getQBSelectionsByWeek(
   });
 }
 
-export async function getQBSelectionsByYear(year: QBStreamingWeek["year"]) {
+export async function getQBSelectionsByYear(year: QBStreamingWeek['year']) {
   return prisma.qBSelection.findMany({
     where: {
       qbStreamingWeek: {

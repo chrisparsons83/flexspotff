@@ -1,10 +1,10 @@
-import type { DraftPick, League } from "@prisma/client";
+import type { DraftPick, League } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { DraftPick } from "@prisma/client";
+export type { DraftPick } from '@prisma/client';
 
-export type DraftPickCreate = Omit<DraftPick, "id">;
+export type DraftPickCreate = Omit<DraftPick, 'id'>;
 
 export async function createDraftPick(draftPick: DraftPickCreate) {
   return prisma.draftPick.create({
@@ -12,7 +12,7 @@ export async function createDraftPick(draftPick: DraftPickCreate) {
   });
 }
 
-export async function deleteDraftPicks(ids: DraftPick["id"][]) {
+export async function deleteDraftPicks(ids: DraftPick['id'][]) {
   return prisma.draftPick.deleteMany({
     where: {
       id: {
@@ -22,7 +22,7 @@ export async function deleteDraftPicks(ids: DraftPick["id"][]) {
   });
 }
 
-export async function getDraftPicks(id: League["id"]) {
+export async function getDraftPicks(id: League['id']) {
   return prisma.league.findUnique({
     where: {
       id,
@@ -37,9 +37,9 @@ export async function getDraftPicks(id: League["id"]) {
   });
 }
 
-export async function getAverageDraftPositionByYear(year: League["year"]) {
+export async function getAverageDraftPositionByYear(year: League['year']) {
   return prisma.draftPick.groupBy({
-    by: ["playerId"],
+    by: ['playerId'],
     where: {
       team: {
         league: {
@@ -62,12 +62,12 @@ export async function getAverageDraftPositionByYear(year: League["year"]) {
     orderBy: [
       {
         _avg: {
-          pickNumber: "asc",
+          pickNumber: 'asc',
         },
       },
       {
         _min: {
-          pickNumber: "asc",
+          pickNumber: 'asc',
         },
       },
     ],

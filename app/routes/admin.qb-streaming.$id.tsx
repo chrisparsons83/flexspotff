@@ -1,23 +1,23 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useActionData, useTransition } from "@remix-run/react";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, useActionData, useTransition } from '@remix-run/react';
 
-import { getWeekNflGames } from "~/models/nflgame.server";
-import type { Player } from "~/models/players.server";
-import { getActivePlayersByPosition, getPlayer } from "~/models/players.server";
+import { getWeekNflGames } from '~/models/nflgame.server';
+import type { Player } from '~/models/players.server';
+import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
 import {
   getQBStreamingWeek,
   updateQBStreamingWeek,
-} from "~/models/qbstreamingweek.server";
+} from '~/models/qbstreamingweek.server';
 import {
   createQBStreamingWeekOption,
   deleteQBStreamingWeekOption,
-} from "~/models/qbstreamingweekoption.server";
+} from '~/models/qbstreamingweekoption.server';
 
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -31,7 +31,7 @@ type LoaderData = {
 
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
@@ -41,15 +41,15 @@ export const action = async ({ params, request }: ActionArgs) => {
   if (!qbStreamingWeek) throw new Error(`QB Streaming Week does not exist`);
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "addPlayer": {
-      const playerId = formData.get("playerId");
-      if (typeof playerId !== "string")
-        throw new Error("Player ID has been generated with an error.");
+    case 'addPlayer': {
+      const playerId = formData.get('playerId');
+      if (typeof playerId !== 'string')
+        throw new Error('Player ID has been generated with an error.');
 
-      const isDeep = formData.get("isDeep");
+      const isDeep = formData.get('isDeep');
 
       // Get NFL team ID for the QB
       const player = await getPlayer(playerId);
@@ -58,12 +58,12 @@ export const action = async ({ params, request }: ActionArgs) => {
       // Get the NFL game where the team ID exists for the current week
       const nflGames = await getWeekNflGames(
         qbStreamingWeek.year,
-        qbStreamingWeek.week
+        qbStreamingWeek.week,
       );
       const nflGame = nflGames.find(
-        (nflGame) =>
+        nflGame =>
           nflGame.awayTeamId === player.currentNFLTeamId ||
-          nflGame.homeTeamId === player.currentNFLTeamId
+          nflGame.homeTeamId === player.currentNFLTeamId,
       );
       if (!nflGame) throw new Error(`Game not found for QB`);
 
@@ -75,19 +75,19 @@ export const action = async ({ params, request }: ActionArgs) => {
         nflGameId: nflGame.id,
       });
 
-      return json<ActionData>({ message: "Player has been added." });
+      return json<ActionData>({ message: 'Player has been added.' });
     }
-    case "removePlayer": {
-      const qbStreamingWeekOptionId = formData.get("qbStreamingWeekOptionId");
-      if (typeof qbStreamingWeekOptionId !== "string")
-        throw new Error("Option does not exist");
+    case 'removePlayer': {
+      const qbStreamingWeekOptionId = formData.get('qbStreamingWeekOptionId');
+      if (typeof qbStreamingWeekOptionId !== 'string')
+        throw new Error('Option does not exist');
 
       await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
 
-      return json<ActionData>({ message: "Player has been removed." });
+      return json<ActionData>({ message: 'Player has been removed.' });
     }
-    case "updateWeek": {
-      const isOpen = formData.get("isOpen");
+    case 'updateWeek': {
+      const isOpen = formData.get('isOpen');
 
       await updateQBStreamingWeek({
         id: qbStreamingWeek.id,
@@ -97,16 +97,16 @@ export const action = async ({ params, request }: ActionArgs) => {
         isOpen: isOpen ? true : false,
       });
 
-      return json<ActionData>({ message: "Week has been updated." });
+      return json<ActionData>({ message: 'Week has been updated.' });
     }
   }
 
-  return json<ActionData>({ message: "Nothing has happened." });
+  return json<ActionData>({ message: 'Nothing has happened.' });
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
@@ -116,11 +116,11 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const qbStreamingWeek = await getQBStreamingWeek(qbStreamingWeekId);
   if (!qbStreamingWeek) throw new Error(`QB Streaming week does not exist`);
 
-  const activeQBs = await getActivePlayersByPosition("QB");
+  const activeQBs = await getActivePlayersByPosition('QB');
 
   return superjson<LoaderData>(
     { activeQBs, qbStreamingWeek },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -129,20 +129,20 @@ export default function AdminSpreadPoolYearWeek() {
   const { activeQBs, qbStreamingWeek } = useSuperLoaderData<typeof loader>();
   const transition = useTransition();
 
-  if (!qbStreamingWeek) throw new Error("No information found for week");
+  if (!qbStreamingWeek) throw new Error('No information found for week');
 
   return (
     <div>
       <h2>Edit Picks for Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST">
+      <Form method='POST'>
         <h3>Add Player</h3>
         <div>
           <select
-            name="playerId"
-            className="form-select mt-1 block w-full dark:border-0 dark:bg-slate-800"
+            name='playerId'
+            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
           >
-            {activeQBs.map((qb) => (
+            {activeQBs.map(qb => (
               <option key={qb.id} value={qb.id}>
                 {qb.lastName}, {qb.firstName}: {qb.nflTeam}
               </option>
@@ -150,29 +150,29 @@ export default function AdminSpreadPoolYearWeek() {
           </select>
         </div>
         <div>
-          <label htmlFor="isDeep">
+          <label htmlFor='isDeep'>
             <input
-              type="checkbox"
-              name="isDeep"
-              id="isDeep"
+              type='checkbox'
+              name='isDeep'
+              id='isDeep'
               defaultChecked={true}
-            />{" "}
+            />{' '}
             Available in both player pools
           </label>
         </div>
-        <div className="pt-4">
+        <div className='pt-4'>
           <Button
-            type="submit"
-            name="_action"
-            value="addPlayer"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='addPlayer'
+            disabled={transition.state !== 'idle'}
           >
             Add Player
           </Button>
         </div>
       </Form>
       <h3>Available Players</h3>
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Player</th>
@@ -183,52 +183,50 @@ export default function AdminSpreadPoolYearWeek() {
           </tr>
         </thead>
         <tbody>
-          {qbStreamingWeek.QBStreamingWeekOptions.map(
-            (qbStreamingWeekOption) => (
-              <tr key={qbStreamingWeekOption.id}>
-                <td>{qbStreamingWeekOption.player.fullName}</td>
-                <td>{qbStreamingWeekOption.player.nflTeam}</td>
-                <td>{qbStreamingWeekOption.isDeep ? "Yes" : "No"}</td>
-                <td>{qbStreamingWeekOption.pointsScored}</td>
-                <td>
-                  <Form method="POST">
-                    <input
-                      type="hidden"
-                      name="qbStreamingWeekOptionId"
-                      value={qbStreamingWeekOption.id}
-                    />
-                    <Button
-                      type="submit"
-                      name="_action"
-                      value="removePlayer"
-                      disabled={transition.state !== "idle"}
-                    >
-                      Remove
-                    </Button>
-                  </Form>
-                </td>
-              </tr>
-            )
-          )}
+          {qbStreamingWeek.QBStreamingWeekOptions.map(qbStreamingWeekOption => (
+            <tr key={qbStreamingWeekOption.id}>
+              <td>{qbStreamingWeekOption.player.fullName}</td>
+              <td>{qbStreamingWeekOption.player.nflTeam}</td>
+              <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
+              <td>{qbStreamingWeekOption.pointsScored}</td>
+              <td>
+                <Form method='POST'>
+                  <input
+                    type='hidden'
+                    name='qbStreamingWeekOptionId'
+                    value={qbStreamingWeekOption.id}
+                  />
+                  <Button
+                    type='submit'
+                    name='_action'
+                    value='removePlayer'
+                    disabled={transition.state !== 'idle'}
+                  >
+                    Remove
+                  </Button>
+                </Form>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
       <h3>Week Settings</h3>
-      <Form method="POST">
-        <label htmlFor="isOpen">
+      <Form method='POST'>
+        <label htmlFor='isOpen'>
           <input
-            type="checkbox"
-            name="isOpen"
-            id="isOpen"
+            type='checkbox'
+            name='isOpen'
+            id='isOpen'
             defaultChecked={qbStreamingWeek.isOpen}
-          />{" "}
+          />{' '}
           Week is active for selections
         </label>
         <div>
           <Button
-            type="submit"
-            name="_action"
-            value="updateWeek"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='updateWeek'
+            disabled={transition.state !== 'idle'}
           >
             Update Week
           </Button>

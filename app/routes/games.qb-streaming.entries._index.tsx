@@ -1,11 +1,11 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
 
-import { getQBStreamingWeeks } from "~/models/qbstreamingweek.server";
-import { getCurrentSeason } from "~/models/season.server";
+import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
+import { getCurrentSeason } from '~/models/season.server';
 
-import { authenticator } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import { authenticator } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   qbStreamingWeeks: Awaited<ReturnType<typeof getQBStreamingWeeks>>;
@@ -13,12 +13,12 @@ type LoaderData = {
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
@@ -27,7 +27,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     {
       qbStreamingWeeks,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -38,12 +38,12 @@ export default function GamesQBStreamingMyEntries() {
     <>
       <h2>My Entries</h2>
       <ul>
-        {qbStreamingWeeks.map((qbStreamingWeek) => {
+        {qbStreamingWeeks.map(qbStreamingWeek => {
           const suffix = qbStreamingWeek.isScored
-            ? "- Week Scored"
+            ? '- Week Scored'
             : !qbStreamingWeek.isOpen
-            ? "- Not Open"
-            : "";
+              ? '- Not Open'
+              : '';
 
           return (
             <li key={qbStreamingWeek.id}>

@@ -1,11 +1,11 @@
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-import type { PoolWeek } from "./poolweek.server";
-import type { User } from "./user.server";
+import type { PoolWeek } from './poolweek.server';
+import type { User } from './user.server';
 
 export async function createPoolWeekMissed(
-  userId: User["id"],
-  poolWeekId: PoolWeek["id"]
+  userId: User['id'],
+  poolWeekId: PoolWeek['id'],
 ) {
   return prisma.poolWeekMissed.create({
     data: { userId, poolWeekId },
@@ -13,8 +13,8 @@ export async function createPoolWeekMissed(
 }
 
 export async function getPoolWeekMissedByUserAndYear(
-  userId: User["id"],
-  year: PoolWeek["year"]
+  userId: User['id'],
+  year: PoolWeek['year'],
 ) {
   return prisma.poolWeekMissed.findMany({
     where: {
@@ -30,7 +30,7 @@ export async function getPoolWeekMissedByUserAndYear(
 }
 
 export async function getPoolWeekMissedTotalByUserAndYear(
-  year: PoolWeek["year"]
+  year: PoolWeek['year'],
 ) {
   return prisma.poolWeekMissed.groupBy({
     where: {
@@ -38,7 +38,7 @@ export async function getPoolWeekMissedTotalByUserAndYear(
         year,
       },
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       resultWonLoss: true,
     },
@@ -46,8 +46,8 @@ export async function getPoolWeekMissedTotalByUserAndYear(
 }
 
 export async function getPoolWeekMissedTotalByUserAndYearAndWeek(
-  year: PoolWeek["year"],
-  weekNumber: PoolWeek["weekNumber"]
+  year: PoolWeek['year'],
+  weekNumber: PoolWeek['weekNumber'],
 ) {
   return prisma.poolWeekMissed.groupBy({
     where: {
@@ -56,7 +56,7 @@ export async function getPoolWeekMissedTotalByUserAndYearAndWeek(
         weekNumber,
       },
     },
-    by: ["userId"],
+    by: ['userId'],
     _sum: {
       amountBet: true,
       resultWonLoss: true,

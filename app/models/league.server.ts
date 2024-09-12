@@ -1,10 +1,10 @@
-import type { League } from "@prisma/client";
+import type { League } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { League } from "@prisma/client";
+export type { League } from '@prisma/client';
 
-type LeagueCreateInput = Omit<League, "id" | "createdAt" | "updatedAt">;
+type LeagueCreateInput = Omit<League, 'id' | 'createdAt' | 'updatedAt'>;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
   ? ElementType
@@ -19,7 +19,7 @@ export async function createLeague(league: LeagueCreateInput) {
   });
 }
 
-export async function getLeague(id: League["id"]) {
+export async function getLeague(id: League['id']) {
   return prisma.league.findUnique({
     where: {
       id,
@@ -31,13 +31,13 @@ export async function getLeagues() {
   return prisma.league.findMany({
     orderBy: [
       {
-        year: "desc",
+        year: 'desc',
       },
       {
-        tier: "asc",
+        tier: 'asc',
       },
       {
-        name: "asc",
+        name: 'asc',
       },
     ],
     include: {
@@ -46,20 +46,20 @@ export async function getLeagues() {
   });
 }
 
-export async function getLeaguesByYear(year: League["year"]) {
+export async function getLeaguesByYear(year: League['year']) {
   return prisma.league.findMany({
     where: {
       year,
     },
     orderBy: [
       {
-        year: "desc",
+        year: 'desc',
       },
       {
-        tier: "asc",
+        tier: 'asc',
       },
       {
-        name: "asc",
+        name: 'asc',
       },
     ],
     include: {
@@ -69,10 +69,10 @@ export async function getLeaguesByYear(year: League["year"]) {
         },
         orderBy: [
           {
-            wins: "desc",
+            wins: 'desc',
           },
           {
-            pointsFor: "desc",
+            pointsFor: 'desc',
           },
         ],
       },

@@ -1,18 +1,18 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
-import React from "react";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
+import React from 'react';
 
-import type { currentResultsBase } from "~/models/fsquared.server";
+import type { currentResultsBase } from '~/models/fsquared.server';
 import {
   getEntryByUserAndYear,
   getResultsForYear,
-} from "~/models/fsquared.server";
-import type { Season } from "~/models/season.server";
-import { getCurrentSeason } from "~/models/season.server";
+} from '~/models/fsquared.server';
+import type { Season } from '~/models/season.server';
+import { getCurrentSeason } from '~/models/season.server';
 
-import FSquaredStandingsRow from "~/components/layout/f-squared/FSquaredStandingsRow";
-import { authenticator } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import FSquaredStandingsRow from '~/components/layout/f-squared/FSquaredStandingsRow';
+import { authenticator } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   currentResults: currentResultsBase[];
@@ -25,7 +25,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const existingEntry = user
@@ -33,10 +33,10 @@ export const loader = async ({ request }: LoaderArgs) => {
     : null;
 
   const currentResults = (await getResultsForYear(currentSeason.year))
-    .map((entry) => {
+    .map(entry => {
       const totalPoints = entry.teams.reduce(
         (prev, curr) => prev + curr.pointsFor,
-        0
+        0,
       );
       return { ...entry, totalPoints };
     })
@@ -60,7 +60,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return superjson<LoaderData>(
     { currentResults, existingEntry, currentSeason },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -81,7 +81,7 @@ export default function FSquaredIndex() {
         <p>Status: {existingEntry ? `Submitted` : `Not Submitted`}</p>
         <p>
           {currentSeason.isOpenForFSquared && (
-            <Link to="my-entry">View/Edit My Entry</Link>
+            <Link to='my-entry'>View/Edit My Entry</Link>
           )}
         </p>
       </div>

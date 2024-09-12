@@ -1,12 +1,12 @@
-import type { LoaderArgs } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import type { LoaderArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
 
-import type { PoolWeek } from "~/models/poolweek.server";
-import { getPoolWeeksByYear } from "~/models/poolweek.server";
-import { getCurrentSeason } from "~/models/season.server";
+import type { PoolWeek } from '~/models/poolweek.server';
+import { getPoolWeeksByYear } from '~/models/poolweek.server';
+import { getCurrentSeason } from '~/models/season.server';
 
-import { authenticator } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import { authenticator } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
   poolWeeks: PoolWeek[];
@@ -14,12 +14,12 @@ type LoaderData = {
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
@@ -28,7 +28,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     {
       poolWeeks,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -39,12 +39,12 @@ export default function GamesQBStreamingMyEntries() {
     <>
       <h2>My Entries</h2>
       <ul>
-        {poolWeeks.map((poolWeek) => {
+        {poolWeeks.map(poolWeek => {
           const suffix = poolWeek.isWeekScored
-            ? " - Week Scored"
+            ? ' - Week Scored'
             : !poolWeek.isOpen
-            ? " - Not Open"
-            : "";
+              ? ' - Not Open'
+              : '';
 
           return (
             <li key={poolWeek.id}>

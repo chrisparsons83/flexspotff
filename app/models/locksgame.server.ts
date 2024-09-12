@@ -1,12 +1,12 @@
-import type { NFLGame, LocksGame } from "@prisma/client";
+import type { LocksGame, NFLGame } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { LocksGame } from "@prisma/client";
+export type { LocksGame } from '@prisma/client';
 
-export type TeamPick = { teamId: string, isActive: number };
+export type TeamPick = { teamId: string; isActive: number };
 
-export type LocksGameCreate = Omit<LocksGame, "id">;
+export type LocksGameCreate = Omit<LocksGame, 'id'>;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
   ? ElementType
@@ -16,8 +16,8 @@ export type LocksGameByYearAndWeekElement = ArrElement<
 >;
 
 export async function getLocksGamesByYearAndWeek(
-  year: NFLGame["year"],
-  week: NFLGame["week"]
+  year: NFLGame['year'],
+  week: NFLGame['week'],
 ) {
   return prisma.locksGame.findMany({
     where: {
@@ -36,7 +36,7 @@ export async function getLocksGamesByYearAndWeek(
     },
     orderBy: {
       game: {
-        gameStartTime: "asc",
+        gameStartTime: 'asc',
       },
     },
   });

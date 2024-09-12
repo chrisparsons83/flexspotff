@@ -1,10 +1,10 @@
-import type { PoolWeek } from "@prisma/client";
+import type { PoolWeek } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { PoolWeek } from "@prisma/client";
+export type { PoolWeek } from '@prisma/client';
 
-type PoolWeekCreateInput = Omit<PoolWeek, "id" | "createdAt" | "updatedAt">;
+type PoolWeekCreateInput = Omit<PoolWeek, 'id' | 'createdAt' | 'updatedAt'>;
 
 export async function createPoolWeek(poolWeek: PoolWeekCreateInput) {
   return prisma.poolWeek.create({
@@ -12,7 +12,7 @@ export async function createPoolWeek(poolWeek: PoolWeekCreateInput) {
   });
 }
 
-export async function getPoolWeek(id: PoolWeek["id"]) {
+export async function getPoolWeek(id: PoolWeek['id']) {
   return prisma.poolWeek.findUnique({
     where: {
       id,
@@ -21,8 +21,8 @@ export async function getPoolWeek(id: PoolWeek["id"]) {
 }
 
 export async function getPoolWeekByYearAndWeek(
-  year: PoolWeek["year"],
-  weekNumber: PoolWeek["weekNumber"]
+  year: PoolWeek['year'],
+  weekNumber: PoolWeek['weekNumber'],
 ) {
   return prisma.poolWeek.findFirst({
     where: {
@@ -31,30 +31,30 @@ export async function getPoolWeekByYearAndWeek(
     },
     orderBy: [
       {
-        weekNumber: "desc",
+        weekNumber: 'desc',
       },
     ],
   });
 }
 
-export async function getPoolWeeksByYear(year: PoolWeek["year"]) {
+export async function getPoolWeeksByYear(year: PoolWeek['year']) {
   return prisma.poolWeek.findMany({
     where: {
       year,
     },
     orderBy: {
-      weekNumber: "desc",
+      weekNumber: 'desc',
     },
   });
 }
 
-export async function getNewestPoolWeekForYear(year: PoolWeek["year"]) {
+export async function getNewestPoolWeekForYear(year: PoolWeek['year']) {
   return prisma.poolWeek.findFirst({
     where: {
       year,
     },
     orderBy: {
-      weekNumber: "desc",
+      weekNumber: 'desc',
     },
   });
 }

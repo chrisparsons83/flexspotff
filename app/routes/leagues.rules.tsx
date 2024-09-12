@@ -1,9 +1,9 @@
 export default function RulesPage() {
   return (
     <section>
-      <h2 id="ffdiscord-club-rules">FFDiscord Club Rules</h2>
+      <h2 id='ffdiscord-club-rules'>FFDiscord Club Rules</h2>
 
-      <h3 id="1-object">1. Object</h3>
+      <h3 id='1-object'>1. Object</h3>
 
       <p>
         1.1. The object of the FFDiscord Club is to win head-to-head matches of
@@ -11,7 +11,7 @@ export default function RulesPage() {
         League to be crowned the FFDiscord Club Champion.
       </p>
 
-      <h3 id="2-commissioners">2. Commissioners</h3>
+      <h3 id='2-commissioners'>2. Commissioners</h3>
 
       <p>
         2.1. The commissioners are the following users: Christhrowsrocks,
@@ -24,7 +24,7 @@ export default function RulesPage() {
         within the Flex Spot Football server.
       </p>
 
-      <h3 id="3-membership">3. Membership</h3>
+      <h3 id='3-membership'>3. Membership</h3>
 
       <p>
         3.1. The FFDiscord Club is a public set of leagues. In order to join the
@@ -58,7 +58,7 @@ export default function RulesPage() {
         overall league.
       </p>
 
-      <h3 id="4-rosters">4. Rosters</h3>
+      <h3 id='4-rosters'>4. Rosters</h3>
 
       <p>4.1. Rosters will consist of the following positions:</p>
       <ul>
@@ -83,11 +83,11 @@ export default function RulesPage() {
         “Doubtful”, “N/A”, “DNR”, or “Susp” are not eligible for IR.
       </p>
 
-      <h3 id="5-scoring">5. Scoring</h3>
+      <h3 id='5-scoring'>5. Scoring</h3>
 
       <p>5.1. All leagues will follow the decimal scoring system below.</p>
 
-      <h4 id="passing">Passing</h4>
+      <h4 id='passing'>Passing</h4>
       <ul>
         <li>1 point for every 25 Passing Yards (0.04 per)</li>
         <li>2 points for every 2pt Conversion Passing</li>
@@ -95,14 +95,14 @@ export default function RulesPage() {
         <li>-2 points for every interception</li>
       </ul>
 
-      <h4 id="rushing">Rushing</h4>
+      <h4 id='rushing'>Rushing</h4>
       <ul>
         <li>1 point for every 10 Rushing Yards (0.1 per)</li>
         <li>2 points for every 2pt Conversion Rushing</li>
         <li>6 points for every Rushing TD</li>
       </ul>
 
-      <h4 id="receiving">Receiving</h4>
+      <h4 id='receiving'>Receiving</h4>
       <ul>
         <li>0.5 points for every Reception</li>
         <li>1 point for every 10 Receiving Yards (0.1 per)</li>
@@ -110,7 +110,7 @@ export default function RulesPage() {
         <li>6 points for every Receiving TD</li>
       </ul>
 
-      <h4 id="other-offense">Other Offense</h4>
+      <h4 id='other-offense'>Other Offense</h4>
       <ul>
         <li>-2 points for every Fumble Lost</li>
         <li>6 points for every Offensive Fumble Recovery TD</li>
@@ -118,7 +118,7 @@ export default function RulesPage() {
         <li>6 points for every Kick Return TD</li>
       </ul>
 
-      <h4 id="defensespecial-teams">Defense/Special Teams</h4>
+      <h4 id='defensespecial-teams'>Defense/Special Teams</h4>
       <ul>
         <li>6 points for every Defensive TD from an Interception</li>
         <li>6 points for every Defensive TD from a Fumble Recovery</li>
@@ -138,7 +138,7 @@ export default function RulesPage() {
         <li>-3 points for Points Allowed 35+</li>
       </ul>
 
-      <h3 id="6-draft">6. Draft</h3>
+      <h3 id='6-draft'>6. Draft</h3>
 
       <p>
         6.1. Draft Date/Time will be determined by the members of each
@@ -181,7 +181,7 @@ export default function RulesPage() {
         member’s responsibility to make sure they are available.
       </p>
 
-      <h3 id="7-waivers">7. Waivers</h3>
+      <h3 id='7-waivers'>7. Waivers</h3>
 
       <p>
         7.1. Waivers will open up immediately upon the conclusion of the draft.
@@ -218,7 +218,7 @@ export default function RulesPage() {
         performed over the season.
       </p>
 
-      <h3 id="8-trading">8. Trading</h3>
+      <h3 id='8-trading'>8. Trading</h3>
 
       <p>
         8.1. Trades will open up immediately upon the conclusion of the draft,
@@ -255,7 +255,7 @@ export default function RulesPage() {
         8.7. There is no limit on the number of trades that can be performed.
       </p>
 
-      <h3 id="9-regular-season">9. Regular Season</h3>
+      <h3 id='9-regular-season'>9. Regular Season</h3>
 
       <p>
         9.1. The regular season will last through Week 14 of the NFL regular
@@ -288,7 +288,7 @@ export default function RulesPage() {
         of the league will earn an additional loss.
       </p>
 
-      <h3 id="10-valid-lineups">10. Valid Lineups</h3>
+      <h3 id='10-valid-lineups'>10. Valid Lineups</h3>
 
       <p>
         10.1. Lineups, both starting and bench players, lock individually at
@@ -373,7 +373,7 @@ export default function RulesPage() {
         registration for the following season.
       </p>
 
-      <h3 id="11-the-cup">11. The Cup</h3>
+      <h3 id='11-the-cup'>11. The Cup</h3>
 
       <p>
         11.1. The Cup is a single elimination tournament that takes place
@@ -405,7 +405,7 @@ export default function RulesPage() {
         two-week matchups.
       </p>
 
-      <h3 id="12-tiebreakers">12. Tiebreakers</h3>
+      <h3 id='12-tiebreakers'>12. Tiebreakers</h3>
 
       <p>
         12.1. There are no tiebreaker settings for regular season matches as
@@ -427,7 +427,7 @@ export default function RulesPage() {
 
       <p>12.4. If a Cup match is tied, then the higher seed will advance.</p>
 
-      <h3 id="13-playoffs">13. Playoffs</h3>
+      <h3 id='13-playoffs'>13. Playoffs</h3>
 
       <p>
         13.1. The playoffs will begin with NFL Week 15 and end at the conclusion
@@ -444,7 +444,7 @@ export default function RulesPage() {
 
       <p>13.4. Playoff matches will be one-week playoff games.</p>
 
-      <h3 id="14-league-hierarchy">14. League Hierarchy</h3>
+      <h3 id='14-league-hierarchy'>14. League Hierarchy</h3>
 
       <p>
         14.1. The FFDiscord Club is distributed into two “tiers”: Tier One, and
@@ -466,7 +466,7 @@ export default function RulesPage() {
         co-champions).
       </p>
 
-      <h3 id="15-promotionrelegation">15. Promotion/Relegation</h3>
+      <h3 id='15-promotionrelegation'>15. Promotion/Relegation</h3>
 
       <p>
         15.1. At the end of each season, a certain number of top and bottom
@@ -516,11 +516,11 @@ export default function RulesPage() {
         will be reshuffled if there are multiple leagues within the tier.
       </p>
 
-      <h3 id="16-rookie-members">16. Rookie Members</h3>
+      <h3 id='16-rookie-members'>16. Rookie Members</h3>
 
       <p>16.1. New members to the FFDiscord Club will begin in Tier Two.</p>
 
-      <h3 id="17-re-entry">17. Re-Entry</h3>
+      <h3 id='17-re-entry'>17. Re-Entry</h3>
 
       <p>
         17.1. If a member leaves the league for a season, when applying for
@@ -534,7 +534,7 @@ export default function RulesPage() {
         readmitted to the league.
       </p>
 
-      <h3 id="18-league-growth-and-expansion">
+      <h3 id='18-league-growth-and-expansion'>
         18. League Growth and Expansion
       </h3>
 
@@ -543,7 +543,7 @@ export default function RulesPage() {
         will be added in Tier Two to accommodate the growth.
       </p>
 
-      <h3 id="19-player-conduct">19. Player Conduct</h3>
+      <h3 id='19-player-conduct'>19. Player Conduct</h3>
 
       <p>
         19.1. Don’t be a jerk, and be respectful to others. Abuse, disrespect,
@@ -557,7 +557,7 @@ export default function RulesPage() {
         not required to be removed from the league.
       </p>
 
-      <h3 id="20-rules">20. Rules</h3>
+      <h3 id='20-rules'>20. Rules</h3>
 
       <p>
         20.1. Any situation not covered within the rules outlined above will be

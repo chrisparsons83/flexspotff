@@ -1,15 +1,15 @@
-import { LockClosedIcon } from "@heroicons/react/outline";
-import clsx from "clsx";
-import { useState } from "react";
+import { LockClosedIcon } from '@heroicons/react/outline';
+import clsx from 'clsx';
+import { useState } from 'react';
 
-import type { League } from "~/models/league.server";
-import type { Team, getTeamsInSeason } from "~/models/team.server";
+import type { League } from '~/models/league.server';
+import type { Team, getTeamsInSeason } from '~/models/team.server';
 
 type Props = {
   leagueName: string;
   teams: Awaited<ReturnType<typeof getTeamsInSeason>>;
-  existingPicks: Team["id"][] | null;
-  isLeagueValid: (leagueName: League["id"], isValid: boolean) => void;
+  existingPicks: Team['id'][] | null;
+  isLeagueValid: (leagueName: League['id'], isValid: boolean) => void;
 };
 
 export default function FSquaredEntryFormSection({
@@ -29,10 +29,10 @@ export default function FSquaredEntryFormSection({
     const total = selected.length + change;
     const isLeagueFull = total === 2 || Boolean(leagueLocked);
     if (event.target.checked) {
-      setSelected((prevState) => [...prevState, event.target.value]);
+      setSelected(prevState => [...prevState, event.target.value]);
     } else {
-      setSelected((prevState) =>
-        prevState.filter((team) => team !== event.target.value)
+      setSelected(prevState =>
+        prevState.filter(team => team !== event.target.value),
       );
     }
     isLeagueValid(leagueName, isLeagueFull);
@@ -40,7 +40,7 @@ export default function FSquaredEntryFormSection({
 
   return (
     <div>
-      <h3 className="flex gap-2">
+      <h3 className='flex gap-2'>
         {leagueName}
         {leagueLocked && <LockClosedIcon width={32} height={32} />}
       </h3>
@@ -48,13 +48,13 @@ export default function FSquaredEntryFormSection({
         <div
           key={team.id}
           className={clsx(
-            index % 2 === 0 ? "bg-gray-900" : "bg-gray-800",
-            "p-2"
+            index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+            'p-2',
           )}
         >
-          <label className="block">
+          <label className='block'>
             <input
-              type="checkbox"
+              type='checkbox'
               name={leagueName}
               value={team.id}
               onChange={handleChangeCheck}
@@ -62,12 +62,12 @@ export default function FSquaredEntryFormSection({
                 leagueLocked ||
                 (selected.length === 2 && !selected.includes(team.id))
               }
-              className="disabled:opacity-25"
+              className='disabled:opacity-25'
               defaultChecked={
                 existingPicks ? existingPicks.includes(team.id) : false
               }
-            />{" "}
-            {team.user?.discordName || "N/A"}
+            />{' '}
+            {team.user?.discordName || 'N/A'}
           </label>
         </div>
       ))}

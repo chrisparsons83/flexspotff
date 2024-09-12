@@ -1,32 +1,32 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { Form, useTransition } from "@remix-run/react";
-import { useState } from "react";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { Form, useTransition } from '@remix-run/react';
+import { useState } from 'react';
 
-import type { TeamPick } from "~/models/locksgame.server";
-import { getLocksGamesByYearAndWeek } from "~/models/locksgame.server";
+import type { TeamPick } from '~/models/locksgame.server';
+import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import type {
   LocksGamePick,
   LocksGamePickCreate,
-} from "~/models/locksgamepicks.server";
+} from '~/models/locksgamepicks.server';
 import {
   createLocksGamePicks,
   deleteLocksGamePicksForUserAndWeek,
   getLocksGamePicksByUserAndLocksWeek,
-} from "~/models/locksgamepicks.server";
-import type { LocksWeek } from "~/models/locksweek.server";
-import { getLocksWeek } from "~/models/locksweek.server";
-import { getCurrentSeason } from "~/models/season.server";
-import type { User } from "~/models/user.server";
+} from '~/models/locksgamepicks.server';
+import type { LocksWeek } from '~/models/locksweek.server';
+import { getLocksWeek } from '~/models/locksweek.server';
+import { getCurrentSeason } from '~/models/season.server';
+import type { User } from '~/models/user.server';
 
-import LocksChallengeGameComponent from "~/components/layout/locks-challenge/LocksChallengeGame";
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator } from "~/services/auth.server";
+import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { authenticator } from '~/services/auth.server';
 import {
   superjson,
   useSuperActionData,
   useSuperLoaderData,
-} from "~/utils/data";
+} from '~/utils/data';
 
 type ActionData = {
   message?: string;
@@ -43,12 +43,12 @@ type LoaderData = {
 
 export const action = async ({ params, request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const locksWeekId = params.id;
@@ -58,7 +58,7 @@ export const action = async ({ params, request }: ActionArgs) => {
   if (!locksWeek) throw new Error(`Missing locks week.`);
   const locksGames = await getLocksGamesByYearAndWeek(
     locksWeek.year,
-    locksWeek.weekNumber
+    locksWeek.weekNumber,
   );
 
   // Create list to hold all selected teams
@@ -67,12 +67,12 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Update map with existing bets
   const existingPicks = await getLocksGamePicksByUserAndLocksWeek(
     user,
-    locksWeek
+    locksWeek,
   );
   for (const existingPick of existingPicks) {
     if (existingPick.isActive > 0) {
       nflTeamsPicked.push(
-        `${existingPick.locksGameId}-${existingPick.teamBetId}`
+        `${existingPick.locksGameId}-${existingPick.teamBetId}`,
       );
     }
   }
@@ -80,53 +80,53 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Update map with new picks that are eligible
   const newPicksForm = await request.formData();
   for (const [key, amount] of newPicksForm.entries()) {
-    const [locksGameId, teamBetId] = key.split("-");
+    const [locksGameId, teamBetId] = key.split('-');
     const locksGame = locksGames.find(
-      (locksGame) => locksGame.id === locksGameId
+      locksGame => locksGame.id === locksGameId,
     );
     if (!locksGame) continue;
 
     // If no team is bet then remove the game from the list
-    if (!teamBetId || teamBetId === "undefined") {
-      if (nflTeamsPicked.some((item) => item.includes(`${locksGameId}`))) {
+    if (!teamBetId || teamBetId === 'undefined') {
+      if (nflTeamsPicked.some(item => item.includes(`${locksGameId}`))) {
         // Remove the game from the list
         nflTeamsPicked.splice(
-          nflTeamsPicked.findIndex((item) => item.includes(`${locksGameId}`)),
-          1
+          nflTeamsPicked.findIndex(item => item.includes(`${locksGameId}`)),
+          1,
         );
       }
     }
 
     if (locksGame.game.gameStartTime > new Date()) {
       // If isActive flag is 0 then do not add to nflTeamsPicked
-      if (amount !== "0") {
+      if (amount !== '0') {
         //If homeTeam is bet on previously and the awayTeam is selected
         if (
           nflTeamsPicked.includes(
-            `${locksGameId}-${locksGame.game.homeTeamId}`
+            `${locksGameId}-${locksGame.game.homeTeamId}`,
           ) &&
           teamBetId === locksGame.game.awayTeamId
         ) {
           nflTeamsPicked.splice(
             nflTeamsPicked.findIndex(
-              (item) => item === `${locksGameId}-${locksGame.game.homeTeamId}`
+              item => item === `${locksGameId}-${locksGame.game.homeTeamId}`,
             ),
-            1
+            1,
           );
           nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
         }
         //If awayTeam is bet on previously and the homeTeam is selected
         if (
           nflTeamsPicked.includes(
-            `${locksGameId}-${locksGame.game.awayTeamId}`
+            `${locksGameId}-${locksGame.game.awayTeamId}`,
           ) &&
           teamBetId === locksGame.game.homeTeamId
         ) {
           nflTeamsPicked.splice(
             nflTeamsPicked.findIndex(
-              (item) => item === `${locksGameId}-${locksGame.game.awayTeamId}`
+              item => item === `${locksGameId}-${locksGame.game.awayTeamId}`,
             ),
-            1
+            1,
           );
           nflTeamsPicked.push(`${locksGameId}-${teamBetId}`);
         } else {
@@ -141,9 +141,9 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Loop through map and build promises to send down for creates
   const dataToInsert: LocksGamePickCreate[] = [];
   for (const [, picked] of nflTeamsPicked.entries()) {
-    const [locksGameId, teamBetId] = picked.split("-");
+    const [locksGameId, teamBetId] = picked.split('-');
     const locksGame = locksGames.find(
-      (locksGame) => locksGame.id === locksGameId
+      locksGame => locksGame.id === locksGameId,
     );
     let otherTeamId =
       teamBetId === locksGame?.game.homeTeamId
@@ -166,7 +166,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       isLoss: 0,
       isTie: 0,
       isWin: 0,
-      teamBetId: otherTeamId || "",
+      teamBetId: otherTeamId || '',
       locksGameId: locksGameId,
       isActive: 0,
     });
@@ -175,9 +175,7 @@ export const action = async ({ params, request }: ActionArgs) => {
   // Find all the locksGame that were not created and add them to the data as inactive
   for (const locksGame of locksGames) {
     // Check if the locksGame was created
-    if (
-      !(nflTeamsPicked.filter((id) => id.includes(locksGame.id)).length > 0)
-    ) {
+    if (!(nflTeamsPicked.filter(id => id.includes(locksGame.id)).length > 0)) {
       // Push the data as inactive
       dataToInsert.push({
         userId: user.id,
@@ -209,19 +207,19 @@ export const action = async ({ params, request }: ActionArgs) => {
   await createLocksGamePicks(dataToInsert);
 
   return superjson<ActionData>(
-    { message: "Your picks have been saved." },
-    { headers: { "x-superjson": "true" } }
+    { message: 'Your picks have been saved.' },
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const locksWeekId = params.id;
@@ -231,23 +229,23 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   if (!locksWeek) {
     return superjson<LoaderData>({
-      notOpenYet: "Week has not been created yet.",
+      notOpenYet: 'Week has not been created yet.',
     });
   }
   if (!locksWeek.isOpen) {
     return superjson<LoaderData>({
-      notOpenYet: "Week is not open yet (Blame Chris)",
+      notOpenYet: 'Week is not open yet (Blame Chris)',
     });
   }
 
   const locksGamePicks = await getLocksGamePicksByUserAndLocksWeek(
     user,
-    locksWeek
+    locksWeek,
   );
 
   const locksGames = await getLocksGamesByYearAndWeek(
     locksWeek.year,
-    locksWeek.weekNumber
+    locksWeek.weekNumber,
   );
 
   const weekNumber = locksWeek.weekNumber;
@@ -260,7 +258,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       locksGamePicks,
       weekNumber,
     },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -271,49 +269,49 @@ export default function GamesLocksChallengeWeek() {
   const transition = useTransition();
 
   const existingPicks: TeamPick[] =
-    locksGamePicks?.flat().map((lockGame) => ({
+    locksGamePicks?.flat().map(lockGame => ({
       teamId: lockGame.teamBetId,
       isActive: lockGame.isActive,
     })) || [];
 
-  const gamesBetOn = existingPicks.filter((pick) => pick.isActive === 1).length;
+  const gamesBetOn = existingPicks.filter(pick => pick.isActive === 1).length;
 
   const [, setPicks] = useState<TeamPick[]>(existingPicks);
 
   const handleChange = (picks: TeamPick[]) => {
-    setPicks((prevPicks) => {
-      const newBetTeamIds = picks.map((pick) => pick.teamId);
+    setPicks(prevPicks => {
+      const newBetTeamIds = picks.map(pick => pick.teamId);
       const cleanedBets = prevPicks.filter(
-        (prevPick) => !newBetTeamIds.includes(prevPick.teamId)
+        prevPick => !newBetTeamIds.includes(prevPick.teamId),
       );
       return [...cleanedBets, ...picks];
     });
   };
 
-  const disableSubmit = transition.state !== "idle" || locksWeek?.isWeekScored;
+  const disableSubmit = transition.state !== 'idle' || locksWeek?.isWeekScored;
   return (
     <>
       <h2>Week {weekNumber} Entry</h2>
-      <Form method="POST" reloadDocument>
+      <Form method='POST' reloadDocument>
         {notOpenYet || (
           <>
             {actionData?.message && <Alert message={actionData.message} />}
-            <div className="mb-4">
+            <div className='mb-4'>
               <div>Teams Picked: {gamesBetOn}</div>
             </div>
-            <div className="md:w-1/2">
-              {locksGames?.map((locksGame) => {
+            <div className='md:w-1/2'>
+              {locksGames?.map(locksGame => {
                 const existingPick = existingPicks.find(
-                  (existingPick) =>
+                  existingPick =>
                     [
                       locksGame.game.awayTeamId,
                       locksGame.game.homeTeamId,
                     ].includes(existingPick.teamId) &&
-                    existingPick.isActive === 1
+                    existingPick.isActive === 1,
                 );
                 const existingLocksGamePick = locksGamePicks?.find(
-                  (locksGamePick) =>
-                    locksGamePick.teamBetId === existingPick?.teamId
+                  locksGamePick =>
+                    locksGamePick.teamBetId === existingPick?.teamId,
                 );
                 return (
                   <LocksChallengeGameComponent
@@ -326,11 +324,11 @@ export default function GamesLocksChallengeWeek() {
                 );
               })}
             </div>
-            <div style={{ height: "1em" }}></div>
+            <div style={{ height: '1em' }}></div>
             <Button
-              type="submit"
+              type='submit'
               disabled={disableSubmit || false}
-              className="!ml-0"
+              className='!ml-0'
             >
               Update Picks
             </Button>

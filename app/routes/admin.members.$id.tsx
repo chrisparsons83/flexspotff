@@ -1,27 +1,27 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { Form, useTransition } from "@remix-run/react";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { Form, useTransition } from '@remix-run/react';
 
-import type { SleeperUser } from "~/models/sleeperUser.server";
+import type { SleeperUser } from '~/models/sleeperUser.server';
 import {
   createOrUpdateSleeperUser,
   deleteSleeperUser,
   getSleeperOwnerIdsByUserId,
-} from "~/models/sleeperUser.server";
-import type { User } from "~/models/user.server";
-import { getUser } from "~/models/user.server";
+} from '~/models/sleeperUser.server';
+import type { User } from '~/models/user.server';
+import { getUser } from '~/models/user.server';
 
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { authenticator, requireAdmin } from "~/services/auth.server";
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 import {
   superjson,
   useSuperActionData,
   useSuperLoaderData,
-} from "~/utils/data";
+} from '~/utils/data';
 
 enum AdminMembersEditOptions {
-  Add = "add",
-  Remove = "remove",
+  Add = 'add',
+  Remove = 'remove',
 }
 
 type ActionData = {
@@ -45,15 +45,15 @@ export const action = async ({
   request,
 }: ActionArgs): Promise<Response | ActionData> => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const formData = await request.formData();
-  const sleeperOwnerID = formData.get("sleeperOwnerID");
-  const action = formData.get("_action");
+  const sleeperOwnerID = formData.get('sleeperOwnerID');
+  const action = formData.get('_action');
 
-  if (typeof sleeperOwnerID !== "string") {
+  if (typeof sleeperOwnerID !== 'string') {
     throw new Error(`Form not submitted correctly`);
   }
   if (!params.id) {
@@ -65,7 +65,7 @@ export const action = async ({
   const fieldErrors = {
     sleeperOwnerID:
       sleeperOwnerID.length === 0
-        ? "Sleeper Owner ID has no content"
+        ? 'Sleeper Owner ID has no content'
         : undefined,
   };
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -79,7 +79,7 @@ export const action = async ({
         {
           message: `sleeperOwnerID ${sleeperOwnerID} removed.`,
         },
-        { headers: { "x-superjson": "true" } }
+        { headers: { 'x-superjson': 'true' } },
       );
     case AdminMembersEditOptions.Add:
       await createOrUpdateSleeperUser({
@@ -88,9 +88,9 @@ export const action = async ({
       });
       return superjson<ActionData>(
         {
-          message: "ID added.",
+          message: 'ID added.',
         },
-        { headers: { "x-superjson": "true" } }
+        { headers: { 'x-superjson': 'true' } },
       );
   }
 
@@ -99,20 +99,20 @@ export const action = async ({
 
 export const loader = async ({ params }: LoaderArgs) => {
   if (!params.id) {
-    throw new Error("Error building page.");
+    throw new Error('Error building page.');
   }
 
   const user = await getUser(params.id);
 
   if (!user) {
-    throw new Error("Member not found");
+    throw new Error('Member not found');
   }
 
   const sleeperUsers = await getSleeperOwnerIdsByUserId(user.id);
 
   return superjson<LoaderData>(
     { user, sleeperUsers },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -122,11 +122,11 @@ export default function EditUser() {
   const transition = useTransition();
 
   const buttonText =
-    transition.state === "submitting"
-      ? "Adding..."
-      : transition.state === "loading"
-      ? "Added!"
-      : "Add";
+    transition.state === 'submitting'
+      ? 'Adding...'
+      : transition.state === 'loading'
+        ? 'Added!'
+        : 'Add';
 
   return (
     <>
@@ -142,16 +142,16 @@ export default function EditUser() {
           <tr key={sleeperOwnerID}>
             <td>{sleeperOwnerID}</td>
             <td>
-              <Form method="POST">
+              <Form method='POST'>
                 <input
-                  type="hidden"
-                  name="sleeperOwnerID"
+                  type='hidden'
+                  name='sleeperOwnerID'
                   value={sleeperOwnerID}
                 />
                 <Button
-                  type="submit"
-                  disabled={transition.state !== "idle"}
-                  name="_action"
+                  type='submit'
+                  disabled={transition.state !== 'idle'}
+                  name='_action'
                   value={AdminMembersEditOptions.Remove}
                 >
                   Remove
@@ -161,31 +161,31 @@ export default function EditUser() {
           </tr>
         ))}
       </table>
-      <Form method="POST" className="grid grid-cols-1 gap-6">
+      <Form method='POST' className='grid grid-cols-1 gap-6'>
         <div>
-          <label htmlFor="sleeperOwnerID">
+          <label htmlFor='sleeperOwnerID'>
             Add Sleeper Owner ID:
             <input
-              type="text"
+              type='text'
               required
-              name="sleeperOwnerID"
-              id="sleeperOwnerID"
+              name='sleeperOwnerID'
+              id='sleeperOwnerID'
               aria-invalid={
                 Boolean(actionData?.fieldErrors?.sleeperOwnerID) || undefined
               }
               aria-errormessage={
                 actionData?.fieldErrors?.sleeperOwnerID
-                  ? "sleeperOwnerID-error"
+                  ? 'sleeperOwnerID-error'
                   : undefined
               }
-              className="mt-1 block w-full dark:border-0 dark:bg-slate-800"
+              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
             />
           </label>
           {actionData?.fieldErrors?.sleeperOwnerID ? (
             <p
-              className="form-validation-error"
-              role="alert"
-              id="sleeperOwnerID-error"
+              className='form-validation-error'
+              role='alert'
+              id='sleeperOwnerID-error'
             >
               {actionData.fieldErrors.sleeperOwnerID}
             </p>
@@ -193,14 +193,14 @@ export default function EditUser() {
         </div>
         <div>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            disabled={transition.state !== "idle"}
-            name="_action"
+            type='submit'
+            disabled={transition.state !== 'idle'}
+            name='_action'
             value={AdminMembersEditOptions.Add}
           >
             {buttonText}

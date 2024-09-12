@@ -1,22 +1,23 @@
-import type { FSquaredEntry, Team } from "@prisma/client";
+import type { FSquaredEntry, Team } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { FSquaredEntry } from "@prisma/client";
+export type { FSquaredEntry } from '@prisma/client';
 
 type FSquaredEntryCreateInput = Omit<
   FSquaredEntry,
-  "id" | "createdAt" | "updatedAt"
+  'id' | 'createdAt' | 'updatedAt'
 >;
 
 // Doing this because Prisma hates me actually aggregating a sum based on connected fields.
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
   ? ElementType
   : never;
-export type currentResultsBase =
-  | ArrElement<Awaited<ReturnType<typeof getResultsForYear>>> & {
-      totalPoints: number;
-    };
+export type currentResultsBase = ArrElement<
+  Awaited<ReturnType<typeof getResultsForYear>>
+> & {
+  totalPoints: number;
+};
 
 export async function createEntry(entry: FSquaredEntryCreateInput) {
   return prisma.fSquaredEntry.create({
@@ -24,7 +25,7 @@ export async function createEntry(entry: FSquaredEntryCreateInput) {
   });
 }
 
-export async function getEntry(id: FSquaredEntry["id"]) {
+export async function getEntry(id: FSquaredEntry['id']) {
   return prisma.fSquaredEntry.findUnique({
     where: {
       id,
@@ -33,8 +34,8 @@ export async function getEntry(id: FSquaredEntry["id"]) {
 }
 
 export async function getEntryByUserAndYear(
-  userId: FSquaredEntry["userId"],
-  year: FSquaredEntry["year"]
+  userId: FSquaredEntry['userId'],
+  year: FSquaredEntry['year'],
 ) {
   return prisma.fSquaredEntry.findFirst({
     where: {
@@ -51,7 +52,7 @@ export async function getEntryByUserAndYear(
   });
 }
 
-export async function getResultsForYear(year: FSquaredEntry["year"]) {
+export async function getResultsForYear(year: FSquaredEntry['year']) {
   return prisma.fSquaredEntry.findMany({
     where: {
       year,
@@ -82,9 +83,9 @@ export async function getResultsForYear(year: FSquaredEntry["year"]) {
 }
 
 export async function updateEntry(
-  id: FSquaredEntry["id"],
-  newEntries: Team["id"][],
-  oldEntries: Team["id"][]
+  id: FSquaredEntry['id'],
+  newEntries: Team['id'][],
+  oldEntries: Team['id'][],
 ) {
   return prisma.fSquaredEntry.update({
     where: {
@@ -92,8 +93,8 @@ export async function updateEntry(
     },
     data: {
       teams: {
-        disconnect: oldEntries.map((entry) => ({ id: entry })),
-        connect: newEntries.map((entry) => ({ id: entry })),
+        disconnect: oldEntries.map(entry => ({ id: entry })),
+        connect: newEntries.map(entry => ({ id: entry })),
       },
     },
   });

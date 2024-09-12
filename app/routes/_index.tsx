@@ -8,7 +8,7 @@ export default function Index() {
         when we probably should be working.
       </p>
       <p>
-        <a href="https://discord.gg/bJdbk4hewF">Join our Discord Server</a>
+        <a href='https://discord.gg/bJdbk4hewF'>Join our Discord Server</a>
       </p>
     </>
   );

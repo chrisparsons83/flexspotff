@@ -1,28 +1,32 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useActionData, useTransition } from "@remix-run/react";
-import { getWeekNflGames } from "~/models/nflgame.server";
-import type { LocksGameCreate} from "~/models/locksgame.server";
-import { getLocksGamesByYearAndWeek, upsertLocksGame } from "~/models/locksgame.server";
+import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, useActionData, useTransition } from '@remix-run/react';
+
+import type { LocksGameCreate } from '~/models/locksgame.server';
 import {
+  getLocksGamesByYearAndWeek,
+  upsertLocksGame,
+} from '~/models/locksgame.server';
+import {
+  deleteLocksGamePicksNotActive,
   updateLocksGamePicksWithResults,
-  deleteLocksGamePicksNotActive
-} from "~/models/locksgamepicks.server";
-import type { LocksWeek } from "~/models/locksweek.server";
+} from '~/models/locksgamepicks.server';
+import type { LocksWeek } from '~/models/locksweek.server';
 import {
   createLocksWeek,
-  getNewestLocksWeekForYear,
   getLocksWeekByYearAndWeek,
   getLocksWeeksByYear,
+  getNewestLocksWeekForYear,
   updateLocksWeek,
-} from "~/models/locksweek.server";
-import { getCurrentSeason } from "~/models/season.server";
+} from '~/models/locksweek.server';
+import { getWeekNflGames } from '~/models/nflgame.server';
+import { getCurrentSeason } from '~/models/season.server';
 
-import Alert from "~/components/ui/Alert";
-import Button from "~/components/ui/Button";
-import { syncNflGameWeek } from "~/libs/syncs.server";
-import { authenticator, requireAdmin } from "~/services/auth.server";
-import { superjson, useSuperLoaderData } from "~/utils/data";
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { syncNflGameWeek } from '~/libs/syncs.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
+import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -35,18 +39,18 @@ type LoaderData = {
 
 export const action = async ({ request }: ActionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   const formData = await request.formData();
-  const action = formData.get("_action");
+  const action = formData.get('_action');
 
   switch (action) {
-    case "createNewWeek": {
+    case 'createNewWeek': {
       let currentSeason = await getCurrentSeason();
       if (!currentSeason) {
-        throw new Error("No active season currently");
+        throw new Error('No active season currently');
       }
 
       // Get max week of season, then add one
@@ -61,17 +65,17 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: false,
       });
 
-      return json<ActionData>({ message: "Week has been created" });
+      return json<ActionData>({ message: 'Week has been created' });
     }
-    case "scoreWeek": {
-      const weekNumberString = formData.get("weekNumber");
-      const yearString = formData.get("year");
+    case 'scoreWeek': {
+      const weekNumberString = formData.get('weekNumber');
+      const yearString = formData.get('year');
 
       if (
-        typeof weekNumberString !== "string" ||
-        typeof yearString !== "string"
+        typeof weekNumberString !== 'string' ||
+        typeof yearString !== 'string'
       ) {
-        throw new Error("Form has not been formed correctly");
+        throw new Error('Form has not been formed correctly');
       }
 
       const year = Number(yearString);
@@ -92,7 +96,7 @@ export const action = async ({ request }: ActionArgs) => {
         locksGamePickPromises.push(updateLocksGamePicksWithResults(locksGame));
       }
       await Promise.all(locksGamePickPromises);
-      
+
       const locksGameDeletePromises: Promise<any>[] = [];
       for (const locksGame of locksGames) {
         locksGameDeletePromises.push(deleteLocksGamePicksNotActive(locksGame));
@@ -104,17 +108,17 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: true,
       });
 
-      return json<ActionData>({ message: "Week has been scored" });
+      return json<ActionData>({ message: 'Week has been scored' });
     }
-    case "publishWeek": {
-      const weekNumberString = formData.get("weekNumber");
-      const yearString = formData.get("year");
+    case 'publishWeek': {
+      const weekNumberString = formData.get('weekNumber');
+      const yearString = formData.get('year');
 
       if (
-        typeof weekNumberString !== "string" ||
-        typeof yearString !== "string"
+        typeof weekNumberString !== 'string' ||
+        typeof yearString !== 'string'
       ) {
-        throw new Error("Form has not been formed correctly");
+        throw new Error('Form has not been formed correctly');
       }
 
       const year = Number(yearString);
@@ -130,7 +134,7 @@ export const action = async ({ request }: ActionArgs) => {
         const locksGame: LocksGameCreate = {
           gameId: nflGame.id,
           locksWeekId: locksWeek.id,
-        }
+        };
         promises.push(upsertLocksGame(locksGame));
       }
       await Promise.all(promises);
@@ -140,29 +144,29 @@ export const action = async ({ request }: ActionArgs) => {
         isOpen: true,
       });
 
-      return json<ActionData>({ message: "Week has been published" });
+      return json<ActionData>({ message: 'Week has been published' });
     }
   }
 
-  return json<ActionData>({ message: "Nothing has happened." });
+  return json<ActionData>({ message: 'Nothing has happened.' });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    failureRedirect: '/login',
   });
   requireAdmin(user);
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error("No active season currently");
+    throw new Error('No active season currently');
   }
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
   return superjson<LoaderData>(
     { locksWeeks },
-    { headers: { "x-superjson": "true" } }
+    { headers: { 'x-superjson': 'true' } },
   );
 };
 
@@ -175,24 +179,24 @@ export default function SpreadLocksList() {
     <div>
       <h2>Locks Challenge Lines by Week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method="POST">
+      <Form method='POST'>
         <div>
           {actionData?.formError ? (
-            <p className="form-validation-error" role="alert">
+            <p className='form-validation-error' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
           <Button
-            type="submit"
-            name="_action"
-            value="createNewWeek"
-            disabled={transition.state !== "idle"}
+            type='submit'
+            name='_action'
+            value='createNewWeek'
+            disabled={transition.state !== 'idle'}
           >
             Create Next Week
           </Button>
         </div>
       </Form>
-      <table className="w-full">
+      <table className='w-full'>
         <thead>
           <tr>
             <th>Week</th>
@@ -203,42 +207,42 @@ export default function SpreadLocksList() {
           </tr>
         </thead>
         <tbody>
-          {locksWeeks.map((locksWeek) => (
+          {locksWeeks.map(locksWeek => (
             <tr key={locksWeek.id}>
               <td>{locksWeek.weekNumber}</td>
-              <td>{locksWeek.isOpen ? "Yes" : "No"}</td>
-              <td>{locksWeek.isWeekScored ? "Yes" : "No"}</td>
+              <td>{locksWeek.isOpen ? 'Yes' : 'No'}</td>
+              <td>{locksWeek.isWeekScored ? 'Yes' : 'No'}</td>
               <td>
-                <Form method="POST">
+                <Form method='POST'>
                   <input
-                    type="hidden"
-                    name="weekNumber"
+                    type='hidden'
+                    name='weekNumber'
                     value={locksWeek.weekNumber}
                   />
-                  <input type="hidden" name="year" value={locksWeek.year} />
+                  <input type='hidden' name='year' value={locksWeek.year} />
                   <Button
-                    type="submit"
-                    name="_action"
-                    value="publishWeek"
-                    disabled={transition.state !== "idle"}
+                    type='submit'
+                    name='_action'
+                    value='publishWeek'
+                    disabled={transition.state !== 'idle'}
                   >
                     Publish Week
                   </Button>
                 </Form>
               </td>
               <td>
-                <Form method="POST">
+                <Form method='POST'>
                   <input
-                    type="hidden"
-                    name="weekNumber"
+                    type='hidden'
+                    name='weekNumber'
                     value={locksWeek.weekNumber}
                   />
-                  <input type="hidden" name="year" value={locksWeek.year} />
+                  <input type='hidden' name='year' value={locksWeek.year} />
                   <Button
-                    type="submit"
-                    name="_action"
-                    value="scoreWeek"
-                    disabled={transition.state !== "idle"}
+                    type='submit'
+                    name='_action'
+                    value='scoreWeek'
+                    disabled={transition.state !== 'idle'}
                   >
                     Score Week
                   </Button>

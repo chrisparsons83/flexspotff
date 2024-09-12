@@ -1,13 +1,13 @@
-import type { League, TeamGame } from "@prisma/client";
+import type { League, TeamGame } from '@prisma/client';
 
-import { prisma } from "~/db.server";
+import { prisma } from '~/db.server';
 
-export type { TeamGame } from "@prisma/client";
+export type { TeamGame } from '@prisma/client';
 
-type TeamGameCreate = Omit<TeamGame, "id">;
-type TeamGameUpsert = Omit<TeamGame, "id"> & Partial<Pick<TeamGame, "id">>;
+type TeamGameCreate = Omit<TeamGame, 'id'>;
+type TeamGameUpsert = Omit<TeamGame, 'id'> & Partial<Pick<TeamGame, 'id'>>;
 
-export async function getNewestWeekTeamGameByYear(year: League["year"]) {
+export async function getNewestWeekTeamGameByYear(year: League['year']) {
   return prisma.teamGame.aggregate({
     where: {
       team: {
@@ -25,7 +25,7 @@ export async function getNewestWeekTeamGameByYear(year: League["year"]) {
   });
 }
 
-export async function getTeamGameYearlyTotals(year: League["year"]) {
+export async function getTeamGameYearlyTotals(year: League['year']) {
   return prisma.teamGame.groupBy({
     where: {
       team: {
@@ -34,21 +34,21 @@ export async function getTeamGameYearlyTotals(year: League["year"]) {
         },
       },
     },
-    by: ["teamId"],
+    by: ['teamId'],
     _sum: {
       pointsScored: true,
     },
     orderBy: {
       _sum: {
-        pointsScored: "desc",
+        pointsScored: 'desc',
       },
     },
   });
 }
 
 export async function getTeamGameMultiweekTotals(
-  weeks: TeamGame["week"][],
-  year: League["year"]
+  weeks: TeamGame['week'][],
+  year: League['year'],
 ) {
   return prisma.teamGame.groupBy({
     where: {
@@ -61,20 +61,20 @@ export async function getTeamGameMultiweekTotals(
         },
       },
     },
-    by: ["teamId"],
+    by: ['teamId'],
     _sum: {
       pointsScored: true,
     },
     orderBy: {
       _sum: {
-        pointsScored: "desc",
+        pointsScored: 'desc',
       },
     },
   });
 }
 
 export async function getTeamGameMultiweekTotalsSeparated(
-  weeks: TeamGame["week"][]
+  weeks: TeamGame['week'][],
 ) {
   return prisma.teamGame.findMany({
     where: {
@@ -86,8 +86,8 @@ export async function getTeamGameMultiweekTotalsSeparated(
 }
 
 export async function getTeamGamesByYearAndWeek(
-  year: League["year"],
-  week: TeamGame["week"]
+  year: League['year'],
+  week: TeamGame['week'],
 ) {
   return prisma.teamGame.findMany({
     where: {
@@ -100,7 +100,7 @@ export async function getTeamGamesByYearAndWeek(
     },
     orderBy: [
       {
-        pointsScored: "desc",
+        pointsScored: 'desc',
       },
     ],
     include: {
@@ -132,8 +132,8 @@ export async function upsertTeamGame(teamGame: TeamGameUpsert) {
 
 export async function createTeamGame(teamGame: TeamGameCreate) {
   const connect = teamGame.starters
-    ?.filter((starter) => starter !== "0")
-    .map((starter) => ({ sleeperId: starter }));
+    ?.filter(starter => starter !== '0')
+    .map(starter => ({ sleeperId: starter }));
 
   return prisma.teamGame.create({
     data: {
@@ -147,8 +147,8 @@ export async function createTeamGame(teamGame: TeamGameCreate) {
 
 export async function updateTeamGame(teamGame: Partial<TeamGame>) {
   const connect = teamGame.starters
-    ?.filter((starter) => starter !== "0")
-    .map((starter) => ({ sleeperId: starter }));
+    ?.filter(starter => starter !== '0')
+    .map(starter => ({ sleeperId: starter }));
 
   return prisma.teamGame.update({
     where: {

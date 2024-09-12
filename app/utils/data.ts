@@ -1,11 +1,11 @@
 // Found at https://github.com/kiliman/remix-superjson
 // We use this because using superjson allows us to actually pass dates as dates via json, WOO.
-import { useActionData, useLoaderData } from "@remix-run/react";
-import * as _superjson from "superjson";
+import { useActionData, useLoaderData } from '@remix-run/react';
+import * as _superjson from 'superjson';
 
 export type SuperJsonFunction = <Data>(
   data: Data,
-  init?: number | ResponseInit
+  init?: number | ResponseInit,
 ) => SuperTypedResponse<Data>;
 
 export declare type SuperTypedResponse<T = unknown> = Response & {
@@ -25,10 +25,10 @@ export type UseDataFunctionReturn<T extends DataOrFunction> = T extends (
   : Awaited<T>;
 
 export const superjson: SuperJsonFunction = (data, init = {}) => {
-  let responseInit = typeof init === "number" ? { status: init } : init;
+  let responseInit = typeof init === 'number' ? { status: init } : init;
   let headers = new Headers(responseInit.headers);
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json; charset=utf-8");
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json; charset=utf-8');
   }
   return new Response(_superjson.stringify(data), {
     ...responseInit,
@@ -41,7 +41,7 @@ export function useSuperLoaderData<T = AppData>(): UseDataFunctionReturn<T> {
   return _superjson.deserialize(data);
 }
 export function useSuperActionData<
-  T = AppData
+  T = AppData,
 >(): UseDataFunctionReturn<T> | null {
   const data = useActionData();
   return data ? _superjson.deserialize(data) : null;
@@ -49,7 +49,7 @@ export function useSuperActionData<
 
 export type RedirectFunction = (
   url: string,
-  init?: number | ResponseInit
+  init?: number | ResponseInit,
 ) => SuperTypedResponse<never>;
 
 /**
@@ -60,14 +60,14 @@ export type RedirectFunction = (
  */
 export const redirect: RedirectFunction = (url, init = 302) => {
   let responseInit = init;
-  if (typeof responseInit === "number") {
+  if (typeof responseInit === 'number') {
     responseInit = { status: responseInit };
-  } else if (typeof responseInit.status === "undefined") {
+  } else if (typeof responseInit.status === 'undefined') {
     responseInit.status = 302;
   }
 
   let headers = new Headers(responseInit.headers);
-  headers.set("Location", url);
+  headers.set('Location', url);
 
   return new Response(null, {
     ...responseInit,

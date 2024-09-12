@@ -18,7 +18,7 @@
     "dev:remix": "cross-env NODE_ENV=development remix watch",
     "dev:css": "cross-env NODE_ENV=development npm run generate:css -- --watch",
     "docker": "docker-compose up -d",
-    "format": "prettier --write",
+    "format": "prettier --write . --check '!./postgres-data'",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "postinstall": "patch-package",
@@ -33,15 +33,6 @@
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"npx cypress run\"",
     "typecheck": "tsc -b && tsc -b cypress",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
-  },
-  "prettier": {
-    "importOrder": [
-      "^~/models/(.*)$",
-      "^~/(.*)$",
-      "^[./]"
-    ],
-    "importOrderSeparation": true,
-    "importOrderSortSpecifiers": true
   },
   "eslintIgnore": [
     "/node_modules",

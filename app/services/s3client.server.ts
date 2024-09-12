@@ -1,17 +1,17 @@
 import type {
   AbortMultipartUploadCommandOutput,
   CompleteMultipartUploadCommandOutput,
-} from "@aws-sdk/client-s3";
-import { HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
+} from '@aws-sdk/client-s3';
+import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import {
   unstable_composeUploadHandlers,
   unstable_createMemoryUploadHandler,
   writeAsyncIterableToWritable,
-} from "@remix-run/node";
-import { parseStream } from "music-metadata";
-import { PassThrough } from "stream";
-import z from "zod";
+} from '@remix-run/node';
+import { parseStream } from 'music-metadata';
+import { PassThrough } from 'stream';
+import z from 'zod';
 
 interface S3FileData
   extends AbortMultipartUploadCommandOutput,
@@ -47,7 +47,7 @@ const uploadStream = (Key: string, contentType: string) => {
       Bucket: process.env.AWS_BUCKET,
       Key,
       Body: pass,
-      ACL: "public-read",
+      ACL: 'public-read',
     },
     leavePartsOnError: false,
   });
@@ -62,14 +62,14 @@ const uploadStream = (Key: string, contentType: string) => {
 const uploadImageToS3 = async (
   data: AsyncIterable<Uint8Array>,
   name: string,
-  contentType: string
+  contentType: string,
 ) => {
   const stream = uploadStream(name, contentType);
   await writeAsyncIterableToWritable(data, stream.writeStream);
   const file = (await stream.promise) as S3FileData;
   const extraMetadata = await stream.metadata;
   const metadata = await s3Client.send(
-    new HeadObjectCommand({ Bucket: file.Bucket, Key: file.Key })
+    new HeadObjectCommand({ Bucket: file.Bucket, Key: file.Key }),
   );
   const duration = extraMetadata.format.duration
     ? Math.floor(extraMetadata.format.duration)
@@ -85,19 +85,19 @@ const uploadImageToS3 = async (
 const s3UploadHandler = unstable_composeUploadHandlers(
   // our custom upload handler
   async ({ name, contentType, data, filename }) => {
-    if (name !== "podcastFile" || !filename) {
+    if (name !== 'podcastFile' || !filename) {
       return undefined;
     }
     const keyName = filename ?? `${name}${+new Date()}`;
     const uploadedImage: any = await uploadImageToS3(
       data,
       keyName,
-      contentType
+      contentType,
     );
     return JSON.stringify(uploadedImage);
   },
   // fallback to memory for everything else
-  unstable_createMemoryUploadHandler()
+  unstable_createMemoryUploadHandler(),
 );
 
 export { s3UploadHandler };
