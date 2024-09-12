@@ -1,5 +1,4 @@
 import type { DraftPick, League } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { DraftPick } from '@prisma/client';

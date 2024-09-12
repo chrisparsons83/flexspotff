@@ -1,5 +1,4 @@
 import type { Registration, User } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { Registration } from '@prisma/client';

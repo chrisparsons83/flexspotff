@@ -1,5 +1,4 @@
 import type { PoolWeek } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { PoolWeek } from '@prisma/client';

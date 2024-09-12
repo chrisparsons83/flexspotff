@@ -1,5 +1,5 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import {
   getQBSelectionsByWeek,
   getQBSelectionsByYear,
@@ -8,8 +8,6 @@ import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
-
-import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
@@ -111,15 +109,15 @@ export default function QBStreamingStandingsYearIndex() {
             const standardPlayer = !currentWeekPick
               ? 'No pick'
               : currentWeekPick.standardPlayer.nflGame.gameStartTime <
-                  new Date()
-                ? currentWeekPick.standardPlayer.player.fullName
-                : 'Pending';
+                new Date()
+              ? currentWeekPick.standardPlayer.player.fullName
+              : 'Pending';
 
             const deepPlayer = !currentWeekPick
               ? 'No pick'
               : currentWeekPick.deepPlayer.nflGame.gameStartTime < new Date()
-                ? currentWeekPick.deepPlayer.player.fullName
-                : 'Pending';
+              ? currentWeekPick.deepPlayer.player.fullName
+              : 'Pending';
             return (
               <QBStreamingStandingsRowComponent
                 key={result.userId}

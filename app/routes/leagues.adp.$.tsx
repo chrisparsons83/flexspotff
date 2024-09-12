@@ -1,12 +1,10 @@
 import type { LoaderArgs } from '@remix-run/node';
 import clsx from 'clsx';
-
 import { getAverageDraftPositionByYear } from '~/models/draftpick.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

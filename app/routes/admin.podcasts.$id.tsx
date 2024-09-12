@@ -6,15 +6,13 @@ import {
 import type { ActionArgs, LoaderArgs, UploadHandler } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
 import { DateTime } from 'luxon';
-
+import Button from '~/components/ui/Button';
 import type { Episode } from '~/models/episode.server';
 import {
   createEpisode,
   getEpisode,
   updateEpisode,
 } from '~/models/episode.server';
-
-import Button from '~/components/ui/Button';
 import { authenticator } from '~/services/auth.server';
 import { podcastJsonSchema, s3UploadHandler } from '~/services/s3client.server';
 import type { S3FileUpload } from '~/services/s3client.server';
@@ -196,8 +194,8 @@ export default function PodcastEpisodeCreate() {
     transition.state === 'submitting'
       ? 'Submitting...'
       : transition.state === 'loading'
-        ? 'Submitted!'
-        : 'Submit';
+      ? 'Submitted!'
+      : 'Submit';
 
   return (
     <>

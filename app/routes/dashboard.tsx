@@ -1,6 +1,6 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
-
+import Button from '~/components/ui/Button';
 import type { Registration } from '~/models/registration.server';
 import {
   createRegistration,
@@ -10,8 +10,6 @@ import {
 import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
-
-import Button from '~/components/ui/Button';
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

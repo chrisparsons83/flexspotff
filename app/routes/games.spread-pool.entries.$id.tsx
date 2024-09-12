@@ -1,7 +1,9 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { Form, useTransition } from '@remix-run/react';
 import { useState } from 'react';
-
+import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { Bet } from '~/models/poolgame.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import type {
@@ -22,10 +24,6 @@ import {
 } from '~/models/poolweekmissed.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
-
-import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator } from '~/services/auth.server';
 import {
   superjson,

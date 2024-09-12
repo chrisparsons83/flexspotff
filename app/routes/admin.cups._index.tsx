@@ -1,15 +1,13 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, Link, useActionData, useTransition } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { Cup } from '~/models/cup.server';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

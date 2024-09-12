@@ -1,6 +1,7 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { Form, useTransition } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { SleeperUser } from '~/models/sleeperUser.server';
 import {
   createOrUpdateSleeperUser,
@@ -9,9 +10,6 @@ import {
 } from '~/models/sleeperUser.server';
 import type { User } from '~/models/user.server';
 import { getUser } from '~/models/user.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import {
   superjson,
@@ -125,8 +123,8 @@ export default function EditUser() {
     transition.state === 'submitting'
       ? 'Adding...'
       : transition.state === 'loading'
-        ? 'Added!'
-        : 'Add';
+      ? 'Added!'
+      : 'Add';
 
   return (
     <>

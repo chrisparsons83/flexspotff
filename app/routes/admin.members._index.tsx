@@ -1,10 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import type { SleeperUser } from '~/models/sleeperUser.server';
 import type { User } from '~/models/user.server';
 import { getUsers } from '~/models/user.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

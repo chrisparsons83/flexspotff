@@ -1,9 +1,7 @@
 //podcasts.apple.com/ph/podcast/trash-turtle-football/id1586577488
 import type { LoaderArgs } from '@remix-run/node';
-
 import { getEpisodes } from '~/models/episode.server';
 import type { Episode } from '~/models/episode.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

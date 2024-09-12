@@ -1,7 +1,9 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { syncNflGameWeek } from '~/libs/syncs.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
 import {
   getLocksGamesByYearAndWeek,
@@ -21,10 +23,6 @@ import {
 } from '~/models/locksweek.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
-import { syncNflGameWeek } from '~/libs/syncs.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

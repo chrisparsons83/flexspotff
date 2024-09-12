@@ -1,10 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import clsx from 'clsx';
-
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
 import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

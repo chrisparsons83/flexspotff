@@ -1,12 +1,10 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
+import GoBox from '~/components/ui/GoBox';
 import { getQBSelectionsByWeek } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-
-import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
-import GoBox from '~/components/ui/GoBox';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {
@@ -107,15 +105,15 @@ export default function QBStreamingStandingsYearWeek() {
             const standardPlayer = !currentWeekPick
               ? 'No pick'
               : currentWeekPick.standardPlayer.nflGame.gameStartTime <
-                  new Date()
-                ? currentWeekPick.standardPlayer.player.fullName
-                : 'Pending';
+                new Date()
+              ? currentWeekPick.standardPlayer.player.fullName
+              : 'Pending';
 
             const deepPlayer = !currentWeekPick
               ? 'No pick'
               : currentWeekPick.deepPlayer.nflGame.gameStartTime < new Date()
-                ? currentWeekPick.deepPlayer.player.fullName
-                : 'Pending';
+              ? currentWeekPick.deepPlayer.player.fullName
+              : 'Pending';
             return (
               <QBStreamingStandingsRowComponent
                 key={result.userId}

@@ -1,5 +1,4 @@
 import z from 'zod';
-
 import type { DraftPickCreate } from '~/models/draftpick.server';
 import {
   createDraftPick,
@@ -20,7 +19,6 @@ import {
   getTeamGamesByYearAndWeek,
   updateTeamGame,
 } from '~/models/teamgame.server';
-
 import { graphQLClient } from '~/services/sleeperGraphql.server';
 
 const sleeperADPJson = z.array(

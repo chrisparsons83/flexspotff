@@ -1,5 +1,4 @@
 import { createCookieSessionStorage } from '@remix-run/node';
-
 import { DAYS_AHEAD } from '~/utils/constants';
 
 // export the whole sessionStorage object

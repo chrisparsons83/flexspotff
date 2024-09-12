@@ -1,9 +1,7 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import LeagueTable from '~/components/layout/standings/LeagueTable';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
-
-import LeagueTable from '~/components/layout/standings/LeagueTable';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

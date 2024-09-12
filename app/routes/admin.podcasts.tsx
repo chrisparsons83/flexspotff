@@ -1,6 +1,5 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Outlet } from '@remix-run/react';
-
 import { authenticator, requirePodcastEditor } from '~/services/auth.server';
 
 export const loader = async ({ request }: LoaderArgs) => {

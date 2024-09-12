@@ -1,6 +1,7 @@
 import { type ActionArgs, type LoaderArgs, json } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { Season } from '~/models/season.server';
 import {
   createSeason,
@@ -8,9 +9,6 @@ import {
   updateActiveSeason,
   updateSeason,
 } from '~/models/season.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

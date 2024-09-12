@@ -1,10 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import type { LocksWeek } from '~/models/locksweek.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
@@ -43,8 +41,8 @@ export default function GamesLocksMyEntries() {
           const suffix = locksWeek.isWeekScored
             ? ' - Week Scored'
             : !locksWeek.isOpen
-              ? ' - Not Open'
-              : '';
+            ? ' - Not Open'
+            : '';
 
           return (
             <li key={locksWeek.id}>

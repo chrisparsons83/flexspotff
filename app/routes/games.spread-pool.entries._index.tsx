@@ -1,10 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import type { PoolWeek } from '~/models/poolweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
@@ -43,8 +41,8 @@ export default function GamesQBStreamingMyEntries() {
           const suffix = poolWeek.isWeekScored
             ? ' - Week Scored'
             : !poolWeek.isOpen
-              ? ' - Not Open'
-              : '';
+            ? ' - Not Open'
+            : '';
 
           return (
             <li key={poolWeek.id}>

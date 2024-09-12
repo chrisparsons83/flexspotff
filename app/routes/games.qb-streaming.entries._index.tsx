@@ -1,9 +1,7 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
@@ -42,8 +40,8 @@ export default function GamesQBStreamingMyEntries() {
           const suffix = qbStreamingWeek.isScored
             ? '- Week Scored'
             : !qbStreamingWeek.isOpen
-              ? '- Not Open'
-              : '';
+            ? '- Not Open'
+            : '';
 
           return (
             <li key={qbStreamingWeek.id}>

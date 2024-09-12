@@ -1,13 +1,11 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
-
 import type { League } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import type { Team } from '~/models/team.server';
 import type { TeamGame } from '~/models/teamgame.server';
 import type { User } from '~/models/user.server';
-
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 // TODO: Clean up this typing.

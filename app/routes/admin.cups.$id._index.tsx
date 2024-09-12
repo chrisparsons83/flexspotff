@@ -1,7 +1,8 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { Cup, ScoreArray } from '~/models/cup.server';
 import { getCup } from '~/models/cup.server';
 import type { CupGame } from '~/models/cupgame.server';
@@ -22,9 +23,6 @@ import {
   getTeamGameMultiweekTotals,
   getTeamGameMultiweekTotalsSeparated,
 } from '~/models/teamgame.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

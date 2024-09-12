@@ -1,5 +1,4 @@
 import type { NFLGame } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { NFLGame } from '@prisma/client';

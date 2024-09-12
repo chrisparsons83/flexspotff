@@ -1,10 +1,6 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
-
-import { createNflTeams } from '~/models/nflteam.server';
-import { getCurrentSeason } from '~/models/season.server';
-
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import {
@@ -13,6 +9,8 @@ import {
   syncNflPlayers,
   syncSleeperWeeklyScores,
 } from '~/libs/syncs.server';
+import { createNflTeams } from '~/models/nflteam.server';
+import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
 type ActionData = {

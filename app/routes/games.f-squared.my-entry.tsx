@@ -3,7 +3,9 @@ import { json } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
 import { useState } from 'react';
 import z from 'zod';
-
+import FSquaredEntryFormSection from '~/components/layout/f-squared/FSquaredEntryFormSection';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import {
   createEntry,
   getEntryByUserAndYear,
@@ -13,10 +15,6 @@ import type { League } from '~/models/league.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
-
-import FSquaredEntryFormSection from '~/components/layout/f-squared/FSquaredEntryFormSection';
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 import { shuffleArray } from '~/utils/helpers';
@@ -196,8 +194,8 @@ export default function FSquaredMyEntry() {
     transition.state === 'submitting'
       ? 'Submitting...'
       : transition.state === 'loading'
-        ? 'Submitted!'
-        : 'Submit';
+      ? 'Submitted!'
+      : 'Submit';
 
   return (
     <div>

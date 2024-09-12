@@ -1,7 +1,9 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { Form, useTransition } from '@remix-run/react';
 import { useState } from 'react';
-
+import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import type { TeamPick } from '~/models/locksgame.server';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import type {
@@ -17,10 +19,6 @@ import type { LocksWeek } from '~/models/locksweek.server';
 import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
-
-import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator } from '~/services/auth.server';
 import {
   superjson,

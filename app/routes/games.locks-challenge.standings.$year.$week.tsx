@@ -1,5 +1,6 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import GoBox from '~/components/ui/GoBox';
 import type { getLocksGamePicksWonLoss } from '~/models/locksgamepicks.server';
 import {
   getLocksGamePicksWonLossWeek,
@@ -11,9 +12,6 @@ import {
 } from '~/models/locksweek.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-
-import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
-import GoBox from '~/components/ui/GoBox';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

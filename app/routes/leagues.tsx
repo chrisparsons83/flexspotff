@@ -1,10 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
-
 import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

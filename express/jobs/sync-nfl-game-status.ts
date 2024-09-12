@@ -1,5 +1,4 @@
 import { parentPort } from 'node:worker_threads';
-
 import { getNflState, syncNflGameWeek } from '~/libs/syncs.server';
 
 // TODO: Make this not hardcoded to 2023.

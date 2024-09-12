@@ -1,7 +1,5 @@
 import clsx from 'clsx';
-
 import type { GetLeaguesByYearElement } from '~/models/league.server';
-
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 type Props = {

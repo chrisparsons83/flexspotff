@@ -1,5 +1,4 @@
 import type { Season } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { Season } from '@prisma/client';

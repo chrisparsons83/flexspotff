@@ -1,9 +1,7 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import { getEpisodes } from '~/models/episode.server';
 import type { Episode } from '~/models/episode.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

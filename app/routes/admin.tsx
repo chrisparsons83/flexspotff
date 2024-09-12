@@ -1,8 +1,6 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
-
 import type { User } from '~/models/user.server';
-
 import {
   authenticator,
   isAdmin,

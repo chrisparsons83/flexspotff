@@ -1,6 +1,5 @@
-import { truncateDB } from '~/utils/vitest';
-
 import { loader } from './podcast';
+import { truncateDB } from '~/utils/vitest';
 
 describe('Podcasts Loader', () => {
   beforeEach(async () => {

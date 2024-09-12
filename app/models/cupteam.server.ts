@@ -1,5 +1,4 @@
 import type { Cup, CupTeam } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { CupTeam } from '@prisma/client';

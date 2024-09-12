@@ -1,7 +1,6 @@
-import { prisma } from '~/db.server';
-
 import type { PoolWeek } from './poolweek.server';
 import type { User } from './user.server';
+import { prisma } from '~/db.server';
 
 export async function createPoolWeekMissed(
   userId: User['id'],

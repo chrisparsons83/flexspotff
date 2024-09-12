@@ -1,7 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
-
 import type {
   PoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
@@ -88,17 +87,17 @@ export default function SpreadPoolStandingsRow({
                   spreadAmount === 0
                     ? 'Even'
                     : spreadAmount > 0
-                      ? `+${spreadAmount}`
-                      : `${spreadAmount}`;
+                    ? `+${spreadAmount}`
+                    : `${spreadAmount}`;
 
                 const resultAction =
                   pick.resultWonLoss! > 0
                     ? 'Won'
                     : pick.resultWonLoss! < 0
-                      ? 'Lost'
-                      : pick.isScored
-                        ? 'Pushed'
-                        : 'Bet';
+                    ? 'Lost'
+                    : pick.isScored
+                    ? 'Pushed'
+                    : 'Bet';
 
                 return (
                   <div

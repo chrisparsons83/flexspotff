@@ -1,9 +1,7 @@
 import type { LoaderArgs } from '@remix-run/node';
 import clsx from 'clsx';
-
 import { getTeamsInSeason } from '~/models/team.server';
 import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
-
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

@@ -1,13 +1,11 @@
 import { Authenticator } from 'remix-auth';
 import { DiscordStrategy, SocialsProvider } from 'remix-auth-socials';
-
 import type { User } from '~/models/user.server';
 import {
   createUser,
   getUserByDiscordId,
   updateUser,
 } from '~/models/user.server';
-
 import { sessionStorage } from '~/services/session.server';
 import {
   SERVER_DISCORD_ADMIN_ROLE_ID,
@@ -44,8 +42,8 @@ authenticator.use(
       const avatarPath = jsonGuild.avatar
         ? `guilds/${SERVER_DISCORD_ID}/users/${props.profile.id}/avatars/${jsonGuild.avatar}.webp`
         : props.profile.__json.avatar
-          ? `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`
-          : '';
+        ? `avatars/${props.profile.id}/${props.profile.__json.avatar}.webp`
+        : '';
       const userName = jsonGuild.nick ?? props.profile.displayName;
 
       let user = await getUserByDiscordId(props.profile.id);

@@ -8,10 +8,8 @@ import {
   ScrollRestoration,
   useRouteError,
 } from '@remix-run/react';
-
-import type { User } from '~/models/user.server';
-
 import NavBar from '~/components/layout/NavBar';
+import type { User } from '~/models/user.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 import tailwindStylesheetUrl from '~/styles/tailwind.css';
 import cssVariables from '~/styles/variables.css';

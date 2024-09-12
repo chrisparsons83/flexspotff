@@ -1,5 +1,5 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import {
   getPoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
@@ -9,8 +9,6 @@ import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.ser
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-
-import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

@@ -1,6 +1,5 @@
 import type { LoaderArgs } from '@remix-run/node';
 import z from 'zod';
-
 import { authenticator } from '~/services/auth.server';
 
 export let loader = ({ request, params }: LoaderArgs) => {

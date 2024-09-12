@@ -1,5 +1,5 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import {
   getLocksGamePicksWonLoss,
   getLocksGamePicksWonLossWeek,
@@ -12,8 +12,6 @@ import {
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-
-import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

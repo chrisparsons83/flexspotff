@@ -1,8 +1,6 @@
 import type { LoaderArgs } from '@remix-run/node';
-
 import { getRegistrationsByYear } from '~/models/registration.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

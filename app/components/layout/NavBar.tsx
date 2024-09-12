@@ -4,7 +4,6 @@ import { MenuIcon, UserIcon, XIcon } from '@heroicons/react/outline';
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import { Fragment } from 'react';
-
 import type { User } from '~/models/user.server';
 
 const navigation = [

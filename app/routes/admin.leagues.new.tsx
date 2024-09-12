@@ -2,10 +2,8 @@ import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { fetch } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
 import z from 'zod';
-
-import { createLeague } from '~/models/league.server';
-
 import Button from '~/components/ui/Button';
+import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { redirect } from '~/utils/data';
 
@@ -82,8 +80,8 @@ export default function LeagueNew() {
     transition.state === 'submitting'
       ? 'Submitting...'
       : transition.state === 'loading'
-        ? 'Submitted!'
-        : 'Submit';
+      ? 'Submitted!'
+      : 'Submit';
 
   return (
     <>

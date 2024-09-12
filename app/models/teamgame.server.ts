@@ -1,5 +1,4 @@
 import type { League, TeamGame } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { TeamGame } from '@prisma/client';

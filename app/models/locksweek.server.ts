@@ -1,5 +1,4 @@
 import type { LocksWeek } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { LocksWeek } from '@prisma/client';

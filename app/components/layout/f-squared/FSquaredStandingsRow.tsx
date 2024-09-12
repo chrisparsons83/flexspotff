@@ -1,7 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
-
 import type { currentResultsBase } from '~/models/fsquared.server';
 
 type Props = {

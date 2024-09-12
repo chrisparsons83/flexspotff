@@ -1,5 +1,4 @@
 import type { Episode } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { Episode } from '@prisma/client';

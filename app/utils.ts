@@ -2,7 +2,6 @@ import { useMatches } from '@remix-run/react';
 import { type ClassValue, clsx } from 'clsx';
 import { useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
-
 import type { User } from '~/models/user.server';
 
 export function cn(...inputs: ClassValue[]) {

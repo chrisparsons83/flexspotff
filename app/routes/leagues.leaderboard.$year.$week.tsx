@@ -1,13 +1,11 @@
 import type { LoaderArgs } from '@remix-run/node';
-
+import LeaderboardRow from '~/components/layout/leaderboard/LeaderboardRow';
+import GoBox from '~/components/ui/GoBox';
 import { getCurrentSeason } from '~/models/season.server';
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
 } from '~/models/teamgame.server';
-
-import LeaderboardRow from '~/components/layout/leaderboard/LeaderboardRow';
-import GoBox from '~/components/ui/GoBox';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type LoaderData = {

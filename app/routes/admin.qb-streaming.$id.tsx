@@ -1,7 +1,8 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useActionData, useTransition } from '@remix-run/react';
-
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { Player } from '~/models/players.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
@@ -13,9 +14,6 @@ import {
   createQBStreamingWeekOption,
   deleteQBStreamingWeekOption,
 } from '~/models/qbstreamingweekoption.server';
-
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 

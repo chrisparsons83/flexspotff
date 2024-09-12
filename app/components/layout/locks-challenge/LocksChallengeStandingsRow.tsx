@@ -1,7 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
-
 import type {
   LocksGamePicksWonLoss,
   getLocksGamesPicksByLocksWeek,
@@ -84,10 +83,10 @@ export default function LocksChallengeStandingsRow({
                   pick.isWin === 1
                     ? 'Won'
                     : pick.isLoss === 1
-                      ? 'Lost'
-                      : pick.isTie === 1
-                        ? 'Pushed'
-                        : 'Bet';
+                    ? 'Lost'
+                    : pick.isTie === 1
+                    ? 'Pushed'
+                    : 'Bet';
 
                 return (
                   <div

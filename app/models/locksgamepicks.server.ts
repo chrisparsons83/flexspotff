@@ -1,10 +1,8 @@
+import type { LocksGameByYearAndWeekElement } from './locksgame.server';
+import { prisma } from '~/db.server';
 import type { LocksGamePick } from '~/models/locksgamepicks.server';
 import type { LocksWeek } from '~/models/locksweek.server';
 import type { User } from '~/models/user.server';
-
-import { prisma } from '~/db.server';
-
-import type { LocksGameByYearAndWeekElement } from './locksgame.server';
 
 export type { LocksGamePick } from '@prisma/client';
 

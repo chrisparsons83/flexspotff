@@ -1,10 +1,8 @@
+import type { PoolGameByYearAndWeekElement } from './poolgame.server';
+import { prisma } from '~/db.server';
 import type { PoolGamePick } from '~/models/poolgamepicks.server';
 import type { PoolWeek } from '~/models/poolweek.server';
 import type { User } from '~/models/user.server';
-
-import { prisma } from '~/db.server';
-
-import type { PoolGameByYearAndWeekElement } from './poolgame.server';
 
 export type { PoolGamePick } from '@prisma/client';
 

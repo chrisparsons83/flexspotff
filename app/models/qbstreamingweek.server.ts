@@ -1,5 +1,4 @@
 import type { QBStreamingWeek, User } from '@prisma/client';
-
 import { prisma } from '~/db.server';
 
 export type { QBStreamingWeek } from '@prisma/client';

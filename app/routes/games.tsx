@@ -1,12 +1,10 @@
 import type { LoaderArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
-
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 const navigationLinks = [

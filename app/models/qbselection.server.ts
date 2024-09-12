@@ -1,8 +1,6 @@
 import type { QBSelection, QBStreamingWeek } from '@prisma/client';
-
-import type { User } from '~/models/user.server';
-
 import { prisma } from '~/db.server';
+import type { User } from '~/models/user.server';
 
 export type { QBSelection } from '@prisma/client';
 

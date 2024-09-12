@@ -1,14 +1,12 @@
 import clsx from 'clsx';
 import { useState } from 'react';
-
+import Button from '~/components/ui/Button';
 import type { NFLTeam } from '~/models/nflteam.server';
 import type {
   Bet,
   PoolGameByYearAndWeekElement,
 } from '~/models/poolgame.server';
 import type { PoolGamePick } from '~/models/poolgamepicks.server';
-
-import Button from '~/components/ui/Button';
 
 const formatSpread = (amount: number, home: boolean) => {
   if (amount === 0) return `Even`;
@@ -45,8 +43,8 @@ export default function SpreadPoolGameComponent({
   const betSliderDefault = !existingBet
     ? 0
     : existingBet.teamId === poolGame.game.awayTeamId
-      ? -1 * existingBet.amount
-      : existingBet.amount;
+    ? -1 * existingBet.amount
+    : existingBet.amount;
 
   const gameDateTime = poolGame.game.gameStartTime;
   const now = new Date();

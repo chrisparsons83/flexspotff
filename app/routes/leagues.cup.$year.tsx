@@ -1,13 +1,11 @@
 import type { LoaderArgs } from '@remix-run/node';
 import clsx from 'clsx';
-
 import type { ScoreArray } from '~/models/cup.server';
 import { getCupByYear } from '~/models/cup.server';
 import { getCupGamesByCup } from '~/models/cupgame.server';
 import { getCupWeeks } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamGameMultiweekTotalsSeparated } from '~/models/teamgame.server';
-
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type RoundName = {

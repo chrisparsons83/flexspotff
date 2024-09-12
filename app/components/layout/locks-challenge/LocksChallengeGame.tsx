@@ -1,14 +1,12 @@
 import clsx from 'clsx';
 import { useState } from 'react';
-
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import type {
   LocksGameByYearAndWeekElement,
   TeamPick,
 } from '~/models/locksgame.server';
 import type { LocksGamePick } from '~/models/locksgamepicks.server';
 import type { NFLTeam } from '~/models/nflteam.server';
-
-import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 
 type Props = {
   handleChange: (teamPick: TeamPick[]) => void;
@@ -35,8 +33,8 @@ export default function LocksChallengeGameComponent({
     existingTeamPick === locksGame.game.homeTeam
       ? 'homeTeamPick'
       : existingTeamPick === locksGame.game.awayTeam
-        ? 'awayTeamPick'
-        : 'noTeamPick';
+      ? 'awayTeamPick'
+      : 'noTeamPick';
 
   const gameDateTime = locksGame.game.gameStartTime;
   const now = new Date();
