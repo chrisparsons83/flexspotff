@@ -20,6 +20,7 @@ type ActionData = {
 
 const sleeperTeamJson = z.array(
   z.object({
+    league_id: z.string(),
     roster_id: z.number(),
     owner_id: z.string().nullable(),
     settings: z.object({
@@ -80,7 +81,15 @@ export const action = async ({ request }: ActionArgs) => {
 
       const sleeperTeams: SleeperTeamJson = sleeperTeamJson
         .parse(await sleeperTeamsRes.json())
-        .filter(team => team.owner_id && team.owner_id !== SLEEPER_ADMIN_ID);
+        .map(team => ({
+          ...team,
+          owner_id: team.owner_id
+            ? team.owner_id
+            : team.league_id === '335507311525122048'
+            ? // Ice did something stupid with his team in Champs this year so this fixes that
+              '76491376673832960'
+            : SLEEPER_ADMIN_ID,
+        }));
       const sleeperDraft: SleeperDraftJson = sleeperDraftJson.parse(
         await sleeperDraftRes.json(),
       );
