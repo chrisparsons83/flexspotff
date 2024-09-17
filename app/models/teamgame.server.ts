@@ -32,6 +32,7 @@ export async function getTeamGameYearlyTotals(year: League['year']) {
           year,
         },
       },
+      isRegularSeason: true,
     },
     by: ['teamId'],
     _sum: {

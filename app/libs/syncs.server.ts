@@ -52,10 +52,10 @@ type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
 
 const sleeperJsonWeeklyMatchup = z.array(
   z.object({
-    starters: z.array(z.string()),
+    starters: z.array(z.string()).nullable(),
     roster_id: z.number(),
     points: z.number(),
-    matchup_id: z.number(),
+    matchup_id: z.number().nullable(),
     starters_points: z.array(z.number()),
   }),
 );
@@ -225,27 +225,31 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
         teamGame => teamGame.teamId === team.id && teamGame.week === week,
       );
 
+      const isRegularSeason = week <= 13 || (week === 14 && year >= 2021);
+
       if (existingTeamGame) {
         teamGameUpserts.push(
           updateTeamGame({
             id: existingTeamGame.id,
-            sleeperMatchupId: matchup.matchup_id,
+            sleeperMatchupId: matchup.matchup_id || -1,
             week,
-            starters: matchup.starters,
+            starters: matchup.starters || [],
             pointsScored: matchup.points,
             teamId: team.id,
             startingPlayerPoints: matchup.starters_points,
+            isRegularSeason,
           }),
         );
       } else {
         teamGameUpserts.push(
           createTeamGame({
-            sleeperMatchupId: matchup.matchup_id,
+            sleeperMatchupId: matchup.matchup_id || -1,
             week,
-            starters: matchup.starters,
+            starters: matchup.starters || [],
             pointsScored: matchup.points,
             teamId: team.id,
             startingPlayerPoints: matchup.starters_points,
+            isRegularSeason,
           }),
         );
       }
@@ -288,6 +292,21 @@ export async function syncNflPlayers() {
       promises.length = 0;
     }
   }
+
+  // We have to add the Oakland Raiders defense manually because they still exist in old versions
+  // of teams.
+  promises.push(
+    upsertPlayer({
+      sleeperId: 'OAK',
+      position: 'DEF',
+      firstName: 'Oakland',
+      lastName: 'Raiders',
+      fullName: 'Oakland Raiders',
+      nflTeam: 'OAK',
+      currentNFLTeamId: nflTeamSleeperIdToLocalIdMap.get('LV') || null,
+    }),
+  );
+
   await Promise.all(promises);
 }
 
