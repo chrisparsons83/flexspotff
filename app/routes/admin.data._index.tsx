@@ -1,8 +1,20 @@
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useTransition,
+} from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
 import {
   getNflState,
   syncNflGameWeek,
@@ -12,6 +24,7 @@ import {
 import { createNflTeams } from '~/models/nflteam.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { FIRST_YEAR } from '~/utils/constants';
 
 type ActionData = {
   formError?: string;
@@ -32,6 +45,7 @@ export const action = async ({ request }: ActionArgs) => {
 
   const formData = await request.formData();
   const action = formData.get('_action');
+  const year = Number(formData.get('year'));
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
@@ -67,12 +81,15 @@ export const action = async ({ request }: ActionArgs) => {
       return json<ActionData>({ message: 'League games have been synced.' });
     }
     case 'resyncCurrentYearScores': {
+      if (year < FIRST_YEAR || year > currentSeason.year) {
+        throw new Error('Invalid year entered');
+      }
       for (let i = 1; i <= 17; i++) {
-        await syncSleeperWeeklyScores(currentSeason.year, i);
+        await syncSleeperWeeklyScores(year, i);
       }
 
       return json<ActionData>({
-        message: 'League games have been synced for the year.',
+        message: `League games have been synced for ${year}.`,
       });
     }
   }
@@ -86,12 +103,23 @@ export const loader = async ({ request }: LoaderArgs) => {
   });
   requireAdmin(user);
 
-  return {};
+  const currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    throw new Error('No current season');
+  }
+
+  return { currentSeason };
 };
 
 export default function AdminDataIndex() {
+  const { currentSeason } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const transition = useTransition();
+
+  const yearArray = Array.from(
+    { length: currentSeason.year - FIRST_YEAR + 1 },
+    (_, i) => FIRST_YEAR + i,
+  ).reverse();
 
   return (
     <>
@@ -153,21 +181,37 @@ export default function AdminDataIndex() {
               {actionData.formError}
             </p>
           ) : null}
-          <Button
-            type='submit'
-            name='_action'
-            value='resyncCurrentYearScores'
-            disabled={transition.state !== 'idle'}
-          >
-            Resync Current Year Scores
-          </Button>
+          <div className='flex flex-start gap-4'>
+            <div>
+              <Select name='year'>
+                <SelectTrigger>
+                  <SelectValue placeholder='Select a year' />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearArray.map(year => (
+                    <SelectItem value={year.toString()} key={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type='submit'
+              name='_action'
+              value='resyncCurrentYearScores'
+              disabled={transition.state !== 'idle'}
+            >
+              Resync Current Year Scores
+            </Button>
+          </div>
         </section>
         <section>
           <h3>Update NFL Players Database</h3>
           <p>
             This will resync all NFL players in the system. You only really need
             to do this if there's a player that's not showing up for some
-            reason. It runs at 10:08 PT daily.
+            reason.
           </p>
           {actionData?.formError ? (
             <p className='form-validation-error' role='alert'>

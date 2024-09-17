@@ -434,6 +434,7 @@ model TeamGame {
 
   sleeperMatchupId Int
   week Int
+  isRegularSeason Boolean @default(true)
 
   pointsScored Float
   starters String[]
