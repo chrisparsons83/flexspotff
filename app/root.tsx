@@ -1,3 +1,4 @@
+import stylesheet from './styles/tailwind.css?url';
 import type { LinksFunction, LoaderArgs } from '@remix-run/node';
 import {
   Links,
@@ -11,16 +12,11 @@ import {
 import NavBar from '~/components/layout/NavBar';
 import type { User } from '~/models/user.server';
 import { authenticator, isEditor } from '~/services/auth.server';
-import tailwindStylesheetUrl from '~/styles/tailwind.css';
-import cssVariables from '~/styles/variables.css';
 import { superjson, useSuperLoaderData } from '~/utils/data';
 
-export const links: LinksFunction = () => {
-  return [
-    { rel: 'stylesheet', href: cssVariables },
-    { rel: 'stylesheet', href: tailwindStylesheetUrl },
-  ];
-};
+export const links: LinksFunction = () => [
+  { rel: 'stylesheet', href: stylesheet },
+];
 
 export const meta = () => {
   return [
