@@ -16,7 +16,6 @@
     "dev:bree-jobs": "cross-env NODE_ENV=development npm run build:bree-jobs -- --watch",
     "dev:build": "cross-env NODE_ENV=development npm run build:server -- --watch",
     "dev:remix": "cross-env NODE_ENV=development remix watch",
-    "dev:css": "cross-env NODE_ENV=development npm run generate:css -- --watch",
     "docker": "docker-compose up -d",
     "format": "prettier --write . --check '!./postgres-data'",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
