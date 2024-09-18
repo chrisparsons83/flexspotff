@@ -1,14 +1,11 @@
 import type { LoaderArgs } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import clsx from 'clsx';
+import GoBox from '~/components/ui/GoBox';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
 import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
-
-type LoaderData = {
-  leaderboard: Awaited<ReturnType<typeof getTeamGameYearlyTotals>>;
-  teams: Awaited<ReturnType<typeof getTeamsInSeason>>;
-};
+import { FIRST_YEAR } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -19,14 +16,21 @@ export const loader = async ({ params }: LoaderArgs) => {
   const leaderboard = await getTeamGameYearlyTotals(currentSeason.year);
   const teams = await getTeamsInSeason(currentSeason.year);
 
-  return superjson<LoaderData>(
-    { leaderboard, teams },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return { leaderboard, teams, maxYear: currentSeason.year };
 };
 
 export default function LeaderboardIndex() {
-  const { leaderboard, teams } = useSuperLoaderData<typeof loader>();
+  const { leaderboard, teams, maxYear } = useLoaderData<typeof loader>();
+
+  const yearArray = Array.from(
+    { length: maxYear - FIRST_YEAR + 1 },
+    (_, i) => FIRST_YEAR + i,
+  )
+    .reverse()
+    .map(yearNumber => ({
+      label: `${yearNumber}`,
+      url: `/leagues/leaderboard/${yearNumber}`,
+    }));
 
   const rankColors: Record<string, string> = {
     admiral: 'bg-admiral text-gray-900',
@@ -39,6 +43,9 @@ export default function LeaderboardIndex() {
   return (
     <>
       <h2>Season Leaderboard</h2>
+      <div className='float-right mb-4'>
+        <GoBox options={yearArray} buttonText='Choose Year' />
+      </div>
       <table>
         <thead>
           <tr>

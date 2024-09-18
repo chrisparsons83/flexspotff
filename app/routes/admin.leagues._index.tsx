@@ -112,6 +112,15 @@ export const action = async ({ request }: ActionArgs) => {
         await updateLeague(league);
       }
 
+      // This does some 2018 cleanup because Chris didn't know what the hell to call the leagues
+      // then and now he knows not to do stupid things like this.
+      if (league.name.match(/^FFDC - /)) {
+        await updateLeague({
+          id: league.id,
+          name: league.name.replace(/^FFDC - /, ''),
+        });
+      }
+
       const promises: Promise<Team>[] = [];
       for (const sleeperTeam of sleeperTeams) {
         if (!sleeperTeam.owner_id) continue;
@@ -156,7 +165,9 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  await syncAdp(league);
+  if (!league.isDrafted) {
+    await syncAdp(league);
+  }
 
   return json<ActionData>({
     message: `${league.year} ${league.name} League has been synced.`,
