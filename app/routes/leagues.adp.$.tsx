@@ -1,19 +1,13 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getAverageDraftPositionByYear } from '~/models/draftpick.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  adp: Awaited<ReturnType<typeof getAverageDraftPositionByYear>>;
-  playersMap: Map<string, Player>;
-  year: number;
-};
-
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -51,14 +45,11 @@ export const loader = async ({ params }: LoaderArgs) => {
     }
   }
 
-  return superjson<LoaderData>(
-    { adp, playersMap, year },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ adp, playersMap, year });
 };
 
 export default function ADP() {
-  const { adp, playersMap, year } = useSuperLoaderData<typeof loader>();
+  const { adp, playersMap, year } = useTypedLoaderData<typeof loader>();
 
   // We do this because tailwind HATES dynamic class names
   const rankColors: Record<string, string> = {

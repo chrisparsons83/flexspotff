@@ -1,26 +1,19 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, Link, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import type { Cup } from '~/models/cup.server';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  cups: Cup[];
-};
-
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -52,14 +45,14 @@ export const action = async ({ request }: ActionArgs) => {
       }
       await Promise.all(promises);
 
-      return json<ActionData>({ message: `${cup.year} Cup has been created` });
+      return typedjson({ message: `${cup.year} Cup has been created` });
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -67,16 +60,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const cups = await getCups();
 
-  return superjson<LoaderData>(
-    { cups },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ cups });
 };
 
 export default function QBStreamingStandingsYearIndex() {
-  const { cups } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { cups } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -84,16 +74,11 @@ export default function QBStreamingStandingsYearIndex() {
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             name='_action'
             value='createNewWeek'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Create Cup
           </Button>

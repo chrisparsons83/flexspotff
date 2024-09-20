@@ -1,6 +1,10 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { getNflGameById } from '~/models/nflgame.server';
@@ -11,21 +15,9 @@ import {
   updateQBSelection,
 } from '~/models/qbselection.server';
 import { getQBStreamingWeek } from '~/models/qbstreamingweek.server';
-import type { User } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  message?: string;
-};
-
-type LoaderData = {
-  user: User;
-  qbStreamingWeek: Awaited<ReturnType<typeof getQBStreamingWeek>>;
-  qbSelection: Awaited<ReturnType<typeof getQBSelection>>;
-};
-
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -86,7 +78,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       userId: existingSelection.userId,
       ...newSelections,
     });
-    return json<ActionData>({ message: 'Your picks have been updated.' });
+    return typedjson({ message: 'Your picks have been updated.' });
   } else {
     if (!newSelections.standardPlayerId)
       throw new Error('No new standard player ID');
@@ -97,11 +89,11 @@ export const action = async ({ params, request }: ActionArgs) => {
       deepPlayerId: newSelections.deepPlayerId,
       qbStreamingWeekId,
     });
-    return json<ActionData>({ message: 'Your picks have been created.' });
+    return typedjson({ message: 'Your picks have been created.' });
   }
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -114,16 +106,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const qbSelection = await getQBSelection(id, user.id);
 
-  return superjson<LoaderData>(
-    { user, qbStreamingWeek, qbSelection },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ user, qbStreamingWeek, qbSelection });
 };
 
 export default function QBStreamingYearWeekEntry() {
-  const actionData = useActionData<ActionData>();
-  const { qbStreamingWeek, qbSelection } = useSuperLoaderData<typeof loader>();
-  const transition = useTransition();
+  const actionData = useTypedActionData<typeof action>();
+  const { qbStreamingWeek, qbSelection } = useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -207,7 +196,7 @@ export default function QBStreamingYearWeekEntry() {
             type='submit'
             name='_action'
             value='saveOptions'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Update Entry
           </Button>

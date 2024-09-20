@@ -1,6 +1,10 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, Link, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
@@ -10,7 +14,6 @@ import {
   getPoolGamesPicksByPoolWeek,
   updatePoolGamePicksWithResults,
 } from '~/models/poolgamepicks.server';
-import type { PoolWeek } from '~/models/poolweek.server';
 import {
   createPoolWeek,
   getNewestPoolWeekForYear,
@@ -19,22 +22,10 @@ import {
   updatePoolWeek,
 } from '~/models/poolweek.server';
 import { createPoolWeekMissed } from '~/models/poolweekmissed.server';
-import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  poolWeeks: PoolWeek[];
-  currentSeason: Season;
-};
-
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -62,7 +53,7 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: false,
       });
 
-      return json<ActionData>({ message: 'Week has been created' });
+      return typedjson({ message: 'Week has been created' });
     }
     case 'scoreWeek': {
       const weekNumberString = formData.get('weekNumber');
@@ -119,14 +110,14 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: true,
       });
 
-      return json<ActionData>({ message: 'Week has been scored' });
+      return typedjson({ message: 'Week has been scored' });
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -139,16 +130,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
-  return superjson<LoaderData>(
-    { poolWeeks, currentSeason },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ poolWeeks, currentSeason });
 };
 
 export default function SpreadPoolList() {
-  const { poolWeeks, currentSeason } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { poolWeeks, currentSeason } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   return (
     <div>
@@ -156,16 +144,11 @@ export default function SpreadPoolList() {
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             name='_action'
             value='createNewWeek'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Create Next Week
           </Button>
@@ -204,7 +187,7 @@ export default function SpreadPoolList() {
                     type='submit'
                     name='_action'
                     value='scoreWeek'
-                    disabled={transition.state !== 'idle'}
+                    disabled={navigation.state !== 'idle'}
                   >
                     Score Week
                   </Button>

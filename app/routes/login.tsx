@@ -1,4 +1,4 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { SocialsProvider } from 'remix-auth-socials';
 import { authenticator } from '~/services/auth.server';
@@ -8,7 +8,7 @@ interface SocialButtonProps {
   label: string;
 }
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     successRedirect: '/dashboard',
   });

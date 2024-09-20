@@ -1,52 +1,32 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { Form, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
 import { useState } from 'react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import type { Bet } from '~/models/poolgame.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
-import type {
-  PoolGamePick,
-  PoolGamePickCreate,
-} from '~/models/poolgamepicks.server';
+import type { PoolGamePickCreate } from '~/models/poolgamepicks.server';
 import {
   createPoolGamePicks,
   deletePoolGamePicksForUserAndWeek,
   getPoolGamePicksByUserAndPoolWeek,
   getPoolGamePicksByUserAndYear,
 } from '~/models/poolgamepicks.server';
-import type { PoolWeek } from '~/models/poolweek.server';
 import { getPoolWeek, getPoolWeeksByYear } from '~/models/poolweek.server';
 import {
   createPoolWeekMissed,
   getPoolWeekMissedByUserAndYear,
 } from '~/models/poolweekmissed.server';
 import { getCurrentSeason } from '~/models/season.server';
-import type { User } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
-import {
-  superjson,
-  useSuperActionData,
-  useSuperLoaderData,
-} from '~/utils/data';
 
-type ActionData = {
-  message?: string;
-};
-
-type LoaderData = {
-  user?: User;
-  poolWeek?: PoolWeek;
-  poolGames?: Awaited<ReturnType<typeof getPoolGamesByYearAndWeek>>;
-  poolGamePicks?: PoolGamePick[];
-  notOpenYet?: string;
-  amountWonLoss?: number | null;
-  newEntryDeduction?: number;
-  missedEntryDeduction?: number;
-};
-
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -176,13 +156,10 @@ export const action = async ({ params, request }: ActionArgs) => {
     await Promise.all(missingWeekPromises);
   }
 
-  return superjson<ActionData>(
-    { message: 'Your picks have been saved.' },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ message: 'Your picks have been saved.' });
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -198,13 +175,25 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const poolWeek = await getPoolWeek(poolWeekId);
 
   if (!poolWeek) {
-    return superjson<LoaderData>({
+    return typedjson({
       notOpenYet: 'Week has not been created yet.',
+      poolWeek,
+      poolGames: [],
+      poolGamePicks: [],
+      amountWonLoss: 0,
+      newEntryDeduction: 0,
+      missedEntryDeduction: 0,
     });
   }
   if (!poolWeek.isOpen) {
-    return superjson<LoaderData>({
+    return typedjson({
       notOpenYet: 'Lines have not been set for this week yet.',
+      poolWeek,
+      poolGames: [],
+      poolGamePicks: [],
+      amountWonLoss: 0,
+      newEntryDeduction: 0,
+      missedEntryDeduction: 0,
     });
   }
 
@@ -230,22 +219,19 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     await getPoolWeekMissedByUserAndYear(user.id, currentSeason.year)
   ).reduce((a, b) => a + (b.resultWonLoss || 0), 0);
 
-  return superjson<LoaderData>(
-    {
-      user,
-      poolWeek,
-      poolGames,
-      poolGamePicks,
-      amountWonLoss,
-      newEntryDeduction,
-      missedEntryDeduction,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    notOpenYet: undefined,
+    poolWeek,
+    poolGames,
+    poolGamePicks,
+    amountWonLoss,
+    newEntryDeduction,
+    missedEntryDeduction,
+  });
 };
 
 export default function GamesSpreadPoolWeek() {
-  const actionData = useSuperActionData<ActionData>();
+  const actionData = useTypedActionData<typeof action>();
   const {
     notOpenYet,
     poolGames,
@@ -254,8 +240,8 @@ export default function GamesSpreadPoolWeek() {
     newEntryDeduction,
     missedEntryDeduction,
     poolWeek,
-  } = useSuperLoaderData<typeof loader>();
-  const transition = useTransition();
+  } = useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   const existingBets =
     poolGamePicks?.map(poolGame => ({
@@ -284,7 +270,7 @@ export default function GamesSpreadPoolWeek() {
   const availableToBet = initialBudget - betAmount;
 
   const disableSubmit =
-    transition.state !== 'idle' || availableToBet < 0 || poolWeek?.isWeekScored;
+    navigation.state !== 'idle' || availableToBet < 0 || poolWeek?.isWeekScored;
 
   return (
     <>

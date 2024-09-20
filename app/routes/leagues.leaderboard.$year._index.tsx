@@ -1,4 +1,4 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import clsx from 'clsx';
 import GoBox from '~/components/ui/GoBox';
@@ -7,7 +7,7 @@ import { getTeamsInSeason } from '~/models/team.server';
 import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
 import { FIRST_YEAR, RANK_COLORS, isLeagueName } from '~/utils/constants';
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!params.year) {
     throw new Error('No year param specified');
   }

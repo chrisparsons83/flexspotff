@@ -1,45 +1,27 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { Form, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
 import { useState } from 'react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import type { TeamPick } from '~/models/locksgame.server';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
-import type {
-  LocksGamePick,
-  LocksGamePickCreate,
-} from '~/models/locksgamepicks.server';
+import type { LocksGamePickCreate } from '~/models/locksgamepicks.server';
 import {
   createLocksGamePicks,
   deleteLocksGamePicksForUserAndWeek,
   getLocksGamePicksByUserAndLocksWeek,
 } from '~/models/locksgamepicks.server';
-import type { LocksWeek } from '~/models/locksweek.server';
 import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import type { User } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
-import {
-  superjson,
-  useSuperActionData,
-  useSuperLoaderData,
-} from '~/utils/data';
 
-type ActionData = {
-  message?: string;
-};
-
-type LoaderData = {
-  user?: User;
-  locksWeek?: LocksWeek;
-  locksGames?: Awaited<ReturnType<typeof getLocksGamesByYearAndWeek>>;
-  locksGamePicks?: LocksGamePick[];
-  notOpenYet?: string;
-  weekNumber?: number;
-};
-
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -204,13 +186,10 @@ export const action = async ({ params, request }: ActionArgs) => {
   await deleteLocksGamePicksForUserAndWeek(user, locksWeek);
   await createLocksGamePicks(dataToInsert);
 
-  return superjson<ActionData>(
-    { message: 'Your picks have been saved.' },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ message: 'Your picks have been saved.' });
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -226,13 +205,21 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const locksWeek = await getLocksWeek(locksWeekId);
 
   if (!locksWeek) {
-    return superjson<LoaderData>({
+    return typedjson({
       notOpenYet: 'Week has not been created yet.',
+      locksWeek,
+      locksGames: [],
+      locksGamePicks: [],
+      weekNumber: locksWeekId,
     });
   }
   if (!locksWeek.isOpen) {
-    return superjson<LoaderData>({
+    return typedjson({
       notOpenYet: 'Week is not open yet (Blame Chris)',
+      locksWeek,
+      locksGames: [],
+      locksGamePicks: [],
+      weekNumber: locksWeekId,
     });
   }
 
@@ -248,9 +235,9 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const weekNumber = locksWeek.weekNumber;
 
-  return superjson<LoaderData>(
+  return typedjson(
     {
-      user,
+      notOpenYet: false,
       locksWeek,
       locksGames,
       locksGamePicks,
@@ -261,10 +248,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 };
 
 export default function GamesLocksChallengeWeek() {
-  const actionData = useSuperActionData<ActionData>();
+  const actionData = useTypedActionData<typeof action>();
   const { notOpenYet, locksWeek, locksGames, locksGamePicks, weekNumber } =
-    useSuperLoaderData<typeof loader>();
-  const transition = useTransition();
+    useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   const existingPicks: TeamPick[] =
     locksGamePicks?.flat().map(lockGame => ({
@@ -286,7 +273,7 @@ export default function GamesLocksChallengeWeek() {
     });
   };
 
-  const disableSubmit = transition.state !== 'idle' || locksWeek?.isWeekScored;
+  const disableSubmit = navigation.state !== 'idle' || locksWeek?.isWeekScored;
   return (
     <>
       <h2>Week {weekNumber} Entry</h2>

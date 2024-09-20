@@ -1,6 +1,10 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
@@ -13,7 +17,6 @@ import {
   deleteLocksGamePicksNotActive,
   updateLocksGamePicksWithResults,
 } from '~/models/locksgamepicks.server';
-import type { LocksWeek } from '~/models/locksweek.server';
 import {
   createLocksWeek,
   getLocksWeekByYearAndWeek,
@@ -24,18 +27,8 @@ import {
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  locksWeeks: LocksWeek[];
-};
-
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -63,7 +56,7 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: false,
       });
 
-      return json<ActionData>({ message: 'Week has been created' });
+      return typedjson({ message: 'Week has been created' });
     }
     case 'scoreWeek': {
       const weekNumberString = formData.get('weekNumber');
@@ -106,7 +99,7 @@ export const action = async ({ request }: ActionArgs) => {
         isWeekScored: true,
       });
 
-      return json<ActionData>({ message: 'Week has been scored' });
+      return typedjson({ message: 'Week has been scored' });
     }
     case 'publishWeek': {
       const weekNumberString = formData.get('weekNumber');
@@ -142,14 +135,14 @@ export const action = async ({ request }: ActionArgs) => {
         isOpen: true,
       });
 
-      return json<ActionData>({ message: 'Week has been published' });
+      return typedjson({ message: 'Week has been published' });
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -162,16 +155,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
-  return superjson<LoaderData>(
-    { locksWeeks },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ locksWeeks });
 };
 
 export default function SpreadLocksList() {
-  const { locksWeeks } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { locksWeeks } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   return (
     <div>
@@ -179,16 +169,11 @@ export default function SpreadLocksList() {
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             name='_action'
             value='createNewWeek'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Create Next Week
           </Button>
@@ -222,7 +207,7 @@ export default function SpreadLocksList() {
                     type='submit'
                     name='_action'
                     value='publishWeek'
-                    disabled={transition.state !== 'idle'}
+                    disabled={navigation.state !== 'idle'}
                   >
                     Publish Week
                   </Button>
@@ -240,7 +225,7 @@ export default function SpreadLocksList() {
                     type='submit'
                     name='_action'
                     value='scoreWeek'
-                    disabled={transition.state !== 'idle'}
+                    disabled={navigation.state !== 'idle'}
                   >
                     Score Week
                   </Button>

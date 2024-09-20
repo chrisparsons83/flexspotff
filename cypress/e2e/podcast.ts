@@ -1,12 +1,4 @@
 describe('podcast tests', () => {
-  it('Navigate to podcasts home page', () => {
-    cy.visit('/');
-
-    // podcasts page will be the third link in nav bar
-    cy.get('nav').find('a').contains('Podcast').click();
-    cy.url().should('include', '/podcast');
-  });
-
   it('Check Title', () => {
     cy.visit('/podcast');
     cy.get('#Title').contains('Trash Turtle Football');

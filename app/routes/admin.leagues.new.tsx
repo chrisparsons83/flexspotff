@@ -1,11 +1,10 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { fetch } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useActionData, useNavigation } from '@remix-run/react';
+import { redirect } from 'remix-typedjson';
 import z from 'zod';
 import Button from '~/components/ui/Button';
 import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { redirect } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
@@ -24,7 +23,7 @@ const sleeperJson = z.object({
 });
 type SleeperJson = z.infer<typeof sleeperJson>;
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -63,7 +62,7 @@ export const action = async ({ request }: ActionArgs) => {
   return redirect(`/admin/leagues`);
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -74,12 +73,12 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 export default function LeagueNew() {
   const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const navigation = useNavigation();
 
   const buttonText =
-    transition.state === 'submitting'
+    navigation.state === 'submitting'
       ? 'Submitting...'
-      : transition.state === 'loading'
+      : navigation.state === 'loading'
       ? 'Submitted!'
       : 'Submit';
 
@@ -115,7 +114,7 @@ export default function LeagueNew() {
               {actionData.formError}
             </p>
           ) : null}
-          <Button type='submit' disabled={transition.state !== 'idle'}>
+          <Button type='submit' disabled={navigation.state !== 'idle'}>
             {buttonText}
           </Button>
         </div>

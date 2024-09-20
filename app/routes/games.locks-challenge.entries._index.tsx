@@ -1,16 +1,11 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-import type { LocksWeek } from '~/models/locksweek.server';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  locksWeeks: LocksWeek[];
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -22,16 +17,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
 
-  return superjson<LoaderData>(
-    {
-      locksWeeks,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    locksWeeks,
+  });
 };
 
 export default function GamesLocksMyEntries() {
-  const { locksWeeks } = useSuperLoaderData<typeof loader>();
+  const { locksWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
     <>

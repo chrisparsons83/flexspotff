@@ -1,12 +1,12 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import type { ScoreArray } from '~/models/cup.server';
 import { getCupByYear } from '~/models/cup.server';
 import { getCupGamesByCup } from '~/models/cupgame.server';
 import { getCupWeeks } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamGameMultiweekTotalsSeparated } from '~/models/teamgame.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type RoundName = {
   key: string;
@@ -21,13 +21,7 @@ const roundNameMapping: RoundName[] = [
   { key: 'ROUND_OF_2', label: 'Finals' },
 ];
 
-type LoaderData = {
-  cupGames: Awaited<ReturnType<typeof getCupGamesByCup>>;
-  scoreArray: ScoreArray[];
-  year: string;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -72,14 +66,11 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     }
   }
 
-  return superjson<LoaderData>(
-    { cupGames, scoreArray, year },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ cupGames, scoreArray, year });
 };
 
 export default function CupYear() {
-  const { cupGames, scoreArray, year } = useSuperLoaderData<typeof loader>();
+  const { cupGames, scoreArray, year } = useTypedLoaderData<typeof loader>();
 
   const rankColors: Record<string, string> = {
     admiral: 'bg-admiral text-gray-900',

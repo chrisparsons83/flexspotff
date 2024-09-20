@@ -3,11 +3,19 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from '@remix-run/node';
-import type { ActionArgs, LoaderArgs, UploadHandler } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  UploadHandler,
+} from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
 import { DateTime } from 'luxon';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Button from '~/components/ui/Button';
-import type { Episode } from '~/models/episode.server';
 import {
   createEpisode,
   getEpisode,
@@ -16,40 +24,11 @@ import {
 import { authenticator } from '~/services/auth.server';
 import { podcastJsonSchema, s3UploadHandler } from '~/services/s3client.server';
 import type { S3FileUpload } from '~/services/s3client.server';
-import { redirect, superjson, useSuperLoaderData } from '~/utils/data';
-
-type ActionData = {
-  formError?: string;
-  fieldErrors?: {
-    title: string | undefined;
-    season?: string | undefined;
-    episode?: string | undefined;
-    description: string | undefined;
-    showNotes: string | undefined;
-    publishDate?: string | undefined;
-    podcastFile?: string | undefined;
-  };
-  fields?: {
-    title: string;
-    season: string;
-    episode: string;
-    description: string;
-    showNotes: string;
-    publishDate: string;
-    podcastFile?: string;
-  };
-};
-
-type LoaderData = {
-  episode?: Episode;
-};
 
 // TODO: Bring this into a settings page
 const SEASONS = [3, 2, 1];
 
-export const action = async ({
-  request,
-}: ActionArgs): Promise<Response | ActionData> => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -111,6 +90,7 @@ export const action = async ({
     description,
     showNotes,
     publishDate,
+    podcastFile: undefined,
   };
 
   const seasonNumber = Number.parseInt(season);
@@ -127,7 +107,7 @@ export const action = async ({
   };
 
   if (Object.values(fieldErrors).some(Boolean)) {
-    return { fieldErrors, fields };
+    return typedjson({ fieldErrors, fields });
   }
 
   if (!id) {
@@ -161,16 +141,20 @@ export const action = async ({
     });
   }
 
-  return redirect(`/admin/podcasts`);
+  return typedjson({
+    message: 'Podcast has been uploaded.',
+    fieldErrors,
+    fields,
+  });
 };
 
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!params.id) {
     throw new Error('Error building page.');
   }
 
   if (params.id === 'new') {
-    return superjson<LoaderData>({}, { headers: { 'x-superjson': 'true' } });
+    return typedjson({ episode: null });
   }
 
   const episode = await getEpisode(params.id);
@@ -179,21 +163,18 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     throw new Error('Episode not found');
   }
 
-  return superjson<LoaderData>(
-    { episode },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ episode });
 };
 
 export default function PodcastEpisodeCreate() {
-  const { episode } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { episode } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   const buttonText =
-    transition.state === 'submitting'
+    navigation.state === 'submitting'
       ? 'Submitting...'
-      : transition.state === 'loading'
+      : navigation.state === 'loading'
       ? 'Submitted!'
       : 'Submit';
 
@@ -243,12 +224,6 @@ export default function PodcastEpisodeCreate() {
                   defaultValue={episode?.season ?? actionData?.fields?.season}
                   name='season'
                   required
-                  aria-invalid={
-                    Boolean(actionData?.fieldErrors?.season) || undefined
-                  }
-                  aria-errormessage={
-                    actionData?.fieldErrors?.season ? 'season-error' : undefined
-                  }
                   className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 >
                   {SEASONS.map(season => {
@@ -260,15 +235,6 @@ export default function PodcastEpisodeCreate() {
                   })}
                 </select>
               </label>
-              {actionData?.fieldErrors?.season ? (
-                <p
-                  className='form-validation-error'
-                  role='alert'
-                  id='season-error'
-                >
-                  {actionData.fieldErrors.season}
-                </p>
-              ) : null}
             </div>
             <div className='w-1/2 shrink'>
               <label htmlFor='episode'>
@@ -280,26 +246,9 @@ export default function PodcastEpisodeCreate() {
                   defaultValue={episode?.episode ?? actionData?.fields?.episode}
                   name='episode'
                   id='episode'
-                  aria-invalid={
-                    Boolean(actionData?.fieldErrors?.episode) || undefined
-                  }
-                  aria-errormessage={
-                    actionData?.fieldErrors?.episode
-                      ? 'episode-error'
-                      : undefined
-                  }
                   className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
                 />
               </label>
-              {actionData?.fieldErrors?.episode ? (
-                <p
-                  className='form-validation-error'
-                  role='alert'
-                  id='episode-error'
-                >
-                  {actionData.fieldErrors.episode}
-                </p>
-              ) : null}
             </div>
           </div>
           <div>
@@ -382,26 +331,9 @@ export default function PodcastEpisodeCreate() {
                 name='publishDate'
                 required
                 id='publishDate'
-                aria-invalid={
-                  Boolean(actionData?.fieldErrors?.publishDate) || undefined
-                }
-                aria-errormessage={
-                  actionData?.fieldErrors?.publishDate
-                    ? 'publishDate-error'
-                    : undefined
-                }
                 className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               />
             </label>
-            {actionData?.fieldErrors?.publishDate ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='publishDate-error'
-              >
-                {actionData.fieldErrors.publishDate}
-              </p>
-            ) : null}
           </div>
           <div>
             <label htmlFor='podcastFile'>
@@ -432,34 +364,12 @@ export default function PodcastEpisodeCreate() {
                 defaultValue={actionData?.fields?.podcastFile}
                 name='podcastFile'
                 id='podcastFile'
-                aria-invalid={
-                  Boolean(actionData?.fieldErrors?.podcastFile) || undefined
-                }
-                aria-errormessage={
-                  actionData?.fieldErrors?.podcastFile
-                    ? 'podcastFile-error'
-                    : undefined
-                }
                 className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               />
             </label>
-            {actionData?.fieldErrors?.podcastFile ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='podcastFile-error'
-              >
-                {actionData.fieldErrors.podcastFile}
-              </p>
-            ) : null}
           </div>
           <div>
-            {actionData?.formError ? (
-              <p className='form-validation-error' role='alert'>
-                {actionData.formError}
-              </p>
-            ) : null}
-            <Button type='submit' disabled={transition.state !== 'idle'}>
+            <Button type='submit' disabled={navigation.state !== 'idle'}>
               {buttonText}
             </Button>
           </div>

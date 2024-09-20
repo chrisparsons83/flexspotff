@@ -1,4 +1,5 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import {
   getLocksGamePicksWonLoss,
@@ -12,18 +13,8 @@ import {
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  totalPoints: Awaited<ReturnType<typeof getLocksGamePicksWonLoss>>;
-  users: User[];
-  userIdToRankMap: Map<string, number>;
-  weeklyPicks?: Awaited<ReturnType<typeof getLocksGamesPicksByLocksWeek>>;
-  userIdToPointsMap: Map<string, number>;
-  year: number;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -141,17 +132,14 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const year = currentSeason.year;
 
-  return superjson<LoaderData>(
-    {
-      totalPoints,
-      users,
-      userIdToRankMap,
-      weeklyPicks,
-      userIdToPointsMap,
-      year,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    totalPoints,
+    users,
+    userIdToRankMap,
+    weeklyPicks,
+    userIdToPointsMap,
+    year,
+  });
 };
 
 export default function LockChallengeStandingsYearIndex() {
@@ -162,7 +150,7 @@ export default function LockChallengeStandingsYearIndex() {
     weeklyPicks,
     userIdToPointsMap,
     year,
-  } = useSuperLoaderData<typeof loader>();
+  } = useTypedLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
   for (const user of users) {

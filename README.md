@@ -1,28 +1,7 @@
 # Flex Spot FF Website Code
 
 This stack is built upon [Remix](https://remix.run/), so if you have questions,
-the [Remix documentation](https://remix.run/docs/en/v1) is your best bet.
-
-## What's in the stack
-
-- [Multi-region Fly app deployment](https://fly.io/docs/reference/scaling/) with
-  [Docker](https://www.docker.com/)
-- [Multi-region Fly PostgreSQL Cluster](https://fly.io/docs/getting-started/multi-region-databases/)
-- Healthcheck endpoint for
-  [Fly backups region fallbacks](https://fly.io/docs/reference/configuration/#services-http_checks)
-- [GitHub Actions](https://github.com/features/actions) for deploy on merge to
-  production and staging environments
-- Discord Authentication with oAuth2 with
-  [remix-auth](https://github.com/sergiodxa/remix-auth)
-- Database ORM with [Prisma](https://prisma.io)
-- Styling with [Tailwind](https://tailwindcss.com/)
-- End-to-end testing with [Cypress](https://cypress.io)
-- Local third party request mocking with [MSW](https://mswjs.io)
-- Unit testing with [Vitest](https://vitest.dev) and
-  [Testing Library](https://testing-library.com)
-- Code formatting with [Prettier](https://prettier.io)
-- Linting with [ESLint](https://eslint.org)
-- Static Types with [TypeScript](https://typescriptlang.org)
+the [Remix documentation](https://remix.run/docs/en/main) is your best bet.
 
 ## Development
 
@@ -58,7 +37,7 @@ the [Remix documentation](https://remix.run/docs/en/v1) is your best bet.
   redirects to the following if you want to test Discord authentication
 
 ```
-http://localhost:3000/auth/discord/callback
+http://localhost:5173/auth/discord/callback
 ```
 
 - Initial setup:
@@ -102,11 +81,25 @@ find the instructions to set up Wireguard
 and the instructions for creating a development database
 [here](https://fly.io/docs/reference/postgres/).
 
+## Styling
+
+We use [TailwindCSS](https://tailwindcss.com/) to do our class level stying, and
+then we are using [ShadCN UI](https://ui.shadcn.com/) as a component library.
+
+## Debugging
+
+The best way to do this in VSCode is to use the `Debug: debug npm script`, which
+you can access from the command palette (Ctrl-Shift-P). Select `dev` from the
+dropdown, which will run `npm run dev` and attach a debugger which can be
+accessed from VSCode. Control-clicking the link in the terminal will open it up
+in your web browser, but you can set breakpoints from within VSCode and examine
+the code that way.
+
 ## Deployment
 
 We use GitHub Actions for continuous integration and deployment. Anything that
 gets into the `main` branch will be deployed to production after running
-tests/build/etc. Anything in the `dev` branch will be deployed to staging.
+tests/build/etc..
 
 ## Testing
 

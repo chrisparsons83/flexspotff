@@ -1,25 +1,17 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
-import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
   { name: 'Survivor', href: '/games/survivor', current: false },
 ];
 
-type LoaderData = {
-  qbStreamingCurrentWeek: number;
-  spreadPoolCurrentWeek: number;
-  locksChallengeCurrentWeek: number;
-  currentSeason: Season;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -37,7 +29,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     await getLocksWeeksByYear(currentSeason.year)
   )[0]?.weekNumber;
 
-  return superjson<LoaderData>(
+  return typedjson(
     {
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
@@ -54,7 +46,7 @@ export default function GamesIndex() {
     spreadPoolCurrentWeek,
     locksChallengeCurrentWeek,
     currentSeason,
-  } = useSuperLoaderData<typeof loader>();
+  } = useTypedLoaderData<typeof loader>();
 
   const qbStreamingLinks = [
     { name: 'Rules', href: '/games/qb-streaming/rules', current: false },

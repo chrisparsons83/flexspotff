@@ -1,15 +1,10 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getRegistrationsByYear } from '~/models/registration.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  registrations: Awaited<ReturnType<typeof getRegistrationsByYear>>;
-  notYetSignedUp: Awaited<ReturnType<typeof getRegistrationsByYear>>;
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -32,14 +27,11 @@ export const loader = async ({ request }: LoaderArgs) => {
     registration => !registrationsUserArray.includes(registration.userId),
   );
 
-  return superjson<LoaderData>(
-    { registrations, notYetSignedUp },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ registrations, notYetSignedUp });
 };
 
 export default function RegistrationList() {
-  const { registrations, notYetSignedUp } = useSuperLoaderData<typeof loader>();
+  const { registrations, notYetSignedUp } = useTypedLoaderData<typeof loader>();
 
   return (
     <>

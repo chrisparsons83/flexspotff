@@ -1,8 +1,12 @@
-import { type ActionArgs, type LoaderArgs, json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import type { Season } from '~/models/season.server';
 import {
   createSeason,
   getSeasons,
@@ -10,18 +14,8 @@ import {
   updateSeason,
 } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  seasons: Season[];
-};
-
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -44,7 +38,7 @@ export const action = async ({ request }: ActionArgs) => {
         registrationSize: 60,
       });
 
-      return json<ActionData>({
+      return typedjson({
         message: `${season.year} season has been created`,
       });
     }
@@ -55,7 +49,7 @@ export const action = async ({ request }: ActionArgs) => {
       }
       const [, season] = await updateActiveSeason(seasonId);
 
-      return json<ActionData>({
+      return typedjson({
         message: `${season.year} season has been made active`,
       });
     }
@@ -71,7 +65,7 @@ export const action = async ({ request }: ActionArgs) => {
         isOpenForRegistration: actionToSeason === 'openReg',
       });
 
-      return json<ActionData>({
+      return typedjson({
         message: `${season.year} season registration is now ${
           season.isOpenForRegistration ? 'open' : 'closed'
         }.`,
@@ -89,7 +83,7 @@ export const action = async ({ request }: ActionArgs) => {
         isOpenForFSquared: actionToSeason === 'openFSquared',
       });
 
-      return json<ActionData>({
+      return typedjson({
         message: `${season.year} F² is now ${
           season.isOpenForFSquared ? 'open' : 'closed'
         }.`,
@@ -97,10 +91,10 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -108,16 +102,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const seasons = await getSeasons();
 
-  return superjson<LoaderData>(
-    { seasons },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ seasons });
 };
 
 export default function SeasonIndex() {
-  const { seasons } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { seasons } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -208,16 +199,11 @@ export default function SeasonIndex() {
       </table>
       <Form method='POST'>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             name='_action'
             value='createSeason'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Create Season for Current Year
           </Button>

@@ -1,16 +1,10 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
-import type { Season } from '~/models/season.server';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getCurrentSeason } from '~/models/season.server';
 import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  teamGameNewestWeek: number;
-  currentSeason: Season;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -19,18 +13,15 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   const teamGameNewestWeek =
     (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
 
-  return superjson<LoaderData>(
-    {
-      teamGameNewestWeek,
-      currentSeason,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    teamGameNewestWeek,
+    currentSeason,
+  });
 };
 
 export default function LeaguesIndex() {
   const { teamGameNewestWeek, currentSeason } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const navigationLinks = [
     {

@@ -1,7 +1,11 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form } from '@remix-run/react';
 import { DateTime } from 'luxon';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
@@ -12,11 +16,6 @@ import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { getUsers } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-import { superjson, useSuperLoaderData } from '~/utils/data';
-
-type ActionData = {
-  message?: string;
-};
 
 const sleeperTeamJson = z.array(
   z.object({
@@ -51,11 +50,7 @@ const sleeperDraftJson = z.object({
 });
 type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
 
-type LoaderData = {
-  leagues: Awaited<ReturnType<typeof getLeagues>>;
-};
-
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
 
   const action = formData.get('action');
@@ -169,12 +164,12 @@ export const action = async ({ request }: ActionArgs) => {
     await syncAdp(league);
   }
 
-  return json<ActionData>({
+  return typedjson({
     message: `${league.year} ${league.name} League has been synced.`,
   });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -182,15 +177,12 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const leagues = await getLeagues();
 
-  return superjson<LoaderData>(
-    { leagues },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ leagues });
 };
 
 export default function LeaguesList() {
-  const { leagues } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
+  const { leagues } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
 
   return (
     <>

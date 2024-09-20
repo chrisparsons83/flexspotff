@@ -1,10 +1,10 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import {
   Form,
   useActionData,
   useLoaderData,
-  useTransition,
+  useNavigation,
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
@@ -37,7 +37,7 @@ type ActionData = {
   message?: string;
 };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -97,7 +97,7 @@ export const action = async ({ request }: ActionArgs) => {
   return json<ActionData>({ message: 'Nothing was updated.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -114,7 +114,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 export default function AdminDataIndex() {
   const { currentSeason } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const navigation = useNavigation();
 
   const yearArray = Array.from(
     { length: currentSeason.year - FIRST_YEAR + 1 },
@@ -142,7 +142,7 @@ export default function AdminDataIndex() {
             type='submit'
             name='_action'
             value='resyncNflGames'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Resync NFL Games
           </Button>
@@ -164,7 +164,7 @@ export default function AdminDataIndex() {
             type='submit'
             name='_action'
             value='resyncCurrentWeekScores'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Resync Current Week Scores
           </Button>
@@ -200,7 +200,7 @@ export default function AdminDataIndex() {
               type='submit'
               name='_action'
               value='resyncCurrentYearScores'
-              disabled={transition.state !== 'idle'}
+              disabled={navigation.state !== 'idle'}
             >
               Resync Current Year Scores
             </Button>
@@ -222,7 +222,7 @@ export default function AdminDataIndex() {
             type='submit'
             name='_action'
             value='resyncNflPlayers'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Resync NFL Players
           </Button>

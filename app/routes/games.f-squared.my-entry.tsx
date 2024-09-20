@@ -1,7 +1,11 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
 import { useState } from 'react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import z from 'zod';
 import FSquaredEntryFormSection from '~/components/layout/f-squared/FSquaredEntryFormSection';
 import Alert from '~/components/ui/Alert';
@@ -16,24 +20,7 @@ import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 import { shuffleArray } from '~/utils/helpers';
-
-type ActionData = {
-  formError?: string;
-  fieldErrors?: {
-    userId: string | undefined;
-  };
-  fields?: {
-    userId: string;
-  };
-  message?: string;
-};
-
-type LoaderData = {
-  leagues: Record<string, Awaited<ReturnType<typeof getTeamsInSeason>>>;
-  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null;
-};
 
 const formEntry = z.string().array().length(2);
 type FormEntry = z.infer<typeof formEntry>;
@@ -61,9 +48,7 @@ function convertExistingEntryToInitialFormState(
   return result;
 }
 
-export const action = async ({
-  request,
-}: ActionArgs): Promise<Response | ActionData> => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -124,12 +109,12 @@ export const action = async ({
     await updateEntry(existingEntry.id, addingEntries, removingEntries);
   }
 
-  return json<ActionData>({
+  return typedjson({
     message: `Your entry has been ${existingEntry ? 'updated' : 'created'}.`,
   });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -149,7 +134,10 @@ export const loader = async ({ request }: LoaderArgs) => {
   );
 
   // Make record object for simplicity
-  const leagues: LoaderData['leagues'] = {};
+  const leagues: Record<
+    string,
+    Awaited<ReturnType<typeof getTeamsInSeason>>
+  > = {};
   for (const team of teams) {
     if (leagues[team.league.name]) {
       leagues[team.league.name].push(team);
@@ -158,16 +146,13 @@ export const loader = async ({ request }: LoaderArgs) => {
     }
   }
 
-  return superjson<LoaderData>(
-    { leagues, existingEntry },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ leagues, existingEntry });
 };
 
 export default function FSquaredMyEntry() {
-  const actionData = useActionData<ActionData>();
-  const { leagues, existingEntry } = useSuperLoaderData<typeof loader>();
-  const transition = useTransition();
+  const actionData = useTypedActionData<typeof action>();
+  const { leagues, existingEntry } = useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   const [validLeagueCheck, setValidLeagueCheck] = useState<
     Record<string, boolean>
@@ -191,9 +176,9 @@ export default function FSquaredMyEntry() {
     Object.values(validLeagueCheck).every(Boolean);
 
   const buttonText =
-    transition.state === 'submitting'
+    navigation.state === 'submitting'
       ? 'Submitting...'
-      : transition.state === 'loading'
+      : navigation.state === 'loading'
       ? 'Submitted!'
       : 'Submit';
 
@@ -228,14 +213,9 @@ export default function FSquaredMyEntry() {
           ))}
         </div>
         <div className='block p-4'>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
-            disabled={!isValidForm || transition.state !== 'idle'}
+            disabled={!isValidForm || navigation.state !== 'idle'}
           >
             {buttonText}
           </Button>

@@ -1,24 +1,16 @@
 //podcasts.apple.com/ph/podcast/trash-turtle-football/id1586577488
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getEpisodes } from '~/models/episode.server';
-import type { Episode } from '~/models/episode.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  episodes: Episode[];
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const episodes = await getEpisodes();
 
-  return superjson<LoaderData>(
-    { episodes },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ episodes });
 };
 
 export default function Records() {
-  const { episodes } = useSuperLoaderData<typeof loader>();
+  const { episodes } = useTypedLoaderData<typeof loader>();
   return (
     <div className='text-center md:text-left'>
       <h2 id='Title'>Trash Turtle Football</h2>
