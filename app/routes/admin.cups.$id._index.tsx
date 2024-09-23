@@ -1,9 +1,13 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import type { Cup, ScoreArray } from '~/models/cup.server';
+import type { ScoreArray } from '~/models/cup.server';
 import { getCup } from '~/models/cup.server';
 import type { CupGame } from '~/models/cupgame.server';
 import {
@@ -24,18 +28,6 @@ import {
   getTeamGameMultiweekTotalsSeparated,
 } from '~/models/teamgame.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
-
-type LoaderData = {
-  message?: string;
-  cup: Cup;
-  cupWeeks: CupWeek[];
-  actionWeeks: Map<string, number>;
-};
-
-type ActionData = {
-  message?: string;
-};
 
 type CupMappingOptions = {
   label: string;
@@ -128,7 +120,7 @@ const roundOf64Matches = [
   [6, 59],
 ];
 
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -162,7 +154,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
       await Promise.all(promises);
 
-      return json<ActionData>({
+      return typedjson({
         message: 'Cup week mappings have been updated.',
       });
     }
@@ -329,7 +321,7 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
       await Promise.all(updates);
 
-      return json<ActionData>({
+      return typedjson({
         message: 'Seeding created.',
       });
     }
@@ -417,14 +409,14 @@ export const action = async ({ params, request }: ActionArgs) => {
       }
       await Promise.all(promises);
 
-      return json<ActionData>({
+      return typedjson({
         message: 'This week was scored.',
       });
     }
   }
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -447,15 +439,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     }
   }
 
-  return superjson<LoaderData>(
-    { cup, cupWeeks, actionWeeks },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ cup, cupWeeks, actionWeeks });
 };
 
 export default function CupAdministerPage() {
-  const actionData = useActionData<ActionData>();
-  const { cup, cupWeeks, actionWeeks } = useSuperLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const { cup, cupWeeks, actionWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
     <>

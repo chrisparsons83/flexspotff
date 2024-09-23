@@ -1,47 +1,26 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { Form, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import type { SleeperUser } from '~/models/sleeperUser.server';
 import {
   createOrUpdateSleeperUser,
   deleteSleeperUser,
   getSleeperOwnerIdsByUserId,
 } from '~/models/sleeperUser.server';
-import type { User } from '~/models/user.server';
 import { getUser } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import {
-  superjson,
-  useSuperActionData,
-  useSuperLoaderData,
-} from '~/utils/data';
 
 enum AdminMembersEditOptions {
   Add = 'add',
   Remove = 'remove',
 }
 
-type ActionData = {
-  formError?: string;
-  fieldErrors?: {
-    sleeperOwnerID: string | undefined;
-  };
-  fields?: {
-    sleeperOwnerID: string;
-  };
-  message?: string;
-};
-
-type LoaderData = {
-  user: User;
-  sleeperUsers: SleeperUser[];
-};
-
-export const action = async ({
-  params,
-  request,
-}: ActionArgs): Promise<Response | ActionData> => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -67,35 +46,33 @@ export const action = async ({
         : undefined,
   };
   if (Object.values(fieldErrors).some(Boolean)) {
-    return { fieldErrors, fields };
+    return typedjson({ fieldErrors, fields, message: undefined });
   }
 
   switch (action) {
     case AdminMembersEditOptions.Remove:
       await deleteSleeperUser(sleeperOwnerID);
-      return superjson<ActionData>(
-        {
-          message: `sleeperOwnerID ${sleeperOwnerID} removed.`,
-        },
-        { headers: { 'x-superjson': 'true' } },
-      );
+      return typedjson({
+        message: `sleeperOwnerID ${sleeperOwnerID} removed.`,
+        fieldErrors,
+        fields,
+      });
     case AdminMembersEditOptions.Add:
       await createOrUpdateSleeperUser({
         userId: params.id,
         sleeperOwnerID,
       });
-      return superjson<ActionData>(
-        {
-          message: 'ID added.',
-        },
-        { headers: { 'x-superjson': 'true' } },
-      );
+      return typedjson({
+        message: 'ID added.',
+        fieldErrors,
+        fields,
+      });
   }
 
-  return superjson({});
+  return typedjson({ message: undefined, fieldErrors, fields });
 };
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!params.id) {
     throw new Error('Error building page.');
   }
@@ -108,21 +85,18 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   const sleeperUsers = await getSleeperOwnerIdsByUserId(user.id);
 
-  return superjson<LoaderData>(
-    { user, sleeperUsers },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ user, sleeperUsers });
 };
 
 export default function EditUser() {
-  const { user, sleeperUsers } = useSuperLoaderData<typeof loader>();
-  const actionData = useSuperActionData<ActionData>();
-  const transition = useTransition();
+  const { user, sleeperUsers } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   const buttonText =
-    transition.state === 'submitting'
+    navigation.state === 'submitting'
       ? 'Adding...'
-      : transition.state === 'loading'
+      : navigation.state === 'loading'
       ? 'Added!'
       : 'Add';
 
@@ -148,7 +122,7 @@ export default function EditUser() {
                 />
                 <Button
                   type='submit'
-                  disabled={transition.state !== 'idle'}
+                  disabled={navigation.state !== 'idle'}
                   name='_action'
                   value={AdminMembersEditOptions.Remove}
                 >
@@ -190,14 +164,9 @@ export default function EditUser() {
           ) : null}
         </div>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
             name='_action'
             value={AdminMembersEditOptions.Add}
           >

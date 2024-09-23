@@ -1,4 +1,5 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import {
   getQBSelectionsByWeek,
@@ -6,19 +7,10 @@ import {
 } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
-import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  qbStreamingResults: QBStreamingStandingsRow[];
-  currentWeekPicks: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
-  year: string;
-  currentSeason: Season;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -73,20 +65,17 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       1;
   }
 
-  return superjson<LoaderData>(
-    {
-      qbStreamingResults: sortedResults,
-      currentWeekPicks,
-      year,
-      currentSeason,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    qbStreamingResults: sortedResults,
+    currentWeekPicks,
+    year,
+    currentSeason,
+  });
 };
 
 export default function QBStreamingStandingsYearIndex() {
   const { year, qbStreamingResults, currentWeekPicks, currentSeason } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const displayYear = +year !== currentSeason.year ? year : '';
 

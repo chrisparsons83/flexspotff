@@ -1,5 +1,5 @@
 # base node image
-FROM node:18-bullseye-slim AS base
+FROM node:22-bullseye-slim AS base
 
 ARG PROD_DATABASE_URL
 
@@ -48,8 +48,8 @@ WORKDIR /myapp
 COPY --from=production-deps /myapp/node_modules /myapp/node_modules
 COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
 
-COPY --from=build /myapp/build /myapp/build
-COPY --from=build /myapp/public /myapp/public
+COPY --from=build /myapp/build/server /myapp/build/server
+COPY --from=build /myapp/build/client /myapp/build/client
 ADD . .
 
 CMD ["npm", "run", "start:production"]

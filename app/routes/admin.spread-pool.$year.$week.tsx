@@ -1,6 +1,11 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { Form, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
 import { DateTime } from 'luxon';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
@@ -16,11 +21,6 @@ import {
 } from '~/models/poolweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import {
-  superjson,
-  useSuperActionData,
-  useSuperLoaderData,
-} from '~/utils/data';
 
 const oddsApiData = z.array(
   z.object({
@@ -52,18 +52,7 @@ const oddsApiData = z.array(
   }),
 );
 
-type ActionData = {
-  message?: string;
-  updatedNflGames?: Map<string, number>;
-};
-
-type LoaderData = {
-  nflGames: Awaited<ReturnType<typeof getWeekNflGames>>;
-  poolGames: Awaited<ReturnType<typeof getPoolGamesByYearAndWeek>>;
-  poolWeek: Awaited<ReturnType<typeof getPoolWeekByYearAndWeek>>;
-};
-
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -114,10 +103,10 @@ export const action = async ({ params, request }: ActionArgs) => {
         });
       }
 
-      return superjson<ActionData>(
-        { message: 'This week has been updated.' },
-        { headers: { 'x-superjson': 'true' } },
-      );
+      return typedjson({
+        message: 'This week has been updated.',
+        updatedNflGames: new Map<string, number>(),
+      });
 
     case 'getSpreads': {
       //Call the API to get the spreads for each game
@@ -191,23 +180,20 @@ export const action = async ({ params, request }: ActionArgs) => {
         }
       });
 
-      return superjson<ActionData>(
-        {
-          message: 'Game spreads have been populated.',
-          updatedNflGames: spreadMapping,
-        },
-        { headers: { 'x-superjson': 'true' } },
-      );
+      return typedjson({
+        message: 'Game spreads have been populated.',
+        updatedNflGames: spreadMapping,
+      });
     }
   }
 
-  return superjson<ActionData>(
-    { message: 'There was an error with something' },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    message: 'There was an error with something',
+    updatedNflGames: new Map<string, number>(),
+  });
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -229,16 +215,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   // Get existing lines
   const poolGames = await getPoolGamesByYearAndWeek(currentSeason.year, week);
 
-  return superjson<LoaderData>(
-    { nflGames, poolGames, poolWeek },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ nflGames, poolGames, poolWeek });
 };
 
 export default function AdminSpreadPoolYearWeek() {
-  const { nflGames, poolGames, poolWeek } = useSuperLoaderData<typeof loader>();
-  const actionData = useSuperActionData<ActionData>();
-  const transition = useTransition();
+  const { nflGames, poolGames, poolWeek } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
   //console.log(nflGames);
   //console.log(actionData?.updatedNflGames?.get('Baltimore Ravens') ?? "No data");
   return (
@@ -304,7 +287,7 @@ export default function AdminSpreadPoolYearWeek() {
             type='submit'
             name='_action'
             value='updateSpreads'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Update Week
           </Button>
@@ -313,7 +296,7 @@ export default function AdminSpreadPoolYearWeek() {
             type='submit'
             name='_action'
             value='getSpreads'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Get Spreads
           </Button>

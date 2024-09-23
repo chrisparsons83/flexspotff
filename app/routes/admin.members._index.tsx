@@ -1,27 +1,16 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-import type { SleeperUser } from '~/models/sleeperUser.server';
-import type { User } from '~/models/user.server';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getUsers } from '~/models/user.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  users: (User & {
-    sleeperUsers: SleeperUser[];
-  })[];
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const users = await getUsers();
 
-  return superjson<LoaderData>(
-    { users },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ users });
 };
 
 export default function PodcastEpisodeList() {
-  const { users } = useSuperLoaderData<typeof loader>();
+  const { users } = useTypedLoaderData<typeof loader>();
 
   return (
     <>

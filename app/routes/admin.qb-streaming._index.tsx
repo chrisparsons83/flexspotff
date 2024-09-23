@@ -1,10 +1,13 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, Link, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, Link, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import type { QBStreamingWeek } from '~/models/qbstreamingweek.server';
 import {
   createQBStreamingWeek,
   getQBStreamingWeek,
@@ -15,16 +18,6 @@ import type { QBStreamingWeekOption } from '~/models/qbstreamingweekoption.serve
 import { updateQBStreamingWeekOptionScore } from '~/models/qbstreamingweekoption.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
-
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  qbStreamingWeeks: QBStreamingWeek[];
-};
 
 // If the below fields do not exist, it is safe to assume they are 0.
 const sleeperJsonStats = z.record(
@@ -45,7 +38,7 @@ const sleeperJsonStats = z.record(
 );
 type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const action = formData.get('_action');
 
@@ -68,7 +61,7 @@ export const action = async ({ request }: ActionArgs) => {
         isScored: false,
       });
 
-      return json<ActionData>({ message: 'Week has been created.' });
+      return typedjson({ message: 'Week has been created.' });
     }
     case 'scoreWeek': {
       const weekNumberString = formData.get('weekNumber');
@@ -127,14 +120,14 @@ export const action = async ({ request }: ActionArgs) => {
         week: qbStreamingWeek.week,
       });
 
-      return json<ActionData>({ message: 'Week has been scored.' });
+      return typedjson({ message: 'Week has been scored.' });
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -147,16 +140,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
 
-  return superjson<LoaderData>(
-    { qbStreamingWeeks },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ qbStreamingWeeks });
 };
 
 export default function AdminQBStreaming() {
-  const { qbStreamingWeeks } = useSuperLoaderData<typeof loader>();
-  const actionData = useActionData<ActionData>();
-  const transition = useTransition();
+  const { qbStreamingWeeks } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
+  const navigation = useNavigation();
 
   return (
     <>
@@ -164,16 +154,11 @@ export default function AdminQBStreaming() {
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             name='_action'
             value='createNewWeek'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Create Next Week
           </Button>
@@ -215,7 +200,7 @@ export default function AdminQBStreaming() {
                     type='submit'
                     name='_action'
                     value='scoreWeek'
-                    disabled={transition.state !== 'idle'}
+                    disabled={navigation.state !== 'idle'}
                   >
                     Score Week
                   </Button>

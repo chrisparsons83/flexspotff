@@ -1,4 +1,5 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LeaderboardRow from '~/components/layout/leaderboard/LeaderboardRow';
 import GoBox from '~/components/ui/GoBox';
 import { getCurrentSeason } from '~/models/season.server';
@@ -6,16 +7,8 @@ import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
 } from '~/models/teamgame.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  leaderboard: Awaited<ReturnType<typeof getTeamGamesByYearAndWeek>>;
-  week: number;
-  year: number;
-  maxWeek: number;
-};
-
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
   const week = Number(params.week);
 
@@ -29,15 +22,12 @@ export const loader = async ({ params }: LoaderArgs) => {
   const maxWeek =
     (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
 
-  return superjson<LoaderData>(
-    { leaderboard, week, maxWeek, year },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ leaderboard, week, maxWeek, year });
 };
 
 export default function LeaderboardYearWeek() {
   const { leaderboard, week, maxWeek, year } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()

@@ -1,18 +1,12 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LeagueTable from '~/components/layout/standings/LeagueTable';
 import GoBox from '~/components/ui/GoBox';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { FIRST_YEAR } from '~/utils/constants';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  leagues: Awaited<ReturnType<typeof getLeaguesByYear>>;
-  year: number;
-  maxYear: number;
-};
-
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
   const currentSeason = await getCurrentSeason();
 
@@ -24,14 +18,11 @@ export const loader = async ({ params }: LoaderArgs) => {
 
   const leagues = await getLeaguesByYear(year);
 
-  return superjson<LoaderData>(
-    { leagues, year, maxYear },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ leagues, year, maxYear });
 };
 
 export default function Standings() {
-  const { leagues, year, maxYear } = useSuperLoaderData<typeof loader>();
+  const { leagues, year, maxYear } = useTypedLoaderData<typeof loader>();
 
   const yearArray = Array.from(
     { length: maxYear - FIRST_YEAR + 1 },

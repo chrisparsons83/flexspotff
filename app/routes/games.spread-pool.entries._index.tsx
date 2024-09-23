@@ -1,16 +1,11 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-import type { PoolWeek } from '~/models/poolweek.server';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  poolWeeks: PoolWeek[];
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -22,16 +17,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
 
-  return superjson<LoaderData>(
-    {
-      poolWeeks,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    poolWeeks,
+  });
 };
 
 export default function GamesQBStreamingMyEntries() {
-  const { poolWeeks } = useSuperLoaderData<typeof loader>();
+  const { poolWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
     <>

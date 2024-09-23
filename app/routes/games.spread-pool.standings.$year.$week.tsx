@@ -1,7 +1,7 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import GoBox from '~/components/ui/GoBox';
-import type { getPoolGamePicksWonLoss } from '~/models/poolgamepicks.server';
 import {
   getPoolGamePicksWonLossWeek,
   getPoolGamesPicksByPoolWeek,
@@ -13,19 +13,8 @@ import {
 import { getPoolWeekMissedTotalByUserAndYearAndWeek } from '~/models/poolweekmissed.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
-  users: User[];
-  userIdToRankMap: Map<string, number>;
-  weeklyPicks?: Awaited<ReturnType<typeof getPoolGamesPicksByPoolWeek>>;
-  maxWeek: number;
-  year: number;
-  week: number;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const yearParam = params.year;
   const weekParam = params.week;
   if (!yearParam) throw new Error('No year existing');
@@ -83,10 +72,15 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   // Get maximum week
   const maxWeek = (await getPoolWeeksByYear(year))[0].weekNumber;
 
-  return superjson<LoaderData>(
-    { amountWonLoss, users, userIdToRankMap, weeklyPicks, maxWeek, year, week },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    amountWonLoss,
+    users,
+    userIdToRankMap,
+    weeklyPicks,
+    maxWeek,
+    year,
+    week,
+  });
 };
 
 export default function SpreadPoolStandingsYearWeekIndex() {
@@ -98,7 +92,7 @@ export default function SpreadPoolStandingsYearWeekIndex() {
     year,
     week,
     maxWeek,
-  } = useSuperLoaderData<typeof loader>();
+  } = useTypedLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
   for (const user of users) {

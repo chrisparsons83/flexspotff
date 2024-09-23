@@ -1,21 +1,14 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
-import type { User } from '~/models/user.server';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import {
   authenticator,
   isAdmin,
   isPodcastEditor,
   requireEditor,
 } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  user: User;
-  userIsAdmin: boolean;
-  userIsPodcastEditor: boolean;
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -27,15 +20,12 @@ export const loader = async ({ request }: LoaderArgs) => {
     isPodcastEditor(user),
   ]);
 
-  return superjson<LoaderData>(
-    { user, userIsAdmin, userIsPodcastEditor },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ user, userIsAdmin, userIsPodcastEditor });
 };
 
 export default function Admin() {
   const { userIsAdmin, userIsPodcastEditor } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>

@@ -1,24 +1,15 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-import React from 'react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import FSquaredStandingsRow from '~/components/layout/f-squared/FSquaredStandingsRow';
-import type { currentResultsBase } from '~/models/fsquared.server';
 import {
   getEntryByUserAndYear,
   getResultsForYear,
 } from '~/models/fsquared.server';
-import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  currentResults: currentResultsBase[];
-  existingEntry: Awaited<ReturnType<typeof getEntryByUserAndYear>> | null;
-  currentSeason: Season;
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request);
 
   let currentSeason = await getCurrentSeason();
@@ -56,15 +47,12 @@ export const loader = async ({ request }: LoaderArgs) => {
     });
   }
 
-  return superjson<LoaderData>(
-    { currentResults, existingEntry, currentSeason },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ currentResults, existingEntry, currentSeason });
 };
 
 export default function FSquaredIndex() {
   const { currentResults, existingEntry, currentSeason } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>

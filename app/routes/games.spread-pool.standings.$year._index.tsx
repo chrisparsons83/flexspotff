@@ -1,4 +1,5 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import {
   getPoolGamePicksWonLoss,
@@ -9,16 +10,8 @@ import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.ser
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  amountWonLoss: Awaited<ReturnType<typeof getPoolGamePicksWonLoss>>;
-  users: User[];
-  userIdToRankMap: Map<string, number>;
-  weeklyPicks?: Awaited<ReturnType<typeof getPoolGamesPicksByPoolWeek>>;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -78,15 +71,12 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   ];
   const users = await getUsersByIds(userIds);
 
-  return superjson<LoaderData>(
-    { amountWonLoss, users, userIdToRankMap, weeklyPicks },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ amountWonLoss, users, userIdToRankMap, weeklyPicks });
 };
 
 export default function QBStreamingStandingsYearIndex() {
   const { amountWonLoss, users, userIdToRankMap, weeklyPicks } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
   for (const user of users) {

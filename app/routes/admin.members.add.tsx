@@ -1,13 +1,13 @@
-import type { ActionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
 import { Form, useNavigation } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
+import { typedjson, useTypedActionData } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { createOrUpdateSleeperUser } from '~/models/sleeperUser.server';
 import { createUser } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperActionData } from '~/utils/data';
 
 const zFormData = z.object({
   discordName: z.string(),
@@ -15,25 +15,7 @@ const zFormData = z.object({
   sleeperOwnerId: z.string(),
 });
 
-type ActionData = {
-  formError?: string;
-  fieldErrors?: {
-    discordName?: string;
-    discordId?: string;
-    sleeperOwnerId?: string;
-  };
-  fields?: {
-    discordName: string;
-    discordId: string;
-    sleeperOwnerId: string;
-  };
-  message?: string;
-  success?: boolean;
-};
-
-export const action = async ({
-  request,
-}: ActionArgs): Promise<Response | ActionData> => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const currentUser = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -57,7 +39,7 @@ export const action = async ({
     sleeperOwnerID: parsedFormData.sleeperOwnerId,
   });
 
-  return superjson<ActionData>(
+  return typedjson(
     {
       message: `User ${parsedFormData.discordName} added.`,
       success: true,
@@ -67,7 +49,7 @@ export const action = async ({
 };
 
 export default function MembersAdd() {
-  const actionData = useSuperActionData<ActionData>();
+  const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -103,14 +85,6 @@ export default function MembersAdd() {
               required
               name='discordName'
               id='discordName'
-              aria-invalid={
-                Boolean(actionData?.fieldErrors?.discordName) || undefined
-              }
-              aria-errormessage={
-                actionData?.fieldErrors?.discordName
-                  ? 'discordName-error'
-                  : undefined
-              }
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
             />
           </label>
@@ -123,14 +97,6 @@ export default function MembersAdd() {
               required
               name='discordId'
               id='discordId'
-              aria-invalid={
-                Boolean(actionData?.fieldErrors?.discordId) || undefined
-              }
-              aria-errormessage={
-                actionData?.fieldErrors?.discordId
-                  ? 'discordId-error'
-                  : undefined
-              }
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
             />
           </label>
@@ -143,24 +109,11 @@ export default function MembersAdd() {
               required
               name='sleeperOwnerId'
               id='sleeperOwnerId'
-              aria-invalid={
-                Boolean(actionData?.fieldErrors?.sleeperOwnerId) || undefined
-              }
-              aria-errormessage={
-                actionData?.fieldErrors?.sleeperOwnerId
-                  ? 'sleeperOwnerId-error'
-                  : undefined
-              }
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
             />
           </label>
         </div>
         <div>
-          {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
-              {actionData.formError}
-            </p>
-          ) : null}
           <Button
             type='submit'
             disabled={navigation.state !== 'idle'}

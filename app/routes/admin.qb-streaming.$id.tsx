@@ -1,10 +1,13 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Form, useActionData, useTransition } from '@remix-run/react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { getWeekNflGames } from '~/models/nflgame.server';
-import type { Player } from '~/models/players.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
 import {
   getQBStreamingWeek,
@@ -15,19 +18,8 @@ import {
   deleteQBStreamingWeekOption,
 } from '~/models/qbstreamingweekoption.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type ActionData = {
-  formError?: string;
-  message?: string;
-};
-
-type LoaderData = {
-  activeQBs: Player[];
-  qbStreamingWeek: Awaited<ReturnType<typeof getQBStreamingWeek>>;
-};
-
-export const action = async ({ params, request }: ActionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -73,7 +65,7 @@ export const action = async ({ params, request }: ActionArgs) => {
         nflGameId: nflGame.id,
       });
 
-      return json<ActionData>({ message: 'Player has been added.' });
+      return typedjson({ message: 'Player has been added.' });
     }
     case 'removePlayer': {
       const qbStreamingWeekOptionId = formData.get('qbStreamingWeekOptionId');
@@ -82,7 +74,7 @@ export const action = async ({ params, request }: ActionArgs) => {
 
       await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
 
-      return json<ActionData>({ message: 'Player has been removed.' });
+      return typedjson({ message: 'Player has been removed.' });
     }
     case 'updateWeek': {
       const isOpen = formData.get('isOpen');
@@ -95,14 +87,14 @@ export const action = async ({ params, request }: ActionArgs) => {
         isOpen: isOpen ? true : false,
       });
 
-      return json<ActionData>({ message: 'Week has been updated.' });
+      return typedjson({ message: 'Week has been updated.' });
     }
   }
 
-  return json<ActionData>({ message: 'Nothing has happened.' });
+  return typedjson({ message: 'Nothing has happened.' });
 };
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -116,16 +108,13 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
   const activeQBs = await getActivePlayersByPosition('QB');
 
-  return superjson<LoaderData>(
-    { activeQBs, qbStreamingWeek },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ activeQBs, qbStreamingWeek });
 };
 
 export default function AdminSpreadPoolYearWeek() {
-  const actionData = useActionData<ActionData>();
-  const { activeQBs, qbStreamingWeek } = useSuperLoaderData<typeof loader>();
-  const transition = useTransition();
+  const actionData = useTypedActionData<typeof action>();
+  const { activeQBs, qbStreamingWeek } = useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
 
   if (!qbStreamingWeek) throw new Error('No information found for week');
 
@@ -163,7 +152,7 @@ export default function AdminSpreadPoolYearWeek() {
             type='submit'
             name='_action'
             value='addPlayer'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Add Player
           </Button>
@@ -198,7 +187,7 @@ export default function AdminSpreadPoolYearWeek() {
                     type='submit'
                     name='_action'
                     value='removePlayer'
-                    disabled={transition.state !== 'idle'}
+                    disabled={navigation.state !== 'idle'}
                   >
                     Remove
                   </Button>
@@ -224,7 +213,7 @@ export default function AdminSpreadPoolYearWeek() {
             type='submit'
             name='_action'
             value='updateWeek'
-            disabled={transition.state !== 'idle'}
+            disabled={navigation.state !== 'idle'}
           >
             Update Week
           </Button>

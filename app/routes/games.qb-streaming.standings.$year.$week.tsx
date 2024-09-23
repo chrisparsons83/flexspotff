@@ -1,21 +1,13 @@
-import type { LoaderArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import GoBox from '~/components/ui/GoBox';
 import { getQBSelectionsByWeek } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
-type LoaderData = {
-  qbSelections: Awaited<ReturnType<typeof getQBSelectionsByWeek>>;
-  rankings: QBStreamingStandingsRow[];
-  year: string;
-  week: number;
-  maxWeek: number;
-};
-
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
@@ -56,21 +48,18 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       ) + 1;
   }
 
-  return superjson<LoaderData>(
-    {
-      qbSelections,
-      rankings,
-      year,
-      week,
-      maxWeek,
-    },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({
+    qbSelections,
+    rankings,
+    year,
+    week,
+    maxWeek,
+  });
 };
 
 export default function QBStreamingStandingsYearWeek() {
   const { qbSelections, rankings, year, week, maxWeek } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
     .reverse()

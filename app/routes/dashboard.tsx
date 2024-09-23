@@ -1,5 +1,6 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import Button from '~/components/ui/Button';
 import type { Registration } from '~/models/registration.server';
 import {
@@ -7,27 +8,17 @@ import {
   getRegistrationByUserAndYear,
   getRegistrationsByYear,
 } from '~/models/registration.server';
-import type { Season } from '~/models/season.server';
 import { getCurrentSeason } from '~/models/season.server';
-import type { User } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
 type ActionData = {
   formError?: string;
   registration?: Registration;
 };
 
-type LoaderData = {
-  user: User;
-  registration: Registration | null;
-  registrationsCount: number;
-  currentSeason: Season;
-};
-
 export const action = async ({
   request,
-}: ActionArgs): Promise<Response | ActionData> => {
+}: ActionFunctionArgs): Promise<Response | ActionData> => {
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -43,10 +34,10 @@ export const action = async ({
 
   let registration = await createRegistration(user.id, year);
 
-  return superjson<ActionData>({ registration });
+  return typedjson({ registration });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -64,15 +55,12 @@ export const loader = async ({ request }: LoaderArgs) => {
   let registrations = await getRegistrationsByYear(currentSeason.year);
   const registrationsCount = registrations.length;
 
-  return superjson<LoaderData>(
-    { user, registration, currentSeason, registrationsCount },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  return typedjson({ user, registration, currentSeason, registrationsCount });
 };
 
 export default function Dashboard() {
   const { registration, currentSeason, registrationsCount } =
-    useSuperLoaderData<typeof loader>();
+    useTypedLoaderData<typeof loader>();
 
   const isRegistrationFull =
     currentSeason.registrationSize <= registrationsCount;

@@ -1,85 +1,75 @@
 import stylesheet from './styles/tailwind.css?url';
-import type { LinksFunction, LoaderArgs } from '@remix-run/node';
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useRouteError,
 } from '@remix-run/react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import NavBar from '~/components/layout/NavBar';
-import type { User } from '~/models/user.server';
 import { authenticator, isEditor } from '~/services/auth.server';
-import { superjson, useSuperLoaderData } from '~/utils/data';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
 ];
 
 export const meta = () => {
-  return [
-    { charset: 'utf-8' },
-    { title: 'Flex Spot FF' },
-    { name: 'viewport', content: 'width=device-width,initial-scale=1' },
-  ];
+  return [{ title: 'Flex Spot FF' }];
 };
 
-type LoaderData = {
-  user: User | null;
-  userIsEditor: boolean;
-  ENV: {
-    NODE_ENV: string;
-  };
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
 
-  return superjson<LoaderData>(
-    {
-      user,
-      userIsEditor,
-      ENV: {
-        NODE_ENV: process.env.NODE_ENV,
-      },
+  return typedjson({
+    user,
+    userIsEditor,
+    ENV: {
+      NODE_ENV: process.env.NODE_ENV,
     },
-    { headers: { 'x-superjson': 'true' } },
-  );
+  });
 };
 
-function App() {
-  const { user, userIsEditor, ENV } = useSuperLoaderData<typeof loader>();
-
+export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en' className='dark h-full'>
       <head>
+        <meta charSet='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
         <Meta />
         <Links />
       </head>
       <body className='h-full bg-slate-700 text-white'>
-        <NavBar user={user} userIsEditor={userIsEditor} />
-        <div className='container relative mx-auto min-h-screen p-4 text-white'>
-          <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
-            <Outlet />
-          </main>
-        </div>
+        {children}
         <ScrollRestoration />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.ENV = ${JSON.stringify(ENV)}`,
-          }}
-        />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );
 }
 
-export default App;
+export default function App() {
+  const { user, userIsEditor, ENV } = useTypedLoaderData<typeof loader>();
+
+  return (
+    <>
+      <NavBar user={user} userIsEditor={userIsEditor} />
+      <div className='container relative mx-auto min-h-screen p-4 text-white'>
+        <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
+          <Outlet />
+        </main>
+      </div>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.ENV = ${JSON.stringify(ENV)}`,
+        }}
+      />
+    </>
+  );
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();
