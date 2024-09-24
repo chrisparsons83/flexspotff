@@ -49,15 +49,7 @@ http://localhost:5173/auth/discord/callback
 - Load database dump if you have one.
 
 ```sh
-cat NAME_OF_BACKUP_FILE | docker exec -i NAME_OF_DOCKER_CONTAINER psql -U postgres flexspotff
-```
-
-(you may need to drop/create the db if that gives you a bunch of errors, you can
-do this to solve it)
-
-```sh
-docker exec -i flexspotff-postgres-1 dropdb -U postgres flexspotff
-docker exec -i flexspotff-postgres-1 createdb -U postgres flexspotff
+npm run db-sync -- NAME_OF_BACKUP_FILE
 ```
 
 - Run the first build:
@@ -80,6 +72,15 @@ find the instructions to set up Wireguard
 [here](https://fly.io/docs/reference/private-networking/#install-your-wireguard-app),
 and the instructions for creating a development database
 [here](https://fly.io/docs/reference/postgres/).
+
+## Database syncing
+
+Assuming you have a backup database to load and are using docker, you can use
+the db-sync npm script to handle this.
+
+```sh
+npm run db-sync -- NAME_OF_BACKUP_FILE
+```
 
 ## Styling
 
