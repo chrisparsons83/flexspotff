@@ -48,7 +48,6 @@ export default function LocksChallengeGameComponent({
   
   // Lock the pick under any of these consitions: the game has started, the week is scored, or the next Sunday at 1PM EST has passed
   const pickLocked = (gameDateTime && gameDateTime < now) || isWeekScored || (nextSunday && nextSunday < now);
-  console.log(existingLocksGamePick);
 
   const wonGame = existingLocksGamePick && existingLocksGamePick.isWin;
 
