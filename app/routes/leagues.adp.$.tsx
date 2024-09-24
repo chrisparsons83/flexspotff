@@ -39,8 +39,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       // position worst than the actual number of picks. There isn't a great way to solve this but
       // we've picked a way, I think.
       position._avg.pickNumber =
-        ((position._avg.pickNumber! * position._count.pickNumber) +
-          (181 * (leagueCount - position._count.pickNumber))) /
+        (position._avg.pickNumber! * position._count.pickNumber +
+          181 * (leagueCount - position._count.pickNumber)) /
         leagueCount;
     }
   }
