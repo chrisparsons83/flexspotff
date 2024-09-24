@@ -71,6 +71,9 @@ export async function getLeaguesByYear(year: League['year']) {
             wins: 'desc',
           },
           {
+            ties: 'desc',
+          },
+          {
             pointsFor: 'desc',
           },
         ],
