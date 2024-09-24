@@ -41,7 +41,13 @@ export default function LocksChallengeGameComponent({
   const isWeekScored = existingLocksGamePick?.isScored;
 
   // Logic for finding 1PM EST of the next Sunday so I can lock all made picks
-  const daysUntilSunday = (7 - now.getDay()) % 7 || 0;
+  let daysUntilSunday = (7 - now.getDay()) % 7 || 0;
+
+  // If today is Monday then go backwards a day.
+  if (daysUntilSunday === 6) {
+    daysUntilSunday = -1;
+  }
+
   const nextSunday = new Date(now);
   nextSunday.setDate(now.getDate() + daysUntilSunday);
   nextSunday.setHours(13, 0, 0, 0);
