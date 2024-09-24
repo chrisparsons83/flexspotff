@@ -40,11 +40,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       // we've picked a way, I think.
       position._avg.pickNumber =
         (position._avg.pickNumber! * position._count.pickNumber +
-          180 * (leagueCount - position._count.pickNumber)) /
+          181 * (leagueCount - position._count.pickNumber)) /
         leagueCount;
     }
   }
-
+  adp.sort((a, b) => a._avg.pickNumber! - b._avg.pickNumber!);
   return typedjson({ adp, playersMap, year });
 };
 
