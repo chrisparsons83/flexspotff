@@ -64,11 +64,19 @@ export default function SpreadPoolGameComponent({
       setBetTeam(poolGame.game.homeTeam);
       setBetAmount(+e.target.value);
       handleChange([
+        { teamId: poolGame.game.homeTeam.id, amount: 0 },
+        { teamId: poolGame.game.awayTeam.id, amount: 0 },
+      ]);
+      handleChange([
         { teamId: poolGame.game.homeTeam.id, amount: +e.target.value },
       ]);
     } else if (+e.target.value < 0) {
       setBetTeam(poolGame.game.awayTeam);
       setBetAmount(-1 * +e.target.value);
+      handleChange([
+        { teamId: poolGame.game.homeTeam.id, amount: 0 },
+        { teamId: poolGame.game.awayTeam.id, amount: 0 },
+      ]);
       handleChange([
         { teamId: poolGame.game.awayTeam.id, amount: -1 * +e.target.value },
       ]);
