@@ -8,6 +8,7 @@
     "db:migrate": "run-p db:migrate:*",
     "db:migrate:dev": "npx prisma migrate dev",
     "db:migrate:test": "dotenv -e .env.test -- npx prisma db push --accept-data-loss",
+    "db-sync": "scripts/db-sync.sh",
     "dev": "remix vite:dev",
     "docker": "docker-compose up -d",
     "format": "prettier --write . --check '!./postgres-data'",
