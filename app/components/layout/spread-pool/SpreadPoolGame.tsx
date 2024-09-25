@@ -36,7 +36,10 @@ export default function SpreadPoolGameComponent({
   const [betAmount, setBetAmount] = useState(
     Math.abs(existingBet?.amount || 0),
   );
-  const [showSlider, setShowSlider] = useState(false);
+  const [showSlider, setShowSlider] = useState(
+    Math.abs(existingBet?.amount || 0) > 0,
+  );
+  const [isBetReset, setIsBetReset] = useState(false);
 
   const betDisplay =
     betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : 'No Bet';
@@ -61,23 +64,19 @@ export default function SpreadPoolGameComponent({
 
   const onBetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (+e.target.value > 0) {
+      setIsBetReset(false);
       setBetTeam(poolGame.game.homeTeam);
       setBetAmount(+e.target.value);
       handleChange([
-        { teamId: poolGame.game.homeTeam.id, amount: 0 },
+        { teamId: poolGame.game.homeTeam.id, amount: +e.target.value },
         { teamId: poolGame.game.awayTeam.id, amount: 0 },
       ]);
-      handleChange([
-        { teamId: poolGame.game.homeTeam.id, amount: +e.target.value },
-      ]);
     } else if (+e.target.value < 0) {
+      setIsBetReset(false);
       setBetTeam(poolGame.game.awayTeam);
       setBetAmount(-1 * +e.target.value);
       handleChange([
         { teamId: poolGame.game.homeTeam.id, amount: 0 },
-        { teamId: poolGame.game.awayTeam.id, amount: 0 },
-      ]);
-      handleChange([
         { teamId: poolGame.game.awayTeam.id, amount: -1 * +e.target.value },
       ]);
     } else {
@@ -95,7 +94,8 @@ export default function SpreadPoolGameComponent({
   };
 
   const resetBet = () => {
-    setBetTeam(null);
+    setBetTeam(existingBetTeam);
+    setIsBetReset(true);
     setBetAmount(0);
     handleChange([
       { teamId: poolGame.game.homeTeam.id, amount: 0 },
@@ -124,6 +124,13 @@ export default function SpreadPoolGameComponent({
           {formatSpread(poolGame.homeSpread, true)})
         </div>
       </div>
+      {isBetReset && (
+        <input
+          type='hidden'
+          name={`${poolGame.id}-${existingBetTeam?.id}`}
+          defaultValue={0}
+        />
+      )}
       {showSlider && (
         <>
           <input
