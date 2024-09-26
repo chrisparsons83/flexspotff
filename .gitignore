@@ -4,8 +4,6 @@ node_modules
 /public/build
 .env*
 
-/cypress/screenshots
-/cypress/videos
 /postgres-data
 
 /coverage
@@ -14,3 +12,7 @@ node_modules
 /*.sql.gz
 
 tsconfig.tsbuildinfo
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
