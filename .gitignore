@@ -12,3 +12,7 @@ node_modules
 /*.sql.gz
 
 tsconfig.tsbuildinfo
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

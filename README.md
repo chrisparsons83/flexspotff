@@ -106,7 +106,15 @@ tests/build/etc..
 
 ### End to End
 
-This will eventually be Playwright. Currently there is no E2E testing setup.
+This uses Playwright to do E2E testing. In order to set up playwright, you may
+need to run the following command first:
+
+```
+npx playwright install --with-deps
+```
+
+Tests are stored in `/tests`, and there's a npm script `test:e2e:ui` that you
+can run to visualize the testing to debug things.
 
 ### Vitest
 

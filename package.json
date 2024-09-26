@@ -20,6 +20,8 @@
     "start:production": "prisma migrate deploy && npm run start",
     "test": "run-s db:migrate:test test:unit",
     "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
+    "test:e2e:ci": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "typecheck": "tsc -b",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
@@ -68,6 +70,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^6.3.1",
+    "@playwright/test": "^1.47.2",
     "@remix-run/dev": "^2.12.1",
     "@remix-run/eslint-config": "^2.12.1",
     "@tailwindcss/forms": "^0.5.2",
