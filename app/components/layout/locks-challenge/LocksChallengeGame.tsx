@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { DateTime } from 'luxon';
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import type {
@@ -40,17 +41,11 @@ export default function LocksChallengeGameComponent({
   const now = new Date();
   const isWeekScored = existingLocksGamePick?.isScored;
 
-  // Logic for finding 1PM EST of the next Sunday so I can lock all made picks
-  let daysUntilSunday = (7 - now.getDay()) % 7 || 0;
-
-  // If today is Monday then go backwards a day.
-  if (daysUntilSunday === 6) {
-    daysUntilSunday = -1;
-  }
-
-  const nextSunday = new Date(now);
-  nextSunday.setDate(now.getDate() + daysUntilSunday);
-  nextSunday.setHours(13, 0, 0, 0);
+  const nextSunday = DateTime.now()
+    .setZone('America/New_York')
+    .minus({ day: 1 })
+    .set({ weekday: 7, hour: 13, minute: 0, second: 0 })
+    .toJSDate();
 
   // Lock the pick under any of these consitions: the game has started, the week is scored, or the next Sunday at 1PM EST has passed
   const pickLocked =
