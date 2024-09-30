@@ -5,6 +5,12 @@ export type { NFLGame } from '@prisma/client';
 
 export type GameCreate = Omit<NFLGame, 'id'>;
 
+enum NFLGameStatus {
+  Complete = 'complete',
+  InGame = 'in_game',
+  PreGame = 'pre_game',
+}
+
 export async function getNflGameById(id: NFLGame['id']) {
   return prisma.nFLGame.findUnique({
     where: {
@@ -28,6 +34,17 @@ export async function getWeekNflGames(
     },
     orderBy: {
       gameStartTime: 'asc',
+    },
+  });
+}
+
+export async function getActiveNflGames() {
+  return prisma.nFLGame.aggregate({
+    where: {
+      status: NFLGameStatus.InGame,
+    },
+    _count: {
+      id: true,
     },
   });
 }

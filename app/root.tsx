@@ -41,6 +41,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <Meta />
         <Links />
+        {
+          // script below fixes FOUC on Firefox
+        }
+        <script>let FF_FOUC_FIX;</script>
       </head>
       <body className='h-full bg-slate-700 text-white'>
         {children}
