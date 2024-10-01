@@ -57,13 +57,21 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       );
       if (!nflGame) throw new Error(`Game not found for QB`);
 
-      await createQBStreamingWeekOption({
-        playerId,
-        isDeep: !!isDeep,
-        pointsScored: 0,
-        qbStreamingWeekId,
-        nflGameId: nflGame.id,
-      });
+      const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${player.id}`;
+      const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.uniqueId === uniqueId
+      );
+
+      if (!existingOption) {
+        await createQBStreamingWeekOption({
+          playerId,
+          isDeep: !!isDeep,
+          pointsScored: 0,
+          qbStreamingWeekId,
+          nflGameId: nflGame.id,
+          uniqueId
+        }); 
+      }
 
       return typedjson({ message: 'Player has been added.' });
     }
@@ -75,6 +83,64 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
 
       return typedjson({ message: 'Player has been removed.' });
+    }
+    case 'importPlayers': {
+      // Get the list of rosterships from sleeper
+      const newFetch = await fetch(
+        `https://api.sleeper.com/players/nfl/research/regular/2024/${qbStreamingWeek.week}`
+      );
+      const rostershipData = await newFetch.json();
+
+      // Filter out the non-QBs
+      const activeQBs = await getActivePlayersByPosition('QB');
+
+      // Add rostership data to active QBs
+      const activeQBsWithRostership = activeQBs.map(qb => {
+        const rostershipInfo = rostershipData[qb.sleeperId];
+        return {
+          ...qb,
+          rostership: rostershipInfo ? rostershipInfo.owned : 0,
+        };
+      });
+
+      // Sort by rostership and remove all above 50%
+      const topQBs = activeQBsWithRostership
+        .sort((a, b) => b.rostership - a.rostership)
+        .filter(qb => qb.rostership < 50)
+        .filter((_, index) => index < 10);
+      
+      // Add the QBs to the QB streaming week
+      for (const qb of topQBs) {
+        const nflGame = await getWeekNflGames(
+          qbStreamingWeek.year,
+          qbStreamingWeek.week,
+        ).then(nflGames =>
+          nflGames.find(
+            nflGame =>
+              nflGame.awayTeamId === qb.currentNFLTeamId ||
+              nflGame.homeTeamId === qb.currentNFLTeamId,
+          ),
+        );
+
+        if (nflGame) {
+          const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${qb.id}`;
+          const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
+            option => option.uniqueId === uniqueId
+          );
+          if (!existingOption) {
+            await createQBStreamingWeekOption({
+              playerId: qb.id,
+              isDeep: qb.rostership < 25 ? true : false,
+              pointsScored: 0,
+              qbStreamingWeekId,
+              nflGameId: nflGame.id,
+              uniqueId
+            });
+          }
+        }
+      }
+
+      return typedjson({ message: 'Players have been imported.' });
     }
     case 'updateWeek': {
       const isOpen = formData.get('isOpen');
@@ -208,6 +274,16 @@ export default function AdminSpreadPoolYearWeek() {
           />{' '}
           Week is active for selections
         </label>
+        <div>
+          <Button
+            type='submit'
+            name='_action'
+            value='importPlayers'
+            disabled={navigation.state !== 'idle'}
+          >
+            Import Players
+          </Button>
+        </div>
         <div>
           <Button
             type='submit'
