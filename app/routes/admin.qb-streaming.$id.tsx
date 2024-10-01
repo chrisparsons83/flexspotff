@@ -87,7 +87,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     case 'importPlayers': {
       // Get the list of rosterships from sleeper
       const newFetch = await fetch(
-        `https://api.sleeper.com/players/nfl/research/regular/2024/${qbStreamingWeek.week}`
+        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
       );
       const rostershipData = await newFetch.json();
 
@@ -106,11 +106,25 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       // Sort by rostership and remove all above 50%
       const topQBs = activeQBsWithRostership
         .sort((a, b) => b.rostership - a.rostership)
-        .filter(qb => qb.rostership < 50)
-        .filter((_, index) => index < 10);
+        .filter(qb => qb.rostership < 50);
+      
+      // Get Projects for the QBs
+      const newFetchTwo = await fetch(
+        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
+      );
+      const projectionData = await newFetchTwo.json();
+
+      // Remove QBs from topQBs that are projected below 1 point in half ppr
+      const topQBsProjected = topQBs.map(qb => {
+        const projection = projectionData[qb.sleeperId];
+        return {
+          ...qb,
+          projection
+        };
+      }).filter(qb => qb.projection?.pts_half_ppr > 1);
       
       // Add the QBs to the QB streaming week
-      for (const qb of topQBs) {
+      for (const qb of topQBsProjected) {
         const nflGame = await getWeekNflGames(
           qbStreamingWeek.year,
           qbStreamingWeek.week,
