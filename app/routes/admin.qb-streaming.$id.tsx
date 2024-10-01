@@ -174,12 +174,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const activeQBs = await getActivePlayersByPosition('QB');
 
-  return typedjson({ activeQBs, qbStreamingWeek });
+  // Filter out players in activeQBs from the qbStreamingWeek
+  const filteredQBs = activeQBs.filter(
+    qb => !qbStreamingWeek.QBStreamingWeekOptions.find(option => option.playerId === qb.id)
+  );
+
+  return typedjson({ filteredQBs, qbStreamingWeek });
 };
 
 export default function AdminSpreadPoolYearWeek() {
   const actionData = useTypedActionData<typeof action>();
-  const { activeQBs, qbStreamingWeek } = useTypedLoaderData<typeof loader>();
+  const { filteredQBs, qbStreamingWeek } = useTypedLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   if (!qbStreamingWeek) throw new Error('No information found for week');
@@ -195,7 +200,7 @@ export default function AdminSpreadPoolYearWeek() {
             name='playerId'
             className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
           >
-            {activeQBs.map(qb => (
+            {filteredQBs.map(qb => (
               <option key={qb.id} value={qb.id}>
                 {qb.lastName}, {qb.firstName}: {qb.nflTeam}
               </option>
@@ -222,6 +227,16 @@ export default function AdminSpreadPoolYearWeek() {
           >
             Add Player
           </Button>
+            <div className='pt-4'>
+            <Button
+              type='submit'
+              name='_action'
+              value='importPlayers'
+              disabled={navigation.state !== 'idle'}
+            >
+              Import Players
+            </Button>
+            </div>
         </div>
       </Form>
       <h3>Available Players</h3>
@@ -274,16 +289,6 @@ export default function AdminSpreadPoolYearWeek() {
           />{' '}
           Week is active for selections
         </label>
-        <div>
-          <Button
-            type='submit'
-            name='_action'
-            value='importPlayers'
-            disabled={navigation.state !== 'idle'}
-          >
-            Import Players
-          </Button>
-        </div>
         <div>
           <Button
             type='submit'
