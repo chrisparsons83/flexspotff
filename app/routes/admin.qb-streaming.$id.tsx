@@ -59,7 +59,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
       const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${player.id}`;
       const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.uniqueId === uniqueId
+        option => option.uniqueId === uniqueId,
       );
 
       if (!existingOption) {
@@ -69,8 +69,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           pointsScored: 0,
           qbStreamingWeekId,
           nflGameId: nflGame.id,
-          uniqueId
-        }); 
+          uniqueId,
+        });
       }
 
       return typedjson({ message: 'Player has been added.' });
@@ -87,7 +87,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     case 'importPlayers': {
       // Get the list of rosterships from sleeper
       const newFetch = await fetch(
-        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
+        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
       );
       const rostershipData = await newFetch.json();
 
@@ -107,22 +107,24 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const topQBs = activeQBsWithRostership
         .sort((a, b) => b.rostership - a.rostership)
         .filter(qb => qb.rostership < 50);
-      
+
       // Get Projects for the QBs
       const newFetchTwo = await fetch(
-        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
+        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
       );
       const projectionData = await newFetchTwo.json();
 
       // Remove QBs from topQBs that are projected below 1 point in half ppr
-      const topQBsProjected = topQBs.map(qb => {
-        const projection = projectionData[qb.sleeperId];
-        return {
-          ...qb,
-          projection
-        };
-      }).filter(qb => qb.projection?.pts_half_ppr > 1);
-      
+      const topQBsProjected = topQBs
+        .map(qb => {
+          const projection = projectionData[qb.sleeperId];
+          return {
+            ...qb,
+            projection,
+          };
+        })
+        .filter(qb => qb.projection?.pts_half_ppr > 1);
+
       // Add the QBs to the QB streaming week
       for (const qb of topQBsProjected) {
         const nflGame = await getWeekNflGames(
@@ -139,7 +141,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         if (nflGame) {
           const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${qb.id}`;
           const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
-            option => option.uniqueId === uniqueId
+            option => option.uniqueId === uniqueId,
           );
           if (!existingOption) {
             await createQBStreamingWeekOption({
@@ -148,7 +150,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
               pointsScored: 0,
               qbStreamingWeekId,
               nflGameId: nflGame.id,
-              uniqueId
+              uniqueId,
             });
           }
         }
@@ -190,7 +192,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Filter out players in activeQBs from the qbStreamingWeek
   const filteredQBs = activeQBs.filter(
-    qb => !qbStreamingWeek.QBStreamingWeekOptions.find(option => option.playerId === qb.id)
+    qb =>
+      !qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.playerId === qb.id,
+      ),
   );
 
   return typedjson({ filteredQBs, qbStreamingWeek });
@@ -241,7 +246,7 @@ export default function AdminSpreadPoolYearWeek() {
           >
             Add Player
           </Button>
-            <div className='pt-4'>
+          <div className='pt-4'>
             <Button
               type='submit'
               name='_action'
@@ -250,7 +255,7 @@ export default function AdminSpreadPoolYearWeek() {
             >
               Import Players
             </Button>
-            </div>
+          </div>
         </div>
       </Form>
       <h3>Available Players</h3>
