@@ -63,7 +63,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         pointsScored: 0,
         qbStreamingWeekId,
         nflGameId: nflGame.id,
-      }).catch((error) => {
+      }).catch(error => {
         console.error(`Failed to add player ${playerId}:`, error);
       });
 
@@ -109,14 +109,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const projectionData = await newFetchTwo.json();
 
       // Remove QBs from topQBs that are projected below 1 point in half ppr
-      const topQBsProjected = topQBs.map(qb => {
-        const projection = projectionData[qb.sleeperId];
-        return {
-          ...qb,
-          projection
-        };
-      }).filter(qb => qb.projection?.pts_half_ppr > 1);
-      
+      const topQBsProjected = topQBs
+        .map(qb => {
+          const projection = projectionData[qb.sleeperId];
+          return {
+            ...qb,
+            projection,
+          };
+        })
+        .filter(qb => qb.projection?.pts_half_ppr > 1);
+
       // Add the QBs to the QB streaming week
       for (const qb of topQBsProjected) {
         const nflGame = await getWeekNflGames(
@@ -131,15 +133,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         );
 
         if (nflGame) {
-            await createQBStreamingWeekOption({
-              playerId: qb.id,
-              isDeep: qb.rostership < 25 ? true : false,
-              pointsScored: 0,
-              qbStreamingWeekId,
-              nflGameId: nflGame.id,
-            }).catch((error) => {
-              console.error(`Failed to add player ${qb.id}:`, error);
-            });
+          await createQBStreamingWeekOption({
+            playerId: qb.id,
+            isDeep: qb.rostership < 25 ? true : false,
+            pointsScored: 0,
+            qbStreamingWeekId,
+            nflGameId: nflGame.id,
+          }).catch(error => {
+            console.error(`Failed to add player ${qb.id}:`, error);
+          });
         }
       }
 
