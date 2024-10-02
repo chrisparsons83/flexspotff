@@ -57,13 +57,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       );
       if (!nflGame) throw new Error(`Game not found for QB`);
 
-        await createQBStreamingWeekOption({
-          playerId,
-          isDeep: !!isDeep,
-          pointsScored: 0,
-          qbStreamingWeekId,
-          nflGameId: nflGame.id,
-        }); 
+      await createQBStreamingWeekOption({
+        playerId,
+        isDeep: !!isDeep,
+        pointsScored: 0,
+        qbStreamingWeekId,
+        nflGameId: nflGame.id,
+      }).catch((error) => {
+        console.error(`Failed to add player ${playerId}:`, error);
+      });
 
       return typedjson({ message: 'Player has been added.' });
     }
@@ -79,7 +81,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     case 'importPlayers': {
       // Get the list of rosterships from sleeper
       const newFetch = await fetch(
-        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
+        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
       );
       const rostershipData = await newFetch.json();
 
@@ -99,10 +101,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const topQBs = activeQBsWithRostership
         .sort((a, b) => b.rostership - a.rostership)
         .filter(qb => qb.rostership < 50);
-      
+
       // Get Projects for the QBs
       const newFetchTwo = await fetch(
-        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`
+        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
       );
       const projectionData = await newFetchTwo.json();
 
@@ -114,8 +116,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           projection
         };
       }).filter(qb => qb.projection?.pts_half_ppr > 1);
-
-      console.log(topQBsProjected);
       
       // Add the QBs to the QB streaming week
       for (const qb of topQBsProjected) {
@@ -131,17 +131,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         );
 
         if (nflGame) {
-            try {
             await createQBStreamingWeekOption({
               playerId: qb.id,
               isDeep: qb.rostership < 25 ? true : false,
               pointsScored: 0,
               qbStreamingWeekId,
               nflGameId: nflGame.id,
+            }).catch((error) => {
+              console.error(`Failed to add player ${qb.id}:`, error);
             });
-            } catch (error) {
-            console.error(`Failed to add player ${qb.id}:`, error);
-            }
         }
       }
 
@@ -181,7 +179,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Filter out players in activeQBs from the qbStreamingWeek
   const filteredQBs = activeQBs.filter(
-    qb => !qbStreamingWeek.QBStreamingWeekOptions.find(option => option.playerId === qb.id)
+    qb =>
+      !qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.playerId === qb.id,
+      ),
   );
 
   return typedjson({ filteredQBs, qbStreamingWeek });
@@ -232,7 +233,7 @@ export default function AdminSpreadPoolYearWeek() {
           >
             Add Player
           </Button>
-            <div className='pt-4'>
+          <div className='pt-4'>
             <Button
               type='submit'
               name='_action'
@@ -241,7 +242,7 @@ export default function AdminSpreadPoolYearWeek() {
             >
               Import Players
             </Button>
-            </div>
+          </div>
         </div>
       </Form>
       <h3>Available Players</h3>
