@@ -57,21 +57,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       );
       if (!nflGame) throw new Error(`Game not found for QB`);
 
-      const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${player.id}`;
-      const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.uniqueId === uniqueId
-      );
-
-      if (!existingOption) {
         await createQBStreamingWeekOption({
           playerId,
           isDeep: !!isDeep,
           pointsScored: 0,
           qbStreamingWeekId,
           nflGameId: nflGame.id,
-          uniqueId
         }); 
-      }
 
       return typedjson({ message: 'Player has been added.' });
     }
@@ -122,6 +114,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           projection
         };
       }).filter(qb => qb.projection?.pts_half_ppr > 1);
+
+      console.log(topQBsProjected);
       
       // Add the QBs to the QB streaming week
       for (const qb of topQBsProjected) {
@@ -137,20 +131,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         );
 
         if (nflGame) {
-          const uniqueId = `${qbStreamingWeek.year}-${qbStreamingWeek.week}-${qb.id}`;
-          const existingOption = qbStreamingWeek.QBStreamingWeekOptions.find(
-            option => option.uniqueId === uniqueId
-          );
-          if (!existingOption) {
+            try {
             await createQBStreamingWeekOption({
               playerId: qb.id,
               isDeep: qb.rostership < 25 ? true : false,
               pointsScored: 0,
               qbStreamingWeekId,
               nflGameId: nflGame.id,
-              uniqueId
             });
-          }
+            } catch (error) {
+            console.error(`Failed to add player ${qb.id}:`, error);
+            }
         }
       }
 
