@@ -63,6 +63,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         pointsScored: 0,
         qbStreamingWeekId,
         nflGameId: nflGame.id,
+      }).catch(error => {
+        console.error(`Failed to add player ${playerId}:`, error);
       });
 
       return typedjson({ message: 'Player has been added.' });
@@ -75,6 +77,75 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
 
       return typedjson({ message: 'Player has been removed.' });
+    }
+    case 'importPlayers': {
+      // Get the list of rosterships from sleeper
+      const newFetch = await fetch(
+        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
+      );
+      const rostershipData = await newFetch.json();
+
+      // Filter out the non-QBs
+      const activeQBs = await getActivePlayersByPosition('QB');
+
+      // Add rostership data to active QBs
+      const activeQBsWithRostership = activeQBs.map(qb => {
+        const rostershipInfo = rostershipData[qb.sleeperId];
+        return {
+          ...qb,
+          rostership: rostershipInfo ? rostershipInfo.owned : 0,
+        };
+      });
+
+      // Sort by rostership and remove all above 50%
+      const topQBs = activeQBsWithRostership
+        .sort((a, b) => b.rostership - a.rostership)
+        .filter(qb => qb.rostership < 50);
+
+      // Get Projects for the QBs
+      const newFetchTwo = await fetch(
+        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
+      );
+      const projectionData = await newFetchTwo.json();
+
+      // Remove QBs from topQBs that are projected below 1 point in half ppr
+      const topQBsProjected = topQBs
+        .map(qb => {
+          const projection = projectionData[qb.sleeperId];
+          return {
+            ...qb,
+            projection,
+          };
+        })
+        .filter(qb => qb.projection?.pts_half_ppr > 1);
+
+      // Add the QBs to the QB streaming week
+      for (const qb of topQBsProjected) {
+        const nflGame = await getWeekNflGames(
+          qbStreamingWeek.year,
+          qbStreamingWeek.week,
+        ).then(nflGames =>
+          nflGames.find(
+            nflGame =>
+              nflGame.awayTeamId === qb.currentNFLTeamId ||
+              nflGame.homeTeamId === qb.currentNFLTeamId,
+          ),
+        );
+
+        if (nflGame) {
+          await createQBStreamingWeekOption({
+            playerId: qb.id,
+            isDeep: qb.rostership < 25 ? true : false,
+            pointsScored: 0,
+            qbStreamingWeekId,
+            nflGameId: nflGame.id,
+          }).catch(error => {
+            console.error(`Failed to add player ${qb.id}:`, error);
+          });
+        }
+      }
+
+      return typedjson({ message: 'Players have been imported.' });
     }
     case 'updateWeek': {
       const isOpen = formData.get('isOpen');
@@ -108,12 +179,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const activeQBs = await getActivePlayersByPosition('QB');
 
-  return typedjson({ activeQBs, qbStreamingWeek });
+  // Filter out players in activeQBs from the qbStreamingWeek
+  const filteredQBs = activeQBs.filter(
+    qb =>
+      !qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.playerId === qb.id,
+      ),
+  );
+
+  return typedjson({ filteredQBs, qbStreamingWeek });
 };
 
 export default function AdminSpreadPoolYearWeek() {
   const actionData = useTypedActionData<typeof action>();
-  const { activeQBs, qbStreamingWeek } = useTypedLoaderData<typeof loader>();
+  const { filteredQBs, qbStreamingWeek } = useTypedLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   if (!qbStreamingWeek) throw new Error('No information found for week');
@@ -129,7 +208,7 @@ export default function AdminSpreadPoolYearWeek() {
             name='playerId'
             className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
           >
-            {activeQBs.map(qb => (
+            {filteredQBs.map(qb => (
               <option key={qb.id} value={qb.id}>
                 {qb.lastName}, {qb.firstName}: {qb.nflTeam}
               </option>
@@ -156,6 +235,16 @@ export default function AdminSpreadPoolYearWeek() {
           >
             Add Player
           </Button>
+          <div className='pt-4'>
+            <Button
+              type='submit'
+              name='_action'
+              value='importPlayers'
+              disabled={navigation.state !== 'idle'}
+            >
+              Import Players
+            </Button>
+          </div>
         </div>
       </Form>
       <h3>Available Players</h3>

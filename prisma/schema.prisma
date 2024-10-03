@@ -354,6 +354,8 @@ model QBStreamingWeekOption {
   nflGame NFLGame @relation(fields: [nflGameId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   nflGameId String
 
+  @@unique([qbStreamingWeekId, playerId], name: "weekIdAndPlayerId")
+
   StandardQBSelections QBSelection[] @relation(name: "StandardPlayer")
   DeepQBSelections QBSelection[] @relation(name: "DeepPlayer")
 }
