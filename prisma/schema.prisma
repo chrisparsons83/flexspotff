@@ -396,6 +396,22 @@ model Season {
   isOpenForRegistration Boolean
   isOpenForFSquared Boolean @default(false)
   registrationSize Int @default(60)
+
+  Weeks SeasonWeek[]
+}
+
+model SeasonWeek {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  season Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  seasonId String
+
+  weekNumber Int
+
+  weekStart DateTime
+  weekEnd DateTime
 }
 
 model SleeperUser {

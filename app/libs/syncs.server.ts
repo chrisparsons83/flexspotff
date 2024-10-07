@@ -1,3 +1,5 @@
+import type { SeasonWeek } from '@prisma/client';
+import { DateTime } from 'luxon';
 import z from 'zod';
 import type { DraftPickCreate } from '~/models/draftpick.server';
 import {
@@ -12,6 +14,11 @@ import { upsertNflGame } from '~/models/nflgame.server';
 import { getNflTeams } from '~/models/nflteam.server';
 import type { PlayerCreate } from '~/models/players.server';
 import { getPlayers, upsertPlayer } from '~/models/players.server';
+import { getSeason } from '~/models/season.server';
+import {
+  createSeasonWeek,
+  getSeasonWeeksBySeason,
+} from '~/models/seasonWeek.server';
 import { getTeams } from '~/models/team.server';
 import type { TeamGame } from '~/models/teamgame.server';
 import {
@@ -43,7 +50,7 @@ const sleeperGraphqlNflGames = z.object({
         home_score: z.number().optional(),
         away_team: z.string(),
         away_score: z.number().optional(),
-        date_time: z.string(),
+        date_time: z.string().datetime({ offset: true }),
       }),
     }),
   ),
@@ -138,6 +145,15 @@ export async function syncAdp(league: League) {
 }
 
 export async function syncNflGameWeek(year: number, weeks: number[]) {
+  // Get season
+  const season = await getSeason(year);
+  if (!season) {
+    throw new Error('No season found for year.');
+  }
+
+  // Get weeks
+  const seasonWeeks = await getSeasonWeeksBySeason(season);
+
   // Doing this for speed, might be able to use Prisma connect to remove this
   const sleeperTeamIdToID: Map<string, string> = new Map();
   const nflTeams = await getNflTeams();
@@ -162,6 +178,42 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
     promises.push(graphQLClient.request<SleeperGraphqlNflGames>(query));
   }
   const games = (await Promise.all(promises)).flatMap(result => result.scores);
+
+  // If we don't have any weeks created, this is where we create the weeks for the season.
+  if (seasonWeeks.length === 0) {
+    const weekStart = games.reduce<Map<number, Date>>((acc, cur) => {
+      const curDate = DateTime.fromISO(cur.metadata.date_time).toJSDate();
+      const accDate =
+        acc.get(cur.week) || DateTime.now().plus({ years: 10 }).toJSDate();
+      acc.set(cur.week, curDate < accDate ? curDate : accDate);
+      return acc;
+    }, new Map());
+    const weekUpdatePromises: Promise<SeasonWeek>[] = [];
+    for (const [week, firstGameDate] of weekStart.entries()) {
+      const firstGameDateLuxon = DateTime.fromJSDate(firstGameDate).setZone(
+        'America/Los_Angeles',
+      );
+      weekUpdatePromises.push(
+        createSeasonWeek({
+          seasonId: season.id,
+          weekNumber: week,
+          weekStart: firstGameDateLuxon
+            .plus({
+              days: (3 - firstGameDateLuxon.weekday) % 7,
+            })
+            .startOf('day')
+            .toJSDate(),
+          weekEnd: firstGameDateLuxon
+            .plus({
+              days: (9 - firstGameDateLuxon.weekday) % 7,
+            })
+            .endOf('day')
+            .toJSDate(),
+        }),
+      );
+    }
+    await Promise.all(weekUpdatePromises);
+  }
 
   const gameUpdatePromises: Promise<GameCreate>[] = [];
   for (const game of games) {
