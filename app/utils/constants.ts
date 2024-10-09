@@ -23,3 +23,16 @@ export const RANK_COLORS: Record<Leagues, string> = {
   galaxy: 'bg-galaxy text-gray-900',
   monarch: 'bg-monarch text-gray-900',
 };
+
+type RoundName = {
+  key: string;
+  label: string;
+};
+export const roundNameMapping: RoundName[] = [
+  { key: 'ROUND_OF_64', label: 'Round of 64' },
+  { key: 'ROUND_OF_32', label: 'Round of 32' },
+  { key: 'ROUND_OF_16', label: 'Round of 16' },
+  { key: 'ROUND_OF_8', label: 'Quarterfinals' },
+  { key: 'ROUND_OF_4', label: 'Semifinals' },
+  { key: 'ROUND_OF_2', label: 'Finals' },
+];

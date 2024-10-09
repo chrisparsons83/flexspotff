@@ -7,19 +7,7 @@ import { getCupGamesByCup } from '~/models/cupgame.server';
 import { getCupWeeks } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamGameMultiweekTotalsSeparated } from '~/models/teamgame.server';
-
-type RoundName = {
-  key: string;
-  label: string;
-};
-const roundNameMapping: RoundName[] = [
-  { key: 'ROUND_OF_64', label: 'Round of 64' },
-  { key: 'ROUND_OF_32', label: 'Round of 32' },
-  { key: 'ROUND_OF_16', label: 'Round of 16' },
-  { key: 'ROUND_OF_8', label: 'Quarterfinals' },
-  { key: 'ROUND_OF_4', label: 'Semifinals' },
-  { key: 'ROUND_OF_2', label: 'Finals' },
-];
+import { roundNameMapping } from '~/utils/constants';
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -42,6 +30,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // Get all weekly scores and then map them into [{userId, ROUND_OF_64, ROUND_OF_32, etc}]
   const scores = await getTeamGameMultiweekTotalsSeparated(
     cupWeeks.map(cupWeek => cupWeek.week),
+    cup.year,
   );
 
   const scoreArray: ScoreArray[] = [];
