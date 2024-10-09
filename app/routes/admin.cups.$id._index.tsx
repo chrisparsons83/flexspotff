@@ -336,6 +336,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
       const scores = await getTeamGameMultiweekTotalsSeparated(
         cupWeeks.map(cupWeek => cupWeek.week),
+        cup.year,
       );
 
       const scoreArray: ScoreArray[] = [];
