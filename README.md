@@ -140,3 +140,16 @@ It's recommended to install an editor plugin (like the
 [VSCode Prettier plugin](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode))
 to get auto-formatting on save. There's also a `npm run format` script you can
 run to format all files in the project.
+
+### Bot
+
+There's a bot in there now. You need to set up the DISCORD_BOT_TOKEN env
+variable in order to have it work, which you can get from the Discord developers
+center.
+
+You can dev the bot using `npm run dev:bot`. Using `dev:all` instead will have
+the website and bot run at the same time.
+
+To make a new command, make a file with the command name under /bot/commands.
+You need to export a data and execute function at the minimum. This uses
+discord.js so use that as reference.

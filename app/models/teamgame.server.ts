@@ -75,11 +75,17 @@ export async function getTeamGameMultiweekTotals(
 
 export async function getTeamGameMultiweekTotalsSeparated(
   weeks: TeamGame['week'][],
+  year: League['year'],
 ) {
   return prisma.teamGame.findMany({
     where: {
       week: {
         in: weeks,
+      },
+      team: {
+        league: {
+          year,
+        },
       },
     },
   });
