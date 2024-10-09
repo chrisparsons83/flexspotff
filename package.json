@@ -22,7 +22,7 @@
     "setup": "prisma migrate dev && prisma db seed",
     "start": "remix-serve ./build/server/index.js",
     "start:bot": "node ./build/bot/server.cjs",
-    "start:production": "prisma migrate deploy && npm run start",
+    "start:production": "prisma migrate deploy && run-p start start:bot",
     "test": "run-s db:migrate:test test:unit",
     "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
     "test:e2e:ci": "playwright test",
