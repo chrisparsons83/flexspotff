@@ -32,7 +32,11 @@ export const getCommandsFromLocal = async (): Promise<
   const commands = new Collection<string, Command>();
 
   const __dirname = fileURLToPath(dirname(import.meta.url));
-  const commandsDir = resolve(__dirname, 'commands');
+  // TODO: Fix this hardcoding at some point
+  const commandsDir =
+    resolve(__dirname, 'commands') === '/myapp/build/server/commands'
+      ? '/myapp/build/bot/commands'
+      : resolve(__dirname, 'commands');
 
   const fileEndingRegex = /(ts|js|cjs)$/;
 
