@@ -174,6 +174,27 @@ export default function Admin() {
                   </li>
                 </ul>
               </section>
+              <section>
+                <p
+                  id='admin-bot-heading'
+                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
+                >
+                  Bot
+                </p>
+                <ul
+                  aria-labelledby='admin-bot-heading'
+                  className='mb-8 space-y-2 p-0'
+                >
+                  <li className='flow-root'>
+                    <Link
+                      to='/admin/bot'
+                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                    >
+                      Commands
+                    </Link>
+                  </li>
+                </ul>
+              </section>
             </>
           )}
           {userIsPodcastEditor && (
