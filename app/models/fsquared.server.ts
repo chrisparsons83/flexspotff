@@ -1,5 +1,6 @@
 import type { FSquaredEntry, Team } from '@prisma/client';
 import { prisma } from '~/db.server';
+import type { ArrElement } from '~/utils/types';
 
 export type { FSquaredEntry } from '@prisma/client';
 
@@ -8,10 +9,6 @@ type FSquaredEntryCreateInput = Omit<
   'id' | 'createdAt' | 'updatedAt'
 >;
 
-// Doing this because Prisma hates me actually aggregating a sum based on connected fields.
-type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
-  ? ElementType
-  : never;
 export type currentResultsBase = ArrElement<
   Awaited<ReturnType<typeof getResultsForYear>>
 > & {
