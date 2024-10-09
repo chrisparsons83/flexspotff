@@ -44,7 +44,11 @@ export const getCommandsFromLocal = async (): Promise<
     fileEndingRegex.test(file),
   );
   for (const file of files) {
-    const filePath = `./commands/${file}`;
+    // TODO: Fix this hardcoding at some point
+    const filePath =
+      commandsDir === '/myapp/build/bot/commands'
+        ? `../bot/commands/${file}`
+        : `./commands/${file}`;
     // TODO: Get rid of this vite-ignore exception
     const module = await import(/* @vite-ignore */ filePath);
     if (Command.guard(module)) {
