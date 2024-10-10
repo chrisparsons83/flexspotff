@@ -25,27 +25,28 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  await interaction.deferReply();
   const userId = interaction.options.getUser('user')?.id || interaction.user.id;
 
   const flexspotUser = await getUserByDiscordId(userId);
   if (!flexspotUser) {
-    return interaction.reply('This user does not exist in the system');
+    return interaction.editReply('This user does not exist in the system');
   }
 
   // Get the current active week to display
   const season = await getCurrentSeason();
   if (!season) {
-    return interaction.reply('There is no current active season');
+    return interaction.editReply('There is no current active season');
   }
   const seasonWeek = await getCurrentWeek();
   if (!seasonWeek) {
-    return interaction.reply('There is no current active week');
+    return interaction.editReply('There is no current active week');
   }
 
   // Get the correct game to display, which may be no game, they may be eliminated
   const cup = await getCupByYear(season.year);
   if (!cup) {
-    return interaction.reply('No cup has been created');
+    return interaction.editReply('No cup has been created');
   }
 
   // Get a bunch of cup data to use later.
@@ -59,10 +60,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   // we should indicate that. We probably need to do something at the end of the season for this
   // logic but for now, this should work.
   if (!currentRound) {
-    return interaction.reply('Cup is not currently in progress');
+    return interaction.editReply('Cup is not currently in progress');
   }
   if (currentRound.mapping === 'SEEDING') {
-    return interaction.reply('Cup is in the seeding round');
+    return interaction.editReply('Cup is in the seeding round');
   }
 
   // Get the games for the user being asked about.
@@ -72,7 +73,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       cupGame.bottomTeam?.team.user?.discordId === userId,
   );
   if (userCupGames.length === 0) {
-    return interaction.reply('Player did not participate in cup');
+    return interaction.editReply('Player did not participate in cup');
   }
 
   // Figure out if they have a current match for the week, if so, show that, otherwise show the last
@@ -86,10 +87,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   // This probably should be adjusted to show the matchup vs bye but we don't need to worry about
   // that until next season.
   if (!matchToDisplay.bottomTeam) {
-    return interaction.reply('Player is on bye this week');
+    return interaction.editReply('Player is on bye this week');
   }
   if (!matchToDisplay.topTeam) {
-    return interaction.reply('Player is on bye this week');
+    return interaction.editReply('Player is on bye this week');
   }
 
   // This gets the cup team object for the user in question - we use this for additional data
@@ -133,7 +134,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       `**${title}**\n${formatGame(mappedScores, matchToDisplay)}`,
     );
 
-  await interaction.reply({ embeds: [embed] });
+  await interaction.editReply({ embeds: [embed] });
 };
 
 const formatGame = (
