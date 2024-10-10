@@ -1,4 +1,5 @@
-import type { ChatInputCommandInteraction, Team } from 'discord.js';
+import type { CupTeam, League, Team, User } from '@prisma/client';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getCupByYear } from '~/models/cup.server';
 import { getCupGamesByCup } from '~/models/cupgame.server';
@@ -101,7 +102,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   // This gets the weeks we need to use to calculate the match score.
   const weeksToScore = cupWeeks
-    .filter(cupWeek => cupWeek.mapping === currentRound.mapping)
+    .filter(cupWeek => cupWeek.mapping === matchToDisplay.round)
     .map(cupWeek => cupWeek.week);
 
   // Get all the scores for the teams we care about.
@@ -120,16 +121,19 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     return acc;
   }, new Map<Team['id'], TeamGame['pointsScored']>());
 
+  // Get some booleans
+  const hasLostMatch = matchToDisplay.losingTeamId === userCupTeamObject.id;
+  const hasWonMatch = matchToDisplay.winningTeamId === userCupTeamObject.id;
+
   // This show the title on the embed.
-  const title = `${
-    matchToDisplay.losingTeamId === userCupTeamObject.id ? 'Lost ' : ''
-  }${
+  const title = `${hasLostMatch ? 'Lost ' : hasWonMatch ? 'Won ' : ''}${
     roundNameMapping.find(roundName => roundName.key === matchToDisplay.round)
       ?.label || ''
   }`;
 
   const embed = new EmbedBuilder()
     .setTitle(flexspotUser.discordName)
+    .setColor(hasLostMatch ? 0xcc0000 : hasWonMatch ? 0xcc0000 : null)
     .setDescription(
       `**${title}**\n${formatGame(mappedScores, matchToDisplay)}`,
     );
@@ -153,48 +157,56 @@ const formatGame = (
     ...[...scores.values()].map(value => value.toFixed(2).length),
   );
 
-  // Format all the text so it looks even
-  // There is almost certainly a cleaner way to do this, but for now I think we'll stick with this.
-  // At the very least, probably making this into a function makes sense.
-  const topSeedDisplay = teams.topTeam.seed.toString().padEnd(columnSeedLength);
-  const topTeamDisplay = (
-    (teams.topTeam.team.user?.discordName || 'Unknown User').length <=
-    TEAM_NAME_DISPLAY_MAX_LENGTH
-      ? teams.topTeam.team.user?.discordName || 'Unknown User'
-      : // We can force here because we know that if we got to this ternary the user name has to exist
-        // even though Typescript can't logic that out
-        teams.topTeam.team.user!.discordName.substring(
-          0,
-          TEAM_NAME_DISPLAY_MAX_LENGTH - 1,
-        ) + '…'
-  ).padEnd(columnTeamNameLength);
-  const topScoreDisplay = scores
-    .get(teams.topTeam.team.id)
-    ?.toFixed(2)
-    .padStart(columnScoreLength);
-  const bottomSeedDisplay = teams.bottomTeam.seed
-    .toString()
-    .padEnd(columnSeedLength);
-  const bottomTeamDisplay = (
-    (teams.bottomTeam.team.user?.discordName || 'Unknown User').length <=
-    TEAM_NAME_DISPLAY_MAX_LENGTH
-      ? teams.bottomTeam.team.user?.discordName || 'Unknown User'
-      : // We can force here because we know that if we got to this ternary the user name has to exist
-        // even though Typescript can't logic that out
-        teams.bottomTeam.team.user!.discordName.substring(
-          0,
-          TEAM_NAME_DISPLAY_MAX_LENGTH - 1,
-        ) + '…'
-  ).padEnd(columnTeamNameLength);
-  const bottomScoreDisplay = scores
-    .get(teams.bottomTeam.team.id)
-    ?.toFixed(2)
-    .padStart(columnScoreLength);
-
   const results = [
-    `\`[${topSeedDisplay}] ${topTeamDisplay} ${topScoreDisplay}\``,
-    `\`[${bottomSeedDisplay}] ${bottomTeamDisplay} ${bottomScoreDisplay}\``,
+    teamDisplayString(
+      teams.topTeam,
+      scores,
+      columnSeedLength,
+      columnTeamNameLength,
+      columnScoreLength,
+    ),
+    teamDisplayString(
+      teams.bottomTeam,
+      scores,
+      columnSeedLength,
+      columnTeamNameLength,
+      columnScoreLength,
+    ),
   ];
 
   return results.join('\n');
+};
+
+const teamDisplayString = (
+  team: CupTeam & {
+    team: Team & {
+      user: User | null;
+      league: League;
+    };
+  },
+  scores: Map<Team['id'], TeamGame['pointsScored']>,
+  seedLength: number,
+  teamNameLength: number,
+  scoreLength: number,
+): string => {
+  const seedDisplay = team.seed.toString().padStart(seedLength);
+  const teamDisplay = (
+    (team.team.user?.discordName || 'Unknown User').length <=
+    TEAM_NAME_DISPLAY_MAX_LENGTH
+      ? team.team.user?.discordName || 'Unknown User'
+      : // We can force here because we know that if we got to this ternary the user name has to exist
+        // even though Typescript can't logic that out
+        team.team.user!.discordName.substring(
+          0,
+          TEAM_NAME_DISPLAY_MAX_LENGTH - 1,
+        ) + '…'
+  ).padEnd(teamNameLength);
+  const scoreDisplay = scores
+    .get(team.team.id)
+    ?.toFixed(2)
+    .padStart(scoreLength);
+
+  const teamLink = `https://sleeper.com/roster/${team.team.league.sleeperLeagueId}/${team.team.rosterId}`;
+
+  return `[\`[${seedDisplay}] ${teamDisplay} ${scoreDisplay}\`](${teamLink})`;
 };
