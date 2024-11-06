@@ -74,7 +74,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const [poolGameId, teamId] = key.split('-');
 
     const poolGame = poolGames.find(poolGame => poolGame.id === poolGameId);
-    if (!poolGame) continue;
+    if (!poolGame || poolGame.game.gameStartTime <= new Date()) continue;
 
     if (!teamId || teamId === 'undefined') {
       nflTeamIdToAmountBetMap.set(
@@ -88,21 +88,19 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       continue;
     }
 
-    if (poolGame.game.gameStartTime > new Date()) {
-      nflTeamIdToAmountBetMap.set(key, Math.abs(+amount));
+    nflTeamIdToAmountBetMap.set(key, Math.abs(+amount));
 
-      // Get team that's the other side of this game and set to 0.
-      if (poolGame.game.awayTeamId === teamId) {
-        nflTeamIdToAmountBetMap.set(
-          `${poolGameId}-${poolGame.game.homeTeamId}`,
-          0,
-        );
-      } else {
-        nflTeamIdToAmountBetMap.set(
-          `${poolGameId}-${poolGame.game.awayTeamId}`,
-          0,
-        );
-      }
+    // Get team that's the other side of this game and set to 0.
+    if (poolGame.game.awayTeamId === teamId) {
+      nflTeamIdToAmountBetMap.set(
+        `${poolGameId}-${poolGame.game.homeTeamId}`,
+        0,
+      );
+    } else {
+      nflTeamIdToAmountBetMap.set(
+        `${poolGameId}-${poolGame.game.awayTeamId}`,
+        0,
+      );
     }
   }
 
