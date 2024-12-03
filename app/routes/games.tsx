@@ -25,9 +25,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     await getPoolWeeksByYear(currentSeason.year)
   )[0]?.weekNumber;
 
-  const locksChallengeCurrentWeek = (
+  let locksChallengeWeek = (
     await getLocksWeeksByYear(currentSeason.year)
-  )[0]?.weekNumber;
+  )[0];
+  
+  const locksChallengeCurrentWeek = (locksChallengeWeek?.isWeekScored && (locksChallengeWeek?.weekNumber === 0)) ? locksChallengeWeek?.weekNumber : (locksChallengeWeek?.weekNumber - 1 ? locksChallengeWeek?.weekNumber - 1 : 1);
 
   return typedjson(
     {
