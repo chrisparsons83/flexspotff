@@ -30,9 +30,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const locksChallengeCurrentWeek =
     locksChallengeWeek?.isWeekScored
       ? locksChallengeWeek?.weekNumber
-      : locksChallengeWeek?.weekNumber - 1
-      ? locksChallengeWeek?.weekNumber - 1
-      : 1;
+      : locksChallengeWeek?.weekNumber - 1 
+      || 1;
 
   return typedjson(
     {
