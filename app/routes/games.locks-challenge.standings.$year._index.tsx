@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
+import { DateTime } from 'luxon';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import {
@@ -13,7 +14,6 @@ import {
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
-import { DateTime } from 'luxon';
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -27,18 +27,18 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
 
   const nextSunday = DateTime.now()
-  .setZone('America/New_York')
-  .minus({ day: 1 })
-  .set({ weekday: 7, hour: 13, minute: 0, second: 0 })
-  .toJSDate();
+    .setZone('America/New_York')
+    .minus({ day: 1 })
+    .set({ weekday: 7, hour: 13, minute: 0, second: 0 })
+    .toJSDate();
 
   // Get current picks for the week
   const weeklyPicks =
     currentWeek &&
     (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
       locksGamePick =>
-        ((locksGamePick.locksGame.game.gameStartTime < new Date()) ||
-        (nextSunday< new Date())) &&
+        (locksGamePick.locksGame.game.gameStartTime < new Date() ||
+          nextSunday < new Date()) &&
         locksGamePick.isActive !== 0,
     );
 
