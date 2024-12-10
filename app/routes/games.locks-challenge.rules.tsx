@@ -1,4 +1,4 @@
-export default function GamesLocksChallengeStreamingRules() {
+export default function GamesLocksChallengeRules() {
   return (
     <>
       <h2>Locks Challenge Rules</h2>
@@ -20,8 +20,8 @@ export default function GamesLocksChallengeStreamingRules() {
       </p>
 
       <p>
-        The player that scores the most points over the course of the season
-        wins. There are no penalties for not picking any teams in a week besides
+        The player with scores the most points at the end of week 18 wins. 
+        There are no penalties for not picking any teams in a week besides
         foregoing the opportunity to earn points that week.
       </p>
     </>
