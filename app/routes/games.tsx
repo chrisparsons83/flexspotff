@@ -30,12 +30,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const locksChallengeCurrentWeek = locksChallengeWeek?.isWeekScored
     ? locksChallengeWeek?.weekNumber
     : locksChallengeWeek?.weekNumber - 1 || 1;
+  
+  const dfsSurvivorCurrentWeek = 1;
 
   return typedjson(
     {
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
       locksChallengeCurrentWeek,
+      dfsSurvivorCurrentWeek,
       currentSeason,
     },
     { headers: { 'x-superjson': 'true' } },
@@ -47,6 +50,7 @@ export default function GamesIndex() {
     qbStreamingCurrentWeek,
     spreadPoolCurrentWeek,
     locksChallengeCurrentWeek,
+    dfsSurvivorCurrentWeek,
     currentSeason,
   } = useTypedLoaderData<typeof loader>();
 
@@ -95,6 +99,25 @@ export default function GamesIndex() {
     {
       name: 'Weekly Standings',
       href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
+      current: false,
+    },
+  ];
+
+  const dfsSurvivorLinks = [ 
+    { name: 'Rules', href: '/games/dfs-survivor/rules', current: false },
+    {
+      name: 'My Entries',
+      href: '/games/dfs-survivor/entries',
+      current: false,
+    },
+    {
+      name: 'Overall Standings',
+      href: `/games/dfs-survivor/standings/${currentSeason.year}`,
+      current: false,
+    },
+    {
+      name: 'Weekly Standings',
+      href: `/games/dfs-survivor/standings/${currentSeason.year}/${dfsSurvivorCurrentWeek}`,
       current: false,
     },
   ];
@@ -185,6 +208,29 @@ export default function GamesIndex() {
               className='mb-8 space-y-2 p-0'
             >
               {nflLocksChallengeLinks.map(navLink => (
+                <li key={navLink.name} className='flow-root'>
+                  <Link
+                    to={navLink.href}
+                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                  >
+                    {navLink.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <p
+              id='games-dfssurvivor-heading'
+              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
+            >
+              DFS Survivor
+            </p>
+            <ul
+              aria-labelledby='games-dfssurvivor-heading'
+              className='mb-8 space-y-2 p-0'
+            >
+              {dfsSurvivorLinks.map(navLink => (
                 <li key={navLink.name} className='flow-root'>
                   <Link
                     to={navLink.href}
