@@ -20,7 +20,7 @@ export default function GamesLocksChallengeRules() {
       </p>
 
       <p>
-        The player with scores the most points at the end of week 18 wins. 
+        The player with scores the most points at the end of week 17 wins. 
         There are no penalties for not picking any teams in a week besides
         foregoing the opportunity to earn points that week.
       </p>
