@@ -1,11 +1,10 @@
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
   } from "~/components/ui/card"
+import SearchSelect from "~/components/ui/SearchSelect"
 import {
     Collapsible,
     CollapsibleContent,
@@ -13,7 +12,6 @@ import {
 } from "~/components/ui/collapsible"
 
 export default function DfsSurvivorWeekComponent() {
-
     return (
         <Collapsible>
             <Card>
@@ -33,119 +31,24 @@ export default function DfsSurvivorWeekComponent() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                QB
+                        {['QB', 'QB', 'RB', 'RB', 'WR', 'WR', 'TE', 'FLEX', 'K', 'D/ST'].map((position, index) => (
+                            <div key={index} className="header-row flex justify-between items-center mb-2">
+                                <div className="text-base font-bold w-16">
+                                    {position}
+                                </div>
+                                <div className="text-base flex-2 mx-1">
+                                    <SearchSelect 
+                                        options={['Tua Turndaballova', 'Patrick Mahomes', 'Josh Allen', 'Jalen Hurts', 'Justin Herbert', 'Jared Goff', "Justin Jefferson", 'Clyde Edwards-Helaire', "Julian Edleman"]}
+                                        onOptionSelect={(selectedOption) => { console.log('Selected option:', selectedOption); }}
+                                        onOptionSelectedChange={(isOptionChanged) => { console.log('Selected options changed:', isOptionChanged); }}>
+                                    </SearchSelect>
+                                </div>
+                                <div className="text-base font-bold w-16 text-right">
+                                    53.73
+                                </div>
                             </div>
-                            <div className="text-base">
-                                Matthew Stafford
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                QB
-                            </div>
-                            <div className="text-base">
-                                Tua Turndaballova
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                RB
-                            </div>
-                            <div className="text-base">
-                                Saquon Barkley
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                RB
-                            </div>
-                            <div className="text-base">
-                                Clyde Edwards-Helaire
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                WR
-                            </div>
-                            <div className="text-base">
-                                Allen Lazard
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                WR
-                            </div>
-                            <div className="text-base">
-                                Tim Jones
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                TE
-                            </div>
-                            <div className="text-base">
-                                T.J. Hockenson
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                FLEX
-                            </div>
-                            <div className="text-base">
-                                Clyde Edwards-Helaire
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                K
-                            </div>
-                            <div className="text-base">
-                                Jake Bates
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
-                        <div className="header-row flex justify-between">
-                            <div className="text-base font-bold">
-                                D/ST
-                            </div>
-                            <div className="text-base">
-                                Carolina Panthers
-                            </div>
-                            <div className="text-base font-bold">
-                                53.73
-                            </div>
-                        </div>
+                        ))}
                     </CardContent>
-                    <CardFooter>
-                    </CardFooter>
                 </CollapsibleContent>
             </Card>
         </Collapsible>
