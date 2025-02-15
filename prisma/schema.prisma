@@ -235,6 +235,81 @@ model NFLTeam {
   nflPlayers Player[]
 }
 
+model OmniDraftPick {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pickNumber Int
+  pickStartTime DateTime?
+  pickMadeTime DateTime?
+
+  player OmniPlayer? @relation(fields: [playerId], references: [id])
+  playerId String
+
+  team OmniUserTeam @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamId String
+
+  @@unique([pickNumber, teamId])
+  @@unique([playerId])
+}
+
+model OmniSeason {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year Int
+  isCurrent Boolean @default(false)
+
+  omniTeams OmniUserTeam[]
+  omniSports OmniSport[]
+  omniPlayers OmniPlayer[]
+}
+
+model OmniUserTeam {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  seasonId String
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String?
+
+  draftPicks OmniDraftPick[]
+}
+
+model OmniSport {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+
+  omniSeasons OmniSeason[]
+  omniPicks OmniPlayer[]
+}
+
+model OmniPlayer {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  displayName String
+  isActive Boolean @default(true)
+  pointsScored Int?
+
+  sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sportId String
+  
+  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  seasonId String
+
+  draftPick OmniDraftPick?
+}
+
 model PoolWeek {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
@@ -482,4 +557,5 @@ model User {
   poolWeeksMissed PoolWeekMissed[]
   locksGamePick LocksGamePick[]
   sleeperUsers SleeperUser[]
+  omniTeams OmniUserTeam[]
 }
