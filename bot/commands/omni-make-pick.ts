@@ -24,12 +24,6 @@ import { getOmniUserTeamByUserIdAndSeason } from '~/models/omniuserteam.server';
 import type { User } from '~/models/user.server';
 import { getUserByDiscordId } from '~/models/user.server';
 
-const omniSeason = await getCurrentOmniSeason();
-const activeSports = await getActiveSports();
-const activePlayers = omniSeason
-  ? await getPlayersAndAssociatedPick(omniSeason.id)
-  : [];
-
 export const data = new SlashCommandBuilder()
   .setName('omni-make-pick')
   .setDescription('Make a draft pick in the currently running Omni draft')
@@ -39,7 +33,85 @@ export const data = new SlashCommandBuilder()
       .setDescription('The sport you are making a pick for')
       .setRequired(true)
       .addChoices(
-        activeSports
+        // TODO: Make this dynamic, this is only happening because Chris is doing this at 1am.
+        [
+          {
+            id: 'golfm',
+            name: 'Golf - Mens',
+          },
+          {
+            id: 'golfw',
+            name: 'Golf - Womens',
+          },
+          {
+            id: 'tennism',
+            name: 'Tennis - Mens',
+          },
+          {
+            id: 'tennisw',
+            name: 'Tennis - Womens',
+          },
+          {
+            id: 'mlb',
+            name: 'MLB',
+          },
+          {
+            id: 'nhl',
+            name: 'NHL',
+          },
+          {
+            id: 'nba',
+            name: 'NBA',
+          },
+          {
+            id: 'nfl',
+            name: 'NFL',
+          },
+          {
+            id: 'ncaam',
+            name: 'NCAA Basketball - Mens',
+          },
+          {
+            id: 'ncaaw',
+            name: 'NCAA Basketball - Womens',
+          },
+          {
+            id: 'ncaaf',
+            name: 'NCAA Football',
+          },
+          {
+            id: 'lol',
+            name: 'LoL World Championship',
+          },
+          {
+            id: 'darts',
+            name: 'PDC Darts World Championship',
+          },
+          {
+            id: 'ncaalm',
+            name: 'NCAA Lacrosse - Mens',
+          },
+          {
+            id: 'nascar',
+            name: 'NASCAR',
+          },
+          {
+            id: 'f1',
+            name: 'F1',
+          },
+          {
+            id: 'mls',
+            name: 'MLS',
+          },
+          {
+            id: 'uefa',
+            name: 'UEFA Champions League',
+          },
+          {
+            id: 'afl',
+            name: 'Aussie Rules AFL Premiership',
+          },
+        ]
           .sort((a, b) => a.name.localeCompare(b.name))
           .map(sport => ({
             name: sport.name,
@@ -56,6 +128,11 @@ export const data = new SlashCommandBuilder()
   );
 
 export const autocomplete = async (interaction: AutocompleteInteraction) => {
+  const omniSeason = await getCurrentOmniSeason();
+  const activePlayers = omniSeason
+    ? await getPlayersAndAssociatedPick(omniSeason.id)
+    : [];
+
   const options = interaction.options.getString('sport') || '';
 
   if (options === '') {
@@ -72,6 +149,7 @@ export const autocomplete = async (interaction: AutocompleteInteraction) => {
 };
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  const activeSports = await getActiveSports();
   await interaction.deferReply({ ephemeral: true });
 
   const userId = interaction.options.getUser('user')?.id || interaction.user.id;
@@ -87,6 +165,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   if (!omniSeason) {
     return interaction.editReply('There is no current active Omni season');
   }
+  const activePlayers = omniSeason
+    ? await getPlayersAndAssociatedPick(omniSeason.id)
+    : [];
 
   const omniUserTeam = await getOmniUserTeamByUserIdAndSeason(
     omniSeason.id,
@@ -165,7 +246,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         content: `Your pick has been entered.`,
         components: [],
       });
-      console.log({ nextPicks });
       if (!interaction.channel) {
         return interaction.editReply('Could not find channel');
       }
