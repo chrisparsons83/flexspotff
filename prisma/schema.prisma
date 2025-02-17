@@ -245,7 +245,7 @@ model OmniDraftPick {
   pickMadeTime DateTime?
 
   player OmniPlayer? @relation(fields: [playerId], references: [id])
-  playerId String
+  playerId String?
 
   team OmniUserTeam @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamId String
@@ -299,6 +299,7 @@ model OmniPlayer {
 
   displayName String
   isActive Boolean @default(true)
+  relativeSort Int
   pointsScored Int?
 
   sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
