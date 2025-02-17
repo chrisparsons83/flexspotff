@@ -156,14 +156,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   const flexspotUser = await getUserByDiscordId(userId);
   if (!flexspotUser) {
-    return interaction.editReply(
+    return interaction.followUp(
       'You have not been added to the backend database by Chris, bug him to fix this.',
     );
   }
 
   const omniSeason = await getCurrentOmniSeason();
   if (!omniSeason) {
-    return interaction.editReply('There is no current active Omni season');
+    return interaction.followUp('There is no current active Omni season');
   }
   const activePlayers = omniSeason
     ? await getPlayersAndAssociatedPick(omniSeason.id)
@@ -174,14 +174,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     flexspotUser.id,
   );
   if (!omniUserTeam) {
-    return interaction.editReply(
+    return interaction.followUp(
       'You have not been added to the current Omni season',
     );
   }
 
   const nextPickFromTeam = await getNextOmniPickForTeam(omniUserTeam.id);
   if (!nextPickFromTeam) {
-    return interaction.editReply('It is not your turn to pick');
+    return interaction.followUp('It is not your turn to pick');
   }
 
   // At this point we know we have a valid pick, so we can try to confirm it.
@@ -203,11 +203,11 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   const player = activePlayers.find(p => p.id === inputPlayer);
   if (!player) {
-    return interaction.editReply('Invalid player selection');
+    return interaction.followUp('Invalid player selection');
   }
   const sport = activeSports.find(s => s.id === inputSport);
   if (!sport) {
-    return interaction.editReply('Invalid sport selection');
+    return interaction.followUp('Invalid sport selection');
   }
 
   const response = await interaction.followUp({
@@ -247,13 +247,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         components: [],
       });
       if (!interaction.channel) {
-        return interaction.editReply('Could not find channel');
+        return interaction.followUp('Could not find channel');
       }
       const channel = await interaction.client.channels.fetch(
         interaction.channel.id,
       );
       if (!channel) {
-        return interaction.editReply('Could not find channel');
+        return interaction.followUp('Could not find channel');
       }
       // TODO: This is a TS error because the type of channel is not guaranteed to be a TextChannel
       await (channel as TextChannel).send({
@@ -266,7 +266,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       });
     }
   } catch {
-    await interaction.editReply({
+    await interaction.followUp({
       content: 'Confirmation not received within 1 minute, cancelling',
       components: [],
     });
