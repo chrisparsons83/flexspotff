@@ -174,7 +174,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     omniSeason.id,
     flexspotUser.id,
   );
-  console.log({ omniUserTeam });
   if (!omniUserTeam) {
     return interaction.followUp(
       'You have not been added to the current Omni season',
@@ -182,7 +181,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   }
 
   const nextPickFromTeam = await getNextOmniPickForTeam(omniUserTeam.id);
-  console.log({ nextPickFromTeam });
   if (!nextPickFromTeam) {
     return interaction.followUp('It is not your turn to pick');
   }
@@ -242,7 +240,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       if (furthestAlongPick?.pickNumber === pickNumber) {
         for (let i = 1; i < 6; i++) {
           const now = new Date();
-          now.setHours(now.getHours() + 12 * i);
+          now.setHours(now.getHours() + 12 * (i - 1));
           const pickInfo = await getPickByPickNumber(pickNumber + i);
           if (pickInfo) {
             nextPicks.push(pickInfo);
