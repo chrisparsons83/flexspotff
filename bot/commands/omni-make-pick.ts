@@ -11,6 +11,7 @@ import {
 } from 'discord.js';
 import type { OmniDraftPick } from '~/models/omnipick.server';
 import {
+  getLatestPickMade,
   getNextOmniPickForTeam,
   getPickByPickNumber,
   updateDraftPick,
@@ -227,21 +228,27 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
     if (confirmation.customId === 'confirm') {
       await updateDraftPick(nextPickFromTeam.id, player.id);
+      const furthestAlongPick = await getLatestPickMade();
       const pickNumber = nextPickFromTeam.pickNumber;
       const nextPicks: (OmniDraftPick & {
         team: OmniUserTeam & {
           user: User | null;
         };
       })[] = [];
-      for (let i = 1; i < 6; i++) {
-        const now = new Date();
-        now.setHours(now.getHours() + 12 * i);
-        const pickInfo = await getPickByPickNumber(pickNumber + i);
-        if (pickInfo) {
-          nextPicks.push(pickInfo);
+
+      // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
+      if (furthestAlongPick?.pickNumber === pickNumber) {
+        for (let i = 1; i < 6; i++) {
+          const now = new Date();
+          now.setHours(now.getHours() + 12 * i);
+          const pickInfo = await getPickByPickNumber(pickNumber + i);
+          if (pickInfo) {
+            nextPicks.push(pickInfo);
+          }
+          await updateDraftPickTimeByPickNumber(pickNumber + i, now);
         }
-        await updateDraftPickTimeByPickNumber(pickNumber + i, now);
       }
+
       await confirmation.update({
         content: `Your pick has been entered.`,
         components: [],
@@ -256,9 +263,15 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         return interaction.followUp('Could not find channel');
       }
       // TODO: This is a TS error because the type of channel is not guaranteed to be a TextChannel
-      await (channel as TextChannel).send({
-        content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Currently on the clock is <@${nextPicks[0].team.user?.discordId}>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
-      });
+      if (furthestAlongPick?.pickNumber !== pickNumber) {
+        await (channel as TextChannel).send({
+          content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Since this pick was catching up on out of order, no clock updates were made.`,
+        });
+      } else {
+        await (channel as TextChannel).send({
+          content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Currently on the clock is <@${nextPicks[0].team.user?.discordId}>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
+        });
+      }
     } else if (confirmation.customId === 'cancel') {
       await confirmation.update({
         content: 'Action cancelled',

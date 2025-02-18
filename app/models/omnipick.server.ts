@@ -17,6 +17,19 @@ export function getPickByPickNumber(pickNumber: number) {
   });
 }
 
+export function getLatestPickMade() {
+  return prisma.omniDraftPick.findFirst({
+    where: {
+      pickMadeTime: {
+        not: null,
+      },
+    },
+    orderBy: {
+      pickNumber: 'desc',
+    },
+  });
+}
+
 export function getNextOmniPickForTeam(teamId: string) {
   const currentTime = new Date();
 
