@@ -174,6 +174,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     omniSeason.id,
     flexspotUser.id,
   );
+  console.log({ omniUserTeam });
   if (!omniUserTeam) {
     return interaction.followUp(
       'You have not been added to the current Omni season',
@@ -181,6 +182,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   }
 
   const nextPickFromTeam = await getNextOmniPickForTeam(omniUserTeam.id);
+  console.log({ nextPickFromTeam });
   if (!nextPickFromTeam) {
     return interaction.followUp('It is not your turn to pick');
   }
