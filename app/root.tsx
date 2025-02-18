@@ -62,6 +62,8 @@ export default function App() {
   const { user, userIsEditor, ENV, currentPath } =
     useTypedLoaderData<typeof loader>();
 
+  console.log({ currentPath });
+
   return (
     <>
       <NavBar user={user} userIsEditor={userIsEditor} />
