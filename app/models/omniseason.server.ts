@@ -7,3 +7,23 @@ export async function getCurrentOmniSeason() {
     },
   });
 }
+
+export async function getOmniSeason(year: number) {
+  return prisma.omniSeason.findFirst({
+    where: {
+      year,
+    },
+    include: {
+      omniTeams: {
+        include: {
+          draftPicks: {
+            include: {
+              player: true,
+            },
+          },
+          user: true,
+        },
+      },
+    },
+  });
+}

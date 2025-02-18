@@ -8,6 +8,7 @@ import {
   ScrollRestoration,
   useRouteError,
 } from '@remix-run/react';
+import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import NavBar from '~/components/layout/NavBar';
 import { authenticator, isEditor } from '~/services/auth.server';
@@ -23,6 +24,7 @@ export const meta = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
+  const currentPath = new URL(request.url).pathname;
 
   return typedjson({
     user,
@@ -30,6 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
+    currentPath,
   });
 };
 
@@ -56,12 +59,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { user, userIsEditor, ENV } = useTypedLoaderData<typeof loader>();
+  const { user, userIsEditor, ENV, currentPath } =
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>
       <NavBar user={user} userIsEditor={userIsEditor} />
-      <div className='container relative mx-auto min-h-screen p-4 text-white'>
+      <div
+        className={clsx(
+          currentPath !== 'omni/2025/board' && 'container',
+          'relative mx-auto min-h-screen p-4 text-white',
+        )}
+      >
         <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
           <Outlet />
         </main>
