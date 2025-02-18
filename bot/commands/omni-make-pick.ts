@@ -218,6 +218,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     ephemeral: true,
   });
 
+  console.log({ interaction });
+
   const collectorFilter = (i: { user: { id: string } }) =>
     i.user.id === interaction.user.id;
   try {
@@ -225,6 +227,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       filter: collectorFilter,
       time: 60_000,
     });
+
+    await confirmation.deferReply({ ephemeral: false });
+
+    console.log({ confirmation });
 
     if (confirmation.customId === 'confirm') {
       await updateDraftPick(nextPickFromTeam.id, player.id);
@@ -249,7 +255,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         }
       }
 
-      await confirmation.update({
+      await confirmation.followUp({
         content: `Your pick has been entered.`,
         components: [],
       });
@@ -273,7 +279,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
       }
     } else if (confirmation.customId === 'cancel') {
-      await confirmation.update({
+      await confirmation.followUp({
         content: 'Action cancelled',
         components: [],
       });
