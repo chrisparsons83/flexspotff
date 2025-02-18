@@ -228,7 +228,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       time: 60_000,
     });
 
-    await confirmation.deferReply({ ephemeral: false });
+    await confirmation.deferReply({ ephemeral: true });
 
     console.log({ confirmation });
 
