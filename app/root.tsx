@@ -62,14 +62,14 @@ export default function App() {
   const { user, userIsEditor, ENV, currentPath } =
     useTypedLoaderData<typeof loader>();
 
-  console.log({ currentPath });
+  const regex = /omni\/\d{4}\/board$/gm;
 
   return (
     <>
       <NavBar user={user} userIsEditor={userIsEditor} />
       <div
         className={clsx(
-          currentPath !== 'omni/2025/board' && 'container',
+          !regex.test(currentPath) && 'container',
           'relative mx-auto min-h-screen p-4 text-white',
         )}
       >
