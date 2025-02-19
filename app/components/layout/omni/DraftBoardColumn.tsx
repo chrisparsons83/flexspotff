@@ -11,7 +11,7 @@ const DraftBoardColumn = ({ omniTeam }: DraftBoardColumnProps) => {
       <div className='h-16 bg-slate-800 p-1 flex flex-col justify-between'>
         <img
           src={avatarImage!}
-          className='h-8 w-8 mx-auto'
+          className='h-8 w-8 mx-auto rounded-2xl'
           alt={omniTeam.user?.discordName}
         />
         <div className='text-center w-full line-clamp-1'>
