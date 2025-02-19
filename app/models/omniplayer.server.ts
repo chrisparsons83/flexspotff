@@ -6,6 +6,7 @@ export function getPlayersAndAssociatedPick(seasonId: string) {
   return prisma.omniPlayer.findMany({
     where: {
       seasonId,
+      isActive: true,
     },
     include: {
       draftPick: true,
