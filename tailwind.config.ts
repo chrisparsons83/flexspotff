@@ -88,6 +88,9 @@ const config: Config = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      columns: {
+        '16': '16',
+      },
       gridTemplateColumns: {
         '16': 'repeat(16, minmax(1rem, 1fr))',
       },

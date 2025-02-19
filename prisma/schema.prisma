@@ -287,6 +287,8 @@ model OmniSport {
   updatedAt DateTime @updatedAt
 
   name String
+  shortName String?
+  emoji String?
 
   omniSeasons OmniSeason[]
   omniPicks OmniPlayer[]

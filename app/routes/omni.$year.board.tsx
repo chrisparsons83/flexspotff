@@ -29,8 +29,8 @@ const OmniYearDraftboard = () => {
   return (
     <div>
       <h2>Omni Draftboard for {year}</h2>
-      <div className='overflow-x-auto'>
-        <div className='grid grid-cols-[repeat(16,100px)] gap-1'>
+      <div className='flex overflow-x-auto w-full flex-column'>
+        <div className='columns-16 gap-1'>
           {season.omniTeams.map(omniTeam => (
             <DraftBoardColumn key={omniTeam.id} omniTeam={omniTeam} />
           ))}

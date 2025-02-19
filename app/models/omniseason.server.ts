@@ -1,4 +1,24 @@
+import type {
+  OmniDraftPick,
+  OmniPlayer,
+  OmniSport,
+  OmniUserTeam,
+  User,
+} from '@prisma/client';
 import { prisma } from '~/db.server';
+
+export type DraftBoardColumnProps = {
+  omniTeam: OmniUserTeam & {
+    user: User | null;
+    draftPicks: (OmniDraftPick & {
+      player:
+        | (OmniPlayer & {
+            sport: OmniSport;
+          })
+        | null;
+    })[];
+  };
+};
 
 export async function getCurrentOmniSeason() {
   return prisma.omniSeason.findFirst({
@@ -18,7 +38,11 @@ export async function getOmniSeason(year: number) {
         include: {
           draftPicks: {
             include: {
-              player: true,
+              player: {
+                include: {
+                  sport: true,
+                },
+              },
             },
           },
           user: true,
