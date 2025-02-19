@@ -26,8 +26,9 @@ const DraftBoardColumn = ({ omniTeam }: DraftBoardColumnProps) => {
             </div>
             <div>{draftPick.player?.sport.shortName}</div>
           </div>
-          <div className='flex-1 text-right text-2xl flex flex-col justify-end'>
-            {draftPick.player?.sport.emoji}
+          <div className='flex-1 text-right flex flex-col justify-between'>
+            <div className='text-xs text-slate-500'>{draftPick.pickNumber}</div>
+            <div className='text-2xl'>{draftPick.player?.sport.emoji}</div>
           </div>
         </div>
       ))}
