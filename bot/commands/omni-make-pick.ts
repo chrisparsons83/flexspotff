@@ -274,8 +274,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Since this pick was catching up on out of order, no clock updates were made.`,
         });
       } else {
+        const pickTimer = new Date();
+        pickTimer.setHours(pickTimer.getHours() + 12);
         await (channel as TextChannel).send({
-          content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Currently on the clock is <@${nextPicks[0].team.user?.discordId}>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
+          content: `${interaction.user} has selected ${
+            player?.displayName
+          } from ${sport?.name}. Currently on the clock is <@${
+            nextPicks[0].team.user?.discordId
+          }> and their pick timer expires <t:${parseInt(
+            (pickTimer.getTime() / 1000).toFixed(0),
+          )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
         });
       }
     } else if (confirmation.customId === 'cancel') {
@@ -284,7 +292,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         components: [],
       });
     }
-  } catch {
+  } catch (e) {
+    console.error(e);
     await interaction.followUp({
       content: 'Confirmation not received within 1 minute, cancelling',
       components: [],
