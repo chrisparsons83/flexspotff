@@ -129,29 +129,33 @@ export const data = new SlashCommandBuilder()
   );
 
 export const autocomplete = async (interaction: AutocompleteInteraction) => {
-  const omniSeason = await getCurrentOmniSeason();
-  const activePlayers = omniSeason
-    ? await getPlayersAndAssociatedPick(omniSeason.id)
-    : [];
-
   const options = interaction.options.getString('sport') || '';
 
   if (options === '') {
     await interaction.respond([]);
+  } else {
+    console.log('Getting current season');
+    const omniSeason = await getCurrentOmniSeason();
+    console.log('Got season, getting players and picks');
+    const activePlayers = omniSeason
+      ? await getPlayersAndAssociatedPick(omniSeason.id)
+      : [];
+    console.log('Got players and picks, filtering');
+
+    interaction.respond(
+      activePlayers
+        .filter(player => player.sportId === options)
+        .filter(player => player.draftPick === null)
+        .sort((a, b) => a.relativeSort - b.relativeSort)
+        .slice(0, 25)
+        .map(player => ({ name: player.displayName, value: player.id })),
+    );
   }
-  interaction.respond(
-    activePlayers
-      .filter(player => player.sportId === options)
-      .filter(player => player.draftPick === null)
-      .sort((a, b) => a.relativeSort - b.relativeSort)
-      .slice(0, 25)
-      .map(player => ({ name: player.displayName, value: player.id })),
-  );
 };
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-  const activeSports = await getActiveSports();
   await interaction.deferReply({ ephemeral: true });
+  const activeSports = await getActiveSports();
 
   const userId = interaction.options.getUser('user')?.id || interaction.user.id;
 
@@ -226,6 +230,11 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         .join(', ')}`,
     );
   }
+
+  // Map out how many people have picked from inputSport players already, add the current pick in
+  // there, and then fill in a single pick for all players that haven't drafted. If that number is
+  // greater than the number of players in the pool, then this is an invalid pick because someone
+  // would not be able to make a pick.
 
   const player = activePlayers.find(p => p.id === inputPlayer);
   if (!player) {
