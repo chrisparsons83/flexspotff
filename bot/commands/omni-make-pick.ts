@@ -202,6 +202,31 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   const inputSport = interaction.options.getString('sport');
   const inputPlayer = interaction.options.getString('pick');
 
+  // Get all the sports you've picked already and the number of picks.
+  const currentSportPicks = omniUserTeam.draftPicks
+    .filter(p => p.player)
+    .map(p => p.player?.sportId);
+  const currentUniqueSportPicks = new Set(currentSportPicks);
+
+  // Add the current pick so we have an accurate state at where we'd be.
+  if (inputSport) {
+    currentSportPicks.push(inputSport);
+    currentUniqueSportPicks.add(inputSport);
+  }
+
+  // Count number of flex spots used already - if you're at the max, you can't pick another flex
+  if (currentSportPicks.length - currentUniqueSportPicks.size > 5) {
+    return interaction.followUp(
+      `You have filled your flex spots. Please choose from one of the following sports: ${activeSports
+        .filter(
+          sport =>
+            !currentSportPicks.filter(String).includes(sport.shortName || ''),
+        )
+        .map(sport => sport.name)
+        .join(', ')}`,
+    );
+  }
+
   const player = activePlayers.find(p => p.id === inputPlayer);
   if (!player) {
     return interaction.followUp('Invalid player selection');
@@ -218,8 +243,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     ephemeral: true,
   });
 
-  console.log({ interaction });
-
   const collectorFilter = (i: { user: { id: string } }) =>
     i.user.id === interaction.user.id;
   try {
@@ -229,8 +252,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     });
 
     await confirmation.deferReply({ ephemeral: true });
-
-    console.log({ confirmation });
 
     if (confirmation.customId === 'confirm') {
       await updateDraftPick(nextPickFromTeam.id, player.id);

@@ -11,5 +11,16 @@ export async function getOmniUserTeamByUserIdAndSeason(
       seasonId,
       userId,
     },
+    include: {
+      draftPicks: {
+        include: {
+          player: {
+            include: {
+              sport: true,
+            },
+          },
+        },
+      },
+    },
   });
 }
