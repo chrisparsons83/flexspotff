@@ -74,6 +74,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
                 `${pick.player?.displayName} (${pick.player?.pointsScored})`,
             )
             .join('\n') || 'None drafted',
+        inline: true,
       })),
     );
 
