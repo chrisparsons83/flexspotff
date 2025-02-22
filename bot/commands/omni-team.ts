@@ -64,7 +64,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     .setDescription(`Current points: 0`)
     .addFields(
       sports.map(sport => ({
-        name: `${sport.emoji} ${sport.shortName}` || '',
+        name: `${sport.emoji} ${sport.shortName}`,
         value:
           omniTeam.draftPicks
             .sort((a, b) => a.pickNumber - b.pickNumber)
