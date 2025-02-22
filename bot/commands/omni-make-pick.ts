@@ -21,7 +21,10 @@ import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getCurrentOmniSeason } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';
 import type { OmniUserTeam } from '~/models/omniuserteam.server';
-import { getOmniUserTeamByUserIdAndSeason } from '~/models/omniuserteam.server';
+import {
+  getOmniUserTeamByUserIdAndSeason,
+  getOmniUserTeamsBySeason,
+} from '~/models/omniuserteam.server';
 import type { User } from '~/models/user.server';
 import { getUserByDiscordId } from '~/models/user.server';
 
@@ -231,11 +234,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     );
   }
 
-  // Map out how many people have picked from inputSport players already, add the current pick in
-  // there, and then fill in a single pick for all players that haven't drafted. If that number is
-  // greater than the number of players in the pool, then this is an invalid pick because someone
-  // would not be able to make a pick.
-
   const player = activePlayers.find(p => p.id === inputPlayer);
   if (!player) {
     return interaction.followUp('Invalid player selection');
@@ -243,6 +241,27 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   const sport = activeSports.find(s => s.id === inputSport);
   if (!sport) {
     return interaction.followUp('Invalid sport selection');
+  }
+
+  // Map out how many people have picked from inputSport players already, add the current pick in
+  // there, and then fill in a single pick for all players that haven't drafted. If that number is
+  // greater than the number of players in the pool, then this is an invalid pick because someone
+  // would not be able to make a pick.
+  const teamsPickedSport = new Set(
+    activePlayers
+      .filter(p => p.sportId === inputSport && p.draftPick)
+      .map(p => p.draftPick?.teamId),
+  );
+  teamsPickedSport.add(omniUserTeam.id);
+  const totalTeams = (await getOmniUserTeamsBySeason(omniSeason.id)).length;
+  const teamsWithoutSport = totalTeams - teamsPickedSport.size;
+  const remainingPlayers = activePlayers.filter(
+    p => p.sportId === inputSport && !p.draftPick,
+  ).length;
+  if (teamsWithoutSport > remainingPlayers) {
+    return interaction.followUp(
+      `There are not enough teams left to pick from ${sport.name}`,
+    );
   }
 
   const response = await interaction.followUp({
