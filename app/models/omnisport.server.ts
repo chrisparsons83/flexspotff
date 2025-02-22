@@ -9,5 +9,9 @@ export async function getCurrentOmniSeason() {
 }
 
 export async function getActiveSports() {
-  return prisma.omniSport.findMany();
+  return prisma.omniSport.findMany({
+    orderBy: {
+      name: 'asc',
+    },
+  });
 }
