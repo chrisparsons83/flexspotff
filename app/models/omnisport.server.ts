@@ -8,6 +8,14 @@ export async function getCurrentOmniSeason() {
   });
 }
 
+export async function getSportById(id: string) {
+  return prisma.omniSport.findFirst({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getActiveSports() {
   return prisma.omniSport.findMany({
     orderBy: {

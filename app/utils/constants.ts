@@ -36,3 +36,87 @@ export const roundNameMapping: RoundName[] = [
   { key: 'ROUND_OF_4', label: 'Semifinals' },
   { key: 'ROUND_OF_2', label: 'Finals' },
 ];
+
+export const SPORTS_LIST = [
+  {
+    id: 'golfm',
+    name: 'Golf - Mens',
+  },
+  {
+    id: 'golfw',
+    name: 'Golf - Womens',
+  },
+  {
+    id: 'tennism',
+    name: 'Tennis - Mens',
+  },
+  {
+    id: 'tennisw',
+    name: 'Tennis - Womens',
+  },
+  {
+    id: 'mlb',
+    name: 'MLB',
+  },
+  {
+    id: 'nhl',
+    name: 'NHL',
+  },
+  {
+    id: 'nba',
+    name: 'NBA',
+  },
+  {
+    id: 'nfl',
+    name: 'NFL',
+  },
+  {
+    id: 'ncaam',
+    name: 'NCAA Basketball - Mens',
+  },
+  {
+    id: 'ncaaw',
+    name: 'NCAA Basketball - Womens',
+  },
+  {
+    id: 'ncaaf',
+    name: 'NCAA Football',
+  },
+  {
+    id: 'lol',
+    name: 'LoL World Championship',
+  },
+  {
+    id: 'darts',
+    name: 'PDC Darts World Championship',
+  },
+  {
+    id: 'ncaalm',
+    name: 'NCAA Lacrosse - Mens',
+  },
+  {
+    id: 'nascar',
+    name: 'NASCAR',
+  },
+  {
+    id: 'f1',
+    name: 'F1',
+  },
+  {
+    id: 'mls',
+    name: 'MLS',
+  },
+  {
+    id: 'uefa',
+    name: 'UEFA Champions League',
+  },
+  {
+    id: 'afl',
+    name: 'Aussie Rules AFL Premiership',
+  },
+]
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map(sport => ({
+    name: sport.name,
+    value: sport.id,
+  }));

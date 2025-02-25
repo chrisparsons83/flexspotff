@@ -9,7 +9,15 @@ export function getPlayersAndAssociatedPick(seasonId: string) {
       isActive: true,
     },
     include: {
-      draftPick: true,
+      draftPick: {
+        include: {
+          team: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
       sport: true,
     },
   });
