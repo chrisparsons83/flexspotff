@@ -137,18 +137,20 @@ export const autocomplete = async (interaction: AutocompleteInteraction) => {
   if (options === '') {
     await interaction.respond([]);
   } else {
-    console.log('Getting current season');
     const omniSeason = await getCurrentOmniSeason();
-    console.log('Got season, getting players and picks');
     const activePlayers = omniSeason
       ? await getPlayersAndAssociatedPick(omniSeason.id)
       : [];
-    console.log('Got players and picks, filtering');
+
+    const focusedValue = interaction.options.getFocused().toLocaleLowerCase();
 
     interaction.respond(
       activePlayers
         .filter(player => player.sportId === options)
         .filter(player => player.draftPick === null)
+        .filter(player =>
+          player.displayName.toLocaleLowerCase().startsWith(focusedValue),
+        )
         .sort((a, b) => a.relativeSort - b.relativeSort)
         .slice(0, 25)
         .map(player => ({ name: player.displayName, value: player.id })),
