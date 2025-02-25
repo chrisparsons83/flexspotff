@@ -257,9 +257,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   teamsPickedSport.add(omniUserTeam.id);
   const totalTeams = (await getOmniUserTeamsBySeason(omniSeason.id)).length;
   const teamsWithoutSport = totalTeams - teamsPickedSport.size;
-  const remainingPlayers = activePlayers.filter(
-    p => p.sportId === inputSport && !p.draftPick,
-  ).length;
+  // Subtract 1 for the player about to be taken
+  const remainingPlayers =
+    activePlayers.filter(p => p.sportId === inputSport && !p.draftPick).length -
+    1;
   if (teamsWithoutSport > remainingPlayers) {
     return interaction.followUp(
       `There are not enough teams left to pick from ${sport.name}`,
