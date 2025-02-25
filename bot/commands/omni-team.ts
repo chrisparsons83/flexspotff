@@ -14,18 +14,22 @@ export const data = new SlashCommandBuilder()
       .setDescription('The user to view.')
       .setRequired(true),
   )
-  .addBooleanOption(option =>
+  .addStringOption(option =>
     option
       .setName('hidden')
       .setDescription(
-        'True only displays for you, false displays for all users. Defaults to false.',
+        'Private to just display for you, public posts the team in public chat for everyone to see.',
       )
-      .setRequired(false),
+      .setRequired(true)
+      .addChoices([
+        { name: 'Private', value: 'private' },
+        { name: 'Public', value: 'public' },
+      ]),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
   const ephemeral =
-    interaction.options.getBoolean('hidden') === false ? false : true;
+    interaction.options.getString('hidden') === 'private' ? true : false;
   await interaction.deferReply({ ephemeral });
 
   const user = interaction.options.getUser('user');

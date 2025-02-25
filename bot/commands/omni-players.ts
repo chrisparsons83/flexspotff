@@ -23,11 +23,17 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .addChoices(SPORTS_LIST),
   )
-  .addBooleanOption(option =>
+  .addStringOption(option =>
     option
       .setName('showdrafted')
-      .setDescription('Show already drafted players. Defaults to false.')
-      .setRequired(false),
+      .setDescription(
+        'Show all players or just the ones you can currently draft',
+      )
+      .setRequired(true)
+      .addChoices([
+        { name: 'All Players', value: 'allplayers' },
+        { name: 'Draftable Players', value: 'draftableplayers' },
+      ]),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
@@ -41,7 +47,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     ? await getPlayersAndAssociatedPick(omniSeason.id)
     : [];
 
-  const showDrafted = Boolean(interaction.options.getBoolean('showdrafted'));
+  const showDrafted =
+    interaction.options.getString('showdrafted') === 'allplayers';
   const inputSport = interaction.options.getString('sport');
   if (!inputSport) {
     return interaction.editReply({
