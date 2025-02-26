@@ -69,8 +69,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     };
   });
 
-  console.log({ pickStats });
-
   const embed = new EmbedBuilder().setTitle(`Draft Time Stats`).addFields(
     pickStats
       .sort((a, b) => a.total - b.total)
