@@ -79,6 +79,15 @@ model CupWeek {
   mapping String @default("")
 }
 
+model DfsSurvivorYear {
+  id String @id @default(cuid())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  dfsSurvivorWeeks DfsSurvivorWeek[]
+}
+
 model DfsSurvivorWeek {
   id String @id @default(cuid())
 
@@ -87,6 +96,9 @@ model DfsSurvivorWeek {
 
   isOpen Boolean
   isScored Boolean
+
+  dfsSurvivorYear DfsSurvivorYear @relation(fields: [dfsSurvivorYearId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  dfsSurvivorYearId String
 
   dfsSurvivorEntries DfsSurvivorEntry[]
 }
@@ -102,10 +114,10 @@ model DfsSurvivorEntry {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   playerId String
 
+  year Int
+
   dfsSurvivorWeek DfsSurvivorWeek @relation(fields: [dfsSurvivorWeekId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   dfsSurvivorWeekId String
-
-  year Int
 
   @@unique([userId, playerId, year], name: "userAndPlayerAndYear")
 
@@ -650,5 +662,6 @@ model User {
   locksGamePick LocksGamePick[]
   sleeperUsers SleeperUser[]
   dfsSurvivorEntry DfsSurvivorEntry[]
+  dfsSurvivorYear DfsSurvivorYear[]
   omniTeams OmniUserTeam[]
 }
