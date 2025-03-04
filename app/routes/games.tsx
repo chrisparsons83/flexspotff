@@ -5,6 +5,7 @@ import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { prisma } from '~/db.server';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -31,7 +32,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ? locksChallengeWeek?.weekNumber
     : locksChallengeWeek?.weekNumber - 1 || 1;
 
-  const dfsSurvivorCurrentWeek = 1;
+  // Get the current DFS Survivor week
+  const dfsSurvivorWeek = await prisma.dFSSurvivorUserWeek.findFirst({
+    where: {
+      year: currentSeason.year,
+      isScored: true,
+    },
+    orderBy: {
+      week: 'desc',
+    },
+  });
+  const dfsSurvivorCurrentWeek = dfsSurvivorWeek?.week || 1;
 
   return typedjson(
     {
