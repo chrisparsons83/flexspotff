@@ -1,68 +1,68 @@
-import type { DfsSurvivorYear } from '@prisma/client';
 import { prisma } from '~/db.server';
+import type { DFSSurvivorUserYear, DFSSurvivorUserWeek, DFSSurvivorUserEntry } from '@prisma/client';
 
-export type { DfsSurvivorYear } from '@prisma/client';
+export type { DFSSurvivorUserYear } from '@prisma/client';
 
-type LocksWeekCreateInput = Omit<LocksWeek, 'id' | 'createdAt' | 'updatedAt'>;
+export type DFSSurvivorUserYearWithWeeks = DFSSurvivorUserYear & {
+  weeks: (DFSSurvivorUserWeek & {
+    entries: DFSSurvivorUserEntry[];
+  })[];
+};
 
-export async function createLocksWeek(locksWeek: LocksWeekCreateInput) {
-  return prisma.locksWeek.create({
-    data: locksWeek,
-  });
-}
-
-export async function getLocksWeek(id: LocksWeek['id']) {
-  return prisma.locksWeek.findUnique({
+export async function getDfsSurvivorYearByUserAndYear(userId: string, year: number): Promise<DFSSurvivorUserYearWithWeeks | null> {
+  return prisma.dFSSurvivorUserYear.findFirst({
     where: {
-      id,
-    },
-  });
-}
-
-export async function getLocksWeekByYearAndWeek(
-  year: LocksWeek['year'],
-  weekNumber: LocksWeek['weekNumber'],
-) {
-  return prisma.locksWeek.findFirst({
-    where: {
+      userId,
       year,
-      weekNumber,
     },
-    orderBy: [
-      {
-        weekNumber: 'desc',
+    include: {
+      weeks: {
+        include: {
+          entries: true,
+        },
       },
-    ],
+    },
   });
 }
 
-export async function getLocksWeeksByYear(year: LocksWeek['year']) {
-  return prisma.locksWeek.findMany({
-    where: {
+export async function createDfsSurvivorYear(userId: string, year: number): Promise<DFSSurvivorUserYearWithWeeks> {
+  const dfsSurvivorYear = await prisma.dFSSurvivorUserYear.create({
+    data: {
+      userId,
       year,
-    },
-    orderBy: {
-      weekNumber: 'desc',
+      points: 0,
     },
   });
-}
 
-export async function getNewestLocksWeekForYear(year: LocksWeek['year']) {
-  return prisma.locksWeek.findFirst({
-    where: {
-      year,
-    },
-    orderBy: {
-      weekNumber: 'desc',
-    },
-  });
-}
+  // Create weeks 1-17
+  for (let week = 1; week <= 17; week++) {
+    await prisma.dFSSurvivorUserWeek.create({
+      data: {
+        userId,
+        year,
+        week,
+        isScored: false,
+      },
+    });
+  }
 
-export async function updateLocksWeek(locksWeek: LocksWeek) {
-  return prisma.locksWeek.update({
+  // Fetch the year with all created weeks and entries
+  const yearWithWeeks = await prisma.dFSSurvivorUserYear.findUnique({
     where: {
-      id: locksWeek.id,
+      id: dfsSurvivorYear.id,
     },
-    data: locksWeek,
+    include: {
+      weeks: {
+        include: {
+          entries: true,
+        },
+      },
+    },
   });
+
+  if (!yearWithWeeks) {
+    throw new Error('Failed to fetch created DFS Survivor year with weeks');
+  }
+
+  return yearWithWeeks;
 }

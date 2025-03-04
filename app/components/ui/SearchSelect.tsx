@@ -6,6 +6,7 @@ type SearchSelectProps = {
     className?: string;
     onOptionSelect: (option: string) => void;
     onOptionSelectedChange: (isSelected: boolean) => void;
+    value?: string;
 };
 
 export default function SearchSelect({
@@ -13,12 +14,20 @@ export default function SearchSelect({
     className,
     onOptionSelect,
     onOptionSelectedChange,
+    value = '',
 }: SearchSelectProps) {
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState(value);
     const [filteredOptions, setFilteredOptions] = useState<string[]>(options);
-    const [isOptionSelected, setIsOptionSelected] = useState(false);
+    const [isOptionSelected, setIsOptionSelected] = useState(value !== '');
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [isFocused, setIsFocused] = useState(false);
     const listRef = useRef<HTMLUListElement>(null);
+
+    // Update query when value changes
+    useEffect(() => {
+        setQuery(value);
+        setIsOptionSelected(value !== '');
+    }, [value]);
 
     // Check if the query is an option and ignore case
     useEffect(() => {
@@ -49,6 +58,7 @@ export default function SearchSelect({
         onOptionSelect(option);
         onOptionSelectedChange(true);
         setHighlightedIndex(-1);
+        setIsFocused(false);
     };
 
     // Allow scrolling through options with arrow keys and selecting with enter
@@ -69,6 +79,8 @@ export default function SearchSelect({
             } else if (filteredOptions.length > 0) {
                 handleSelect(filteredOptions[0]);
             }
+        } else if (event.key === 'Escape') {
+            setIsFocused(false);
         }
     };
 
@@ -86,20 +98,28 @@ export default function SearchSelect({
                 value={query}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => {
+                    // Small delay to allow click events to fire on options
+                    setTimeout(() => setIsFocused(false), 200);
+                }}
                 className="w-full px-4 py-2 border rounded-md bg-transparent"
             />
-            {query && filteredOptions.length > 0 && !isOptionSelected && (
+            {isFocused && query && filteredOptions.length > 0 && !isOptionSelected && (
                 <ul ref={listRef} className="absolute z-10 w-full border rounded-md bg-slate-700 max-h-40 overflow-y-auto text-white marker:text-white top-full mt-1">
                     {filteredOptions.slice(0, 5).map((option, index) => (
                         <li
                             key={option}
                             onClick={() => handleSelect(option)}
                             className={clsx(
-                                'px-4 py-2 cursor-pointer hover:bg-slate-500',
+                                'px-4 py-2 cursor-pointer hover:bg-slate-500 relative',
                                 { 'bg-slate-500': index === highlightedIndex }
                             )}
                         >
                             {option}
+                            {index < filteredOptions.slice(0, 5).length - 1 && (
+                                <div className="absolute bottom-0 left-0 w-[90%] h-[1px] bg-gray-500"></div>
+                            )}
                         </li>
                     ))}
                 </ul>

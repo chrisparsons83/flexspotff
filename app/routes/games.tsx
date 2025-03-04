@@ -5,7 +5,6 @@ import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { authenticator } from '~/services/auth.server';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -31,10 +30,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const locksChallengeCurrentWeek = locksChallengeWeek?.isWeekScored
     ? locksChallengeWeek?.weekNumber
     : locksChallengeWeek?.weekNumber - 1 || 1;
-  
-    const user = await authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    });
 
   const dfsSurvivorCurrentWeek = 1;
 
