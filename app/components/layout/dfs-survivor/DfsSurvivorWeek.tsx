@@ -11,9 +11,10 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "~/components/ui/collapsible"
-import Button from "~/components/ui/Button"
 import { useState, useEffect } from "react"
+import clsx from "clsx"
 import { Form } from "@remix-run/react"
+import Button from "~/components/ui/Button"
 
 interface Props {
   week: DFSSurvivorUserWeek & {
@@ -31,9 +32,10 @@ interface Props {
     FLX: Player[];
   };
   isSaving: boolean;
+  formId: string;
 }
 
-export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSaving }: Props) {
+export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSaving, formId }: Props) {
     const totalPoints = week.entries.reduce((sum, entry) => sum + entry.points, 0);
     const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>({});
 
@@ -65,7 +67,7 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
             case 'K':
                 return availablePlayers.K;
             case 'D/ST':
-                return availablePlayers.DST;
+                return availablePlayers.DEF;
             default:
                 return [];
         }
@@ -96,7 +98,7 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
                         <CardTitle>
                             <div className="header-row flex justify-between">
                                 <div className="text-lg font-bold">
-                                    Week {week.week}
+                                    {week.isScored ? `Week ${week.week} Scored` : `Week ${week.week}`}
                                 </div>
                                 <div className="text-lg font-bold">
                                     {totalPoints.toFixed(2)}
@@ -107,24 +109,33 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent>
-                        <Form method="post" reloadDocument>
+                        <Form method="post" reloadDocument id={formId}>
                             <input type="hidden" name="weekId" value={week.id} />
                             {positions.map((position) => {
                                 const existingEntry = week.entries.find(entry => entry.id.endsWith(position));
-                                const defaultPlayerName = existingEntry?.player.fullName || '';
+                                const defaultPlayerName = existingEntry?.player.fullName || (week.isScored ? 'No Player Selected' : '');
                                 return (
                                     <div key={position} className="header-row flex justify-between items-center mb-2">
                                         <div className="text-base font-bold w-16">
                                             {formatPositionName(position)}
                                         </div>
-                                        <div className="text-base flex-2 mx-1">
-                                            <input type="hidden" name={`playerId-${position}`} value={selectedPlayers[position] || ''} />
-                                            <SearchSelect 
-                                                options={getPositionPlayers(position).map(player => player.fullName)}
-                                                onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
-                                                onOptionSelectedChange={() => {}}
-                                                value={defaultPlayerName}
-                                            />
+                                        <div className="text-base flex-2 mx-1 flex items-center gap-2">
+                                            <input type="hidden" name={`playerId-${week.id}-${position}`} value={selectedPlayers[position] || ''} />
+                                            <div className="flex-1">
+                                                <SearchSelect 
+                                                    options={getPositionPlayers(position).map(player => player.fullName)}
+                                                    onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
+                                                    onOptionSelectedChange={() => {}}
+                                                    value={defaultPlayerName}
+                                                    disabled={week.isScored}
+                                                    className={clsx(week.isScored ? "border-none" : "", "font-bold")}
+                                                />
+                                            </div>
+                                            {week.isScored && (
+                                                <div className="w-16 text-right font-bold">
+                                                    {existingEntry ? existingEntry.points.toFixed(2) : '0.00'}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -132,9 +143,9 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
                             <div className="mt-4 flex justify-end">
                                 <Button 
                                     type="submit"
-                                    disabled={isSaving || Object.keys(selectedPlayers).length === 0}
+                                    disabled={isSaving || Object.keys(selectedPlayers).length === 0 || week.isScored}
                                 >
-                                    {isSaving ? 'Saving...' : 'Save Entries'}
+                                    {isSaving ? 'Saving...' : week.isScored ? 'Week Scored' : 'Save Entry'}
                                 </Button>
                             </div>
                         </Form>

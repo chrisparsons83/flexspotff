@@ -7,6 +7,8 @@ type SearchSelectProps = {
     onOptionSelect: (option: string) => void;
     onOptionSelectedChange: (isSelected: boolean) => void;
     value?: string;
+    disabled?: boolean;
+    textColor?: string;
 };
 
 export default function SearchSelect({
@@ -15,6 +17,8 @@ export default function SearchSelect({
     onOptionSelect,
     onOptionSelectedChange,
     value = '',
+    disabled = false,
+    textColor,
 }: SearchSelectProps) {
     const [query, setQuery] = useState(value);
     const [filteredOptions, setFilteredOptions] = useState<string[]>(options);
@@ -37,6 +41,7 @@ export default function SearchSelect({
     }, [query, options, onOptionSelectedChange]);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (disabled) return;
         const value = event.target.value;
         if (value.length < query.length) {
             setIsOptionSelected(false);
@@ -52,6 +57,7 @@ export default function SearchSelect({
     };
 
     const handleSelect = (option: string) => {
+        if (disabled) return;
         setQuery(option);
         setFilteredOptions([option]);
         setIsOptionSelected(true);
@@ -63,6 +69,7 @@ export default function SearchSelect({
 
     // Allow scrolling through options with arrow keys and selecting with enter
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (disabled) return;
         if (filteredOptions.length === 0) return;
 
         if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
@@ -98,14 +105,19 @@ export default function SearchSelect({
                 value={query}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
+                onFocus={() => !disabled && setIsFocused(true)}
                 onBlur={() => {
                     // Small delay to allow click events to fire on options
                     setTimeout(() => setIsFocused(false), 200);
                 }}
-                className="w-full px-4 py-2 border rounded-md bg-transparent"
+                disabled={disabled}
+                className={clsx(
+                    "w-full px-4 py-2 border rounded-md bg-transparent",
+                    disabled && "opacity-50 cursor-not-allowed",
+                    textColor
+                )}
             />
-            {isFocused && query && filteredOptions.length > 0 && !isOptionSelected && (
+            {isFocused && query && filteredOptions.length > 0 && !isOptionSelected && !disabled && (
                 <ul ref={listRef} className="absolute z-10 w-full border rounded-md bg-slate-700 max-h-40 overflow-y-auto text-white marker:text-white top-full mt-1">
                     {filteredOptions.slice(0, 5).map((option, index) => (
                         <li
