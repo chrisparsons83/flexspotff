@@ -39,22 +39,23 @@ const sleeperJsonStats = z.record(
     off_fum_rec_td: z.number().optional(),
     punt_ret_td: z.number().optional(),
     kick_ret_td: z.number().optional(),
-    def_int_td: z.number().optional(),
-    def_fum_rec_td: z.number().optional(),
-    def_sack: z.number().optional(),
-    def_tackle_for_loss: z.number().optional(),
-    def_safety: z.number().optional(),
-    def_blocked_kick: z.number().optional(),
-    def_int: z.number().optional(),
-    def_fum_rec: z.number().optional(),
-    def_pts_allowed: z.number().optional(),
-    def_yds_allowed: z.number().optional(),
-    fg_0_19: z.number().optional(),
-    fg_20_29: z.number().optional(),
-    fg_30_39: z.number().optional(),
-    fg_40_49: z.number().optional(),
-    fg_50_plus: z.number().optional(),
-    xpt: z.number().optional(),
+    pts_allow: z.number().optional(),
+    yds_allow: z.number().optional(),
+    def_st_td: z.number().optional(),
+    int: z.number().optional(),
+    fum_rec: z.number().optional(),
+    safe: z.number().optional(),
+    sack: z.number().optional(),
+    blk_kick: z.number().optional(),
+    tkl_loss: z.number().optional(),
+    fgm_0_19: z.number().optional(),
+    fgm_20_29: z.number().optional(),
+    fgm_30_39: z.number().optional(),
+    fgm_40_49: z.number().optional(),
+    fgm_50p: z.number().optional(),
+    fgmiss: z.number().optional(),
+    xpmiss: z.number().optional(),
+    xpm: z.number().optional(),
   }),
 );
 type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
@@ -177,46 +178,42 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         score =
           Math.round(
             100 *
-              (3 * (stats.fg_0_19 || 0) +
-                3 * (stats.fg_20_29 || 0) +
-                3 * (stats.fg_30_39 || 0) +
-                4 * (stats.fg_40_49 || 0) +
-                5 * (stats.fg_50_plus || 0) +
-                1 * (stats.xpt || 0)),
+              (3 * (stats.fgm_0_19 || 0) +
+                3 * (stats.fgm_20_29 || 0) +
+                3 * (stats.fgm_30_39 || 0) +
+                4 * (stats.fgm_40_49 || 0) +
+                5 * (stats.fgm_50p || 0) +
+                1 * (stats.xpm || 0) -
+                1 * (stats.fgmiss || 0) -
+                1 * (stats.xpmiss || 0)),
           ) / 100;
-      } else if (entry.player.position === 'DST') {
+      } else if (entry.player.position === 'DEF') {
         let defPoints = 0;
         // Points allowed
-        if (stats.def_pts_allowed) {
-          if (stats.def_pts_allowed === 0) defPoints += 10;
-          else if (stats.def_pts_allowed < 7) defPoints += 7;
-          else if (stats.def_pts_allowed < 14) defPoints += 4;
-          else if (stats.def_pts_allowed < 21) defPoints += 1;
-          else if (stats.def_pts_allowed < 28) defPoints -= 1;
-          else if (stats.def_pts_allowed < 35) defPoints -= 2;
+        if (stats.pts_allow !== undefined) {
+          if (stats.pts_allow <= 20) defPoints += 0;
+          else if (stats.pts_allow <= 27) defPoints -= 1;
+          else if (stats.pts_allow <= 34) defPoints -= 2;
           else defPoints -= 3;
         }
         // Yards allowed
-        if (stats.def_yds_allowed) {
-          if (stats.def_yds_allowed < 100) defPoints += 5;
-          else if (stats.def_yds_allowed < 200) defPoints += 3;
-          else if (stats.def_yds_allowed < 300) defPoints += 2;
-          else if (stats.def_yds_allowed < 400) defPoints -= 1;
-          else if (stats.def_yds_allowed < 500) defPoints -= 2;
+        if (stats.yds_allow !== undefined) {
+          if (stats.yds_allow < 350) defPoints += 0;
+          else if (stats.yds_allow <= 399) defPoints -= 1;
+          else if (stats.yds_allow <= 449) defPoints -= 1;
+          else if (stats.yds_allow <= 499) defPoints -= 2;
+          else if (stats.yds_allow <= 549) defPoints -= 2;
           else defPoints -= 3;
         }
         // Other defensive stats
         defPoints +=
-          6 * (stats.def_int_td || 0) +
-          6 * (stats.def_fum_rec_td || 0) +
-          8 * (stats.punt_ret_td || 0) +
-          8 * (stats.kick_ret_td || 0) +
-          2 * (stats.def_int || 0) +
-          2 * (stats.def_fum_rec || 0) +
-          4 * (stats.def_safety || 0) +
-          1 * (stats.def_sack || 0) +
-          3 * (stats.def_blocked_kick || 0) +
-          0.5 * (stats.def_tackle_for_loss || 0);
+          6 * (stats.def_st_td || 0) +
+          2 * (stats.int || 0) +
+          2 * (stats.fum_rec || 0) +
+          4 * (stats.safe || 0) +
+          1 * (stats.sack || 0) +
+          3 * (stats.blk_kick || 0) +
+          0.5 * (stats.tkl_loss || 0);
         score = Math.round(100 * defPoints) / 100;
       }
 
