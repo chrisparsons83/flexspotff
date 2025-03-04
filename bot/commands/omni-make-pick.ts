@@ -201,9 +201,15 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     await confirmation.deferReply({ ephemeral: true });
 
     if (confirmation.customId === 'confirm') {
-      await updateDraftPick(nextPickFromTeam.id, player.id);
+      // We need to check the next pick again because there could be duplicate picks submitted at once, thanks Allen.
+      const currentNextPickFromTeam = await getNextOmniPickForTeam(omniUserTeam.id);
+      if (!currentNextPickFromTeam) {
+        return interaction.followUp('It is not your turn to pick');
+      }
+
+      await updateDraftPick(currentNextPickFromTeam.id, player.id);
       const furthestAlongPick = await getLatestPickMade();
-      const pickNumber = nextPickFromTeam.pickNumber;
+      const pickNumber = currentNextPickFromTeam.pickNumber;
       const nextPicks: (OmniDraftPick & {
         team: OmniUserTeam & {
           user: User | null;
