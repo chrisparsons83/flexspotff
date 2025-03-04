@@ -42,7 +42,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw new Error('Invalid form data');
   }
 
-  // Get the week to ensure it exists and belongs to the user
   const week = await prisma.dFSSurvivorUserWeek.findUnique({
     where: { id: weekId },
     include: { userYear: true }
@@ -52,24 +51,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw new Error('Invalid week or unauthorized');
   }
 
-  // Process all entries from the form
   const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'D/ST'];
   
   for (const position of positions) {
     const playerId = formData.get(`playerId-${position}`);
     if (typeof playerId !== 'string' || !playerId) continue;
 
-    // Get the player and their team
     const player = await prisma.player.findUnique({
       where: { id: playerId },
       include: { currentNFLTeam: true }
     });
 
-    if (!player || !player.currentNFLTeam) {
+    if (!player?.currentNFLTeam) {
       throw new Error(`Player not found or no team found for position ${position}`);
     }
 
-    // Get the NFL game for this week and team
     const nflGame = await prisma.nFLGame.findFirst({
       where: {
         week: week.week,
@@ -85,7 +81,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Error(`No game found for player ${player.fullName} in week ${week.week}`);
     }
 
-    // Create or update the entry
     await prisma.dFSSurvivorUserEntry.upsert({
       where: {
         id: `${user.id}-${week.year}-${week.week}-${position}`
@@ -103,7 +98,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       update: {
         nflGameId: nflGame.id,
         playerId: player.id,
-        points: 0 // Reset points when changing player
+        points: 0
       }
     });
   }
@@ -116,7 +111,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     return typedjson<LoaderData>({ isOpen: false, currentSeason: null });
   }
@@ -125,13 +120,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return typedjson<LoaderData>({ isOpen: false, currentSeason });
   }
 
-  // Get or create DFS Survivor year for the user
   let dfsSurvivorYear = await getDfsSurvivorYearByUserAndYear(user.id, currentSeason.year);
   if (!dfsSurvivorYear) {
     dfsSurvivorYear = await createDfsSurvivorYear(user.id, currentSeason.year);
   }
 
-  // Get all entries for the user in this year to filter out already selected players
   const allEntries = await prisma.dFSSurvivorUserEntry.findMany({
     where: {
       userId: user.id,
@@ -143,10 +136,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   });
 
-  // Create a set of player IDs that are already selected
   const selectedPlayerIds = new Set(allEntries.map(entry => entry.playerId));
 
-  // Fetch available players for each position
   const [qbPlayers, rbPlayers, wrPlayers, tePlayers, kPlayers, dstPlayers] = await Promise.all([
     prisma.player.findMany({
       where: { position: 'QB' },
@@ -174,16 +165,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     })
   ]);
 
-  // Filter out already selected players
   const filterSelectedPlayers = (players: Player[]) => 
     players.filter(player => !selectedPlayerIds.has(player.id));
 
-  // Create FLEX players list (RB, WR, TE combined)
   const flexPlayers = [...rbPlayers, ...wrPlayers, ...tePlayers]
     .filter(player => !selectedPlayerIds.has(player.id))
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
 
-  // Get the DFS Survivor year with entries and player information
   const dfsSurvivorYearWithEntries = await prisma.dFSSurvivorUserYear.findUnique({
     where: { id: dfsSurvivorYear.id },
     include: {
@@ -240,20 +228,16 @@ export default function GamesDfsSurvivorMyEntry() {
   return (
     <div>
       <h2>My DFS Survivor Entries</h2>
-      <div className="space-y-4">
-        {actionData?.message && (
-          <div>{actionData.message}</div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.dfsSurvivorWeeks.map((week) => (
-            <DfsSurvivorWeekComponent 
-              key={week.id} 
-              week={week} 
-              availablePlayers={data.availablePlayers}
-              isSaving={false}
-            />
-          ))}
-        </div>
+      {actionData?.message && actionData.message}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {data.dfsSurvivorWeeks.map((week) => (
+          <DfsSurvivorWeekComponent 
+            key={week.id} 
+            week={week} 
+            availablePlayers={data.availablePlayers}
+            isSaving={false}
+          />
+        ))}
       </div>
     </div>
   );

@@ -37,11 +37,9 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
     const totalPoints = week.entries.reduce((sum, entry) => sum + entry.points, 0);
     const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>({});
 
-    // Initialize selected players from existing entries
     useEffect(() => {
         const initialSelected: Record<string, string> = {};
         week.entries.forEach(entry => {
-            // Use the position from the entry's ID
             const position = entry.id.split('-').pop() || '';
             initialSelected[position] = entry.playerId;
         });
@@ -84,19 +82,11 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
         }
     };
 
-    const positions = [
-        { id: 'QB1', label: 'QB' },
-        { id: 'QB2', label: 'QB' },
-        { id: 'RB1', label: 'RB' },
-        { id: 'RB2', label: 'RB' },
-        { id: 'WR1', label: 'WR' },
-        { id: 'WR2', label: 'WR' },
-        { id: 'TE', label: 'TE' },
-        { id: 'FLEX1', label: 'FLEX' },
-        { id: 'FLEX2', label: 'FLEX' },
-        { id: 'K', label: 'K' },
-        { id: 'D/ST', label: 'D/ST' }
-    ];
+    const formatPositionName = (position: string) => {
+        return position.replace(/[0-9]/g, '');
+    };
+
+    const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'D/ST'];
 
     return (
         <Collapsible>
@@ -119,26 +109,21 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers, isSav
                     <CardContent>
                         <Form method="post" reloadDocument>
                             <input type="hidden" name="weekId" value={week.id} />
-                            {positions.map(({ id, label }) => {
-                                const existingEntry = week.entries.find(entry => entry.id.endsWith(id));
+                            {positions.map((position) => {
+                                const existingEntry = week.entries.find(entry => entry.id.endsWith(position));
                                 const defaultPlayerName = existingEntry?.player.fullName || '';
                                 return (
-                                    <div key={id} className="header-row flex justify-between items-center mb-2">
+                                    <div key={position} className="header-row flex justify-between items-center mb-2">
                                         <div className="text-base font-bold w-16">
-                                            {label}
+                                            {formatPositionName(position)}
                                         </div>
                                         <div className="text-base flex-2 mx-1">
-                                            <input type="hidden" name={`playerId-${id}`} value={selectedPlayers[id] || ''} />
+                                            <input type="hidden" name={`playerId-${position}`} value={selectedPlayers[position] || ''} />
                                             <SearchSelect 
-                                                options={getPositionPlayers(id).map(player => player.fullName)}
-                                                onOptionSelect={(playerName) => handlePlayerSelect(id, playerName)}
+                                                options={getPositionPlayers(position).map(player => player.fullName)}
+                                                onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
                                                 onOptionSelectedChange={() => {}}
                                                 value={defaultPlayerName}
-                                                data-week-id={week.id}
-                                                data-position={id}
-                                                data-player-id={selectedPlayers[id]}
-                                                data-entry-id={existingEntry?.id}
-                                                data-selected-player
                                             />
                                         </div>
                                     </div>
