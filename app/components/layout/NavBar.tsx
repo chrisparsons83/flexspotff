@@ -78,7 +78,7 @@ export default function NavBar({ user, userIsEditor }: Props) {
                       {user ? (
                         <img
                           src={avatarImage!}
-                          className='block h-8 w-8'
+                          className='block h-8 w-8 rounded-2xl'
                           alt={user.discordName}
                         />
                       ) : (

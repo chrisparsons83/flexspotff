@@ -79,54 +79,6 @@ model CupWeek {
   mapping String @default("")
 }
 
-model DFSSurvivorUserYear {
-  id        String   @id @default(cuid())
-  userId    String
-  year      Int
-  points    Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user       User                  @relation(fields: [userId], references: [id])
-  weeks      DFSSurvivorUserWeek[]
-
-  @@unique([userId, year])
-}
-
-model DFSSurvivorUserWeek {
-  id        String   @id @default(cuid())
-  userId    String
-  year      Int
-  week      Int
-  isScored  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userYear DFSSurvivorUserYear @relation(fields: [userId, year], references: [userId, year])
-  entries  DFSSurvivorUserEntry[]
-
-  @@unique([userId, year, week])
-}
-
-model DFSSurvivorUserEntry {
-  id        String   @id @default(cuid())
-  userId    String
-  year      Int
-  week      Int
-  nflGameId String
-  playerId  String
-  position  String   // e.g., "QB1", "QB2", "RB1", "RB2", etc.
-  points    Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userWeek DFSSurvivorUserWeek @relation(fields: [userId, year, week], references: [userId, year, week])
-  nflGame  NFLGame             @relation(fields: [nflGameId], references: [id])
-  player   Player              @relation(fields: [playerId], references: [id])
-
-  @@unique([userId, year, week, position])
-}
-
 model DraftPick {
   id String @id @default(cuid())
 
@@ -264,7 +216,6 @@ model NFLGame {
   poolGame PoolGame?
   locksGame LocksGame?
   QBStreamingWeekOption QBStreamingWeekOption[]
-  dfsSurvivorEntries DFSSurvivorUserEntry[]
 }
 
 model NFLTeam {
@@ -282,84 +233,6 @@ model NFLTeam {
   poolBets PoolGamePick[]
   locksPicks LocksGamePick[]
   nflPlayers Player[]
-}
-
-model OmniDraftPick {
-  id String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  pickNumber Int
-  pickStartTime DateTime?
-  pickMadeTime DateTime?
-
-  player OmniPlayer? @relation(fields: [playerId], references: [id])
-  playerId String?
-
-  team OmniUserTeam @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  teamId String
-
-  @@unique([pickNumber, teamId])
-  @@unique([playerId])
-}
-
-model OmniSeason {
-  id String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  year Int
-  isCurrent Boolean @default(false)
-
-  omniTeams OmniUserTeam[]
-  omniSports OmniSport[]
-  omniPlayers OmniPlayer[]
-}
-
-model OmniUserTeam {
-  id String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  seasonId String
-
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String?
-
-  draftPicks OmniDraftPick[]
-}
-
-model OmniSport {
-  id String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  name String
-  shortName String?
-  emoji String?
-
-  omniSeasons OmniSeason[]
-  omniPicks OmniPlayer[]
-}
-
-model OmniPlayer {
-  id String @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  displayName String
-  isActive Boolean @default(true)
-  relativeSort Int
-  pointsScored Int?
-
-  sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  sportId String
-  
-  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  seasonId String
-
-  draftPick OmniDraftPick?
 }
 
 model PoolWeek {
@@ -451,7 +324,6 @@ model Player {
   DraftPicks DraftPick[]
   QBStreamingWeekOption QBStreamingWeekOption[]
   TeamGames TeamGame[]
-  dfsSurvivorEntries DFSSurvivorUserEntry[]
 }
 
 model QBStreamingWeek {
@@ -523,7 +395,6 @@ model Season {
   isCurrent Boolean
   isOpenForRegistration Boolean
   isOpenForFSquared Boolean @default(false)
-  isOpenForDFSSurvivor Boolean @default(false)
   registrationSize Int @default(60)
 
   Weeks SeasonWeek[]
@@ -611,10 +482,4 @@ model User {
   poolWeeksMissed PoolWeekMissed[]
   locksGamePick LocksGamePick[]
   sleeperUsers SleeperUser[]
-<<<<<<< HEAD
-  dfsSurvivorUserYears DFSSurvivorUserYear[]
 }
-=======
-  omniTeams OmniUserTeam[]
-}
->>>>>>> main
