@@ -6,6 +6,8 @@ import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { createDfsSurvivorYear, getDfsSurvivorYearByUserAndYear } from '~/models/dfssurvivoryear.server';
 import { prisma } from '~/db.server';
+import Button from '~/components/ui/Button';
+import { useState } from 'react';
 
 type WeekWithEntries = DFSSurvivorUserWeek & {
   entries: (DFSSurvivorUserEntry & {
@@ -25,7 +27,7 @@ type LoaderData =
         WR: Player[];
         TE: Player[];
         K: Player[];
-        DST: Player[];
+        DEF: Player[];
         FLX: Player[];
       };
     };
@@ -36,71 +38,74 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   const formData = await request.formData();
-  const weekId = formData.get('weekId');
+  const weeks = formData.getAll('weekId');
 
-  if (typeof weekId !== 'string') {
-    throw new Error('Invalid form data');
-  }
+  for (const weekId of weeks) {
+    if (typeof weekId !== 'string') continue;
 
-  const week = await prisma.dFSSurvivorUserWeek.findUnique({
-    where: { id: weekId },
-    include: { userYear: true }
-  });
-
-  if (!week || week.userYear.userId !== user.id) {
-    throw new Error('Invalid week or unauthorized');
-  }
-
-  const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'D/ST'];
-  
-  for (const position of positions) {
-    const playerId = formData.get(`playerId-${position}`);
-    if (typeof playerId !== 'string' || !playerId) continue;
-
-    const player = await prisma.player.findUnique({
-      where: { id: playerId },
-      include: { currentNFLTeam: true }
+    const week = await prisma.dFSSurvivorUserWeek.findUnique({
+      where: { id: weekId },
+      include: { userYear: true }
     });
 
-    if (!player?.currentNFLTeam) {
-      throw new Error(`Player not found or no team found for position ${position}`);
+    if (!week || week.userYear.userId !== user.id) {
+      throw new Error('Invalid week or unauthorized');
     }
 
-    const nflGame = await prisma.nFLGame.findFirst({
-      where: {
-        week: week.week,
-        year: week.year,
-        OR: [
-          { homeTeamId: player.currentNFLTeam.id },
-          { awayTeamId: player.currentNFLTeam.id }
-        ]
-      }
-    });
+    const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'D/ST'];
+    
+    for (const position of positions) {
+      const searchPosition = position.replace(/[12]/, '');
+      const playerId = formData.get(`playerId-${weekId}-${position}`);
+      if (typeof playerId !== 'string' || !playerId) continue;
 
-    if (!nflGame) {
-      throw new Error(`No game found for player ${player.fullName} in week ${week.week}`);
+      const player = await prisma.player.findUnique({
+        where: { 
+          id: playerId,
+        },
+        include: { currentNFLTeam: true }
+      });
+
+      if (!player?.currentNFLTeam) {
+        throw new Error(`Player not found or no team found for position ${searchPosition}`);
+      }
+
+      const nflGame = await prisma.nFLGame.findFirst({
+        where: {
+          week: week.week,
+          year: week.year,
+          OR: [
+            { homeTeamId: player.currentNFLTeam.id },
+            { awayTeamId: player.currentNFLTeam.id }
+          ]
+        }
+      });
+
+      if (!nflGame) {
+        throw new Error(`No game found for player ${player.fullName} in week ${week.week}`);
+      }
+
+      await prisma.dFSSurvivorUserEntry.upsert({
+        where: {
+          id: `${user.id}-${week.year}-${week.week}-${position}`
+        },
+        create: {
+          id: `${user.id}-${week.year}-${week.week}-${position}`,
+          userId: user.id,
+          year: week.year,
+          week: week.week,
+          nflGameId: nflGame.id,
+          playerId: player.id,
+          points: 0,
+          position: position
+        },
+        update: {
+          nflGameId: nflGame.id,
+          playerId: player.id,
+          points: 0
+        }
+      });
     }
-
-    await prisma.dFSSurvivorUserEntry.upsert({
-      where: {
-        id: `${user.id}-${week.year}-${week.week}-${position}`
-      },
-      create: {
-        id: `${user.id}-${week.year}-${week.week}-${position}`,
-        userId: user.id,
-        year: week.year,
-        week: week.week,
-        nflGameId: nflGame.id,
-        playerId: player.id,
-        points: 0,
-        position: position
-      },
-      update: {
-        nflGameId: nflGame.id,
-        playerId: player.id,
-        points: 0
-      }
-    });
   }
 
   return typedjson({ message: 'Entries saved successfully' });
@@ -140,27 +145,45 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const [qbPlayers, rbPlayers, wrPlayers, tePlayers, kPlayers, dstPlayers] = await Promise.all([
     prisma.player.findMany({
-      where: { position: 'QB' },
+      where: { 
+        position: 'QB',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     }),
     prisma.player.findMany({
-      where: { position: 'RB' },
+      where: { 
+        position: 'RB',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     }),
     prisma.player.findMany({
-      where: { position: 'WR' },
+      where: { 
+        position: 'WR',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     }),
     prisma.player.findMany({
-      where: { position: 'TE' },
+      where: { 
+        position: 'TE',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     }),
     prisma.player.findMany({
-      where: { position: 'K' },
+      where: { 
+        position: 'K',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     }),
     prisma.player.findMany({
-      where: { position: 'DST' },
+      where: { 
+        position: 'DEF',
+        currentNFLTeamId: { not: null }
+      },
       orderBy: { fullName: 'asc' }
     })
   ]);
@@ -197,7 +220,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       WR: filterSelectedPlayers(wrPlayers),
       TE: filterSelectedPlayers(tePlayers),
       K: filterSelectedPlayers(kPlayers),
-      DST: filterSelectedPlayers(dstPlayers),
+      DEF: filterSelectedPlayers(dstPlayers),
       FLX: flexPlayers
     }
   });
@@ -206,6 +229,45 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function GamesDfsSurvivorMyEntry() {
   const data = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
+  const [error, setError] = useState<string | null>(null);
+
+  const checkForDuplicatePlayers = () => {
+    const selectedPlayers = new Set<string>();
+    const inputs = document.querySelectorAll('input[name^="playerId-"]');
+    
+    for (const input of inputs) {
+      const playerId = (input as HTMLInputElement).value;
+      if (playerId && selectedPlayers.has(playerId)) {
+        return true;
+      }
+      if (playerId) {
+        selectedPlayers.add(playerId);
+      }
+    }
+    return false;
+  };
+
+  const handleSaveAll = () => {
+    if (checkForDuplicatePlayers()) {
+      setError('Cannot save entries: A player has been selected multiple times');
+    } else {
+      setError(null);
+      // Collect all form data and submit
+      const formData = new FormData();
+      const inputs = document.querySelectorAll('input[name^="playerId-"]');
+      inputs.forEach(input => {
+        formData.append((input as HTMLInputElement).name, (input as HTMLInputElement).value);
+      });
+      const weekInputs = document.querySelectorAll('input[name="weekId"]');
+      weekInputs.forEach(input => {
+        formData.append('weekId', (input as HTMLInputElement).value);
+      });
+      fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+      }).then(() => window.location.reload());
+    }
+  };
 
   if (!data.currentSeason) {
     return (
@@ -229,13 +291,20 @@ export default function GamesDfsSurvivorMyEntry() {
     <div>
       <h2>My DFS Survivor Entries</h2>
       {actionData?.message && actionData.message}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+      <div className="mb-4 flex justify-end">
+        <Button type="button" onClick={handleSaveAll}>
+          Save All Entries
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.dfsSurvivorWeeks.map((week) => (
+        {[...data.dfsSurvivorWeeks].sort((a, b) => a.week - b.week).map((week) => (
           <DfsSurvivorWeekComponent 
             key={week.id} 
             week={week} 
             availablePlayers={data.availablePlayers}
             isSaving={false}
+            formId={`week-${week.week}`}
           />
         ))}
       </div>

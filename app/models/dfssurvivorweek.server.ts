@@ -1,5 +1,4 @@
 import { prisma } from '~/db.server';
-import type { DFSSurvivorUserWeek } from '@prisma/client';
 
 export type { DFSSurvivorUserWeek } from '@prisma/client';
 
