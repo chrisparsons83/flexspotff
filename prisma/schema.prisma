@@ -262,6 +262,11 @@ model OmniSeason {
   year Int
   isCurrent Boolean @default(false)
 
+  hasOvernightPause Boolean @default(false)
+  pauseStartHour Int?
+  pauseEndHour Int?
+  hoursPerPick Int @default(12)
+
   omniTeams OmniUserTeam[]
   omniSports OmniSport[]
   omniPlayers OmniPlayer[]

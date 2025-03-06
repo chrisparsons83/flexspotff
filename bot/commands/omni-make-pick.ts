@@ -212,14 +212,27 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
       // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
       if (furthestAlongPick?.pickNumber === pickNumber) {
+        const nextPick = new Date();
+        const lengthOfPause =
+          (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
+
         for (let i = 1; i < 6; i++) {
-          const now = new Date();
-          now.setHours(now.getHours() + 12 * (i - 1));
           const pickInfo = await getPickByPickNumber(pickNumber + i);
           if (pickInfo) {
             nextPicks.push(pickInfo);
           }
-          await updateDraftPickTimeByPickNumber(pickNumber + i, now);
+          await updateDraftPickTimeByPickNumber(pickNumber + i, nextPick);
+          nextPick.setHours(nextPick.getHours() + omniSeason.hoursPerPick);
+          // if this falls into the pause window, then we need to bump it up by the amount of time in the pause
+          if (
+            omniSeason.hasOvernightPause &&
+            omniSeason.pauseStartHour &&
+            omniSeason.pauseEndHour &&
+            nextPick.getHours() >= omniSeason.pauseStartHour &&
+            nextPick.getHours() < omniSeason.pauseEndHour
+          ) {
+            nextPick.setHours(nextPick.getHours() + lengthOfPause);
+          }
         }
       }
 
