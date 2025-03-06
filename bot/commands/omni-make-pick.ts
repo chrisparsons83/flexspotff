@@ -144,8 +144,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     return interaction.followUp(
       `You have filled your flex spots. Please choose from one of the following sports: ${activeSports
         .filter(
-          sport =>
-            !currentSportPicks.filter(String).includes(sport.shortName || ''),
+          sport => !currentSportPicks.filter(String).includes(sport.id || ''),
         )
         .map(sport => sport.name)
         .join(', ')}`,
@@ -202,7 +201,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
     if (confirmation.customId === 'confirm') {
       // We need to check the next pick again because there could be duplicate picks submitted at once, thanks Allen.
-      const currentNextPickFromTeam = await getNextOmniPickForTeam(omniUserTeam.id);
+      const currentNextPickFromTeam = await getNextOmniPickForTeam(
+        omniUserTeam.id,
+      );
       if (!currentNextPickFromTeam) {
         return interaction.followUp('It is not your turn to pick');
       }
