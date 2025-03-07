@@ -5,7 +5,7 @@ type SearchSelectProps = {
     options: string[];
     className?: string;
     onOptionSelect: (option: string) => void;
-    onOptionSelectedChange: (isSelected: boolean) => void;
+    onOptionSelectedChange: (value: string) => void;
     value?: string;
     disabled?: boolean;
     textColor?: string;
@@ -22,7 +22,6 @@ export default function SearchSelect({
 }: SearchSelectProps) {
     const [query, setQuery] = useState(value);
     const [filteredOptions, setFilteredOptions] = useState<string[]>(options);
-    const [isOptionSelected, setIsOptionSelected] = useState(value !== '');
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
     const listRef = useRef<HTMLUListElement>(null);
@@ -30,24 +29,13 @@ export default function SearchSelect({
     // Update query when value changes
     useEffect(() => {
         setQuery(value);
-        setIsOptionSelected(value !== '');
     }, [value]);
-
-    // Check if the query is an option and ignore case
-    useEffect(() => {
-        const isSelected = options.some(option => option.toLowerCase() === query.toLowerCase());
-        setIsOptionSelected(isSelected);
-        onOptionSelectedChange(isSelected);
-    }, [query, options, onOptionSelectedChange]);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (disabled) return;
         const value = event.target.value;
-        if (value.length < query.length) {
-            setIsOptionSelected(false);
-            onOptionSelectedChange(false);
-        }
         setQuery(value);
+        onOptionSelectedChange(value);
         setFilteredOptions(
             options.filter(option =>
                 option.toLowerCase().includes(value.toLowerCase())
@@ -60,11 +48,42 @@ export default function SearchSelect({
         if (disabled) return;
         setQuery(option);
         setFilteredOptions([option]);
-        setIsOptionSelected(true);
         onOptionSelect(option);
-        onOptionSelectedChange(true);
+        onOptionSelectedChange(option);
         setHighlightedIndex(-1);
         setIsFocused(false);
+    };
+
+    const handleBlur = () => {
+        // Small delay to allow click events to fire on options
+        setTimeout(() => {
+            setIsFocused(false);
+            
+            // If there's text but no exact match selected yet
+            if (query) {
+                // Try exact match first
+                const exactMatch = options.find(
+                    option => option.toLowerCase() === query.toLowerCase()
+                );
+                
+                // Then try partial match
+                const partialMatch = options.find(
+                    option => option.toLowerCase().includes(query.toLowerCase())
+                );
+
+                // Use exact match if found, otherwise use partial match
+                const match = exactMatch || partialMatch;
+                
+                if (match) {
+                    handleSelect(match);
+                } else {
+                    // If no match found, keep the entered text
+                    onOptionSelectedChange(query);
+                }
+            } else {
+                onOptionSelectedChange('');
+            }
+        }, 200);
     };
 
     // Allow scrolling through options with arrow keys and selecting with enter
@@ -81,10 +100,13 @@ export default function SearchSelect({
                 prevIndex > 0 ? prevIndex - 1 : filteredOptions.length - 1
             );
         } else if (event.key === 'Enter') {
+            event.preventDefault();
             if (highlightedIndex >= 0) {
                 handleSelect(filteredOptions[highlightedIndex]);
             } else if (filteredOptions.length > 0) {
                 handleSelect(filteredOptions[0]);
+            } else {
+                onOptionSelectedChange(query);
             }
         } else if (event.key === 'Escape') {
             setIsFocused(false);
@@ -106,10 +128,7 @@ export default function SearchSelect({
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => !disabled && setIsFocused(true)}
-                onBlur={() => {
-                    // Small delay to allow click events to fire on options
-                    setTimeout(() => setIsFocused(false), 200);
-                }}
+                onBlur={handleBlur}
                 disabled={disabled}
                 className={clsx(
                     "w-full px-4 py-2 border rounded-md bg-transparent",
@@ -117,7 +136,7 @@ export default function SearchSelect({
                     textColor
                 )}
             />
-            {isFocused && query && filteredOptions.length > 0 && !isOptionSelected && !disabled && (
+            {isFocused && query && filteredOptions.length > 0 && !disabled && (
                 <ul ref={listRef} className="absolute z-10 w-full border rounded-md bg-slate-700 max-h-40 overflow-y-auto text-white marker:text-white top-full mt-1">
                     {filteredOptions.slice(0, 5).map((option, index) => (
                         <li
