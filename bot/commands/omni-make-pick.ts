@@ -264,7 +264,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
       } else {
         const pickTimer = new Date();
-        pickTimer.setHours(pickTimer.getHours() + lengthOfPause);
+        pickTimer.setHours(pickTimer.getHours() + omniSeason.hoursPerPick);
         await (channel as TextChannel).send({
           content: `${interaction.user} has selected ${
             player?.displayName
