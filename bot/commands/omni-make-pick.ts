@@ -217,11 +217,12 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         };
       })[] = [];
 
+      const lengthOfPause =
+          (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
+
       // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
       if (furthestAlongPick?.pickNumber === pickNumber) {
         const nextPick = new Date();
-        const lengthOfPause =
-          (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
 
         for (let i = 1; i < 6; i++) {
           const pickInfo = await getPickByPickNumber(pickNumber + i);
@@ -263,7 +264,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
       } else {
         const pickTimer = new Date();
-        pickTimer.setHours(pickTimer.getHours() + 12);
+        pickTimer.setHours(pickTimer.getHours() + lengthOfPause);
         await (channel as TextChannel).send({
           content: `${interaction.user} has selected ${
             player?.displayName
