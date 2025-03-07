@@ -611,10 +611,6 @@ model User {
   poolWeeksMissed PoolWeekMissed[]
   locksGamePick LocksGamePick[]
   sleeperUsers SleeperUser[]
-<<<<<<< HEAD
   dfsSurvivorUserYears DFSSurvivorUserYear[]
-}
-=======
   omniTeams OmniUserTeam[]
 }
->>>>>>> main

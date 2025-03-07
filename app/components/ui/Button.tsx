@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { type MouseEvent } from 'react';
 
 type ButtonProps = {
   children: string;
@@ -6,7 +7,7 @@ type ButtonProps = {
   disabled?: boolean;
   name?: string;
   value?: string;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   className?: string;
 };
 
