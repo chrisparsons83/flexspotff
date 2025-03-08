@@ -223,11 +223,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
       if (furthestAlongPick?.pickNumber === pickNumber) {
         const nextPick = new Date();
-        console.log({
-          currentHour: nextPick.getUTCHours(),
-          startHour: omniSeason.pauseStartHour,
-          endHour: omniSeason.pauseEndHour,
-        });
+
         // if we're currently in the pause window, then set the clock to the end of the pause
         if (
           omniSeason.hasOvernightPause &&
@@ -242,7 +238,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           nextPick.setMinutes(0);
           nextPick.setSeconds(0);
         }
-        console.log({ nextPick });
 
         for (let i = 1; i < 6; i++) {
           const pickInfo = await getPickByPickNumber(pickNumber + i);
