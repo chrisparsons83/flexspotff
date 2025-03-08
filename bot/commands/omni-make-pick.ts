@@ -218,11 +218,31 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       })[] = [];
 
       const lengthOfPause =
-          (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
+        (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
 
       // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
       if (furthestAlongPick?.pickNumber === pickNumber) {
         const nextPick = new Date();
+        console.log({
+          currentHour: nextPick.getUTCHours(),
+          startHour: omniSeason.pauseStartHour,
+          endHour: omniSeason.pauseEndHour,
+        });
+        // if we're currently in the pause window, then set the clock to the end of the pause
+        if (
+          omniSeason.hasOvernightPause &&
+          omniSeason.pauseStartHour &&
+          omniSeason.pauseEndHour &&
+          nextPick.getUTCHours() >= omniSeason.pauseStartHour &&
+          nextPick.getUTCHours() < omniSeason.pauseEndHour
+        ) {
+          nextPick.setUTCHours(
+            omniSeason.pauseEndHour + omniSeason.hoursPerPick,
+          );
+          nextPick.setMinutes(0);
+          nextPick.setSeconds(0);
+        }
+        console.log({ nextPick });
 
         for (let i = 1; i < 6; i++) {
           const pickInfo = await getPickByPickNumber(pickNumber + i);
@@ -230,16 +250,18 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             nextPicks.push(pickInfo);
           }
           await updateDraftPickTimeByPickNumber(pickNumber + i, nextPick);
-          nextPick.setHours(nextPick.getHours() + omniSeason.hoursPerPick);
+          nextPick.setUTCHours(
+            nextPick.getUTCHours() + omniSeason.hoursPerPick,
+          );
           // if this falls into the pause window, then we need to bump it up by the amount of time in the pause
           if (
             omniSeason.hasOvernightPause &&
             omniSeason.pauseStartHour &&
             omniSeason.pauseEndHour &&
-            nextPick.getHours() >= omniSeason.pauseStartHour &&
-            nextPick.getHours() < omniSeason.pauseEndHour
+            nextPick.getUTCHours() >= omniSeason.pauseStartHour &&
+            nextPick.getUTCHours() < omniSeason.pauseEndHour
           ) {
-            nextPick.setHours(nextPick.getHours() + lengthOfPause);
+            nextPick.setUTCHours(nextPick.getUTCHours() + lengthOfPause);
           }
         }
       }
@@ -271,7 +293,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           } from ${sport?.name}. Currently on the clock is <@${
             nextPicks[0].team.user?.discordId
           }> and their pick timer expires <t:${parseInt(
-            (pickTimer.getTime() / 1000).toFixed(0),
+            // TODO: Fix this logic for the last pick.
+            (nextPicks[1].pickStartTime!.getTime() / 1000).toFixed(0),
           )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
         });
       }
