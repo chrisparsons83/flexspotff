@@ -60,17 +60,21 @@ export const autocomplete = async (interaction: AutocompleteInteraction) => {
 
     const focusedValue = interaction.options.getFocused().toLocaleLowerCase();
 
-    interaction.respond(
-      activePlayers
-        .filter(player => player.sportId === options)
-        .filter(player => player.draftPick === null)
-        .filter(player =>
-          player.displayName.toLocaleLowerCase().startsWith(focusedValue),
-        )
-        .sort((a, b) => a.relativeSort - b.relativeSort)
-        .slice(0, 25)
-        .map(player => ({ name: player.displayName, value: player.id })),
-    );
+    try {
+      interaction.respond(
+        activePlayers
+          .filter(player => player.sportId === options)
+          .filter(player => player.draftPick === null)
+          .filter(player =>
+            player.displayName.toLocaleLowerCase().startsWith(focusedValue),
+          )
+          .sort((a, b) => a.relativeSort - b.relativeSort)
+          .slice(0, 25)
+          .map(player => ({ name: player.displayName, value: player.id })),
+      );
+    } catch (e) {
+      console.error(e);
+    }
   }
 };
 
