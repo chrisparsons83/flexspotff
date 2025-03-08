@@ -17,6 +17,9 @@ export function getPendingPicksBySeason(seasonId: string) {
         },
       },
     },
+    orderBy: {
+      pickNumber: 'asc',
+    },
   });
 }
 
