@@ -242,7 +242,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         for (let i = 1; i < 6; i++) {
           const pickInfo = await getPickByPickNumber(pickNumber + i);
           if (pickInfo) {
-            nextPicks.push(pickInfo);
+            nextPicks.push({ ...pickInfo, pickStartTime: nextPick });
           }
           await updateDraftPickTimeByPickNumber(pickNumber + i, nextPick);
           nextPick.setUTCHours(
@@ -280,18 +280,24 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Since this pick was catching up on out of order, no clock updates were made.`,
         });
       } else {
-        const pickTimer = new Date();
-        pickTimer.setHours(pickTimer.getHours() + omniSeason.hoursPerPick);
-        await (channel as TextChannel).send({
-          content: `${interaction.user} has selected ${
-            player?.displayName
-          } from ${sport?.name}. Currently on the clock is <@${
-            nextPicks[0].team.user?.discordId
-          }> and their pick timer expires <t:${parseInt(
-            // TODO: Fix this logic for the last pick.
-            (nextPicks[0].pickStartTime!.getTime() / 1000).toFixed(0),
-          )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
-        });
+        const nextPick = await getPickByPickNumber(pickNumber + 2);
+        if (!nextPick) {
+          await (channel as TextChannel).send({
+            content:
+              'Mock draft has completed. Starting actual draft. Listem OTC.',
+          });
+        } else {
+          await (channel as TextChannel).send({
+            content: `${interaction.user} has selected ${
+              player?.displayName
+            } from ${sport?.name}. Currently on the clock is <@${
+              nextPicks[0].team.user?.discordId
+            }> and their pick timer expires <t:${parseInt(
+              // TODO: Fix this logic for the last pick.
+              (nextPick.pickStartTime!.getTime() / 1000).toFixed(0),
+            )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
+          });
+        }
       }
     } else if (confirmation.customId === 'cancel') {
       await confirmation.followUp({
