@@ -289,7 +289,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             nextPicks[0].team.user?.discordId
           }> and their pick timer expires <t:${parseInt(
             // TODO: Fix this logic for the last pick.
-            (nextPicks[1].pickStartTime!.getTime() / 1000).toFixed(0),
+            (nextPicks[0].pickStartTime!.getTime() / 1000).toFixed(0),
           )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
         });
       }
