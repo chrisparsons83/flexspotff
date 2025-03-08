@@ -2,6 +2,24 @@ import { prisma } from '~/db.server';
 
 export type { OmniDraftPick } from '@prisma/client';
 
+export function getPendingPicksBySeason(seasonId: string) {
+  return prisma.omniDraftPick.findMany({
+    where: {
+      pickStartTime: {
+        lte: new Date(),
+      },
+      playerId: null,
+    },
+    include: {
+      team: {
+        include: {
+          user: true,
+        },
+      },
+    },
+  });
+}
+
 export function getPickByPickNumber(pickNumber: number) {
   return prisma.omniDraftPick.findFirst({
     where: {
