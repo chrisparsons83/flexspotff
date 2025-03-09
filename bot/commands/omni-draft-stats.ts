@@ -23,6 +23,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-draft-stats__execute');
   const ephemeral =
     interaction.options.getString(DISPLAY_FIELD) === 'private' ? true : false;
   await interaction.deferReply({ ephemeral });

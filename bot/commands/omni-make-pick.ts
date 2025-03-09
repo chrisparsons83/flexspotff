@@ -48,6 +48,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const autocomplete = async (interaction: AutocompleteInteraction) => {
+  console.log('omni-make-pick__autocomplete');
   const options = interaction.options.getString('sport') || '';
 
   if (options === '') {
@@ -79,6 +80,7 @@ export const autocomplete = async (interaction: AutocompleteInteraction) => {
 };
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-make-pick__execute');
   await interaction.deferReply({ ephemeral: true });
   const activeSports = await getActiveSports();
 

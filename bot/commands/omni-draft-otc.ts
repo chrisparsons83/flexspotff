@@ -23,6 +23,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-draft-otc__execute');
   const ephemeral =
     interaction.options.getString(DISPLAY_FIELD) === 'private' ? true : false;
   await interaction.deferReply({ ephemeral });
@@ -57,8 +58,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           .join('\n'),
       })),
     );
-
-  console.log({ openPicks, teamsOTC });
 
   return interaction.editReply({
     embeds: [embed],

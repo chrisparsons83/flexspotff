@@ -13,6 +13,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-sport-count__execute');
   await interaction.deferReply({ ephemeral: true });
 
   const sports = await getActiveSports();
