@@ -287,10 +287,24 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
       } else {
         const nextPick = await getPickByPickNumber(pickNumber + 2);
+        const nextToNextPick = await getPickByPickNumber(pickNumber + 2);
         if (!nextPick) {
           await (channel as TextChannel).send({
             content:
               'Mock draft has completed. Starting actual draft. Listem OTC.',
+          });
+        } else if (!nextToNextPick) {
+          const fakeClock = new Date();
+          fakeClock.setHours(fakeClock.getHours() + 4);
+          await (channel as TextChannel).send({
+            content:
+            `${interaction.user} has selected ${
+              player?.displayName
+            } from ${sport?.name}. Currently on the clock is <@${
+              nextPicks[0].team.user?.discordId
+            }> and their pick timer expires <t:${parseInt(
+              (fakeClock.getTime() / 1000).toFixed(0),
+            )}:R>.`,
           });
         } else {
           await (channel as TextChannel).send({
