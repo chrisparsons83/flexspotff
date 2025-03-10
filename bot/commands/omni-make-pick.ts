@@ -291,7 +291,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         if (!nextPick) {
           await (channel as TextChannel).send({
             content:
-              'Mock draft has completed. Starting actual draft. Listem OTC.',
+              'This draft has completed. Go hug your children or something.',
           });
         } else if (!nextToNextPick) {
           const fakeClock = new Date();
