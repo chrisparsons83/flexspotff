@@ -291,7 +291,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         if (!nextPick) {
           await (channel as TextChannel).send({
             content:
-              'This draft has completed. Go hug your children or something.',
+              `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. This draft has completed. Go hug your children or something.`,
           });
         } else if (!nextToNextPick) {
           const fakeClock = new Date();
