@@ -52,12 +52,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Error('Invalid week or unauthorized');
     }
 
-    const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'D/ST'];
+    const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'DEF'];
     
     for (const position of positions) {
-      const searchPosition = position.replace(/[12]/, '');
+      const searchPosition = position === 'DEF' ? position : position.replace(/[12]/, '');
       const playerId = formData.get(`playerId-${weekId}-${position}`);
-      if (typeof playerId !== 'string' || !playerId) continue;
+      
+      // If playerId is empty string or not provided, delete any existing entry
+      if (typeof playerId !== 'string' || !playerId) {
+        await prisma.dFSSurvivorUserEntry.deleteMany({
+          where: {
+            userId: user.id,
+            year: week.year,
+            week: week.week,
+            position: position
+          }
+        });
+        continue;
+      }
 
       const player = await prisma.player.findUnique({
         where: { 
@@ -85,26 +97,40 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         throw new Error(`No game found for player ${player.fullName} in week ${week.week}`);
       }
 
-      await prisma.dFSSurvivorUserEntry.upsert({
+      // First try to find an existing entry
+      const existingEntry = await prisma.dFSSurvivorUserEntry.findFirst({
         where: {
-          id: `${user.id}-${week.year}-${week.week}-${position}`
-        },
-        create: {
-          id: `${user.id}-${week.year}-${week.week}-${position}`,
           userId: user.id,
           year: week.year,
           week: week.week,
-          nflGameId: nflGame.id,
-          playerId: player.id,
-          points: 0,
           position: position
-        },
-        update: {
-          nflGameId: nflGame.id,
-          playerId: player.id,
-          points: 0
         }
       });
+
+      if (existingEntry) {
+        // Update existing entry
+        await prisma.dFSSurvivorUserEntry.update({
+          where: { id: existingEntry.id },
+          data: {
+            nflGameId: nflGame.id,
+            playerId: player.id,
+            points: 0
+          }
+        });
+      } else {
+        // Create new entry
+        await prisma.dFSSurvivorUserEntry.create({
+          data: {
+            userId: user.id,
+            year: week.year,
+            week: week.week,
+            nflGameId: nflGame.id,
+            playerId: player.id,
+            points: 0,
+            position: position
+          }
+        });
+      }
     }
   }
 

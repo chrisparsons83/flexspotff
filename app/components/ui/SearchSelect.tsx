@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import clsx from 'clsx';
 
 type SearchSelectProps = {
@@ -21,114 +21,157 @@ export default function SearchSelect({
     textColor,
 }: SearchSelectProps) {
     const [query, setQuery] = useState(value);
-    const [filteredOptions, setFilteredOptions] = useState<string[]>(options);
-    const [highlightedIndex, setHighlightedIndex] = useState(-1);
-    const [isFocused, setIsFocused] = useState(false);
-    const listRef = useRef<HTMLUListElement>(null);
+    const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedOption, setSelectedOption] = useState<string>(value);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const dropdownRef = useRef<HTMLUListElement>(null);
+    const isDeleting = useRef(false);
 
-    // Update query when value changes
+    // Update query and selected option when value prop changes
     useEffect(() => {
-        setQuery(value);
-    }, [value]);
+        // Only update if we're not actively deleting and value is different
+        if (!isDeleting.current && value !== query) {
+            setQuery(value);
+            setSelectedOption(value);
+        }
+    }, [value, query]);
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle input change
+    const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         if (disabled) return;
-        const value = event.target.value;
-        setQuery(value);
-        onOptionSelectedChange(value);
-        setFilteredOptions(
-            options.filter(option =>
-                option.toLowerCase().includes(value.toLowerCase())
-            )
+        
+        const newValue = event.target.value;
+        const isBackspaceDelete = query.length > newValue.length;
+        isDeleting.current = isBackspaceDelete;
+
+        setQuery(newValue);
+
+        // If input is empty or only whitespace, clear all states
+        if (!newValue.trim()) {
+            setQuery('');
+            setSelectedOption('');
+            onOptionSelect('');
+            onOptionSelectedChange('');
+            setFilteredOptions([]);
+            return;
+        }
+
+        // Filter options based on input
+        const filtered = options
+            .filter(option => 
+                option.toLowerCase().includes(newValue.toLowerCase()))
+            .slice(0, 3);
+        
+        setFilteredOptions(filtered);
+        
+        // If exact match found, update selection
+        const exactMatch = options.find(
+            opt => opt.toLowerCase() === newValue.toLowerCase()
         );
-        setHighlightedIndex(-1);
-    };
+        if (exactMatch) {
+            setSelectedOption(exactMatch);
+            onOptionSelect(exactMatch);
+            onOptionSelectedChange(exactMatch);
+        } else {
+            setSelectedOption(newValue);
+            onOptionSelectedChange(newValue);
+        }
 
-    const handleSelect = (option: string) => {
+        // Reset deletion flag after state updates
+        setTimeout(() => {
+            isDeleting.current = false;
+        }, 0);
+    }, [disabled, options, onOptionSelect, onOptionSelectedChange, query]);
+
+    // Handle option selection from dropdown
+    const handleOptionSelect = useCallback((option: string) => {
         if (disabled) return;
+        
+        isDeleting.current = false;
         setQuery(option);
-        setFilteredOptions([option]);
+        setSelectedOption(option);
+        setIsOpen(false);
         onOptionSelect(option);
         onOptionSelectedChange(option);
-        setHighlightedIndex(-1);
-        setIsFocused(false);
-    };
+        setFilteredOptions([]);
+    }, [disabled, onOptionSelect, onOptionSelectedChange]);
 
-    const handleBlur = () => {
-        // Small delay to allow click events to fire on options
-        setTimeout(() => {
-            setIsFocused(false);
-            
-            // If there's text but no exact match selected yet
-            if (query) {
-                // Try exact match first
-                const exactMatch = options.find(
-                    option => option.toLowerCase() === query.toLowerCase()
-                );
-                
-                // Then try partial match
-                const partialMatch = options.find(
-                    option => option.toLowerCase().includes(query.toLowerCase())
-                );
+    // Handle input focus
+    const handleFocus = useCallback(() => {
+        if (disabled) return;
+        
+        setIsOpen(true);
+        // Show top 3 matching options on focus
+        const filtered = options
+            .filter(option => 
+                option.toLowerCase().includes(query.toLowerCase()))
+            .slice(0, 3);
+        setFilteredOptions(filtered);
+    }, [disabled, options, query]);
 
-                // Use exact match if found, otherwise use partial match
-                const match = exactMatch || partialMatch;
+    // Handle click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+                inputRef.current && !inputRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+                setFilteredOptions([]);
                 
-                if (match) {
-                    handleSelect(match);
-                } else {
-                    // If no match found, keep the entered text
-                    onOptionSelectedChange(query);
+                // Only revert if not actively deleting and there's a query
+                if (!isDeleting.current && query.trim() && 
+                    !options.find(opt => opt.toLowerCase() === query.toLowerCase())) {
+                    setQuery(selectedOption);
+                    onOptionSelectedChange(selectedOption);
                 }
-            } else {
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [options, query, selectedOption, onOptionSelectedChange]);
+
+    // Handle keyboard navigation
+    const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (disabled) return;
+
+        // Handle backspace/delete keys
+        if (event.key === 'Backspace' || event.key === 'Delete') {
+            isDeleting.current = true;
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (filteredOptions.length > 0) {
+                handleOptionSelect(filteredOptions[0]);
+            } else if (!query.trim()) {
+                // If empty or whitespace, clear selection
+                setSelectedOption('');
+                onOptionSelect('');
                 onOptionSelectedChange('');
             }
-        }, 200);
-    };
-
-    // Allow scrolling through options with arrow keys and selecting with enter
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (disabled) return;
-        if (filteredOptions.length === 0) return;
-
-        if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-            setHighlightedIndex((prevIndex) =>
-                prevIndex < filteredOptions.length - 1 ? prevIndex + 1 : 0
-            );
-        } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-            setHighlightedIndex((prevIndex) =>
-                prevIndex > 0 ? prevIndex - 1 : filteredOptions.length - 1
-            );
-        } else if (event.key === 'Enter') {
-            event.preventDefault();
-            if (highlightedIndex >= 0) {
-                handleSelect(filteredOptions[highlightedIndex]);
-            } else if (filteredOptions.length > 0) {
-                handleSelect(filteredOptions[0]);
-            } else {
-                onOptionSelectedChange(query);
-            }
+            setIsOpen(false);
         } else if (event.key === 'Escape') {
-            setIsFocused(false);
+            setIsOpen(false);
+            setFilteredOptions([]);
+            // Only revert if not actively deleting
+            if (!isDeleting.current) {
+                setQuery(selectedOption);
+                onOptionSelectedChange(selectedOption);
+            }
         }
-    };
-
-    useEffect(() => {
-        if (highlightedIndex >= 0 && listRef.current) {
-            const listItem = listRef.current.children[highlightedIndex] as HTMLElement;
-            listItem.scrollIntoView({ block: 'nearest' });
-        }
-    }, [highlightedIndex]);
+    }, [disabled, filteredOptions, handleOptionSelect, query, selectedOption, onOptionSelect, onOptionSelectedChange]);
 
     return (
         <div className={clsx(className, 'relative')}>
             <input
+                ref={inputRef}
                 type="text"
                 value={query}
-                onChange={handleChange}
+                onChange={handleInputChange}
+                onFocus={handleFocus}
                 onKeyDown={handleKeyDown}
-                onFocus={() => !disabled && setIsFocused(true)}
-                onBlur={handleBlur}
                 disabled={disabled}
                 className={clsx(
                     "w-full px-4 py-2 border rounded-md bg-transparent",
@@ -136,19 +179,21 @@ export default function SearchSelect({
                     textColor
                 )}
             />
-            {isFocused && query && filteredOptions.length > 0 && !disabled && (
-                <ul ref={listRef} className="absolute z-10 w-full border rounded-md bg-slate-700 max-h-40 overflow-y-auto text-white marker:text-white top-full mt-1">
-                    {filteredOptions.slice(0, 5).map((option, index) => (
+            {isOpen && filteredOptions.length > 0 && !disabled && (
+                <ul 
+                    ref={dropdownRef}
+                    className="absolute z-10 w-full border rounded-md bg-slate-700 max-h-40 overflow-y-auto text-white marker:text-white top-full mt-1"
+                >
+                    {filteredOptions.map((option, index) => (
                         <li
                             key={option}
-                            onClick={() => handleSelect(option)}
+                            onClick={() => handleOptionSelect(option)}
                             className={clsx(
-                                'px-4 py-2 cursor-pointer hover:bg-slate-500 relative',
-                                { 'bg-slate-500': index === highlightedIndex }
+                                'px-4 py-2 cursor-pointer hover:bg-slate-500 relative'
                             )}
                         >
                             {option}
-                            {index < filteredOptions.slice(0, 5).length - 1 && (
+                            {index < filteredOptions.length - 1 && (
                                 <div className="absolute bottom-0 left-0 w-[90%] h-[1px] bg-gray-500"></div>
                             )}
                         </li>
