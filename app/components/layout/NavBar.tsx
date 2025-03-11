@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Home', href: '/', current: false },
   { name: 'Leagues', href: '/leagues', current: false },
   { name: 'Games', href: '/games', current: false },
+  { name: 'Omni', href: '/omni-league/standings/2025', current: false },
   { name: 'Podcast', href: '/podcast', current: false },
 ];
 
