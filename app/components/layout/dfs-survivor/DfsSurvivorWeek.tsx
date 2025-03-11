@@ -11,7 +11,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "~/components/ui/collapsible"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import clsx from "clsx"
 import Button from "~/components/ui/Button"
 import { Form } from "@remix-run/react"
@@ -48,19 +48,28 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
     const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>({});
     const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
+    // Initialize state from week entries
     useEffect(() => {
+        console.log('Initializing state from week entries:', week.entries);
         const initialSelected: Record<string, string> = {};
         const initialValues: Record<string, string> = {};
+        
         week.entries.forEach(entry => {
-            const position = entry.id.split('-').pop() || '';
+            const position = entry.position;
+            console.log('Processing entry for position:', position, entry);
+            
             initialSelected[position] = entry.playerId;
             initialValues[position] = entry.player.fullName;
         });
+
+        console.log('Initial selected players:', initialSelected);
+        console.log('Initial input values:', initialValues);
+        
         setSelectedPlayers(initialSelected);
         setInputValues(initialValues);
     }, [week.entries]);
 
-    const getPositionPlayersArray = (position: string): Player[] => {
+    const getPositionPlayersArray = useCallback((position: string): Player[] => {
         switch (position) {
             case 'QB1':
             case 'QB2':
@@ -83,15 +92,22 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
             default:
                 return [];
         }
-    };
+    }, [availablePlayers]);
 
-    const getPositionPlayers = (position: string): string[] => {
-        return getPositionPlayersArray(position).map(p => p.fullName);
-    };
+    const getPositionPlayers = useCallback((position: string): string[] => {
+        const players = getPositionPlayersArray(position);
+        console.log(`Available players for ${position}:`, players);
+        return players.map(p => p.fullName);
+    }, [getPositionPlayersArray]);
 
-    const handlePlayerSelect = (position: string, playerName: string | boolean) => {
+    const handlePlayerSelect = useCallback((position: string, playerName: string | boolean) => {
+        console.log(`handlePlayerSelect called for ${position} with value:`, playerName);
+        console.log('Current selectedPlayers:', selectedPlayers);
+        console.log('Current inputValues:', inputValues);
+
         // If playerName is not a string or is empty, clear the selection
         if (typeof playerName !== 'string' || !playerName) {
+            console.log('Clearing selection for position:', position);
             setInputValues(prev => {
                 const newState = { ...prev };
                 delete newState[position];
@@ -106,33 +122,39 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
         }
 
         const positionPlayers = getPositionPlayersArray(position);
+        console.log('Available players for position:', positionPlayers);
+        
         const player = positionPlayers.find((p: Player) => 
             p.fullName.toLowerCase() === playerName.toLowerCase()
         );
+        console.log('Found player:', player);
 
-        setInputValues(prev => ({
-            ...prev,
-            [position]: playerName
-        }));
-
+        // Update both states atomically to prevent race conditions
         if (player) {
-            setSelectedPlayers(prev => ({
-                ...prev,
-                [position]: player.id
-            }));
-        } else {
+            console.log('Updating states with valid player');
             setSelectedPlayers(prev => {
-                const newState = { ...prev };
-                delete newState[position];
+                const newState = { ...prev, [position]: player.id };
+                console.log('New selectedPlayers state:', newState);
                 return newState;
             });
+            setInputValues(prev => {
+                const newState = { ...prev, [position]: player.fullName };
+                console.log('New inputValues state:', newState);
+                return newState;
+            });
+        } else {
+            console.log('No valid player found, only updating input value');
+            setInputValues(prev => ({
+                ...prev,
+                [position]: playerName
+            }));
         }
-    };
+    }, [selectedPlayers, inputValues, getPositionPlayersArray]);
 
-    const formatPositionName = (position: string) => {
+    const formatPositionName = useCallback((position: string) => {
         if (position === 'DEF') return 'D/ST';
         return position.replace(/[0-9]/g, '');
-    };
+    }, []);
 
     const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'DEF'];
 
@@ -158,8 +180,8 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                         <Form method="post" reloadDocument>
                             {!week.isScored && <input type="hidden" name="weekId" value={week.id} />}
                             {positions.map((position) => {
-                                const existingEntry = week.entries.find(entry => entry.id.endsWith(position));
-                                const defaultPlayerName = existingEntry?.player.fullName || (week.isScored ? 'No Player Selected' : '');
+                                const existingEntry = week.entries.find(entry => entry.position === position);
+                                const defaultPlayerName = existingEntry?.player.fullName || '';
 
                                 return (
                                     <div key={position} className="header-row flex justify-between items-center mb-2" data-testid={`${position}-container`}>
@@ -186,7 +208,7 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                                             </div>
                                             {week.isScored && (
                                                 <div className="w-16 text-right font-bold">
-                                                    {week.entries.find(entry => entry.id.endsWith(position))?.points.toFixed(2) || '0.00'}
+                                                    {existingEntry?.points.toFixed(2) || '0.00'}
                                                 </div>
                                             )}
                                         </div>
