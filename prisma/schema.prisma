@@ -272,6 +272,18 @@ model OmniSeason {
   omniPlayers OmniPlayer[]
 }
 
+model OmniScore {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  player OmniPlayer? @relation(fields: [playerId], references: [id])
+  playerId String?
+
+  pointsAdded Int
+  isEliminated Boolean
+}
+
 model OmniUserTeam {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
@@ -308,6 +320,7 @@ model OmniPlayer {
   isActive Boolean @default(true)
   relativeSort Int
   pointsScored Int?
+  isComplete Boolean @default(false)
 
   sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   sportId String
@@ -316,6 +329,7 @@ model OmniPlayer {
   seasonId String
 
   draftPick OmniDraftPick?
+  scoringEvents OmniScore[]
 }
 
 model PoolWeek {
