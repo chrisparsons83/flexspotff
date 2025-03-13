@@ -11,15 +11,19 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "~/components/ui/collapsible"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import clsx from "clsx"
 import Button from "~/components/ui/Button"
-import { Form } from "@remix-run/react"
+import type { FetcherWithComponents } from "@remix-run/react"
 
 interface Props {
   week: DFSSurvivorUserWeek & {
     entries: (DFSSurvivorUserEntry & {
-      player: Player;
+      player: Player & {
+        currentNFLTeam?: {
+          sleeperId?: string;
+        } | null;
+      };
     })[];
   };
   availablePlayers: {
@@ -33,9 +37,18 @@ interface Props {
   };
   isSaving: boolean;
   formId: string;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isPlayerSelected?: (playerId: string, weekId: string, position: string) => boolean;
+  onError?: (error: string | null) => void;
+  globalError?: string | null;
+  hasError?: boolean;
+  parentFetcher: FetcherWithComponents<any>;
 }
 
-export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
+export default function DfsSurvivorWeekComponent({ 
+  week, 
+  availablePlayers = {
     QB: [],
     RB: [],
     WR: [],
@@ -43,31 +56,75 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
     K: [],
     DEF: [],
     FLX: []
-}, isSaving, formId }: Props) {
+  }, 
+  isSaving, 
+  formId, 
+  isExpanded = false,
+  onToggleExpand,
+  isPlayerSelected = () => false,
+  onError, 
+  globalError, 
+  hasError = false,
+  parentFetcher
+}: Props) {
     const totalPoints = week.entries.reduce((sum, entry) => sum + entry.points, 0);
-    const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>({});
-    const [inputValues, setInputValues] = useState<Record<string, string>>({});
-
-    // Initialize state from week entries
-    useEffect(() => {
-        console.log('Initializing state from week entries:', week.entries);
-        const initialSelected: Record<string, string> = {};
-        const initialValues: Record<string, string> = {};
+    
+    // Modify the initialization code to transform DEF player names
+    const initialSelected: Record<string, string> = {};
+    const initialValues: Record<string, string> = {};
+    
+    week.entries.forEach(entry => {
+        const position = entry.position;
+        initialSelected[position] = entry.playerId;
         
-        week.entries.forEach(entry => {
-            const position = entry.position;
-            console.log('Processing entry for position:', position, entry);
-            
-            initialSelected[position] = entry.playerId;
+        // Transform DEF player names to abbreviations
+        if (position === 'DEF' && entry.player.position === 'DEF' && entry.player.currentNFLTeam?.sleeperId) {
+            initialValues[position] = entry.player.currentNFLTeam.sleeperId;
+        } else {
             initialValues[position] = entry.player.fullName;
+        }
+    });
+    
+    const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>(initialSelected);
+    const [inputValues, setInputValues] = useState<Record<string, string>>(initialValues);
+    
+    // Determine if the Save Entry button should be disabled
+    const isSaveDisabled = useCallback(() => {
+        // Only disable if the week is already scored or if a fetch is in progress
+        return week.isScored || parentFetcher.state === 'submitting';
+    }, [week.isScored, parentFetcher.state]);
+
+    const checkForIntraWeekDuplicates = useCallback(() => {
+        // Create a map of player IDs to the positions they're used in
+        const playerCounts = new Map<string, { name: string, positions: Set<string> }>();
+        
+        Object.entries(selectedPlayers).forEach(([position, playerId]) => {
+            if (!playerId) return;
+            
+            const playerName = inputValues[position];
+            if (!playerName) return;
+
+            // Use a Set to ensure unique positions
+            const existing = playerCounts.get(playerId) || { name: playerName, positions: new Set() };
+            existing.positions.add(position);
+            playerCounts.set(playerId, existing);
         });
 
-        console.log('Initial selected players:', initialSelected);
-        console.log('Initial input values:', initialValues);
-        
-        setSelectedPlayers(initialSelected);
-        setInputValues(initialValues);
-    }, [week.entries]);
+        for (const [, info] of playerCounts) {
+            // Only consider it a duplicate if the same player is used in multiple DIFFERENT positions
+            if (info.positions.size > 1) {
+                const positionsArray = Array.from(info.positions);
+                const error = `Cannot select ${info.name} multiple times in week ${week.week} (${positionsArray.join(', ')})`;
+                // Pass error to parent component instead of handling locally
+                onError?.(error);
+                return true;
+            }
+        }
+
+        // Notify parent that there's no error
+        onError?.(null);
+        return false;
+    }, [selectedPlayers, inputValues, week.week, onError]);
 
     const getPositionPlayersArray = useCallback((position: string): Player[] => {
         switch (position) {
@@ -96,18 +153,15 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
 
     const getPositionPlayers = useCallback((position: string): string[] => {
         const players = getPositionPlayersArray(position);
-        console.log(`Available players for ${position}:`, players);
         return players.map(p => p.fullName);
     }, [getPositionPlayersArray]);
 
     const handlePlayerSelect = useCallback((position: string, playerName: string | boolean) => {
-        console.log(`handlePlayerSelect called for ${position} with value:`, playerName);
-        console.log('Current selectedPlayers:', selectedPlayers);
-        console.log('Current inputValues:', inputValues);
-
+        console.log(`Week ${week.week} player selection change - Position: ${position}, Player: ${playerName}`);
+        
         // If playerName is not a string or is empty, clear the selection
         if (typeof playerName !== 'string' || !playerName) {
-            console.log('Clearing selection for position:', position);
+            console.log(`Week ${week.week} clearing player selection for ${position}`);
             setInputValues(prev => {
                 const newState = { ...prev };
                 delete newState[position];
@@ -118,38 +172,79 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                 delete newState[position];
                 return newState;
             });
+            
+            // Notify parent component of the change
+            console.log(`Week ${week.week} notifying parent of input change`);
+            onError?.(null);
             return;
         }
 
-        const positionPlayers = getPositionPlayersArray(position);
-        console.log('Available players for position:', positionPlayers);
-        
-        const player = positionPlayers.find((p: Player) => 
-            p.fullName.toLowerCase() === playerName.toLowerCase()
-        );
-        console.log('Found player:', player);
+        // Find matching player in available players for this position
+        const players = getPositionPlayersArray(position);
+        const player = players.find(p => p.fullName === playerName);
 
-        // Update both states atomically to prevent race conditions
         if (player) {
-            console.log('Updating states with valid player');
-            setSelectedPlayers(prev => {
-                const newState = { ...prev, [position]: player.id };
-                console.log('New selectedPlayers state:', newState);
-                return newState;
-            });
-            setInputValues(prev => {
-                const newState = { ...prev, [position]: player.fullName };
-                console.log('New inputValues state:', newState);
-                return newState;
-            });
-        } else {
-            console.log('No valid player found, only updating input value');
+            console.log(`Week ${week.week} player found:`, player.fullName);
+            
+            // Before setting, check if this player is already selected in another week
+            if (isPlayerSelected(player.id, week.id, position)) {
+                const error = `Player ${player.fullName} is already selected in another week`;
+                console.log(`Week ${week.week} ${error}`);
+                onError?.(error);
+                return;
+            }
+            
+            // Update state only if no error
+            setSelectedPlayers(prev => ({
+                ...prev,
+                [position]: player.id
+            }));
             setInputValues(prev => ({
                 ...prev,
                 [position]: playerName
             }));
+            
+            // Check for duplicate players within the same week
+            setTimeout(() => {
+                checkForIntraWeekDuplicates();
+            }, 0);
+        } else {
+            console.log(`Week ${week.week} no matching player found for "${playerName}" in position ${position}`);
+            setInputValues(prev => ({
+                ...prev,
+                [position]: playerName
+            }));
+            
+            // Notify parent component of the change
+            console.log(`Week ${week.week} notifying parent of input change`);
+            onError?.(null);
         }
-    }, [selectedPlayers, inputValues, getPositionPlayersArray]);
+    }, [selectedPlayers, inputValues, getPositionPlayersArray, onError, week.week, week.id, isPlayerSelected, checkForIntraWeekDuplicates]);
+
+    const handleSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        console.log(`Week ${week.week} submit handler called`);
+        
+        if (checkForIntraWeekDuplicates()) {
+            console.log(`Week ${week.week} has duplicate players, aborting submit`);
+            return;
+        }
+        
+        // Use parent's fetcher for form submission
+        const form = e.target as HTMLFormElement;
+        const formData = new FormData(form);
+        
+        // Add the weekId if not already present
+        if (!formData.has('weekId')) {
+            formData.append('weekId', week.id);
+        }
+        
+        console.log(`Week ${week.week} submitting with ${formData.getAll('weekId').length} weekId entries`);
+        
+        // Submit the form using parent fetcher
+        parentFetcher.submit(formData, { method: 'post' });
+        
+    }, [checkForIntraWeekDuplicates, week.id, week.week, parentFetcher]);
 
     const formatPositionName = useCallback((position: string) => {
         if (position === 'DEF') return 'D/ST';
@@ -159,26 +254,28 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
     const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'DEF'];
 
     return (
-        <Collapsible>
-            <Card>
+        <Collapsible 
+            data-testid={`week-${week.week}-form`} 
+            open={isExpanded}
+            onOpenChange={() => {
+                console.log(`Week ${week.week} - Toggling expansion state from ${isExpanded} to ${!isExpanded}`);
+                onToggleExpand?.();
+            }}
+        >
+            <Card className="mb-4">
                 <CollapsibleTrigger className="w-full">
-                    <CardHeader>
-                        <CardTitle>
-                            <div className="header-row flex justify-between">
-                                <div className="text-lg font-bold" data-testid={`week-${week.week}-form`}>
-                                    {week.isScored ? `Week ${week.week} Scored` : `Week ${week.week}`}
-                                </div>
-                                <div className="text-lg font-bold">
-                                    {totalPoints.toFixed(2)}
-                                </div>
-                            </div>
-                        </CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Week {week.week}</CardTitle>
+                        <div className="text-right">
+                            <div className="text-sm">Total: {totalPoints.toFixed(2)}</div>
+                        </div>
                     </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <CardContent>
-                        <Form method="post" reloadDocument>
-                            {!week.isScored && <input type="hidden" name="weekId" value={week.id} />}
+                        <form method="post" id={formId} onSubmit={handleSubmit}>
+                            <input type="hidden" name="weekId" value={week.id} data-week-number={week.week} />
+                            
                             {positions.map((position) => {
                                 const existingEntry = week.entries.find(entry => entry.position === position);
                                 const defaultPlayerName = existingEntry?.player.fullName || '';
@@ -193,6 +290,7 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                                                 type="hidden" 
                                                 name={`playerId-${week.id}-${position}`} 
                                                 value={selectedPlayers[position] || ''}
+                                                data-player-name={inputValues[position] || ''}
                                                 data-testid={`player-input-${position}`}
                                             />
                                             <div className="flex-1">
@@ -201,13 +299,13 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                                                     onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
                                                     onOptionSelectedChange={(value) => handlePlayerSelect(position, value)}
                                                     value={inputValues[position] || defaultPlayerName}
-                                                    disabled={week.isScored}
+                                                    disabled={week.isScored || parentFetcher.state === 'submitting'}
                                                     className={clsx(week.isScored ? "border-none" : "", "font-bold")}
                                                     data-testid={`player-select-${position}`}
                                                 />
                                             </div>
                                             {week.isScored && (
-                                                <div className="w-16 text-right font-bold">
+                                                <div className="w-16 text-right font-bold" suppressHydrationWarning>
                                                     {existingEntry?.points.toFixed(2) || '0.00'}
                                                 </div>
                                             )}
@@ -218,12 +316,16 @@ export default function DfsSurvivorWeekComponent({ week, availablePlayers = {
                             <div className="mt-4 flex justify-end">
                                 <Button 
                                     type="submit"
-                                    disabled={week.isScored}
+                                    disabled={isSaveDisabled()}
                                 >
-                                    {week.isScored ? 'Week Scored' : 'Save Entry'}
+                                    {week.isScored 
+                                        ? 'Week Scored' 
+                                        : parentFetcher.state === 'submitting' 
+                                            ? 'Saving...' 
+                                            : 'Save Entry'}
                                 </Button>
                             </div>
-                        </Form>
+                        </form>
                     </CardContent>
                 </CollapsibleContent>
             </Card>
