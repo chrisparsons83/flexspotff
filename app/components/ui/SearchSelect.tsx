@@ -20,6 +20,7 @@ export default function SearchSelect({
     disabled = false,
     textColor,
 }: SearchSelectProps) {
+    // Initialize state with the value prop to ensure consistency between server and client
     const [query, setQuery] = useState(value);
     const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -112,6 +113,9 @@ export default function SearchSelect({
 
     // Handle click outside
     useEffect(() => {
+        // Only add event listener on the client side
+        if (typeof window === 'undefined') return;
+        
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
                 inputRef.current && !inputRef.current.contains(event.target as Node)) {
