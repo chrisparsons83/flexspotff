@@ -270,6 +270,7 @@ model OmniSeason {
   omniTeams OmniUserTeam[]
   omniSports OmniSport[]
   omniPlayers OmniPlayer[]
+  omniSportEvents OmniSportEvent[]
 }
 
 model OmniScore {
@@ -309,6 +310,37 @@ model OmniSport {
 
   omniSeasons OmniSeason[]
   omniPicks OmniPlayer[]
+  omniSportEvents OmniSportEvent[]
+}
+
+model OmniSportEvent {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sportId String
+
+  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  seasonId String
+
+  name String
+
+  omniSportEventPoints OmniSportEventPoints[]
+}
+
+model OmniSportEventPoints {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event OmniSportEvent @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  eventId String
+
+  player OmniPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  playerId String
+
+  points Float
 }
 
 model OmniPlayer {
@@ -330,6 +362,7 @@ model OmniPlayer {
 
   draftPick OmniDraftPick?
   scoringEvents OmniScore[]
+  omniSportEvents OmniSportEventPoints[]
 }
 
 model PoolWeek {

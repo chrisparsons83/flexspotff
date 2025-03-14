@@ -1,9 +1,9 @@
 import type { OmniPlayer } from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ChangeEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import Button from '~/components/ui/Button';
 import {
@@ -114,6 +114,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 const AdminOmniScoring = () => {
   const [activeSport, setActiveSport] = useState('');
   const { sports, players } = useTypedLoaderData<typeof loader>();
+  const navigation = useNavigation();
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (navigation.state === 'idle') {
+      formRef.current?.reset();
+    }
+  }, [navigation.state]);
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setActiveSport(e.target.value);
@@ -122,7 +131,7 @@ const AdminOmniScoring = () => {
   return (
     <div>
       <h2>Adjust Scoring</h2>
-      <Form method='POST'>
+      <Form method='POST' ref={formRef}>
         <h3>Choose Sport</h3>
         <p>Note: only the sport selected here will have its data updated.</p>
         <div>
