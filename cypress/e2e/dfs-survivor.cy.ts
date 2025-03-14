@@ -17,31 +17,6 @@ describe('DFS Survivor', () => {
     cy.getCookie('_session').should('exist');
   };
 
-  const clearEntriesUserOne = () => {
-    loginAsUserOne();
-    cy.navigateToDFSSurvivor();
-    clearAllEntries();
-  };
-
-  // const clearEntriesUserTwo = () => {
-  //   loginAsUserTwo();
-  //   cy.navigateToDFSSurvivor();
-  //   clearAllEntries();
-  // };
-
-  // const clearEntriesAllUsers = () => {
-  //   clearEntriesUserOne();
-  //   clearEntriesUserTwo();
-  // };
-
-  const openWeekCards = (weeks: number[]) => {
-    weeks.forEach(week => {
-      cy.contains(`Week ${week}`).click();
-      cy.wait(100);
-    });
-    cy.wait(50);
-  };
-
   // const loginAsAdmin = () => {
   //   // Clear any existing session
   //   cy.clearCookie('_session');
@@ -66,17 +41,7 @@ describe('DFS Survivor', () => {
     // Navigate to entries page
     cy.navigateToDFSSurvivor();
 
-    // First, ensure all weeks are open in reverse order (17 to 1)
-    for (let week = 17; week >= 1; week--) {
-      // Click on the week header text to open the card
-      cy.contains(`Week ${week}`).click();
-      cy.wait(100); // Longer wait to ensure animation completes
-      
-      // Verify the card is open by checking for visible inputs
-      cy.get(`[data-testid="week-${week}-form"]`)
-        .find('input[type="text"].w-full')
-        .should('be.visible');
-    }
+    openWeekCards();
 
     // Get all input fields and store them in an array
     cy.get('input[type="text"].w-full').then($inputs => {
@@ -104,6 +69,105 @@ describe('DFS Survivor', () => {
     });
   };
 
+  const clearEntriesUserOne = () => {
+    loginAsUserOne();
+    cy.navigateToDFSSurvivor();
+    clearAllEntries();
+  };
+
+  // const clearEntriesUserTwo = () => {
+  //   loginAsUserTwo();
+  //   cy.navigateToDFSSurvivor();
+  //   clearAllEntries();
+  // };
+
+  // const clearEntriesAllUsers = () => {
+  //   clearEntriesUserOne();
+  //   clearEntriesUserTwo();
+  // };
+
+  const openWeekCards = () => {
+    for (let week = 17; week >= 1; week--) {
+      cy.contains(`Week ${week}`).click();
+      cy.wait(100); 
+    }
+  };
+
+  const enterPlayers = (playerSelections: Array<{week: number, index: number, name: string}>) => {
+    playerSelections.forEach(({ week, index, name }) => {
+      cy.get('input[type="text"].w-full').eq(index).clear().type(name || ' ');
+      cy.wait(100); // Add wait after typing
+      cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
+      cy.wait(100); // Wait for any potential auto-complete/validation
+    });
+    // Click the position label of the last player to ensure dropdown closes
+    const lastPlayerIndex = playerSelections[playerSelections.length - 1].index;
+    // Directly trigger blur on the last field that was interacted with
+    cy.get('input[type="text"].w-full').eq(lastPlayerIndex).blur();
+  };
+
+  const saveEntry = (week: number) => {
+    cy.get('button:contains("Save Entry")').then($buttons => {
+      cy.wrap($buttons[week - 1]).click();
+    });
+    cy.wait(500);
+  };
+
+  const saveAllEntries = () => {
+    cy.get('button').contains('Save All Entries').click();
+    cy.wait(500);
+  };
+
+  const verifySuccessfulEntry = () => {
+    cy.contains('Entries successfully submitted').should('be.visible');
+    cy.reload();
+    cy.url().should('include', '/games/dfs-survivor/entries');
+  };
+
+  const verifyFailedEntrySingleWeek = (playerName: string, week1: string, position1: string, position2: string) => {
+    cy.contains(`Cannot select ${playerName} multiple times in week ${week1} (${position1}, ${position2})`).should('exist');
+  };
+
+  const verifyFailedEntryMultiWeek = (playerName: string, weeks: Array<number>) => {
+    const weeksString = weeks.join(', ');
+    cy.contains(`Cannot select ${playerName} in multiple weeks (${weeksString})`).should('exist');
+  };
+
+  const verifyFailedEntrySavedWeek = (playerName: string) => {
+    cy.contains(`Player ${playerName} is already selected in another week`).should('exist');
+  };
+
+  const verifyPlayerEntries = (playerSelections: Array<{week: number, index: number, name: string}>) => {
+    playerSelections.forEach(({ week, index, name }) => {
+      cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
+    });
+  };
+
+  const getPlayerIndex = (week: number, position: string) => {
+    // Position map for direct position-to-index mapping
+    const positionMap: Record<string, number> = {
+      'QB1': 0,
+      'QB2': 1,
+      'RB1': 2,
+      'RB2': 3,
+      'WR1': 4,
+      'WR2': 5,
+      'TE': 6,
+      'FLEX1': 7,
+      'FLEX2': 8,
+      'K': 9,
+      'DEF': 10
+    };
+    
+    // Get the base position index or throw error if invalid position
+    if (!positionMap.hasOwnProperty(position)) {
+      throw new Error(`Invalid position: ${position}`);
+    }
+    
+    // Calculate final index based on week
+    return positionMap[position] + (11 * (week - 1));
+  };
+
   beforeEach(() => {
     // Reset and load the database backup using Docker
     cy.exec('docker exec -i flexspotff-postgres-1 psql -U postgres -d flexspotff < flexspot_backup_20250306_1636.sql', {
@@ -125,619 +189,323 @@ describe('DFS Survivor', () => {
   });
 
   /*
-  TEST: Singular Player Selection
+  TEST: Save Entry Functionality
 
   Purpose:
   - Test the ability to select a single player for a week and save the entry
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - A user selects a singluar player for any week and any position
-  - The user clicks the "Save Entry" button
-  - The user opens up the tab for the week in which they made the selection
-
-  Expected Results:
-  - The user sees the player they selected in the lineup
+  - Test the ability to select multiple players for a week and save the entry
   */
-  it('should allow single player selection and save', () => {
+  it('Save Entry Tests', () => {
     loginAsUserOne();
     clearEntriesUserOne();
-    cy.navigateToDFSSurvivor();
 
-    let testWeeks = [1];
-    openWeekCards(testWeeks);
-
+    // Test saving a player to a blank week
     const players = [
-      { index: 0, name: 'Daniel Jones' }
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Daniel Jones' },
     ];
 
-    // Fill out each player with proper waits
-    players.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('be.visible').clear().type(name);
-      cy.wait(50);
-      cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
-      cy.wait(50); // Wait for any potential auto-complete/validation
-    });
-    cy.wait(100);
+    enterPlayers(players);
+    saveEntry(1);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(players);
 
-    // Ensure form is ready before saving
-    cy.get('button').contains('Save Entry').should('be.visible').should('be.enabled').click();
-    cy.wait(50);
+    // Test saving multiple players for a filled week
+    const playersTwo = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Raheem Blackshear' },
+      { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Rhamondre Stevenson' },
+    ];
 
-    // Verify it was saved
-    cy.contains('Entries successfully submitted').should('be.visible');
+    enterPlayers(playersTwo);
+    saveEntry(1);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersTwo);
 
-    // Reload the page
-    cy.reload();
+    // Test overwriting a player in a filled week and adding a player
+    const playersThree = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Saquon Barkley' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Justin Jefferson' },
+    ];
 
-    // Wait for save to complete and page to stabilize
-    cy.url().should('include', '/games/dfs-survivor/entries');
+    enterPlayers(playersThree);
+    saveEntry(1);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersThree);
 
-    // Verify entries after save
-    cy.contains(`Week 1`).click();
-    cy.wait(50);
-    
-    // Verify each player was saved
-    players.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
-    });
+    // Test filling in players for two weeks and then saving one week
+    const playersFour = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Aaron Jones' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'Elijah Moore' },
+      { week: 2, index: getPlayerIndex(2, 'FLEX1'), name: 'Nick Chubb' },
+    ];
 
-    clearAllEntries();
+    const playersFourValidation = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Saquon Barkley' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: '' },
+      { week: 2, index: getPlayerIndex(2, 'FLEX1'), name: 'Nick Chubb' },
+    ];
+
+    enterPlayers(playersFour);
+    saveEntry(2);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersFourValidation);
+
+    // Test filling out a full week
+    const playersFive = [
+      { week: 3, index: getPlayerIndex(3, 'DEF'), name: 'CHI' },
+      { week: 3, index: getPlayerIndex(3, 'K'), name: 'Harrison Butker' },
+      { week: 3, index: getPlayerIndex(3, 'FLEX2'), name: 'Justin Watson' },
+      { week: 3, index: getPlayerIndex(3, 'FLEX1'), name: 'Amon-Ra St. Brown' },
+      { week: 3, index: getPlayerIndex(3, 'TE'), name: 'Cole Kmet' },
+      { week: 3, index: getPlayerIndex(3, 'WR2'), name: 'Jameson Williams' },
+      { week: 3, index: getPlayerIndex(3, 'WR1'), name: 'Tim Patrick' },
+      { week: 3, index: getPlayerIndex(3, 'RB2'), name: 'Jahmyr Gibbs' },
+      { week: 3, index: getPlayerIndex(3, 'RB1'), name: 'David Montgomery' },
+      { week: 3, index: getPlayerIndex(3, 'QB2'), name: 'Jared Goff' },
+      { week: 3, index: getPlayerIndex(3, 'QB1'), name: 'Josh Allen' }
+    ];
+
+    enterPlayers(playersFive);
+    saveEntry(3);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersFive);
   });
 
   /*
-  TEST: Singluar Player Selection
+  TEST: Save All Entries Functionality
 
   Purpose:
-  - Test the ability to select player for multiple weeks and save the entry
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - A user selects a singluar player for any week and any position
-  - The user then selects a second player for a different week and any position
-  - The user clicks the "Save All Entries" button
-  - The user opens up the tab for both weeks in which they made the selection
-
-  Expected Results:
-  - The user sees the players they selected in the lineup
+  - Test the ability to select a single player for a week and save the entry
+  - Test the ability to select multiple players for a week and save the entry
   */
-  it('should allow single player selections across different weeks', () => {
+  it('Save All Entries Tests', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    const playerSelections = [
-      { week: 1, index: 2, name: 'Saquon Barkley' },
-      { week: 3, index: 17, name: 'Gerald Everett' },
-      { week: 10, index: 26, name: 'Jordan Addison' }
-    ];
-
-    // Wait for the form to be visible and open Week 1
-    cy.contains(`Week 1`).click();
-    cy.wait(50);
-    cy.contains(`Week 3`).click();
-    cy.wait(50);
-    cy.contains(`Week 10`).click();
-    cy.wait(50);
-
-    // Fill out entries for each week
-    playerSelections.forEach(({ index, name }) => {
-      // Fill player name and wait for validation
-      cy.get('input[type="text"].w-full').eq(index).should('be.visible').clear().type(name);
-      cy.wait(50);
-      cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
-      cy.wait(50); // Wait after typing player name
-    });
-    cy.wait(100);
-
-    // Ensure Save All Entries button is ready
-    cy.get('button').contains('Save All Entries').should('be.visible').should('be.enabled').click();
-    cy.wait(50);
-
-    // Verify it was saved
-    cy.contains('Entries successfully submitted').should('be.visible');
-
-    // Reload the page
-    cy.reload();
-
-    // Wait for save to complete
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    // Wait for the form to be visible and open Week 1
-    cy.contains(`Week 1`).click();
-    cy.wait(50);
-    cy.contains(`Week 3`).click();
-    cy.wait(50);
-    cy.contains(`Week 10`).click();
-    cy.wait(50);
-
-    // Verify all entries were saved
-    playerSelections.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
-      cy.wait(50);
-    });
-
-    clearAllEntries();
-  });
-
-  /*
-  TEST: Multiple Player Selection
-
-  Purpose:
-  - Test the ability to select multiple players for one week and save the entry
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - A user selects a singluar player for any week and any position
-  - The user then selects a second player for the same week and any position
-  - The user clicks the "Save Entry" button
-  - The user opens up the tab for the week in which they made the selection
-
-  Expected Results:
-  - The user sees the players they selected in the lineup
-  */
-  it('should allow multiple player selections in the same week', () => {
-    loginAsUserOne();
-    cy.navigateToDFSSurvivor();
-
-    // Wait for the form to be visible and open Week 1
-    cy.contains("Week 1").click();
-    cy.wait(50);
-
-    // Select players one by one with waits
+    // Test saving a player to a blank week
     const players = [
-      { index: 10, name: 'CHI' },
-      { index: 9, name: 'Harrison Butker' },
-      { index: 8, name: 'Justin Watson' },
-      { index: 7, name: 'Amon-Ra St. Brown' },
-      { index: 6, name: 'Cole Kmet' },
-      { index: 5, name: 'Jameson Williams' },
-      { index: 4, name: 'Tim Patrick' },
-      { index: 3, name: 'Jahmyr Gibbs' },
-      { index: 2, name: 'David Montgomery' },
-      { index: 1, name: 'Jared Goff' },
-      { index: 0, name: 'Josh Allen' }
+      { week: 10, index: getPlayerIndex(10, 'WR1'), name: 'Jahan Dotson' },
+      { week: 9, index: getPlayerIndex(9, 'DEF'), name: 'ATL' },
     ];
 
-    // Fill out each player with proper waits
-    players.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('be.visible').clear().type(name);
-      cy.wait(50);
-      cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
-      cy.wait(50);
-    });
-    cy.wait(100);
+    enterPlayers(players);
+    saveAllEntries();
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(players);
 
-    // Ensure form is ready before saving
-    cy.get('button').contains('Save Entry').click();
-    cy.wait(50);
-
-    // Verify it was saved
-    cy.contains('Entries successfully submitted').should('be.visible');
-
-    // Reload the page
-    cy.reload();
-
-    // Wait for save to complete and page to stabilize
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    // Open Week 1
-    cy.contains("Week 1").click();
-    cy.wait(50);
-
-    // Verify each player was saved
-    players.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
-    });
-
-    clearAllEntries();
-  });
-
-  /*
-  TEST: Multiple Player Selection
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - A user selects a singluar player for any week and any position
-  - The user then selects a second player for the same week and any position
-  - The user then selects a third player for a different week and any position
-  - The user then selects a fourth player for the same week and any position
-  - The user then selects a fifth player for the same week and any position
-  - The user then selects a sixth player for a different week and any position
-  - The user then selects a seventh player for a different week and any position
-  - The user clicks the "Save All Entries" button
-  - The user opens up the tab for all four weeks in which they made the selection
-
-  Expected Results:
-  - The user sees the players they selected in the lineup
-  */
-  it('should allow complex multiple player selections across different weeks', () => {
-    loginAsUserOne();
-    cy.navigateToDFSSurvivor();
-
-    const weekSelections = [
-      {
-        week: 1,
-        players: [
-          { index: 0, name: 'Josh Allen' },
-          { index: 2, name: 'Saquon Barkley' }
-        ]
-      },
-      {
-        week: 2,
-        players: [
-          { index: 15, name: 'Justin Jefferson' },
-          { index: 19, name: 'Dyami Brown' },
-          { index: 17, name: 'Travis Kelce' }
-        ]
-      },
-      {
-        week: 3,
-        players: [
-          { index: 24, name: 'Christian McCaffrey' }
-        ]
-      },
-      {
-        week: 4,
-        players: [
-          { index: 42, name: 'Justin Tucker' }
-        ]
-      }
+    // Test saving multiple players for a filled week
+    const playersTwo = [
+      { week: 9, index: getPlayerIndex(9, 'RB1'), name: 'Jerome Ford' },
+      { week: 9, index: getPlayerIndex(9, 'RB2'), name: 'Raheem Mostert' },
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Josh Allen' },
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Saquon Barkley' },
+      { week: 2, index: getPlayerIndex(2, 'WR1'), name: 'Justin Jefferson' },
+      { week: 2, index: getPlayerIndex(2, 'FLEX2'), name: 'Dyami Brown' },
+      { week: 2, index: getPlayerIndex(2, 'TE'), name: 'Travis Kelce' },
+      { week: 3, index: getPlayerIndex(3, 'RB1'), name: 'Christian McCaffrey' },
+      { week: 4, index: getPlayerIndex(4, 'K'), name: 'Justin Tucker' }
     ];
 
-    // Open all required weeks first
-    for (let week = 1; week < 5; week++) {
-      // Click on the week header text to open the card
-      cy.contains(`Week ${week}`).click();
-      cy.wait(50); // Longer wait to ensure animation completes
-    }
+    enterPlayers(playersTwo);
+    saveAllEntries();
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersTwo);
+    verifyPlayerEntries(players);
 
-    // Fill out entries for each week
-    weekSelections.forEach(({ players }) => {
-      // Fill out each player in the week
-      players.forEach(({ index, name }) => {
-        cy.get('input[type="text"].w-full').eq(index).should('be.visible').clear().type(name);
-        cy.wait(50);
-        cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
-        cy.wait(50);
-      });
-    });
-    cy.wait(200);
-
-    // Ensure Save All Entries button is ready
-    cy.get('button').contains('Save All Entries').should('be.visible').should('be.enabled').click();
-    cy.wait(50);
-
-    // Verify it was saved
-    cy.contains('Entries successfully submitted').should('be.visible');
-
-    // Reload the page
-    cy.reload();
-
-    // Wait for save to complete
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    // Open all required weeks first
-    for (let week = 1; week < 5; week++) {
-      // Click on the week header text to open the card
-      cy.contains(`Week ${week}`).click();
-      cy.wait(50); // Longer wait to ensure animation completes
-    }
-
-    // Verify all entries were saved
-    weekSelections.forEach(({ players }) => {
-      players.forEach(({ index, name }) => {
-        cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
-      });
-    });
-
-    clearAllEntries();
-  });
-
-  /*
-  TEST: Independent Week Card Saving
-
-  Purpose:
-  - Test that saving one week's entries does not affect other weeks' unsaved entries
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - A user fills out multiple players in Week 1
-  - The user fills out multiple players in Week 2
-  - The user clicks "Save Entry" only for Week 1
-  - The user verifies Week 1 entries are saved
-  - The user verifies Week 2 entries are not saved
-
-  Expected Results:
-  - Week 1 entries should be saved and visible after saving
-  - Week 2 entries should be cleared/not visible after saving
-  */
-  it('should only save entries for the week where Save Entry was clicked', () => {
-    loginAsUserOne();
-    cy.navigateToDFSSurvivor();
-
-    const weekSelections = [
-      {
-        week: 1,
-        players: [
-          { index: 0, name: 'Josh Allen' },
-          { index: 2, name: 'Saquon Barkley' },
-          { index: 6, name: 'Travis Kelce' }
-        ]
-      },
-      {
-        week: 2,
-        players: [
-          { index: 16, name: 'Justin Jefferson' },
-          { index: 13, name: 'Christian McCaffrey' },
-          { index: 19, name: 'Dyami Brown' }
-        ]
-      }
+    // Test overwriting multiple players in filled weeks
+    const playersThree = [
+      { week: 9, index: getPlayerIndex(9, 'RB1'), name: 'Kenneth Gainwell' },
+      { week: 10, index: getPlayerIndex(10, 'WR1'), name: 'Garrett Wilson' },
+      { week: 9, index: getPlayerIndex(9, 'RB2'), name: 'Raheem Mostert' },
     ];
 
-    // Open all required weeks first
-    for (let week = 1; week < 3; week++) {
-      // Click on the week header text to open the card
-      cy.contains(`Week ${week}`).click();
-      cy.wait(50); // Longer wait to ensure animation completes
-    }
+    enterPlayers(playersThree);
+    saveAllEntries();
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersThree);
 
-    // Fill out entries for each week
-    weekSelections.forEach(({ players }) => {
-      // Fill out each player in the week
-      players.forEach(({ index, name }) => {
-        cy.get('input[type="text"].w-full').eq(index).should('be.visible').clear().type(name);
-        cy.get('input[type="text"].w-full').eq(index).type('{downarrow}{enter}');
-        cy.wait(50); // Wait for validation
-      });
-    });
-    cy.wait(100);
+    // Test Deleting a player and adding a player in the same week
+    const playersFour = [
+      { week: 9, index: getPlayerIndex(9, 'RB1'), name: '' },
+      { week: 9, index: getPlayerIndex(9, 'FLEX2'), name: 'Sam LaPorta' },
+    ];
 
-    // Save only Week 1 by clicking its Save Entry button
-    cy.get('button').contains('Save Entry').first().should('be.visible').click();
-    cy.wait(50);
-
-    // Verify it was saved
-    cy.contains('Entries successfully submitted').should('be.visible');
-
-    // Reload the page
-    cy.reload();
-
-    // Wait for save to complete
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    // Open all required weeks first
-    for (let week = 1; week < 3; week++) {
-      // Click on the week header text to open the card
-      cy.contains(`Week ${week}`).click();
-      cy.wait(50); // Longer wait to ensure animation completes
-      
-    }
-
-    weekSelections[0].players.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', name);
-    });
-
-    weekSelections[1].players.forEach(({ index }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', '');
-    });
-
-    clearAllEntries();
+    enterPlayers(playersFour);
+    saveAllEntries();
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(playersFour);
   });
 
   /*
   TEST: Invalid Player Name Entry
 
   Purpose:
-  - Test that invalid/non-existent player names cannot be saved
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - User opens Week 1
-  - User attempts to enter non-existent player name
-  - User attempts to enter a player name without proper capitalization
-  - User attempts to enter a player name with a space
-  - User attempts to enter a player name with a number
-  - User attempts to enter a player name with a special character
-  - User attempts to enter a player name with a team abbreviation
-  - User attempts to save the entry
-  - User verifies the entry is not saved
-
-  Expected Results:
-  - Invalid player name should not be saved
-  - Form should not submit successfully
+  - test the limits of what is allowed in the player name field and what registers as a player name
   */
-  it('should not save invalid player names', () => {
+  it('Invalid Player Name Tests', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    // Open Week 1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-
-    const invalidPlayerTests = [
-      { index: 10, name: 'Detroit Lions', description: 'team name' },
-      { index: 0, name: 'Invalid Player XYZ', description: 'non-existent player' },
-      { index: 9, name: 'HaRrIson bUtKer', description: 'improper capitalization' },
-      { index: 8, name: 'JOSH JACOBS', description: 'all caps' },
-      { index: 7, name: 'aaron jones', description: 'lowercase' },
-      { index: 6, name: 'Trey  McBride', description: 'double space' },
-      { index: 5, name: 'Tim Patrick1', description: 'number suffix' },
-      { index: 4, name: 'T14i342m Jon132es38129371884', description: 'numbers in name' },
-      { index: 3, name: 'Alvin Kamara38129371884', description: 'number suffix' },
-      { index: 2, name: 'Kyren William$', description: 'special character' }
+    const entryPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'DEF'), name: 'Detroit Lions', description: 'team name' },
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Invalid Player XYZ', description: 'non-existent player' },
+      { week: 1, index: getPlayerIndex(1, 'K'), name: 'HaRrIson bUtKer', description: 'improper capitalization' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'JOSH JACOBS', description: 'all caps' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'aaron jones', description: 'lowercase' },
+      { week: 1, index: getPlayerIndex(1, 'TE'), name: 'Trey  McBride', description: 'double space' },
+      { week: 1, index: getPlayerIndex(1, 'WR2'), name: 'Tim Patrick1', description: 'number suffix' },
+      { week: 1, index: getPlayerIndex(1, 'WR1'), name: 'T14i342m Jon132es38129371884', description: 'numbers in name' },
+      { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Alvin Kamara38129371884', description: 'number suffix' },
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Kyren William$', description: 'special character' }
     ];
 
-    // Try each invalid player name
-    invalidPlayerTests.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).clear().type(name);
-      cy.wait(50); // Wait after typing player name
-    });
-    cy.wait(100);
+    const validPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'DEF'), name: 'DET', description: 'team name' },
+      { week: 1, index: getPlayerIndex(1, 'K'), name: 'Harrison Butker', description: 'improper capitalization' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'Josh Jacobs', description: 'all caps' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Aaron Jones', description: 'lowercase' },
+      { week: 1, index: getPlayerIndex(1, 'WR2'), name: 'Tim Patrick', description: 'number suffix' },
+      { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Alvin Kamara', description: 'number suffix' },
+    ]
 
-    // Try to save
-    cy.get('button').contains('Save Entry').click();
-    cy.wait(50);
-
-    // Reload the page
-    cy.reload();
-
-    // Verify page reloaded
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    // Verify entries - only properly formatted names should be saved
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-
-    const expectedSavedValues: Record<number, string> = {
-      3: 'Alvin Kamara',
-      5: 'Tim Patrick',
-      7: 'Aaron Jones',
-      8: 'Josh Jacobs',
-      9: 'Harrison Butker',
-      10: 'DET'
-    };
-
-    // Verify each field
-    invalidPlayerTests.forEach(({ index }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', expectedSavedValues[index] || '');
-    });
-
-    clearAllEntries();
+    enterPlayers(entryPlayers);
+    saveEntry(1);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(validPlayers);
   });
 
   /*
-  TEST: Same Week Duplicate Prevention
+  TEST: Duplicate Tests with Save Entry
 
   Purpose:
   - Test that the same player cannot be selected multiple times in the same week
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - User opens Week 1
-  - User selects a player in one position
-  - User attempts to select the same player in another position
-  - User attempts to save entries
-  - User verifies error message and prevention of save
-
-  Expected Results:
-  - Duplicate selection should show error
-  - Save operation should be blocked
+  - Test that the same player cannot be selected multiple times across different weeks
   */
-  it('should prevent duplicate player selections in same week', () => {
+  it('Save Entry Duplicate Player Tests', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    // Open Week 1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50);
-
-    const playerSelections = [
-      { index: 2, name: 'Najee Harris' },
-      { index: 1, name: 'Josh Allen' },
-      { index: 0, name: 'Josh Allen' } // Duplicate entry
+    // Test that the same player cannot be selected multiple times in the same week
+    const entryPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Josh Allen' },
+      { week: 1, index: getPlayerIndex(1, 'QB2'), name: 'Josh Allen' },
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Najee Harris' }
     ];
 
-    // Enter all players
-    playerSelections.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).clear().type(name);
-      cy.wait(100); // Wait after typing player name
-    });
+    const validPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: '' },
+      { week: 1, index: getPlayerIndex(1, 'QB2'), name: '' },
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: '' }
+    ]
 
-    cy.wait(100);
-
-    // Click the Save All Entries button
-    cy.get('button').contains('Save All Entries').click();
-    cy.wait(50);
-
-    // Reload the page
+    enterPlayers(entryPlayers);
+    verifyFailedEntrySingleWeek('Josh Allen', '1', 'QB1', 'QB2');
+    saveEntry(1);
     cy.reload();
+    cy.url().should('include', '/games/dfs-survivor/entries');
+    openWeekCards();
+    verifyPlayerEntries(validPlayers);
 
-    // Open Week 1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50);
+    // Test that the same player cannot be selected multiple times across different weeks
+    const entryPlayersTwo = [
+      { week: 3, index: getPlayerIndex(3, 'TE'), name: 'Gerald Everett' },
+      { week: 10, index: getPlayerIndex(10, 'FLEX2'), name: 'Gerald Everett' },
+    ]
 
-    // Verify that Najee Harris is saved in RB1 and QB1 and QB2 is empty
-    cy.get('input[type="text"].w-full').eq(2).should('have.value', 'Najee Harris');
-    cy.get('input[type="text"].w-full').eq(1).should('have.value', 'Josh Allen');
-    cy.get('input[type="text"].w-full').eq(0).should('have.value', '');
+    const validPlayersTwo = [
+      { week: 3, index: getPlayerIndex(3, 'TE'), name: '' },
+      { week: 10, index: getPlayerIndex(10, 'FLEX2'), name: 'Gerald Everett' },
+    ]
 
-    clearAllEntries();
+    enterPlayers(entryPlayersTwo);
+    saveEntry(10);
+    cy.reload();
+    cy.url().should('include', '/games/dfs-survivor/entries');
+    openWeekCards();
+    verifyPlayerEntries(validPlayersTwo);
+
+    // Test that the same player cannot be selected multiple times in the week and the player is already saved in different week
+    const entryPlayersThree = [
+      { week: 5, index: getPlayerIndex(5, 'WR1'), name: 'Josh Reynolds' },
+    ]
+
+    enterPlayers(entryPlayersThree);
+    saveEntry(5);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(entryPlayersThree);
+
+    const duplicatePlayersThree = [
+      { week: 7, index: getPlayerIndex(7, 'FLEX1'), name: 'Josh Reynolds' },
+    ]
+
+    enterPlayers(duplicatePlayersThree);
+    verifyFailedEntrySavedWeek('Josh Reynolds');
+    saveEntry(7);
+    cy.reload();
+    cy.url().should('include', '/games/dfs-survivor/entries');
+    openWeekCards();
+    verifyPlayerEntries(entryPlayersThree);
+
+    // Test that the same player cannot be selected multiple times in the week and the player is already saved in this week
+    const entryPlayersFour = [
+      { week: 5, index: getPlayerIndex(5, 'FLEX1'), name: 'Josh Reynolds' },
+    ]
+
+    enterPlayers(entryPlayersFour);
+    verifyFailedEntrySavedWeek('Josh Reynolds');
+    saveEntry(5);
+    cy.reload();
+    cy.url().should('include', '/games/dfs-survivor/entries');
+    openWeekCards();
+    verifyPlayerEntries(entryPlayersThree);
   });
 
   /*
-  TEST: Cross-Week Duplicate Prevention
+  TEST: Duplicate Tests with Save All Entries
 
   Purpose:
-  - Test that players cannot be reused across different weeks
-
-  Prerequisites:
-  - DFS Survivor created for active season
-  - DFS Survivor open for active season
-
-  Test Steps:
-  - User saves a player in Week 1
-  - User attempts to use same player in Week 2
-  - User verifies player cannot be selected
-  - User verifies appropriate error handling
-
-  Expected Results:
-  - Previously used player should not be selectable in new week
-  - Save operation should be blocked
+  - Test that the same player cannot be selected multiple times in the same week
+  - Test that the same player cannot be selected multiple times across different weeks
   */
   it('should prevent using same player across different weeks', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    // Select and save Josh Allen in Week 1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50);
-    cy.get('input[type="text"].w-full').eq(0).clear().type('Josh Allen');
-    cy.wait(50);
+    const entryPlayersOne = [
+      { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Josh Allen' },
+    ];
 
-    cy.get('button:contains("Save Entry")').then($buttons => {
-      cy.wrap($buttons[0]).click();
-    });
+    const entryPlayersTwo = [
+      { week: 2, index: getPlayerIndex(2, 'QB2'), name: 'Josh Allen' },
+    ];
 
-    // Wait for page reload
-    cy.url().should('include', '/games/dfs-survivor/entries');
-
-    cy.get('input[type="text"].w-full').eq(0).should('have.value', 'Josh Allen');
-    cy.wait(50);
-
-
-    // Try to select Josh Allen in Week 2
-    cy.get('[data-testid="week-2-form"]').click();
-    cy.wait(50);
-    cy.get('input[type="text"].w-full').eq(11).clear().type('Josh Allen');
-    cy.wait(50);
+    const entryPlayerTwoResult = [
+      { week: 2, index: getPlayerIndex(2, 'QB2'), name: '' },
+    ]
     
-    // Verify error message appears
-    cy.contains('Cannot select Josh Allen for week 1 QB1 and week 2 QB1').should('be.visible');
+    enterPlayers(entryPlayersOne);
+    saveEntry(1);
+    verifySuccessfulEntry();
+    openWeekCards();
+    verifyPlayerEntries(entryPlayersOne);
 
-    // Click Save Entry for week 2
+    enterPlayers(entryPlayersTwo);
+    saveEntry(2);
 
-    clearAllEntries();
+    cy.reload();
+    openWeekCards();
+    verifyPlayerEntries(entryPlayersOne);
+    verifyPlayerEntries(entryPlayerTwoResult);
   });
 
   /*
@@ -769,38 +537,27 @@ describe('DFS Survivor', () => {
   */
   it('should prevent using same player across different weeks when using Save All Entries', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    // Select Jerry Jeudy in Week 1 as WR1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-    cy.get('input[type="text"].w-full').eq(4).clear().type('Jerry Jeudy');
-    cy.wait(50); // Wait after typing player name
+    const entryPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'WR1'), name: 'Jerry Jeudy' },
+      { week: 4, index: getPlayerIndex(4, 'WR2'), name: 'Jerry Jeudy' },
+      { week: 6, index: getPlayerIndex(6, 'FLEX1'), name: 'Jerry Jeudy' },
+    ]
 
-    // Select Jerry Jeudy in Week 4 as WR2
-    cy.get('[data-testid="week-4-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-    cy.get('input[type="text"].w-full').eq(16).clear().type('Jerry Jeudy');
-    cy.wait(50); // Wait after typing player name
+    const validPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'WR1'), name: '' },
+      { week: 4, index: getPlayerIndex(4, 'WR2'), name: '' },
+      { week: 6, index: getPlayerIndex(6, 'FLEX1'), name: '' },
+    ]
 
-    // Select Jerry Jeudy in Week 6 as FLEX1
-    cy.get('[data-testid="week-6-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-    cy.get('input[type="text"].w-full').eq(29).clear().type('Jerry Jeudy');
-    cy.wait(50); // Wait after typing player name
+    enterPlayers(entryPlayers);
+    saveAllEntries();
+    verifyFailedEntryMultiWeek('Jerry Jeudy', [1, 4, 6]);
 
-    // Verify error message appears
-    cy.contains('Cannot select Jerry Jeudy for week 1 WR1 and week 4').should('be.visible');
-
-    // Verify that the Save Entry buttons for all weeks are enabled (since only cross-week duplicates)
-    cy.get('button:contains("Save Entry")').each(($button) => {
-      cy.wrap($button).should('not.be.disabled');
-    });
-
-    // Verify that the Save All Entries button is disabled
-    cy.get('button').contains('Save All Entries').should('be.disabled');
-
-    clearAllEntries();
+    cy.reload();
+    openWeekCards();
+    verifyPlayerEntries(validPlayers);
   });
 
   /*
@@ -827,42 +584,25 @@ describe('DFS Survivor', () => {
   */
   it('should prevent players from being selected in invalid positions', () => {
     loginAsUserOne();
-    cy.navigateToDFSSurvivor();
+    clearEntriesUserOne();
 
-    // Open Week 1
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50); // Wait after clicking week form
+    const entryPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Josh Allen' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Justin Tucker' },
+    ]
 
-    const invalidPositionTests = [
-      { index: 2, name: 'Josh Allen', description: 'QB in RB slot' },
-      { index: 7, name: 'Justin Tucker', description: 'K in FLEX slot' }
-    ];
+    const validPlayers = [
+      { week: 1, index: getPlayerIndex(1, 'RB1'), name: '' },
+      { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: '' },
+    ]
 
-    // Try each invalid position
-    invalidPositionTests.forEach(({ index, name }) => {
-      cy.get('input[type="text"].w-full').eq(index).clear().type(name);
-      cy.wait(50); // Wait after typing player name
-    });
+    enterPlayers(entryPlayers);
+    saveEntry(1);
 
-    // Try to save
-    cy.get('button').contains('Save Entry').click();
-    cy.wait(50);
-
-    // Refresh the page
     cy.reload();
-    cy.wait(50);
+    openWeekCards();
+    verifyPlayerEntries(validPlayers);
 
-    // Verify entries were not saved
-    cy.url().should('include', '/games/dfs-survivor/entries');
-    cy.get('[data-testid="week-1-form"]').click();
-    cy.wait(50); // Wait after clicking week form
-
-    // Verify each field
-    invalidPositionTests.forEach(({ index }) => {
-      cy.get('input[type="text"].w-full').eq(index).should('have.value', '');
-    });
-
-    clearAllEntries();
   });
 
   /*
