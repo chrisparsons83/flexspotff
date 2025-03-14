@@ -131,7 +131,7 @@ const AdminOmniScoring = () => {
   return (
     <div>
       <h2>Adjust Scoring</h2>
-      <Form method='POST' ref={formRef}>
+      <Form method='POST' ref={formRef} preventScrollReset={true}>
         <h3>Choose Sport</h3>
         <p>Note: only the sport selected here will have its data updated.</p>
         <div>
@@ -215,7 +215,7 @@ const AdminOmniScoring = () => {
             <table>
               <thead>
                 <tr>
-                  <th>Player</th>
+                  <th className='not-prose px-4 text-left'>Player</th>
                   <th>Total Points</th>
                 </tr>
               </thead>
@@ -238,7 +238,7 @@ const AdminOmniScoring = () => {
                           'p-2',
                         )}
                       >
-                        <td>{player.displayName}</td>
+                        <td className='not-prose px-4'>{player.displayName}</td>
                         <td>{player.pointsScored}</td>
                       </tr>
                     );
