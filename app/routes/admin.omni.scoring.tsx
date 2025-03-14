@@ -4,7 +4,12 @@ import { Form, useNavigation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ChangeEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
+import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import {
   getPlayersAndAssociatedPick,
@@ -114,6 +119,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 const AdminOmniScoring = () => {
   const [activeSport, setActiveSport] = useState('');
   const { sports, players } = useTypedLoaderData<typeof loader>();
+  const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -136,6 +142,7 @@ const AdminOmniScoring = () => {
   return (
     <div>
       <h2>Adjust Scoring</h2>
+      {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' ref={formRef} preventScrollReset={true}>
         <h3>Choose Sport</h3>
         <p>Note: only the sport selected here will have its data updated.</p>
