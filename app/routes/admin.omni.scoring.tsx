@@ -153,14 +153,14 @@ const AdminOmniScoring = () => {
             <h3>Active Players</h3>
             <table>
               <thead>
-                <tr>
-                  <th>Player</th>
+                <tr className='text-left'>
+                  <th className='not-prose px-4'>Player</th>
                   <th>Current Points</th>
                   <th>Points to Add</th>
-                  <th>Player Eliminated</th>
+                  <th className='px-4'>Player Eliminated</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className='align-middle'>
                 {players
                   .filter(
                     player =>
@@ -179,12 +179,14 @@ const AdminOmniScoring = () => {
                           'p-2',
                         )}
                       >
-                        <td>{player.displayName}</td>
+                        <td className='not-prose px-4'>
+                          <div>{player.displayName}</div>
+                        </td>
                         <td>{player.pointsScored}</td>
                         <td>
                           <select
                             name={`${player.id}--pointsAdded`}
-                            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-600'
+                            className='form-select block w-full dark:border-0 dark:bg-slate-600'
                           >
                             <option value='0'>0</option>
                             <option value='10'>10</option>

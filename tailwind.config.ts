@@ -24,6 +24,15 @@ const config: Config = {
       },
     },
     extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            td: {
+              verticalAlign: 'middle',
+            },
+          },
+        },
+      },
       colors: {
         admiral: '#15c9bf',
         champions: '#c29f04',
