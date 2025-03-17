@@ -97,7 +97,7 @@ export default function OmniQualifyingPointsYearIndex() {
       <h2>{year} Omni Qualifying Points</h2>
       <h3>Sport: {currentSport.name}</h3>
       <div className='float-right mb-4'>
-        <GoBox options={sportsArray} buttonText='Choose League' />
+        <GoBox options={sportsArray} buttonText='Choose Sport' />
       </div>
       <table>
         <thead>
