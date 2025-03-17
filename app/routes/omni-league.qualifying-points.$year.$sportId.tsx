@@ -41,6 +41,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     )
     .filter(sport => sport !== undefined);
 
+  const currentSport = sports.find(sport => sport.id === sportId);
+  if (!currentSport) {
+    throw new Error('Sport not found');
+  }
+
   const qualifyingPointsMap = sportEvents
     .flatMap(sportEvent => sportEvent.omniSportEventPoints)
     .reduce((acc, entry) => {
@@ -75,11 +80,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       }
     });
 
-  return { pointsLeaderboard, sports, year };
+  return { currentSport, pointsLeaderboard, sports, year };
 };
 
 export default function OmniQualifyingPointsYearIndex() {
-  const { pointsLeaderboard, sports, year } =
+  const { currentSport, pointsLeaderboard, sports, year } =
     useTypedLoaderData<typeof loader>();
 
   const sportsArray = sports.map(sport => ({
@@ -90,6 +95,7 @@ export default function OmniQualifyingPointsYearIndex() {
   return (
     <>
       <h2>{year} Omni Qualifying Points</h2>
+      <h3>Sport: {currentSport.name}</h3>
       <div className='float-right mb-4'>
         <GoBox options={sportsArray} buttonText='Choose League' />
       </div>
