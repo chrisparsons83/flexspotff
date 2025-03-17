@@ -341,6 +341,7 @@ model OmniSportEventPoints {
   playerId String
 
   points Float
+  isComplete Boolean @default(false)
 }
 
 model OmniPlayer {

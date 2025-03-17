@@ -13,6 +13,11 @@ export default function OmniIndex() {
       current: false,
     },
     { name: 'Standings', href: '/omni-league/standings/2025', current: false },
+    {
+      name: 'Qualifying Points',
+      href: '/omni-league/qualifying-points/2025/golfm',
+      current: false,
+    },
   ];
 
   return (
