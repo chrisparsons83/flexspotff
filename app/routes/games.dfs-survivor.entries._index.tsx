@@ -194,6 +194,69 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
 
+    // Check if any valid player selections were made AND if they are different from existing entries
+    let hasChangedPlayerSelections = false;
+    
+    // First, get existing entries for the user
+    const existingUserEntries = await prisma.dFSSurvivorUserEntry.findMany({
+      where: {
+        userId: user.id,
+        year: currentSeason.year,
+        week: { in: Array.from(submittedWeeks) }
+      }
+    });
+    
+    // Create a map of existing entries for easy comparison
+    const existingEntriesMap = new Map<string, string>();
+    existingUserEntries.forEach(entry => {
+      const key = `${entry.week}-${entry.position}`;
+      existingEntriesMap.set(key, entry.playerId);
+    });
+    
+    // Check if any selections are different from what's already in the database
+    for (const weekId of weeks) {
+      if (typeof weekId !== 'string') continue;
+      
+      const week = await prisma.dFSSurvivorUserWeek.findUnique({
+        where: { id: weekId },
+        include: { userYear: true }
+      });
+      
+      if (!week) continue;
+      
+      const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'DEF'];
+      
+      for (const position of positions) {
+        const playerId = formData.get(`playerId-${weekId}-${position}`);
+        const key = `${week.week}-${position}`;
+        
+        // Check if this selection is different from what's already saved
+        if (typeof playerId === 'string') {
+          if (playerId) {
+            // If there's a player selected, check if it's different from existing
+            if (!existingEntriesMap.has(key) || existingEntriesMap.get(key) !== playerId) {
+              hasChangedPlayerSelections = true;
+              break;
+            }
+          } else {
+            // If no player selected but one existed before, that's a change
+            if (existingEntriesMap.has(key)) {
+              hasChangedPlayerSelections = true;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (hasChangedPlayerSelections) break;
+    }
+    
+    if (!hasChangedPlayerSelections) {
+      return typedjson<ActionResponse>({ 
+        message: 'No players saved. Please try selecting the player from the dropdown.' 
+      });
+    }
+
     // Now process each week and save entries
     for (const weekId of weeks) {
       if (typeof weekId !== 'string') continue;
@@ -252,9 +315,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
 
         if (!nflGame) {
-          console.error(`No game found for player ${player.fullName} in week ${week.week}`);
+          console.error(`Player ${player.fullName} is on a bye week for Week ${week.week}`);
           return typedjson<ActionResponse>({ 
-            error: `No game found for player ${player.fullName} in week ${week.week}` 
+            error: `Error: ${player.fullName} is on a bye week during week ${week.week}` 
           });
         }
 
