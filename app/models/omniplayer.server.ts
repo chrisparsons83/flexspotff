@@ -1,3 +1,4 @@
+import type { OmniPlayer } from '@prisma/client';
 import { prisma } from '~/db.server';
 
 export type { OmniDraftPick } from '@prisma/client';
@@ -19,6 +20,17 @@ export function getPlayersAndAssociatedPick(seasonId: string) {
         },
       },
       sport: true,
+    },
+  });
+}
+
+export function updateOmniPlayer(player: Partial<OmniPlayer>) {
+  return prisma.omniPlayer.update({
+    where: {
+      id: player.id,
+    },
+    data: {
+      ...player,
     },
   });
 }

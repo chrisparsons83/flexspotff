@@ -28,6 +28,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-team__execute');
   const ephemeral =
     interaction.options.getString('hidden') === 'private' ? true : false;
   await interaction.deferReply({ ephemeral });

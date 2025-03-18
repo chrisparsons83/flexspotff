@@ -48,6 +48,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const autocomplete = async (interaction: AutocompleteInteraction) => {
+  console.log('omni-make-pick__autocomplete');
   const options = interaction.options.getString('sport') || '';
 
   if (options === '') {
@@ -60,21 +61,26 @@ export const autocomplete = async (interaction: AutocompleteInteraction) => {
 
     const focusedValue = interaction.options.getFocused().toLocaleLowerCase();
 
-    interaction.respond(
-      activePlayers
-        .filter(player => player.sportId === options)
-        .filter(player => player.draftPick === null)
-        .filter(player =>
-          player.displayName.toLocaleLowerCase().startsWith(focusedValue),
-        )
-        .sort((a, b) => a.relativeSort - b.relativeSort)
-        .slice(0, 25)
-        .map(player => ({ name: player.displayName, value: player.id })),
-    );
+    try {
+      interaction.respond(
+        activePlayers
+          .filter(player => player.sportId === options)
+          .filter(player => player.draftPick === null)
+          .filter(player =>
+            player.displayName.toLocaleLowerCase().startsWith(focusedValue),
+          )
+          .sort((a, b) => a.relativeSort - b.relativeSort)
+          .slice(0, 25)
+          .map(player => ({ name: player.displayName, value: player.id })),
+      );
+    } catch (e) {
+      console.error(e);
+    }
   }
 };
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-make-pick__execute');
   await interaction.deferReply({ ephemeral: true });
   const activeSports = await getActiveSports();
 
@@ -144,8 +150,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     return interaction.followUp(
       `You have filled your flex spots. Please choose from one of the following sports: ${activeSports
         .filter(
-          sport =>
-            !currentSportPicks.filter(String).includes(sport.shortName || ''),
+          sport => !currentSportPicks.filter(String).includes(sport.id || ''),
         )
         .map(sport => sport.name)
         .join(', ')}`,
@@ -201,25 +206,64 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     await confirmation.deferReply({ ephemeral: true });
 
     if (confirmation.customId === 'confirm') {
-      await updateDraftPick(nextPickFromTeam.id, player.id);
+      // We need to check the next pick again because there could be duplicate picks submitted at once, thanks Allen.
+      const currentNextPickFromTeam = await getNextOmniPickForTeam(
+        omniUserTeam.id,
+      );
+      if (!currentNextPickFromTeam) {
+        return interaction.followUp('It is not your turn to pick');
+      }
+
+      await updateDraftPick(currentNextPickFromTeam.id, player.id);
       const furthestAlongPick = await getLatestPickMade();
-      const pickNumber = nextPickFromTeam.pickNumber;
+      const pickNumber = currentNextPickFromTeam.pickNumber;
       const nextPicks: (OmniDraftPick & {
         team: OmniUserTeam & {
           user: User | null;
         };
       })[] = [];
 
+      const lengthOfPause =
+        (omniSeason.pauseEndHour || 0) - (omniSeason.pauseStartHour || 0);
+
       // If this is currently the newest pick (IE the person hasn't been skipped, update pick clocks)
       if (furthestAlongPick?.pickNumber === pickNumber) {
+        const nextPick = new Date();
+
+        // if we're currently in the pause window, then set the clock to the end of the pause
+        if (
+          omniSeason.hasOvernightPause &&
+          omniSeason.pauseStartHour &&
+          omniSeason.pauseEndHour &&
+          nextPick.getUTCHours() >= omniSeason.pauseStartHour &&
+          nextPick.getUTCHours() < omniSeason.pauseEndHour
+        ) {
+          nextPick.setUTCHours(
+            omniSeason.pauseEndHour + omniSeason.hoursPerPick,
+          );
+          nextPick.setMinutes(0);
+          nextPick.setSeconds(0);
+        }
+
         for (let i = 1; i < 6; i++) {
-          const now = new Date();
-          now.setHours(now.getHours() + 12 * (i - 1));
           const pickInfo = await getPickByPickNumber(pickNumber + i);
           if (pickInfo) {
-            nextPicks.push(pickInfo);
+            nextPicks.push({ ...pickInfo, pickStartTime: nextPick });
           }
-          await updateDraftPickTimeByPickNumber(pickNumber + i, now);
+          await updateDraftPickTimeByPickNumber(pickNumber + i, nextPick);
+          nextPick.setUTCHours(
+            nextPick.getUTCHours() + omniSeason.hoursPerPick,
+          );
+          // if this falls into the pause window, then we need to bump it up by the amount of time in the pause
+          if (
+            omniSeason.hasOvernightPause &&
+            omniSeason.pauseStartHour &&
+            omniSeason.pauseEndHour &&
+            nextPick.getUTCHours() >= omniSeason.pauseStartHour &&
+            nextPick.getUTCHours() < omniSeason.pauseEndHour
+          ) {
+            nextPick.setUTCHours(nextPick.getUTCHours() + lengthOfPause);
+          }
         }
       }
 
@@ -242,17 +286,38 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. Since this pick was catching up on out of order, no clock updates were made.`,
         });
       } else {
-        const pickTimer = new Date();
-        pickTimer.setHours(pickTimer.getHours() + 12);
-        await (channel as TextChannel).send({
-          content: `${interaction.user} has selected ${
-            player?.displayName
-          } from ${sport?.name}. Currently on the clock is <@${
-            nextPicks[0].team.user?.discordId
-          }> and their pick timer expires <t:${parseInt(
-            (pickTimer.getTime() / 1000).toFixed(0),
-          )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
-        });
+        const nextPick = await getPickByPickNumber(pickNumber + 2);
+        const nextToNextPick = await getPickByPickNumber(pickNumber + 2);
+        if (!nextPick) {
+          await (channel as TextChannel).send({
+            content:
+              `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. This draft has completed. Go hug your children or something.`,
+          });
+        } else if (!nextToNextPick) {
+          const fakeClock = new Date();
+          fakeClock.setHours(fakeClock.getHours() + 4);
+          await (channel as TextChannel).send({
+            content:
+            `${interaction.user} has selected ${
+              player?.displayName
+            } from ${sport?.name}. Currently on the clock is <@${
+              nextPicks[0].team.user?.discordId
+            }> and their pick timer expires <t:${parseInt(
+              (fakeClock.getTime() / 1000).toFixed(0),
+            )}:R>.`,
+          });
+        } else {
+          await (channel as TextChannel).send({
+            content: `${interaction.user} has selected ${
+              player?.displayName
+            } from ${sport?.name}. Currently on the clock is <@${
+              nextPicks[0].team.user?.discordId
+            }> and their pick timer expires <t:${parseInt(
+              // TODO: Fix this logic for the last pick.
+              (nextPick.pickStartTime!.getTime() / 1000).toFixed(0),
+            )}:R>. On deck is <@${nextPicks[1].team.user?.discordId}>`,
+          });
+        }
       }
     } else if (confirmation.customId === 'cancel') {
       await confirmation.followUp({

@@ -311,9 +311,27 @@ model OmniSeason {
   year Int
   isCurrent Boolean @default(false)
 
+  hasOvernightPause Boolean @default(false)
+  pauseStartHour Int?
+  pauseEndHour Int?
+  hoursPerPick Int @default(12)
+
   omniTeams OmniUserTeam[]
   omniSports OmniSport[]
   omniPlayers OmniPlayer[]
+  omniSportEvents OmniSportEvent[]
+}
+
+model OmniScore {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  player OmniPlayer? @relation(fields: [playerId], references: [id])
+  playerId String?
+
+  pointsAdded Int
+  isEliminated Boolean
 }
 
 model OmniUserTeam {
@@ -341,6 +359,38 @@ model OmniSport {
 
   omniSeasons OmniSeason[]
   omniPicks OmniPlayer[]
+  omniSportEvents OmniSportEvent[]
+}
+
+model OmniSportEvent {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sportId String
+
+  season OmniSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  seasonId String
+
+  name String
+
+  omniSportEventPoints OmniSportEventPoints[]
+}
+
+model OmniSportEventPoints {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event OmniSportEvent @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  eventId String
+
+  player OmniPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  playerId String
+
+  points Float
+  isComplete Boolean @default(false)
 }
 
 model OmniPlayer {
@@ -352,6 +402,7 @@ model OmniPlayer {
   isActive Boolean @default(true)
   relativeSort Int
   pointsScored Int?
+  isComplete Boolean @default(false)
 
   sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   sportId String
@@ -360,6 +411,8 @@ model OmniPlayer {
   seasonId String
 
   draftPick OmniDraftPick?
+  scoringEvents OmniScore[]
+  omniSportEvents OmniSportEventPoints[]
 }
 
 model PoolWeek {

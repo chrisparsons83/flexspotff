@@ -37,6 +37,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
+  console.log('omni-players__execute');
   await interaction.deferReply({ ephemeral: true });
 
   const omniSeason = await getCurrentOmniSeason();
