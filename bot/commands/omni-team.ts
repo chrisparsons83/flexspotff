@@ -1,7 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getCurrentOmniSeason } from '~/models/omniseason.server';
-import { getActiveSports } from '~/models/omnisport.server';
 import { getOmniUserTeamByUserIdAndSeason } from '~/models/omniuserteam.server';
 import { getUserByDiscordId } from '~/models/user.server';
 
@@ -61,8 +60,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       content: 'No Omni team found for this user.',
     });
   }
-
-  const sports = await getActiveSports();
 
   const totalPoints = omniTeam.draftPicks.reduce((acc, pick) => acc + (pick.player?.pointsScored || 0), 0)
 
