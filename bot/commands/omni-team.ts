@@ -74,6 +74,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           .filter(pick => !pick.player?.isComplete)
           .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
           .join('\n') || '',
+        inline: true
       },{
         name: `Completed`,
         value: omniTeam.draftPicks
@@ -81,6 +82,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           .filter(pick => pick.player?.isComplete)
           .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
           .join('\n') || '',
+          inline: true
       }]
     );
 
