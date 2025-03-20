@@ -64,9 +64,11 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   const sports = await getActiveSports();
 
+  const totalPoints = omniTeam.draftPicks.reduce((acc, pick) => acc + (pick.player?.pointsScored || 0), 0)
+
   const embed = new EmbedBuilder()
     .setTitle(`${user.username}'s Omni Team`)
-    .setDescription(`Current points: 0`)
+    .setDescription(`Current points: ${totalPoints.toFixed(0)}`)
     .addFields(
       sports.map(sport => ({
         name: `${sport.emoji} ${sport.shortName}`,
