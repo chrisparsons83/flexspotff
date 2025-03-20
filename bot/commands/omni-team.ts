@@ -78,12 +78,12 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       [{
         name: `Active`,
         value: activePlayers.length > 0 ? activePlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
-          .join('\n') : '',
+          .join('\n') : 'No active players',
         inline: true
       },{
         name: `Completed`,
         value: completedPlayers.length > 0 ? completedPlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
-          .join('\n') : '',
+          .join('\n') : 'No completed players',
           inline: true
       }]
     );
