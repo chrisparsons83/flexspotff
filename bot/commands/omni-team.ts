@@ -70,18 +70,21 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     .setTitle(`${user.username}'s Omni Team`)
     .setDescription(`Current points: ${totalPoints.toFixed(0)}`)
     .addFields(
-      sports.map(sport => ({
-        name: `${sport.emoji} ${sport.shortName}`,
-        value:
-          omniTeam.draftPicks
-            .sort((a, b) => a.pickNumber - b.pickNumber)
-            .filter(pick => pick.player?.sportId === sport.id)
-            .map(
-              pick => pick.player?.isComplete ? `~~${pick.player?.displayName}~~ (${pick.player?.pointsScored})` : `${pick.player?.displayName} (${pick.player?.pointsScored})`,
-            )
-            .join('\n') || 'None drafted',
-        inline: true,
-      })),
+      [{
+        name: `Active`,
+        value: omniTeam.draftPicks
+          .sort((a, b) => (a.player?.sport.name || '').toLocaleCompare(b.player?.sport.name || ''))
+          .filter(pick => !pick.player?.isComplete)
+          .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
+          .join('\n') || '',
+      },{
+        name: `Completed`,
+        value: omniTeam.draftPicks
+          .sort((a, b) => (a.player?.sport.name || '').toLocaleCompare(b.player?.sport.name || ''))
+          .filter(pick => pick.player?.isComplete)
+          .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
+          .join('\n') || '',
+      }]
     );
 
   return interaction.editReply({
