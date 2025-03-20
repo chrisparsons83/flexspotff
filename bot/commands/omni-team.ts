@@ -77,8 +77,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             .sort((a, b) => a.pickNumber - b.pickNumber)
             .filter(pick => pick.player?.sportId === sport.id)
             .map(
-              pick =>
-                `${pick.player?.displayName} (${pick.player?.pointsScored})`,
+              pick => pick.player?.isComplete ? `~~${pick.player?.displayName}~~ (${pick.player?.pointsScored})` : `${pick.player?.displayName} (${pick.player?.pointsScored})`,
             )
             .join('\n') || 'None drafted',
         inline: true,
