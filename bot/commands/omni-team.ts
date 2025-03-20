@@ -73,14 +73,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       [{
         name: `Active`,
         value: omniTeam.draftPicks
-          .sort((a, b) => (a.player?.sport.name || '').toLocaleCompare(b.player?.sport.name || ''))
+          .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
           .filter(pick => !pick.player?.isComplete)
           .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
           .join('\n') || '',
       },{
         name: `Completed`,
         value: omniTeam.draftPicks
-          .sort((a, b) => (a.player?.sport.name || '').toLocaleCompare(b.player?.sport.name || ''))
+          .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
           .filter(pick => pick.player?.isComplete)
           .map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
           .join('\n') || '',
