@@ -2,6 +2,8 @@ import type { OmniPlayer } from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useNavigation } from '@remix-run/react';
 import clsx from 'clsx';
+import type { APIEmbedField, RestOrArray } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import type { ChangeEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -9,6 +11,7 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
+import { sendMessageToChannel } from '~/../bot/utils';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import {
@@ -20,8 +23,17 @@ import { createOmniScore } from '~/models/omniscore.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { envSchema } from '~/utils/helpers';
 
 const OMNI_YEAR = 2025;
+const env = envSchema.parse(process.env);
+
+interface DiscordScoringUpdate {
+  id: string;
+  existingScore: number;
+  pointsAdded: number;
+  isEliminated: boolean;
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -65,10 +77,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         | Promise<Partial<OmniPlayer>>
         | Promise<OmniScoreCreate>
       )[] = [];
+      const scoringUpdatesToSendToDiscord: DiscordScoringUpdate[] = [];
       for (const [id, data] of updates) {
         const existingScore =
           players.find(player => player.id === id)?.pointsScored || 0;
         if (Number(data.pointsAdded) > 0 || data.isEliminated === 'on') {
+          scoringUpdatesToSendToDiscord.push({
+            id,
+            existingScore,
+            pointsAdded: Number(data.pointsAdded),
+            isEliminated: data.isEliminated === 'on' ? true : false,
+          });
           updatesToSend.push(
             updateOmniPlayer({
               id,
@@ -86,6 +105,70 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
       }
       await Promise.all(updatesToSend);
+
+      if (
+        typeof env.OMNI_CHANNEL_ID === 'string' &&
+        scoringUpdatesToSendToDiscord.length > 0
+      ) {
+        const sport = await getActiveSports().then(sports =>
+          sports.find(sport => sport.id === sportId),
+        );
+        if (!sport) {
+          throw new Error('Sport not found.');
+        }
+
+        const pointsAwarded = scoringUpdatesToSendToDiscord.filter(
+          update => update.pointsAdded > 0,
+        );
+        const teamsCompleted = scoringUpdatesToSendToDiscord.filter(
+          update => update.isEliminated,
+        );
+
+        const fields: RestOrArray<APIEmbedField> = [];
+        if (pointsAwarded.length > 0) {
+          fields.push({
+            name: 'Points awarded',
+            value: pointsAwarded
+              .map(update => {
+                const player = players.find(p => p.id === update.id);
+                if (!player) return '';
+                return `${player.displayName}: +${update.pointsAdded} (${
+                  update.pointsAdded + update.existingScore
+                } total)`;
+              })
+              .join('\n'),
+          });
+        }
+        if (teamsCompleted.length > 0) {
+          fields.push({
+            name: 'Teams Completed',
+            value: teamsCompleted
+              .map(update => {
+                const player = players.find(p => p.id === update.id);
+                if (!player) return '';
+                return `${player.displayName}: ${
+                  update.pointsAdded + update.existingScore
+                } points`;
+              })
+              .join('\n'),
+          });
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle(`${sport.emoji} Scores Updated`)
+          .setDescription(
+            `The following scores have been updated in ${sport.name}`,
+          )
+          .addFields(fields);
+
+        await sendMessageToChannel({
+          channelId: env.OMNI_CHANNEL_ID,
+          messageData: {
+            embeds: [embed],
+          },
+        });
+      }
+
       break;
   }
 
@@ -132,8 +215,17 @@ const AdminOmniScoring = () => {
         left: 0,
         behavior: 'instant', // Optional if you want to skip the scrolling animation
       });
+      // Restore sportId after reset
+      setTimeout(() => {
+        const sportIdInput = formRef.current?.elements.namedItem(
+          'sportId',
+        ) as HTMLInputElement;
+        if (sportIdInput) {
+          sportIdInput.value = activeSport; // Restore sportId value
+        }
+      }, 0);
     }
-  }, [navigation.state]);
+  }, [activeSport, navigation.state]);
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setActiveSport(e.target.value);
