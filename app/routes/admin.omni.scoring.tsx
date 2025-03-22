@@ -132,7 +132,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               .map(update => {
                 const player = players.find(p => p.id === update.id);
                 if (!player) return '';
-                return `${player.displayName}: +${update.pointsAdded} (${
+                return `${player.displayName} (${
+                  player.draftPick?.team.user?.discordName
+                }): +${update.pointsAdded} (${
                   update.pointsAdded + update.existingScore
                 } total)`;
               })
@@ -146,9 +148,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               .map(update => {
                 const player = players.find(p => p.id === update.id);
                 if (!player) return '';
-                return `${player.displayName}: ${
-                  update.pointsAdded + update.existingScore
-                } points`;
+                return `${player.displayName} (${
+                  player.draftPick?.team.user?.discordName
+                }): ${update.pointsAdded + update.existingScore} points`;
               })
               .join('\n'),
           });
