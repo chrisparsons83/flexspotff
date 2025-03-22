@@ -1,7 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { getCurrentOmniSeason } from '~/models/omniseason.server';
-import { getActiveSports } from '~/models/omnisport.server';
 import { getOmniUserTeamByUserIdAndSeason } from '~/models/omniuserteam.server';
 import { getUserByDiscordId } from '~/models/user.server';
 
@@ -62,25 +61,31 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     });
   }
 
-  const sports = await getActiveSports();
+  const totalPoints = omniTeam.draftPicks.reduce((acc, pick) => acc + (pick.player?.pointsScored || 0), 0)
+
+  const activePlayers = omniTeam.draftPicks
+  .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
+  .filter(pick => !pick.player?.isComplete);
+
+  const completedPlayers = omniTeam.draftPicks
+  .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
+  .filter(pick => pick.player?.isComplete);
 
   const embed = new EmbedBuilder()
     .setTitle(`${user.username}'s Omni Team`)
-    .setDescription(`Current points: 0`)
+    .setDescription(`Current points: ${totalPoints.toFixed(0)}`)
     .addFields(
-      sports.map(sport => ({
-        name: `${sport.emoji} ${sport.shortName}`,
-        value:
-          omniTeam.draftPicks
-            .sort((a, b) => a.pickNumber - b.pickNumber)
-            .filter(pick => pick.player?.sportId === sport.id)
-            .map(
-              pick =>
-                `${pick.player?.displayName} (${pick.player?.pointsScored})`,
-            )
-            .join('\n') || 'None drafted',
-        inline: true,
-      })),
+      [{
+        name: `Active`,
+        value: activePlayers.length > 0 ? activePlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
+          .join('\n') : 'No active players',
+        inline: true
+      },{
+        name: `Completed`,
+        value: completedPlayers.length > 0 ? completedPlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
+          .join('\n') : 'No completed players',
+          inline: true
+      }]
     );
 
   return interaction.editReply({
