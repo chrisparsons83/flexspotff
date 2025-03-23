@@ -1,8 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import clsx from 'clsx';
-import { getOmniSeason } from '~/models/omniseason.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getOmniSeason, getOmniStandings } from '~/models/omniseason.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!params.year) {
@@ -11,49 +10,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const year = Number(params.year);
 
-  const currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('Missing current season');
-  }
-
   const seasonResults = await getOmniSeason(year);
 
   if (!seasonResults) {
     throw new Error('No season found');
   }
 
-  const rankedPoints = seasonResults.omniTeams
-    .map(omniTeam =>
-      omniTeam.draftPicks.reduce(
-        (acc, pick) => acc + (pick.player?.pointsScored || 0),
-        0,
-      ),
-    )
-    .sort()
-    .reverse();
-
-  const leaderboard = seasonResults.omniTeams
-    .map(omniTeam => {
-      const totalPoints = omniTeam.draftPicks.reduce(
-        (acc, pick) => acc + (pick.player?.pointsScored || 0),
-        0,
-      );
-
-      return {
-        owner: omniTeam.user?.discordName || '',
-        totalPoints,
-        rank: rankedPoints.findIndex(rank => rank === totalPoints) + 1,
-      };
-    })
-    .sort((a, b) => {
-      if (a.totalPoints < b.totalPoints) {
-        return 1;
-      } else if (a.totalPoints > b.totalPoints) {
-        return -1;
-      } else {
-        return a.owner.localeCompare(b.owner);
-      }
-    });
+  const leaderboard = getOmniStandings(seasonResults);
 
   return { leaderboard, year };
 };
