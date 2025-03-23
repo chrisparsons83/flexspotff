@@ -44,7 +44,7 @@ const DraftBoardColumn = ({ omniTeam }: DraftBoardColumnProps) => {
                 draftPick.player?.pointsScored || 0,
                 draftPick.player?.isComplete || false,
               ),
-              'h-16 p-1 bg-slate-600 flex',
+              'h-16 p-1 flex',
             )}
           >
             <div className='flex flex-col justify-between flex-4'>
