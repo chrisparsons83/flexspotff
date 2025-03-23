@@ -33,6 +33,7 @@ interface DiscordScoringUpdate {
   existingScore: number;
   pointsAdded: number;
   isEliminated: boolean;
+  discordId?: string;
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -87,6 +88,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             existingScore,
             pointsAdded: Number(data.pointsAdded),
             isEliminated: data.isEliminated === 'on' ? true : false,
+            discordId: players.find(player => player.id === id)?.draftPick?.team
+              .user?.discordId,
           });
           updatesToSend.push(
             updateOmniPlayer({
@@ -132,9 +135,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               .map(update => {
                 const player = players.find(p => p.id === update.id);
                 if (!player) return '';
-                return `${player.displayName} (${
-                  player.draftPick?.team.user?.discordName
-                }): +${update.pointsAdded} (${
+                return `${player.displayName} (<@${
+                  player.draftPick?.team.user?.discordId
+                }>): +${update.pointsAdded} (${
                   update.pointsAdded + update.existingScore
                 } total)`;
               })
@@ -148,9 +151,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               .map(update => {
                 const player = players.find(p => p.id === update.id);
                 if (!player) return '';
-                return `${player.displayName} (${
-                  player.draftPick?.team.user?.discordName
-                }): ${update.pointsAdded + update.existingScore} points`;
+                return `${player.displayName} (<@${
+                  player.draftPick?.team.user?.discordId
+                }>): ${update.pointsAdded + update.existingScore} points`;
               })
               .join('\n'),
           });
@@ -163,9 +166,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           )
           .addFields(fields);
 
+        const uniqueUsers = [
+          ...new Set(
+            teamsCompleted
+              .map(team => team.discordId)
+              .filter(discordId => discordId !== undefined),
+          ),
+        ];
+
         await sendMessageToChannel({
           channelId: env.OMNI_CHANNEL_ID,
           messageData: {
+            content: `Scoring update for ${uniqueUsers
+              .map(discordId => `<@${discordId}>`)
+              .join(', ')}`,
             embeds: [embed],
           },
         });
