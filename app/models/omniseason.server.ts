@@ -75,10 +75,15 @@ export function getOmniStandings(
         0,
       );
 
+      const remainingPlayers = omniTeam.draftPicks.filter(
+        pick => !pick.player?.isComplete,
+      ).length;
+
       return {
         owner: omniTeam.user?.discordName || '',
         totalPoints,
         rank: rankedPoints.findIndex(rank => rank === totalPoints) + 1,
+        remainingPlayers,
       };
     })
     .sort((a, b) => {

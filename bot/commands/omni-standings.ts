@@ -35,13 +35,18 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
   const embed = new EmbedBuilder()
     .setTitle(`Current Leaderboard`)
+    .setFooter({
+      text: 'Number in parentheses is the number of picks still live',
+    })
     .setDescription(
       `${leaderboard
         .map(
           position =>
             `${position.rank}) ${
               position.owner
-            } - ${position.totalPoints.toFixed(0)} points`,
+            } - ${position.totalPoints.toFixed(0)} points (${
+              position.remainingPlayers
+            })`,
         )
         .join('\n')}`,
     );
