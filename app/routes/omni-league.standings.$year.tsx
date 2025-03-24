@@ -33,6 +33,7 @@ export default function OmniLeaderboardYearIndex() {
             <th></th>
             <th>Player</th>
             <th>Points</th>
+            <th>Picks Remaining</th>
           </tr>
         </thead>
         <tbody>
@@ -56,6 +57,7 @@ export default function OmniLeaderboardYearIndex() {
                 </td>
                 <td>{position.owner}</td>
                 <td>{position.totalPoints.toFixed(0)}</td>
+                <td>{position.remainingPlayers.toFixed(0)}</td>
               </tr>
             );
           })}
