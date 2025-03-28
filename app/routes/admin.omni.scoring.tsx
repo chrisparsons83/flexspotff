@@ -168,10 +168,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         const uniqueUsers = [
           ...new Set(
-            ...pointsAwarded
-              .map(team => team.discordId)
-              .filter(discordId => discordId !== undefined),
-            ...teamsCompleted
+            [...teamsCompleted, ...pointsAwarded]
               .map(team => team.discordId)
               .filter(discordId => discordId !== undefined),
           ),
