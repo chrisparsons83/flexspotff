@@ -65,7 +65,7 @@ export function getOmniStandings(
         0,
       ),
     )
-    .sort()
+    .sort((a, b) => Number(b) - Number(a))
     .reverse();
 
   return season.omniTeams
