@@ -47,6 +47,11 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     : [];
 
   const showDraftedOption = interaction.options.getString('showdrafted');
+  if (!showDraftedOption) {
+    return interaction.editReply({
+      content: 'No show drafted option provided',
+    });
+  }
 
   const inputSport = interaction.options.getString('sport');
   if (!inputSport) {
@@ -83,7 +88,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           }
         })
         .sort((a, b) => a.relativeSort - b.relativeSort)
-        .map(player => playerDisplay(player))
+        .map(player => playerDisplay(player, showDraftedOption))
         .join('\n'),
     );
 
@@ -103,9 +108,14 @@ const playerDisplay = (
         })
       | null;
   },
+  showDraftedOption: string,
 ) => {
   if (player.draftPick) {
-    return `${player.relativeSort}) ~~${player.displayName}~~ (${player.draftPick.team.user?.discordName})`;
+    if (showDraftedOption === 'draftedplayers') {
+      return `${player.relativeSort}) ${player.displayName} (${player.draftPick.team.user?.discordName})`;
+    } else {
+      return `${player.relativeSort}) ~~${player.displayName}~~ (${player.draftPick.team.user?.discordName})`;
+    }
   } else {
     return `${player.relativeSort}) ${player.displayName}`;
   }
