@@ -26,18 +26,16 @@ export const data = new SlashCommandBuilder()
   .addStringOption(option =>
     option
       .setName('showdrafted')
-      .setDescription(
-        'Show all players or just the ones you can currently draft',
-      )
+      .setDescription('Show all players. undrafted players, or drafted players')
       .setRequired(true)
       .addChoices([
         { name: 'All Players', value: 'allplayers' },
         { name: 'Draftable Players', value: 'draftableplayers' },
+        { name: 'Drafted Players', value: 'draftedplayers' },
       ]),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-  console.log('omni-players__execute');
   await interaction.deferReply({ ephemeral: true });
 
   const omniSeason = await getCurrentOmniSeason();
@@ -48,8 +46,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     ? await getPlayersAndAssociatedPick(omniSeason.id)
     : [];
 
-  const showDrafted =
-    interaction.options.getString('showdrafted') === 'allplayers';
+  const showDraftedOption = interaction.options.getString('showdrafted');
+
   const inputSport = interaction.options.getString('sport');
   if (!inputSport) {
     return interaction.editReply({
@@ -72,7 +70,18 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     .setTitle(`Players in ${sport.name}`)
     .setDescription(
       playerList
-        .filter(player => showDrafted || !player.draftPick)
+        .filter(player => {
+          switch (showDraftedOption) {
+            case 'allplayers':
+              return true;
+            case 'draftableplayers':
+              return !player.draftPick;
+            case 'draftedplayers':
+              return !!player.draftPick;
+            default:
+              return true;
+          }
+        })
         .sort((a, b) => a.relativeSort - b.relativeSort)
         .map(player => playerDisplay(player))
         .join('\n'),
