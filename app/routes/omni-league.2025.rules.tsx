@@ -81,7 +81,8 @@ const OmniYearRules = () => {
         divided equally). If 8th, 9th, and 10th are tied, each of those players
         will earn 7 points (20+0+0 divided equally, rounded to the nearest
         point). This applies to both points awarded and golf and tennis
-        qualifying points.
+        qualifying points, though those are rounded to the nearest hundredth of
+        a point as opposed to the nearest point.
       </p>
       <p>
         3.4. The top eight in this season's sports are defined in the following
