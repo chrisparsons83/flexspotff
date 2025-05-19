@@ -110,7 +110,7 @@ jobs:
           field: 'app'
 
       - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.2.1
+        uses: docker/setup-buildx-action@v3
 
       # Setup cache
       - name: ⚡️ Cache Docker layers
@@ -128,19 +128,21 @@ jobs:
           username: x
           password: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: 🐳 Docker build
-        uses: docker/build-push-action@v3
+      - name: 🔓 Login to Vultr Container Registry
+        uses: docker/login-action@v3
         with:
-          context: .
+          registry: sjc.vultrcr.com/chrisparsons
+          username: ${{ secrets.VULTR_USERNAME }}
+          password: ${{ secrets.VULTR_API_KEY }}
+
+      - name: 🗄️ Save to Vultr Container Registry
+        uses: docker/build-push-action@v5
+        with:
           push: true
-          tags:
-            registry.fly.io/${{ steps.app_name.outputs.value }}:${{
-            github.ref_name }}-${{ github.sha }}
+          tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
+          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
           build-args: |
-            COMMIT_SHA=${{ github.sha }}
             PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
 
       # This ugly bit is necessary if you don't want your cache to grow forever
       # till it hits GitHub's limit of 5GB.
@@ -162,25 +164,6 @@ jobs:
       github.event_name == 'push' }}
 
     steps:
-      - name: ⬇️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔓 Login to Vultr Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: sjc.vultrcr.com/chrisparsons
-          username: ${{ secrets.VULTR_USERNAME }}
-          password: ${{ secrets.VULTR_API_KEY }}
-
-      - name: 🗄️ Save to Vultr Container Registry
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
-          cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
-          build-args: |
-            PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
-
       - name: Deploy app to Vultr VPS
         uses: appleboy/ssh-action@master
         env:
