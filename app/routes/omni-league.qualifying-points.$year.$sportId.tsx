@@ -57,8 +57,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     (a, b) => b - a,
   );
 
-  console.log('rankedQualifyingPoints', rankedQualifyingPoints);
-
   const pointsLeaderboard = Array.from(qualifyingPointsMap.entries())
     .map(([playerId, points]) => {
       const player = players.find(player => player.id === playerId);
