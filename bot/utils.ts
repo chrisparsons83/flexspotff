@@ -1,5 +1,6 @@
 import { getCommandsFromLocal } from './client';
 import { applicationCommands } from './types/Command';
+import type { EmbedBuilder } from 'discord.js';
 import { REST, Routes } from 'discord.js';
 import { envSchema } from '~/utils/helpers';
 
@@ -84,5 +85,27 @@ export const getCommands = async (props: GetCommandsProps | null) => {
     return commands;
   } catch (error) {
     console.error(error);
+  }
+};
+
+interface SendMessageProps {
+  channelId: string;
+  messageData: {
+    content?: string;
+    embeds: EmbedBuilder[];
+  };
+}
+export const sendMessageToChannel = async ({
+  channelId,
+  messageData,
+}: SendMessageProps) => {
+  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
+
+  try {
+    await rest.post(Routes.channelMessages(channelId), {
+      body: { ...messageData },
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
   }
 };

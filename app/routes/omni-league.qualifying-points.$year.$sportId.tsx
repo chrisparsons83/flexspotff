@@ -53,9 +53,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       return acc;
     }, new Map<string, number>());
 
-  const rankedQualifyingPoints = Array.from(qualifyingPointsMap.values())
-    .sort()
-    .reverse();
+  const rankedQualifyingPoints = Array.from(qualifyingPointsMap.values()).sort(
+    (a, b) => b - a,
+  );
 
   const pointsLeaderboard = Array.from(qualifyingPointsMap.entries())
     .map(([playerId, points]) => {
