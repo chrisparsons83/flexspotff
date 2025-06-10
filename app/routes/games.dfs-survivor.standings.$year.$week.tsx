@@ -32,6 +32,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const year = +yearParam;
   const week = +weekParam;
 
+  // Get max week for navigation
+  const scoredWeeksForMaxWeek = await prisma.dFSSurvivorUserWeek.findMany({
+    where: {
+      year,
+      isScored: true,
+    },
+    orderBy: { week: 'desc' },
+  });
+
+  const maxWeek = scoredWeeksForMaxWeek[0]?.week || 0;
+
   // Get the week's entries
   const weekEntries = await prisma.dFSSurvivorUserWeek.findFirst({
     where: {
@@ -49,7 +60,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   });
 
   if (!weekEntries) {
-    throw new Error('Week not found or not scored');
+    return typedjson<LoaderData>({
+      totalPoints: [],
+      users: [],
+      userIdToRankMap: new Map(),
+      maxWeek,
+      year,
+      week,
+    });
   }
 
   // Calculate points for each user
@@ -86,16 +104,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userIds = totalPoints.map(result => result.userId);
   const users = await getUsersByIds(userIds);
 
-  // Get max week for navigation
-  const scoredWeeks = await prisma.dFSSurvivorUserWeek.findMany({
-    where: { 
-      year,
-      isScored: true 
-    },
-    orderBy: { week: 'desc' },
-  });
-
-  const maxWeek = scoredWeeks[0]?.week || 0;
+  const userIdToUserMap: Map<string, User> = new Map();
+  for (const user of users) {
+    userIdToUserMap.set(user.id, user);
+  }
 
   return typedjson<LoaderData>({
     totalPoints,
@@ -126,7 +138,11 @@ export default function DfsSurvivorStandingsYearWeekIndex() {
     <>
       <h2>DFS Survivor Standings for Week {week}</h2>
       <div className='float-right mb-4'>
-        <GoBox options={weekArray} buttonText='Choose Week' />
+        <GoBox
+          options={weekArray}
+          buttonText='Choose Week'
+          disabled={maxWeek === 0}
+        />
       </div>
       <table>
         <thead>
@@ -137,7 +153,7 @@ export default function DfsSurvivorStandingsYearWeekIndex() {
           </tr>
         </thead>
         <tbody>
-          {totalPoints.map((result) => (
+          {totalPoints.map(result => (
             <DfsSurvivorStandingsRow
               key={result.userId}
               rank={userIdToRankMap.get(result.userId)}
@@ -145,7 +161,8 @@ export default function DfsSurvivorStandingsYearWeekIndex() {
               points={result.points}
               entries={result.entries}
             />
-          ))}
+          ))
+          }
         </tbody>
       </table>
     </>
