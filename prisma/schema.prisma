@@ -99,11 +99,13 @@ model DFSSurvivorUserWeek {
   year      Int
   week      Int
   isScored  Boolean  @default(false)
+  isLocked  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   userYear DFSSurvivorUserYear @relation(fields: [userId, year], references: [userId, year])
   entries  DFSSurvivorUserEntry[]
+  user     User                @relation(fields: [userId], references: [id])
 
   @@unique([userId, year, week])
 }
@@ -119,6 +121,8 @@ model DFSSurvivorUserEntry {
   points    Float    @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isLocked  Boolean  @default(false)
+  isScored  Boolean  @default(false)
 
   userWeek DFSSurvivorUserWeek @relation(fields: [userId, year, week], references: [userId, year, week])
   nflGame  NFLGame             @relation(fields: [nflGameId], references: [id])
@@ -665,5 +669,6 @@ model User {
   locksGamePick LocksGamePick[]
   sleeperUsers SleeperUser[]
   dfsSurvivorUserYears DFSSurvivorUserYear[]
+  dfsSurvivorUserWeeks DFSSurvivorUserWeek[]
   omniTeams OmniUserTeam[]
 }

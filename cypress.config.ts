@@ -28,6 +28,7 @@ export default defineConfig({
       database: 'flexspotff',
       user: 'postgres',
       password: 'postgres'
-    }
+    },
+    TIME_MOCK_SECRET: 'FDG*4#H(*)@EDHN'
   }
 }); 
