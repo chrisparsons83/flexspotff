@@ -16,6 +16,12 @@ import clsx from "clsx"
 import Button from "~/components/ui/Button"
 import type { FetcherWithComponents } from "@remix-run/react"
 
+type WeekGameTiming = {
+  week: number;
+  lastGameStartTime: Date;
+  playerGameTimes: Record<string, Date>; // playerId -> game start time
+};
+
 interface Props {
   week: DFSSurvivorUserWeek & {
     entries: (DFSSurvivorUserEntry & {
@@ -44,6 +50,8 @@ interface Props {
   globalError?: string | null;
   hasError?: boolean;
   parentFetcher: FetcherWithComponents<any>;
+  weekGameTiming?: WeekGameTiming;
+  currentTime?: Date;
 }
 
 export default function DfsSurvivorWeekComponent({ 
@@ -65,7 +73,9 @@ export default function DfsSurvivorWeekComponent({
   onError, 
   globalError, 
   hasError = false,
-  parentFetcher
+  parentFetcher,
+  weekGameTiming,
+  currentTime
 }: Props) {
     const totalPoints = week.entries.reduce((sum, entry) => sum + entry.points, 0);
     
@@ -90,9 +100,44 @@ export default function DfsSurvivorWeekComponent({
     
     // Determine if the Save Entry button should be disabled
     const isSaveDisabled = useCallback(() => {
-        // Only disable if the week is already scored or if a fetch is in progress
-        return week.isScored || parentFetcher.state === 'submitting';
-    }, [week.isScored, parentFetcher.state]);
+        // Disable if the week is already scored or if a fetch is in progress
+        if (week.isScored || parentFetcher.state === 'submitting') {
+            return true;
+        }
+        
+        // Disable if the last game of the week has begun and timing data is available
+        if (weekGameTiming && currentTime && currentTime >= weekGameTiming.lastGameStartTime) {
+            return true;
+        }
+        
+        return false;
+    }, [week.isScored, parentFetcher.state, weekGameTiming, currentTime]);
+
+    // Check if a specific player input should be disabled
+    const isPlayerInputDisabled = useCallback((position: string, playerId?: string) => {
+        // Always disable if week is scored or fetcher is submitting
+        if (week.isScored || parentFetcher.state === 'submitting') {
+            return true;
+        }
+        
+        // If we have timing data and current time
+        if (weekGameTiming && currentTime) {
+            // Disable if the last game of the week has begun
+            if (currentTime >= weekGameTiming.lastGameStartTime) {
+                return true;
+            }
+            
+            // If a specific player is selected, check if their game has started
+            if (playerId && weekGameTiming.playerGameTimes[playerId]) {
+                const playerGameTime = weekGameTiming.playerGameTimes[playerId];
+                if (currentTime >= playerGameTime) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }, [week.isScored, parentFetcher.state, weekGameTiming, currentTime]);
 
     const checkForIntraWeekDuplicates = useCallback(() => {
         // Create a map of player IDs to the positions they're used in
@@ -294,15 +339,15 @@ export default function DfsSurvivorWeekComponent({
                                                 data-testid={`player-input-${position}`}
                                             />
                                             <div className="flex-1">
-                                                <SearchSelect 
-                                                    options={getPositionPlayers(position)}
-                                                    onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
-                                                    onOptionSelectedChange={(value) => handlePlayerSelect(position, value)}
-                                                    value={inputValues[position] || defaultPlayerName}
-                                                    disabled={week.isScored || parentFetcher.state === 'submitting'}
-                                                    className={clsx(week.isScored ? "border-none" : "", "font-bold")}
-                                                    data-testid={`player-select-${position}`}
-                                                />
+                                                                                <SearchSelect 
+                                    options={getPositionPlayers(position)}
+                                    onOptionSelect={(playerName) => handlePlayerSelect(position, playerName)}
+                                    onOptionSelectedChange={(value) => handlePlayerSelect(position, value)}
+                                    value={inputValues[position] || defaultPlayerName}
+                                    disabled={isPlayerInputDisabled(position, selectedPlayers[position])}
+                                    className={clsx(week.isScored ? "border-none" : "", "font-bold")}
+                                    data-testid={`player-select-${position}`}
+                                />
                                             </div>
                                             {week.isScored && (
                                                 <div className="w-16 text-right font-bold" suppressHydrationWarning>

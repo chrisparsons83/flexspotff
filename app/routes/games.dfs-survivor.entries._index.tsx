@@ -9,6 +9,8 @@ import { prisma } from '~/db.server';
 import Button from '~/components/ui/Button';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useFetcher } from '@remix-run/react';
+import { getCurrentTime } from '~/utils/time';
+import { getWeekNflGames } from '~/models/nflgame.server';
 
 // Define the AvailablePlayers type
 type AvailablePlayers = {
@@ -21,8 +23,22 @@ type AvailablePlayers = {
   FLX: Player[];
 };
 
+type WeekGameTiming = {
+  week: number;
+  lastGameStartTime: Date;
+  playerGameTimes: Record<string, Date>; // playerId -> game start time
+};
+
 type LoaderData = 
-  | { isOpen: true; currentSeason: Season; dfsSurvivorWeeks: Array<DFSSurvivorUserWeek & { entries: Array<DFSSurvivorUserEntry & { player: Player & { currentNFLTeam?: { sleeperId: string } | null } }> }>; availablePlayers: AvailablePlayers }
+  | { 
+      isOpen: true; 
+      currentSeason: Season; 
+      dfsSurvivorWeeks: Array<DFSSurvivorUserWeek & { entries: Array<DFSSurvivorUserEntry & { player: Player & { currentNFLTeam?: { sleeperId: string } | null } }> }>; 
+      availablePlayers: AvailablePlayers;
+      weekGameTimings: WeekGameTiming[];
+      currentTime: Date;
+      lastWeekOfSeason: number;
+    }
   | { isOpen: false; currentSeason: Season | null };
 
 // Type definition for the action response
@@ -69,7 +85,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           continue;
         }
 
-        
         // Get player info for better error messages
         const player = await prisma.player.findUnique({
           where: { id: playerId }
@@ -190,6 +205,91 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return typedjson<ActionResponse>({ 
             error: `Cannot select ${info.playerName || existing.playerName} in multiple weeks (${existing.weeks.join(', ')} and ${submittedWeek})` 
           });
+        }
+      }
+    }
+
+    // Check if any players selected are on a bye week
+    for (const weekId of weeks) {
+      if (typeof weekId !== 'string') continue;
+
+      const week = await prisma.dFSSurvivorUserWeek.findUnique({
+        where: { id: weekId },
+        include: { userYear: true }
+      });
+
+      if (!week) continue;
+
+      const positions = ['QB1', 'QB2', 'RB1', 'RB2', 'WR1', 'WR2', 'TE', 'FLEX1', 'FLEX2', 'K', 'DEF'];
+
+      for (const position of positions) {
+        const playerId = formData.get(`playerId-${weekId}-${position}`);
+        if (typeof playerId !== 'string' || !playerId) continue;
+
+        const player = await prisma.player.findUnique({
+          where: { id: playerId },
+          include: { currentNFLTeam: true }
+        });
+
+        if (!player?.currentNFLTeam) {
+          console.error(`Player not found or no team found for position ${position}`);
+          return typedjson<ActionResponse>({ 
+            error: `Player not found or no team found for position ${position}` 
+          });
+        }
+
+        const nflGame = await prisma.nFLGame.findFirst({
+          where: {
+            week: week.week,
+            year: week.year,
+            OR: [
+              { homeTeamId: player.currentNFLTeam.id },
+              { awayTeamId: player.currentNFLTeam.id }
+            ]
+          }
+        });
+
+        if (!nflGame) {
+          console.error(`Player ${player.fullName} is on a bye week for Week ${week.week}`);
+          return typedjson<ActionResponse>({ 
+            error: `Error: ${player.fullName} is on a bye week during week ${week.week}` 
+          });
+        }
+
+        // Check if any players selected have a game that already started for that week
+        // But skip this check if the player was already in this position (unchanged selection)
+        const existingEntryForPosition = await prisma.dFSSurvivorUserEntry.findFirst({
+          where: {
+            userId: user.id,
+            year: week.year,
+            week: week.week,
+            position: position
+          }
+        });
+
+        // Only check game start time for new or changed player selections
+        const isPlayerChanged = !existingEntryForPosition || existingEntryForPosition.playerId !== player.id;
+        
+        if (isPlayerChanged) {
+          const testTime = formData.get('__test_current_time__') as string | undefined;
+          console.log(`=== PROCESSING PLAYER: ${player.fullName} (${position}) ===`);
+          console.log(`Raw test time from form: ${testTime}`);
+          console.log(`Has TIME_MOCK_SECRET: ${!!process.env.TIME_MOCK_SECRET}`);
+          
+          const currentTime = getCurrentTime(testTime);
+          console.log(`Current time after processing: ${currentTime}`);
+          console.log(`Game start time: ${nflGame.gameStartTime}`);
+          console.log(`Time comparison: ${nflGame.gameStartTime} <= ${currentTime} = ${nflGame.gameStartTime <= currentTime}`);
+          console.log(`====================================`);
+          
+          if (nflGame.gameStartTime <= currentTime) {
+            console.error(`Game for player ${player.fullName} has already started for Week ${week.week}`);
+            return typedjson<ActionResponse>({ 
+              error: `Error: Game for ${player.fullName} has already started for week ${week.week}` 
+            });
+          }
+        } else {
+          console.log(`Player ${player.fullName} unchanged in position ${position} for week ${week.week}, skipping time check`);
         }
       }
     }
@@ -468,6 +568,68 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   });
 
+  // Get game timing information for all weeks
+  const weekGameTimings: WeekGameTiming[] = [];
+  // Extract mock time from request URL if present (for testing)
+  const url = new URL(request.url);
+  const testTime = url.searchParams.get('__test_current_time__');
+  const currentTime = getCurrentTime(testTime || undefined);
+  let lastWeekOfSeason = 17; // Default to week 17
+
+  // Get all unique weeks that have DFS survivor entries or need to be created
+  const allWeeks = new Set<number>();
+  dfsSurvivorYearWithEntries?.weeks.forEach(week => allWeeks.add(week.week));
+  
+  // Add weeks 1-17 if they don't exist
+  for (let i = 1; i <= 17; i++) {
+    allWeeks.add(i);
+  }
+
+  // Get game timing for each week
+  for (const weekNumber of Array.from(allWeeks).sort()) {
+    try {
+      const nflGames = await getWeekNflGames(currentSeason.year, weekNumber);
+      
+      if (nflGames.length > 0) {
+        // Find the last game of the week (latest start time)
+        const lastGame = nflGames.reduce((latest, current) => 
+          current.gameStartTime > latest.gameStartTime ? current : latest
+        );
+
+        // Create player game times object
+        const playerGameTimes: Record<string, Date> = {};
+        
+        // Get all players and their game times for this week
+        const allPlayers = [...qbPlayers, ...rbPlayers, ...wrPlayers, ...tePlayers, ...kPlayers, ...dstPlayers];
+        
+        for (const player of allPlayers) {
+          if (player.currentNFLTeamId) {
+            // Find the game this player's team is playing in this week
+            const playerGame = nflGames.find(game => 
+              game.homeTeamId === player.currentNFLTeamId || 
+              game.awayTeamId === player.currentNFLTeamId
+            );
+            
+            if (playerGame) {
+              playerGameTimes[player.id] = playerGame.gameStartTime;
+            }
+          }
+        }
+
+        weekGameTimings.push({
+          week: weekNumber,
+          lastGameStartTime: lastGame.gameStartTime,
+          playerGameTimes
+        });
+
+        // Update last week of season based on available games
+        lastWeekOfSeason = Math.max(lastWeekOfSeason, weekNumber);
+      }
+    } catch (error) {
+      console.error(`Error fetching games for week ${weekNumber}:`, error);
+    }
+  }
+
   return typedjson<LoaderData>({ 
     dfsSurvivorWeeks: dfsSurvivorYearWithEntries?.weeks || [], 
     currentSeason, 
@@ -480,7 +642,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       K: kPlayers,
       DEF: dstPlayers,
       FLX: flexPlayers
-    }
+    },
+    weekGameTimings,
+    currentTime,
+    lastWeekOfSeason
   });
 };
 
@@ -592,6 +757,12 @@ export default function GamesDfsSurvivorMyEntry() {
             formData.append(input.name, input.value || '');
           }
         });
+        
+        // Also collect the test time input if it exists
+        const testTimeInput = form.querySelector('input[name="__test_current_time__"]') as HTMLInputElement;
+        if (testTimeInput && testTimeInput.value) {
+          formData.append('__test_current_time__', testTimeInput.value);
+        }
       });
       
       // If no weeks found in the DOM, fall back to the data from the server
@@ -622,6 +793,22 @@ export default function GamesDfsSurvivorMyEntry() {
     if (!('dfsSurvivorWeeks' in data)) return false;
     return data.dfsSurvivorWeeks.every(week => week.isScored);
   }, [data]);
+
+  // Check if Save All button should be disabled
+  const isSaveAllDisabled = useMemo(() => {
+    if (!('dfsSurvivorWeeks' in data)) return true;
+    
+    // Disable if all weeks are scored
+    if (areAllWeeksScored) return true;
+    
+    // Disable if the last game of the last week has begun
+    const finalWeekTiming = data.weekGameTimings.find(timing => timing.week === data.lastWeekOfSeason);
+    if (finalWeekTiming && data.currentTime >= finalWeekTiming.lastGameStartTime) {
+      return true;
+    }
+    
+    return false;
+  }, [data, areAllWeeksScored]);
 
   // Update error state when fetcher error changes
   useEffect(() => {
@@ -672,7 +859,7 @@ export default function GamesDfsSurvivorMyEntry() {
         <Button 
           type="button" 
           onClick={handleSaveAll}
-          disabled={isSaving || areAllWeeksScored}
+          disabled={isSaving || isSaveAllDisabled}
           data-testid="save-all-entries-button"
         >
           {isSaving ? 'Saving...' : 'Save All Entries'}
@@ -697,6 +884,8 @@ export default function GamesDfsSurvivorMyEntry() {
               formId={`week-${week.week}`}
               onError={handleWeekError}
               parentFetcher={fetcher}
+              weekGameTiming={data.weekGameTimings.find(timing => timing.week === week.week)}
+              currentTime={data.currentTime}
             />
           </div>
         ))}
