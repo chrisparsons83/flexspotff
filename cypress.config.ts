@@ -12,23 +12,23 @@ export default defineConfig({
   env: {
     userOne: {
       discordId: '1111',
-      discordName: 'UserOne'
+      discordName: 'UserOne',
     },
     userTwo: {
       discordId: '2222',
-      discordName: 'UserTwo'
+      discordName: 'UserTwo',
     },
     userThree: {
       discordId: '3333',
-      discordName: 'UserThree'
+      discordName: 'UserThree',
     },
     db: {
       host: 'localhost',
       port: 5432,
       database: 'flexspotff',
       user: 'postgres',
-      password: 'postgres'
+      password: 'postgres',
     },
-    TIME_MOCK_SECRET: 'FDG*4#H(*)@EDHN'
-  }
-}); 
+    TIME_MOCK_SECRET: 'FDG*4#H(*)@EDHN',
+  },
+});

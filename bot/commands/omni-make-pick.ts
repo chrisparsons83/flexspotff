@@ -290,15 +290,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         const nextToNextPick = await getPickByPickNumber(pickNumber + 2);
         if (!nextPick) {
           await (channel as TextChannel).send({
-            content:
-              `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. This draft has completed. Go hug your children or something.`,
+            content: `${interaction.user} has selected ${player?.displayName} from ${sport?.name}. This draft has completed. Go hug your children or something.`,
           });
         } else if (!nextToNextPick) {
           const fakeClock = new Date();
           fakeClock.setHours(fakeClock.getHours() + 4);
           await (channel as TextChannel).send({
-            content:
-            `${interaction.user} has selected ${
+            content: `${interaction.user} has selected ${
               player?.displayName
             } from ${sport?.name}. Currently on the clock is <@${
               nextPicks[0].team.user?.discordId
