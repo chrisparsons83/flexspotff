@@ -349,9 +349,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           existingEntryForPosition.playerId !== player.id;
 
         if (isPlayerChanged) {
-          const testTime = formData.get('__test_current_time__') as string | undefined;
+          const testTime = formData.get('__test_current_time__') as
+            | string
+            | undefined;
           const currentTime = getCurrentTime(testTime);
-          
+
           if (nflGame.gameStartTime <= currentTime) {
             console.error(
               `Game for player ${player.fullName} has already started for Week ${week.week}`,
@@ -784,18 +786,20 @@ export default function GamesDfsSurvivorMyEntry() {
   }, []);
 
   // Toggle week expansion
-  const toggleWeekExpansion = useCallback((weekId: string) => {
-    
-    setExpandedWeeks(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(weekId)) {
-        newSet.delete(weekId);
-      } else {
-        newSet.add(weekId);
-      }
-      return newSet;
-    });
-  }, [expandedWeeks]);
+  const toggleWeekExpansion = useCallback(
+    (weekId: string) => {
+      setExpandedWeeks(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(weekId)) {
+          newSet.delete(weekId);
+        } else {
+          newSet.add(weekId);
+        }
+        return newSet;
+      });
+    },
+    [expandedWeeks],
+  );
 
   // Get all selected players across all weeks to validate no duplicates
   const allSelectedPlayers = useMemo(() => {
@@ -848,12 +852,11 @@ export default function GamesDfsSurvivorMyEntry() {
     setError(null);
 
     try {
-      
       const formData = new FormData();
 
       // Get all the week forms from the DOM to ensure we're collecting the current state
       const weekForms = document.querySelectorAll(`form[id^="week-"]`);
-      
+
       // Track which week IDs we're submitting
       const submittedWeekIds = new Set<string>();
 
