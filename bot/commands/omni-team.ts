@@ -61,32 +61,54 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     });
   }
 
-  const totalPoints = omniTeam.draftPicks.reduce((acc, pick) => acc + (pick.player?.pointsScored || 0), 0)
+  const totalPoints = omniTeam.draftPicks.reduce(
+    (acc, pick) => acc + (pick.player?.pointsScored || 0),
+    0,
+  );
 
   const activePlayers = omniTeam.draftPicks
-  .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
-  .filter(pick => !pick.player?.isComplete);
+    .sort((a, b) =>
+      (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''),
+    )
+    .filter(pick => !pick.player?.isComplete);
 
   const completedPlayers = omniTeam.draftPicks
-  .sort((a, b) => (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''))
-  .filter(pick => pick.player?.isComplete);
+    .sort((a, b) =>
+      (a.player?.sport.name || '').localeCompare(b.player?.sport.name || ''),
+    )
+    .filter(pick => pick.player?.isComplete);
 
   const embed = new EmbedBuilder()
     .setTitle(`${user.username}'s Omni Team`)
     .setDescription(`Current points: ${totalPoints.toFixed(0)}`)
-    .addFields(
-      [{
+    .addFields([
+      {
         name: `Active`,
-        value: activePlayers.length > 0 ? activePlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
-          .join('\n') : 'No active players',
-        inline: true
-      },{
+        value:
+          activePlayers.length > 0
+            ? activePlayers
+                .map(
+                  pick =>
+                    `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`,
+                )
+                .join('\n')
+            : 'No active players',
+        inline: true,
+      },
+      {
         name: `Completed`,
-        value: completedPlayers.length > 0 ? completedPlayers.map((pick) => `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`)
-          .join('\n') : 'No completed players',
-          inline: true
-      }]
-    );
+        value:
+          completedPlayers.length > 0
+            ? completedPlayers
+                .map(
+                  pick =>
+                    `${pick.player?.sport.emoji} ${pick.player?.displayName} (${pick.player?.pointsScored})`,
+                )
+                .join('\n')
+            : 'No completed players',
+        inline: true,
+      },
+    ]);
 
   return interaction.editReply({
     embeds: [embed],

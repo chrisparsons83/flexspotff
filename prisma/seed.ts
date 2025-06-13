@@ -11,18 +11,22 @@ async function seed() {
   ];
 
   // Cleanup the existing users
-  await Promise.all(users.map(user => 
-    prisma.user.delete({ where: { discordId: user.discordId } }).catch(() => {
-      // no worries if it doesn't exist yet
-    })
-  ));
+  await Promise.all(
+    users.map(user =>
+      prisma.user.delete({ where: { discordId: user.discordId } }).catch(() => {
+        // no worries if it doesn't exist yet
+      }),
+    ),
+  );
 
   // Create new users
-  await Promise.all(users.map(user => 
-    prisma.user.create({
-      data: user,
-    })
-  ));
+  await Promise.all(
+    users.map(user =>
+      prisma.user.create({
+        data: user,
+      }),
+    ),
+  );
 
   console.log(`Database has been seeded with ${users.length} users. 🌱`);
 }

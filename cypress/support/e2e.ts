@@ -11,27 +11,30 @@ if (app) {
 }
 
 // Add custom commands for authentication
-Cypress.Commands.add('loginAsUser', (user: { discordId: string; discordName: string }) => {
-  // Use the test login endpoint to properly set up the session
-  cy.request({
-    method: 'POST',
-    url: '/api/test/login',
-    body: {
-      discordId: user.discordId,
-      discordName: user.discordName,
-      discordAvatar: 'default_avatar',
-      discordRoles: ['user']
-    }
-  }).then((response) => {
-    expect(response.status).to.eq(200);
-  });
+Cypress.Commands.add(
+  'loginAsUser',
+  (user: { discordId: string; discordName: string }) => {
+    // Use the test login endpoint to properly set up the session
+    cy.request({
+      method: 'POST',
+      url: '/api/test/login',
+      body: {
+        discordId: user.discordId,
+        discordName: user.discordName,
+        discordAvatar: 'default_avatar',
+        discordRoles: ['user'],
+      },
+    }).then(response => {
+      expect(response.status).to.eq(200);
+    });
 
-  // Visit root to ensure session is set
-  cy.visit('/', { failOnStatusCode: false });
-  
-  // Verify we are logged in by checking for redirect
-  cy.url().should('not.include', '/auth/discord');
-});
+    // Visit root to ensure session is set
+    cy.visit('/', { failOnStatusCode: false });
+
+    // Verify we are logged in by checking for redirect
+    cy.url().should('not.include', '/auth/discord');
+  },
+);
 
 // Add custom command to navigate to DFS survivor page
 Cypress.Commands.add('navigateToDFSSurvivor', () => {
@@ -60,9 +63,9 @@ Cypress.Commands.add('createDFSSurvivorContest', (contestName: string) => {
 Cypress.Commands.add('joinDFSSurvivorContest', (contestId: string) => {
   cy.visit(`/games/dfs-survivor/${contestId}`, { failOnStatusCode: false });
   cy.get('[data-testid="join-contest-button"]').click();
-}); 
+});
 
-Cypress.on("uncaught:exception", (err) => {
+Cypress.on('uncaught:exception', err => {
   // Cypress and React Hydrating the document don't get along
   // for some unknown reason. Hopefully, we figure out why eventually
   // so we can remove this.
@@ -73,6 +76,6 @@ Cypress.on("uncaught:exception", (err) => {
     /Minified React error #418/.test(err.message) ||
     /Minified React error #423/.test(err.message)
   ) {
-    return false
+    return false;
   }
 });

@@ -1,11 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { prisma } from '~/db.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { prisma } from '~/db.server';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -114,7 +114,7 @@ export default function GamesIndex() {
     },
   ];
 
-  const dfsSurvivorLinks = [ 
+  const dfsSurvivorLinks = [
     { name: 'Rules', href: '/games/dfs-survivor/rules', current: false },
     {
       name: 'My Entries',
