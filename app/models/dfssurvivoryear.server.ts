@@ -1,5 +1,9 @@
+import type {
+  DFSSurvivorUserYear,
+  DFSSurvivorUserWeek,
+  DFSSurvivorUserEntry,
+} from '@prisma/client';
 import { prisma } from '~/db.server';
-import type { DFSSurvivorUserYear, DFSSurvivorUserWeek, DFSSurvivorUserEntry } from '@prisma/client';
 
 export type { DFSSurvivorUserYear } from '@prisma/client';
 
@@ -9,7 +13,10 @@ export type DFSSurvivorUserYearWithWeeks = DFSSurvivorUserYear & {
   })[];
 };
 
-export async function getDfsSurvivorYearByUserAndYear(userId: string, year: number): Promise<DFSSurvivorUserYearWithWeeks | null> {
+export async function getDfsSurvivorYearByUserAndYear(
+  userId: string,
+  year: number,
+): Promise<DFSSurvivorUserYearWithWeeks | null> {
   return prisma.dFSSurvivorUserYear.findFirst({
     where: {
       userId,
@@ -25,7 +32,10 @@ export async function getDfsSurvivorYearByUserAndYear(userId: string, year: numb
   });
 }
 
-export async function createDfsSurvivorYear(userId: string, year: number): Promise<DFSSurvivorUserYearWithWeeks> {
+export async function createDfsSurvivorYear(
+  userId: string,
+  year: number,
+): Promise<DFSSurvivorUserYearWithWeeks> {
   const dfsSurvivorYear = await prisma.dFSSurvivorUserYear.create({
     data: {
       userId,

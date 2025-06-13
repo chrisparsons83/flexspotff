@@ -8,7 +8,10 @@ declare global {
        * Custom command to mock login as a specific user
        * @example cy.loginAsUser({ discordId: '1111', discordName: 'UserOne' })
        */
-      loginAsUser(user: { discordId: string; discordName: string }): Chainable<void>;
+      loginAsUser(user: {
+        discordId: string;
+        discordName: string;
+      }): Chainable<void>;
 
       /**
        * Custom command to navigate to DFS survivor page
@@ -35,4 +38,4 @@ declare global {
       navigateToDFSSurvivorAdmin(): Chainable<void>;
     }
   }
-} 
+}

@@ -2,10 +2,10 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import DfsSurvivorStandingsRow from '~/components/layout/dfs-survivor/DfsSurvivorStandingsRow';
 import GoBox from '~/components/ui/GoBox';
-import { authenticator } from '~/services/auth.server';
 import { prisma } from '~/db.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
+import { authenticator } from '~/services/auth.server';
 
 type LoaderData = {
   totalPoints: {
@@ -71,10 +71,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Calculate points for each user from all their entries across all week records
   const userPoints = new Map<string, { points: number; entries: any[] }>();
-  
+
   for (const weekRecord of weekEntries) {
     for (const entry of weekRecord.entries) {
-      const current = userPoints.get(entry.userId) || { points: 0, entries: [] };
+      const current = userPoints.get(entry.userId) || {
+        points: 0,
+        entries: [],
+      };
       current.points += entry.points;
       current.entries.push(entry);
       userPoints.set(entry.userId, current);
@@ -82,17 +85,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
 
   // Convert to array and sort by points
-  const totalPoints = Array.from(userPoints.entries()).map(([userId, data]) => ({
-    userId,
-    points: data.points,
-    entries: data.entries,
-  })).sort((a, b) => b.points - a.points);
+  const totalPoints = Array.from(userPoints.entries())
+    .map(([userId, data]) => ({
+      userId,
+      points: data.points,
+      entries: data.entries,
+    }))
+    .sort((a, b) => b.points - a.points);
 
   // Create rank map
   const userIdToRankMap = new Map<string, number>();
   let currentRank = 1;
   let currentPoints = -1;
-  
+
   totalPoints.forEach((result, index) => {
     if (result.points !== currentPoints) {
       currentRank = index + 1;
@@ -121,7 +126,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 export default function DfsSurvivorStandingsYearWeekIndex() {
-  const { totalPoints, users, userIdToRankMap, maxWeek, year, week } = useTypedLoaderData<typeof loader>();
+  const { totalPoints, users, userIdToRankMap, maxWeek, year, week } =
+    useTypedLoaderData<typeof loader>();
 
   const userIdToUserMap: Map<string, User> = new Map();
   for (const user of users) {
@@ -163,10 +169,9 @@ export default function DfsSurvivorStandingsYearWeekIndex() {
               entries={result.entries}
               showFlexAsActualPosition={false}
             />
-          ))
-          }
+          ))}
         </tbody>
       </table>
     </>
   );
-} 
+}

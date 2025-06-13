@@ -1,13 +1,22 @@
+import type {
+  DFSSurvivorUserWeek,
+  Season,
+  DFSSurvivorUserEntry,
+  Player,
+} from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
-import { typedjson, useTypedActionData, useTypedLoaderData } from 'remix-typedjson';
-import type { DFSSurvivorUserWeek, Season, DFSSurvivorUserEntry, Player } from '@prisma/client';
-import { getCurrentSeason } from '~/models/season.server';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
+import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import { authenticator, requireAdmin } from '~/services/auth.server';
 import { prisma } from '~/db.server';
-import z from 'zod';
+import { getCurrentSeason } from '~/models/season.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 
 type WeekWithEntries = DFSSurvivorUserWeek & {
   entries: (DFSSurvivorUserEntry & {
@@ -74,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!currentSeason) {
       throw new Error('No active season currently');
     }
-    } else if (_action === 'scoreWeek') {
+  } else if (_action === 'scoreWeek') {
     const weekNumberString = formData.get('weekNumber');
     const yearString = formData.get('year');
     const id = formData.get('id');
@@ -92,9 +101,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // Get ALL week records for this NFL week (all users)
     const allWeekRecords = await prisma.dFSSurvivorUserWeek.findMany({
-      where: { 
+      where: {
         year,
-        week: weekNumber
+        week: weekNumber,
       },
       include: {
         entries: {
@@ -115,7 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (isCurrentlyScored) {
       // UNSCORE: Reset all entry points to 0 and mark week as unscored
       const promises: Promise<any>[] = [];
-      
+
       for (const weekRecord of allWeekRecords) {
         for (const entry of weekRecord.entries) {
           promises.push(
@@ -156,7 +165,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
 
       const promises: Promise<any>[] = [];
-      
+
       // Score ALL entries from ALL users for this week
       for (const weekRecord of allWeekRecords) {
         for (const entry of weekRecord.entries) {
@@ -331,16 +340,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         const allEntriesForWeek = dfsSurvivorWeeks
           .filter(w => w.week === week.week)
           .flatMap(w => w.entries);
-        
+
         acc.push({
           ...week,
-          entries: allEntriesForWeek
+          entries: allEntriesForWeek,
         });
       }
       return acc;
     }, [] as typeof dfsSurvivorWeeks);
 
-    return typedjson<LoaderData>({ dfsSurvivorWeeks: uniqueWeeks, currentSeason });
+    return typedjson<LoaderData>({
+      dfsSurvivorWeeks: uniqueWeeks,
+      currentSeason,
+    });
   } catch (error) {
     console.error('Error fetching DFS Survivor weeks:', error);
     throw new Error('Failed to fetch DFS Survivor weeks');
@@ -355,8 +367,7 @@ export default function AdminDfsSurvivorIndex() {
     <>
       <h2>DFS Survivor</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-      </Form>
+      <Form method='POST'></Form>
       <table className='w-full'>
         <thead>
           <tr>
@@ -375,11 +386,7 @@ export default function AdminDfsSurvivorIndex() {
                   <input type='hidden' name='weekNumber' value={week.week} />
                   <input type='hidden' name='year' value={week.year} />
                   <input type='hidden' name='id' value={week.id} />
-                  <Button 
-                    type='submit' 
-                    name='_action' 
-                    value='scoreWeek'
-                  >
+                  <Button type='submit' name='_action' value='scoreWeek'>
                     {week.isScored ? 'Revert Scoring' : 'Score Week'}
                   </Button>
                 </Form>
@@ -390,4 +397,4 @@ export default function AdminDfsSurvivorIndex() {
       </table>
     </>
   );
-} 
+}

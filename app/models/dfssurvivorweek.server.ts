@@ -13,7 +13,10 @@ export async function getDfsSurvivorWeeksByYear(year: number) {
   });
 }
 
-export async function getDfsSurvivorWeekByYearAndWeek(year: number, week: number) {
+export async function getDfsSurvivorWeekByYearAndWeek(
+  year: number,
+  week: number,
+) {
   return prisma.dFSSurvivorUserWeek.findFirst({
     where: {
       year,
@@ -22,7 +25,11 @@ export async function getDfsSurvivorWeekByYearAndWeek(year: number, week: number
   });
 }
 
-export async function createDfsSurvivorWeek(userId: string, year: number, week: number) {
+export async function createDfsSurvivorWeek(
+  userId: string,
+  year: number,
+  week: number,
+) {
   return prisma.dFSSurvivorUserWeek.create({
     data: {
       userId,
@@ -31,4 +38,4 @@ export async function createDfsSurvivorWeek(userId: string, year: number, week: 
       isScored: false,
     },
   });
-} 
+}

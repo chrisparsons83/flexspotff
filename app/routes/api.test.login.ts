@@ -1,18 +1,22 @@
 import { json } from '@remix-run/node';
 import type { ActionFunction } from '@remix-run/node';
+import {
+  createUser,
+  getUserByDiscordId,
+  updateUser,
+} from '~/models/user.server';
 import { sessionStorage } from '~/services/session.server';
-import { createUser, getUserByDiscordId, updateUser } from '~/models/user.server';
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.json();
-  
+
   // First ensure the user exists in the database
   let user = await getUserByDiscordId(body.discordId);
   if (!user) {
     user = await createUser(
       body.discordId,
       body.discordName,
-      body.discordAvatar
+      body.discordAvatar,
     );
   }
 
@@ -20,7 +24,7 @@ export const action: ActionFunction = async ({ request }) => {
   if (JSON.stringify(user.discordRoles) !== JSON.stringify(body.discordRoles)) {
     user = await updateUser({
       ...user,
-      discordRoles: body.discordRoles
+      discordRoles: body.discordRoles,
     });
   }
 
@@ -31,7 +35,7 @@ export const action: ActionFunction = async ({ request }) => {
     discordId: user.discordId,
     discordName: user.discordName,
     discordAvatar: user.discordAvatar,
-    discordRoles: user.discordRoles
+    discordRoles: user.discordRoles,
   });
 
   // Return response with session cookie
@@ -39,8 +43,8 @@ export const action: ActionFunction = async ({ request }) => {
     { success: true },
     {
       headers: {
-        'Set-Cookie': await sessionStorage.commitSession(session)
-      }
-    }
+        'Set-Cookie': await sessionStorage.commitSession(session),
+      },
+    },
   );
-}; 
+};
