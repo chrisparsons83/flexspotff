@@ -352,23 +352,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           const testTime = formData.get('__test_current_time__') as
             | string
             | undefined;
-          console.log(
-            `=== PROCESSING PLAYER: ${player.fullName} (${position}) ===`,
-          );
-          console.log(`Raw test time from form: ${testTime}`);
-          console.log(
-            `Has TIME_MOCK_SECRET: ${!!process.env.TIME_MOCK_SECRET}`,
-          );
-
           const currentTime = getCurrentTime(testTime);
-          console.log(`Current time after processing: ${currentTime}`);
-          console.log(`Game start time: ${nflGame.gameStartTime}`);
-          console.log(
-            `Time comparison: ${nflGame.gameStartTime} <= ${currentTime} = ${
-              nflGame.gameStartTime <= currentTime
-            }`,
-          );
-          console.log(`====================================`);
 
           if (nflGame.gameStartTime <= currentTime) {
             console.error(
@@ -378,10 +362,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               error: `Error: Game for ${player.fullName} has already started for week ${week.week}`,
             });
           }
-        } else {
-          console.log(
-            `Player ${player.fullName} unchanged in position ${position} for week ${week.week}, skipping time check`,
-          );
         }
       }
     }
@@ -808,18 +788,11 @@ export default function GamesDfsSurvivorMyEntry() {
   // Toggle week expansion
   const toggleWeekExpansion = useCallback(
     (weekId: string) => {
-      console.log(`Toggling week expansion for week ${weekId}`);
-      console.log(
-        `Current expanded weeks: ${Array.from(expandedWeeks).join(', ')}`,
-      );
-
       setExpandedWeeks(prev => {
         const newSet = new Set(prev);
         if (newSet.has(weekId)) {
-          console.log(`Collapsing week ${weekId}`);
           newSet.delete(weekId);
         } else {
-          console.log(`Expanding week ${weekId}`);
           newSet.add(weekId);
         }
         return newSet;
@@ -879,13 +852,10 @@ export default function GamesDfsSurvivorMyEntry() {
     setError(null);
 
     try {
-      console.log('Starting Save All process...');
-
       const formData = new FormData();
 
       // Get all the week forms from the DOM to ensure we're collecting the current state
       const weekForms = document.querySelectorAll(`form[id^="week-"]`);
-      console.log(`Found ${weekForms.length} week forms to process`);
 
       // Track which week IDs we're submitting
       const submittedWeekIds = new Set<string>();

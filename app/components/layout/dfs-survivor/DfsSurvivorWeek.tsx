@@ -236,15 +236,8 @@ export default function DfsSurvivorWeekComponent({
 
   const handlePlayerSelect = useCallback(
     (position: string, playerName: string | boolean) => {
-      console.log(
-        `Week ${week.week} player selection change - Position: ${position}, Player: ${playerName}`,
-      );
-
       // If playerName is not a string or is empty, clear the selection
       if (typeof playerName !== 'string' || !playerName) {
-        console.log(
-          `Week ${week.week} clearing player selection for ${position}`,
-        );
         setInputValues(prev => {
           const newState = { ...prev };
           delete newState[position];
@@ -257,7 +250,6 @@ export default function DfsSurvivorWeekComponent({
         });
 
         // Notify parent component of the change
-        console.log(`Week ${week.week} notifying parent of input change`);
         onError?.(null);
         return;
       }
@@ -267,12 +259,9 @@ export default function DfsSurvivorWeekComponent({
       const player = players.find(p => p.fullName === playerName);
 
       if (player) {
-        console.log(`Week ${week.week} player found:`, player.fullName);
-
         // Before setting, check if this player is already selected in another week
         if (isPlayerSelected(player.id, week.id, position)) {
           const error = `Player ${player.fullName} is already selected in another week`;
-          console.log(`Week ${week.week} ${error}`);
           onError?.(error);
           return;
         }
@@ -292,16 +281,12 @@ export default function DfsSurvivorWeekComponent({
           checkForIntraWeekDuplicates();
         }, 0);
       } else {
-        console.log(
-          `Week ${week.week} no matching player found for "${playerName}" in position ${position}`,
-        );
         setInputValues(prev => ({
           ...prev,
           [position]: playerName,
         }));
 
         // Notify parent component of the change
-        console.log(`Week ${week.week} notifying parent of input change`);
         onError?.(null);
       }
     },
@@ -320,10 +305,8 @@ export default function DfsSurvivorWeekComponent({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      console.log(`Week ${week.week} submit handler called`);
 
       if (checkForIntraWeekDuplicates()) {
-        console.log(`Week ${week.week} has duplicate players, aborting submit`);
         return;
       }
 
@@ -335,12 +318,6 @@ export default function DfsSurvivorWeekComponent({
       if (!formData.has('weekId')) {
         formData.append('weekId', week.id);
       }
-
-      console.log(
-        `Week ${week.week} submitting with ${
-          formData.getAll('weekId').length
-        } weekId entries`,
-      );
 
       // Submit the form using parent fetcher
       parentFetcher.submit(formData, { method: 'post' });
@@ -372,11 +349,6 @@ export default function DfsSurvivorWeekComponent({
       data-testid={`week-${week.week}-form`}
       open={isExpanded}
       onOpenChange={() => {
-        console.log(
-          `Week ${
-            week.week
-          } - Toggling expansion state from ${isExpanded} to ${!isExpanded}`,
-        );
         onToggleExpand?.();
       }}
     >
