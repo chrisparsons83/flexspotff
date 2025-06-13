@@ -1,4 +1,6 @@
 import { defineConfig } from 'cypress';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export default defineConfig({
   e2e: {
@@ -29,6 +31,6 @@ export default defineConfig({
       user: 'postgres',
       password: 'postgres'
     },
-    TIME_MOCK_SECRET: 'FDG*4#H(*)@EDHN'
+    TIME_MOCK_SECRET: process.env.TIME_MOCK_SECRET
   }
 }); 
