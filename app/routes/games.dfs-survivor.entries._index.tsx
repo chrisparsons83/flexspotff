@@ -349,33 +349,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           existingEntryForPosition.playerId !== player.id;
 
         if (isPlayerChanged) {
-<<<<<<< HEAD
           const testTime = formData.get('__test_current_time__') as string | undefined;
           const currentTime = getCurrentTime(testTime);
           
-=======
-          const testTime = formData.get('__test_current_time__') as
-            | string
-            | undefined;
-          console.log(
-            `=== PROCESSING PLAYER: ${player.fullName} (${position}) ===`,
-          );
-          console.log(`Raw test time from form: ${testTime}`);
-          console.log(
-            `Has TIME_MOCK_SECRET: ${!!process.env.TIME_MOCK_SECRET}`,
-          );
-
-          const currentTime = getCurrentTime(testTime);
-          console.log(`Current time after processing: ${currentTime}`);
-          console.log(`Game start time: ${nflGame.gameStartTime}`);
-          console.log(
-            `Time comparison: ${nflGame.gameStartTime} <= ${currentTime} = ${
-              nflGame.gameStartTime <= currentTime
-            }`,
-          );
-          console.log(`====================================`);
-
->>>>>>> df7e2732603db01bfdd99b488c5c240f3358ec30
           if (nflGame.gameStartTime <= currentTime) {
             console.error(
               `Game for player ${player.fullName} has already started for Week ${week.week}`,
@@ -384,13 +360,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               error: `Error: Game for ${player.fullName} has already started for week ${week.week}`,
             });
           }
-<<<<<<< HEAD
-=======
-        } else {
-          console.log(
-            `Player ${player.fullName} unchanged in position ${position} for week ${week.week}, skipping time check`,
-          );
->>>>>>> df7e2732603db01bfdd99b488c5c240f3358ec30
         }
       }
     }
@@ -815,7 +784,6 @@ export default function GamesDfsSurvivorMyEntry() {
   }, []);
 
   // Toggle week expansion
-<<<<<<< HEAD
   const toggleWeekExpansion = useCallback((weekId: string) => {
     
     setExpandedWeeks(prev => {
@@ -828,29 +796,6 @@ export default function GamesDfsSurvivorMyEntry() {
       return newSet;
     });
   }, [expandedWeeks]);
-=======
-  const toggleWeekExpansion = useCallback(
-    (weekId: string) => {
-      console.log(`Toggling week expansion for week ${weekId}`);
-      console.log(
-        `Current expanded weeks: ${Array.from(expandedWeeks).join(', ')}`,
-      );
-
-      setExpandedWeeks(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(weekId)) {
-          console.log(`Collapsing week ${weekId}`);
-          newSet.delete(weekId);
-        } else {
-          console.log(`Expanding week ${weekId}`);
-          newSet.add(weekId);
-        }
-        return newSet;
-      });
-    },
-    [expandedWeeks],
-  );
->>>>>>> df7e2732603db01bfdd99b488c5c240f3358ec30
 
   // Get all selected players across all weeks to validate no duplicates
   const allSelectedPlayers = useMemo(() => {
@@ -903,22 +848,12 @@ export default function GamesDfsSurvivorMyEntry() {
     setError(null);
 
     try {
-<<<<<<< HEAD
       
-=======
-      console.log('Starting Save All process...');
-
->>>>>>> df7e2732603db01bfdd99b488c5c240f3358ec30
       const formData = new FormData();
 
       // Get all the week forms from the DOM to ensure we're collecting the current state
       const weekForms = document.querySelectorAll(`form[id^="week-"]`);
-<<<<<<< HEAD
       
-=======
-      console.log(`Found ${weekForms.length} week forms to process`);
-
->>>>>>> df7e2732603db01bfdd99b488c5c240f3358ec30
       // Track which week IDs we're submitting
       const submittedWeekIds = new Set<string>();
 
