@@ -32,7 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const year = +yearParam;
   const week = +weekParam;
 
-  // Get max week for navigation
+  // Get max week for navigation (still use scored weeks for navigation)
   const scoredWeeksForMaxWeek = await prisma.dFSSurvivorUserWeek.findMany({
     where: {
       year,
@@ -43,12 +43,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const maxWeek = scoredWeeksForMaxWeek[0]?.week || 0;
 
-  // Get the week's entries
-  const weekEntries = await prisma.dFSSurvivorUserWeek.findFirst({
+  // Get all week entries for the specified week (scored or unscored)
+  const weekEntries = await prisma.dFSSurvivorUserWeek.findMany({
     where: {
       year,
       week,
-      isScored: true,
     },
     include: {
       entries: {
@@ -59,7 +58,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     },
   });
 
-  if (!weekEntries) {
+  if (!weekEntries || weekEntries.length === 0) {
     return typedjson<LoaderData>({
       totalPoints: [],
       users: [],
@@ -70,14 +69,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     });
   }
 
-  // Calculate points for each user
+  // Calculate points for each user from all their entries across all week records
   const userPoints = new Map<string, { points: number; entries: any[] }>();
   
-  for (const entry of weekEntries.entries) {
-    const current = userPoints.get(entry.userId) || { points: 0, entries: [] };
-    current.points += entry.points;
-    current.entries.push(entry);
-    userPoints.set(entry.userId, current);
+  for (const weekRecord of weekEntries) {
+    for (const entry of weekRecord.entries) {
+      const current = userPoints.get(entry.userId) || { points: 0, entries: [] };
+      current.points += entry.points;
+      current.entries.push(entry);
+      userPoints.set(entry.userId, current);
+    }
   }
 
   // Convert to array and sort by points
@@ -160,6 +161,7 @@ export default function DfsSurvivorStandingsYearWeekIndex() {
               user={userIdToUserMap.get(result.userId)}
               points={result.points}
               entries={result.entries}
+              showFlexAsActualPosition={false}
             />
           ))
           }

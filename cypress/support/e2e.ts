@@ -42,6 +42,13 @@ Cypress.Commands.add('navigateToDFSSurvivor', () => {
   cy.url().should('include', '/games/dfs-survivor/entries');
 });
 
+// Add custom command to navigate to DFS survivor admin page
+Cypress.Commands.add('navigateToDFSSurvivorAdmin', () => {
+  cy.url().should('not.include', '/auth/discord');
+  cy.visit('/admin/dfs-survivor', { failOnStatusCode: false });
+  cy.url().should('include', '/admin/dfs-survivor');
+});
+
 // Add custom command to create a new DFS survivor contest
 Cypress.Commands.add('createDFSSurvivorContest', (contestName: string) => {
   cy.get('[data-testid="create-contest-button"]').click();

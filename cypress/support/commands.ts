@@ -27,6 +27,12 @@ declare global {
        * @example cy.joinDFSSurvivorContest('contest-id')
        */
       joinDFSSurvivorContest(contestId: string): Chainable<void>;
+
+      /**
+       * Custom command to navigate to DFS survivor admin page
+       * @example cy.navigateToDFSSurvivorAdmin()
+       */
+      navigateToDFSSurvivorAdmin(): Chainable<void>;
     }
   }
 } 

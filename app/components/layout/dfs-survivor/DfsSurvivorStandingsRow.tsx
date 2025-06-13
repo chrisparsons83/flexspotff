@@ -12,25 +12,46 @@ type Props = {
       position: string;
     };
   })[];
+  showFlexAsActualPosition?: boolean;
 };
 
-const positionOrder = {
-  'QB1': 1,
-  'QB2': 2,
-  'RB1': 3,
-  'RB2': 4,
-  'WR1': 5,
-  'WR2': 6,
-  'TE': 7,
-  'FLEX1': 8,
-  'FLEX2': 9,
-  'K': 10,
-  'D/ST': 11,
+const positionTypeOrder = {
+  'QB': 1,
+  'RB': 2,
+  'WR': 3,
+  'TE': 4,
+  'FLEX': 5,
+  'K': 6,
+  'D/ST': 7,
 };
 
-const formatPosition = (position: string) => {
+const formatPosition = (rosterPosition: string, playerPosition?: string, showFlexAsActualPosition: boolean = true) => {
   // Remove numbers from QB, RB, WR, and FLEX positions
-  return position.replace(/[12]$/, '');
+  const cleanPosition = rosterPosition.replace(/[12]$/, '');
+  
+  // If it's a FLEX position and we want to show actual position, return the player's actual position
+  if (cleanPosition === 'FLEX' && showFlexAsActualPosition && playerPosition) {
+    return playerPosition;
+  }
+  
+  return cleanPosition;
+};
+
+const getPositionType = (position: string, showFlexAsActualPosition: boolean = true) => {
+  const formattedPosition = formatPosition(position);
+  
+  // If we're not showing FLEX as actual position (weekly standings), keep FLEX as FLEX
+  if (formattedPosition === 'FLEX' && !showFlexAsActualPosition) {
+    return 'FLEX';
+  }
+  
+  // Map FLEX positions to their actual player position (for overall standings)
+  if (formattedPosition === 'FLEX') {
+    // For FLEX positions, we need to use the player's actual position
+    return 'FLEX'; // This will be handled separately
+  }
+  
+  return formattedPosition;
 };
 
 const formatPoints = (points: number) => {
@@ -42,6 +63,7 @@ export default function DfsSurvivorStandingsRow({
   user,
   points,
   entries,
+  showFlexAsActualPosition = true,
 }: Props) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -51,12 +73,29 @@ export default function DfsSurvivorStandingsRow({
 
   if (!user) return null;
 
-  // Sort entries by position order
+  // Sort entries by position type first, then by points within each position
   const sortedEntries = [...entries].sort((a, b) => {
-    const posA = a.id.split('-').pop() || '';
-    const posB = b.id.split('-').pop() || '';
-    return (positionOrder[posA as keyof typeof positionOrder] || 0) - 
-           (positionOrder[posB as keyof typeof positionOrder] || 0);
+    let positionTypeA = getPositionType(a.position, showFlexAsActualPosition);
+    let positionTypeB = getPositionType(b.position, showFlexAsActualPosition);
+    
+    // For FLEX positions in overall standings, use the actual player position
+    if (positionTypeA === 'FLEX' && showFlexAsActualPosition) {
+      positionTypeA = a.player.position;
+    }
+    if (positionTypeB === 'FLEX' && showFlexAsActualPosition) {
+      positionTypeB = b.player.position;
+    }
+    
+    // First sort by position type
+    const positionOrderA = positionTypeOrder[positionTypeA as keyof typeof positionTypeOrder] || 999;
+    const positionOrderB = positionTypeOrder[positionTypeB as keyof typeof positionTypeOrder] || 999;
+    
+    if (positionOrderA !== positionOrderB) {
+      return positionOrderA - positionOrderB;
+    }
+    
+    // If same position type, sort by points (highest first)
+    return b.points - a.points;
   });
 
   return (
@@ -91,16 +130,13 @@ export default function DfsSurvivorStandingsRow({
           <td colSpan={2}>
             {sortedEntries.length === 0 && <div>No entries</div>}
             <div className="grid grid-cols-3 gap-4">
-              {sortedEntries.map(entry => {
-                const position = entry.id.split('-').pop() || '';
-                return (
-                  <>
-                    <div>{formatPosition(position)}</div>
-                    <div>{entry.player.fullName}</div>
-                    <div>{formatPoints(entry.points)}</div>
-                  </>
-                );
-              })}
+              {sortedEntries.map(entry => (
+                <div key={entry.id} className="contents">
+                  <div>{formatPosition(entry.position, entry.player.position, showFlexAsActualPosition)}</div>
+                  <div>{entry.player.fullName}</div>
+                  <div>{formatPoints(entry.points)}</div>
+                </div>
+              ))}
             </div>
           </td>
         </tr>
