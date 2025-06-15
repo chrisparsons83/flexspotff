@@ -1,8 +1,13 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
-import { typedjson, useTypedLoaderData, useTypedActionData } from 'remix-typedjson';
-import { authenticator, requireAdmin } from '~/services/auth.server';
+import { useEffect, useRef } from 'react';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { Form, useNavigation } from '@remix-run/react';
+import { typedjson, useTypedActionData, useTypedLoaderData } from 'remix-typedjson';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/Button';
+import { createOmniPlayer } from '~/models/omniplayer.server';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 
 // Define ActionData types and type guards
 type SuccessActionData = { successMessage: string };
@@ -27,13 +32,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return typedjson({ omniSeasons, omniSports });
 };
-
-import type { ActionFunctionArgs } from '@remix-run/node';
-import { Form, useNavigation } from '@remix-run/react';
-import { useEffect, useRef } from 'react';
-import { createOmniPlayer } from '~/models/omniplayer.server';
-import Button from '~/components/ui/Button';
-import Alert from '~/components/ui/Alert';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
