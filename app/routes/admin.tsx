@@ -151,6 +151,14 @@ export default function Admin() {
                       Qualifying Points Update
                     </Link>
                   </li>
+                  <li className='flow-root'>
+                    <Link
+                      to='/admin/omni/add-player'
+                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                    >
+                      Add Omni Player
+                    </Link>
+                  </li>
                 </ul>
               </section>
               <section>

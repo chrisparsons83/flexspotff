@@ -352,7 +352,7 @@ model OmniPlayer {
   displayName String
   isActive Boolean @default(true)
   relativeSort Int
-  pointsScored Int?
+  pointsScored Int? @default(0)
   isComplete Boolean @default(false)
 
   sport OmniSport @relation(fields: [sportId], references: [id], onDelete: Cascade, onUpdate: Cascade)

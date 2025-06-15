@@ -24,6 +24,22 @@ export function getPlayersAndAssociatedPick(seasonId: string) {
   });
 }
 
+export function createOmniPlayer({
+  displayName,
+  sportId,
+  seasonId,
+  relativeSort,
+}: Pick<OmniPlayer, 'displayName' | 'sportId' | 'seasonId' | 'relativeSort'>) {
+  return prisma.omniPlayer.create({
+    data: {
+      displayName,
+      sportId,
+      seasonId,
+      relativeSort,
+    },
+  });
+}
+
 export function updateOmniPlayer(player: Partial<OmniPlayer>) {
   return prisma.omniPlayer.update({
     where: {

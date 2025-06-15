@@ -28,6 +28,14 @@ export async function getCurrentOmniSeason() {
   });
 }
 
+export async function getAllOmniSeasons() {
+  return prisma.omniSeason.findMany({
+    orderBy: {
+      year: 'desc',
+    },
+  });
+}
+
 export async function getOmniSeason(year: number) {
   return prisma.omniSeason.findFirst({
     where: {
