@@ -11,6 +11,8 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
+import { OMNI_YEAR } from '~/utils/constants';
+import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
 import {
@@ -19,7 +21,7 @@ import {
 } from '~/models/omnisporteventpoints.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
-const OMNI_YEAR = 2025;
+
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -128,11 +130,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Error('Why is there no season, Chris?');
   }
 
-  const players = omniSeason?.omniTeams.flatMap(omniTeam =>
-    omniTeam.draftPicks
-      .map(draftPick => draftPick.player)
-      .filter(player => player !== null),
-  );
+  const players = await getPlayersAndAssociatedPick(omniSeason.id);
 
   players.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
