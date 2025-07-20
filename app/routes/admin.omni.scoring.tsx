@@ -228,6 +228,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 const AdminOmniScoring = () => {
   const [activeSport, setActiveSport] = useState('');
   const [allChecked, setAllChecked] = useState(false);
+  const [useInputField, setUseInputField] = useState(false);
   const { sports, players } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
@@ -257,6 +258,7 @@ const AdminOmniScoring = () => {
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setActiveSport(e.target.value);
     setAllChecked(false);
+    setUseInputField(false);
   };
 
   const toggleAllCheckboxes = () => {
@@ -267,6 +269,10 @@ const AdminOmniScoring = () => {
     checkboxes.forEach(checkbox => {
       checkbox.checked = newState;
     });
+  };
+
+  const toggleInputMode = () => {
+    setUseInputField(!useInputField);
   };
 
   return (
@@ -293,13 +299,20 @@ const AdminOmniScoring = () => {
         {activeSport !== '' && (
           <>
             <h3>Active Players</h3>
-            <div className="mb-4">
+            <div className="mb-4 flex gap-2">
               <Button 
                 type="button" 
                 onClick={toggleAllCheckboxes}
                 className="bg-gray-100 text-gray-900 hover:bg-gray-200"
               >
                 {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
+              </Button>
+              <Button 
+                type="button" 
+                onClick={toggleInputMode}
+                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+              >
+                {useInputField ? 'Use Dropdown' : 'Use Custom Values'}
               </Button>
             </div>
             <table>
@@ -335,15 +348,25 @@ const AdminOmniScoring = () => {
                         </td>
                         <td>{player.pointsScored}</td>
                         <td>
-                          <select
-                            name={`${player.id}--pointsAdded`}
-                            className='form-select block w-full dark:border-0 dark:bg-slate-600'
-                          >
-                            <option value='0'>0</option>
-                            <option value='10'>10</option>
-                            <option value='20'>20</option>
-                            <option value='30'>30</option>
-                          </select>
+                          {useInputField ? (
+                            <input
+                              type="number"
+                              name={`${player.id}--pointsAdded`}
+                              defaultValue="0"
+                              min="0"
+                              className='form-input block w-full dark:border-0 dark:bg-slate-600'
+                            />
+                          ) : (
+                            <select
+                              name={`${player.id}--pointsAdded`}
+                              className='form-select block w-full dark:border-0 dark:bg-slate-600'
+                            >
+                              <option value='0'>0</option>
+                              <option value='10'>10</option>
+                              <option value='20'>20</option>
+                              <option value='30'>30</option>
+                            </select>
+                          )}
                         </td>
                         <td>
                           <input
