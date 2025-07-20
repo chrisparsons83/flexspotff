@@ -174,12 +174,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ),
         ];
 
+        // Get the content text based on whether we're pinging everyone or specific users
+        let contentText;
+        if (uniqueUsers.length === players.filter(player => player && player.draftPick?.team.user?.discordId).length) {
+          // If uniqueUsers includes all players in the league, ping the role instead of individuals
+          contentText = env.OMNI_ROLE_ID ? `Scoring update for <@&${env.OMNI_ROLE_ID}>` : 'Scoring update for everyone';
+        } else {
+          // Otherwise ping specific users
+          contentText = `Scoring update for ${uniqueUsers
+            .map(discordId => `<@${discordId}>`)
+            .join(', ')}`;
+        }
+
         await sendMessageToChannel({
           channelId: env.OMNI_CHANNEL_ID,
           messageData: {
-            content: `Scoring update for ${uniqueUsers
-              .map(discordId => `<@${discordId}>`)
-              .join(', ')}`,
+            content: contentText,
             embeds: [embed],
           },
         });

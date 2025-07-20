@@ -17,6 +17,7 @@ const envSchema = z.object({
   FORCE_ADMIN: z.enum(['off', 'on']),
   NODE_ENV: z.optional(z.string().min(1)),
   OMNI_CHANNEL_ID: z.optional(z.string().min(1)),
+  OMNI_ROLE_ID: z.optional(z.string().min(1)),
   SESSION_SECRET: z.string().min(1),
   WEBSITE_URL: z.string().min(1),
   SPREADS_API_KEY: z.string().min(1),
