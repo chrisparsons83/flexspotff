@@ -217,6 +217,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 const AdminOmniScoring = () => {
   const [activeSport, setActiveSport] = useState('');
+  const [allChecked, setAllChecked] = useState(false);
   const { sports, players } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
@@ -245,6 +246,17 @@ const AdminOmniScoring = () => {
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setActiveSport(e.target.value);
+    setAllChecked(false);
+  };
+
+  const toggleAllCheckboxes = () => {
+    const newState = !allChecked;
+    setAllChecked(newState);
+    
+    const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name$="--isEliminated"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = newState;
+    });
   };
 
   return (
@@ -271,6 +283,15 @@ const AdminOmniScoring = () => {
         {activeSport !== '' && (
           <>
             <h3>Active Players</h3>
+            <div className="mb-4">
+              <Button 
+                type="button" 
+                onClick={toggleAllCheckboxes}
+                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+              >
+                {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
+              </Button>
+            </div>
             <table>
               <thead>
                 <tr className='text-left'>
