@@ -129,7 +129,7 @@ export default function OmniQualifyingPointsYearIndex() {
                 </td>
                 <td>{position.player.displayName}</td>
                 <td>{position.player.draftPick?.team.user?.discordName}</td>
-                <td>{position.points}</td>
+                <td>{position.points.toFixed(2)}</td>
               </tr>
             );
           })}
