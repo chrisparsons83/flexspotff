@@ -2,19 +2,7 @@ describe('DFS Survivor', () => {
   const loginAsUserOne = () => {
     cy.clearCookie('_session');
 
-
     cy.loginAsUser(Cypress.env('userOne'));
-    cy.getCookie('_session').should('exist');
-
-    cy.navigateToDFSSurvivor();
-    cy.wait(200);
-  };
-
-  const loginAsUserTwo = () => {
-    cy.clearCookie('_session');
-
-
-    cy.loginAsUser(Cypress.env('userTwo'));
     cy.getCookie('_session').should('exist');
 
     cy.navigateToDFSSurvivor();
@@ -24,12 +12,10 @@ describe('DFS Survivor', () => {
   const loginAsAdmin = () => {
     cy.clearCookie('_session');
 
-
     cy.request({
       method: 'POST',
       url: '/api/test/login',
       body: {
-        discordId: '123456789',
         discordId: '123456789',
         discordName: 'TestAdmin',
         discordAvatar: 'default_avatar',
@@ -74,25 +60,6 @@ describe('DFS Survivor', () => {
     loginAsUserOne();
     navigateWithMockTime(new Date('2024-08-06T00:19:00Z'));
     clearAllEntries();
-  };
-
-  const clearEntriesUserTwo = () => {
-    unscoreAllWeeks();
-    loginAsUserTwo();
-    navigateWithMockTime(new Date('2024-08-06T00:19:00Z'));
-    clearAllEntries();
-  };
-
-  const clearEntriesAdmin = () => {
-    loginAsAdmin();
-    cy.navigateToDFSSurvivor();
-    clearAllEntries();
-  };
-
-  const clearEntriesAllUsers = () => {
-    clearEntriesUserOne();
-    clearEntriesUserTwo();
-    clearEntriesAdmin();
   };
 
   const openWeekCards = () => {
@@ -394,11 +361,11 @@ describe('DFS Survivor', () => {
       { week: 10, index: getPlayerIndex(10, 'WR1'), name: 'Jahan Dotson' },
       { week: 9, index: getPlayerIndex(9, 'DEF'), name: 'ATL' },
     ];
-    enterPlayers(playerEntriesOne);
+    enterPlayers(players);
     saveAllEntries(testTime);
     verifySuccessfulEntry();
     openWeekCards();
-    verifyPlayerEntries(playerEntriesOne);
+    verifyPlayerEntries(players);
 
     // Test saving multiple players for a filled week
     const playersTwo = [
@@ -1267,221 +1234,5 @@ describe('DFS Survivor', () => {
         cy.get('button:contains("Save Entry")').should('not.be.disabled');
       });
     }
-  });
-
-  // /*
-  // TEST: Scoring Validation
-
-  // Purpose:
-  // - Test that entries are scored correctly and scores are displayed properly
-  // */
-  // it('Scoring Validation', () => {
-  //   const testTime = new Date('2024-09-06T00:19:00Z');
-  //   unscoreAllWeeks();
-  //   clearEntriesUserOne();
-
-  //   // Create full entries for user one weeks 1 and 2 and 3
-  //   const playerEntriesOne = [
-  //     { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Patrick Mahomes' },
-  //     { week: 1, index: getPlayerIndex(1, 'QB2'), name: 'Justin Herbert' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Najee Harris' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Gus Edwards' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR1'), name: 'JuJu Smith-Schuster' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR2'), name: 'Ladd McConkey' },
-  //     { week: 1, index: getPlayerIndex(1, 'TE'), name: 'Noah Gray' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Isaiah Likely' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'Derrick Henry' },
-  //     { week: 1, index: getPlayerIndex(1, 'K'), name: 'Justin Tucker' },
-  //     { week: 1, index: getPlayerIndex(1, 'DEF'), name: 'BAL' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB1'), name: 'Jared Goff' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB2'), name: 'Jordan Love' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB1'), name: 'Josh Jacobs' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB2'), name: 'David Montgomery' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR1'), name: 'Tim Patrick' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR2'), name: 'Jayden Reed' },
-  //     { week: 2, index: getPlayerIndex(2, 'TE'), name: 'Tucker Kraft' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX1'), name: 'Justin Jefferson' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX2'), name: 'Rome Odunze' },
-  //     { week: 2, index: getPlayerIndex(2, 'K'), name: 'Jake Bates' },
-  //     { week: 2, index: getPlayerIndex(2, 'DEF'), name: 'DET' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB1'), name: 'Tua Tagovailoa' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB2'), name: 'Josh Allen' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB1'), name: 'Raheem Mostert' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB2'), name: 'James Cook' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR1'), name: 'Khalil Shakir' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR2'), name: 'Jaylen Waddle' },
-  //     { week: 3, index: getPlayerIndex(3, 'TE'), name: 'Jonnu Smith' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX1'), name: 'Ray Davis' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX2'), name: 'Tyreek Hill' },
-  //     { week: 3, index: getPlayerIndex(3, 'K'), name: 'Tyler Bass' },
-  //     { week: 3, index: getPlayerIndex(3, 'DEF'), name: 'BUF' },
-  //   ]
-  //   enterPlayers(playerEntriesOne);
-  //   saveAllEntries(testTime);
-  //   verifySuccessfulEntry();
-  //   openWeekCards();
-  //   verifyPlayerEntries(playerEntriesOne);
-
-  //   // Create full entries for user two weeks 1 and 2 and 3
-  //   clearEntriesUserTwo();
-  //   const playerEntriesTwo = [
-  //     { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Patrick Mahomes' },
-  //     { week: 1, index: getPlayerIndex(1, 'QB2'), name: 'Justin Herbert' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Najee Harris' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Gus Edwards' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR1'), name: 'JuJu Smith-Schuster' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR2'), name: 'Ladd McConkey' },
-  //     { week: 1, index: getPlayerIndex(1, 'TE'), name: 'Noah Gray' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Isaiah Likely' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'Derrick Henry' },
-  //     { week: 1, index: getPlayerIndex(1, 'K'), name: 'Justin Tucker' },
-  //     { week: 1, index: getPlayerIndex(1, 'DEF'), name: 'BAL' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB1'), name: 'Sam Darnold' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB2'), name: 'Jordan Love' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB1'), name: 'Josh Jacobs' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB2'), name: 'David Montgomery' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR1'), name: 'Tim Patrick' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR2'), name: 'Jayden Reed' },
-  //     { week: 2, index: getPlayerIndex(2, 'TE'), name: 'Tucker Kraft' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX1'), name: 'Justin Jefferson' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX2'), name: 'Rome Odunze' },
-  //     { week: 2, index: getPlayerIndex(2, 'K'), name: 'Jake Bates' },
-  //     { week: 2, index: getPlayerIndex(2, 'DEF'), name: 'DET' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB1'), name: 'Tua Tagovailoa' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB2'), name: 'Josh Allen' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB1'), name: 'Raheem Mostert' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB2'), name: 'James Cook' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR1'), name: 'Khalil Shakir' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR2'), name: 'Jaylen Waddle' },
-  //     { week: 3, index: getPlayerIndex(3, 'TE'), name: 'Jonnu Smith' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX1'), name: 'Ray Davis' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX2'), name: 'Tyreek Hill' },
-  //     { week: 3, index: getPlayerIndex(3, 'K'), name: 'Tyler Bass' },
-  //     { week: 3, index: getPlayerIndex(3, 'DEF'), name: 'BUF' },
-  //   ]
-  //   enterPlayers(playerEntriesTwo);
-  //   saveAllEntries(testTime);
-  //   verifySuccessfulEntry();
-  //   openWeekCards();
-  //   verifyPlayerEntries(playerEntriesTwo);
-
-  //   // Create full entries for admin weeks 1 and 2 and 3
-  //   clearEntriesAdmin();
-  //   const playerEntriesAdmin = [
-  //     { week: 1, index: getPlayerIndex(1, 'QB1'), name: 'Patrick Mahomes' },
-  //     { week: 1, index: getPlayerIndex(1, 'QB2'), name: 'Justin Herbert' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB1'), name: 'Najee Harris' },
-  //     { week: 1, index: getPlayerIndex(1, 'RB2'), name: 'Gus Edwards' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR1'), name: 'JuJu Smith-Schuster' },
-  //     { week: 1, index: getPlayerIndex(1, 'WR2'), name: 'Ladd McConkey' },
-  //     { week: 1, index: getPlayerIndex(1, 'TE'), name: 'Noah Gray' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX1'), name: 'Isaiah Likely' },
-  //     { week: 1, index: getPlayerIndex(1, 'FLEX2'), name: 'Derrick Henry' },
-  //     { week: 1, index: getPlayerIndex(1, 'K'), name: 'Justin Tucker' },
-  //     { week: 1, index: getPlayerIndex(1, 'DEF'), name: 'BAL' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB1'), name: 'Sam Darnold' },
-  //     { week: 2, index: getPlayerIndex(2, 'QB2'), name: 'Jordan Love' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB1'), name: 'Josh Jacobs' },
-  //     { week: 2, index: getPlayerIndex(2, 'RB2'), name: 'David Montgomery' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR1'), name: 'Tim Patrick' },
-  //     { week: 2, index: getPlayerIndex(2, 'WR2'), name: 'Jayden Reed' },
-  //     { week: 2, index: getPlayerIndex(2, 'TE'), name: 'Tucker Kraft' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX1'), name: 'Justin Jefferson' },
-  //     { week: 2, index: getPlayerIndex(2, 'FLEX2'), name: 'Rome Odunze' },
-  //     { week: 2, index: getPlayerIndex(2, 'K'), name: 'Jake Bates' },
-  //     { week: 2, index: getPlayerIndex(2, 'DEF'), name: 'DET' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB1'), name: 'Tua Tagovailoa' },
-  //     { week: 3, index: getPlayerIndex(3, 'QB2'), name: 'Josh Allen' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB1'), name: 'Raheem Mostert' },
-  //     { week: 3, index: getPlayerIndex(3, 'RB2'), name: 'James Cook' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR1'), name: 'Khalil Shakir' },
-  //     { week: 3, index: getPlayerIndex(3, 'WR2'), name: 'Jaylen Waddle' },
-  //     { week: 3, index: getPlayerIndex(3, 'TE'), name: 'Jonnu Smith' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX1'), name: 'Breece Hall' },
-  //     { week: 3, index: getPlayerIndex(3, 'FLEX2'), name: 'Tyreek Hill' },
-  //     { week: 3, index: getPlayerIndex(3, 'K'), name: 'Tyler Bass' },
-  //     { week: 3, index: getPlayerIndex(3, 'DEF'), name: 'BUF' },
-  //   ]
-  //   enterPlayers(playerEntriesAdmin);
-  //   saveAllEntries(testTime);
-  //   verifySuccessfulEntry();
-  //   openWeekCards();
-  //   verifyPlayerEntries(playerEntriesAdmin);
-
-  //   // Fast forward to week 3
-  //   navigateWithMockTime(new Date('2024-09-25T00:59:00Z'));
-
-  //   // Score weeks 1-3
-  //   cy.navigateToDFSSurvivorAdmin();
-  //   cy.wait(200);
-
-  //   // Score specific weeks using a robust approach similar to revertScoredWeeks
-  //   const scoreSpecificWeeks = (weeksToScore: number[]) => {
-  //     const scoreNextWeek = (remainingWeeks: number[]) => {
-  //       if (remainingWeeks.length === 0) return;
-
-  //       const weekToScore = remainingWeeks[0];
-  //       const restOfWeeks = remainingWeeks.slice(1);
-
-  //       cy.get('table tbody tr').then($rows => {
-  //         let foundWeek = false;
-
-  //         // Check each row for the specific week number
-  //         $rows.each((index, row) => {
-  //           const firstCellText = Cypress.$(row).find('td').first().text().trim();
-
-  //           if (firstCellText === weekToScore.toString()) {
-  //             const $button = Cypress.$(row).find('button');
-  //             if ($button.length > 0 && $button.text().trim() === 'Score Week') {
-  //               foundWeek = true;
-  //               // Click to score the week
-  //               cy.wrap($button).click();
-  //               cy.wait(1000); // Wait for the page to update
-  //               return false; // Break out of the each loop
-  //             }
-  //           }
-  //         });
-
-  //         // Continue with the next week
-  //         if (foundWeek) {
-  //           // Wait for page update, then score the next week
-  //           scoreNextWeek(restOfWeeks);
-  //         } else {
-  //           // Week was already scored or not found, continue with next
-  //           scoreNextWeek(restOfWeeks);
-  //         }
-  //       });
-  //     };
-
-  //     scoreNextWeek(weeksToScore);
-  //   };
-
-  //   scoreSpecificWeeks([1, 2, 3]);
-
-  //   // TODO: Verify correct scoring displays for users one two and admin
-
-  //   cy.navigateToDFSSurvivor();
-  //   openWeekCards();
-  //   verifyPlayerEntries(playerEntriesAdmin);
-
-    //   // Verify Correct Overall Standings
-
-    //   // Verify correct weekly standings
-
-    //   // Create some entries for user one week 4
-
-    //   // Create full entries for user two week 4
-
-    //   // Create no entries for admin in week 4
-
-    //   // Fast forward to week 5
-
-    //   // Score week 4
-
-    //   // Verify correct scoring displays for users one two and admin
-
-    //   // Verify Correct Overall Standings
-
-    // Verify correct weekly standings
   });
 });

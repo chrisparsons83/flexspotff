@@ -291,11 +291,8 @@ export default function DfsSurvivorWeekComponent({
       }
     },
     [
-      selectedPlayers,
-      inputValues,
       getPositionPlayersArray,
       onError,
-      week.week,
       week.id,
       isPlayerSelected,
       checkForIntraWeekDuplicates,
@@ -322,7 +319,7 @@ export default function DfsSurvivorWeekComponent({
       // Submit the form using parent fetcher
       parentFetcher.submit(formData, { method: 'post' });
     },
-    [checkForIntraWeekDuplicates, week.id, week.week, parentFetcher],
+    [checkForIntraWeekDuplicates, week.id, parentFetcher],
   );
 
   const formatPositionName = useCallback((position: string) => {

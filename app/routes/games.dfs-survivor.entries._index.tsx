@@ -786,20 +786,17 @@ export default function GamesDfsSurvivorMyEntry() {
   }, []);
 
   // Toggle week expansion
-  const toggleWeekExpansion = useCallback(
-    (weekId: string) => {
-      setExpandedWeeks(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(weekId)) {
-          newSet.delete(weekId);
-        } else {
-          newSet.add(weekId);
-        }
-        return newSet;
-      });
-    },
-    [expandedWeeks],
-  );
+  const toggleWeekExpansion = useCallback((weekId: string) => {
+    setExpandedWeeks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(weekId)) {
+        newSet.delete(weekId);
+      } else {
+        newSet.add(weekId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Get all selected players across all weeks to validate no duplicates
   const allSelectedPlayers = useMemo(() => {
