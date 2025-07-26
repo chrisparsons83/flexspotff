@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { prisma } from '~/db.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
@@ -31,11 +32,24 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ? locksChallengeWeek?.weekNumber
     : locksChallengeWeek?.weekNumber - 1 || 1;
 
+  // Get the current DFS Survivor week
+  const dfsSurvivorWeek = await prisma.dFSSurvivorUserWeek.findFirst({
+    where: {
+      year: currentSeason.year,
+      isScored: true,
+    },
+    orderBy: {
+      week: 'desc',
+    },
+  });
+  const dfsSurvivorCurrentWeek = dfsSurvivorWeek?.week || 1;
+
   return typedjson(
     {
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
       locksChallengeCurrentWeek,
+      dfsSurvivorCurrentWeek,
       currentSeason,
     },
     { headers: { 'x-superjson': 'true' } },
@@ -47,6 +61,7 @@ export default function GamesIndex() {
     qbStreamingCurrentWeek,
     spreadPoolCurrentWeek,
     locksChallengeCurrentWeek,
+    dfsSurvivorCurrentWeek,
     currentSeason,
   } = useTypedLoaderData<typeof loader>();
 
@@ -95,6 +110,25 @@ export default function GamesIndex() {
     {
       name: 'Weekly Standings',
       href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
+      current: false,
+    },
+  ];
+
+  const dfsSurvivorLinks = [
+    { name: 'Rules', href: '/games/dfs-survivor/rules', current: false },
+    {
+      name: 'My Entries',
+      href: '/games/dfs-survivor/entries',
+      current: false,
+    },
+    {
+      name: 'Overall Standings',
+      href: `/games/dfs-survivor/standings/${currentSeason.year}`,
+      current: false,
+    },
+    {
+      name: 'Weekly Standings',
+      href: `/games/dfs-survivor/standings/${currentSeason.year}/${dfsSurvivorCurrentWeek}`,
       current: false,
     },
   ];
@@ -185,6 +219,29 @@ export default function GamesIndex() {
               className='mb-8 space-y-2 p-0'
             >
               {nflLocksChallengeLinks.map(navLink => (
+                <li key={navLink.name} className='flow-root'>
+                  <Link
+                    to={navLink.href}
+                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                  >
+                    {navLink.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <p
+              id='games-dfssurvivor-heading'
+              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
+            >
+              DFS Survivor
+            </p>
+            <ul
+              aria-labelledby='games-dfssurvivor-heading'
+              className='mb-8 space-y-2 p-0'
+            >
+              {dfsSurvivorLinks.map(navLink => (
                 <li key={navLink.name} className='flow-root'>
                   <Link
                     to={navLink.href}

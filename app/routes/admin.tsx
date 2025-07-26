@@ -122,6 +122,14 @@ export default function Admin() {
                       Locks Challenge
                     </Link>
                   </li>
+                  <li className='flow-root'>
+                    <Link
+                      to='/admin/dfs-survivor'
+                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                    >
+                      DFS Survivor
+                    </Link>
+                  </li>
                 </ul>
               </section>
               <section>

@@ -176,9 +176,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         // Get the content text based on whether we're pinging everyone or specific users
         let contentText;
-        if (uniqueUsers.length === players.filter(player => player && player.draftPick?.team.user?.discordId).length) {
+        if (
+          uniqueUsers.length ===
+          players.filter(
+            player => player && player.draftPick?.team.user?.discordId,
+          ).length
+        ) {
           // If uniqueUsers includes all players in the league, ping the role instead of individuals
-          contentText = env.OMNI_ROLE_ID ? `Scoring update for <@&${env.OMNI_ROLE_ID}>` : 'Scoring update for everyone';
+          contentText = env.OMNI_ROLE_ID
+            ? `Scoring update for <@&${env.OMNI_ROLE_ID}>`
+            : 'Scoring update for everyone';
         } else {
           // Otherwise ping specific users
           contentText = `Scoring update for ${uniqueUsers
@@ -264,8 +271,10 @@ const AdminOmniScoring = () => {
   const toggleAllCheckboxes = () => {
     const newState = !allChecked;
     setAllChecked(newState);
-    
-    const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name$="--isEliminated"]');
+
+    const checkboxes = document.querySelectorAll<HTMLInputElement>(
+      'input[name$="--isEliminated"]',
+    );
     checkboxes.forEach(checkbox => {
       checkbox.checked = newState;
     });
@@ -299,18 +308,18 @@ const AdminOmniScoring = () => {
         {activeSport !== '' && (
           <>
             <h3>Active Players</h3>
-            <div className="mb-4 flex gap-2">
-              <Button 
-                type="button" 
+            <div className='mb-4 flex gap-2'>
+              <Button
+                type='button'
                 onClick={toggleAllCheckboxes}
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
               >
                 {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
               </Button>
-              <Button 
-                type="button" 
+              <Button
+                type='button'
                 onClick={toggleInputMode}
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
               >
                 {useInputField ? 'Use Dropdown' : 'Use Custom Values'}
               </Button>
@@ -350,10 +359,10 @@ const AdminOmniScoring = () => {
                         <td>
                           {useInputField ? (
                             <input
-                              type="number"
+                              type='number'
                               name={`${player.id}--pointsAdded`}
-                              defaultValue="0"
-                              min="0"
+                              defaultValue='0'
+                              min='0'
                               className='form-input block w-full dark:border-0 dark:bg-slate-600'
                             />
                           ) : (

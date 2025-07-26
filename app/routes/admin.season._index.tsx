@@ -30,11 +30,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   switch (action) {
     case 'createSeason': {
+      //const year = new Date().getFullYear();
+      const year = new Date('2024-04-01').getFullYear();
       const season = await createSeason({
-        year: new Date().getFullYear(),
+        year,
         isCurrent: false,
         isOpenForRegistration: false,
         isOpenForFSquared: false,
+        isOpenForDFSSurvivor: false,
         registrationSize: 60,
       });
 
@@ -89,6 +92,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }.`,
       });
     }
+    case 'setDFSSurvivor': {
+      const seasonId = formData.get('seasonId');
+      const actionToSeason = formData.get('actionToSeason');
+      if (typeof seasonId !== 'string' || typeof actionToSeason !== 'string') {
+        throw new Error(`Form not generated correctly.`);
+      }
+
+      const season = await updateSeason({
+        id: seasonId,
+        isOpenForDFSSurvivor: actionToSeason === 'openDFSSurvivor',
+      });
+
+      return typedjson({
+        message: `${season.year} DFS Survivor is now ${
+          season.isOpenForDFSSurvivor ? 'open' : 'closed'
+        }.`,
+      });
+    }
   }
 
   return typedjson({ message: 'Nothing has happened.' });
@@ -121,6 +142,7 @@ export default function SeasonIndex() {
             <th>Active?</th>
             <th>Open Registration?</th>
             <th>Open F²?</th>
+            <th>Open DFS Survivor?</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -132,6 +154,7 @@ export default function SeasonIndex() {
               isCurrent,
               isOpenForRegistration,
               isOpenForFSquared,
+              isOpenForDFSSurvivor,
             } = season;
 
             return (
@@ -140,6 +163,7 @@ export default function SeasonIndex() {
                 <td>{isCurrent ? 'Yes' : 'No'}</td>
                 <td>{isOpenForRegistration ? 'Yes' : 'No'}</td>
                 <td>{isOpenForFSquared ? 'Yes' : 'No'}</td>
+                <td>{isOpenForDFSSurvivor ? 'Yes' : 'No'}</td>
                 <td className='not-prose'>
                   {!isCurrent && (
                     <Form method='POST'>
@@ -187,6 +211,27 @@ export default function SeasonIndex() {
                           value='setFSquared'
                         >
                           {isOpenForFSquared ? 'Close F²' : 'Open F²'}
+                        </Button>
+                      </Form>
+                      <Form method='POST'>
+                        <input type='hidden' name='seasonId' value={id} />
+                        <input
+                          type='hidden'
+                          name='actionToSeason'
+                          value={
+                            !isOpenForDFSSurvivor
+                              ? 'openDFSSurvivor'
+                              : 'closeDFSSurvivor'
+                          }
+                        />
+                        <Button
+                          type='submit'
+                          name='_action'
+                          value='setDFSSurvivor'
+                        >
+                          {isOpenForDFSSurvivor
+                            ? 'Close DFS Survivor'
+                            : 'Open DFS Survivor'}
                         </Button>
                       </Form>
                     </>
