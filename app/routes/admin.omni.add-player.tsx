@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useNavigation } from '@remix-run/react';
-import { typedjson, useTypedActionData, useTypedLoaderData } from 'remix-typedjson';
+import { useEffect, useRef } from 'react';
+import {
+  typedjson,
+  useTypedActionData,
+  useTypedLoaderData,
+} from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
 import { createOmniPlayer } from '~/models/omniplayer.server';
@@ -11,7 +15,15 @@ import { authenticator, requireAdmin } from '~/services/auth.server';
 
 // Define ActionData types and type guards
 type SuccessActionData = { successMessage: string };
-type ErrorActionData = { errors: { displayName?: string; sportId?: string; seasonId?: string; relativeSort?: string; form?: string } };
+type ErrorActionData = {
+  errors: {
+    displayName?: string;
+    sportId?: string;
+    seasonId?: string;
+    relativeSort?: string;
+    form?: string;
+  };
+};
 type ActionDataType = SuccessActionData | ErrorActionData;
 
 function isSuccessData(data: any): data is SuccessActionData {
@@ -46,27 +58,52 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const relativeSortString = formData.get('relativeSort');
 
   if (typeof displayName !== 'string' || displayName.trim() === '') {
-    return typedjson({ errors: { displayName: 'Display Name is required' } }, { status: 400 });
+    return typedjson(
+      { errors: { displayName: 'Display Name is required' } },
+      { status: 400 },
+    );
   }
   if (typeof sportId !== 'string' || sportId.trim() === '') {
-    return typedjson({ errors: { sportId: 'Sport is required' } }, { status: 400 });
+    return typedjson(
+      { errors: { sportId: 'Sport is required' } },
+      { status: 400 },
+    );
   }
   if (typeof seasonId !== 'string' || seasonId.trim() === '') {
-    return typedjson({ errors: { seasonId: 'Omni Season is required' } }, { status: 400 });
+    return typedjson(
+      { errors: { seasonId: 'Omni Season is required' } },
+      { status: 400 },
+    );
   }
-  if (typeof relativeSortString !== 'string' || !/^-?\d+$/.test(relativeSortString)) {
-    return typedjson({ errors: { relativeSort: 'Relative Sort must be an integer' } }, { status: 400 });
+  if (
+    typeof relativeSortString !== 'string' ||
+    !/^-?\d+$/.test(relativeSortString)
+  ) {
+    return typedjson(
+      { errors: { relativeSort: 'Relative Sort must be an integer' } },
+      { status: 400 },
+    );
   }
 
   const relativeSort = parseInt(relativeSortString, 10);
 
   try {
-    const newPlayer = await createOmniPlayer({ displayName, sportId, seasonId, relativeSort });
-    return typedjson({ successMessage: `Omni player ${newPlayer.displayName} created successfully` });
+    const newPlayer = await createOmniPlayer({
+      displayName,
+      sportId,
+      seasonId,
+      relativeSort,
+    });
+    return typedjson({
+      successMessage: `Omni player ${newPlayer.displayName} created successfully`,
+    });
   } catch (error) {
     console.error('Error creating Omni Player:', error);
     // Consider more specific error handling based on Prisma errors if needed
-    return typedjson({ errors: { form: 'Failed to create Omni Player. Please try again.' } }, { status: 500 });
+    return typedjson(
+      { errors: { form: 'Failed to create Omni Player. Please try again.' } },
+      { status: 500 },
+    );
   }
 };
 
@@ -80,7 +117,8 @@ export default function AddOmniPlayerPage() {
 
   // Clear display name on successful submission
   useEffect(() => {
-    if (isSuccessData(actionData) && displayNameInputRef.current) { // actionData.successMessage is implicitly checked by isSuccessData
+    if (isSuccessData(actionData) && displayNameInputRef.current) {
+      // actionData.successMessage is implicitly checked by isSuccessData
       displayNameInputRef.current.value = '';
     }
   }, [actionData]);
@@ -88,12 +126,25 @@ export default function AddOmniPlayerPage() {
   return (
     <div>
       <h2>Add Omni Player</h2>
-      {actionData && 'successMessage' in actionData && actionData.successMessage && <Alert message={actionData.successMessage} status='success' />} 
-      {actionData && 'errors' in actionData && actionData.errors && 'form' in actionData.errors && actionData.errors.form && <Alert message={actionData.errors.form} status='error' />}
+      {actionData &&
+        'successMessage' in actionData &&
+        actionData.successMessage && (
+          <Alert message={actionData.successMessage} status='success' />
+        )}
+      {actionData &&
+        'errors' in actionData &&
+        actionData.errors &&
+        'form' in actionData.errors &&
+        actionData.errors.form && (
+          <Alert message={actionData.errors.form} status='error' />
+        )}
 
       <Form method='post' className='space-y-6'>
         <div>
-          <label htmlFor='displayName' className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <label
+            htmlFor='displayName'
+            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+          >
             Display Name
           </label>
           <input
@@ -105,15 +156,22 @@ export default function AddOmniPlayerPage() {
             className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
             aria-describedby='displayName-error'
           />
-          {actionData && 'errors' in actionData && actionData.errors && 'displayName' in actionData.errors && actionData.errors.displayName && (
-            <p className='mt-2 text-sm text-red-600' id='displayName-error'>
-              {actionData.errors.displayName}
-            </p>
-          )}
+          {actionData &&
+            'errors' in actionData &&
+            actionData.errors &&
+            'displayName' in actionData.errors &&
+            actionData.errors.displayName && (
+              <p className='mt-2 text-sm text-red-600' id='displayName-error'>
+                {actionData.errors.displayName}
+              </p>
+            )}
         </div>
 
         <div>
-          <label htmlFor='sportId' className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <label
+            htmlFor='sportId'
+            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+          >
             Sport
           </label>
           <select
@@ -123,21 +181,28 @@ export default function AddOmniPlayerPage() {
             aria-describedby='sportId-error'
           >
             <option value=''>Select Sport</option>
-            {omniSports.map((sport) => (
+            {omniSports.map(sport => (
               <option key={sport.id} value={sport.id}>
                 {sport.name}
               </option>
             ))}
           </select>
-          {actionData && 'errors' in actionData && actionData.errors && 'sportId' in actionData.errors && actionData.errors.sportId && (
-            <p className='mt-2 text-sm text-red-600' id='sportId-error'>
-              {actionData.errors.sportId}
-            </p>
-          )}
+          {actionData &&
+            'errors' in actionData &&
+            actionData.errors &&
+            'sportId' in actionData.errors &&
+            actionData.errors.sportId && (
+              <p className='mt-2 text-sm text-red-600' id='sportId-error'>
+                {actionData.errors.sportId}
+              </p>
+            )}
         </div>
 
         <div>
-          <label htmlFor='seasonId' className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <label
+            htmlFor='seasonId'
+            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+          >
             Omni Season
           </label>
           <select
@@ -147,21 +212,28 @@ export default function AddOmniPlayerPage() {
             aria-describedby='seasonId-error'
           >
             <option value=''>Select Omni Season</option>
-            {omniSeasons.map((season) => (
+            {omniSeasons.map(season => (
               <option key={season.id} value={season.id}>
                 {season.year}
               </option>
             ))}
           </select>
-          {actionData && 'errors' in actionData && actionData.errors && 'seasonId' in actionData.errors && actionData.errors.seasonId && (
-            <p className='mt-2 text-sm text-red-600' id='seasonId-error'>
-              {actionData.errors.seasonId}
-            </p>
-          )}
+          {actionData &&
+            'errors' in actionData &&
+            actionData.errors &&
+            'seasonId' in actionData.errors &&
+            actionData.errors.seasonId && (
+              <p className='mt-2 text-sm text-red-600' id='seasonId-error'>
+                {actionData.errors.seasonId}
+              </p>
+            )}
         </div>
 
         <div>
-          <label htmlFor='relativeSort' className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <label
+            htmlFor='relativeSort'
+            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+          >
             Relative Sort
           </label>
           <input
@@ -173,11 +245,15 @@ export default function AddOmniPlayerPage() {
             className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
             aria-describedby='relativeSort-error'
           />
-          {actionData && 'errors' in actionData && actionData.errors && 'relativeSort' in actionData.errors && actionData.errors.relativeSort && (
-            <p className='mt-2 text-sm text-red-600' id='relativeSort-error'>
-              {actionData.errors.relativeSort}
-            </p>
-          )}
+          {actionData &&
+            'errors' in actionData &&
+            actionData.errors &&
+            'relativeSort' in actionData.errors &&
+            actionData.errors.relativeSort && (
+              <p className='mt-2 text-sm text-red-600' id='relativeSort-error'>
+                {actionData.errors.relativeSort}
+              </p>
+            )}
         </div>
 
         <div>
