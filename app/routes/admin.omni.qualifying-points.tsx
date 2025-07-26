@@ -11,7 +11,6 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
-import { OMNI_YEAR } from '~/utils/constants';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
@@ -20,8 +19,7 @@ import {
   updateOmniSportEventPoints,
 } from '~/models/omnisporteventpoints.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-
-
+import { OMNI_YEAR } from '~/utils/constants';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -170,12 +168,14 @@ const AdminOmniScoring = () => {
     setActiveSportEvent(e.target.value);
     setAllChecked(false);
   };
-  
+
   const toggleAllCheckboxes = () => {
     const newState = !allChecked;
     setAllChecked(newState);
-    
-    const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name$="--isEliminated"]');
+
+    const checkboxes = document.querySelectorAll<HTMLInputElement>(
+      'input[name$="--isEliminated"]',
+    );
     checkboxes.forEach(checkbox => {
       checkbox.checked = newState;
     });
@@ -227,11 +227,11 @@ const AdminOmniScoring = () => {
         {activeSportEvent !== '' && (
           <>
             <h3>Active Players</h3>
-            <div className="mb-4">
-              <Button 
-                type="button" 
+            <div className='mb-4'>
+              <Button
+                type='button'
                 onClick={toggleAllCheckboxes}
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
               >
                 {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
               </Button>
