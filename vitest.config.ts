@@ -1,4 +1,4 @@
-/// <reference types="vitest" />q
+/// <reference types="vitest" />
 /// <reference types="vite/client" />
 import { join } from 'path';
 import { defineConfig } from 'vitest/config';
