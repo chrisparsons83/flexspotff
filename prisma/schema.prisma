@@ -206,7 +206,26 @@ model DraftSlot {
   draftDateTime DateTime
   season Int
   
+  preferences DraftSlotPreference[]
+  
   @@unique([draftDateTime, season], name: "draftSlotDateTimeSeason")
+}
+
+model DraftSlotPreference {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  draftSlotId String
+  season Int
+  ranking Int // 1 = most preferred, higher numbers = less preferred
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  draftSlot DraftSlot @relation(fields: [draftSlotId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, draftSlotId], name: "userDraftSlotPreference")
+  @@unique([userId, season, ranking], name: "userSeasonRanking")
 }
 
 model LocksWeek {
@@ -682,4 +701,5 @@ model User {
   dfsSurvivorUserYears DFSSurvivorUserYear[]
   dfsSurvivorUserWeeks DFSSurvivorUserWeek[]
   omniTeams OmniUserTeam[]
+  draftSlotPreferences DraftSlotPreference[]
 }
