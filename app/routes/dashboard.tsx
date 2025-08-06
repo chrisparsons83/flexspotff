@@ -52,10 +52,23 @@ export const action = async ({
 
     try {
       const parsedPreferences = JSON.parse(preferences);
+      
+      // Validate that at least 3 draft times are selected
+      if (!Array.isArray(parsedPreferences) || parsedPreferences.length < 3) {
+        return { formError: 'Please select at least 3 draft times you can make.' };
+      }
+      
+      // Convert availability selections to ranking format for backend compatibility
+      // Assign rankings 1, 2, 3, etc. to selected slots
+      const rankedPreferences = parsedPreferences.map((pref, index) => ({
+        draftSlotId: pref.draftSlotId,
+        ranking: index + 1
+      }));
+      
       await upsertUserDraftSlotPreferences(
         user.id,
         Number.parseInt(season, 10),
-        parsedPreferences
+        rankedPreferences
       );
       return typedjson({ success: true });
     } catch (error) {
@@ -107,51 +120,20 @@ export default function Dashboard() {
     useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   
-  const [preferences, setPreferences] = useState(() => {
-    if (!draftSlotsWithPreferences) return {};
-    const prefs: Record<string, number> = {};
+  const [selectedSlots, setSelectedSlots] = useState(() => {
+    if (!draftSlotsWithPreferences) return new Set<string>();
+    const selected = new Set<string>();
     draftSlotsWithPreferences.forEach((slot: any) => {
       if (slot.userRanking) {
-        prefs[slot.id] = slot.userRanking;
+        selected.add(slot.id);
       }
     });
-    return prefs;
+    return selected;
   });
 
-  // Check for duplicate rankings
-  const getDuplicateRanks = () => {
-    const usedRanks: Record<number, string[]> = {};
-    Object.entries(preferences).forEach(([slotId, ranking]) => {
-      if (ranking > 0) {
-        if (!usedRanks[ranking]) {
-          usedRanks[ranking] = [];
-        }
-        usedRanks[ranking].push(slotId);
-      }
-    });
-    
-    const duplicates = new Set<string>();
-    Object.values(usedRanks).forEach(slotIds => {
-      if (slotIds.length > 1) {
-        slotIds.forEach(slotId => duplicates.add(slotId));
-      }
-    });
-    
-    return duplicates;
-  };
-
-  const duplicateSlots = getDuplicateRanks();
-  const hasDuplicates = duplicateSlots.size > 0;
-
-  // Check if all draft slots have rankings
-  const getUnrankedSlots = () => {
-    if (!draftSlotsWithPreferences) return [];
-    return draftSlotsWithPreferences.filter((slot: any) => !preferences[slot.id] || preferences[slot.id] <= 0);
-  };
-
-  const unrankedSlots = getUnrankedSlots();
-  const hasUnrankedSlots = unrankedSlots.length > 0;
-  const canSave = !hasDuplicates && !hasUnrankedSlots;
+  // Check if at least 3 slots are selected
+  const hasMinimumSelections = selectedSlots.size >= 3;
+  const canSave = hasMinimumSelections;
 
   const isRegistrationFull =
     currentSeason.registrationSize <= registrationsCount;
@@ -171,7 +153,7 @@ export default function Dashboard() {
           {draftSlotsWithPreferences && draftSlotsWithPreferences.length > 0 && (
             <div style={{ marginTop: '2rem' }}>
               <h3>Draft Time Preferences</h3>
-              <p>Rank your preferred draft times from 1 (most preferred) to {draftSlotsWithPreferences.length} (least preferred):</p>
+              <p>Select all draft times that you can make. You must select at least 3 options:</p>
               
               {(actionData as ActionData)?.success && (
                 <div style={{ marginBottom: '1rem' }}>
@@ -191,66 +173,67 @@ export default function Dashboard() {
                   type="hidden" 
                   name="preferences" 
                   value={JSON.stringify(
-                    Object.entries(preferences)
-                      .filter(([_, ranking]) => ranking > 0)
-                      .map(([draftSlotId, ranking]) => ({ draftSlotId, ranking }))
+                    Array.from(selectedSlots).map(draftSlotId => ({ draftSlotId, available: true }))
                   )}
                 />
                 
                 <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
                   {draftSlotsWithPreferences.map((slot: any) => (
                     <div key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ flex: 1 }}>
-                        {slot.draftDateTime.toLocaleString(undefined, {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          timeZoneName: 'short'
-                        })}
-                      </div>
-                      <div>
-                        <select
-                          id={`ranking-${slot.id}`}
-                          value={preferences[slot.id] || ''}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="checkbox"
+                          id={`slot-${slot.id}`}
+                          checked={selectedSlots.has(slot.id)}
                           onChange={(e) => {
-                            const newRanking = parseInt(e.target.value, 10);
-                            setPreferences(prev => ({
-                              ...prev,
-                              [slot.id]: newRanking
-                            }));
+                            setSelectedSlots(prev => {
+                              const newSelected = new Set(prev);
+                              if (e.target.checked) {
+                                newSelected.add(slot.id);
+                              } else {
+                                newSelected.delete(slot.id);
+                              }
+                              return newSelected;
+                            });
                           }}
                           style={{ 
-                            padding: '0.5rem', 
-                            minWidth: '80px', 
-                            width: '100px', 
-                            color: 'black',
-                            backgroundColor: duplicateSlots.has(slot.id) ? '#ffebee' : 'white',
-                            borderColor: duplicateSlots.has(slot.id) ? '#f44336' : '#ccc',
-                            borderWidth: '2px'
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <label 
+                          htmlFor={`slot-${slot.id}`}
+                          style={{ 
+                            cursor: 'pointer',
+                            flex: 1,
+                            fontSize: '1rem'
                           }}
                         >
-                          <option value="">-</option>
-                          {Array.from({ length: draftSlotsWithPreferences.length }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                          ))}
-                        </select>
+                          {slot.draftDateTime.toLocaleString(undefined, {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </label>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                {hasDuplicates && (
+                {!hasMinimumSelections && (
                   <p style={{ color: '#f44336', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    ⚠️ Please fix duplicate rankings before saving. Each rank can only be used once.
+                    ⚠️ Please select at least 3 draft times you can make. Currently selected: {selectedSlots.size}
                   </p>
                 )}
                 
-                {hasUnrankedSlots && (
-                  <p style={{ color: '#f44336', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    ⚠️ Please rank all draft slots before saving. {unrankedSlots.length} slot{unrankedSlots.length === 1 ? '' : 's'} still need{unrankedSlots.length === 1 ? 's' : ''} ranking.
+                {selectedSlots.size > 0 && (
+                  <p style={{ color: '#4caf50', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                    ✓ {selectedSlots.size} draft time{selectedSlots.size === 1 ? '' : 's'} selected
                   </p>
                 )}
                 
