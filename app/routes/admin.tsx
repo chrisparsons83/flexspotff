@@ -79,6 +79,14 @@ export default function Admin() {
                   </li>
                   <li className='flow-root'>
                     <Link
+                      to='/admin/draft-slots'
+                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
+                    >
+                      Draft Slots
+                    </Link>
+                  </li>
+                  <li className='flow-root'>
+                    <Link
                       to='/admin/leagues/new'
                       className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
                     >

@@ -198,6 +198,17 @@ model League {
   teams Team[]
 }
 
+model DraftSlot {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  draftDateTime DateTime
+  season Int
+  
+  @@unique([draftDateTime, season], name: "draftSlotDateTimeSeason")
+}
+
 model LocksWeek {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
