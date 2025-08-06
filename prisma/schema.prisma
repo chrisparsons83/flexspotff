@@ -225,7 +225,6 @@ model DraftSlotPreference {
   draftSlot DraftSlot @relation(fields: [draftSlotId], references: [id], onDelete: Cascade)
 
   @@unique([userId, draftSlotId], name: "userDraftSlotPreference")
-  @@unique([userId, season, ranking], name: "userSeasonRanking")
 }
 
 model LocksWeek {
