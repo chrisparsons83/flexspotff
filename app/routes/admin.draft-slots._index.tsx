@@ -16,6 +16,7 @@ import {
   updateDraftSlot,
 } from '~/models/draftSlot.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   id: z.string().optional(),
@@ -113,13 +114,13 @@ export default function DraftSlotsAdmin() {
           <Button type="button">Add New Draft Slot</Button>
         </Link>
       </p>
-      {actionData?.success && actionData.message && (
+      {isSuccessWithMessage(actionData) && (
         <Alert message={actionData.message} />
       )}
-      {actionData && !actionData.success && (
+      {isErrorResponse(actionData) && (
         <Alert
           message={
-            (actionData as any).error?.general?.[0] || 'An error occurred. Please try again.'
+            ('general' in actionData.error && actionData.error.general?.[0]) || 'An error occurred. Please try again.'
           }
         />
       )}

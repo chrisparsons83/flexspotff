@@ -12,6 +12,7 @@ import Button from '~/components/ui/Button';
 import { getDraftSlot, updateDraftSlot } from '~/models/draftSlot.server';
 import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   draftDateTime: z.string().min(1, 'Draft date and time is required'),
@@ -103,13 +104,13 @@ export default function EditDraftSlot() {
       <p>
         <Link to="/admin/draft-slots">← Back to Draft Slots</Link>
       </p>
-      {actionData?.success && actionData.message && (
+      {isSuccessWithMessage(actionData) && (
         <Alert message={`${actionData.message} Redirecting...`} />
       )}
-      {actionData && !actionData.success && (
+      {isErrorResponse(actionData) && (
         <Alert
           message={
-            (actionData as any).error?.general?.[0] || 'An error occurred. Please try again.'
+            ('general' in actionData.error && actionData.error.general?.[0]) || 'An error occurred. Please try again.'
           }
         />
       )}
@@ -132,9 +133,9 @@ export default function EditDraftSlot() {
               ))}
             </select>
           </label>
-          {actionData && !actionData.success && (actionData as any).error?.season && (
+          {isErrorResponse(actionData) && 'season' in actionData.error && actionData.error.season && (
             <p className='form-validation-error' role='alert'>
-              {(actionData as any).error.season[0]}
+              {actionData.error.season[0]}
             </p>
           )}
         </div>
@@ -150,9 +151,9 @@ export default function EditDraftSlot() {
               required
             />
           </label>
-          {actionData && !actionData.success && (actionData as any).error?.draftDateTime && (
+          {isErrorResponse(actionData) && 'draftDateTime' in actionData.error && actionData.error.draftDateTime && (
             <p className='form-validation-error' role='alert'>
-              {(actionData as any).error.draftDateTime[0]}
+              {actionData.error.draftDateTime[0]}
             </p>
           )}
           <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
@@ -160,9 +161,9 @@ export default function EditDraftSlot() {
           </p>
         </div>
         <div>
-          {actionData && !actionData.success && (actionData as any).error?.general && (
+          {isErrorResponse(actionData) && 'general' in actionData.error && actionData.error.general && (
             <p className='form-validation-error' role='alert'>
-              {(actionData as any).error.general[0]}
+              {actionData.error.general[0]}
             </p>
           )}
           <Button type="submit">
