@@ -59,10 +59,10 @@ export const action = async ({
       }
       
       // Convert availability selections to ranking format for backend compatibility
-      // Assign rankings 1, 2, 3, etc. to selected slots
-      const rankedPreferences = parsedPreferences.map((pref, index) => ({
+      // Set all selected slots to ranking 1 since there's no preference order
+      const rankedPreferences = parsedPreferences.map((pref) => ({
         draftSlotId: pref.draftSlotId,
-        ranking: index + 1
+        ranking: 1
       }));
       
       await upsertUserDraftSlotPreferences(
