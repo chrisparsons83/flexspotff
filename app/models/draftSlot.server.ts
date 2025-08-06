@@ -12,6 +12,44 @@ export function getDraftSlots() {
   });
 }
 
+export async function getDraftSlotsWithPreferenceCounts() {
+  const draftSlots = await prisma.draftSlot.findMany({
+    include: {
+      preferences: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              discordName: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: [
+      { season: 'desc' },
+      { draftDateTime: 'asc' },
+    ],
+  });
+
+  return draftSlots.map(slot => ({
+    ...slot,
+    availableCount: slot.preferences.length,
+    availableUsers: slot.preferences.map(pref => pref.user),
+  }));
+}
+
+export async function getUniqueUsersWithPreferences() {
+  const uniqueUsers = await prisma.draftSlotPreference.findMany({
+    select: {
+      userId: true,
+    },
+    distinct: ['userId'],
+  });
+  
+  return uniqueUsers.length;
+}
+
 export function getDraftSlot({ id }: Pick<DraftSlot, 'id'>) {
   return prisma.draftSlot.findFirst({
     where: { id },

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link } from '@remix-run/react';
+import { Link } from '@remix-run/react';
 
 import {
   typedjson,
@@ -9,10 +9,12 @@ import {
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
+import DraftSlotRow from '~/components/layout/admin/DraftSlotRow';
 import {
   createDraftSlot,
   deleteDraftSlot,
-  getDraftSlots,
+  getDraftSlotsWithPreferenceCounts,
+  getUniqueUsersWithPreferences,
   updateDraftSlot,
 } from '~/models/draftSlot.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -97,13 +99,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
   requireAdmin(user);
 
-  const draftSlots = await getDraftSlots();
+  const [draftSlots, uniqueUsersCount] = await Promise.all([
+    getDraftSlotsWithPreferenceCounts(),
+    getUniqueUsersWithPreferences(),
+  ]);
 
-  return typedjson({ draftSlots });
+  return typedjson({ draftSlots, uniqueUsersCount });
 };
 
 export default function DraftSlotsAdmin() {
-  const { draftSlots } = useTypedLoaderData<typeof loader>();
+  const { draftSlots, uniqueUsersCount } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
 
   return (
@@ -113,6 +118,9 @@ export default function DraftSlotsAdmin() {
         <Link to="/admin/draft-slots/new">
           <Button type="button">Add New Draft Slot</Button>
         </Link>
+      </p>
+      <p>
+        {uniqueUsersCount} unique {uniqueUsersCount === 1 ? 'person has' : 'people have'} entered their draft time preferences.
       </p>
       {isSuccessWithMessage(actionData) && (
         <Alert message={actionData.message} />
@@ -129,51 +137,20 @@ export default function DraftSlotsAdmin() {
           <tr>
             <th>Season</th>
             <th>Draft Date & Time</th>
+            <th>Available People</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {draftSlots.length === 0 ? (
             <tr>
-              <td colSpan={3} style={{ textAlign: 'center', padding: '20px' }}>
+              <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
                 No draft slots found. Create your first draft slot to get started.
               </td>
             </tr>
           ) : (
             draftSlots.map((slot: any) => (
-              <tr key={slot.id}>
-                <td>{slot.season}</td>
-                <td>
-                  {new Date(slot.draftDateTime).toLocaleString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    timeZoneName: 'short'
-                  })}
-                </td>
-                <td className='not-prose'>
-                  <Link to={`/admin/draft-slots/${slot.id}/edit`}>
-                    <Button type="button">Edit</Button>
-                  </Link>
-                  {' '}
-                  <Form method="post" style={{ display: 'inline' }}>
-                    <input type="hidden" name="id" value={slot.id} />
-                    <input type="hidden" name="action" value="delete" />
-                    <Button
-                      type="submit"
-                      onClick={(e) => {
-                        if (!confirm('Are you sure you want to delete this draft slot?')) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </Form>
-                </td>
-              </tr>
+              <DraftSlotRow key={slot.id} slot={slot} />
             ))
           )}
         </tbody>
