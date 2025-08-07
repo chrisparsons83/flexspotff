@@ -19,6 +19,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let lastYearRegistrations = await getRegistrationsByYear(
     currentSeason.year - 1,
   );
+  let twoYearsAgoRegistrations = await getRegistrationsByYear(
+    currentSeason.year - 2,
+  );
 
   let registrationsUserArray = registrations.map(
     registration => registration.userId,
@@ -26,12 +29,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let notYetSignedUp = lastYearRegistrations.filter(
     registration => !registrationsUserArray.includes(registration.userId),
   );
+  let twoYearsAgoNotSignedUp = twoYearsAgoRegistrations.filter(
+    registration => !registrationsUserArray.includes(registration.userId),
+  );
 
-  return typedjson({ registrations, notYetSignedUp });
+  return typedjson({ registrations, notYetSignedUp, twoYearsAgoNotSignedUp });
 };
 
 export default function RegistrationList() {
-  const { registrations, notYetSignedUp } = useTypedLoaderData<typeof loader>();
+  const { registrations, notYetSignedUp, twoYearsAgoNotSignedUp } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -44,6 +50,12 @@ export default function RegistrationList() {
       <h3>Missing from last year</h3>
       <ul>
         {notYetSignedUp.map(registration => (
+          <li key={registration.id}>{registration.user.discordName}</li>
+        ))}
+      </ul>
+      <h3>Missing from two years ago</h3>
+      <ul>
+        {twoYearsAgoNotSignedUp.map(registration => (
           <li key={registration.id}>{registration.user.discordName}</li>
         ))}
       </ul>
