@@ -109,3 +109,25 @@ export const sendMessageToChannel = async ({
     console.error('Error sending message:', error);
   }
 };
+
+interface SetUserRoleProps {
+  guildId: string;
+  userId: string;
+  roleId: string;
+}
+
+export const setUserRole = async ({
+  guildId,
+  userId,
+  roleId,
+}: SetUserRoleProps) => {
+  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
+
+  try {
+    await rest.put(Routes.guildMemberRole(guildId, userId, roleId));
+    console.log(`Successfully assigned role ${roleId} to user ${userId} in guild ${guildId}`);
+  } catch (error) {
+    console.error('Error setting user role:', error);
+    throw error;
+  }
+};

@@ -27,6 +27,14 @@ export async function getSeason(year: Season['year']) {
   });
 }
 
+export async function getSeasonById(id: Season['id']) {
+  return prisma.season.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function getSeasons() {
   return prisma.season.findMany({
     orderBy: [

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, useNavigation } from '@remix-run/react';
+import { Form, Link, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -234,6 +234,14 @@ export default function SeasonIndex() {
                             : 'Open DFS Survivor'}
                         </Button>
                       </Form>
+                      <Link
+                        to={`/admin/season/${id}/sorting`}
+                        className="inline-block"
+                      >
+                        <Button type="button">
+                          League Sorting
+                        </Button>
+                      </Link>
                     </>
                   )}
                 </td>
