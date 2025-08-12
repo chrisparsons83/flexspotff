@@ -24,6 +24,7 @@ const envSchema = z.object({
   SPREADS_API_KEY: z.string().min(1),
   PLAYWRIGHT_DISCORD_USERNAME: z.optional(z.string().min(1)),
   PLAYWRIGHT_DISCORD_PASSWORD: z.optional(z.string().min(1)),
+  FFDISCORDADMIN_SLEEPER_ID: z.string().min(1),
 });
 
 const shuffleArray = <T>(array: T[]): T[] => {

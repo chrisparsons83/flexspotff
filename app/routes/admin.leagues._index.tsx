@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { DateTime } from 'luxon';
+import { env } from 'process';
 import {
   typedjson,
   useTypedActionData,
@@ -118,7 +119,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const promises: Promise<Team>[] = [];
       for (const sleeperTeam of sleeperTeams) {
-        if (!sleeperTeam.owner_id) continue;
+        // Don't import the admin team. These are blank teams. There is a single exception in 2018, but if that data breaks, whatever.
+        if (!sleeperTeam.owner_id || sleeperTeam.owner_id === env.FFDISCORDADMIN_SLEEPER_ID) continue;
         // build team object
         const systemUser = existingUsersSleeperIds.filter(
           team => team.sleeperOwnerID === sleeperTeam.owner_id,
