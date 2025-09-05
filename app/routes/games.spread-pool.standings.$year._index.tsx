@@ -7,17 +7,15 @@ import {
 } from '~/models/poolgamepicks.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.server';
-import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
+  const yearParam = params.year;
+  if (!yearParam) throw new Error('No year existing');
+  const year = +yearParam;
 
-  const poolWeeks = await getPoolWeeksByYear(currentSeason.year);
+  const poolWeeks = await getPoolWeeksByYear(year);
 
   // Get the most active week
   const currentWeek = poolWeeks.find(poolWeek => poolWeek.isOpen === true);
@@ -31,11 +29,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         poolGamePick.amountBet !== 0,
     );
 
-  const amountWonLoss = await getPoolGamePicksWonLoss(currentSeason.year);
+  const amountWonLoss = await getPoolGamePicksWonLoss(year);
 
   // Update amountWonLoss based on missing week totals, then re-sort.
   const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(
-    currentSeason.year,
+    year,
   );
   if (missingWeekPenalties.length > 0) {
     for (const missingWeekPenalty of missingWeekPenalties) {

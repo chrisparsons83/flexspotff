@@ -11,17 +11,15 @@ import {
   getLocksWeekByYearAndWeek,
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
-import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
+  const yearParam = params.year;
+  if (!yearParam) throw new Error('No year existing');
+  const year = +yearParam;
 
-  const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
+  const locksWeeks = await getLocksWeeksByYear(year);
 
   // Get the most active week
   const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
@@ -43,14 +41,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     );
 
   // Find the max week number
-  const maxWeek = (await getLocksWeeksByYear(currentSeason.year))[0].weekNumber;
+  const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
 
   let userIdToPointsMap: Map<string, number> = new Map();
 
   // loop through all the completed weeks for the season
   for (let i = 1; i <= maxWeek; i++) {
     // Get the locks week for that week
-    const locksWeek = await getLocksWeekByYearAndWeek(currentSeason.year, i);
+    const locksWeek = await getLocksWeekByYearAndWeek(year, i);
 
     if (locksWeek) {
       // Get a list of the userId and their wins for the week
@@ -78,7 +76,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
-  const totalPointsRaw = await getLocksGamePicksWonLoss(currentSeason.year);
+  const totalPointsRaw = await getLocksGamePicksWonLoss(year);
 
   // Add points to _sum in totalPointsRaw
   const totalPointsRawWithPoints = totalPointsRaw.map(point => ({
@@ -137,8 +135,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     ...new Set(totalPointsRaw.map(locksGameSum => locksGameSum.userId)),
   ];
   const users = await getUsersByIds(userIds);
-
-  const year = currentSeason.year;
 
   return typedjson({
     totalPoints,
