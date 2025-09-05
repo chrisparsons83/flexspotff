@@ -8,23 +8,20 @@ import {
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { authenticator } from '~/services/auth.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
-  });
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const yearParam = params.year;
+  if (!yearParam) throw new Error('No year existing');
+  const year = +yearParam;
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
   }
 
-  const year = params.year ?? `${currentSeason.year}`;
+  const qbStreamingWeeks = await getQBStreamingWeeks(year);
 
-  const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
-
-  const qbSelections = await getQBSelectionsByYear(currentSeason.year);
+  const qbSelections = await getQBSelectionsByYear(year);
 
   const currentWeekPicks = await getQBSelectionsByWeek(qbStreamingWeeks[0].id);
 
