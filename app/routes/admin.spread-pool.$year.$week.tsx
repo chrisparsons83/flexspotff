@@ -159,17 +159,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       );
       const odds = oddsApiData.parse(await newFetch.json());
 
-      // odds contains a list of live and upcoming events and odds for different bookmakers.
-      // Events are ordered by start time (live events are first)
-      // console.log(JSON.stringify(response.data))
-
-      // Check your usage
-      // console.log(
-      //   "Remaining requests",
-      //   response.headers["x-requests-remaining"]
-      // );
-      // console.log("Used requests", response.headers["x-requests-used"]);
-
       // Create a map of team names to their spread points
       odds.forEach(game => {
         const draftkings = game.bookmakers.find(b => b.key === 'draftkings');

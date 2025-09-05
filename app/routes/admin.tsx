@@ -291,10 +291,18 @@ export default function Admin() {
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
+  console.error({error});
+  // Don't forget to typecheck with your own logic.
+  // Any value can be thrown, not just errors!
+  let errorMessage = 'Unknown error';
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+
   return (
     <div>
       <h2>Error</h2>
-      <pre>{error.message}</pre>
+      <pre>{errorMessage}</pre>
     </div>
   );
 }
