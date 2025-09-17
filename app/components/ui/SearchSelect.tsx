@@ -123,21 +123,19 @@ export default function SearchSelect({
             <CommandList>
               <CommandEmpty>No players found.</CommandEmpty>
               <CommandGroup>
-                {positionPlayersFull
-                  .filter(
-                    player =>
-                      !allSelectedPlayers.has(player.id) ||
-                      player.fullName === value,
-                  )
-                  .map(player => (
-                    <CommandItem
-                      key={player.fullName}
-                      value={player.fullName}
-                      onSelect={() => handleOptionSelect(player.fullName)}
-                    >
-                      {player.fullName} {playerMatchups[player.fullName]}
-                    </CommandItem>
-                  ))}
+                {positionPlayersFull.map(player => (
+                  <CommandItem
+                    key={player.fullName}
+                    value={player.fullName}
+                    onSelect={() => handleOptionSelect(player.fullName)}
+                    disabled={
+                      allSelectedPlayers.has(player.id) &&
+                      player.fullName !== value
+                    }
+                  >
+                    {player.fullName} {playerMatchups[player.fullName]}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </Command>
