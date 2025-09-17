@@ -14,7 +14,7 @@ import { getPoolWeekMissedTotalByUserAndYearAndWeek } from '~/models/poolweekmis
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const yearParam = params.year;
   const weekParam = params.week;
   if (!yearParam) throw new Error('No year existing');
@@ -125,7 +125,7 @@ export default function SpreadPoolStandingsYearWeekIndex() {
           </tr>
         </thead>
         <tbody>
-          {amountWonLoss.map((result, index) => (
+          {amountWonLoss.map(result => (
             <SpreadPoolStandingsRow
               initialBudget={0}
               key={result.userId}

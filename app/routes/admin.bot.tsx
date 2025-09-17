@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
@@ -38,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return typedjson({ message: 'Commands loaded.' });
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async () => {
   const env = envSchema.parse(process.env);
 
   const guildCommands = await getCommands({ guildId: env.DEV_GUILD_ID });

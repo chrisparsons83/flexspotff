@@ -1,9 +1,8 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getUsers } from '~/models/user.server';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async () => {
   const users = await getUsers();
 
   return typedjson({ users });

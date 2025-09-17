@@ -208,7 +208,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return typedjson({ message: 'Scores have been updated.' });
 };
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });

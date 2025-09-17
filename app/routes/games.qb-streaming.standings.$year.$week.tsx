@@ -7,7 +7,7 @@ import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');

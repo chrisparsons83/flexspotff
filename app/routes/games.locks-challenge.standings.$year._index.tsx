@@ -14,7 +14,7 @@ import {
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const yearParam = params.year;
   if (!yearParam) throw new Error('No year existing');
   const year = +yearParam;
@@ -175,7 +175,7 @@ export default function LockChallengeStandingsYearIndex() {
           </tr>
         </thead>
         <tbody>
-          {totalPoints.map((result, index) => (
+          {totalPoints.map(result => (
             <LocksChallengeStandingsRow
               key={result.userId}
               rank={userIdToRankMap.get(result.userId)}

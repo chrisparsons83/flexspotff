@@ -148,7 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!params.id) {
     throw new Error('Error building page.');
   }

@@ -9,7 +9,7 @@ import { getCurrentSeason } from '~/models/season.server';
 import { getTeamGameMultiweekTotalsSeparated } from '~/models/teamgame.server';
 import { roundNameMapping } from '~/utils/constants';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');

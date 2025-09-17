@@ -461,7 +461,7 @@ export default function CupAdministerPage() {
             </tr>
           </thead>
           <tbody>
-            {cupWeeks.map((cupWeek, index) => {
+            {cupWeeks.map(cupWeek => {
               const action =
                 actionWeeks.get(cupWeek.mapping) === cupWeek.week
                   ? cupWeek.mapping

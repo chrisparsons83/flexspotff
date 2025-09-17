@@ -10,7 +10,7 @@ import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.ser
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const yearParam = params.year;
   if (!yearParam) throw new Error('No year existing');
   const year = +yearParam;
@@ -32,9 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const amountWonLoss = await getPoolGamePicksWonLoss(year);
 
   // Update amountWonLoss based on missing week totals, then re-sort.
-  const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(
-    year,
-  );
+  const missingWeekPenalties = await getPoolWeekMissedTotalByUserAndYear(year);
   if (missingWeekPenalties.length > 0) {
     for (const missingWeekPenalty of missingWeekPenalties) {
       const updateIndex = amountWonLoss.findIndex(
@@ -95,7 +93,7 @@ export default function QBStreamingStandingsYearIndex() {
           </tr>
         </thead>
         <tbody>
-          {amountWonLoss.map((result, index) => (
+          {amountWonLoss.map(result => (
             <SpreadPoolStandingsRow
               key={result.userId}
               rank={userIdToRankMap.get(result.userId)}

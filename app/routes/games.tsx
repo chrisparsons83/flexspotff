@@ -1,4 +1,3 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { prisma } from '~/db.server';
@@ -12,7 +11,7 @@ const navigationLinks = [
   { name: 'Survivor', href: '/games/survivor', current: false },
 ];
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async () => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');

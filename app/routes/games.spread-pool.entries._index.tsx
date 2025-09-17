@@ -5,7 +5,7 @@ import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });

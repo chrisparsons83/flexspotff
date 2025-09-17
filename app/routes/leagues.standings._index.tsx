@@ -1,4 +1,3 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LeagueTable from '~/components/layout/standings/LeagueTable';
 import GoBox from '~/components/ui/GoBox';
@@ -6,7 +5,7 @@ import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { FIRST_YEAR } from '~/utils/constants';
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async () => {
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
     throw new Error('No active season currently');
