@@ -48,9 +48,15 @@ http://localhost:5173/auth/discord/callback
 
 - Load database dump if you have one.
 
-```sh
-npm run db-sync -- NAME_OF_BACKUP_FILE
-```
+  ```sh
+  npm run db-sync -- NAME_OF_BACKUP_FILE
+  ```
+
+  If you're in Windows, you can use the powershell version of this
+
+  ```sh
+  scripts\db-sync.ps1 -FileToUpdate "path-to-sql-file.sql"
+  ```
 
 - Run the first build:
 
@@ -80,6 +86,12 @@ the db-sync npm script to handle this.
 
 ```sh
 npm run db-sync -- NAME_OF_BACKUP_FILE
+```
+
+If you're in Windows, you can use the powershell version of this
+
+```sh
+scripts\db-sync.ps1 -FileToUpdate "path-to-sql-file.sql"
 ```
 
 ## Styling
