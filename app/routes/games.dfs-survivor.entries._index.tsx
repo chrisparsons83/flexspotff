@@ -3,19 +3,21 @@ import type {
   DFSSurvivorUserEntry,
   Season,
   Player,
+  NFLGame,
+  NFLTeam,
 } from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import DfsSurvivorWeekComponent from '~/components/layout/dfs-survivor/DfsSurvivorWeek';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { prisma } from '~/db.server';
 import {
   createDfsSurvivorYear,
   getDfsSurvivorYearByUserAndYear,
 } from '~/models/dfssurvivoryear.server';
-import { getWeekNflGames } from '~/models/nflgame.server';
+import { getNflGamesBySeason, getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { getCurrentTime } from '~/utils/time';
@@ -56,6 +58,10 @@ type LoaderData =
       weekGameTimings: WeekGameTiming[];
       currentTime: Date;
       lastWeekOfSeason: number;
+      nflGames: (NFLGame & {
+        homeTeam: NFLTeam;
+        awayTeam: NFLTeam;
+      })[];
     }
   | { isOpen: false; currentSeason: Season | null };
 
@@ -662,6 +668,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     a.fullName.localeCompare(b.fullName),
   );
 
+  // Get all NFL games this season
+  const nflGames = await getNflGamesBySeason(currentSeason.year);
+
   const dfsSurvivorYearWithEntries =
     await prisma.dFSSurvivorUserYear.findUnique({
       where: { id: dfsSurvivorYear.id },
@@ -768,6 +777,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     weekGameTimings,
     currentTime,
     lastWeekOfSeason,
+    nflGames,
   });
 };
 
@@ -800,7 +810,16 @@ export default function GamesDfsSurvivorMyEntry() {
 
   // Get all selected players across all weeks to validate no duplicates
   const allSelectedPlayers = useMemo(() => {
-    if (!('dfsSurvivorWeeks' in data)) return new Map();
+    if (!('dfsSurvivorWeeks' in data))
+      return new Map<
+        string,
+        {
+          weekId: string;
+          weekNumber: number;
+          position: string;
+          playerName: string;
+        }
+      >();
 
     const playerMap = new Map<
       string,
@@ -1013,7 +1032,6 @@ export default function GamesDfsSurvivorMyEntry() {
                 availablePlayers={data.availablePlayers}
                 isExpanded={expandedWeeks.has(week.id)}
                 onToggleExpand={() => toggleWeekExpansion(week.id)}
-                isSaving={isSaving}
                 isPlayerSelected={isPlayerSelected}
                 formId={`week-${week.week}`}
                 onError={handleWeekError}
@@ -1022,6 +1040,8 @@ export default function GamesDfsSurvivorMyEntry() {
                   timing => timing.week === week.week,
                 )}
                 currentTime={data.currentTime}
+                nflGames={data.nflGames.filter(game => game.week === week.week)}
+                allSelectedPlayers={allSelectedPlayers}
               />
             </div>
           ))}

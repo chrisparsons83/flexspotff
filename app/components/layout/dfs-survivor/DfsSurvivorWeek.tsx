@@ -2,11 +2,13 @@ import type {
   DFSSurvivorUserWeek,
   DFSSurvivorUserEntry,
   Player,
+  NFLGame,
+  NFLTeam,
 } from '@prisma/client';
 import type { FetcherWithComponents } from '@remix-run/react';
 import clsx from 'clsx';
-import { useState, useCallback } from 'react';
-import Button from '~/components/ui/Button';
+import { useState, useCallback, useMemo } from 'react';
+import Button from '~/components/ui/FlexSpotButton';
 import SearchSelect from '~/components/ui/SearchSelect';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import {
@@ -40,7 +42,6 @@ interface Props {
     DEF: Player[];
     FLX: Player[];
   };
-  isSaving: boolean;
   formId: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -50,11 +51,17 @@ interface Props {
     position: string,
   ) => boolean;
   onError?: (error: string | null) => void;
-  globalError?: string | null;
-  hasError?: boolean;
   parentFetcher: FetcherWithComponents<any>;
   weekGameTiming?: WeekGameTiming;
   currentTime?: Date;
+  nflGames: (NFLGame & {
+    homeTeam: NFLTeam;
+    awayTeam: NFLTeam;
+  })[];
+  allSelectedPlayers: Map<
+    string,
+    { weekId: string; weekNumber: number; position: string; playerName: string }
+  >;
 }
 
 export default function DfsSurvivorWeekComponent({
@@ -68,22 +75,23 @@ export default function DfsSurvivorWeekComponent({
     DEF: [],
     FLX: [],
   },
-  isSaving,
   formId,
   isExpanded = false,
   onToggleExpand,
   isPlayerSelected = () => false,
   onError,
-  globalError,
-  hasError = false,
   parentFetcher,
   weekGameTiming,
   currentTime,
+  nflGames,
+  allSelectedPlayers,
 }: Props) {
   const totalPoints = week.entries.reduce(
     (sum, entry) => sum + entry.points,
     0,
   );
+
+  console.log({ allSelectedPlayers });
 
   // Modify the initialization code to transform DEF player names
   const initialSelected: Record<string, string> = {};
@@ -109,6 +117,45 @@ export default function DfsSurvivorWeekComponent({
     useState<Record<string, string>>(initialSelected);
   const [inputValues, setInputValues] =
     useState<Record<string, string>>(initialValues);
+
+  // Create a player/team mapping with the map key being the player's name and the team being their opponent this week.
+  const playerOpponentMap = useMemo(() => {
+    const mapping: Record<string, string> = {};
+
+    // Combine all available players from all positions
+    const allPlayers = [
+      ...availablePlayers.QB,
+      ...availablePlayers.RB,
+      ...availablePlayers.WR,
+      ...availablePlayers.TE,
+      ...availablePlayers.DEF,
+      ...availablePlayers.K,
+      ...availablePlayers.FLX,
+    ];
+
+    // For each player, find their team's game this week and determine opponent
+    allPlayers.forEach(player => {
+      // Use nflTeam field if currentNFLTeam relation is not available
+      const playerTeamId = player.nflTeam;
+      if (!playerTeamId) return;
+
+      // Find the game where this player's team is playing
+      const game = nflGames.find(
+        game =>
+          game.homeTeam.sleeperId === playerTeamId ||
+          game.awayTeam.sleeperId === playerTeamId,
+      );
+
+      if (game) {
+        const isHome = game.homeTeam.sleeperId === playerTeamId;
+        const opponent = isHome ? game.awayTeam : game.homeTeam;
+        const prefix = isHome ? 'v' : '@';
+        mapping[player.fullName] = ` ${prefix} ${opponent.sleeperId}`;
+      }
+    });
+
+    return mapping;
+  }, [availablePlayers, nflGames]);
 
   // Determine if the Save Entry button should be disabled
   const isSaveDisabled = useCallback(() => {
@@ -226,11 +273,17 @@ export default function DfsSurvivorWeekComponent({
     [availablePlayers],
   );
 
+  // TODO: Deprecate this in favor of getPositionPlayersFull
   const getPositionPlayers = useCallback(
     (position: string): string[] => {
       const players = getPositionPlayersArray(position);
       return players.map(p => p.fullName);
     },
+    [getPositionPlayersArray],
+  );
+
+  const getPositionPlayersFull = useCallback(
+    (position: string): Player[] => getPositionPlayersArray(position),
     [getPositionPlayersArray],
   );
 
@@ -410,6 +463,9 @@ export default function DfsSurvivorWeekComponent({
                             'font-bold',
                           )}
                           data-testid={`player-select-${position}`}
+                          playerMatchups={playerOpponentMap}
+                          allSelectedPlayers={allSelectedPlayers}
+                          positionPlayersFull={getPositionPlayersFull(position)}
                         />
                       </div>
                       {week.isScored && (

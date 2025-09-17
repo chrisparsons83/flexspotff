@@ -11,6 +11,21 @@ enum NFLGameStatus {
   PreGame = 'pre_game',
 }
 
+export async function getNflGamesBySeason(year: NFLGame['year']) {
+  return prisma.nFLGame.findMany({
+    where: {
+      year,
+    },
+    include: {
+      homeTeam: true,
+      awayTeam: true,
+    },
+    orderBy: {
+      gameStartTime: 'asc',
+    },
+  });
+}
+
 export async function getNflGameById(id: NFLGame['id']) {
   return prisma.nFLGame.findUnique({
     where: {
