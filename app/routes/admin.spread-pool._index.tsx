@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import {
@@ -69,7 +69,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
-      console.log(year, weekNumber);
 
       const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
       if (!poolWeek) throw new Error(`There's no pool week here`);

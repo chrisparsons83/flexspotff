@@ -1,7 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import { Form, Link } from '@remix-run/react';
 import { useState } from 'react';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 
 type User = {
   id: string;
@@ -38,7 +38,7 @@ export default function DraftSlotRow({ slot }: Props) {
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            timeZoneName: 'short'
+            timeZoneName: 'short',
           })}
           {slot.availableCount > 0 && (
             <>
@@ -68,16 +68,17 @@ export default function DraftSlotRow({ slot }: Props) {
         </td>
         <td className='not-prose'>
           <Link to={`/admin/draft-slots/${slot.id}/edit`}>
-            <Button type="button">Edit</Button>
-          </Link>
-          {' '}
-          <Form method="post" style={{ display: 'inline' }}>
-            <input type="hidden" name="id" value={slot.id} />
-            <input type="hidden" name="action" value="delete" />
+            <Button type='button'>Edit</Button>
+          </Link>{' '}
+          <Form method='post' style={{ display: 'inline' }}>
+            <input type='hidden' name='id' value={slot.id} />
+            <input type='hidden' name='action' value='delete' />
             <Button
-              type="submit"
-              onClick={(e) => {
-                if (!confirm('Are you sure you want to delete this draft slot?')) {
+              type='submit'
+              onClick={e => {
+                if (
+                  !confirm('Are you sure you want to delete this draft slot?')
+                ) {
                   e.preventDefault();
                 }
               }}
@@ -97,12 +98,12 @@ export default function DraftSlotRow({ slot }: Props) {
                   No users have selected this time slot yet.
                 </div>
               ) : (
-                <div 
-                  style={{ 
+                <div
+                  style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                     gap: '0.5rem',
-                    maxWidth: '100%'
+                    maxWidth: '100%',
                   }}
                 >
                   {slot.availableUsers

@@ -4,7 +4,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import type { DeleteCommandsProps } from '~/../bot/utils';
 import { deleteCommand, deployCommands, getCommands } from '~/../bot/utils';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { envSchema } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {

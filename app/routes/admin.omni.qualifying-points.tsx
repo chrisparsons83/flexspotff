@@ -10,7 +10,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
@@ -76,7 +76,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
         const pointsToStart = existingScore?.points || 0;
         const totalPoints = pointsToStart + Number(data.pointsAdded);
-        console.log({ id, existingScore, pointsToStart, data, totalPoints });
         if (Number(data.pointsAdded) !== 0 || data.isEliminated === 'on') {
           if (existingScore) {
             updatesToSend.push(

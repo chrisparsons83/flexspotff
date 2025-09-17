@@ -7,7 +7,7 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   Select,
   SelectContent,

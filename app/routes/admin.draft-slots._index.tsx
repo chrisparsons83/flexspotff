@@ -1,15 +1,14 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import z from 'zod';
-import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
 import DraftSlotRow from '~/components/layout/admin/DraftSlotRow';
+import Alert from '~/components/ui/Alert';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   createDraftSlot,
   deleteDraftSlot,
@@ -39,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!submission.success) {
     return typedjson(
       { success: false, error: submission.error.flatten().fieldErrors },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -52,13 +51,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           draftDateTime: new Date(draftDateTime),
           season,
         });
-        return typedjson({ success: true, message: 'Draft slot created successfully' });
+        return typedjson({
+          success: true,
+          message: 'Draft slot created successfully',
+        });
 
       case 'update':
         if (!id) {
           return typedjson(
-            { success: false, error: { general: ['ID is required for update'] } },
-            { status: 400 }
+            {
+              success: false,
+              error: { general: ['ID is required for update'] },
+            },
+            { status: 400 },
           );
         }
         await updateDraftSlot({
@@ -66,29 +71,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           draftDateTime: new Date(draftDateTime),
           season,
         });
-        return typedjson({ success: true, message: 'Draft slot updated successfully' });
+        return typedjson({
+          success: true,
+          message: 'Draft slot updated successfully',
+        });
 
       case 'delete':
         if (!id) {
           return typedjson(
-            { success: false, error: { general: ['ID is required for delete'] } },
-            { status: 400 }
+            {
+              success: false,
+              error: { general: ['ID is required for delete'] },
+            },
+            { status: 400 },
           );
         }
         await deleteDraftSlot({ id });
-        return typedjson({ success: true, message: 'Draft slot deleted successfully' });
+        return typedjson({
+          success: true,
+          message: 'Draft slot deleted successfully',
+        });
 
       default:
         return typedjson(
           { success: false, error: { general: ['Invalid action'] } },
-          { status: 400 }
+          { status: 400 },
         );
     }
   } catch (error) {
     console.error('Draft slot operation error:', error);
     return typedjson(
-      { success: false, error: { general: ['Operation failed. Please try again.'] } },
-      { status: 500 }
+      {
+        success: false,
+        error: { general: ['Operation failed. Please try again.'] },
+      },
+      { status: 500 },
     );
   }
 };
@@ -115,12 +132,14 @@ export default function DraftSlotsAdmin() {
     <>
       <h2>Draft Slots Management</h2>
       <p>
-        <Link to="/admin/draft-slots/new">
-          <Button type="button">Add New Draft Slot</Button>
+        <Link to='/admin/draft-slots/new'>
+          <Button type='button'>Add New Draft Slot</Button>
         </Link>
       </p>
       <p>
-        {uniqueUsersCount} unique {uniqueUsersCount === 1 ? 'person has' : 'people have'} entered their draft time preferences.
+        {uniqueUsersCount} unique{' '}
+        {uniqueUsersCount === 1 ? 'person has' : 'people have'} entered their
+        draft time preferences.
       </p>
       {isSuccessWithMessage(actionData) && (
         <Alert message={actionData.message} />
@@ -128,7 +147,8 @@ export default function DraftSlotsAdmin() {
       {isErrorResponse(actionData) && (
         <Alert
           message={
-            ('general' in actionData.error && actionData.error.general?.[0]) || 'An error occurred. Please try again.'
+            ('general' in actionData.error && actionData.error.general?.[0]) ||
+            'An error occurred. Please try again.'
           }
         />
       )}
@@ -145,7 +165,8 @@ export default function DraftSlotsAdmin() {
           {draftSlots.length === 0 ? (
             <tr>
               <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
-                No draft slots found. Create your first draft slot to get started.
+                No draft slots found. Create your first draft slot to get
+                started.
               </td>
             </tr>
           ) : (

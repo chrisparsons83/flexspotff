@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { PoolGame, PoolGameCreate } from '~/models/poolgame.server';
 import {
@@ -211,8 +211,7 @@ export default function AdminSpreadPoolYearWeek() {
   const { nflGames, poolGames, poolWeek } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
-  //console.log(nflGames);
-  //console.log(actionData?.updatedNflGames?.get('Baltimore Ravens') ?? "No data");
+
   return (
     <div>
       <h2>Edit Picks for Week {nflGames[0].week}</h2>

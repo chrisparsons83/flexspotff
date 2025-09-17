@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
 import {

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { typedjson, useTypedActionData } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { createOrUpdateSleeperUser } from '~/models/sleeperUser.server';
 import { createUser } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';

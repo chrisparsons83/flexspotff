@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { createDraftSlot } from '~/models/draftSlot.server';
 import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -16,7 +16,10 @@ import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   draftDateTime: z.string().min(1, 'Draft date and time is required'),
-  season: z.string().min(1, 'Season is required').transform((val) => parseInt(val, 10)),
+  season: z
+    .string()
+    .min(1, 'Season is required')
+    .transform(val => parseInt(val, 10)),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -31,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!submission.success) {
     return typedjson(
       { success: false, error: submission.error.flatten().fieldErrors },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -42,12 +45,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       draftDateTime: new Date(draftDateTime),
       season,
     });
-    return typedjson({ success: true, message: 'Draft slot created successfully!' });
+    return typedjson({
+      success: true,
+      message: 'Draft slot created successfully!',
+    });
   } catch (error) {
     console.error('Draft slot creation error:', error);
     return typedjson(
-      { success: false, error: { general: ['Failed to create draft slot. Please try again.'] } },
-      { status: 500 }
+      {
+        success: false,
+        error: { general: ['Failed to create draft slot. Please try again.'] },
+      },
+      { status: 500 },
     );
   }
 };
@@ -57,7 +66,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
   requireAdmin(user);
-  
+
   const seasons = await getSeasons();
   return typedjson({ seasons });
 };
@@ -78,7 +87,7 @@ export default function NewDraftSlot() {
     <>
       <h2>Create New Draft Slot</h2>
       <p>
-        <Link to="/admin/draft-slots">← Back to Draft Slots</Link>
+        <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
       </p>
       {isSuccessWithMessage(actionData) && (
         <Alert message={actionData.message} />
@@ -86,22 +95,27 @@ export default function NewDraftSlot() {
       {isErrorResponse(actionData) && (
         <Alert
           message={
-            ('general' in actionData.error && actionData.error.general?.[0]) || 'An error occurred. Please try again.'
+            ('general' in actionData.error && actionData.error.general?.[0]) ||
+            'An error occurred. Please try again.'
           }
         />
       )}
-      <Form ref={formRef} method="post" className='grid grid-cols-1 gap-6'>
+      <Form ref={formRef} method='post' className='grid grid-cols-1 gap-6'>
         <div>
-          <label htmlFor="season">
+          <label htmlFor='season'>
             Season:
             <select
-              name="season"
-              id="season"
+              name='season'
+              id='season'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
-              defaultValue={seasons.find((s: any) => s.isCurrent)?.year || seasons[0]?.year || ''}
+              defaultValue={
+                seasons.find((s: any) => s.isCurrent)?.year ||
+                seasons[0]?.year ||
+                ''
+              }
             >
-              <option value="">Select a season...</option>
+              <option value=''>Select a season...</option>
               {seasons.map((season: any) => (
                 <option key={season.id} value={season.year}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}
@@ -109,41 +123,53 @@ export default function NewDraftSlot() {
               ))}
             </select>
           </label>
-          {isErrorResponse(actionData) && 'season' in actionData.error && actionData.error.season && (
-            <p className='form-validation-error' role='alert'>
-              {actionData.error.season[0]}
-            </p>
-          )}
+          {isErrorResponse(actionData) &&
+            'season' in actionData.error &&
+            actionData.error.season && (
+              <p className='form-validation-error' role='alert'>
+                {actionData.error.season[0]}
+              </p>
+            )}
         </div>
         <div>
-          <label htmlFor="draftDateTime">
-            Draft Date & Time (in your local timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}):
+          <label htmlFor='draftDateTime'>
+            Draft Date & Time (in your local timezone:{' '}
+            {Intl.DateTimeFormat().resolvedOptions().timeZone}):
             <input
-              type="datetime-local"
-              name="draftDateTime"
-              id="draftDateTime"
+              type='datetime-local'
+              name='draftDateTime'
+              id='draftDateTime'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
             />
           </label>
-          {isErrorResponse(actionData) && 'draftDateTime' in actionData.error && actionData.error.draftDateTime && (
-            <p className='form-validation-error' role='alert'>
-              {actionData.error.draftDateTime[0]}
-            </p>
-          )}
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-            Enter the draft time in your local timezone. It will be displayed to all users in their respective local timezones.
+          {isErrorResponse(actionData) &&
+            'draftDateTime' in actionData.error &&
+            actionData.error.draftDateTime && (
+              <p className='form-validation-error' role='alert'>
+                {actionData.error.draftDateTime[0]}
+              </p>
+            )}
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              marginTop: '0.25rem',
+            }}
+          >
+            Enter the draft time in your local timezone. It will be displayed to
+            all users in their respective local timezones.
           </p>
         </div>
         <div>
-          {isErrorResponse(actionData) && 'general' in actionData.error && actionData.error.general && (
-            <p className='form-validation-error' role='alert'>
-              {actionData.error.general[0]}
-            </p>
-          )}
-          <Button type="submit">
-            Create Draft Slot
-          </Button>
+          {isErrorResponse(actionData) &&
+            'general' in actionData.error &&
+            actionData.error.general && (
+              <p className='form-validation-error' role='alert'>
+                {actionData.error.general[0]}
+              </p>
+            )}
+          <Button type='submit'>Create Draft Slot</Button>
         </div>
       </Form>
     </>

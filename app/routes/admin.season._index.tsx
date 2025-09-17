@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   createSeason,
   getSeasons,
@@ -236,11 +236,9 @@ export default function SeasonIndex() {
                       </Form>
                       <Link
                         to={`/admin/season/${id}/sorting`}
-                        className="inline-block"
+                        className='inline-block'
                       >
-                        <Button type="button">
-                          League Sorting
-                        </Button>
+                        <Button type='button'>League Sorting</Button>
                       </Link>
                     </>
                   )}

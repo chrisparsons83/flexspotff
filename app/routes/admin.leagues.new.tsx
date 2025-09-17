@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { redirect } from 'remix-typedjson';
 import z from 'zod';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 

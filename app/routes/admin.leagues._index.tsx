@@ -9,7 +9,7 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { syncAdp } from '~/libs/syncs.server';
 import { getLeague, getLeagues, updateLeague } from '~/models/league.server';
 import type { Team } from '~/models/team.server';
@@ -120,7 +120,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const promises: Promise<Team>[] = [];
       for (const sleeperTeam of sleeperTeams) {
         // Don't import the admin team. These are blank teams. There is a single exception in 2018, but if that data breaks, whatever.
-        if (!sleeperTeam.owner_id || sleeperTeam.owner_id === env.FFDISCORDADMIN_SLEEPER_ID) continue;
+        if (
+          !sleeperTeam.owner_id ||
+          sleeperTeam.owner_id === env.FFDISCORDADMIN_SLEEPER_ID
+        )
+          continue;
         // build team object
         const systemUser = existingUsersSleeperIds.filter(
           team => team.sleeperOwnerID === sleeperTeam.owner_id,

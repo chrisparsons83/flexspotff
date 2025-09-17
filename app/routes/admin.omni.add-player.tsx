@@ -7,7 +7,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { createOmniPlayer } from '~/models/omniplayer.server';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';

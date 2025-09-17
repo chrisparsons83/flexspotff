@@ -13,7 +13,7 @@ import {
 } from 'remix-typedjson';
 import { sendMessageToChannel } from '~/../bot/utils';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   getPlayersAndAssociatedPick,
   updateOmniPlayer,

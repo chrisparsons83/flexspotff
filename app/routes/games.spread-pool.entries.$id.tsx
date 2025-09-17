@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import type { Bet } from '~/models/poolgame.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import type { PoolGamePickCreate } from '~/models/poolgamepicks.server';

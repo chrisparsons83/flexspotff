@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import type { TeamPick } from '~/models/locksgame.server';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import type { LocksGamePickCreate } from '~/models/locksgamepicks.server';

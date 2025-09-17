@@ -9,7 +9,7 @@ import {
 import z from 'zod';
 import FSquaredEntryFormSection from '~/components/layout/f-squared/FSquaredEntryFormSection';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   createEntry,
   getEntryByUserAndYear,

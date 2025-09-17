@@ -15,7 +15,7 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import {
   createEpisode,
   getEpisode,

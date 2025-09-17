@@ -7,7 +7,7 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import {
   createQBStreamingWeek,

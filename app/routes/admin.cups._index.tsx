@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';

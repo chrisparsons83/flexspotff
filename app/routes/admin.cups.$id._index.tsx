@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/Button';
+import Button from '~/components/ui/FlexSpotButton';
 import type { ScoreArray } from '~/models/cup.server';
 import { getCup } from '~/models/cup.server';
 import type { CupGame } from '~/models/cupgame.server';
@@ -170,11 +170,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const promises: Promise<CupTeam>[] = [];
       let seed = 1;
       for (const { teamId } of scores) {
-        console.log({
-          cupId,
-          teamId,
-          seed,
-        });
         promises.push(
           createCupTeam({
             cupId,
