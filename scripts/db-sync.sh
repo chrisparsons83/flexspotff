@@ -18,4 +18,8 @@ database=$(echo "$DATABASE_URL" | awk -F'/' '{print $NF}')
 docker exec -i $container_name psql -U postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$database' AND pid <> pg_backend_pid();"
 docker exec -i $container_name psql -U postgres -c "DROP DATABASE IF EXISTS $database;"
 docker exec -i $container_name psql -U postgres -c "CREATE DATABASE $database OWNER postgres;"
-gunzip -c "$fileToUpdate" | docker exec -i flexspotff-postgres-1 psql -U postgres -d "$database"
+if [[ "$fileToUpdate" == *.gz ]]; then
+  gunzip -c "$fileToUpdate" | docker exec -i flexspotff-postgres-1 psql -U postgres -d "$database"
+else
+  cat "$fileToUpdate" | docker exec -i flexspotff-postgres-1 psql -U postgres -d "$database"
+fi
