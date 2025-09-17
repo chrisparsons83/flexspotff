@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { getWeekNflGames } from '~/models/nflgame.server';
 
 const envSchema = z.object({
   AWS_BUCKET: z.string().min(1),
@@ -35,5 +36,16 @@ const shuffleArray = <T>(array: T[]): T[] => {
   }
   return arrayCopy;
 };
+
+/**
+ * Returns true if any NFL game for the given year/week is not complete.
+ */
+export async function areAllNflGamesComplete(
+  year: number,
+  week: number,
+): Promise<boolean> {
+  const nflGames = await getWeekNflGames(year, week);
+  return nflGames.some(game => game.status !== 'complete');
+}
 
 export { envSchema, shuffleArray };

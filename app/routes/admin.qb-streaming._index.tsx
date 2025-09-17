@@ -8,6 +8,7 @@ import {
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/Button';
+import { syncNflGameWeek } from '~/libs/syncs.server';
 import {
   createQBStreamingWeek,
   getQBStreamingWeek,
@@ -18,6 +19,7 @@ import type { QBStreamingWeekOption } from '~/models/qbstreamingweekoption.serve
 import { updateQBStreamingWeekOptionScore } from '~/models/qbstreamingweekoption.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { areAllNflGamesComplete } from '~/utils/helpers';
 
 // If the below fields do not exist, it is safe to assume they are 0.
 const sleeperJsonStats = z.record(
@@ -81,6 +83,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
+
+      // Update NFL scores for the week
+      await syncNflGameWeek(year, [weekNumber]);
+
+      // Check if all NFL games for the week are completed
+      const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
+      if (!allGamesCompleted) {
+        return typedjson({
+          message: 'Not all games have been completed, scoring cannot proceed',
+        });
+      }
 
       const sleeperLeagueRes = await fetch(
         `https://api.sleeper.app/v1/stats/nfl/regular/${year}/${weekNumber}?position[]=QB`,

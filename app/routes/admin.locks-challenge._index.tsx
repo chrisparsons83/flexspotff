@@ -27,6 +27,7 @@ import {
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { areAllNflGamesComplete } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -78,7 +79,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Update NFL scores for the week
       await syncNflGameWeek(year, [weekNumber]);
 
-      // TODO: Put check in here to cancel the process if all games aren't completed.
+      // Check if all NFL games for the week are completed
+      const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
+      if (!allGamesCompleted) {
+        return typedjson({
+          message: 'Not all games have been completed, scoring cannot proceed',
+        });
+      }
 
       // Loop through each game and process
       const locksGames = await getLocksGamesByYearAndWeek(year, weekNumber);
