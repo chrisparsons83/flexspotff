@@ -45,7 +45,7 @@ export async function areAllNflGamesComplete(
   week: number,
 ): Promise<boolean> {
   const nflGames = await getWeekNflGames(year, week);
-  return nflGames.some(game => game.status !== 'complete');
+  return nflGames.every(game => game.status === 'complete');
 }
 
 export { envSchema, shuffleArray };
