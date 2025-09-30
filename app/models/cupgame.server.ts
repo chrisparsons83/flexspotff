@@ -57,3 +57,11 @@ export async function updateCupGame(id: CupGame['id'], data: Partial<CupGame>) {
     data,
   });
 }
+
+export async function deleteCupGamesByCup(cupId: Cup['id']) {
+  return prisma.cupGame.deleteMany({
+    where: {
+      cupId,
+    },
+  });
+}

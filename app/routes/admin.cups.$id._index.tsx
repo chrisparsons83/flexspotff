@@ -12,12 +12,14 @@ import { getCup } from '~/models/cup.server';
 import type { CupGame } from '~/models/cupgame.server';
 import {
   createCupGame,
+  deleteCupGamesByCup,
   getCupGamesByCup,
   updateCupGame,
 } from '~/models/cupgame.server';
 import {
   type CupTeam,
   createCupTeam,
+  deleteCupTeamsByCup,
   getCupTeamsByCup,
 } from '~/models/cupteam.server';
 import type { CupWeek } from '~/models/cupweek.server';
@@ -159,6 +161,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       });
     }
     case 'SEEDING': {
+      // Clear existing seeds and games from this cup before generating new ones
+      await Promise.all([
+        deleteCupTeamsByCup(cupId),
+        deleteCupGamesByCup(cupId),
+      ]);
+
       const weeksToScore = (await getCupWeeks(cupId))
         .filter(cupWeek => cupWeek.mapping === 'SEEDING')
         .map(cupWeek => cupWeek.week);

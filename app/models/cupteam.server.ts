@@ -18,3 +18,11 @@ export async function getCupTeamsByCup(cupId: Cup['id']) {
     },
   });
 }
+
+export async function deleteCupTeamsByCup(cupId: Cup['id']) {
+  return prisma.cupTeam.deleteMany({
+    where: {
+      cupId,
+    },
+  });
+}
