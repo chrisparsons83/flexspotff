@@ -1,55 +1,15 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
-import { DateTime } from 'luxon';
-import { env } from 'process';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import { syncAdp } from '~/libs/syncs.server';
-import { getLeague, getLeagues, updateLeague } from '~/models/league.server';
-import type { Team } from '~/models/team.server';
-import { createTeam, getTeams, updateTeam } from '~/models/team.server';
-import { getUsers } from '~/models/user.server';
+import { syncLeague } from '~/libs/league-sync.server';
+import { getLeague, getLeagues } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-
-const sleeperTeamJson = z.array(
-  z.object({
-    league_id: z.string(),
-    roster_id: z.number(),
-    owner_id: z.string().nullable(),
-    settings: z.object({
-      wins: z.number(),
-      losses: z.number(),
-      ties: z.number(),
-      total_moves: z.number(),
-      waiver_budget_used: z.number(),
-      fpts: z.number().optional(),
-      fpts_decimal: z.number().optional(),
-      fpts_against: z.number().optional(),
-      fpts_against_decimal: z.number().optional(),
-    }),
-    metadata: z
-      .object({
-        streak: z.string().optional(),
-        record: z.string().optional(),
-      })
-      .nullable(),
-  }),
-);
-type SleeperTeamJson = z.infer<typeof sleeperTeamJson>;
-const sleeperDraftJson = z.object({
-  status: z.string(),
-  season: z.string(),
-  start_time: z.number().nullable(),
-  draft_order: z.record(z.number()).nullable(),
-});
-type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -68,106 +28,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   switch (action) {
     case 'sync': {
-      const teamsUrl = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
-      const draftsUrl = `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}`;
-      const [sleeperTeamsRes, sleeperDraftRes] = await Promise.all([
-        fetch(teamsUrl),
-        fetch(draftsUrl),
-      ]);
-
-      const sleeperTeams: SleeperTeamJson = sleeperTeamJson
-        .parse(await sleeperTeamsRes.json())
-        .map(team => ({
-          ...team,
-          owner_id: team.owner_id
-            ? team.owner_id
-            : team.league_id === '335507311525122048'
-            ? // Ice did something stupid with his team in Champs this year so this fixes that
-              '76491376673832960'
-            : SLEEPER_ADMIN_ID,
-        }));
-      const sleeperDraft: SleeperDraftJson = sleeperDraftJson.parse(
-        await sleeperDraftRes.json(),
-      );
-
-      const existingTeamsSleeperOwners = (await getTeams(leagueId)).map(
-        team => [team.sleeperOwnerId, team.id],
-      );
-      const existingUsersSleeperIds = (await getUsers()).flatMap(
-        ({ id, sleeperUsers }) =>
-          sleeperUsers.map(sleeperUser => ({
-            id,
-            sleeperOwnerID: sleeperUser.sleeperOwnerID,
-          })),
-      );
-
-      if (sleeperDraft.start_time) {
-        league.draftDateTime = DateTime.fromSeconds(
-          sleeperDraft.start_time / 1000,
-        ).toJSDate();
-        await updateLeague(league);
-      }
-
-      // This does some 2018 cleanup because Chris didn't know what the hell to call the leagues
-      // then and now he knows not to do stupid things like this.
-      if (league.name.match(/^FFDC - /)) {
-        await updateLeague({
-          id: league.id,
-          name: league.name.replace(/^FFDC - /, ''),
-        });
-      }
-
-      const promises: Promise<Team>[] = [];
-      for (const sleeperTeam of sleeperTeams) {
-        // Don't import the admin team. These are blank teams. There is a single exception in 2018, but if that data breaks, whatever.
-        if (
-          !sleeperTeam.owner_id ||
-          sleeperTeam.owner_id === env.FFDISCORDADMIN_SLEEPER_ID
-        )
-          continue;
-        // build team object
-        const systemUser = existingUsersSleeperIds.filter(
-          team => team.sleeperOwnerID === sleeperTeam.owner_id,
-        );
-        const team = {
-          wins: sleeperTeam.settings.wins,
-          losses: sleeperTeam.settings.losses,
-          ties: sleeperTeam.settings.ties,
-          sleeperOwnerId: sleeperTeam.owner_id!,
-          pointsFor:
-            (sleeperTeam.settings.fpts ?? 0) +
-            0.01 * (sleeperTeam.settings.fpts_decimal ?? 0),
-          pointsAgainst:
-            (sleeperTeam.settings.fpts_against ?? 0) +
-            0.01 * (sleeperTeam.settings.fpts_against_decimal ?? 0),
-          rosterId: sleeperTeam.roster_id,
-          leagueId,
-          draftPosition: sleeperDraft.draft_order
-            ? sleeperDraft.draft_order[sleeperTeam.owner_id]
-            : null,
-          userId: systemUser.length > 0 ? systemUser[0].id : null,
-        };
-        // if team exists, add ID and add update to promises array
-        // else, add create to promises array
-        const existingTeam = existingTeamsSleeperOwners.filter(
-          team => team[0] === sleeperTeam.owner_id,
-        );
-        if (existingTeam.length > 0) {
-          promises.push(updateTeam({ id: existingTeam[0][1], ...team }));
-        } else {
-          promises.push(createTeam(team));
-        }
-      }
-      await Promise.all(promises);
+      await syncLeague(league);
       break;
     }
     default: {
       throw new Error(`Action not supported`);
     }
-  }
-
-  if (!league.isDrafted) {
-    await syncAdp(league);
   }
 
   return typedjson({

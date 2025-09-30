@@ -19,8 +19,12 @@ export class SchedulerService {
         {
           name: 'sync-nfl-players',
           // Run every Tuesday at 2:00 AM
-          cron: '0 2 * * 2',
-          // Alternative human-readable format: 'at 2:00 am on Tuesday'
+          cron: '0 5 * * 2',
+        },
+        {
+          name: 'sync-leagues',
+          // Run every Tuesday at 7:00 AM
+          cron: '0 7 * * 2',
         },
         // Add more jobs here as needed
       ],
@@ -35,19 +39,19 @@ export class SchedulerService {
   }
 
   private setupEventHandlers() {
-    this.bree.on('worker created', (name) => {
+    this.bree.on('worker created', name => {
       console.log(`Job worker created: ${name}`);
     });
 
-    this.bree.on('worker deleted', (name) => {
+    this.bree.on('worker deleted', name => {
       console.log(`Job worker deleted: ${name}`);
     });
 
-    this.bree.on('worker message', (data) => {
+    this.bree.on('worker message', data => {
       console.log('Job message:', data);
     });
 
-    this.bree.on('job completed', (name) => {
+    this.bree.on('job completed', name => {
       console.log(`Job completed: ${name}`);
     });
 
