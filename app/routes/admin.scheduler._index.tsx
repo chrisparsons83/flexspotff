@@ -10,6 +10,7 @@ import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { scheduler } from '~/services/scheduler.server';
+import { cronToHuman } from '~/utils/cron';
 
 type ActionData = {
   message?: string;
@@ -81,7 +82,7 @@ export default function AdminSchedulerIndex() {
         <section>
           <h3>Scheduled Jobs</h3>
           <div className='space-y-4'>
-            {jobs.map((job: any, index: number) => (
+            {jobs.map((job, index: number) => (
               <div
                 key={index}
                 className='border rounded-lg p-4 bg-gray-50 dark:bg-gray-800'
@@ -90,11 +91,19 @@ export default function AdminSchedulerIndex() {
                   <div>
                     <h4 className='font-semibold text-lg'>{job.name}</h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      Schedule: {job.cron || 'Not scheduled'}
+                      Schedule: {cronToHuman(job.cron)}
+                    </p>
+                    <p className='text-xs text-gray-500 mt-1'>
+                      Cron: {job.cron || 'Not scheduled'}
                     </p>
                     {job.name === 'sync-nfl-players' && (
                       <p className='text-sm text-gray-500 mt-1'>
-                        Syncs NFL players database every Tuesday at 2:00 AM
+                        Syncs NFL players database from external API
+                      </p>
+                    )}
+                    {job.name === 'sync-leagues' && (
+                      <p className='text-sm text-gray-500 mt-1'>
+                        Syncs all leagues in the current season with team data
                       </p>
                     )}
                   </div>
