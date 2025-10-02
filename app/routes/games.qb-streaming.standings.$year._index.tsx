@@ -114,7 +114,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       year,
       currentSeason,
       isTop12Season: true,
-      qbStreamingWeeks: qbStreamingWeeks.sort((a, b) => a.week - b.week),
+      qbStreamingWeeks: qbStreamingWeeks
+        .filter(week => week.isScored)
+        .sort((a, b) => a.week - b.week),
     });
   }
 
