@@ -1,10 +1,11 @@
-import { Link, Outlet } from '@remix-run/react';
+import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { prisma } from '~/db.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { NavigationSection } from '~/components/layout/NavigationSection';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -137,121 +138,30 @@ export default function GamesIndex() {
       <h2>FlexSpotFF Games</h2>
       <div className='grid md:grid-cols-12 md:gap-4'>
         <div className='not-prose text-sm md:col-span-2'>
-          <section>
-            <p
-              id='admin-leagues-heading'
-              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-            >
-              Games
-            </p>
-            <ul
-              aria-labelledby='admin-leagues-heading'
-              className='mb-8 space-y-2 p-0'
-            >
-              {navigationLinks.map(navLink => (
-                <li key={navLink.name} className='flow-root'>
-                  <Link
-                    to={navLink.href}
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    {navLink.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <p
-              id='games-spreadPool-heading'
-              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-            >
-              Spread Pool
-            </p>
-            <ul
-              aria-labelledby='games-spreadPool-heading'
-              className='mb-8 space-y-2 p-0'
-            >
-              {spreadPoolLinks.map(navLink => (
-                <li key={navLink.name} className='flow-root'>
-                  <Link
-                    to={navLink.href}
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    {navLink.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <p
-              id='admin-leagues-heading'
-              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-            >
-              QB Streaming Challenge
-            </p>
-            <ul
-              aria-labelledby='admin-leagues-heading'
-              className='mb-8 space-y-2 p-0'
-            >
-              {qbStreamingLinks.map(navLink => (
-                <li key={navLink.name} className='flow-root'>
-                  <Link
-                    to={navLink.href}
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    {navLink.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <p
-              id='games-locksChallenge-heading'
-              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-            >
-              Locks Challenge
-            </p>
-            <ul
-              aria-labelledby='games-locksChallenge-heading'
-              className='mb-8 space-y-2 p-0'
-            >
-              {nflLocksChallengeLinks.map(navLink => (
-                <li key={navLink.name} className='flow-root'>
-                  <Link
-                    to={navLink.href}
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    {navLink.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <p
-              id='games-dfssurvivor-heading'
-              className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-            >
-              DFS Survivor
-            </p>
-            <ul
-              aria-labelledby='games-dfssurvivor-heading'
-              className='mb-8 space-y-2 p-0'
-            >
-              {dfsSurvivorLinks.map(navLink => (
-                <li key={navLink.name} className='flow-root'>
-                  <Link
-                    to={navLink.href}
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    {navLink.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <NavigationSection 
+            title="Games" 
+            links={navigationLinks} 
+            headingId="admin-leagues-heading" 
+          />
+          <NavigationSection 
+            title="Spread Pool" 
+            links={spreadPoolLinks} 
+            headingId="games-spreadPool-heading" 
+          />
+          <NavigationSection 
+            title="QB Streaming Challenge" 
+            links={qbStreamingLinks} 
+          />
+          <NavigationSection 
+            title="Locks Challenge" 
+            links={nflLocksChallengeLinks} 
+            headingId="games-locksChallenge-heading" 
+          />
+          <NavigationSection 
+            title="DFS Survivor" 
+            links={dfsSurvivorLinks} 
+            headingId="games-dfssurvivor-heading" 
+          />
         </div>
         <div className='md:col-span-10'>
           <Outlet />

@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link, Outlet } from '@remix-run/react';
+import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import {
   authenticator,
@@ -7,6 +7,7 @@ import {
   isPodcastEditor,
   requireEditor,
 } from '~/services/auth.server';
+import { NavigationSection } from '~/components/layout/NavigationSection';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -27,6 +28,47 @@ export default function Admin() {
   const { userIsAdmin, userIsPodcastEditor } =
     useTypedLoaderData<typeof loader>();
 
+  const leaguesLinks = [
+    { name: 'Registration List', href: '/admin/registration-list', current: false },
+    { name: 'Seasons', href: '/admin/season', current: false },
+    { name: 'Leagues', href: '/admin/leagues', current: false },
+    { name: 'Cups', href: '/admin/cups', current: false },
+    { name: 'Draft Slots', href: '/admin/draft-slots', current: false },
+    { name: 'Add League', href: '/admin/leagues/new', current: false },
+  ];
+
+  const gamesLinks = [
+    { name: 'Spread Pool', href: '/admin/spread-pool', current: false },
+    { name: 'QB Streaming', href: '/admin/qb-streaming', current: false },
+    { name: 'Locks Challenge', href: '/admin/locks-challenge', current: false },
+    { name: 'DFS Survivor', href: '/admin/dfs-survivor', current: false },
+  ];
+
+  const omniLinks = [
+    { name: 'Score Update', href: '/admin/omni/scoring', current: false },
+    { name: 'Qualifying Points Update', href: '/admin/omni/qualifying-points', current: false },
+    { name: 'Add Omni Player', href: '/admin/omni/add-player', current: false },
+  ];
+
+  const membersLinks = [
+    { name: 'List', href: '/admin/members', current: false },
+    { name: 'Add Members', href: '/admin/members/add', current: false },
+  ];
+
+  const dataLinks = [
+    { name: 'Syncing', href: '/admin/data', current: false },
+    { name: 'Scheduler', href: '/admin/scheduler', current: false },
+  ];
+
+  const botLinks = [
+    { name: 'Commands', href: '/admin/bot', current: false },
+  ];
+
+  const podcastLinks = [
+    { name: 'List', href: '/admin/podcasts', current: false },
+    { name: 'Add', href: '/admin/podcasts/new', current: false },
+  ];
+
   return (
     <>
       <h2>Admin</h2>
@@ -34,260 +76,44 @@ export default function Admin() {
         <div className='not-prose text-sm md:col-span-3'>
           {userIsAdmin && (
             <>
-              <section>
-                <p
-                  id='admin-leagues-heading'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Leagues
-                </p>
-                <ul
-                  aria-labelledby='admin-leagues-heading'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/registration-list'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Registration List
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/season'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Seasons
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/leagues'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Leagues
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/cups'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Cups
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/draft-slots'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Draft Slots
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/leagues/new'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Add League
-                    </Link>
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p
-                  id='admin-members-games'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Games
-                </p>
-                <ul
-                  aria-labelledby='admin-members-games'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/spread-pool'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Spread Pool
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/qb-streaming'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      QB Streaming
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/locks-challenge'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Locks Challenge
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/dfs-survivor'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      DFS Survivor
-                    </Link>
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p
-                  id='admin-omni-heading'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Omni
-                </p>
-                <ul
-                  aria-labelledby='admin-omni-heading'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/omni/scoring'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Score Update
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/omni/qualifying-points'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Qualifying Points Update
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/omni/add-player'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Add Omni Player
-                    </Link>
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p
-                  id='admin-members-heading'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Members
-                </p>
-                <ul
-                  aria-labelledby='admin-members-heading'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/members'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      List
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/members/add'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Add Members
-                    </Link>
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p
-                  id='admin-data-heading'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Data
-                </p>
-                <ul
-                  aria-labelledby='admin-data-heading'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/data'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Syncing
-                    </Link>
-                  </li>
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/scheduler'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Scheduler
-                    </Link>
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p
-                  id='admin-bot-heading'
-                  className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-                >
-                  Bot
-                </p>
-                <ul
-                  aria-labelledby='admin-bot-heading'
-                  className='mb-8 space-y-2 p-0'
-                >
-                  <li className='flow-root'>
-                    <Link
-                      to='/admin/bot'
-                      className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                    >
-                      Commands
-                    </Link>
-                  </li>
-                </ul>
-              </section>
+              <NavigationSection 
+                title="Leagues" 
+                links={leaguesLinks} 
+                headingId="admin-leagues-heading" 
+              />
+              <NavigationSection 
+                title="Games" 
+                links={gamesLinks} 
+                headingId="admin-members-games" 
+              />
+              <NavigationSection 
+                title="Omni" 
+                links={omniLinks} 
+                headingId="admin-omni-heading" 
+              />
+              <NavigationSection 
+                title="Members" 
+                links={membersLinks} 
+                headingId="admin-members-heading" 
+              />
+              <NavigationSection 
+                title="Data" 
+                links={dataLinks} 
+                headingId="admin-data-heading" 
+              />
+              <NavigationSection 
+                title="Bot" 
+                links={botLinks} 
+                headingId="admin-bot-heading" 
+              />
             </>
           )}
           {userIsPodcastEditor && (
-            <section>
-              <p
-                id='admin-podcast-heading'
-                className='mb-3 font-semibold text-slate-900 dark:text-slate-500'
-              >
-                Podcast
-              </p>
-              <ul
-                aria-labelledby='admin-podcast-heading'
-                className='mb-8 space-y-2 p-0'
-              >
-                <li className='flow-root'>
-                  <Link
-                    to='/admin/podcasts'
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    List
-                  </Link>
-                </li>
-                <li className='flow-root'>
-                  <Link
-                    to='/admin/podcasts/new'
-                    className='block text-slate-700 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-300'
-                  >
-                    Add
-                  </Link>
-                </li>
-              </ul>
-            </section>
+            <NavigationSection 
+              title="Podcast" 
+              links={podcastLinks} 
+              headingId="admin-podcast-heading" 
+            />
           )}
         </div>
         <div className='md:col-span-9'>
