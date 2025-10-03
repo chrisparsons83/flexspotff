@@ -41,6 +41,7 @@ ADD . .
 RUN npm run build
 RUN npm run build:bot
 RUN npm run build:scheduler
+RUN npm run build:jobs
 
 # Finally, build the production image with minimal footprint
 FROM base
@@ -52,6 +53,7 @@ COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
 
 COPY --from=build /myapp/build/bot /myapp/build/bot
 COPY --from=build /myapp/build/scheduler /myapp/build/scheduler
+COPY --from=build /myapp/build/jobs /myapp/build/jobs
 COPY --from=build /myapp/build/server /myapp/build/server
 COPY --from=build /myapp/build/client /myapp/build/client
 ADD . .

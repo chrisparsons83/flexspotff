@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "build:all": "run-s build build:bot build:scheduler",
+    "build:all": "run-s build build:bot build:scheduler build:jobs",
     "build:bot": "tsup-node --config ./bot/tsup.config.ts",
     "build:scheduler": "tsup-node --config ./scheduler/tsup.config.ts",
+    "build:jobs": "tsup-node --config ./jobs/tsup.config.ts",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "cypress:test": "start-server-and-test dev http://localhost:5173 cypress:run",

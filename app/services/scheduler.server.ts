@@ -8,9 +8,10 @@ export class SchedulerService {
   private bree: Bree;
 
   constructor() {
+    const isProduction = process.env.NODE_ENV === 'production';
     this.bree = new Bree({
-      root: path.join(process.cwd(), 'jobs'),
-      defaultExtension: 'ts',
+      root: isProduction ? path.join(process.cwd(), 'build/jobs') : path.join(process.cwd(), 'jobs'),
+      defaultExtension: isProduction ? 'js' : 'ts',
       jobs: [
         {
           name: 'sync-nfl-players',
