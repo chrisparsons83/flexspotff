@@ -49,7 +49,7 @@ async function monitorNflGamesJob() {
       );
     }
 
-    const message = `NFL games monitoring completed. Games before: ${inGameCountBefore}, after: ${inGameCountAfter}, scores resynced: ${shouldResyncScores}`;
+    const message = `NFL games monitoring completed. Games before: ${inGameCountBefore}, after: ${inGameCountAfter}`;
 
     // Send success message to parent
     if (parentPort) {
