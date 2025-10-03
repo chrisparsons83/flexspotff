@@ -1,9 +1,5 @@
 import Bree from 'bree';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Scheduler service using Bree for running scheduled tasks
@@ -13,7 +9,7 @@ export class SchedulerService {
 
   constructor() {
     this.bree = new Bree({
-      root: path.join(__dirname, '../../jobs'),
+      root: path.join(process.cwd(), 'jobs'),
       defaultExtension: 'ts',
       jobs: [
         {

@@ -42,18 +42,22 @@ process.on('unhandledRejection', async (reason, promise) => {
 });
 
 // Start the scheduler
-try {
-  await scheduler.start();
-  console.log('✅ Scheduler started successfully');
-  
-  const jobs = scheduler.getJobs();
-  console.log('📋 Active Jobs:');
-  jobs.forEach((job: any) => {
-    console.log(`   • ${job.name}: ${job.cron || 'No schedule'}`);
-  });
-  
-  console.log('🚀 Scheduler running in background...');
-} catch (error) {
-  console.error('❌ Failed to start scheduler:', error);
-  process.exit(1);
+async function startScheduler() {
+  try {
+    await scheduler.start();
+    console.log('✅ Scheduler started successfully');
+    
+    const jobs = scheduler.getJobs();
+    console.log('📋 Active Jobs:');
+    jobs.forEach((job: any) => {
+      console.log(`   • ${job.name}: ${job.cron || 'No schedule'}`);
+    });
+    
+    console.log('🚀 Scheduler running in background...');
+  } catch (error) {
+    console.error('❌ Failed to start scheduler:', error);
+    process.exit(1);
+  }
 }
+
+startScheduler();

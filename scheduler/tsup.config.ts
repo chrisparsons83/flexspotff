@@ -1,10 +1,11 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['server.ts'],
+  entry: ['scheduler/server.ts'],
   format: ['cjs'],
   target: 'node18',
-  outDir: '../build/scheduler',
+  tsconfig: './scheduler/tsconfig.json',
+  outDir: './build/scheduler',
   clean: true,
   sourcemap: true,
   minify: false,
