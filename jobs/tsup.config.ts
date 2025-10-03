@@ -18,6 +18,6 @@ export default defineConfig({
     '@prisma/client',
     'prisma'
   ],
-  // Keep the original file structure
-  outExtension: () => ({ js: '.js' }),
+  // Use .cjs extension for CommonJS in ESM project
+  outExtension: () => ({ js: '.cjs' }),
 });
