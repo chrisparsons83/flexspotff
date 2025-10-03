@@ -106,6 +106,11 @@ export default function AdminSchedulerIndex() {
                         Syncs all leagues in the current season with team data
                       </p>
                     )}
+                    {job.name === 'monitor-nfl-games' && (
+                      <p className='text-sm text-gray-500 mt-1'>
+                        Monitors NFL games and triggers score resyncing when games finish
+                      </p>
+                    )}
                   </div>
                   <Form method='POST' className='inline'>
                     <input type='hidden' name='jobName' value={job.name} />

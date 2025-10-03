@@ -26,6 +26,11 @@ export class SchedulerService {
           // Run every Tuesday at 7:00 AM
           cron: '0 7 * * 2',
         },
+        {
+          name: 'monitor-nfl-games',
+          // Run every 5 minutes
+          cron: '*/5 * * * *',
+        },
         // Add more jobs here as needed
       ],
       // Enable logging
