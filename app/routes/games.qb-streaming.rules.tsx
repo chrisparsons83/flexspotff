@@ -14,7 +14,7 @@ export default function GamesQBStreamingRules() {
         <li>-2 per interception/fumble</li>
         <li>2 per 2-point conversion</li>
       </ul>
-      <p>Highest score at the end of the season wins.</p>
+      <p>Highest total from your best 12 weekly scores at the end of the season wins.</p>
     </>
   );
 }
