@@ -23,10 +23,23 @@ export const data = new SlashCommandBuilder()
       .setDescription(
         'Optional: the user to check. If this is left blank, your user will be checked.',
       ),
+  )
+  .addStringOption(option =>
+    option
+      .setName('hidden')
+      .setDescription(
+        'Private to just display for you, public posts the result in public chat for everyone to see.',
+      )
+      .addChoices([
+        { name: 'Private', value: 'private' },
+        { name: 'Public', value: 'public' },
+      ]),
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
-  await interaction.deferReply();
+  const ephemeral =
+    interaction.options.getString('hidden') === 'private' ? true : false;
+  await interaction.deferReply({ ephemeral });
   const userId = interaction.options.getUser('user')?.id || interaction.user.id;
 
   const flexspotUser = await getUserByDiscordId(userId);
