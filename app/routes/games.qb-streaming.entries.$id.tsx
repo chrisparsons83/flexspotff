@@ -43,30 +43,57 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     throw new Error('Bad form submit for deepPlayerId');
   }
 
-  // Check both players, make sure both existing player and new player are not locked.
-  const standardQBStreamingOption = currentWeek.QBStreamingWeekOptions.find(
-    option => option.id === standardPlayerId,
-  );
-  if (!standardQBStreamingOption)
-    throw new Error('Standard QB Streaming Option not found');
-  const standardNFLGame = await getNflGameById(
-    standardQBStreamingOption.nflGameId,
-  );
-  if (!standardNFLGame) throw new Error('Game not found');
-  if (standardNFLGame.gameStartTime > new Date()) {
-    newSelections.standardPlayerId = standardPlayerId;
-  }
+  // Helper function to validate and get player selection
+  const validatePlayerSelection = async (
+    submittedPlayerId: string,
+    existingPlayerId: string | null,
+    existingPlayerGame: { gameStartTime: Date } | null,
+    selectionType: 'standard' | 'deep',
+  ): Promise<string> => {
+    // If user has an existing selection and it's locked, keep the existing value
+    if (existingPlayerId && existingPlayerGame) {
+      const existingIsLocked = existingPlayerGame.gameStartTime < new Date();
 
-  const deepQBStreamingOption = currentWeek.QBStreamingWeekOptions.find(
-    option => option.id === deepPlayerId,
+      if (existingIsLocked) {
+        // Selection is locked, ignore submitted value and return existing
+        return existingPlayerId;
+      }
+    }
+
+    // Selection is either unlocked or doesn't exist yet - validate the new selection
+    const qbStreamingOption = currentWeek.QBStreamingWeekOptions.find(
+      option => option.id === submittedPlayerId,
+    );
+    if (!qbStreamingOption) {
+      throw new Error(`${selectionType === 'standard' ? 'Standard' : 'Deep'} QB Streaming Option not found`);
+    }
+
+    const nflGame = await getNflGameById(qbStreamingOption.nflGameId);
+    if (!nflGame) throw new Error('Game not found');
+
+    if (nflGame.gameStartTime > new Date()) {
+      return submittedPlayerId;
+    } else {
+      throw new Error(
+        `Cannot select a ${selectionType} player whose game has already started`,
+      );
+    }
+  };
+
+  // Validate both selections
+  newSelections.standardPlayerId = await validatePlayerSelection(
+    standardPlayerId,
+    existingSelection?.standardPlayerId ?? null,
+    existingSelection?.standardPlayer.nflGame ?? null,
+    'standard',
   );
-  if (!deepQBStreamingOption)
-    throw new Error('Deep QB Streaming Option not found');
-  const deepNFLGame = await getNflGameById(deepQBStreamingOption.nflGameId);
-  if (!deepNFLGame) throw new Error('Game not found');
-  if (deepNFLGame.gameStartTime > new Date()) {
-    newSelections.deepPlayerId = deepPlayerId;
-  }
+
+  newSelections.deepPlayerId = await validatePlayerSelection(
+    deepPlayerId,
+    existingSelection?.deepPlayerId ?? null,
+    existingSelection?.deepPlayer.nflGame ?? null,
+    'deep',
+  );
 
   // Update or create selection
   if (existingSelection) {
@@ -114,7 +141,12 @@ export default function QBStreamingYearWeekEntry() {
   const { qbStreamingWeek, qbSelection } = useTypedLoaderData<typeof loader>();
   const navigation = useNavigation();
 
-  console.log('hello');
+  const standardIsLocked =
+    !!qbSelection &&
+    qbSelection?.standardPlayer.nflGame.gameStartTime < new Date();
+  const deepIsLocked =
+    !!qbSelection &&
+    qbSelection?.deepPlayer.nflGame.gameStartTime < new Date();
 
   return (
     <>
@@ -124,16 +156,20 @@ export default function QBStreamingYearWeekEntry() {
         <div className='mb-4'>
           <label htmlFor='standardPlayerId'>
             Standard Selection:
+            {standardIsLocked && qbSelection?.standardPlayerId && (
+              <input
+                type='hidden'
+                name='standardPlayerId'
+                value={qbSelection.standardPlayerId}
+              />
+            )}
             <select
               defaultValue={qbSelection?.standardPlayerId}
-              name='standardPlayerId'
+              name={standardIsLocked ? undefined : 'standardPlayerId'}
               id='standardPlayerId'
-              required
+              required={!standardIsLocked}
               className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              disabled={
-                !!qbSelection &&
-                qbSelection?.standardPlayer.nflGame.gameStartTime < new Date()
-              }
+              disabled={standardIsLocked}
             >
               <option value=''></option>
               {qbStreamingWeek?.QBStreamingWeekOptions.map(qbOption => {
@@ -159,16 +195,20 @@ export default function QBStreamingYearWeekEntry() {
         <div className='mb-4'>
           <label htmlFor='deepPlayerId'>
             Deep Selection:
+            {deepIsLocked && qbSelection?.deepPlayerId && (
+              <input
+                type='hidden'
+                name='deepPlayerId'
+                value={qbSelection.deepPlayerId}
+              />
+            )}
             <select
               defaultValue={qbSelection?.deepPlayerId}
-              name='deepPlayerId'
+              name={deepIsLocked ? undefined : 'deepPlayerId'}
               id='deepPlayerId'
-              required
+              required={!deepIsLocked}
               className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              disabled={
-                !!qbSelection &&
-                qbSelection?.deepPlayer.nflGame.gameStartTime < new Date()
-              }
+              disabled={deepIsLocked}
             >
               <option value=''></option>
               {qbStreamingWeek?.QBStreamingWeekOptions.filter(
