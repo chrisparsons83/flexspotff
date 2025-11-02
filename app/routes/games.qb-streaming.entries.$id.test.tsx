@@ -1,19 +1,38 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { action } from './games.qb-streaming.entries.$id';
 import type { ActionFunctionArgs } from '@remix-run/node';
-import * as auth from '~/services/auth.server';
-import * as qbStreamingWeekModel from '~/models/qbstreamingweek.server';
-import * as qbSelectionModel from '~/models/qbselection.server';
+import { describe, expect, it, vi, beforeEach, afterAll } from 'vitest';
 import * as nflGameModel from '~/models/nflgame.server';
+import * as qbSelectionModel from '~/models/qbselection.server';
+import * as qbStreamingWeekModel from '~/models/qbstreamingweek.server';
+import type { User } from '~/models/user.server';
+import * as auth from '~/services/auth.server';
+import { prisma } from '~/db.server';
 
 // Mock all dependencies
-vi.mock('~/services/auth.server');
+vi.mock('~/services/auth.server', () => ({
+  authenticator: {
+    isAuthenticated: vi.fn(),
+  },
+}));
 vi.mock('~/models/qbstreamingweek.server');
 vi.mock('~/models/qbselection.server');
 vi.mock('~/models/nflgame.server');
+vi.mock('~/db.server', () => ({
+  prisma: {
+    $disconnect: vi.fn(),
+  },
+}));
 
 describe('QB Streaming Entries Action', () => {
-  const mockUser = { id: 'user-123', email: 'test@example.com' };
+  const mockUser: User = {
+    id: 'user-123',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    discordId: 'discord-123',
+    discordName: 'TestUser',
+    discordAvatar: 'avatar-url',
+    discordRoles: [],
+  };
   const weekId = 'week-123';
   const standardOptionId = 'standard-option-123';
   const deepOptionId = 'deep-option-123';
@@ -29,8 +48,14 @@ describe('QB Streaming Entries Action', () => {
     vi.clearAllMocks();
     vi.setSystemTime(now);
 
-    // Default auth mock
+    // Default auth mock - isAuthenticated returns Promise<User | null>
+    // In tests we mock it to always return User (successful auth)
+    // @ts-expect-error - Mocking narrower type (User) than actual (User | null) for test clarity
     vi.mocked(auth.authenticator.isAuthenticated).mockResolvedValue(mockUser);
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   const createMockRequest = (
@@ -95,9 +120,17 @@ describe('QB Streaming Entries Action', () => {
       );
       vi.mocked(qbSelectionModel.getQBSelection).mockResolvedValue(null);
       vi.mocked(nflGameModel.getNflGameById)
-        .mockResolvedValueOnce({ id: 'game-1', gameStartTime: futureDate } as any)
-        .mockResolvedValueOnce({ id: 'game-2', gameStartTime: futureDate } as any);
-      vi.mocked(qbSelectionModel.createQBSelection).mockResolvedValue({} as any);
+        .mockResolvedValueOnce({
+          id: 'game-1',
+          gameStartTime: futureDate,
+        } as any)
+        .mockResolvedValueOnce({
+          id: 'game-2',
+          gameStartTime: futureDate,
+        } as any);
+      vi.mocked(qbSelectionModel.createQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       const result = await action(
         createMockRequest(standardOptionId, deepOptionId),
@@ -126,7 +159,9 @@ describe('QB Streaming Entries Action', () => {
 
       await expect(
         action(createMockRequest(standardOptionId, deepOptionId)),
-      ).rejects.toThrow('Cannot select a standard player whose game has already started');
+      ).rejects.toThrow(
+        'Cannot select a standard player whose game has already started',
+      );
     });
 
     it('should throw error when trying to create with locked deep player', async () => {
@@ -136,12 +171,20 @@ describe('QB Streaming Entries Action', () => {
       );
       vi.mocked(qbSelectionModel.getQBSelection).mockResolvedValue(null);
       vi.mocked(nflGameModel.getNflGameById)
-        .mockResolvedValueOnce({ id: 'game-1', gameStartTime: futureDate } as any)
-        .mockResolvedValueOnce({ id: 'game-2', gameStartTime: pastDate } as any);
+        .mockResolvedValueOnce({
+          id: 'game-1',
+          gameStartTime: futureDate,
+        } as any)
+        .mockResolvedValueOnce({
+          id: 'game-2',
+          gameStartTime: pastDate,
+        } as any);
 
       await expect(
         action(createMockRequest(standardOptionId, deepOptionId)),
-      ).rejects.toThrow('Cannot select a deep player whose game has already started');
+      ).rejects.toThrow(
+        'Cannot select a deep player whose game has already started',
+      );
     });
   });
 
@@ -171,9 +214,17 @@ describe('QB Streaming Entries Action', () => {
         mockExistingSelection as any,
       );
       vi.mocked(nflGameModel.getNflGameById)
-        .mockResolvedValueOnce({ id: 'game-3', gameStartTime: futureDate } as any)
-        .mockResolvedValueOnce({ id: 'game-4', gameStartTime: futureDate } as any);
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+        .mockResolvedValueOnce({
+          id: 'game-3',
+          gameStartTime: futureDate,
+        } as any)
+        .mockResolvedValueOnce({
+          id: 'game-4',
+          gameStartTime: futureDate,
+        } as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       const result = await action(
         createMockRequest(altStandardOptionId, altDeepOptionId),
@@ -220,7 +271,9 @@ describe('QB Streaming Entries Action', () => {
         id: 'game-4',
         gameStartTime: futureDate,
       } as any);
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       const result = await action(
         createMockRequest(altStandardOptionId, altDeepOptionId),
@@ -266,7 +319,9 @@ describe('QB Streaming Entries Action', () => {
         id: 'game-2',
         gameStartTime: futureDate,
       } as any);
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       // User tries to submit a different standard ID by modifying HTML
       const result = await action(
@@ -313,7 +368,9 @@ describe('QB Streaming Entries Action', () => {
         id: 'game-3',
         gameStartTime: futureDate,
       } as any);
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       const result = await action(
         createMockRequest(altStandardOptionId, altDeepOptionId),
@@ -359,7 +416,9 @@ describe('QB Streaming Entries Action', () => {
         id: 'game-1',
         gameStartTime: futureDate,
       } as any);
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       // User tries to submit a different deep ID by modifying HTML
       const result = await action(
@@ -402,7 +461,9 @@ describe('QB Streaming Entries Action', () => {
       vi.mocked(qbSelectionModel.getQBSelection).mockResolvedValue(
         mockExistingSelection as any,
       );
-      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue({} as any);
+      vi.mocked(qbSelectionModel.updateQBSelection).mockResolvedValue(
+        {} as any,
+      );
 
       const result = await action(
         createMockRequest(altStandardOptionId, altDeepOptionId),
@@ -423,7 +484,9 @@ describe('QB Streaming Entries Action', () => {
 
   describe('Error cases', () => {
     it('should throw error when week does not exist', async () => {
-      vi.mocked(qbStreamingWeekModel.getQBStreamingWeek).mockResolvedValue(null);
+      vi.mocked(qbStreamingWeekModel.getQBStreamingWeek).mockResolvedValue(
+        null,
+      );
 
       await expect(
         action(createMockRequest(standardOptionId, deepOptionId)),
