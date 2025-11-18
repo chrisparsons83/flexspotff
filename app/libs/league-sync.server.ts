@@ -91,10 +91,27 @@ export async function syncLeague(league: League): Promise<void> {
       user => user.sleeperOwnerID === sleeperTeam.owner_id,
     );
 
+    // Parse median record from metadata.record string
+    // Each week has 2 characters: first is H2H result, second is median result
+    const recordString = sleeperTeam.metadata?.record || '';
+    let medianWins = 0;
+    let medianTies = 0;
+    let medianLosses = 0;
+
+    for (let i = 1; i < recordString.length; i += 2) {
+      const medianResult = recordString[i];
+      if (medianResult === 'W') medianWins++;
+      else if (medianResult === 'T') medianTies++;
+      else if (medianResult === 'L') medianLosses++;
+    }
+
     const team = {
       wins: sleeperTeam.settings.wins,
       losses: sleeperTeam.settings.losses,
       ties: sleeperTeam.settings.ties,
+      medianWins,
+      medianTies,
+      medianLosses,
       sleeperOwnerId: sleeperTeam.owner_id!,
       pointsFor:
         (sleeperTeam.settings.fpts ?? 0) +

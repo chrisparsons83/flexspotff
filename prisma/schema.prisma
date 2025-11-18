@@ -644,6 +644,9 @@ model Team {
   wins           Int
   ties           Int
   losses         Int
+  medianWins     Int    @default(0)
+  medianTies     Int    @default(0)
+  medianLosses   Int    @default(0)
   sleeperOwnerId String
   pointsFor      Float
   pointsAgainst  Float

@@ -18,6 +18,7 @@ export default function LeagueTable({ league }: Props) {
             <th></th>
             <th>Name</th>
             <th>Record</th>
+            <th>Median</th>
             <th>PF</th>
             <th>PA</th>
           </tr>
@@ -41,6 +42,9 @@ export default function LeagueTable({ league }: Props) {
               <td>{team.user?.discordName}</td>
               <td>
                 {team.wins}-{team.losses}-{team.ties}
+              </td>
+              <td>
+                {team.medianWins}-{team.medianLosses}-{team.medianTies}
               </td>
               <td>{team.pointsFor}</td>
               <td>{team.pointsAgainst}</td>
