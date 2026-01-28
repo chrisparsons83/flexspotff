@@ -87,11 +87,16 @@ export function getOmniStandings(
         pick => !pick.player?.isComplete,
       ).length;
 
+      const picksWithPoints = omniTeam.draftPicks.filter(
+        pick => (pick.player?.pointsScored || 0) > 0,
+      ).length;
+
       return {
         owner: omniTeam.user?.discordName || '',
         totalPoints,
         rank: rankedPoints.findIndex(rank => rank === totalPoints) + 1,
         remainingPlayers,
+        picksWithPoints,
       };
     })
     .sort((a, b) => {
