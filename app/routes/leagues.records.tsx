@@ -1,4 +1,7 @@
+import clsx from 'clsx';
+import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import RecordsTable from '~/components/layout/records/RecordsTable';
 import type { RecordTable } from '~/models/records.server';
 import {
   getCareerRecords,
@@ -7,9 +10,6 @@ import {
   getSingleSeasonRecords,
   getStreakRecords,
 } from '~/models/records.server';
-import clsx from 'clsx';
-import { useState } from 'react';
-import RecordsTable from '~/components/layout/records/RecordsTable';
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },

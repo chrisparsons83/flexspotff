@@ -1,12 +1,12 @@
 import { action } from './games.qb-streaming.entries.$id';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { describe, expect, it, vi, beforeEach, afterAll } from 'vitest';
+import { prisma } from '~/db.server';
 import * as nflGameModel from '~/models/nflgame.server';
 import * as qbSelectionModel from '~/models/qbselection.server';
 import * as qbStreamingWeekModel from '~/models/qbstreamingweek.server';
 import type { User } from '~/models/user.server';
 import * as auth from '~/services/auth.server';
-import { prisma } from '~/db.server';
 
 // Mock all dependencies
 vi.mock('~/services/auth.server', () => ({

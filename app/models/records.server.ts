@@ -140,11 +140,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.pointsAgainst - a.pointsAgainst)
         .slice(0, TOP_N)
         .map(c => ({
-          cells: [
-            c.name,
-            c.pointsAgainst.toFixed(2),
-            c.seasons.toString(),
-          ],
+          cells: [c.name, c.pointsAgainst.toFixed(2), c.seasons.toString()],
         })),
     },
     {
@@ -204,17 +200,13 @@ export async function getSingleSeasonRecords(): Promise<RecordTable[]> {
     },
   });
 
-  const totalGames = (t: (typeof teams)[number]) =>
-    t.wins + t.losses + t.ties;
+  const totalGames = (t: (typeof teams)[number]) => t.wins + t.losses + t.ties;
   const winPct = (t: (typeof teams)[number]) =>
     totalGames(t) > 0 ? t.wins / totalGames(t) : 0;
   const differential = (t: (typeof teams)[number]) =>
     t.pointsFor - t.pointsAgainst;
 
-  const makeRow = (
-    t: (typeof teams)[number],
-    value: string,
-  ): RecordRow => ({
+  const makeRow = (t: (typeof teams)[number], value: string): RecordRow => ({
     cells: [
       t.user?.discordName || 'Unknown',
       value,
@@ -324,9 +316,7 @@ export async function getSingleGameRecords(): Promise<RecordTable[]> {
   ]);
 
   const makeRow = (
-    g:
-      | (typeof highestGames)[number]
-      | (typeof lowestGames)[number],
+    g: (typeof highestGames)[number] | (typeof lowestGames)[number],
   ): RecordRow => ({
     cells: [
       g.team.user?.discordName || 'Unknown',
@@ -561,10 +551,9 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
       g1.pointsScored > g2.pointsScored
         ? 'W'
         : g1.pointsScored < g2.pointsScored
-          ? 'L'
-          : 'T';
-    const r2: 'W' | 'L' | 'T' =
-      r1 === 'W' ? 'L' : r1 === 'L' ? 'W' : 'T';
+        ? 'L'
+        : 'T';
+    const r2: 'W' | 'L' | 'T' = r1 === 'W' ? 'L' : r1 === 'L' ? 'W' : 'T';
 
     gameResults.push({
       teamId: g1.teamId,
@@ -665,7 +654,9 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
       cells: [
         s.userName,
         s.length.toString(),
-        `${s.year} W${s.startWeek}${s.startWeek !== s.endWeek ? `-W${s.endWeek}` : ''}`,
+        `${s.year} W${s.startWeek}${
+          s.startWeek !== s.endWeek ? `-W${s.endWeek}` : ''
+        }`,
         s.leagueName,
       ],
       leagueName: s.leagueName.toLowerCase(),

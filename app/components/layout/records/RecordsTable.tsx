@@ -25,9 +25,7 @@ export default function RecordsTable({ title, headers, rows }: Props) {
           {rows.map((row, index) => (
             <tr
               key={index}
-              className={clsx(
-                index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-              )}
+              className={clsx(index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800')}
             >
               <td className='px-2'>
                 <div

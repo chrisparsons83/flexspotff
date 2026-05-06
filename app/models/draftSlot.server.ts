@@ -5,10 +5,7 @@ export type { DraftSlot } from '@prisma/client';
 
 export function getDraftSlots() {
   return prisma.draftSlot.findMany({
-    orderBy: [
-      { season: 'desc' },
-      { draftDateTime: 'asc' },
-    ],
+    orderBy: [{ season: 'desc' }, { draftDateTime: 'asc' }],
   });
 }
 
@@ -26,10 +23,7 @@ export async function getDraftSlotsWithPreferenceCounts() {
         },
       },
     },
-    orderBy: [
-      { season: 'desc' },
-      { draftDateTime: 'asc' },
-    ],
+    orderBy: [{ season: 'desc' }, { draftDateTime: 'asc' }],
   });
 
   return draftSlots.map(slot => ({
@@ -46,7 +40,7 @@ export async function getUniqueUsersWithPreferences() {
     },
     distinct: ['userId'],
   });
-  
+
   return uniqueUsers.length;
 }
 

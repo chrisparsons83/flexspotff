@@ -1,8 +1,8 @@
 import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { NavigationSection } from '~/components/layout/NavigationSection';
 import { getCurrentSeason } from '~/models/season.server';
 import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
-import { NavigationSection } from '~/components/layout/NavigationSection';
 
 export const loader = async () => {
   let currentSeason = await getCurrentSeason();
@@ -46,10 +46,10 @@ export default function LeaguesIndex() {
       <h2>FlexSpotFF Leagues</h2>
       <div className='grid md:grid-cols-12 md:gap-4'>
         <div className='not-prose text-sm md:col-span-2'>
-          <NavigationSection 
-            title="Leagues" 
-            links={navigationLinks} 
-            headingId="admin-leagues-heading" 
+          <NavigationSection
+            title='Leagues'
+            links={navigationLinks}
+            headingId='admin-leagues-heading'
           />
         </div>
         <div className='md:col-span-10'>

@@ -1,11 +1,16 @@
+import { syncAdp } from './syncs.server';
 import { DateTime } from 'luxon';
 import { env } from 'process';
-import { syncAdp } from './syncs.server';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { getUsers } from '~/models/user.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-import { sleeperTeamJson, sleeperDraftJson, type SleeperTeamJson, type SleeperDraftJson } from '~/utils/types';
+import {
+  sleeperTeamJson,
+  sleeperDraftJson,
+  type SleeperTeamJson,
+  type SleeperDraftJson,
+} from '~/utils/types';
 
 /**
  * Syncs a single league with Sleeper API data
@@ -16,7 +21,7 @@ export async function syncLeague(league: League): Promise<void> {
   // Fetch data from Sleeper API
   const teamsUrl = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
   const draftsUrl = `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}`;
-  
+
   const [sleeperTeamsRes, sleeperDraftRes] = await Promise.all([
     fetch(teamsUrl),
     fetch(draftsUrl),
@@ -43,9 +48,10 @@ export async function syncLeague(league: League): Promise<void> {
   );
 
   // Get existing teams for this league
-  const existingTeamsSleeperOwners = (await getTeams(league.id)).map(
-    team => [team.sleeperOwnerId, team.id],
-  );
+  const existingTeamsSleeperOwners = (await getTeams(league.id)).map(team => [
+    team.sleeperOwnerId,
+    team.id,
+  ]);
 
   // Get users once for this sync operation
   const existingUsersSleeperIds = (await getUsers()).flatMap(
@@ -168,7 +174,8 @@ export async function syncMultipleLeagues(leagues: League[]): Promise<{
       console.log(`✅ Successfully synced league: ${league.name}`);
     } catch (error) {
       errorCount++;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       errors.push({ leagueName: league.name, error: errorMessage });
       console.error(`❌ Failed to sync league ${league.name}:`, error);
     }

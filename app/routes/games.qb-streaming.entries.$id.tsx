@@ -65,7 +65,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       option => option.id === submittedPlayerId,
     );
     if (!qbStreamingOption) {
-      throw new Error(`${selectionType === 'standard' ? 'Standard' : 'Deep'} QB Streaming Option not found`);
+      throw new Error(
+        `${
+          selectionType === 'standard' ? 'Standard' : 'Deep'
+        } QB Streaming Option not found`,
+      );
     }
 
     const nflGame = await getNflGameById(qbStreamingOption.nflGameId);
@@ -145,8 +149,7 @@ export default function QBStreamingYearWeekEntry() {
     !!qbSelection &&
     qbSelection?.standardPlayer.nflGame.gameStartTime < new Date();
   const deepIsLocked =
-    !!qbSelection &&
-    qbSelection?.deepPlayer.nflGame.gameStartTime < new Date();
+    !!qbSelection && qbSelection?.deepPlayer.nflGame.gameStartTime < new Date();
 
   return (
     <>

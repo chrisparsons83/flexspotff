@@ -1,11 +1,11 @@
 import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { NavigationSection } from '~/components/layout/NavigationSection';
 import { prisma } from '~/db.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { NavigationSection } from '~/components/layout/NavigationSection';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -138,29 +138,29 @@ export default function GamesIndex() {
       <h2>FlexSpotFF Games</h2>
       <div className='grid md:grid-cols-12 md:gap-4'>
         <div className='not-prose text-sm md:col-span-2'>
-          <NavigationSection 
-            title="Games" 
-            links={navigationLinks} 
-            headingId="admin-leagues-heading" 
+          <NavigationSection
+            title='Games'
+            links={navigationLinks}
+            headingId='admin-leagues-heading'
           />
-          <NavigationSection 
-            title="Spread Pool" 
-            links={spreadPoolLinks} 
-            headingId="games-spreadPool-heading" 
+          <NavigationSection
+            title='Spread Pool'
+            links={spreadPoolLinks}
+            headingId='games-spreadPool-heading'
           />
-          <NavigationSection 
-            title="QB Streaming Challenge" 
-            links={qbStreamingLinks} 
+          <NavigationSection
+            title='QB Streaming Challenge'
+            links={qbStreamingLinks}
           />
-          <NavigationSection 
-            title="Locks Challenge" 
-            links={nflLocksChallengeLinks} 
-            headingId="games-locksChallenge-heading" 
+          <NavigationSection
+            title='Locks Challenge'
+            links={nflLocksChallengeLinks}
+            headingId='games-locksChallenge-heading'
           />
-          <NavigationSection 
-            title="DFS Survivor" 
-            links={dfsSurvivorLinks} 
-            headingId="games-dfssurvivor-heading" 
+          <NavigationSection
+            title='DFS Survivor'
+            links={dfsSurvivorLinks}
+            headingId='games-dfssurvivor-heading'
           />
         </div>
         <div className='md:col-span-10'>
