@@ -11,8 +11,5 @@ export default defineConfig({
   minify: false,
   splitting: false,
   bundle: true,
-  external: [
-    '@prisma/client',
-    'prisma'
-  ],
+  external: ['@prisma/client', 'prisma'],
 });

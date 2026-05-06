@@ -13,7 +13,7 @@ export type DraftSlotPreferenceWithDraftSlot = DraftSlotPreference & {
 
 export async function getUserDraftSlotPreferences(
   userId: string,
-  season: number
+  season: number,
 ): Promise<DraftSlotPreferenceWithDraftSlot[]> {
   return prisma.draftSlotPreference.findMany({
     where: {
@@ -38,7 +38,7 @@ export async function getUserDraftSlotPreferences(
 export async function upsertUserDraftSlotPreferences(
   userId: string,
   season: number,
-  preferences: { draftSlotId: string; ranking: number }[]
+  preferences: { draftSlotId: string; ranking: number }[],
 ): Promise<void> {
   // Delete existing preferences for this user and season
   await prisma.draftSlotPreference.deleteMany({
@@ -51,7 +51,7 @@ export async function upsertUserDraftSlotPreferences(
   // Create new preferences
   if (preferences.length > 0) {
     await prisma.draftSlotPreference.createMany({
-      data: preferences.map((pref) => ({
+      data: preferences.map(pref => ({
         userId,
         draftSlotId: pref.draftSlotId,
         season,
@@ -63,7 +63,7 @@ export async function upsertUserDraftSlotPreferences(
 
 export async function getDraftSlotsWithUserPreferences(
   userId: string,
-  season: number
+  season: number,
 ) {
   const draftSlots = await prisma.draftSlot.findMany({
     where: {
@@ -84,7 +84,7 @@ export async function getDraftSlotsWithUserPreferences(
     },
   });
 
-  return draftSlots.map((slot) => ({
+  return draftSlots.map(slot => ({
     ...slot,
     userRanking: slot.preferences[0]?.ranking || null,
   }));

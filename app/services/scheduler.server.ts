@@ -9,13 +9,15 @@ export class SchedulerService {
 
   constructor() {
     const isProduction = process.env.NODE_ENV === 'production';
-    const jobsRoot = isProduction ? path.join(process.cwd(), 'build/jobs') : path.join(process.cwd(), 'jobs');
+    const jobsRoot = isProduction
+      ? path.join(process.cwd(), 'build/jobs')
+      : path.join(process.cwd(), 'jobs');
     const jobExtension = isProduction ? 'cjs' : 'ts';
-    
+
     console.log(`Scheduler Environment: ${process.env.NODE_ENV}`);
     console.log(`Jobs Root: ${jobsRoot}`);
     console.log(`Job Extension: ${jobExtension}`);
-    
+
     this.bree = new Bree({
       root: jobsRoot,
       defaultExtension: jobExtension,

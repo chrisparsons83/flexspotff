@@ -1,13 +1,13 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { NavigationSection } from '~/components/layout/NavigationSection';
 import {
   authenticator,
   isAdmin,
   isPodcastEditor,
   requireEditor,
 } from '~/services/auth.server';
-import { NavigationSection } from '~/components/layout/NavigationSection';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -29,7 +29,11 @@ export default function Admin() {
     useTypedLoaderData<typeof loader>();
 
   const leaguesLinks = [
-    { name: 'Registration List', href: '/admin/registration-list', current: false },
+    {
+      name: 'Registration List',
+      href: '/admin/registration-list',
+      current: false,
+    },
     { name: 'Seasons', href: '/admin/season', current: false },
     { name: 'Leagues', href: '/admin/leagues', current: false },
     { name: 'Cups', href: '/admin/cups', current: false },
@@ -46,7 +50,11 @@ export default function Admin() {
 
   const omniLinks = [
     { name: 'Score Update', href: '/admin/omni/scoring', current: false },
-    { name: 'Qualifying Points Update', href: '/admin/omni/qualifying-points', current: false },
+    {
+      name: 'Qualifying Points Update',
+      href: '/admin/omni/qualifying-points',
+      current: false,
+    },
     { name: 'Add Omni Player', href: '/admin/omni/add-player', current: false },
   ];
 
@@ -60,9 +68,7 @@ export default function Admin() {
     { name: 'Scheduler', href: '/admin/scheduler', current: false },
   ];
 
-  const botLinks = [
-    { name: 'Commands', href: '/admin/bot', current: false },
-  ];
+  const botLinks = [{ name: 'Commands', href: '/admin/bot', current: false }];
 
   const podcastLinks = [
     { name: 'List', href: '/admin/podcasts', current: false },
@@ -76,43 +82,43 @@ export default function Admin() {
         <div className='not-prose text-sm md:col-span-3'>
           {userIsAdmin && (
             <>
-              <NavigationSection 
-                title="Leagues" 
-                links={leaguesLinks} 
-                headingId="admin-leagues-heading" 
+              <NavigationSection
+                title='Leagues'
+                links={leaguesLinks}
+                headingId='admin-leagues-heading'
               />
-              <NavigationSection 
-                title="Games" 
-                links={gamesLinks} 
-                headingId="admin-members-games" 
+              <NavigationSection
+                title='Games'
+                links={gamesLinks}
+                headingId='admin-members-games'
               />
-              <NavigationSection 
-                title="Omni" 
-                links={omniLinks} 
-                headingId="admin-omni-heading" 
+              <NavigationSection
+                title='Omni'
+                links={omniLinks}
+                headingId='admin-omni-heading'
               />
-              <NavigationSection 
-                title="Members" 
-                links={membersLinks} 
-                headingId="admin-members-heading" 
+              <NavigationSection
+                title='Members'
+                links={membersLinks}
+                headingId='admin-members-heading'
               />
-              <NavigationSection 
-                title="Data" 
-                links={dataLinks} 
-                headingId="admin-data-heading" 
+              <NavigationSection
+                title='Data'
+                links={dataLinks}
+                headingId='admin-data-heading'
               />
-              <NavigationSection 
-                title="Bot" 
-                links={botLinks} 
-                headingId="admin-bot-heading" 
+              <NavigationSection
+                title='Bot'
+                links={botLinks}
+                headingId='admin-bot-heading'
               />
             </>
           )}
           {userIsPodcastEditor && (
-            <NavigationSection 
-              title="Podcast" 
-              links={podcastLinks} 
-              headingId="admin-podcast-heading" 
+            <NavigationSection
+              title='Podcast'
+              links={podcastLinks}
+              headingId='admin-podcast-heading'
             />
           )}
         </div>
@@ -125,7 +131,7 @@ export default function Admin() {
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  console.error({error});
+  console.error({ error });
   // Don't forget to typecheck with your own logic.
   // Any value can be thrown, not just errors!
   let errorMessage = 'Unknown error';

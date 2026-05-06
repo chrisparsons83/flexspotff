@@ -108,7 +108,8 @@ export default function AdminSchedulerIndex() {
                     )}
                     {job.name === 'monitor-nfl-games' && (
                       <p className='text-sm text-gray-500 mt-1'>
-                        Monitors NFL games and triggers score resyncing when games finish
+                        Monitors NFL games and triggers score resyncing when
+                        games finish
                       </p>
                     )}
                   </div>

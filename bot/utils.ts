@@ -125,7 +125,9 @@ export const setUserRole = async ({
 
   try {
     await rest.put(Routes.guildMemberRole(guildId, userId, roleId));
-    console.log(`Successfully assigned role ${roleId} to user ${userId} in guild ${guildId}`);
+    console.log(
+      `Successfully assigned role ${roleId} to user ${userId} in guild ${guildId}`,
+    );
   } catch (error) {
     console.error('Error setting user role:', error);
     throw error;

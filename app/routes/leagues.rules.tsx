@@ -27,15 +27,15 @@ export default function RulesPage() {
       <h3 id='3-membership'>3. Membership</h3>
 
       <p>
-        3.1. The Flex Spot Football Club is a public set of leagues. In order to join the
-        Club, you must be a member of the Flex Spot Football server throughout the
-        season.
+        3.1. The Flex Spot Football Club is a public set of leagues. In order to
+        join the Club, you must be a member of the Flex Spot Football server
+        throughout the season.
       </p>
 
       <p>
-        3.1a. The majority of communication for the Flex Spot Football Club is done
-        through the Discord server. It is expected that members are reasonably
-        active and responsive to inquiries through the server.
+        3.1a. The majority of communication for the Flex Spot Football Club is
+        done through the Discord server. It is expected that members are
+        reasonably active and responsive to inquiries through the server.
       </p>
 
       <p>
@@ -318,9 +318,9 @@ export default function RulesPage() {
         10.4. Empty lineup slots are permitted for strategic purposes. Examples
         include, but not limited to: benching a Monday night player when they
         are ahead of their opponent who does not have any more active players,
-        not playing a defense because they don’t want to drop a player, playing a
-        player on bye because they don’t want to drop a player. Players that are
-        going to play an empty lineup spot for strategic purposes need to
+        not playing a defense because they don’t want to drop a player, playing
+        a player on bye because they don’t want to drop a player. Players that
+        are going to play an empty lineup spot for strategic purposes need to
         declare their intent to a Commissioner or in the main FFDiscord Club
         channel.
       </p>
@@ -449,10 +449,10 @@ export default function RulesPage() {
       <h3 id='14-league-hierarchy'>14. League Hierarchy</h3>
 
       <p>
-        14.1. The Flex Spot Football Club is distributed into two “tiers”: Tier One, and
-        Tier Two. Tier One consists of a single 12-member league, known as the
-        Champions League. Tier Two consists of multiple 12-member leagues, and
-        can vary in quantity of leagues from season to season.
+        14.1. The Flex Spot Football Club is distributed into two “tiers”: Tier
+        One, and Tier Two. Tier One consists of a single 12-member league, known
+        as the Champions League. Tier Two consists of multiple 12-member
+        leagues, and can vary in quantity of leagues from season to season.
       </p>
 
       <p>
