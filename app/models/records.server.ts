@@ -88,21 +88,6 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most Career Losses',
-      headers: ['Player', 'Losses', 'Record', 'Seasons'],
-      rows: [...careers]
-        .sort((a, b) => b.losses - a.losses)
-        .slice(0, TOP_N)
-        .map(c => ({
-          cells: [
-            c.name,
-            c.losses.toString(),
-            `${c.wins}-${c.losses}-${c.ties}`,
-            c.seasons.toString(),
-          ],
-        })),
-    },
-    {
       title: 'Highest Career Win Percentage',
       headers: ['Player', 'Win %', 'Record', 'Seasons'],
       rows: [...careers]
