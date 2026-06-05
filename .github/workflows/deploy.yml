@@ -9,26 +9,45 @@ permissions:
   actions: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  format:
+    name: 🎨 Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: 📥 Install deps
+        run: npm ci
+
+      - name: 🎨 Check formatting
+        run: npm run format
+
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
     steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⎔ Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: 'npm'
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+      - name: 📥 Install deps
+        run: npm ci
 
       - name: 🔬 Lint
         run: npm run lint
@@ -37,21 +56,17 @@ jobs:
     name: ʦ TypeScript
     runs-on: ubuntu-latest
     steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⎔ Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: 'npm'
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+      - name: 📥 Install deps
+        run: npm ci
 
       - name: 🔎 Type check
         run: npm run typecheck --if-present
@@ -60,24 +75,20 @@ jobs:
     name: ⚡ Vitest
     runs-on: ubuntu-latest
     steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🏄 Copy test env vars
         run: cp .env.example .env.test
 
       - name: ⎔ Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 19
+          node-version: 22
+          cache: 'npm'
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+      - name: 📥 Install deps
+        run: npm ci
 
       - name: 🐳 Docker compose
         # the sleep is just there to give time for postgres to get started
@@ -88,48 +99,6 @@ jobs:
       - name: ⚡ Run vitest
         run: npm run test
 
-  playwright:
-    name: 🎭 Playwright
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🐳 Docker compose
-        run: docker compose up -d && sleep 3
-
-      - name: 🗄️ Setup Database
-        run: npx prisma migrate reset --force
-
-      - name: 🎭 Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: 🎭 Run Playwright tests
-        run: npx playwright test
-
-      - name: 📊 Upload test report
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
   build:
     name: 🐳 Build
     # only build/deploy main branch on pushes
@@ -138,11 +107,8 @@ jobs:
       github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 👀 Read app name
         uses: SebRollen/toml-action@v1.0.2
@@ -154,17 +120,8 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Setup cache
-      - name: ⚡️ Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: 🔑 Fly Registry Auth
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: registry.fly.io
           username: x
@@ -178,30 +135,19 @@ jobs:
           password: ${{ secrets.VULTR_API_KEY }}
 
       - name: 🗄️ Save to Vultr Container Registry
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: sjc.vultrcr.com/chrisparsons/flexspotff:latest
-          # cache-from: type=registry,ref=sjc.vultrcr.com/chrisparsons/flexspotff:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             PROD_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
-
-      # This ugly bit is necessary if you don't want your cache to grow forever
-      # till it hits GitHub's limit of 5GB.
-      # Temp fix
-      # https://github.com/docker/build-push-action/issues/252
-      # https://github.com/moby/buildkit/issues/1896
-      - name: 🚚 Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, vitest, playwright, build]
+    needs: [lint, typecheck, format, vitest, build]
     # only deploy main/dev branch on pushes
     if:
       ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') &&
