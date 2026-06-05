@@ -92,6 +92,67 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         message: `League games have been synced for ${year}.`,
       });
     }
+    case 'syncTestDatabase': {
+      const { execFile } = await import('child_process');
+      const { promisify } = await import('util');
+      const execFileAsync = promisify(execFile);
+
+      const url = new URL(process.env.DATABASE_URL!);
+      const dbUser = url.username;
+      const prodDb = url.pathname.slice(1);
+      const testDb = 'flexspotff_test';
+
+      try {
+        await execFileAsync('docker', [
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
+          `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${testDb}' AND pid <> pg_backend_pid();`,
+        ]);
+        await execFileAsync('docker', [
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
+          `DROP DATABASE IF EXISTS ${testDb};`,
+        ]);
+        await execFileAsync('docker', [
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
+          `CREATE DATABASE ${testDb} OWNER ${dbUser};`,
+        ]);
+        // Pipe requires a shell; single-quote values to prevent injection
+        const safeUser = dbUser.replace(/'/g, "'\\''");
+        const safeProdDb = prodDb.replace(/'/g, "'\\''");
+        await execFileAsync('docker', [
+          'exec',
+          '-i',
+          'postgres',
+          'bash',
+          '-c',
+          `pg_dump -U '${safeUser}' '${safeProdDb}' | psql -U '${safeUser}' -d '${testDb}'`,
+        ]);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        return json<ActionData>({ formError: `Sync failed: ${message}` });
+      }
+
+      return json<ActionData>({
+        message: 'Test database has been synced from production.',
+      });
+    }
   }
 
   return json<ActionData>({ message: 'Nothing was updated.' });
@@ -225,6 +286,23 @@ export default function AdminDataIndex() {
             disabled={navigation.state !== 'idle'}
           >
             Resync NFL Players
+          </Button>
+        </section>
+        <section>
+          <h3>Sync Test Database</h3>
+          <p>
+            Copies the production database to <code>flexspotff_test</code> so
+            developers can point their local apps at the shared test database
+            instead of running Docker. This will overwrite all existing data in
+            the test database.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='syncTestDatabase'
+            disabled={navigation.state !== 'idle'}
+          >
+            Sync Test Database from Production
           </Button>
         </section>
       </Form>
