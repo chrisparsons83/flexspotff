@@ -104,22 +104,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       try {
         await execFileAsync('docker', [
-          'exec', '-i', 'postgres', 'psql', '-U', dbUser, '-c',
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
           `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${testDb}' AND pid <> pg_backend_pid();`,
         ]);
         await execFileAsync('docker', [
-          'exec', '-i', 'postgres', 'psql', '-U', dbUser, '-c',
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
           `DROP DATABASE IF EXISTS ${testDb};`,
         ]);
         await execFileAsync('docker', [
-          'exec', '-i', 'postgres', 'psql', '-U', dbUser, '-c',
+          'exec',
+          '-i',
+          'postgres',
+          'psql',
+          '-U',
+          dbUser,
+          '-c',
           `CREATE DATABASE ${testDb} OWNER ${dbUser};`,
         ]);
         // Pipe requires a shell; single-quote values to prevent injection
         const safeUser = dbUser.replace(/'/g, "'\\''");
         const safeProdDb = prodDb.replace(/'/g, "'\\''");
         await execFileAsync('docker', [
-          'exec', '-i', 'postgres', 'bash', '-c',
+          'exec',
+          '-i',
+          'postgres',
+          'bash',
+          '-c',
           `pg_dump -U '${safeUser}' '${safeProdDb}' | psql -U '${safeUser}' -d '${testDb}'`,
         ]);
       } catch (e) {
@@ -269,11 +291,10 @@ export default function AdminDataIndex() {
         <section>
           <h3>Sync Test Database</h3>
           <p>
-            Copies the production database to{' '}
-            <code>flexspotff_test</code> so developers can point their
-            local apps at the shared test database instead of running
-            Docker. This will overwrite all existing data in the test
-            database.
+            Copies the production database to <code>flexspotff_test</code> so
+            developers can point their local apps at the shared test database
+            instead of running Docker. This will overwrite all existing data in
+            the test database.
           </p>
           <Button
             type='submit'
