@@ -13,6 +13,38 @@ the [Remix documentation](https://remix.run/docs/en/main) is your best bet.
   npm install
   ```
 
+- Copy `.env.example` to `.env`.
+
+There are two ways to get a working database. **Option A** (shared test DB) is
+recommended for most new contributors.
+
+#### Option A — Shared test database (recommended)
+
+Ask Chris for the `DATABASE_URL` for the shared `flexspotff_test` database and
+set it in your `.env`. You can skip the Docker and database-sync steps entirely.
+
+Update these values in `.env`:
+
+- `DATABASE_URL`: use the connection string provided by Chris
+- `DISCORD_CLIENT_ID`: go to discord.com/developers, create an application, and
+  use the client ID from the OAuth2 tab
+- `DISCORD_SECRET`: client secret from the same page
+- `SESSION_SECRET`: optional, sets the session encryption string
+
+> **Important:** Leave `OMNI_CHANNEL_ID`, `OMNI_ROLE_ID`, and
+> `LEAGUE_ANNOUNCEMENT_CHANNEL_ID` unset (they are commented out in
+> `.env.example`). Without these, no Discord notifications will fire if you use
+> admin routes while developing.
+
+Then run migrations and start the dev server:
+
+```sh
+npm run setup
+npm run dev
+```
+
+#### Option B — Local Docker database
+
 - Start the Postgres Database in [Docker](https://www.docker.com/get-started):
 
   ```sh
@@ -23,15 +55,12 @@ the [Remix documentation](https://remix.run/docs/en/main) is your best bet.
   > the background. Ensure that Docker has finished and your container is
   > running before proceeding.
 
-- Copy .env.example to .env, and update the following:
+- Update `.env`:
 
-  - DATABASE_URL to remove the \_test at the end, as that's used for the testing
-    pipeline
-  - DISCORD_CLIENT_ID: Go to discord.com/developers, create an application, and
-    then under the OAuth2 tab in settings, use the client ID
-  - DISCORD_SECRET: On the same page as above, use the client secret (you may
-    need to reset yours)
-  - SESSION_SECRET: Not required but does set a different string for encrypting
+  - `DATABASE_URL`: remove the `_test` suffix (that's used for the testing
+    pipeline)
+  - `DISCORD_CLIENT_ID`, `DISCORD_SECRET`: see Option A above
+  - `SESSION_SECRET`: optional
 
 - While you're in the discord developer settings, you'll also want to set
   redirects to the following if you want to test Discord authentication
@@ -72,14 +101,19 @@ http://localhost:5173/auth/discord/callback
 
 This starts your app in development mode, rebuilding assets on file changes.
 
-If you'd prefer not to use Docker, you can also use Fly's Wireguard VPN to
-connect to a development database (or even your production database). You can
-find the instructions to set up Wireguard
-[here](https://fly.io/docs/reference/private-networking/#install-your-wireguard-app),
-and the instructions for creating a development database
-[here](https://fly.io/docs/reference/postgres/).
-
 ## Database syncing
+
+### Syncing production to the shared test database
+
+To refresh the shared `flexspotff_test` database from production, use the button
+on the `/admin/data` page ("Sync Test Database from Production"), or run this
+from the server:
+
+```sh
+npm run db:sync-prod-to-test
+```
+
+### Restoring a backup to a local Docker database
 
 Assuming you have a backup database to load and are using docker, you can use
 the db-sync npm script to handle this.
