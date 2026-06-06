@@ -53,7 +53,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export default function ADP() {
-  const { adp, playersMap, year, maxYear } = useTypedLoaderData<typeof loader>();
+  const { adp, playersMap, year, maxYear } =
+    useTypedLoaderData<typeof loader>();
 
   const yearArray = Array.from(
     { length: maxYear - FIRST_YEAR + 1 },
