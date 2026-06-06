@@ -1,11 +1,13 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import GoBox from '~/components/ui/GoBox';
 import { getAverageDraftPositionByYear } from '~/models/draftpick.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { FIRST_YEAR } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -13,10 +15,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Error('No active season currently');
   }
 
-  const year =
-    params['*'] === ''
-      ? currentSeason.year
-      : Number.parseInt(params['*'] || '');
+  const yearParam = params['*'];
+  const year = !yearParam ? currentSeason.year : Number.parseInt(yearParam);
+
+  if (isNaN(year)) {
+    throw new Error('Invalid year parameter');
+  }
 
   const leagueCount = (await getLeaguesByYear(year)).filter(
     league => league.isDrafted,
@@ -45,11 +49,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     }
   }
   adp.sort((a, b) => a._avg.pickNumber! - b._avg.pickNumber!);
-  return typedjson({ adp, playersMap, year });
+  return typedjson({ adp, playersMap, year, maxYear: currentSeason.year });
 };
 
 export default function ADP() {
-  const { adp, playersMap, year } = useTypedLoaderData<typeof loader>();
+  const { adp, playersMap, year, maxYear } = useTypedLoaderData<typeof loader>();
+
+  const yearArray = Array.from(
+    { length: maxYear - FIRST_YEAR + 1 },
+    (_, i) => FIRST_YEAR + i,
+  )
+    .reverse()
+    .map(yearNumber => ({
+      label: `${yearNumber}`,
+      url: `/leagues/adp/${yearNumber}`,
+    }));
 
   // We do this because tailwind HATES dynamic class names
   const rankColors: Record<string, string> = {
@@ -63,6 +77,9 @@ export default function ADP() {
   return (
     <div>
       <h2>{year} Server ADP</h2>
+      <div className='float-right mb-4'>
+        <GoBox options={yearArray} buttonText='Choose Year' />
+      </div>
       {adp.length === 0 ? (
         <div>To be loaded once leagues have started drafting.</div>
       ) : (
@@ -91,7 +108,7 @@ export default function ADP() {
                   <td className='pl-1'>
                     <div
                       className={clsx(
-                        rankColors[playerInfo!.position!.toLowerCase()],
+                        rankColors[playerInfo?.position?.toLowerCase() ?? ''],
                         'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
                       )}
                     >
