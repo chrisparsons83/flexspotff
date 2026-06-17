@@ -46,6 +46,14 @@ export async function getPlayersByIDs(ids: Player['id'][]) {
   });
 }
 
+export async function getPlayersBySleepersIds(
+  sleeperIds: Player['sleeperId'][],
+) {
+  return prisma.player.findMany({
+    where: { sleeperId: { in: sleeperIds } },
+  });
+}
+
 export async function upsertPlayer(player: PlayerCreate) {
   return prisma.player.upsert({
     where: {

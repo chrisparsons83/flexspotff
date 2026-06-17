@@ -37,6 +37,11 @@ export class SchedulerService {
           // Run every 5 minutes
           cron: '*/5 * * * *',
         },
+        {
+          name: 'sync-d12-scores',
+          // Run every Tuesday at 7:00 AM UTC (midnight PT)
+          cron: '0 7 * * 2',
+        },
         // Add more jobs here as needed
       ],
       // Enable logging

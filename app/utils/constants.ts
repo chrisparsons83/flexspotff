@@ -17,6 +17,14 @@ export enum Leagues {
 export const isLeagueName = (value: string): value is Leagues =>
   value in Leagues;
 
+export const POSITION_RANK_COLORS: Record<string, string> = {
+  qb: 'bg-qb',
+  rb: 'bg-rb',
+  wr: 'bg-wr',
+  te: 'bg-te',
+  def: 'bg-def',
+};
+
 export const RANK_COLORS: Record<Leagues, string> = {
   admiral: 'bg-admiral text-gray-900',
   champions: 'bg-champions text-gray-900',
