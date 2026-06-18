@@ -1,9 +1,9 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import YearSelector from '~/components/ui/YearSelector';
+import GoBox from '~/components/ui/GoBox';
 import { getAllD12SeasonYears } from '~/models/d12season.server';
 import {
   computeD12Leaderboard,
@@ -73,10 +73,12 @@ export default function GamesD12YearIndex() {
     <div>
       <div className='flex items-center justify-between mb-4'>
         <h2>{year} Leaderboard</h2>
-        <YearSelector
-          year={year}
-          years={allYears}
-          buildUrl={y => `/games/d12/${y}`}
+        <GoBox
+          buttonText='Choose Year'
+          options={allYears.map(y => ({
+            label: `${y}`,
+            url: `/games/d12/${y}`,
+          }))}
         />
       </div>
 
@@ -93,47 +95,49 @@ export default function GamesD12YearIndex() {
             </tr>
           </thead>
           <tbody>
-            {leaderboard.map(entry => [
-              <tr key={entry.userId}>
-                <td>{entry.rank}</td>
-                <td className='flex items-center gap-3'>
-                  <Link
-                    to={`/games/d12/${year}/user/${entry.userId}`}
-                    className='hover:underline'
-                  >
-                    {entry.discordName}
-                  </Link>
-                  {expandedIds.has(entry.userId) ? (
-                    <ChevronUpIcon
-                      width={20}
-                      height={20}
-                      onClick={() => toggle(entry.userId)}
-                      className='cursor-pointer'
-                      aria-label='Hide Details'
-                    />
-                  ) : (
-                    <ChevronDownIcon
-                      width={20}
-                      height={20}
-                      onClick={() => toggle(entry.userId)}
-                      className='cursor-pointer'
-                      aria-label='Show Details'
-                    />
-                  )}
-                </td>
-                <td>{entry.totalPoints.toFixed(2)}</td>
-                <td>
-                  {entry.bestWeek > 0
-                    ? `${entry.bestWeekPoints.toFixed(2)} (Wk ${
-                        entry.bestWeek
-                      })`
-                    : '—'}
-                </td>
-              </tr>,
-              expandedIds.has(entry.userId) && (
-                <BreakdownRow key={`${entry.userId}-breakdown`} entry={entry} />
-              ),
-            ])}
+            {leaderboard.map(entry => (
+              <Fragment key={entry.userId}>
+                <tr>
+                  <td>{entry.rank}</td>
+                  <td className='flex items-center gap-3'>
+                    <Link
+                      to={`/games/d12/${year}/user/${entry.userId}`}
+                      className='hover:underline'
+                    >
+                      {entry.discordName}
+                    </Link>
+                    {expandedIds.has(entry.userId) ? (
+                      <ChevronUpIcon
+                        width={20}
+                        height={20}
+                        onClick={() => toggle(entry.userId)}
+                        className='cursor-pointer'
+                        aria-label='Hide Details'
+                      />
+                    ) : (
+                      <ChevronDownIcon
+                        width={20}
+                        height={20}
+                        onClick={() => toggle(entry.userId)}
+                        className='cursor-pointer'
+                        aria-label='Show Details'
+                      />
+                    )}
+                  </td>
+                  <td>{entry.totalPoints.toFixed(2)}</td>
+                  <td>
+                    {entry.bestWeek > 0
+                      ? `${entry.bestWeekPoints.toFixed(2)} (Wk ${
+                          entry.bestWeek
+                        })`
+                      : '—'}
+                  </td>
+                </tr>
+                {expandedIds.has(entry.userId) && (
+                  <BreakdownRow entry={entry} />
+                )}
+              </Fragment>
+            ))}
           </tbody>
         </table>
       )}

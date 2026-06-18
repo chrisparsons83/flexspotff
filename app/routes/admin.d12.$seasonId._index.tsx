@@ -10,6 +10,7 @@ import Button from '~/components/ui/FlexSpotButton';
 import {
   syncD12LeagueWeek,
   syncD12Season,
+  syncD12DraftPicksForSeason,
   inferD12LeagueUsers,
   getSleeperLeagueInfo,
   parseSleeperLeagueIdFromUrl,
@@ -72,6 +73,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       return typedjson({ message: `All scores synced for ${season.year}` });
     }
 
+    case 'syncDraftPicks': {
+      const season = await getD12SeasonById(seasonId);
+      if (!season) throw new Error('Season not found');
+      await syncD12DraftPicksForSeason(season.year);
+      return typedjson({ message: `Draft picks synced for ${season.year}` });
+    }
+
     case 'syncLeague': {
       const leagueId = formData.get('leagueId');
       if (typeof leagueId !== 'string')
@@ -94,9 +102,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
     case 'syncCurrentWeek': {
       const weekStr = formData.get('week');
-      if (typeof weekStr !== 'string') throw new Error('Week is required');
+      if (typeof weekStr !== 'string' || weekStr.trim() === '')
+        return typedjson({ message: 'Week is required' });
       const week = Number(weekStr);
-      if (week <= 0) throw new Error('Week must be greater than 0');
+      if (week <= 0)
+        return typedjson({ message: 'Week must be greater than 0' });
 
       const season = await getD12SeasonById(seasonId);
       if (!season) throw new Error('Season not found');
@@ -261,6 +271,18 @@ export default function AdminD12SeasonIndex() {
           disabled={isSubmitting}
         >
           Add League
+        </Button>
+      </Form>
+
+      <h3>Draft Picks</h3>
+      <Form method='POST'>
+        <Button
+          type='submit'
+          name='_action'
+          value='syncDraftPicks'
+          disabled={isSubmitting}
+        >
+          Sync Draft Picks
         </Button>
       </Form>
     </div>

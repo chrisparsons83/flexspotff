@@ -29,6 +29,7 @@ model D12League {
   d12SeasonId String
 
   weekScores D12WeekScore[]
+  draftPicks D12DraftPick[]
 
   @@index([d12SeasonId])
 }
@@ -49,6 +50,24 @@ model D12WeekScore {
 
   @@unique([d12LeagueId, userId, week])
   @@index([d12LeagueId, week])
+}
+
+model D12DraftPick {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sleeperId String
+  pickNo    Int
+
+  league      D12League @relation(fields: [d12LeagueId], references: [id], onDelete: Cascade)
+  d12LeagueId String
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  @@unique([d12LeagueId, sleeperId])
+  @@index([d12LeagueId])
 }
 
 model Cup {
@@ -748,4 +767,5 @@ model User {
   omniTeams            OmniUserTeam[]
   draftSlotPreferences DraftSlotPreference[]
   d12WeekScores        D12WeekScore[]
+  d12DraftPicks        D12DraftPick[]
 }

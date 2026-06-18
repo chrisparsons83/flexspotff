@@ -1,5 +1,6 @@
 import z from 'zod';
 import { prisma } from '~/db.server';
+import { upsertD12DraftPicksForLeague } from '~/models/d12draftpick.server';
 import type { D12League } from '~/models/d12league.server';
 import { getD12LeaguesBySeasonId } from '~/models/d12league.server';
 import { getD12SeasonByYear } from '~/models/d12season.server';
@@ -209,12 +210,43 @@ export async function syncD12Season(year: number) {
   const leagues = await getD12LeaguesBySeasonId(season.id);
   const currentWeek = await getCurrentNFLWeek();
 
-  for (const league of leagues) {
-    const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
-      league.sleeperLeagueId,
-    );
-    for (let week = 1; week <= currentWeek; week++) {
-      await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
-    }
-  }
+  await Promise.all(
+    leagues.map(async league => {
+      try {
+        const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
+          league.sleeperLeagueId,
+        );
+        for (let week = 1; week <= currentWeek; week++) {
+          await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+        }
+      } catch (e) {
+        console.error(`Failed to sync league "${league.name}":`, e);
+      }
+    }),
+  );
+}
+
+export async function syncD12DraftPicksForSeason(year: number) {
+  const season = await getD12SeasonByYear(year);
+  if (!season) throw new Error(`No D12 season found for year ${year}`);
+
+  await Promise.all(
+    season.leagues.map(async league => {
+      try {
+        const [picks, { rosterToOwner, ownerToUserId }] = await Promise.all([
+          getSleeperDraftPicksForLeague(league.sleeperLeagueId),
+          resolveLeagueOwners(league.sleeperLeagueId),
+        ]);
+        if (picks.length === 0) return;
+        const enriched = picks.map(pick => {
+          const ownerId = rosterToOwner.get(pick.roster_id);
+          const userId = ownerId ? ownerToUserId.get(ownerId) ?? null : null;
+          return { sleeperId: pick.player_id, pickNo: pick.pick_no, userId };
+        });
+        await upsertD12DraftPicksForLeague(league.id, enriched);
+      } catch (e) {
+        console.error(`Failed to sync draft picks for "${league.name}":`, e);
+      }
+    }),
+  );
 }
