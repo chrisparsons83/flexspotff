@@ -31,3 +31,12 @@ export async function getD12DraftPicksForLeagues(leagueIds: string[]) {
     },
   });
 }
+
+export async function getD12DraftPicksByUserAndLeagues(
+  userId: string,
+  leagueIds: string[],
+) {
+  return prisma.d12DraftPick.findMany({
+    where: { userId, d12LeagueId: { in: leagueIds } },
+  });
+}

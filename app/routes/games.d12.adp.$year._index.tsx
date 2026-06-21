@@ -223,7 +223,9 @@ export default function GamesD12AdpYear() {
               const isExpanded = expandedIds.has(adpPlayer.sleeperId);
               return (
                 <Fragment key={adpPlayer.sleeperId}>
-                  <tr>
+                  <tr
+                    className={index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'}
+                  >
                     <td className='pl-1'>
                       <div
                         className={clsx(

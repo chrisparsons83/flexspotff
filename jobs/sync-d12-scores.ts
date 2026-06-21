@@ -18,13 +18,22 @@ async function syncD12ScoresJob() {
     }
 
     console.log(`Syncing D12 scores for ${season.year}...`);
-    await syncD12Season(season.year);
+    const errors = await syncD12Season(season.year);
+
+    if (errors.length > 0) {
+      console.error(
+        `D12 sync completed with ${errors.length} league error(s):`,
+      );
+      for (const err of errors) {
+        console.error(` - ${err}`);
+      }
+    }
 
     const message = `D12 scores sync completed for ${season.year}`;
     console.log(message);
 
     if (parentPort) {
-      parentPort.postMessage({ success: true, message });
+      parentPort.postMessage({ success: true, message, errors });
     }
   } catch (error) {
     console.error('D12 scores sync job failed:', error);

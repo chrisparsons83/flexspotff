@@ -24,19 +24,6 @@ export async function getD12SeasonByYear(year: number) {
   });
 }
 
-export async function getD12SeasonByYearWithScores(year: number) {
-  return prisma.d12Season.findUnique({
-    where: { year },
-    include: {
-      leagues: {
-        include: {
-          weekScores: true,
-        },
-      },
-    },
-  });
-}
-
 export async function getAllD12Seasons() {
   return prisma.d12Season.findMany({
     orderBy: { year: 'desc' },

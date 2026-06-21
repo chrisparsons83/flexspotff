@@ -4,11 +4,10 @@ import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { getSleeperDraftPicksByUser } from '~/libs/d12-sync.server';
+import { getD12DraftPicksByUserAndLeagues } from '~/models/d12draftpick.server';
 import { getD12SeasonByYear } from '~/models/d12season.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
-import { getSleeperOwnerIdsByUserId } from '~/models/sleeperUser.server';
 import { getUserById } from '~/models/user.server';
 import { POSITION_RANK_COLORS } from '~/utils/constants';
 
@@ -26,37 +25,25 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { year: yearParam, userId } = params;
   if (!yearParam || !userId) throw new Error('Missing parameters');
   const year = Number(yearParam);
+  if (!Number.isInteger(year) || year < 2025) throw new Error('Invalid year');
 
-  const [season, sleeperUsers, user] = await Promise.all([
+  const [season, user] = await Promise.all([
     getD12SeasonByYear(year),
-    getSleeperOwnerIdsByUserId(userId),
     getUserById(userId),
   ]);
 
   if (!season) throw new Error(`No D12 season found for ${year}`);
   if (!user) throw new Error('User not found');
-  if (sleeperUsers.length === 0)
-    throw new Error('User has no linked Sleeper account');
 
-  const { sleeperOwnerID } = sleeperUsers[0];
-
-  const allPicks = await Promise.all(
-    season.leagues.map(league =>
-      getSleeperDraftPicksByUser(league.sleeperLeagueId, sleeperOwnerID),
-    ),
-  );
+  const leagueIds = season.leagues.map(l => l.id);
+  const allPicks = await getD12DraftPicksByUserAndLeagues(userId, leagueIds);
 
   const playerMap = new Map<string, { count: number; picks: number[] }>();
-  for (const picks of allPicks) {
-    for (const pick of picks) {
-      const existing = playerMap.get(pick.player_id) ?? {
-        count: 0,
-        picks: [],
-      };
-      existing.count++;
-      existing.picks.push(pick.pick_no);
-      playerMap.set(pick.player_id, existing);
-    }
+  for (const pick of allPicks) {
+    const existing = playerMap.get(pick.sleeperId) ?? { count: 0, picks: [] };
+    existing.count++;
+    existing.picks.push(pick.pickNo);
+    playerMap.set(pick.sleeperId, existing);
   }
 
   const ownership = Array.from(playerMap.entries()).map(

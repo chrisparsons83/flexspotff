@@ -83,7 +83,7 @@ type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
 const sleeperJsonNflState = z.object({
   week: z.number(),
   season_type: z.string(),
-  season_start_date: z.string(),
+  season_start_date: z.string().nullable(),
   season: z.string(),
   display_week: z.number(),
 });

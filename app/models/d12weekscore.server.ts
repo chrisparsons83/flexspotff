@@ -1,24 +1,5 @@
 import { prisma } from '~/db.server';
 
-export async function upsertD12WeekScore(data: {
-  d12LeagueId: string;
-  userId: string;
-  week: number;
-  points: number | null;
-}) {
-  return prisma.d12WeekScore.upsert({
-    where: {
-      d12LeagueId_userId_week: {
-        d12LeagueId: data.d12LeagueId,
-        userId: data.userId,
-        week: data.week,
-      },
-    },
-    update: { points: data.points },
-    create: data,
-  });
-}
-
 export async function getD12WeekScoresBySeasonYear(year: number) {
   return prisma.d12WeekScore.findMany({
     where: {

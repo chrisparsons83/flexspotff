@@ -14,9 +14,9 @@ import {
   inferD12LeagueUsers,
   getSleeperLeagueInfo,
   parseSleeperLeagueIdFromUrl,
-  getCurrentNFLWeek,
   resolveLeagueOwners,
 } from '~/libs/d12-sync.server';
+import { getNflState } from '~/libs/syncs.server';
 import {
   createD12League,
   deleteD12League,
@@ -55,6 +55,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
             ? ` (${inferredUsers.length} managers mapped)`
             : ' (warning: no managers mapped to Discord users yet)'
         }`,
+        errors: undefined as string[] | undefined,
       });
     }
 
@@ -63,21 +64,30 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       if (typeof leagueId !== 'string')
         throw new Error('League ID is required');
       await deleteD12League(leagueId);
-      return typedjson({ message: 'League deleted' });
+      return typedjson({
+        message: 'League deleted',
+        errors: undefined as string[] | undefined,
+      });
     }
 
     case 'syncAllScores': {
       const season = await getD12SeasonById(seasonId);
       if (!season) throw new Error('Season not found');
-      await syncD12Season(season.year);
-      return typedjson({ message: `All scores synced for ${season.year}` });
+      const errors = await syncD12Season(season.year);
+      return typedjson({
+        message: `All scores synced for ${season.year}`,
+        errors: errors.length > 0 ? errors : undefined,
+      });
     }
 
     case 'syncDraftPicks': {
       const season = await getD12SeasonById(seasonId);
       if (!season) throw new Error('Season not found');
-      await syncD12DraftPicksForSeason(season.year);
-      return typedjson({ message: `Draft picks synced for ${season.year}` });
+      const errors = await syncD12DraftPicksForSeason(season.year);
+      return typedjson({
+        message: `Draft picks synced for ${season.year}`,
+        errors: errors.length > 0 ? errors : undefined,
+      });
     }
 
     case 'syncLeague': {
@@ -87,44 +97,69 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const league = await getD12LeagueById(leagueId);
       if (!league) throw new Error('League not found');
 
-      const maxWeek = await getCurrentNFLWeek();
+      const maxWeek = Math.min((await getNflState()).week, 17);
       const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
         league.sleeperLeagueId,
       );
 
+      const errors: string[] = [];
       for (let week = 1; week <= maxWeek; week++) {
-        await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+        try {
+          await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push(`Week ${week}: ${msg}`);
+        }
       }
       return typedjson({
         message: `Scores resynced for "${league.name}" (weeks 1–${maxWeek})`,
+        errors: errors.length > 0 ? errors : undefined,
       });
     }
 
     case 'syncCurrentWeek': {
       const weekStr = formData.get('week');
       if (typeof weekStr !== 'string' || weekStr.trim() === '')
-        return typedjson({ message: 'Week is required' });
+        return typedjson({
+          message: 'Week is required',
+          errors: undefined as string[] | undefined,
+        });
       const week = Number(weekStr);
-      if (week <= 0)
-        return typedjson({ message: 'Week must be greater than 0' });
+      if (isNaN(week) || week <= 0)
+        return typedjson({
+          message: 'Week must be greater than 0',
+          errors: undefined as string[] | undefined,
+        });
 
       const season = await getD12SeasonById(seasonId);
       if (!season) throw new Error('Season not found');
 
       const leagues = await getD12LeaguesBySeasonId(seasonId);
+      const errors: string[] = [];
       await Promise.all(
         leagues.map(async league => {
-          const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
-            league.sleeperLeagueId,
-          );
-          return syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+          try {
+            const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
+              league.sleeperLeagueId,
+            );
+            await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            errors.push(`"${league.name}": ${msg}`);
+          }
         }),
       );
-      return typedjson({ message: `Week ${week} scores synced` });
+      return typedjson({
+        message: `Week ${week} scores synced`,
+        errors: errors.length > 0 ? errors : undefined,
+      });
     }
   }
 
-  return typedjson({ message: 'No action taken' });
+  return typedjson({
+    message: 'No action taken',
+    errors: undefined as string[] | undefined,
+  });
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -152,6 +187,9 @@ export default function AdminD12SeasonIndex() {
     <div>
       <h2>Administer {season.year} D12 Season</h2>
       {actionData?.message && <Alert message={actionData.message} />}
+      {actionData?.errors?.map(err => (
+        <Alert key={err} message={err} status='error' />
+      ))}
 
       <div className='flex flex-col gap-2 mb-8 items-start'>
         <Form method='POST'>

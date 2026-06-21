@@ -1,5 +1,6 @@
 import z from 'zod';
 import { prisma } from '~/db.server';
+import { getNflState } from '~/libs/syncs.server';
 import { upsertD12DraftPicksForLeague } from '~/models/d12draftpick.server';
 import type { D12League } from '~/models/d12league.server';
 import { getD12LeaguesBySeasonId } from '~/models/d12league.server';
@@ -31,14 +32,6 @@ export function parseSleeperLeagueIdFromUrl(input: string): string {
   throw new Error(
     `Could not parse a Sleeper league ID from: "${input}". Paste the full league URL from sleeper.com.`,
   );
-}
-
-export async function getCurrentNFLWeek(): Promise<number> {
-  const res = await fetch('https://api.sleeper.app/v1/state/nfl');
-  if (!res.ok)
-    throw new Error(`Sleeper API error ${res.status}: GET /state/nfl`);
-  const nflState = z.object({ week: z.number() }).parse(await res.json());
-  return Math.min(nflState.week, 17);
 }
 
 const sleeperMatchupSchema = z.array(
@@ -203,12 +196,13 @@ export async function getSleeperDraftPicksByUser(
   return allPicks.filter(p => p.roster_id === userRosterId);
 }
 
-export async function syncD12Season(year: number) {
+export async function syncD12Season(year: number): Promise<string[]> {
   const season = await getD12SeasonByYear(year);
   if (!season) throw new Error(`No D12 season found for year ${year}`);
 
   const leagues = await getD12LeaguesBySeasonId(season.id);
-  const currentWeek = await getCurrentNFLWeek();
+  const currentWeek = Math.min((await getNflState()).week, 17);
+  const errors: string[] = [];
 
   await Promise.all(
     leagues.map(async league => {
@@ -220,15 +214,22 @@ export async function syncD12Season(year: number) {
           await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
         }
       } catch (e) {
-        console.error(`Failed to sync league "${league.name}":`, e);
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(`"${league.name}": ${msg}`);
       }
     }),
   );
+
+  return errors;
 }
 
-export async function syncD12DraftPicksForSeason(year: number) {
+export async function syncD12DraftPicksForSeason(
+  year: number,
+): Promise<string[]> {
   const season = await getD12SeasonByYear(year);
   if (!season) throw new Error(`No D12 season found for year ${year}`);
+
+  const errors: string[] = [];
 
   await Promise.all(
     season.leagues.map(async league => {
@@ -245,8 +246,11 @@ export async function syncD12DraftPicksForSeason(year: number) {
         });
         await upsertD12DraftPicksForLeague(league.id, enriched);
       } catch (e) {
-        console.error(`Failed to sync draft picks for "${league.name}":`, e);
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(`"${league.name}": ${msg}`);
       }
     }),
   );
+
+  return errors;
 }
