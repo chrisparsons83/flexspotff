@@ -48,6 +48,10 @@ export default function Admin() {
     { name: 'DFS Survivor', href: '/admin/dfs-survivor', current: false },
   ];
 
+  const d12Links = [
+    { name: 'D12 Seasons & Leagues', href: '/admin/d12', current: false },
+  ];
+
   const omniLinks = [
     { name: 'Score Update', href: '/admin/omni/scoring', current: false },
     {
@@ -91,6 +95,11 @@ export default function Admin() {
                 title='Games'
                 links={gamesLinks}
                 headingId='admin-members-games'
+              />
+              <NavigationSection
+                title='D12'
+                links={d12Links}
+                headingId='admin-d12-heading'
               />
               <NavigationSection
                 title='Omni'

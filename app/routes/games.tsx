@@ -2,6 +2,7 @@ import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { NavigationSection } from '~/components/layout/NavigationSection';
 import { prisma } from '~/db.server';
+import { getLatestD12Season } from '~/models/d12season.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
@@ -44,6 +45,8 @@ export const loader = async () => {
   });
   const dfsSurvivorCurrentWeek = dfsSurvivorWeek?.week || 1;
 
+  const latestD12Season = await getLatestD12Season();
+
   return typedjson(
     {
       qbStreamingCurrentWeek,
@@ -51,6 +54,7 @@ export const loader = async () => {
       locksChallengeCurrentWeek,
       dfsSurvivorCurrentWeek,
       currentSeason,
+      d12Year: latestD12Season?.year ?? null,
     },
     { headers: { 'x-superjson': 'true' } },
   );
@@ -63,6 +67,7 @@ export default function GamesIndex() {
     locksChallengeCurrentWeek,
     dfsSurvivorCurrentWeek,
     currentSeason,
+    d12Year,
   } = useTypedLoaderData<typeof loader>();
 
   const qbStreamingLinks = [
@@ -162,6 +167,24 @@ export default function GamesIndex() {
             links={dfsSurvivorLinks}
             headingId='games-dfssurvivor-heading'
           />
+          {d12Year && (
+            <NavigationSection
+              title='D12'
+              links={[
+                {
+                  name: 'Leaderboard',
+                  href: `/games/d12/${d12Year}`,
+                  current: false,
+                },
+                {
+                  name: 'ADP',
+                  href: `/games/d12/adp/${d12Year}`,
+                  current: false,
+                },
+              ]}
+              headingId='games-d12-heading'
+            />
+          )}
         </div>
         <div className='md:col-span-10'>
           <Outlet />

@@ -7,7 +7,7 @@ import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { FIRST_YEAR } from '~/utils/constants';
+import { FIRST_YEAR, POSITION_RANK_COLORS } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -66,15 +66,6 @@ export default function ADP() {
       url: `/leagues/adp/${yearNumber}`,
     }));
 
-  // We do this because tailwind HATES dynamic class names
-  const rankColors: Record<string, string> = {
-    qb: 'bg-qb',
-    rb: 'bg-rb',
-    wr: 'bg-wr',
-    te: 'bg-te',
-    def: 'bg-def',
-  };
-
   return (
     <div>
       <h2>{year} Server ADP</h2>
@@ -109,7 +100,9 @@ export default function ADP() {
                   <td className='pl-1'>
                     <div
                       className={clsx(
-                        rankColors[playerInfo?.position?.toLowerCase() ?? ''],
+                        POSITION_RANK_COLORS[
+                          playerInfo?.position?.toLowerCase() ?? ''
+                        ],
                         'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
                       )}
                     >
