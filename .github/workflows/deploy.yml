@@ -128,10 +128,8 @@ jobs:
         # exits non-zero (2) if schema.prisma has changes not captured in a
         # migration, i.e. a model was added without a matching migration file
         run: >
-          npx prisma migrate diff
-          --from-url "$DATABASE_URL"
-          --to-schema-datamodel prisma/schema.prisma
-          --exit-code
+          npx prisma migrate diff --from-url "$DATABASE_URL"
+          --to-schema-datamodel prisma/schema.prisma --exit-code
 
   build:
     name: 🐳 Build
