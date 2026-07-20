@@ -89,6 +89,14 @@ export async function getLeagueCountsByYear() {
   });
 }
 
+export async function getLeagueCountForYear(year: League['year']) {
+  return prisma.league.count({
+    where: {
+      year,
+    },
+  });
+}
+
 export async function updateLeague(league: Partial<League>) {
   return prisma.league.update({
     where: {

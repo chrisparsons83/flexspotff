@@ -7,7 +7,10 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import { getLeagueCountsByYear, getLeaguesByYear } from '~/models/league.server';
+import {
+  getLeagueCountForYear,
+  getLeagueCountsByYear,
+} from '~/models/league.server';
 import {
   createSeason,
   deleteSeason,
@@ -58,8 +61,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return typedjson({ message: 'Season not found.' });
       }
 
-      const leagues = await getLeaguesByYear(season.year);
-      if (leagues.length > 0) {
+      if (season.isCurrent) {
+        return typedjson({
+          message: `Cannot delete the active season.`,
+        });
+      }
+
+      const leagueCount = await getLeagueCountForYear(season.year);
+      if (leagueCount > 0) {
         return typedjson({
           message: `Cannot delete a season that has leagues attached.`,
         });
@@ -209,7 +218,7 @@ export default function SeasonIndex() {
                       </Button>
                     </Form>
                   )}
-                  {leagueCount === 0 && (
+                  {!isCurrent && leagueCount === 0 && (
                     <Form method='POST' style={{ display: 'inline' }}>
                       <input type='hidden' name='seasonId' value={id} />
                       <Button
