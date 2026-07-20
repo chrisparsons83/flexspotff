@@ -40,24 +40,23 @@ export async function upsertUserDraftSlotPreferences(
   seasonId: string,
   draftSlotIds: string[],
 ): Promise<void> {
-  // Delete existing preferences for this user and season
-  await prisma.draftSlotPreference.deleteMany({
-    where: {
-      userId,
-      seasonId,
-    },
-  });
-
-  // Create new preferences
-  if (draftSlotIds.length > 0) {
-    await prisma.draftSlotPreference.createMany({
+  // Replace the user's preferences for this season atomically so a failed
+  // insert can't leave them with no preferences.
+  await prisma.$transaction([
+    prisma.draftSlotPreference.deleteMany({
+      where: {
+        userId,
+        seasonId,
+      },
+    }),
+    prisma.draftSlotPreference.createMany({
       data: draftSlotIds.map(draftSlotId => ({
         userId,
         draftSlotId,
         seasonId,
       })),
-    });
-  }
+    }),
+  ]);
 }
 
 export async function getDraftSlotsWithUserPreferences(
@@ -83,8 +82,8 @@ export async function getDraftSlotsWithUserPreferences(
     },
   });
 
-  return draftSlots.map(slot => ({
+  return draftSlots.map(({ preferences, ...slot }) => ({
     ...slot,
-    isSelected: slot.preferences.length > 0,
+    isSelected: preferences.length > 0,
   }));
 }

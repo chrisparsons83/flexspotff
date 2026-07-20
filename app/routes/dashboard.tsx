@@ -17,7 +17,7 @@ import {
 import type { Registration } from '~/models/registration.server';
 import {
   getRegistrationByUserAndYear,
-  getRegistrationsByYear,
+  getRegistrationCountByYear,
   registerWithDraftPreferences,
 } from '~/models/registration.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -43,9 +43,12 @@ function parseSelectedSlotIds(
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
-    return parsed.filter(
+    const valid = parsed.filter(
       (id): id is string => typeof id === 'string' && validSlotIds.has(id),
     );
+    // Dedupe so a forged/replayed submission can't violate the
+    // (userId, draftSlotId) unique constraint.
+    return [...new Set(valid)];
   } catch {
     return null;
   }
@@ -103,13 +106,17 @@ export const action = async ({
       };
     }
 
-    await registerWithDraftPreferences(
-      user.id,
-      currentSeason.year,
-      currentSeason.id,
-      draftSlotIds,
-    );
-    return typedjson({ success: true });
+    try {
+      await registerWithDraftPreferences(
+        user.id,
+        currentSeason.year,
+        currentSeason.id,
+        draftSlotIds,
+      );
+      return typedjson({ success: true });
+    } catch {
+      return { formError: 'Failed to register. Please try again.' };
+    }
   }
 
   if (actionType === 'updateDraftPreferences') {
@@ -153,8 +160,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     currentSeason.year,
   );
 
-  const registrations = await getRegistrationsByYear(currentSeason.year);
-  const registrationsCount = registrations.length;
+  const registrationsCount = await getRegistrationCountByYear(
+    currentSeason.year,
+  );
 
   // Draft slots for the current season, annotated with whether this user has
   // already selected each one. Loaded whether or not the user is registered so
@@ -229,7 +237,6 @@ export default function Dashboard() {
         >
           <input
             type='checkbox'
-            name='draftSlot'
             value={slot.id}
             checked={selectedSlots.has(slot.id)}
             onChange={e => toggleSlot(slot.id, e.target.checked)}

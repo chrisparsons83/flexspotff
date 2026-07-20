@@ -67,6 +67,12 @@ export async function getRegistrationByUserAndYear(
   });
 }
 
+export async function getRegistrationCountByYear(year: Registration['year']) {
+  return prisma.registration.count({
+    where: { year },
+  });
+}
+
 export async function getRegistrationsByYear(year: Registration['year']) {
   return prisma.registration.findMany({
     where: { year },
