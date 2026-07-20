@@ -54,6 +54,14 @@ export async function updateSeason(season: Partial<Season>) {
   });
 }
 
+export async function deleteSeason(id: Season['id']) {
+  return prisma.season.delete({
+    where: {
+      id,
+    },
+  });
+}
+
 export async function updateActiveSeason(id: Season['id']) {
   return prisma.$transaction([
     prisma.season.updateMany({

@@ -8,7 +8,13 @@ import {
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import {
+  getLeagueCountForYear,
+  getLeagueCountsByYear,
+} from '~/models/league.server';
+import {
   createSeason,
+  deleteSeason,
+  getSeasonById,
   getSeasons,
   updateActiveSeason,
   updateSeason,
@@ -30,8 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   switch (action) {
     case 'createSeason': {
-      //const year = new Date().getFullYear();
-      const year = new Date('2024-04-01').getFullYear();
+      const year = new Date().getFullYear();
       const season = await createSeason({
         year,
         isCurrent: false,
@@ -43,6 +48,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return typedjson({
         message: `${season.year} season has been created`,
+      });
+    }
+    case 'deleteSeason': {
+      const seasonId = formData.get('seasonId');
+      if (typeof seasonId !== 'string') {
+        throw new Error(`Form not generated correctly.`);
+      }
+
+      const season = await getSeasonById(seasonId);
+      if (!season) {
+        return typedjson({ message: 'Season not found.' });
+      }
+
+      if (season.isCurrent) {
+        return typedjson({
+          message: `Cannot delete the active season.`,
+        });
+      }
+
+      const leagueCount = await getLeagueCountForYear(season.year);
+      if (leagueCount > 0) {
+        return typedjson({
+          message: `Cannot delete a season that has leagues attached.`,
+        });
+      }
+
+      await deleteSeason(seasonId);
+
+      return typedjson({
+        message: `${season.year} season has been deleted`,
       });
     }
     case 'setActive': {
@@ -123,11 +158,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const seasons = await getSeasons();
 
-  return typedjson({ seasons });
+  const leagueCounts = await getLeagueCountsByYear();
+  const leagueCountsByYear: Record<number, number> = {};
+  for (const { year, _count } of leagueCounts) {
+    leagueCountsByYear[year] = _count._all;
+  }
+
+  return typedjson({ seasons, leagueCountsByYear });
 };
 
 export default function SeasonIndex() {
-  const { seasons } = useTypedLoaderData<typeof loader>();
+  const { seasons, leagueCountsByYear } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
 
@@ -139,6 +180,7 @@ export default function SeasonIndex() {
         <thead>
           <tr>
             <th>Year</th>
+            <th>Leagues</th>
             <th>Active?</th>
             <th>Open Registration?</th>
             <th>Open F²?</th>
@@ -157,9 +199,12 @@ export default function SeasonIndex() {
               isOpenForDFSSurvivor,
             } = season;
 
+            const leagueCount = leagueCountsByYear[year] ?? 0;
+
             return (
               <tr key={id}>
                 <td>{year}</td>
+                <td>{leagueCount}</td>
                 <td>{isCurrent ? 'Yes' : 'No'}</td>
                 <td>{isOpenForRegistration ? 'Yes' : 'No'}</td>
                 <td>{isOpenForFSquared ? 'Yes' : 'No'}</td>
@@ -170,6 +215,27 @@ export default function SeasonIndex() {
                       <input type='hidden' name='seasonId' value={id} />
                       <Button type='submit' name='_action' value='setActive'>
                         Set Active
+                      </Button>
+                    </Form>
+                  )}
+                  {!isCurrent && leagueCount === 0 && (
+                    <Form method='POST' style={{ display: 'inline' }}>
+                      <input type='hidden' name='seasonId' value={id} />
+                      <Button
+                        type='submit'
+                        name='_action'
+                        value='deleteSeason'
+                        onClick={e => {
+                          if (
+                            !confirm(
+                              'Are you sure you want to delete this season?',
+                            )
+                          ) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        Delete
                       </Button>
                     </Form>
                   )}
