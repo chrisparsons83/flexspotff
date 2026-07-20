@@ -30,8 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   switch (action) {
     case 'createSeason': {
-      //const year = new Date().getFullYear();
-      const year = new Date('2024-04-01').getFullYear();
+      const year = new Date().getFullYear();
       const season = await createSeason({
         year,
         isCurrent: false,
