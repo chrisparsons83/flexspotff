@@ -16,7 +16,7 @@ import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   draftDateTime: z.string().min(1, 'Draft date and time is required'),
-  season: z.string().min(1, 'Season is required').transform(Number),
+  seasonId: z.string().min(1, 'Season is required'),
 });
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -40,13 +40,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   }
 
-  const { draftDateTime, season } = submission.data;
+  const { draftDateTime, seasonId } = submission.data;
 
   try {
     await updateDraftSlot({
       id,
       draftDateTime: new Date(draftDateTime),
-      season,
+      seasonId,
     });
     return typedjson({
       success: true,
@@ -123,28 +123,28 @@ export default function EditDraftSlot() {
       )}
       <Form method='post' className='grid grid-cols-1 gap-6'>
         <div>
-          <label htmlFor='season'>
+          <label htmlFor='seasonId'>
             Season:
             <select
-              name='season'
-              id='season'
+              name='seasonId'
+              id='seasonId'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
-              defaultValue={draftSlot.season}
+              defaultValue={draftSlot.seasonId}
             >
               <option value=''>Select a season...</option>
               {seasons.map((season: any) => (
-                <option key={season.id} value={season.year}>
+                <option key={season.id} value={season.id}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}
                 </option>
               ))}
             </select>
           </label>
           {isErrorResponse(actionData) &&
-            'season' in actionData.error &&
-            actionData.error.season && (
+            'seasonId' in actionData.error &&
+            actionData.error.seasonId && (
               <p className='form-validation-error' role='alert'>
-                {actionData.error.season[0]}
+                {actionData.error.seasonId[0]}
               </p>
             )}
         </div>

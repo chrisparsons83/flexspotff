@@ -16,10 +16,7 @@ import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   draftDateTime: z.string().min(1, 'Draft date and time is required'),
-  season: z
-    .string()
-    .min(1, 'Season is required')
-    .transform(val => parseInt(val, 10)),
+  seasonId: z.string().min(1, 'Season is required'),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -38,12 +35,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { draftDateTime, season } = submission.data;
+  const { draftDateTime, seasonId } = submission.data;
 
   try {
     await createDraftSlot({
       draftDateTime: new Date(draftDateTime),
-      season,
+      seasonId,
     });
     return typedjson({
       success: true,
@@ -102,32 +99,32 @@ export default function NewDraftSlot() {
       )}
       <Form ref={formRef} method='post' className='grid grid-cols-1 gap-6'>
         <div>
-          <label htmlFor='season'>
+          <label htmlFor='seasonId'>
             Season:
             <select
-              name='season'
-              id='season'
+              name='seasonId'
+              id='seasonId'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
               defaultValue={
-                seasons.find((s: any) => s.isCurrent)?.year ||
-                seasons[0]?.year ||
+                seasons.find((s: any) => s.isCurrent)?.id ||
+                seasons[0]?.id ||
                 ''
               }
             >
               <option value=''>Select a season...</option>
               {seasons.map((season: any) => (
-                <option key={season.id} value={season.year}>
+                <option key={season.id} value={season.id}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}
                 </option>
               ))}
             </select>
           </label>
           {isErrorResponse(actionData) &&
-            'season' in actionData.error &&
-            actionData.error.season && (
+            'seasonId' in actionData.error &&
+            actionData.error.seasonId && (
               <p className='form-validation-error' role='alert'>
-                {actionData.error.season[0]}
+                {actionData.error.seasonId[0]}
               </p>
             )}
         </div>

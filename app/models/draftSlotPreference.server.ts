@@ -7,55 +7,54 @@ export type DraftSlotPreferenceWithDraftSlot = DraftSlotPreference & {
   draftSlot: {
     id: string;
     draftDateTime: Date;
-    season: number;
   };
 };
 
 export async function getUserDraftSlotPreferences(
   userId: string,
-  season: number,
+  seasonId: string,
 ): Promise<DraftSlotPreferenceWithDraftSlot[]> {
   return prisma.draftSlotPreference.findMany({
     where: {
       userId,
-      season,
+      seasonId,
     },
     include: {
       draftSlot: {
         select: {
           id: true,
           draftDateTime: true,
-          season: true,
         },
       },
     },
     orderBy: {
-      ranking: 'asc',
+      draftSlot: {
+        draftDateTime: 'asc',
+      },
     },
   });
 }
 
 export async function upsertUserDraftSlotPreferences(
   userId: string,
-  season: number,
-  preferences: { draftSlotId: string; ranking: number }[],
+  seasonId: string,
+  draftSlotIds: string[],
 ): Promise<void> {
   // Delete existing preferences for this user and season
   await prisma.draftSlotPreference.deleteMany({
     where: {
       userId,
-      season,
+      seasonId,
     },
   });
 
   // Create new preferences
-  if (preferences.length > 0) {
+  if (draftSlotIds.length > 0) {
     await prisma.draftSlotPreference.createMany({
-      data: preferences.map(pref => ({
+      data: draftSlotIds.map(draftSlotId => ({
         userId,
-        draftSlotId: pref.draftSlotId,
-        season,
-        ranking: pref.ranking,
+        draftSlotId,
+        seasonId,
       })),
     });
   }
@@ -63,11 +62,11 @@ export async function upsertUserDraftSlotPreferences(
 
 export async function getDraftSlotsWithUserPreferences(
   userId: string,
-  season: number,
+  seasonId: string,
 ) {
   const draftSlots = await prisma.draftSlot.findMany({
     where: {
-      season,
+      seasonId,
     },
     include: {
       preferences: {
@@ -75,7 +74,7 @@ export async function getDraftSlotsWithUserPreferences(
           userId,
         },
         select: {
-          ranking: true,
+          id: true,
         },
       },
     },
@@ -86,6 +85,6 @@ export async function getDraftSlotsWithUserPreferences(
 
   return draftSlots.map(slot => ({
     ...slot,
-    userRanking: slot.preferences[0]?.ranking || null,
+    isSelected: slot.preferences.length > 0,
   }));
 }

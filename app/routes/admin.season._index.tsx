@@ -14,6 +14,7 @@ import {
 import {
   createSeason,
   deleteSeason,
+  getSeason,
   getSeasonById,
   getSeasons,
   updateActiveSeason,
@@ -37,6 +38,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   switch (action) {
     case 'createSeason': {
       const year = new Date().getFullYear();
+
+      const existingSeason = await getSeason(year);
+      if (existingSeason) {
+        return typedjson({
+          message: `A ${year} season already exists.`,
+        });
+      }
+
       const season = await createSeason({
         year,
         isCurrent: false,

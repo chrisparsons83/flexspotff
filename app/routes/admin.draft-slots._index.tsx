@@ -21,8 +21,8 @@ import { isSuccessWithMessage, isErrorResponse } from '~/utils/types';
 
 const draftSlotSchema = z.object({
   id: z.string().optional(),
-  draftDateTime: z.string().min(1, 'Draft date and time is required'),
-  season: z.string().min(1, 'Season is required').transform(Number),
+  draftDateTime: z.string().optional(),
+  seasonId: z.string().optional(),
   action: z.enum(['create', 'update', 'delete']),
 });
 
@@ -42,14 +42,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { id, draftDateTime, season, action } = submission.data;
+  const { id, draftDateTime, seasonId, action } = submission.data;
 
   try {
     switch (action) {
       case 'create':
+        if (!draftDateTime || !seasonId) {
+          return typedjson(
+            {
+              success: false,
+              error: {
+                general: ['Draft date/time and season are required'],
+              },
+            },
+            { status: 400 },
+          );
+        }
         await createDraftSlot({
           draftDateTime: new Date(draftDateTime),
-          season,
+          seasonId,
         });
         return typedjson({
           success: true,
@@ -66,10 +77,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             { status: 400 },
           );
         }
+        if (!draftDateTime || !seasonId) {
+          return typedjson(
+            {
+              success: false,
+              error: {
+                general: ['Draft date/time and season are required'],
+              },
+            },
+            { status: 400 },
+          );
+        }
         await updateDraftSlot({
           id,
           draftDateTime: new Date(draftDateTime),
-          season,
+          seasonId,
         });
         return typedjson({
           success: true,
