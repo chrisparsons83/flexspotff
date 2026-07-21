@@ -117,7 +117,6 @@ interface SortingResultData {
 interface PlayerPreferences {
   [playerId: string]: Array<{
     draftSlotId: string;
-    ranking: number;
     draftDateTime?: Date;
   }>;
 }
@@ -284,7 +283,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     sortedLeagueNames.forEach(leagueName => {
       const groups = leagueGroups[leagueName];
       const embed = new EmbedBuilder()
-        .setTitle(`🏈 ${leagueName} League 2025`)
+        .setTitle(`🏈 ${leagueName} League ${season.year}`)
         .setColor(leagueColors[leagueName.toLowerCase()] || 0x00ff00);
 
       groups.forEach((group: AnnouncementGroup) => {
@@ -374,7 +373,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             Array<{
               draftSlotId: string;
               draftDateTime: Date;
-              ranking: number;
             }>
           >, // Keep empty for now
         });
@@ -428,7 +426,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             Array<{
               draftSlotId: string;
               draftDateTime: Date;
-              ranking: number;
             }>
           >, // Keep empty for now
         });
@@ -472,7 +469,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           Array<{
             draftSlotId: string;
             draftDateTime: Date;
-            ranking: number;
           }>
         >, // Keep empty for now
       });
@@ -499,8 +495,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     try {
-      // Get draft slots for this season
-      const draftSlots = await getDraftSlotsBySeason({ season: season.year });
+      // Get draft slots for this season. Attach the season year so downstream
+      // grouping/announcement code can keep displaying it (all slots here
+      // belong to the same season).
+      const seasonDraftSlots = await getDraftSlotsBySeason({
+        seasonId: season.id,
+      });
+      const draftSlots = seasonDraftSlots.map(slot => ({
+        id: slot.id,
+        draftDateTime: slot.draftDateTime,
+        season: season.year,
+      }));
 
       if (draftSlots.length === 0) {
         return typedjson({
@@ -526,33 +531,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       for (const player of selectedPlayerData) {
         const preferences = await getUserDraftSlotPreferences(
           player.id,
-          season.year,
+          season.id,
         );
 
         if (preferences.length > 0) {
-          // Separate ranked vs unranked preferences
-          const rankedPreferences = preferences.filter(p => p.ranking > 0);
-
-          if (rankedPreferences.length > 0) {
-            // Player has ranked preferences
-            playersWithPreferences.push({
-              id: player.id,
-              discordName: player.discordName,
-              discordId: player.discordId,
-              preferences: rankedPreferences.map(p => ({
-                draftSlotId: p.draftSlotId,
-                ranking: p.ranking,
-              })),
-            });
-          } else {
-            // Player has availability but no rankings - treat as available for all their slots
-            playersWithoutPreferences.push({
-              id: player.id,
-              discordName: player.discordName,
-              discordId: player.discordId,
-              allAvailableSlots: preferences.map(p => p.draftSlotId),
-            });
-          }
+          // Player has selected the times they are available for
+          playersWithPreferences.push({
+            id: player.id,
+            discordName: player.discordName,
+            discordId: player.discordId,
+            preferences: preferences.map(p => ({
+              draftSlotId: p.draftSlotId,
+            })),
+          });
         } else {
           // Player has no preferences recorded - assume they're available for all slots
           playersWithoutPreferences.push({
@@ -580,20 +571,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         Array<{
           draftSlotId: string;
           draftDateTime: Date;
-          ranking: number;
         }>
       > = {};
 
       for (const player of selectedPlayerData) {
         const preferences = await getUserDraftSlotPreferences(
           player.id,
-          season.year,
+          season.id,
         );
         if (preferences.length > 0) {
           playerPreferencesMap[player.id] = preferences.map(p => ({
             draftSlotId: p.draftSlotId,
             draftDateTime: p.draftSlot.draftDateTime,
-            ranking: p.ranking,
           }));
         }
       }
@@ -647,7 +636,7 @@ function trySlotCombination(
     discordId: string;
     availableSlots: string[];
     hasPreferences: boolean;
-    preferences: Array<{ draftSlotId: string; ranking: number }>;
+    preferences: Array<{ draftSlotId: string }>;
   }>,
   slotCombo: Array<{
     id: string;
@@ -675,12 +664,7 @@ function trySlotCombination(
   for (const player of shuffledPlayers.filter(p => p.hasPreferences)) {
     let assigned = false;
 
-    // Sort player's preferences by ranking (1 is highest preference)
-    const sortedPreferences = [...player.preferences].sort(
-      (a, b) => a.ranking - b.ranking,
-    );
-
-    for (const pref of sortedPreferences) {
+    for (const pref of player.preferences) {
       if (!slotCombo.some(slot => slot.id === pref.draftSlotId)) continue; // Skip if slot not in this combination
 
       const currentAssignment = slotAssignments.get(pref.draftSlotId);
@@ -799,10 +783,10 @@ function trySlotCombination(
       originalPlayer.hasPreferences &&
       originalPlayer.preferences.length > 0
     ) {
-      // Use their top preference from the combination
-      const topPref = originalPlayer.preferences
-        .filter(pref => slotCombo.some(slot => slot.id === pref.draftSlotId))
-        .sort((a, b) => a.ranking - b.ranking)[0];
+      // Use their first available preference from the combination
+      const topPref = originalPlayer.preferences.filter(pref =>
+        slotCombo.some(slot => slot.id === pref.draftSlotId),
+      )[0];
       if (topPref) {
         bestSlot = slotCombo.find(slot => slot.id === topPref.draftSlotId);
       }
@@ -874,7 +858,7 @@ function calculateCombinationScore(
     discordId: string;
     availableSlots: string[];
     hasPreferences: boolean;
-    preferences: Array<{ draftSlotId: string; ranking: number }>;
+    preferences: Array<{ draftSlotId: string }>;
   }>,
 ): number {
   // Primary score: number of completed groups (most important)
@@ -899,7 +883,7 @@ function sortPlayersIntoDraftSlots(
     id: string;
     discordName: string;
     discordId: string;
-    preferences: Array<{ draftSlotId: string; ranking: number }>;
+    preferences: Array<{ draftSlotId: string }>;
   }>,
   playersWithoutPreferences: Array<{
     id: string;

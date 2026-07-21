@@ -266,11 +266,12 @@ model DraftSlot {
   updatedAt DateTime @updatedAt
 
   draftDateTime DateTime
-  season        Int
+  seasonId      String
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   preferences DraftSlotPreference[]
 
-  @@unique([draftDateTime, season], name: "draftSlotDateTimeSeason")
+  @@unique([draftDateTime, seasonId], name: "draftSlotDateTimeSeason")
 }
 
 model DraftSlotPreference {
@@ -280,11 +281,11 @@ model DraftSlotPreference {
 
   userId      String
   draftSlotId String
-  season      Int
-  ranking     Int // 1 = most preferred, higher numbers = less preferred
+  seasonId    String
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   draftSlot DraftSlot @relation(fields: [draftSlotId], references: [id], onDelete: Cascade)
+  season    Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, draftSlotId], name: "userDraftSlotPreference")
 }
@@ -667,14 +668,16 @@ model Season {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  year                  Int
+  year                  Int     @unique
   isCurrent             Boolean
   isOpenForRegistration Boolean
   isOpenForFSquared     Boolean @default(false)
   isOpenForDFSSurvivor  Boolean @default(false)
   registrationSize      Int     @default(60)
 
-  Weeks SeasonWeek[]
+  Weeks                SeasonWeek[]
+  draftSlots           DraftSlot[]
+  draftSlotPreferences DraftSlotPreference[]
 }
 
 model SeasonWeek {

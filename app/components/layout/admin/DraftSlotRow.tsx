@@ -10,7 +10,7 @@ type User = {
 
 type DraftSlot = {
   id: string;
-  season: number;
+  season: { year: number };
   draftDateTime: Date;
   availableCount: number;
   availableUsers: User[];
@@ -30,7 +30,7 @@ export default function DraftSlotRow({ slot }: Props) {
   return (
     <>
       <tr>
-        <td>{slot.season}</td>
+        <td>{slot.season.year}</td>
         <td className='flex items-center gap-3'>
           {new Date(slot.draftDateTime).toLocaleString(undefined, {
             year: 'numeric',

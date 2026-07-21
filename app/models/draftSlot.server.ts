@@ -5,13 +5,25 @@ export type { DraftSlot } from '@prisma/client';
 
 export function getDraftSlots() {
   return prisma.draftSlot.findMany({
-    orderBy: [{ season: 'desc' }, { draftDateTime: 'asc' }],
+    include: {
+      season: {
+        select: {
+          year: true,
+        },
+      },
+    },
+    orderBy: [{ season: { year: 'desc' } }, { draftDateTime: 'asc' }],
   });
 }
 
 export async function getDraftSlotsWithPreferenceCounts() {
   const draftSlots = await prisma.draftSlot.findMany({
     include: {
+      season: {
+        select: {
+          year: true,
+        },
+      },
       preferences: {
         include: {
           user: {
@@ -23,7 +35,7 @@ export async function getDraftSlotsWithPreferenceCounts() {
         },
       },
     },
-    orderBy: [{ season: 'desc' }, { draftDateTime: 'asc' }],
+    orderBy: [{ season: { year: 'desc' } }, { draftDateTime: 'asc' }],
   });
 
   return draftSlots.map(slot => ({
@@ -52,12 +64,12 @@ export function getDraftSlot({ id }: Pick<DraftSlot, 'id'>) {
 
 export function createDraftSlot({
   draftDateTime,
-  season,
-}: Pick<DraftSlot, 'draftDateTime' | 'season'>) {
+  seasonId,
+}: Pick<DraftSlot, 'draftDateTime' | 'seasonId'>) {
   return prisma.draftSlot.create({
     data: {
       draftDateTime,
-      season,
+      seasonId,
     },
   });
 }
@@ -65,13 +77,13 @@ export function createDraftSlot({
 export function updateDraftSlot({
   id,
   draftDateTime,
-  season,
-}: Pick<DraftSlot, 'id' | 'draftDateTime' | 'season'>) {
+  seasonId,
+}: Pick<DraftSlot, 'id' | 'draftDateTime' | 'seasonId'>) {
   return prisma.draftSlot.update({
     where: { id },
     data: {
       draftDateTime,
-      season,
+      seasonId,
     },
   });
 }
@@ -82,9 +94,9 @@ export function deleteDraftSlot({ id }: Pick<DraftSlot, 'id'>) {
   });
 }
 
-export function getDraftSlotsBySeason({ season }: { season: number }) {
+export function getDraftSlotsBySeason({ seasonId }: { seasonId: string }) {
   return prisma.draftSlot.findMany({
-    where: { season },
+    where: { seasonId },
     orderBy: { draftDateTime: 'asc' },
   });
 }
