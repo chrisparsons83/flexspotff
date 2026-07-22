@@ -2,6 +2,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import { Form, Link } from '@remix-run/react';
 import { useState } from 'react';
 import Button from '~/components/ui/FlexSpotButton';
+import LocalDateTime from '~/components/ui/LocalDateTime';
 
 type User = {
   id: string;
@@ -32,14 +33,17 @@ export default function DraftSlotRow({ slot }: Props) {
       <tr>
         <td>{slot.season.year}</td>
         <td className='flex items-center gap-3'>
-          {new Date(slot.draftDateTime).toLocaleString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZoneName: 'short',
-          })}
+          <LocalDateTime
+            value={slot.draftDateTime}
+            options={{
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              timeZoneName: 'short',
+            }}
+          />
           {slot.availableCount > 0 && (
             <>
               {' '}

@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, Link, useNavigate } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   typedjson,
   useTypedActionData,
@@ -88,6 +88,7 @@ export default function EditDraftSlot() {
   const { draftSlot, seasons } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigate = useNavigate();
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (actionData?.success) {
@@ -98,10 +99,38 @@ export default function EditDraftSlot() {
     }
   }, [actionData?.success, navigate]);
 
-  // Format the datetime for the input field
-  const formatDateTimeForInput = (date: string | Date) => {
+  // Format the stored UTC instant into a datetime-local value using the
+  // browser's local wall-clock (getFullYear/getMonth/... are local getters).
+  const toLocalInputValue = (date: string | Date) => {
     const d = new Date(date);
-    return d.toISOString().slice(0, 16);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return (
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+      `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+    );
+  };
+
+  // Prefill the input on the client, where the browser timezone is known. Doing
+  // this during SSR would use the server (UTC) zone and show a shifted time.
+  useEffect(() => {
+    if (dateInputRef.current) {
+      dateInputRef.current.value = toLocalInputValue(draftSlot.draftDateTime);
+    }
+  }, [draftSlot.draftDateTime]);
+
+  // Convert the local wall-clock value into an absolute UTC ISO string before
+  // submit, so the server stores the correct instant regardless of its zone.
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const local = form.elements.namedItem(
+      'draftDateTimeLocal',
+    ) as HTMLInputElement | null;
+    const hidden = form.elements.namedItem(
+      'draftDateTime',
+    ) as HTMLInputElement | null;
+    if (hidden) {
+      hidden.value = local?.value ? new Date(local.value).toISOString() : '';
+    }
   };
 
   return (
@@ -121,7 +150,11 @@ export default function EditDraftSlot() {
           }
         />
       )}
-      <Form method='post' className='grid grid-cols-1 gap-6'>
+      <Form
+        method='post'
+        onSubmit={handleSubmit}
+        className='grid grid-cols-1 gap-6'
+      >
         <div>
           <label htmlFor='seasonId'>
             Season:
@@ -153,14 +186,16 @@ export default function EditDraftSlot() {
             Draft Date & Time (in your local timezone:{' '}
             {Intl.DateTimeFormat().resolvedOptions().timeZone}):
             <input
+              ref={dateInputRef}
               type='datetime-local'
-              name='draftDateTime'
-              id='draftDateTime'
-              defaultValue={formatDateTimeForInput(draftSlot.draftDateTime)}
+              name='draftDateTimeLocal'
+              id='draftDateTimeLocal'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
             />
           </label>
+          {/* Populated on submit with the UTC ISO string; see handleSubmit. */}
+          <input type='hidden' name='draftDateTime' />
           {isErrorResponse(actionData) &&
             'draftDateTime' in actionData.error &&
             actionData.error.draftDateTime && (

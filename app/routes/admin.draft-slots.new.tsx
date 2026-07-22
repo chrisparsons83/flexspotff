@@ -80,6 +80,22 @@ export default function NewDraftSlot() {
     }
   }, [actionData]);
 
+  // Convert the datetime-local wall-clock value (interpreted in the browser's
+  // timezone) into an absolute UTC ISO string before the form is submitted, so
+  // the server stores the correct instant regardless of its own timezone.
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const local = form.elements.namedItem(
+      'draftDateTimeLocal',
+    ) as HTMLInputElement | null;
+    const hidden = form.elements.namedItem(
+      'draftDateTime',
+    ) as HTMLInputElement | null;
+    if (hidden) {
+      hidden.value = local?.value ? new Date(local.value).toISOString() : '';
+    }
+  };
+
   return (
     <>
       <h2>Create New Draft Slot</h2>
@@ -97,7 +113,12 @@ export default function NewDraftSlot() {
           }
         />
       )}
-      <Form ref={formRef} method='post' className='grid grid-cols-1 gap-6'>
+      <Form
+        ref={formRef}
+        method='post'
+        onSubmit={handleSubmit}
+        className='grid grid-cols-1 gap-6'
+      >
         <div>
           <label htmlFor='seasonId'>
             Season:
@@ -134,12 +155,14 @@ export default function NewDraftSlot() {
             {Intl.DateTimeFormat().resolvedOptions().timeZone}):
             <input
               type='datetime-local'
-              name='draftDateTime'
-              id='draftDateTime'
+              name='draftDateTimeLocal'
+              id='draftDateTimeLocal'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
             />
           </label>
+          {/* Populated on submit with the UTC ISO string; see handleSubmit. */}
+          <input type='hidden' name='draftDateTime' />
           {isErrorResponse(actionData) &&
             'draftDateTime' in actionData.error &&
             actionData.error.draftDateTime && (
