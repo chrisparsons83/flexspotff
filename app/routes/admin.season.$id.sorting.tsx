@@ -9,6 +9,7 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import { sendMessageToChannel } from '~/../bot/utils';
+import LocalDateTime from '~/components/ui/LocalDateTime';
 import {
   Popover,
   PopoverContent,
@@ -1126,9 +1127,10 @@ export default function LeagueSorting() {
             <div className='space-y-1'>
               {sortedPreferences.map(pref => (
                 <div key={pref.draftSlotId} className='text-xs text-gray-300'>
-                  {new Date(pref.draftDateTime || new Date()).toLocaleString(
-                    'en-US',
-                    {
+                  <LocalDateTime
+                    value={pref.draftDateTime || new Date()}
+                    locale='en-US'
+                    options={{
                       timeZoneName: 'short',
                       hour: 'numeric',
                       minute: '2-digit',
@@ -1136,8 +1138,8 @@ export default function LeagueSorting() {
                       month: 'numeric',
                       day: 'numeric',
                       year: 'numeric',
-                    },
-                  )}
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -1322,16 +1324,26 @@ export default function LeagueSorting() {
                           <div className='flex justify-between items-center mb-3'>
                             <h4 className='text-lg font-medium text-white'>
                               Draft Slot:{' '}
-                              {new Date(
-                                group.draftSlot?.draftDateTime || new Date(),
-                              ).toLocaleDateString()}{' '}
+                              <LocalDateTime
+                                value={
+                                  group.draftSlot?.draftDateTime || new Date()
+                                }
+                                options={{
+                                  year: 'numeric',
+                                  month: 'numeric',
+                                  day: 'numeric',
+                                }}
+                              />{' '}
                               at{' '}
-                              {new Date(
-                                group.draftSlot?.draftDateTime || new Date(),
-                              ).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              <LocalDateTime
+                                value={
+                                  group.draftSlot?.draftDateTime || new Date()
+                                }
+                                options={{
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }}
+                              />
                             </h4>
                             <select
                               value={leagueAssignments[groupIndex] || ''}
@@ -1413,16 +1425,26 @@ export default function LeagueSorting() {
                           className='bg-gray-800 border border-gray-600 rounded-lg p-4'
                         >
                           <h4 className='text-white font-medium mb-2'>
-                            {new Date(
-                              analysis.draftSlot?.draftDateTime || new Date(),
-                            ).toLocaleDateString()}{' '}
+                            <LocalDateTime
+                              value={
+                                analysis.draftSlot?.draftDateTime || new Date()
+                              }
+                              options={{
+                                year: 'numeric',
+                                month: 'numeric',
+                                day: 'numeric',
+                              }}
+                            />{' '}
                             at{' '}
-                            {new Date(
-                              analysis.draftSlot?.draftDateTime || new Date(),
-                            ).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            <LocalDateTime
+                              value={
+                                analysis.draftSlot?.draftDateTime || new Date()
+                              }
+                              options={{
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }}
+                            />
                           </h4>
                           <p className='text-gray-300 text-sm mb-2'>
                             Available Players:{' '}

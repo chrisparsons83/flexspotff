@@ -9,6 +9,7 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
+import LocalDateTime from '~/components/ui/LocalDateTime';
 import { getDraftSlotsBySeason } from '~/models/draftSlot.server';
 import {
   getDraftSlotsWithUserPreferences,
@@ -243,15 +244,18 @@ export default function Dashboard() {
             className='h-4 w-4 cursor-pointer'
           />
           <span>
-            {slot.draftDateTime.toLocaleString(undefined, {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              timeZoneName: 'short',
-            })}
+            <LocalDateTime
+              value={slot.draftDateTime}
+              options={{
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                timeZoneName: 'short',
+              }}
+            />
           </span>
         </label>
       ))}
@@ -285,7 +289,8 @@ export default function Dashboard() {
       {registration ? (
         <>
           <p>
-            Thanks! You signed up at {registration.createdAt.toLocaleString()}
+            Thanks! You signed up at{' '}
+            <LocalDateTime value={registration.createdAt} />
           </p>
           {hasDraftSlots && (
             <div>
