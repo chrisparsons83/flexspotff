@@ -85,12 +85,10 @@ export default function NewDraftSlot() {
   // the server stores the correct instant regardless of its own timezone.
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     const form = event.currentTarget;
-    const local = form.elements.namedItem(
-      'draftDateTimeLocal',
-    ) as HTMLInputElement | null;
-    const hidden = form.elements.namedItem(
-      'draftDateTime',
-    ) as HTMLInputElement | null;
+    const local = form.querySelector<HTMLInputElement>('#draftDateTimeLocal');
+    const hidden = form.querySelector<HTMLInputElement>(
+      'input[name="draftDateTime"]',
+    );
     if (hidden) {
       hidden.value = local?.value ? new Date(local.value).toISOString() : '';
     }
@@ -150,12 +148,14 @@ export default function NewDraftSlot() {
             )}
         </div>
         <div>
-          <label htmlFor='draftDateTime'>
+          <label htmlFor='draftDateTimeLocal'>
             Draft Date & Time (in your local timezone:{' '}
-            {Intl.DateTimeFormat().resolvedOptions().timeZone}):
+            <span suppressHydrationWarning>
+              {Intl.DateTimeFormat().resolvedOptions().timeZone}
+            </span>
+            ):
             <input
               type='datetime-local'
-              name='draftDateTimeLocal'
               id='draftDateTimeLocal'
               className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
               required
