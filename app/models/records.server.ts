@@ -35,6 +35,10 @@ export type RecordCategories = {
  * rule 9.5, already include the weekly median game, so they are combined
  * H2H + median records. `medianWins`/`medianLosses`/`medianTies` are the median
  * portion of that same total, not a separate set of games.
+ *
+ * Points are deliberately absent: Sleeper's season totals cover whichever weeks
+ * it counts, which may include the playoffs, so every points record on the page
+ * is summed from the regular season games themselves instead.
  */
 export type RecordsTeam = {
   id: string;
@@ -49,8 +53,6 @@ export type RecordsTeam = {
   medianWins: number;
   medianLosses: number;
   medianTies: number;
-  pointsFor: number;
-  pointsAgainst: number;
 };
 
 export type RecordsGame = {
@@ -69,6 +71,12 @@ export type RecordsCupGame = {
   round: string;
   /** Byes are auto-advanced with a winner set, but nobody played them. */
   containsBye: boolean;
+  /**
+   * Both bracket slots were filled. A decided game missing one is a walkover -
+   * an unfilled slot still scores as 0 - so it is not a game either. Tracked
+   * separately from the users below, which are null for an unlinked owner.
+   */
+  isContested: boolean;
   topUser: RecordsCupUser | null;
   bottomUser: RecordsCupUser | null;
   winningUser: RecordsCupUser | null;
@@ -196,6 +204,17 @@ function buildTeamSeasons(
 ): TeamSeason[] {
   const teamsById = new Map(teams.map(team => [team.id, team]));
 
+  // Only the current week of the current season has its NFL game statuses
+  // refreshed (jobs/monitor-nfl-games), so a status left stale by a missed sync
+  // would exclude that week forever. Earlier seasons are finished by
+  // definition, so only the newest one is checked for games still in progress.
+  const latestYear = teams.reduce(
+    (latest, team) => Math.max(latest, team.year),
+    0,
+  );
+  const isPlayedWeek = (year: number, week: number) =>
+    year < latestYear || isWeekFinal(year, week);
+
   // Median scoring did not always exist. A league that recorded no median
   // results anywhere played head-to-head only.
   const leagueHasMedian = new Map<string, boolean>();
@@ -213,7 +232,7 @@ function buildTeamSeasons(
     const team = teamsById.get(game.teamId);
     if (!team) continue;
     if (game.week > regularSeasonLastWeek(team.year)) continue;
-    if (!isWeekFinal(team.year, game.week)) continue;
+    if (!isPlayedWeek(team.year, game.week)) continue;
 
     let weeks = leagueWeeks.get(team.leagueId);
     if (!weeks) {
@@ -274,6 +293,9 @@ function buildTeamSeasons(
       for (const game of weekGames) {
         const season = seasons.get(game.teamId);
         if (!season) continue;
+        // There is no unique constraint on team/week, so ignore any duplicate
+        // rather than counting its points twice.
+        if (season.weeks.has(week)) continue;
 
         const opponent = opponents.get(game.teamId) ?? null;
 
@@ -333,7 +355,12 @@ function buildCareerRecords(seasons: TeamSeason[]): RecordTable[] {
 
   const map = new Map<string, CareerStats>();
 
-  for (const { team, isSeasonComplete } of seasons) {
+  for (const {
+    team,
+    isSeasonComplete,
+    regularSeasonPointsFor,
+    headToHeadPointsAgainst,
+  } of seasons) {
     const existing = map.get(team.userId) || {
       name: team.userName,
       seasons: 0,
@@ -356,8 +383,8 @@ function buildCareerRecords(seasons: TeamSeason[]): RecordTable[] {
     existing.wins += team.wins;
     existing.losses += team.losses;
     existing.ties += team.ties;
-    existing.pointsFor += team.pointsFor;
-    existing.pointsAgainst += team.pointsAgainst;
+    existing.pointsFor += regularSeasonPointsFor;
+    existing.pointsAgainst += headToHeadPointsAgainst;
     existing.medianWins += team.medianWins;
     existing.medianLosses += team.medianLosses;
     existing.medianTies += team.medianTies;
@@ -367,7 +394,7 @@ function buildCareerRecords(seasons: TeamSeason[]): RecordTable[] {
       existing.completedWins += team.wins;
       existing.completedLosses += team.losses;
       existing.completedTies += team.ties;
-      existing.completedPointsFor += team.pointsFor;
+      existing.completedPointsFor += regularSeasonPointsFor;
     }
 
     map.set(team.userId, existing);
@@ -434,7 +461,7 @@ function buildCareerRecords(seasons: TeamSeason[]): RecordTable[] {
       ),
     },
     {
-      title: 'Most Career Points For',
+      title: 'Most Career Points For (regular season)',
       headers: ['Player', 'Points For', 'Seasons'],
       rows: withRanks(
         [...careers]
@@ -449,7 +476,7 @@ function buildCareerRecords(seasons: TeamSeason[]): RecordTable[] {
       ),
     },
     {
-      title: 'Most Career Points Against',
+      title: 'Most Career Points Against (regular season, head-to-head)',
       headers: ['Player', 'Points Against', 'Seasons'],
       rows: withRanks(
         [...careers]
@@ -755,9 +782,9 @@ function buildCupRecords(cupGames: RecordsCupGame[]): RecordTable[] {
   };
 
   for (const game of cupGames) {
-    // A bye advances a team without a game being played, so it is neither a
-    // win nor an appearance.
-    if (game.containsBye) continue;
+    // A bye or a walkover advances a team without a game being played, so it is
+    // neither a win nor an appearance.
+    if (game.containsBye || !game.isContested) continue;
 
     if (game.topUser) getOrCreate(game.topUser).gamesPlayed++;
     if (game.bottomUser) getOrCreate(game.bottomUser).gamesPlayed++;
@@ -970,6 +997,11 @@ export function buildRecords({
   };
 }
 
+const cupTeamUserSelect = {
+  userId: true,
+  user: { select: { discordName: true } },
+} as const;
+
 export async function getRecords(): Promise<RecordCategories> {
   const [teamRows, gameRows, cupGameRows, unfinalizedWeeks] = await Promise.all(
     [
@@ -985,8 +1017,6 @@ export async function getRecords(): Promise<RecordCategories> {
           medianWins: true,
           medianLosses: true,
           medianTies: true,
-          pointsFor: true,
-          pointsAgainst: true,
           user: { select: { discordName: true } },
           league: { select: { year: true, name: true } },
         },
@@ -1010,15 +1040,11 @@ export async function getRecords(): Promise<RecordCategories> {
         select: {
           round: true,
           containsBye: true,
-          winningTeam: {
-            select: { team: { select: { userId: true, user: true } } },
-          },
-          topTeam: {
-            select: { team: { select: { userId: true, user: true } } },
-          },
-          bottomTeam: {
-            select: { team: { select: { userId: true, user: true } } },
-          },
+          topTeamId: true,
+          bottomTeamId: true,
+          winningTeam: { select: { team: { select: cupTeamUserSelect } } },
+          topTeam: { select: { team: { select: cupTeamUserSelect } } },
+          bottomTeam: { select: { team: { select: cupTeamUserSelect } } },
         },
       }),
       getUnfinalizedWeeks(),
@@ -1038,8 +1064,6 @@ export async function getRecords(): Promise<RecordCategories> {
     medianWins: team.medianWins,
     medianLosses: team.medianLosses,
     medianTies: team.medianTies,
-    pointsFor: team.pointsFor,
-    pointsAgainst: team.pointsAgainst,
   }));
 
   const toCupUser = (
@@ -1057,6 +1081,7 @@ export async function getRecords(): Promise<RecordCategories> {
   const cupGames: RecordsCupGame[] = cupGameRows.map(game => ({
     round: game.round,
     containsBye: game.containsBye,
+    isContested: game.topTeamId !== null && game.bottomTeamId !== null,
     topUser: toCupUser(game.topTeam),
     bottomUser: toCupUser(game.bottomTeam),
     winningUser: toCupUser(game.winningTeam),

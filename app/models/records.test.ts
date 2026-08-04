@@ -27,8 +27,6 @@ const makeTeam = (overrides: Partial<RecordsTeam> = {}): RecordsTeam => ({
   medianWins: 0,
   medianLosses: 0,
   medianTies: 0,
-  pointsFor: 0,
-  pointsAgainst: 0,
   ...overrides,
 });
 
@@ -57,6 +55,28 @@ const build = ({
   cupGames?: RecordsCupGame[];
   isWeekFinal?: (year: number, week: number) => boolean;
 }) => buildRecords({ teams, games, cupGames, isWeekFinal });
+
+const user = (id: string, name: string) => ({ userId: id, userName: name });
+
+/** A cup game both teams actually played. */
+const cupGame = ({
+  round,
+  top,
+  bottom,
+  winner,
+}: {
+  round: string;
+  top: string;
+  bottom: string;
+  winner: string;
+}): RecordsCupGame => ({
+  round,
+  containsBye: false,
+  isContested: true,
+  topUser: user(top.toLowerCase(), top),
+  bottomUser: user(bottom.toLowerCase(), bottom),
+  winningUser: user(winner.toLowerCase(), winner),
+});
 
 const tableByTitle = (tables: RecordTable[], match: string) => {
   const table = tables.find(t => t.title.startsWith(match));
@@ -107,32 +127,18 @@ describe('buildRecords', () => {
     });
 
     it('averages career points over completed seasons only', () => {
-      const fullSeason = Array.from({ length: LAST_WEEK }, () => 100);
+      const fullSeason = (score: number) =>
+        Array.from({ length: LAST_WEEK }, () => score);
 
       // Two finished seasons plus one that has only played a single week.
       const teams = [
-        makeTeam({
-          id: 'a-2023',
-          leagueId: 'league-2023',
-          year: 2023,
-          pointsFor: 1600,
-        }),
-        makeTeam({
-          id: 'a-2024',
-          leagueId: 'league-2024',
-          year: 2024,
-          pointsFor: 1400,
-        }),
-        makeTeam({
-          id: 'a-2025',
-          leagueId: 'league-2025',
-          year: 2025,
-          pointsFor: 100,
-        }),
+        makeTeam({ id: 'a-2023', leagueId: 'league-2023', year: 2023 }),
+        makeTeam({ id: 'a-2024', leagueId: 'league-2024', year: 2024 }),
+        makeTeam({ id: 'a-2025', leagueId: 'league-2025', year: 2025 }),
       ];
       const games = [
-        ...makeGames('a-2023', fullSeason),
-        ...makeGames('a-2024', fullSeason),
+        ...makeGames('a-2023', fullSeason(100)),
+        ...makeGames('a-2024', fullSeason(120)),
         ...makeGames('a-2025', [100]),
       ];
 
@@ -143,13 +149,16 @@ describe('buildRecords', () => {
       expect(
         tableByTitle(careerRecords, 'Most Seasons Played').rows[0].cells[1],
       ).toBe('3');
+      expect(
+        tableByTitle(careerRecords, 'Most Career Points For').rows[0].cells[1],
+      ).toBe((100 * LAST_WEEK + 120 * LAST_WEEK + 100).toFixed(2));
 
       const alice = tableByTitle(
         careerRecords,
         'Highest Average Points For per Season',
       ).rows[0];
-      expect(alice.cells[1]).toBe('1500.00');
-      expect(alice.cells[2]).toBe('3000.00');
+      expect(alice.cells[1]).toBe((110 * LAST_WEEK).toFixed(2));
+      expect(alice.cells[2]).toBe((220 * LAST_WEEK).toFixed(2));
       expect(alice.cells[3]).toBe('2');
     });
 
@@ -173,6 +182,38 @@ describe('buildRecords', () => {
   });
 
   describe('single game', () => {
+    it('trusts earlier seasons even if a week looks unfinished', () => {
+      // Only the current season's statuses get refreshed, so a stale one must
+      // not erase a finished season from the record book.
+      const { teams, games } = twoTeamSeason({ weeks: 3 });
+      const current = twoTeamSeason({ weeks: 1 });
+      for (const team of current.teams) {
+        team.id = `${team.id}-next`;
+        team.leagueId = 'league-next';
+        team.year = YEAR + 1;
+      }
+      for (const game of current.games) {
+        game.teamId = `${game.teamId}-next`;
+      }
+
+      const { singleGameRecords } = build({
+        teams: [...teams, ...current.teams],
+        games: [...games, ...current.games],
+        isWeekFinal: () => false,
+      });
+
+      const highest = tableByTitle(
+        singleGameRecords,
+        'Highest Score in a Single Week',
+      );
+
+      // The older season survives; the current season's unfinished week does not.
+      expect(highest.rows).toHaveLength(6);
+      expect(highest.rows.every(row => row.cells[3] === YEAR.toString())).toBe(
+        true,
+      );
+    });
+
     it('ignores weeks whose games are still in progress', () => {
       const { teams, games } = twoTeamSeason({ weeks: 3 });
       games.push(
@@ -303,10 +344,6 @@ describe('buildRecords', () => {
         homeScore: 110,
         awayScore: 90,
       });
-      // A stored total that includes playoff weeks must not leak through.
-      teams[0].pointsFor = 9999;
-      teams[0].pointsAgainst = 9999;
-
       const { singleSeasonRecords } = build({ teams, games });
 
       expect(
@@ -325,44 +362,83 @@ describe('buildRecords', () => {
   });
 
   describe('cup', () => {
-    const user = (id: string, name: string) => ({ userId: id, userName: name });
-
     it('excludes byes from wins and games played', () => {
       const cupGames: RecordsCupGame[] = [
+        // The bracket builder auto-advances a bye with a winner already set.
         {
           round: 'ROUND_OF_64',
           containsBye: true,
+          isContested: false,
           topUser: user('user-1', 'Alice'),
           bottomUser: null,
           winningUser: user('user-1', 'Alice'),
         },
-        {
+        cupGame({
           round: 'ROUND_OF_32',
-          containsBye: false,
-          topUser: user('user-1', 'Alice'),
-          bottomUser: user('user-2', 'Bob'),
-          winningUser: user('user-1', 'Alice'),
-        },
+          top: 'Alice',
+          bottom: 'Bob',
+          winner: 'Alice',
+        }),
       ];
 
       const { cupRecords } = build({ teams: [], games: [], cupGames });
-      const wins = tableByTitle(cupRecords, 'Most Cup Game Wins');
-      const alice = wins.rows.find(row => row.cells[0] === 'Alice');
+      const alice = tableByTitle(cupRecords, 'Most Cup Game Wins').rows.find(
+        row => row.cells[0] === 'Alice',
+      );
 
       expect(alice?.cells[1]).toBe('1');
       expect(alice?.cells[2]).toBe('1');
       expect(alice?.cells[3]).toBe('100.0%');
     });
 
-    it('still credits finals and championships', () => {
+    it('excludes a walkover where a bracket slot was never filled', () => {
+      // An empty slot scores as 0, so the lone team is credited a win it never
+      // played for. Not flagged as a bye, so it needs its own guard.
       const cupGames: RecordsCupGame[] = [
         {
-          round: 'ROUND_OF_2',
+          round: 'ROUND_OF_32',
           containsBye: false,
+          isContested: false,
           topUser: user('user-1', 'Alice'),
-          bottomUser: user('user-2', 'Bob'),
+          bottomUser: null,
           winningUser: user('user-1', 'Alice'),
         },
+      ];
+
+      const { cupRecords } = build({ teams: [], games: [], cupGames });
+
+      expect(tableByTitle(cupRecords, 'Most Cup Game Wins').rows).toHaveLength(
+        0,
+      );
+    });
+
+    it('counts an opponent who is not linked to a discord user', () => {
+      // A team with no linked user still played the game, so the win counts.
+      const cupGames: RecordsCupGame[] = [
+        {
+          round: 'ROUND_OF_32',
+          containsBye: false,
+          isContested: true,
+          topUser: user('user-1', 'Alice'),
+          bottomUser: null,
+          winningUser: user('user-1', 'Alice'),
+        },
+      ];
+
+      const { cupRecords } = build({ teams: [], games: [], cupGames });
+      const alice = tableByTitle(cupRecords, 'Most Cup Game Wins').rows[0];
+
+      expect(alice.cells).toEqual(['Alice', '1', '1', '100.0%']);
+    });
+
+    it('still credits finals and championships', () => {
+      const cupGames: RecordsCupGame[] = [
+        cupGame({
+          round: 'ROUND_OF_2',
+          top: 'Alice',
+          bottom: 'Bob',
+          winner: 'Alice',
+        }),
       ];
 
       const { cupRecords } = build({ teams: [], games: [], cupGames });
@@ -376,32 +452,62 @@ describe('buildRecords', () => {
         ),
       ).toEqual(['Alice', 'Bob']);
     });
+
+    it('aggregates cup games across years', () => {
+      const cupGames: RecordsCupGame[] = [
+        cupGame({
+          round: 'ROUND_OF_2',
+          top: 'Alice',
+          bottom: 'Bob',
+          winner: 'Alice',
+        }),
+        cupGame({
+          round: 'ROUND_OF_2',
+          top: 'Alice',
+          bottom: 'Cara',
+          winner: 'Cara',
+        }),
+      ];
+
+      const { cupRecords } = build({ teams: [], games: [], cupGames });
+      const alice = tableByTitle(
+        cupRecords,
+        'Most Cup Championships',
+      ).rows.find(row => row.cells[0] === 'Alice');
+
+      // One title from two finals, and one cup game win overall.
+      expect(alice?.cells).toEqual(['Alice', '1', '2', '1']);
+    });
   });
 
   describe('ranking', () => {
     it('gives tied rows the same rank and skips the next', () => {
-      // Alice reached two finals; Bob and Cara reached one each.
-      const finalists = ['Alice', 'Alice', 'Bob', 'Cara'];
-      const cupGames: RecordsCupGame[] = finalists.map(name => ({
-        round: 'ROUND_OF_2',
-        containsBye: false,
-        topUser: user(name.toLowerCase(), name),
-        bottomUser: null,
-        winningUser: null,
-      }));
+      // Alice reached two finals, winning one; Bob and Cara reached one each.
+      const cupGames: RecordsCupGame[] = [
+        cupGame({
+          round: 'ROUND_OF_2',
+          top: 'Alice',
+          bottom: 'Bob',
+          winner: 'Alice',
+        }),
+        cupGame({
+          round: 'ROUND_OF_2',
+          top: 'Alice',
+          bottom: 'Cara',
+          winner: 'Cara',
+        }),
+      ];
 
       const { cupRecords } = build({ teams: [], games: [], cupGames });
       const finals = tableByTitle(cupRecords, 'Most Cup Finals Appearances');
 
       expect(finals.rows.map(row => [row.cells[0], row.rank])).toEqual([
         ['Alice', 1],
-        ['Bob', 2],
+        // Cara sorts above Bob on the championship tiebreak, but they are tied
+        // on finals so they share a rank.
         ['Cara', 2],
+        ['Bob', 2],
       ]);
     });
-
-    function user(id: string, name: string) {
-      return { userId: id, userName: name };
-    }
   });
 });
