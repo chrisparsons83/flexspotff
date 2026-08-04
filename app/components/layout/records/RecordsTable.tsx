@@ -36,7 +36,7 @@ export default function RecordsTable({ title, headers, rows }: Props) {
                     'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
                   )}
                 >
-                  {index + 1}
+                  {row.rank ?? index + 1}
                 </div>
               </td>
               {row.cells.map((cell, i) => (

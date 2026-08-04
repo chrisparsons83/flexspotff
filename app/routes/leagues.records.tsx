@@ -3,13 +3,7 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import RecordsTable from '~/components/layout/records/RecordsTable';
 import type { RecordTable } from '~/models/records.server';
-import {
-  getCareerRecords,
-  getCupRecords,
-  getSingleGameRecords,
-  getSingleSeasonRecords,
-  getStreakRecords,
-} from '~/models/records.server';
+import { getRecords } from '~/models/records.server';
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },
@@ -22,27 +16,7 @@ const CATEGORIES = [
 type CategoryKey = (typeof CATEGORIES)[number]['key'];
 
 export const loader = async () => {
-  const [
-    careerRecords,
-    singleSeasonRecords,
-    singleGameRecords,
-    cupRecords,
-    streakRecords,
-  ] = await Promise.all([
-    getCareerRecords(),
-    getSingleSeasonRecords(),
-    getSingleGameRecords(),
-    getCupRecords(),
-    getStreakRecords(),
-  ]);
-
-  return typedjson({
-    careerRecords,
-    singleSeasonRecords,
-    singleGameRecords,
-    cupRecords,
-    streakRecords,
-  });
+  return typedjson(await getRecords());
 };
 
 export default function Records() {

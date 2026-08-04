@@ -53,6 +53,28 @@ export async function getWeekNflGames(
   });
 }
 
+/**
+ * Returns the set of `${year}:${week}` keys that still have at least one NFL
+ * game that has not finished. This is the batch equivalent of
+ * `areAllNflGamesComplete` in ~/utils/helpers.
+ *
+ * Callers should treat a week as final when it is *absent* from this set. NFL
+ * games are only tracked from 2022 onward, so a year/week with no rows at all
+ * is historical data, not a week in progress.
+ */
+export async function getUnfinalizedWeeks() {
+  const weeks = await prisma.nFLGame.groupBy({
+    by: ['year', 'week'],
+    where: {
+      status: {
+        not: NFLGameStatus.Complete,
+      },
+    },
+  });
+
+  return new Set(weeks.map(({ year, week }) => `${year}:${week}`));
+}
+
 export async function getActiveNflGames() {
   return prisma.nFLGame.aggregate({
     where: {

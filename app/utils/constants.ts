@@ -7,6 +7,9 @@ export const SLEEPER_ADMIN_ID = `329096543967641600`;
 export const FIRST_YEAR = 2018;
 export const OMNI_YEAR = 2025;
 
+// Starting in 2021 the regular season runs one week longer.
+export const regularSeasonLastWeek = (year: number) => (year >= 2021 ? 14 : 13);
+
 export enum Leagues {
   admiral = 'admiral',
   champions = 'champions',
