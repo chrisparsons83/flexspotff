@@ -193,13 +193,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             .join(', ')}`;
         }
 
-        await sendMessageToChannel({
-          channelId: env.OMNI_CHANNEL_ID,
-          messageData: {
-            content: contentText,
-            embeds: [embed],
-          },
-        });
+        // Scores are already saved at this point, so a Discord outage should not
+        // fail the whole action -- log and carry on.
+        try {
+          await sendMessageToChannel({
+            channelId: env.OMNI_CHANNEL_ID,
+            messageData: {
+              content: contentText,
+              embeds: [embed],
+            },
+          });
+        } catch (error) {
+          console.error('Failed to send omni scoring notification:', error);
+        }
       }
 
       break;

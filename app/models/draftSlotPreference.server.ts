@@ -10,13 +10,23 @@ export type DraftSlotPreferenceWithDraftSlot = DraftSlotPreference & {
   };
 };
 
-export async function getUserDraftSlotPreferences(
-  userId: string,
+/**
+ * Preferences for many users at once, grouped by user id. Callers sorting a
+ * whole season would otherwise issue one query per player.
+ *
+ * Users with no preferences recorded are absent from the map rather than
+ * present with an empty array, so callers can tell "picked nothing" apart from
+ * "was not asked about".
+ */
+export async function getDraftSlotPreferencesByUser(
+  userIds: string[],
   seasonId: string,
-): Promise<DraftSlotPreferenceWithDraftSlot[]> {
-  return prisma.draftSlotPreference.findMany({
+): Promise<Map<string, DraftSlotPreferenceWithDraftSlot[]>> {
+  if (userIds.length === 0) return new Map();
+
+  const preferences = await prisma.draftSlotPreference.findMany({
     where: {
-      userId,
+      userId: { in: userIds },
       seasonId,
     },
     include: {
@@ -33,6 +43,18 @@ export async function getUserDraftSlotPreferences(
       },
     },
   });
+
+  const byUser = new Map<string, DraftSlotPreferenceWithDraftSlot[]>();
+  for (const preference of preferences) {
+    const existing = byUser.get(preference.userId);
+    if (existing) {
+      existing.push(preference);
+    } else {
+      byUser.set(preference.userId, [preference]);
+    }
+  }
+
+  return byUser;
 }
 
 export async function upsertUserDraftSlotPreferences(
