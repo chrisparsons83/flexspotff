@@ -6,6 +6,11 @@ import { envSchema } from '~/utils/helpers';
 
 const env = envSchema.parse(process.env);
 
+// A single shared client. @discordjs/rest tracks rate-limit buckets and queues
+// requests per instance, so constructing one per call would defeat that and
+// leave callers to invent their own throttling.
+const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
+
 export interface DeleteCommandsProps {
   guildId?: string;
   commandId: string;
@@ -14,8 +19,6 @@ export const deleteCommand = async ({
   guildId,
   commandId,
 }: DeleteCommandsProps) => {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
-
   try {
     if (guildId) {
       await rest.delete(
@@ -38,8 +41,6 @@ interface DeployCommandsProps {
   guildId: string;
 }
 export const deployCommands = async (props: DeployCommandsProps | null) => {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
-
   const localCommands = await getCommandsFromLocal();
 
   try {
@@ -66,8 +67,6 @@ interface GetCommandsProps {
   guildId: string;
 }
 export const getCommands = async (props: GetCommandsProps | null) => {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
-
   try {
     const commands = props
       ? applicationCommands.parse(
@@ -99,14 +98,13 @@ export const sendMessageToChannel = async ({
   channelId,
   messageData,
 }: SendMessageProps) => {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
-
   try {
     await rest.post(Routes.channelMessages(channelId), {
       body: { ...messageData },
     });
   } catch (error) {
     console.error('Error sending message:', error);
+    throw error;
   }
 };
 
@@ -121,8 +119,6 @@ export const setUserRole = async ({
   userId,
   roleId,
 }: SetUserRoleProps) => {
-  const rest = new REST({ version: '10' }).setToken(env.DISCORD_BOT_TOKEN);
-
   try {
     await rest.put(Routes.guildMemberRole(guildId, userId, roleId));
     console.log(
