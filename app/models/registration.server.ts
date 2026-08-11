@@ -58,6 +58,39 @@ export async function registerWithDraftPreferences(
   return registration;
 }
 
+/**
+ * The inverse of registerWithDraftPreferences: drop the registration and the
+ * draft-time preferences that were saved alongside it. Nothing cascades from
+ * Registration to DraftSlotPreference, so leaving the preferences behind would
+ * keep the user showing up in season sorting after they've been unregistered.
+ */
+export async function deleteRegistrationWithDraftPreferences(
+  registrationId: Registration['id'],
+  userId: User['id'],
+  seasonId: string,
+) {
+  const [registration] = await prisma.$transaction([
+    prisma.registration.delete({
+      where: { id: registrationId },
+    }),
+    prisma.draftSlotPreference.deleteMany({
+      where: {
+        userId,
+        seasonId,
+      },
+    }),
+  ]);
+
+  return registration;
+}
+
+export async function getRegistrationById(id: Registration['id']) {
+  return prisma.registration.findUnique({
+    where: { id },
+    include: { user: true },
+  });
+}
+
 export async function getRegistrationByUserAndYear(
   userId: User['id'],
   year: Registration['year'],

@@ -1,5 +1,5 @@
-import clsx from 'clsx';
 import { type MouseEvent } from 'react';
+import { cn } from '~/utils';
 
 type ButtonProps = {
   children: string;
@@ -22,9 +22,11 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={clsx(
-        className,
+      // cn (twMerge) rather than clsx so a caller-supplied color actually wins:
+      // clsx only concatenates, leaving the defaults below to take the cascade.
+      className={cn(
         'focus-visible:ring-offset-2zd inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-25',
+        className,
       )}
       type={type}
       disabled={disabled}
