@@ -44,7 +44,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const registration = await getRegistrationById(registrationId);
       if (!registration) {
-        return typedjson({ message: 'Registration not found.' });
+        return typedjson({
+          message: 'Registration not found.',
+          status: 'error' as const,
+        });
       }
 
       // Only the current season is removable here. The prior-year lists on this
@@ -52,22 +55,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (registration.year !== currentSeason.year) {
         return typedjson({
           message: `Only ${currentSeason.year} registrations can be removed.`,
+          status: 'error' as const,
         });
       }
 
-      await deleteRegistrationWithDraftPreferences(
+      const deleted = await deleteRegistrationWithDraftPreferences(
         registration.id,
         registration.userId,
         currentSeason.id,
       );
 
+      // Someone else removed them between the lookup and the delete.
+      if (!deleted) {
+        return typedjson({
+          message: 'Registration not found.',
+          status: 'error' as const,
+        });
+      }
+
       return typedjson({
         message: `${registration.user.discordName} has been removed from the ${currentSeason.year} registration list.`,
+        status: 'success' as const,
       });
     }
   }
 
-  return typedjson({ message: 'Nothing has happened.' });
+  return typedjson({
+    message: 'Nothing has happened.',
+    status: 'error' as const,
+  });
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -111,7 +127,9 @@ export default function RegistrationList() {
   return (
     <>
       <h2 className='mt-0'>Registration List</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+      {actionData?.message && (
+        <Alert message={actionData.message} status={actionData.status} />
+      )}
       <ol>
         {registrations.map(registration => (
           <li key={registration.id}>
