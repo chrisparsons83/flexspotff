@@ -1,9 +1,9 @@
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { getUsers } from '~/models/user.server';
+import { getUsersIncludingMerged } from '~/models/user.server';
 
 export const loader = async () => {
-  const users = await getUsers();
+  const users = await getUsersIncludingMerged();
 
   return typedjson({ users });
 };
@@ -25,7 +25,14 @@ export default function PodcastEpisodeList() {
         <tbody>
           {users.map(user => (
             <tr key={user.id}>
-              <td>{user.discordName}</td>
+              <td>
+                {user.discordName}
+                {user.mergedInto && (
+                  <span className='ml-2 text-sm opacity-75'>
+                    (merged into {user.mergedInto.discordName})
+                  </span>
+                )}
+              </td>
               <td>
                 <ul className='!my-0'>
                   {user.sleeperUsers.map(sleeperUser => (
@@ -36,7 +43,15 @@ export default function PodcastEpisodeList() {
                 </ul>
               </td>
               <td>
-                <Link to={`./${user.id}`}>Edit</Link>
+                {/* A merged member has no identity of their own to edit -
+                    everything they own now belongs to the canonical member. */}
+                {user.mergedInto ? (
+                  <Link to={`./${user.mergedInto.id}`}>
+                    Edit {user.mergedInto.discordName}
+                  </Link>
+                ) : (
+                  <Link to={`./${user.id}`}>Edit</Link>
+                )}
               </td>
             </tr>
           ))}

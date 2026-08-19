@@ -32,6 +32,8 @@ const mockUser: User = {
   discordName: 'Admin',
   discordAvatar: '',
   discordRoles: [],
+  mergedIntoId: null,
+  mergedAt: null,
 };
 
 const makeMember = (id: string, discordName: string) => ({
