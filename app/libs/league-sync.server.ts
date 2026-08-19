@@ -8,8 +8,10 @@ import { SLEEPER_ADMIN_ID } from '~/utils/constants';
 import {
   sleeperTeamJson,
   sleeperDraftJson,
+  sleeperLeagueUsersJson,
   type SleeperTeamJson,
   type SleeperDraftJson,
+  type SleeperLeagueUsersJson,
 } from '~/utils/types';
 
 /**
@@ -182,4 +184,55 @@ export async function syncMultipleLeagues(leagues: League[]): Promise<{
   }
 
   return { syncedCount, errorCount, errors };
+}
+
+export type SleeperLeagueUser = {
+  sleeperOwnerId: string;
+  username: string | null;
+  displayName: string | null;
+  teamName: string | null;
+};
+
+/**
+ * Looks up the display names behind the Sleeper owner IDs in a league. Teams
+ * only ever store the owner ID, so this is the only way to put a human-readable
+ * name next to an unmatched team.
+ * @param sleeperLeagueId - The Sleeper league ID to look up
+ * @returns The league's Sleeper users keyed by owner ID
+ */
+export async function getSleeperLeagueUsers(
+  sleeperLeagueId: League['sleeperLeagueId'],
+): Promise<Map<string, SleeperLeagueUser>> {
+  const res = await fetch(
+    `https://api.sleeper.app/v1/league/${sleeperLeagueId}/users`,
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      `Sleeper user lookup failed for league ${sleeperLeagueId} (${res.status})`,
+    );
+  }
+
+  // Sleeper answers 200 with a null body for a league ID it doesn't know, so a
+  // bad ID lands here rather than above. Parse it by hand: a raw ZodError
+  // message is a JSON blob, and this one goes in front of an admin.
+  const parsedUsers = sleeperLeagueUsersJson.safeParse(await res.json());
+  if (!parsedUsers.success) {
+    throw new Error(
+      `Sleeper returned no usable user list for league ${sleeperLeagueId}`,
+    );
+  }
+  const sleeperUsers: SleeperLeagueUsersJson = parsedUsers.data;
+
+  return new Map(
+    sleeperUsers.map(sleeperUser => [
+      sleeperUser.user_id,
+      {
+        sleeperOwnerId: sleeperUser.user_id,
+        username: sleeperUser.username ?? null,
+        displayName: sleeperUser.display_name ?? null,
+        teamName: sleeperUser.metadata?.team_name ?? null,
+      },
+    ]),
+  );
 }
