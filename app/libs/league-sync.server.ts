@@ -213,9 +213,16 @@ export async function getSleeperLeagueUsers(
     );
   }
 
-  const sleeperUsers: SleeperLeagueUsersJson = sleeperLeagueUsersJson.parse(
-    await res.json(),
-  );
+  // Sleeper answers 200 with a null body for a league ID it doesn't know, so a
+  // bad ID lands here rather than above. Parse it by hand: a raw ZodError
+  // message is a JSON blob, and this one goes in front of an admin.
+  const parsedUsers = sleeperLeagueUsersJson.safeParse(await res.json());
+  if (!parsedUsers.success) {
+    throw new Error(
+      `Sleeper returned no usable user list for league ${sleeperLeagueId}`,
+    );
+  }
+  const sleeperUsers: SleeperLeagueUsersJson = parsedUsers.data;
 
   return new Map(
     sleeperUsers.map(sleeperUser => [

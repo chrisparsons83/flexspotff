@@ -142,7 +142,11 @@ describe('Admin unmatched Sleeper users', () => {
           name: 'Champions',
           tier: 1,
           sleeperLeagueId: 'sleeper-league-1',
-          teams: [makeTeam('team-1', 'owner-1'), makeTeam('team-2', 'owner-2')],
+          teams: [
+            makeTeam('team-1', 'owner-1'),
+            makeTeam('team-2', 'owner-2'),
+            makeTeam('team-3', 'owner-3'),
+          ],
         },
       ] as any);
       vi.mocked(userModel.getUsers).mockResolvedValue([
@@ -150,6 +154,8 @@ describe('Admin unmatched Sleeper users', () => {
         // Two members share this name, so it can't be suggested for either.
         makeMember('user-2', 'Twin'),
         makeMember('user-3', 'twin'),
+        // Normalizes to an empty string, which must not match anybody.
+        makeMember('user-4', '🔥🔥🔥'),
       ] as any);
       vi.mocked(sleeperUserModel.getSleeperUsersByOwnerIds).mockResolvedValue(
         [],
@@ -158,6 +164,7 @@ describe('Admin unmatched Sleeper users', () => {
         new Map([
           ['owner-1', makeSleeperUser('owner-1', 'big_cat', 'BigCat')],
           ['owner-2', makeSleeperUser('owner-2', 'twin', 'Twin')],
+          ['owner-3', makeSleeperUser('owner-3', '...', '!!!')],
         ]),
       );
 
@@ -173,6 +180,7 @@ describe('Admin unmatched Sleeper users', () => {
       ).toEqual([
         ['owner-1', 'user-1'],
         ['owner-2', ''],
+        ['owner-3', ''],
       ]);
     });
 
@@ -231,6 +239,9 @@ describe('Admin unmatched Sleeper users', () => {
       vi.mocked(userModel.getUser).mockResolvedValue(
         makeMember('user-1', 'Chris'),
       );
+      vi.mocked(sleeperUserModel.getSleeperUserByOwnerId).mockResolvedValue(
+        null,
+      );
       vi.mocked(sleeperUserModel.matchSleeperOwnerToUser).mockResolvedValue({
         sleeperUser: { sleeperOwnerID: 'owner-2', userId: 'user-1' },
         teamsUpdated: 2,
@@ -268,6 +279,27 @@ describe('Admin unmatched Sleeper users', () => {
       ).json();
 
       expect(data.status).toBe('error');
+      expect(sleeperUserModel.matchSleeperOwnerToUser).not.toHaveBeenCalled();
+    });
+
+    it('refuses a stale submit for an owner someone already matched', async () => {
+      vi.mocked(userModel.getUser).mockResolvedValue(
+        makeMember('user-1', 'Chris'),
+      );
+      vi.mocked(sleeperUserModel.getSleeperUserByOwnerId).mockResolvedValue({
+        sleeperOwnerID: 'owner-2',
+        userId: 'user-9',
+        user: makeMember('user-9', 'Someone Else'),
+      } as any);
+
+      const data = await (
+        await action(
+          actionArgs({ sleeperOwnerID: 'owner-2', userId: 'user-1' }),
+        )
+      ).json();
+
+      expect(data.status).toBe('error');
+      expect(data.message).toContain('Someone Else');
       expect(sleeperUserModel.matchSleeperOwnerToUser).not.toHaveBeenCalled();
     });
   });

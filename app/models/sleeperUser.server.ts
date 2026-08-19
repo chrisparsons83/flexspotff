@@ -40,6 +40,20 @@ export async function getSleeperUsersByOwnerIds(
     where: {
       sleeperOwnerID: { in: sleeperOwnerIDs },
     },
+    select: {
+      sleeperOwnerID: true,
+      userId: true,
+    },
+  });
+}
+
+export async function getSleeperUserByOwnerId(
+  sleeperOwnerID: SleeperUser['sleeperOwnerID'],
+) {
+  return prisma.sleeperUser.findUnique({
+    where: {
+      sleeperOwnerID,
+    },
     include: {
       user: true,
     },

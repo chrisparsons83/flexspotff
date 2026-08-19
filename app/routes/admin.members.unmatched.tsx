@@ -13,6 +13,7 @@ import { getSleeperLeagueUsers } from '~/libs/league-sync.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import {
+  getSleeperUserByOwnerId,
   getSleeperUsersByOwnerIds,
   matchSleeperOwnerToUser,
 } from '~/models/sleeperUser.server';
@@ -56,6 +57,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!member) {
     return typedjson({
       message: 'Member not found.',
+      status: 'error' as const,
+    });
+  }
+
+  // This page only ever renders owners with no mapping, so a submit for one
+  // that is already mapped came from a stale form - a second tab, the back
+  // button, or another admin getting there first. Re-pointing it would move
+  // every one of that owner's teams, so say something instead of doing it.
+  const existingMatch = await getSleeperUserByOwnerId(sleeperOwnerID);
+  if (existingMatch) {
+    return typedjson({
+      message: `Sleeper ID ${sleeperOwnerID} is already matched to ${existingMatch.user.discordName}. Reload the page, and use the member's edit page if you need to change it.`,
       status: 'error' as const,
     });
   }
@@ -104,11 +117,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const memberIdsByName = new Map<string, string[]>();
   for (const member of members) {
     const key = normalizeName(member.discordName);
+    // A name that is all emoji or all punctuation normalizes away to nothing,
+    // and nothing is not a name that matches anybody.
+    if (!key) {
+      continue;
+    }
     memberIdsByName.set(key, [...(memberIdsByName.get(key) ?? []), member.id]);
   }
   const suggestMemberId = (...names: (string | null)[]) => {
     for (const name of names) {
-      const matches = name ? memberIdsByName.get(normalizeName(name)) : [];
+      const key = name ? normalizeName(name) : '';
+      const matches = key ? memberIdsByName.get(key) : undefined;
       if (matches?.length === 1) {
         return matches[0];
       }
