@@ -19,16 +19,12 @@ import {
 } from '~/models/sleeperUser.server';
 import { getUser, getUsers } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { normalizeName } from '~/utils/names';
 
 const zFormData = z.object({
   sleeperOwnerID: z.string().min(1, 'No Sleeper owner ID was submitted.'),
   userId: z.string().min(1, 'Pick a member to match this Sleeper user to.'),
 });
-
-// Sleeper names and Discord names rarely match byte for byte, but they very
-// often match once punctuation and casing are out of the way.
-const normalizeName = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // The admin layout only requires an editor, and layout loaders do not guard
