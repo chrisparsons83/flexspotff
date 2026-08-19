@@ -64,6 +64,11 @@ export default function Admin() {
 
   const membersLinks = [
     { name: 'List', href: '/admin/members', current: false },
+    {
+      name: 'Unmatched Sleeper Users',
+      href: '/admin/members/unmatched',
+      current: false,
+    },
     { name: 'Add Members', href: '/admin/members/add', current: false },
   ];
 

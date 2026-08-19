@@ -54,3 +54,19 @@ export const sleeperDraftJson = z.object({
   draft_order: z.record(z.number()).nullable(),
 });
 export type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
+
+// The /league/:id/users endpoint is how we find out what a Sleeper owner ID is
+// actually called, since we only ever store the ID on Team.
+export const sleeperLeagueUsersJson = z.array(
+  z.object({
+    user_id: z.string(),
+    username: z.string().nullish(),
+    display_name: z.string().nullish(),
+    metadata: z
+      .object({
+        team_name: z.string().nullish(),
+      })
+      .nullish(),
+  }),
+);
+export type SleeperLeagueUsersJson = z.infer<typeof sleeperLeagueUsersJson>;
