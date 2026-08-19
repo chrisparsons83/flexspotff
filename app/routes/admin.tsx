@@ -69,6 +69,7 @@ export default function Admin() {
       href: '/admin/members/unmatched',
       current: false,
     },
+    { name: 'Merge Duplicates', href: '/admin/members/merge', current: false },
     { name: 'Add Members', href: '/admin/members/add', current: false },
   ];
 
