@@ -756,6 +756,18 @@ model User {
   discordAvatar String
   discordRoles  String[]
 
+  // A merged-away account. The row is kept as a tombstone so its discordId
+  // stays claimed and a re-login resolves back to the canonical member instead
+  // of splitting the history again.
+  mergedInto   User?     @relation("UserMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  mergedIntoId String?
+  mergedFrom   User[]    @relation("UserMerge")
+  mergedAt     DateTime?
+
+  mergesAsDuplicate UserMerge[] @relation("UserMergeDuplicate")
+  mergesAsCanonical UserMerge[] @relation("UserMergeCanonical")
+  mergesPerformed   UserMerge[] @relation("UserMergePerformedBy")
+
   registrations        Registration[]
   episodes             Episode[]
   teams                Team[]
@@ -771,4 +783,33 @@ model User {
   draftSlotPreferences DraftSlotPreference[]
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
+
+  @@index([mergedIntoId])
+}
+
+/// One admin-performed merge of a duplicate member into a canonical one. The
+/// moved row IDs are recorded because nothing on a moved row says which member
+/// it came from, so this is the only moment that information exists - without
+/// it the merge could never be undone.
+model UserMerge {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  duplicateId String
+  duplicate   User   @relation("UserMergeDuplicate", fields: [duplicateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  canonicalId String
+  canonical   User   @relation("UserMergeCanonical", fields: [canonicalId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  performedById String
+  performedBy   User   @relation("UserMergePerformedBy", fields: [performedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  /// Row IDs moved by this merge, keyed by table name, plus a `_tombstones`
+  /// key holding the users whose mergedIntoId was re-pointed at the canonical.
+  movedRows Json
+
+  undoneAt DateTime?
+
+  @@index([duplicateId])
+  @@index([canonicalId])
 }
