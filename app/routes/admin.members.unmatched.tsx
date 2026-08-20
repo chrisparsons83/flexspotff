@@ -19,16 +19,12 @@ import {
 } from '~/models/sleeperUser.server';
 import { getUser, getUsers } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { normalizeName } from '~/utils/names';
 
 const zFormData = z.object({
   sleeperOwnerID: z.string().min(1, 'No Sleeper owner ID was submitted.'),
   userId: z.string().min(1, 'Pick a member to match this Sleeper user to.'),
 });
-
-// Sleeper names and Discord names rarely match byte for byte, but they very
-// often match once punctuation and casing are out of the way.
-const normalizeName = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // The admin layout only requires an editor, and layout loaders do not guard
@@ -57,6 +53,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!member) {
     return typedjson({
       message: 'Member not found.',
+      status: 'error' as const,
+    });
+  }
+
+  // The picker is built from live members only, so a merged-away one here came
+  // from a form loaded before the merge. Matching would backfill every one of
+  // that owner's teams onto an account nobody can log into.
+  if (member.mergedIntoId) {
+    return typedjson({
+      message: `${member.discordName} was merged into another member. Reload the page and pick the member they were merged into.`,
       status: 'error' as const,
     });
   }

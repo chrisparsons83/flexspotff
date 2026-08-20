@@ -1,8 +1,15 @@
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getEpisodes } from '~/models/episode.server';
+import { authenticator, requirePodcastEditor } from '~/services/auth.server';
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const currentUser = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requirePodcastEditor(currentUser);
+
   const episodes = await getEpisodes();
 
   return typedjson({ episodes }, { headers: { 'x-superjson': 'true' } });

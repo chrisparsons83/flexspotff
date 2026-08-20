@@ -32,6 +32,8 @@ const mockUser: User = {
   discordName: 'Admin',
   discordAvatar: '',
   discordRoles: [],
+  mergedIntoId: null,
+  mergedAt: null,
 };
 
 const makeMember = (id: string, discordName: string) => ({
@@ -91,6 +93,30 @@ describe('Admin unmatched Sleeper users', () => {
       isOpenForFSquared: false,
       isOpenForDFSSurvivor: false,
       registrationSize: 0,
+    });
+  });
+
+  describe('authorization', () => {
+    it('requires an admin on the loader', async () => {
+      vi.mocked(leagueModel.getLeaguesByYear).mockResolvedValue([]);
+      vi.mocked(sleeperUserModel.getSleeperUsersByOwnerIds).mockResolvedValue(
+        [],
+      );
+      vi.mocked(userModel.getUsers).mockResolvedValue([]);
+
+      await loader(loaderArgs);
+
+      expect(auth.requireAdmin).toHaveBeenCalledWith(mockUser);
+    });
+
+    it('requires an admin on the action', async () => {
+      // The admin layout only requires an editor and does not run for child
+      // actions, so this route has to check for itself.
+      vi.mocked(userModel.getUser).mockResolvedValue(null);
+
+      await action(actionArgs({ sleeperOwnerID: 'owner-1', userId: 'user-1' }));
+
+      expect(auth.requireAdmin).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -235,6 +261,29 @@ describe('Admin unmatched Sleeper users', () => {
   });
 
   describe('action', () => {
+    it('refuses a member who was merged away', async () => {
+      // The picker only lists live members, so this came from a form loaded
+      // before the merge. Matching would backfill every one of that owner's
+      // teams onto an account nobody can log into.
+      vi.mocked(userModel.getUser).mockResolvedValue({
+        ...makeMember('user-1', 'Panda'),
+        mergedIntoId: 'user-2',
+      });
+      vi.mocked(sleeperUserModel.getSleeperUserByOwnerId).mockResolvedValue(
+        null,
+      );
+
+      const data = await (
+        await action(
+          actionArgs({ sleeperOwnerID: 'owner-2', userId: 'user-1' }),
+        )
+      ).json();
+
+      expect(data.status).toBe('error');
+      expect(data.message).toContain('Panda');
+      expect(sleeperUserModel.matchSleeperOwnerToUser).not.toHaveBeenCalled();
+    });
+
     it('matches the Sleeper owner to the member', async () => {
       vi.mocked(userModel.getUser).mockResolvedValue(
         makeMember('user-1', 'Chris'),

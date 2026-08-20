@@ -21,7 +21,7 @@ import {
   getEpisode,
   updateEpisode,
 } from '~/models/episode.server';
-import { authenticator } from '~/services/auth.server';
+import { authenticator, requirePodcastEditor } from '~/services/auth.server';
 import { podcastJsonSchema, s3UploadHandler } from '~/services/s3client.server';
 import type { S3FileUpload } from '~/services/s3client.server';
 
@@ -32,6 +32,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
+  // Being logged in is not the same as being allowed - without this any member
+  // could create episodes and upload to S3 through the handler below.
+  requirePodcastEditor(user);
 
   const uploadHandler: UploadHandler = unstable_composeUploadHandlers(
     s3UploadHandler,
@@ -148,7 +151,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const currentUser = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requirePodcastEditor(currentUser);
+
   if (!params.id) {
     throw new Error('Error building page.');
   }

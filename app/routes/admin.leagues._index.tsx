@@ -12,6 +12,13 @@ import { getLeague, getLeagues } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  // The admin layout only requires an editor, and layout loaders do not guard
+  // child actions, so this has to check for admin itself.
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(user);
+
   const formData = await request.formData();
 
   const action = formData.get('action');
