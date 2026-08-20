@@ -96,6 +96,30 @@ describe('Admin unmatched Sleeper users', () => {
     });
   });
 
+  describe('authorization', () => {
+    it('requires an admin on the loader', async () => {
+      vi.mocked(leagueModel.getLeaguesByYear).mockResolvedValue([]);
+      vi.mocked(sleeperUserModel.getSleeperUsersByOwnerIds).mockResolvedValue(
+        [],
+      );
+      vi.mocked(userModel.getUsers).mockResolvedValue([]);
+
+      await loader(loaderArgs);
+
+      expect(auth.requireAdmin).toHaveBeenCalledWith(mockUser);
+    });
+
+    it('requires an admin on the action', async () => {
+      // The admin layout only requires an editor and does not run for child
+      // actions, so this route has to check for itself.
+      vi.mocked(userModel.getUser).mockResolvedValue(null);
+
+      await action(actionArgs({ sleeperOwnerID: 'owner-1', userId: 'user-1' }));
+
+      expect(auth.requireAdmin).toHaveBeenCalledWith(mockUser);
+    });
+  });
+
   describe('loader', () => {
     it('lists only the teams with no Sleeper mapping', async () => {
       vi.mocked(leagueModel.getLeaguesByYear).mockResolvedValue([

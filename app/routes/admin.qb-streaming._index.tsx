@@ -41,6 +41,13 @@ const sleeperJsonStats = z.record(
 type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  // The admin layout only requires an editor, and layout loaders do not guard
+  // child actions, so this has to check for admin itself.
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(user);
+
   const formData = await request.formData();
   const action = formData.get('_action');
 

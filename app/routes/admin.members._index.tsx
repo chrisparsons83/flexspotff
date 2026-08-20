@@ -1,8 +1,15 @@
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { getUsersIncludingMerged } from '~/models/user.server';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const currentUser = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(currentUser);
+
   const users = await getUsersIncludingMerged();
 
   return typedjson({ users });

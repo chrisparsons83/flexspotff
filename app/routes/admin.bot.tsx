@@ -1,13 +1,22 @@
-import type { ActionFunctionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import type { DeleteCommandsProps } from '~/../bot/utils';
 import { deleteCommand, deployCommands, getCommands } from '~/../bot/utils';
 import Button from '~/components/ui/FlexSpotButton';
+import { authenticator, requireAdmin } from '~/services/auth.server';
 import { envSchema } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  // The admin layout only requires an editor, and layout loaders do not guard
+  // child actions, so this has to check for admin itself. Without it these
+  // buttons deploy and delete live Discord commands for anyone who finds them.
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(user);
+
   const env = envSchema.parse(process.env);
 
   const formData = await request.formData();
@@ -38,7 +47,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return typedjson({ message: 'Commands loaded.' });
 };
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(user);
+
   const env = envSchema.parse(process.env);
 
   const guildCommands = await getCommands({ guildId: env.DEV_GUILD_ID });

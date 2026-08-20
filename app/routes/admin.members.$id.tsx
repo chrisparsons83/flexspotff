@@ -72,7 +72,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return typedjson({ message: undefined, fieldErrors, fields });
 };
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const currentUser = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+  requireAdmin(currentUser);
+
   if (!params.id) {
     throw new Error('Error building page.');
   }
