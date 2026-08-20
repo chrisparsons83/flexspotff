@@ -111,3 +111,38 @@ export async function updateUser(user: Partial<User>) {
     },
   });
 }
+
+/**
+ * Finds the member this Discord login belongs to, creating them on first sight,
+ * and refreshes their stored profile.
+ *
+ * Lives here rather than in the strategy callback so the merged-account case is
+ * testable: getUserByDiscordId resolves a merged-away account to the member who
+ * absorbed it, and that member's row must not be overwritten with the profile
+ * of the account that just signed in.
+ */
+export async function resolveMemberForLogin({
+  discordId,
+  discordName,
+  discordAvatar,
+  discordRoles,
+}: {
+  discordId: string;
+  discordName: string;
+  discordAvatar: string;
+  discordRoles: string[];
+}) {
+  const user =
+    (await getUserByDiscordId(discordId)) ??
+    (await createUser(discordId, discordName, discordAvatar));
+
+  // A merged-away account resolves to the member who absorbed it, whose Discord
+  // profile this is not. Writing it back would rename that member and replace
+  // the discordRoles isAdmin reads, quietly dropping their access every time
+  // the merged account signs in.
+  if (user.discordId !== discordId) {
+    return user;
+  }
+
+  return updateUser({ ...user, discordName, discordAvatar, discordRoles });
+}

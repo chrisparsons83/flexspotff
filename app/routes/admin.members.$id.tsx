@@ -57,7 +57,19 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         fieldErrors,
         fields,
       });
-    case AdminMembersEditOptions.Add:
+    case AdminMembersEditOptions.Add: {
+      // Pointing a Sleeper account at a merged-away member would strand its
+      // teams on an account nobody can log into, and the next league sync
+      // would detach them from the record book entirely.
+      const member = await getUser(params.id);
+      if (member?.mergedIntoId) {
+        return typedjson({
+          message: `${member.discordName} was merged into another member. Add this Sleeper ID to the member they were merged into instead.`,
+          fieldErrors,
+          fields,
+        });
+      }
+
       await createOrUpdateSleeperUser({
         userId: params.id,
         sleeperOwnerID,
@@ -67,6 +79,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         fieldErrors,
         fields,
       });
+    }
   }
 
   return typedjson({ message: undefined, fieldErrors, fields });

@@ -1,11 +1,7 @@
 import { Authenticator } from 'remix-auth';
 import { DiscordStrategy, SocialsProvider } from 'remix-auth-socials';
 import type { User } from '~/models/user.server';
-import {
-  createUser,
-  getUserByDiscordId,
-  updateUser,
-} from '~/models/user.server';
+import { resolveMemberForLogin } from '~/models/user.server';
 import { sessionStorage } from '~/services/session.server';
 import {
   SERVER_DISCORD_ADMIN_ROLE_ID,
@@ -46,18 +42,12 @@ authenticator.use(
         : '';
       const userName = jsonGuild.nick ?? props.profile.displayName;
 
-      let user = await getUserByDiscordId(props.profile.id);
-      if (!user) {
-        user = await createUser(props.profile.id, userName, avatarPath);
-      }
-
-      user.discordName = userName;
-      user.discordAvatar = avatarPath;
-      user.discordRoles = jsonGuild.roles;
-
-      user = await updateUser(user);
-
-      return user;
+      return resolveMemberForLogin({
+        discordId: props.profile.id,
+        discordName: userName,
+        discordAvatar: avatarPath,
+        discordRoles: jsonGuild.roles,
+      });
     },
   ),
 );

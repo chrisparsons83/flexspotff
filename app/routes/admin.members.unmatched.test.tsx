@@ -261,6 +261,29 @@ describe('Admin unmatched Sleeper users', () => {
   });
 
   describe('action', () => {
+    it('refuses a member who was merged away', async () => {
+      // The picker only lists live members, so this came from a form loaded
+      // before the merge. Matching would backfill every one of that owner's
+      // teams onto an account nobody can log into.
+      vi.mocked(userModel.getUser).mockResolvedValue({
+        ...makeMember('user-1', 'Panda'),
+        mergedIntoId: 'user-2',
+      });
+      vi.mocked(sleeperUserModel.getSleeperUserByOwnerId).mockResolvedValue(
+        null,
+      );
+
+      const data = await (
+        await action(
+          actionArgs({ sleeperOwnerID: 'owner-2', userId: 'user-1' }),
+        )
+      ).json();
+
+      expect(data.status).toBe('error');
+      expect(data.message).toContain('Panda');
+      expect(sleeperUserModel.matchSleeperOwnerToUser).not.toHaveBeenCalled();
+    });
+
     it('matches the Sleeper owner to the member', async () => {
       vi.mocked(userModel.getUser).mockResolvedValue(
         makeMember('user-1', 'Chris'),

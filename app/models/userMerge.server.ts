@@ -468,7 +468,7 @@ export async function mergeUsers(
   // Prisma 3 has no interactive transactions without a preview flag, so this is
   // the array form. Every statement targets rows by primary key and every
   // destination slot was proven free above, so ordering does not matter.
-  await prisma.$transaction([
+  const results = await prisma.$transaction([
     ...writes,
 
     // Keep the tombstone graph one hop deep. If someone was already merged into
@@ -479,8 +479,14 @@ export async function mergeUsers(
       data: { mergedIntoId: canonicalId },
     }),
 
-    prisma.user.update({
-      where: { id: duplicateId },
+    // Conditional on the duplicate still being unmerged (or already merged
+    // into this same member, for a re-run). Two admins merging at once would
+    // otherwise build a two-hop chain, and getUserByDiscordId only follows one.
+    prisma.user.updateMany({
+      where: {
+        id: duplicateId,
+        OR: [{ mergedIntoId: null }, { mergedIntoId: canonicalId }],
+      },
       data: { mergedIntoId: canonicalId, mergedAt: new Date() },
     }),
 
@@ -493,6 +499,18 @@ export async function mergeUsers(
       },
     }),
   ]);
+
+  // The tombstone write is the second-to-last statement. Zero rows means the
+  // duplicate was merged somewhere else between the plan and the write, so the
+  // data moved but the link did not - say so rather than reporting success.
+  const { count: tombstoned } = results[results.length - 2] as {
+    count: number;
+  };
+  if (tombstoned === 0) {
+    throw new MergeGuardError(
+      `${plan.duplicate.discordName} was merged by someone else while this was running. Their data moved to ${plan.canonical.discordName}, but run the preview again to check where they now point.`,
+    );
+  }
 
   return plan;
 }
@@ -619,18 +637,27 @@ export async function getMergedUsersWithLeftovers() {
       ...selectUser,
       mergedAt: true,
       mergedInto: { select: { id: true, discordName: true } },
+      // Every relation MERGE_TABLES can move needs counting here. A table left
+      // out reports zero leftovers, and the merge page hides its re-merge
+      // button when the total is zero - so the one case this list exists to
+      // surface would be the one case it stays invisible.
       _count: {
         select: {
           teams: true,
           sleeperUsers: true,
           registrations: true,
+          episodes: true,
           fSquaredEntries: true,
           poolGamePicks: true,
+          poolWeeksMissed: true,
           locksGamePick: true,
           QBSelections: true,
+          draftSlotPreferences: true,
           omniTeams: true,
           d12WeekScores: true,
+          d12DraftPicks: true,
           dfsSurvivorUserYears: true,
+          dfsSurvivorUserWeeks: true,
         },
       },
     },

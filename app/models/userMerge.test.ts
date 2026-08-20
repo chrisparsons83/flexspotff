@@ -1,5 +1,10 @@
 import { getCareerRecords } from './records.server';
-import { MergeGuardError, mergeUsers, planUserMerge } from './userMerge.server';
+import {
+  MergeGuardError,
+  getMergedUsersWithLeftovers,
+  mergeUsers,
+  planUserMerge,
+} from './userMerge.server';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { prisma } from '~/db.server';
 import { truncateDB } from '~/utils/vitest';
@@ -295,6 +300,63 @@ describe('userMerge', () => {
     expect((record?.movedRows as Record<string, string[]>).team).toEqual([
       team.id,
     ]);
+  });
+
+  it('counts leftovers in every table a merge can move', async () => {
+    const [dup, canon, admin] = await Promise.all([
+      makeUser('Dup'),
+      makeUser('Canon'),
+      makeUser('Admin'),
+    ]);
+
+    await mergeUsers(dup.id, canon.id, admin.id);
+
+    // Something lands on the tombstone afterwards, as a stale session would -
+    // in a table that is easy to leave out of the count.
+    await prisma.episode.create({
+      data: {
+        authorId: dup.id,
+        description: 'd',
+        duration: 1,
+        episode: 2,
+        filepath: 'f',
+        filesize: 1,
+        publishDate: new Date(),
+        season: 1,
+        shownotes: '',
+        title: 'Ep 2',
+      },
+    });
+
+    const merged = await getMergedUsersWithLeftovers();
+    const tombstone = merged.find(user => user.id === dup.id);
+
+    // The merge page hides its re-merge button when this is zero, so a missed
+    // table would make exactly this case invisible.
+    expect(tombstone?.leftoverCount).toBe(1);
+  });
+
+  it('refuses to relink a duplicate another merge already claimed', async () => {
+    const [a, b, c, admin] = await Promise.all([
+      makeUser('A'),
+      makeUser('B'),
+      makeUser('C'),
+      makeUser('Admin'),
+    ]);
+
+    const plan = await planUserMerge(a.id, b.id);
+    expect(plan.duplicate.id).toBe(a.id);
+
+    // Another admin gets there first, between the plan above and the write.
+    await mergeUsers(a.id, c.id, admin.id);
+
+    await expect(mergeUsers(a.id, b.id, admin.id)).rejects.toThrow(
+      MergeGuardError,
+    );
+
+    // A still points at C - one hop, not a chain through B.
+    const refreshedA = await prisma.user.findUnique({ where: { id: a.id } });
+    expect(refreshedA?.mergedIntoId).toBe(c.id);
   });
 
   describe('guards', () => {

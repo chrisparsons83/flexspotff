@@ -151,9 +151,13 @@ export default function MergeMembers() {
         method='POST'
         className='not-prose my-6 flex flex-wrap items-end gap-4'
       >
+        {/* MemberSelect seeds its state from defaultValue once, on mount. The
+            keys remount it when a preview arrives - without them, previewing
+            from the suggestions table would leave these two blank. */}
         <label className='flex flex-col gap-1'>
           <span className='text-sm font-medium'>Duplicate (goes away)</span>
           <MemberSelect
+            key={`duplicate-${preview?.duplicate.id ?? 'empty'}`}
             name='duplicateId'
             members={members}
             defaultValue={preview?.duplicate.id}
@@ -165,6 +169,7 @@ export default function MergeMembers() {
             Keep (receives everything)
           </span>
           <MemberSelect
+            key={`canonical-${preview?.canonical.id ?? 'empty'}`}
             name='canonicalId'
             members={members}
             defaultValue={preview?.canonical.id}

@@ -57,6 +57,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
 
+  // The picker is built from live members only, so a merged-away one here came
+  // from a form loaded before the merge. Matching would backfill every one of
+  // that owner's teams onto an account nobody can log into.
+  if (member.mergedIntoId) {
+    return typedjson({
+      message: `${member.discordName} was merged into another member. Reload the page and pick the member they were merged into.`,
+      status: 'error' as const,
+    });
+  }
+
   // This page only ever renders owners with no mapping, so a submit for one
   // that is already mapped came from a stale form - a second tab, the back
   // button, or another admin getting there first. Re-pointing it would move

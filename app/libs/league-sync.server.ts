@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { env } from 'process';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
-import { getUsers } from '~/models/user.server';
+import { getUsersIncludingMerged } from '~/models/user.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
 import {
   sleeperTeamJson,
@@ -56,10 +56,14 @@ export async function syncLeague(league: League): Promise<void> {
   ]);
 
   // Get users once for this sync operation
-  const existingUsersSleeperIds = (await getUsers()).flatMap(
-    ({ id, sleeperUsers }) =>
+  // Merged members are included and resolved to whoever absorbed them. Leaving
+  // them out instead would make a Sleeper link that still points at one fail to
+  // resolve, and the team below would be saved with userId: null - which drops
+  // those seasons out of the record book, since getCareerRecords skips them.
+  const existingUsersSleeperIds = (await getUsersIncludingMerged()).flatMap(
+    ({ id, mergedInto, sleeperUsers }) =>
       sleeperUsers.map(sleeperUser => ({
-        id,
+        id: mergedInto?.id ?? id,
         sleeperOwnerID: sleeperUser.sleeperOwnerID,
       })),
   );
