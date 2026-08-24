@@ -97,11 +97,41 @@ export async function getLeagueCountForYear(year: League['year']) {
   });
 }
 
-export async function updateLeague(league: Partial<League>) {
+type LeagueUpdateInput = Pick<League, 'id'> &
+  Partial<Omit<League, 'id' | 'createdAt' | 'updatedAt'>>;
+
+/**
+ * Updates the scalar columns of a league. Every field is optional, so a caller
+ * only names what it owns and leaves the rest of the row alone.
+ *
+ * The fields are pulled out by hand rather than handed to Prisma wholesale:
+ * callers pass whole league rows, and a row read with `include: { teams }`
+ * carries a teams array that Prisma rejects as an update payload.
+ */
+export async function updateLeague({
+  id,
+  year,
+  name,
+  sleeperLeagueId,
+  sleeperDraftId,
+  draftDateTime,
+  tier,
+  isActive,
+  isDrafted,
+}: LeagueUpdateInput) {
   return prisma.league.update({
     where: {
-      id: league.id,
+      id,
     },
-    data: league,
+    data: {
+      year,
+      name,
+      sleeperLeagueId,
+      sleeperDraftId,
+      draftDateTime,
+      tier,
+      isActive,
+      isDrafted,
+    },
   });
 }

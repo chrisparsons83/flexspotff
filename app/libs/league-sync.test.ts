@@ -173,6 +173,33 @@ describe('syncLeague', () => {
     );
   });
 
+  it('stores the draft date Sleeper reports, without touching other columns', async () => {
+    vi.mocked(userModel.getUsersIncludingMerged).mockResolvedValue([]);
+    globalThis.fetch = vi.fn(async (url: string | URL | Request) => {
+      if (url.toString().includes('/rosters')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'pre_draft',
+          season: '2024',
+          // Sleeper reports start_time in epoch milliseconds.
+          start_time: 1725411600000,
+          draft_order: null,
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    await syncLeague(league);
+
+    expect(leagueModel.updateLeague).toHaveBeenCalledWith({
+      id: 'league-1',
+      draftDateTime: new Date(1725411600000),
+    });
+  });
+
   it('leaves a team unowned when no member claims the Sleeper account', async () => {
     vi.mocked(userModel.getUsersIncludingMerged).mockResolvedValue([]);
 

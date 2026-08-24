@@ -139,7 +139,10 @@ export async function syncAdp(league: League) {
   }
   await Promise.all(promises);
 
-  await updateLeague({ ...league, isDrafted });
+  // Only isDrafted belongs to this sync. Writing the whole league object back
+  // would also write whatever it held when it was read, which used to undo the
+  // draft date syncLeague had just pulled from Sleeper.
+  await updateLeague({ id: league.id, isDrafted });
 
   return true;
 }
