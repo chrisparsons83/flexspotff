@@ -17,12 +17,47 @@ hardcoded in a way that will break again the next time the schedule changes.
 
 ---
 
-## Phase 0 — Verify the Sleeper API (blocking)
+## Phase 0 — Verification (blocking)
 
-**Everything downstream rests on field names that have not been observed.**
-Network egress was blocked while planning, so the Sleeper shapes below are from
-knowledge, not from a response body. Do this first, from any machine with
-network access.
+**Everything downstream rests on facts that have not been observed.** Network
+egress to `api.sleeper.app` is denied by organization policy from the planning
+environment, and no database was reachable there, so the Sleeper shapes below
+are from knowledge rather than from a response body. Do this first.
+
+### 0a. Median data integrity — no network needed
+
+Run this first, because it needs only a database connection and settles two
+questions at once: whether existing median data is corrupt (Risk 2), and what
+year median scoring actually started.
+
+The invariant: **there is exactly one median game per week**, so a team's median
+game count must equal its H2H game count, or be zero. Half is the corruption
+signature.
+
+```sql
+SELECT l.year,
+       COUNT(*) AS teams,
+       SUM(t.wins + t.losses + t.ties) AS h2h_games,
+       SUM(t."medianWins" + t."medianLosses" + t."medianTies") AS median_games
+FROM "Team" t
+JOIN "League" l ON t."leagueId" = l.id
+GROUP BY l.year
+ORDER BY l.year;
+```
+
+| Result per year              | Meaning                               |
+| ---------------------------- | ------------------------------------- |
+| `median_games == h2h_games`  | Median era, parsed correctly          |
+| `median_games == 0`          | Non-median era, no corruption         |
+| `median_games ≈ h2h_games/2` | **Corruption confirmed** — see Risk 2 |
+
+The first year where `median_games` goes non-zero and equals `h2h_games` is when
+median scoring started — derived from data, exactly as the design requires.
+
+The equivalent eyeball check: load `/leagues/standings/2018` and look at the
+Median column. Non-zero there is the bug.
+
+### 0b. Sleeper API shapes — needs network access
 
 ```sh
 # A real league id, from app/libs/league-sync.server.ts:41
@@ -44,8 +79,9 @@ Confirm, and correct this plan where reality differs:
 | `t1`/`t2` are **roster ids**, matching `Team.rosterId`                          | Mapping bracket sides to members            |
 
 **Also capture** a `metadata.record` string from a pre-median season (2018/2019)
-and a median season, and count characters against weeks played. See Risk 2 —
-this determines whether existing median data is trustworthy.
+and a median season, and count characters against weeks played. Together with 0a
+this fully settles Risk 2: 0a says whether the stored data is wrong, and this
+says why.
 
 Save real responses as JSON fixtures under `test/fixtures/sleeper/`. The bracket
 classifier is the riskiest pure function in this plan and should be tested
@@ -99,6 +135,9 @@ pre-backfill rows are distinguishable from real values.
   `FIRST_YEAR`.
 - Then re-run `resyncCurrentYearScores` per year to correct `isRegularSeason` on
   existing `TeamGame` rows.
+- **Regression check:** re-run the Phase 0a query. Every year must now show
+  `median_games == h2h_games` (median era) or `median_games == 0` (pre-median).
+  Any year still sitting near half is a backfill that didn't take.
 
 ---
 
@@ -305,19 +344,31 @@ season count, career record, and championships against `/leagues/standings` and
    `league_average_match` doesn't exist, median era falls back to inferring from
    `metadata.record` length vs weeks played — workable, but less direct.
 
-2. **Existing median data may already be wrong.** `league-sync.server.ts:112`
-   walks `metadata.record` two characters per week unconditionally:
+2. **Existing median data may already be wrong.** _Failure mode confirmed;
+   triggering condition still open._ `league-sync.server.ts:112` walks
+   `metadata.record` two characters per week unconditionally:
 
    ```ts
    for (let i = 1; i < recordString.length; i += 2) { ... }
    ```
 
-   If Sleeper emits one character per week when median scoring is off, then for
-   every pre-median season this reads _odd-numbered H2H results_ as median
-   results, and `medianWins`/`medianLosses` hold garbage. That would also make
-   "Most Career Median Wins" on the Record Books page wrong today.
-   **Unverified** — Phase 0 settles it. If confirmed, zeroing those rows is part
-   of the Phase 1 backfill.
+   Running that exact loop over each candidate input shape:
+
+   | Input                                  | Parsed median record | Median games | Correct?                |
+   | -------------------------------------- | -------------------- | ------------ | ----------------------- |
+   | 28 chars (14 wks × 2, median league)   | 7-0-7                | 14           | ✅ matches weeks played |
+   | 13 chars (13 wks × 1, standard league) | 3-0-3                | 6            | ❌ **6 phantom games**  |
+   | absent / empty                         | 0-0-0                | 0            | ✅ correct by accident  |
+
+   So the bug is real **if and only if** Sleeper emits a one-character-per-week
+   `record` for non-median leagues. If it omits `record` for those leagues
+   instead, the values are zero and nothing is wrong — and note that
+   `app/utils/types.ts:43` marks `record` as `.optional()` with `metadata`
+   `.nullable()`, so absence is a genuine possibility.
+
+   If the bug is real it also makes "Most Career Median Wins" on the Record
+   Books page wrong today. Phase 0a settles it with one query; if confirmed,
+   zeroing those rows is part of the Phase 1 backfill.
 
 3. **Bracket backfill depends on old leagues still resolving.** 2018–2020
    leagues may have aged out of Sleeper. Partial recovery is acceptable; the
