@@ -68,15 +68,14 @@ export async function syncLeague(league: League): Promise<void> {
       })),
   );
 
-  // Update league draft date if available
+  // Update league draft date if available. start_time is epoch milliseconds.
   if (sleeperDraft.start_time) {
-    const updatedLeague = {
-      ...league,
+    await updateLeague({
+      id: league.id,
       draftDateTime: DateTime.fromSeconds(
         sleeperDraft.start_time / 1000,
       ).toJSDate(),
-    };
-    await updateLeague(updatedLeague);
+    });
   }
 
   // Clean up legacy league names (2018 cleanup)
