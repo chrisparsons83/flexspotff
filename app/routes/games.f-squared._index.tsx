@@ -6,6 +6,7 @@ import {
   getEntryByUserAndYear,
   getResultsForYear,
 } from '~/models/fsquared.server';
+import { fSquaredEntryPoints } from '~/models/profile/sideGameScoring';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
@@ -23,10 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const currentResults = (await getResultsForYear(currentSeason.year))
     .map(entry => {
-      const totalPoints = entry.teams.reduce(
-        (prev, curr) => prev + curr.pointsFor,
-        0,
-      );
+      const totalPoints = fSquaredEntryPoints(entry.teams);
       return { ...entry, totalPoints };
     })
     .sort((a, b) => {

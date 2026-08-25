@@ -2,6 +2,12 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import {
+  QB_STREAMING_COUNTING_WEEKS,
+  qbStreamingSeasonTotal,
+  qbStreamingUsesTopWeeks,
+  selectCountingWeeks,
+} from '~/models/profile/sideGameScoring';
+import {
   getQBSelectionsByWeek,
   getQBSelectionsByYear,
 } from '~/models/qbselection.server';
@@ -22,8 +28,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const qbStreamingWeeks = await getQBStreamingWeeks(year);
   const qbSelections = await getQBSelectionsByYear(year);
 
-  // For 2025+ seasons, use top 12 weekly scores logic
-  if (year >= 2025) {
+  // The best-twelve rule only applies from 2025; qbStreamingUsesTopWeeks owns
+  // the cutover, shared with the profile title badges.
+  if (qbStreamingUsesTopWeeks(year)) {
     // Group selections by user and week
     const userWeeklyScores = new Map<
       string,
@@ -63,25 +70,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       const user = qbSelections.find(s => s.user.id === userId)?.user;
       if (!user) continue;
 
-      // Sort weekly scores by score descending to get top 12
-      const sortedWeeklyScores = [...weeklyScores].sort(
-        (a, b) => b.score - a.score,
+      const countingWeeks = selectCountingWeeks(
+        weeklyScores,
+        week => week.score,
+        QB_STREAMING_COUNTING_WEEKS,
       );
-      const top12Scores = sortedWeeklyScores.slice(0, 12);
-      const top12WeekIds = new Set(top12Scores.map(s => s.weekId));
+      const countingWeekIds = new Set(countingWeeks.map(week => week.weekId));
 
-      // Calculate total from top 12
-      const totalPoints = top12Scores.reduce(
-        (sum, score) => sum + score.score,
-        0,
+      const totalPoints = qbStreamingSeasonTotal(
+        weeklyScores.map(week => week.score),
+        year,
       );
 
-      // Mark which weeks count toward top 12
+      // Weeks that were dropped are still shown, marked as not counting.
       const weeklyScoresWithStatus = weeklyScores
         .map(ws => ({
           week: ws.week,
           score: ws.score,
-          countsToward: top12WeekIds.has(ws.weekId),
+          countsToward: countingWeekIds.has(ws.weekId),
         }))
         .sort((a, b) => a.week - b.week);
 

@@ -1,8 +1,9 @@
 import type { SideGameKey } from './badges';
 import {
   addTo,
+  fSquaredEntryPoints,
   locksWeekPoints,
-  topWeeksTotal,
+  qbStreamingSeasonTotal,
   winnersOf,
 } from './sideGameScoring';
 import { prisma } from '~/db.server';
@@ -67,7 +68,10 @@ async function countD12Titles(userId: string): Promise<number> {
   return countWins(byYear, userId);
 }
 
-/** QB Streaming: the best twelve weeks only. */
+/**
+ * QB Streaming: the best twelve weeks from 2025, every week before that.
+ * `qbStreamingSeasonTotal` owns which rule applies.
+ */
 async function countQbStreamingTitles(userId: string): Promise<number> {
   const entered = await prisma.qBSelection.findMany({
     where: { userId },
@@ -86,7 +90,8 @@ async function countQbStreamingTitles(userId: string): Promise<number> {
     },
   });
 
-  // Weeks are collected per member first, because only the best twelve count.
+  // Weeks are collected per member first, because whether they all count
+  // depends on the season.
   const weeklyByYear = new Map<number, Map<string, number[]>>();
   for (const selection of selections) {
     const year = selection.qbStreamingWeek.year;
@@ -104,7 +109,7 @@ async function countQbStreamingTitles(userId: string): Promise<number> {
   for (const [year, perUser] of weeklyByYear) {
     const totals = new Map<string, number>();
     for (const [entrant, weeks] of perUser) {
-      totals.set(entrant, topWeeksTotal(weeks));
+      totals.set(entrant, qbStreamingSeasonTotal(weeks, year));
     }
     byYear.set(year, totals);
   }
@@ -275,8 +280,11 @@ async function countFSquaredTitles(userId: string): Promise<number> {
   const byYear = new Map<number, Map<string, number>>();
   for (const entry of entries) {
     if (!byYear.has(entry.year)) byYear.set(entry.year, new Map());
-    const points = entry.teams.reduce((sum, team) => sum + team.pointsFor, 0);
-    addTo(byYear.get(entry.year)!, entry.userId, points);
+    addTo(
+      byYear.get(entry.year)!,
+      entry.userId,
+      fSquaredEntryPoints(entry.teams),
+    );
   }
 
   return countWins(byYear, userId);

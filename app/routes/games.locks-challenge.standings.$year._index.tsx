@@ -11,6 +11,7 @@ import {
   getLocksWeekByYearAndWeek,
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
+import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 
@@ -54,22 +55,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       // Get a list of the userId and their wins for the week
       const locksWeekResults = await getLocksGamePicksWonLossWeek(locksWeek);
 
-      // If a user got a loss for the week, set their wins to 0
-      const filteredPoints = locksWeekResults.map(amount => {
-        return {
-          userId: amount.userId,
-          _sum: {
-            isWin: amount._sum.isLoss !== 0 ? 0 : amount._sum.isWin,
-            isLoss: amount._sum.isLoss,
-            isTie: amount._sum.isTie,
-          },
-        };
-      });
-
-      filteredPoints.forEach(amount => {
+      // A single loss voids the whole week - locksWeekPoints owns that rule,
+      // shared with the profile title badges.
+      locksWeekResults.forEach(amount => {
         const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
-        const weekPoints = amount._sum.isWin || 0;
-        userIdToPointsMap.set(amount.userId, currentPoints + weekPoints);
+        userIdToPointsMap.set(
+          amount.userId,
+          currentPoints + locksWeekPoints(amount._sum),
+        );
       });
     }
   }
