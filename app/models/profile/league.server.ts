@@ -99,10 +99,13 @@ export type LeagueProfile = {
   headToHead: HeadToHeadRow[];
   playoffs: {
     championships: number;
-    toiletBowls: number;
+    sackos: number;
     appearances: number;
     wins: number;
     losses: number;
+    sackoAppearances: number;
+    sackoWins: number;
+    sackoLosses: number;
   };
   highlights: {
     bestWeek: { points: number; year: number; week: number } | null;
@@ -175,6 +178,9 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
         winningTeam: {
           select: { userId: true, user: { select: { discordName: true } } },
         },
+        advancingTeam: {
+          select: { userId: true, user: { select: { discordName: true } } },
+        },
       },
     }),
   ]);
@@ -233,10 +239,13 @@ function emptyProfile(): LeagueProfile {
     headToHead: [],
     playoffs: {
       championships: 0,
-      toiletBowls: 0,
+      sackos: 0,
       appearances: 0,
       wins: 0,
       losses: 0,
+      sackoAppearances: 0,
+      sackoWins: 0,
+      sackoLosses: 0,
     },
     highlights: {
       bestWeek: null,
@@ -447,10 +456,13 @@ function buildPlayoffs(
 
   return {
     championships: stats?.championships ?? 0,
-    toiletBowls: stats?.toiletBowls ?? 0,
+    sackos: stats?.sackos ?? 0,
     appearances: stats?.appearances ?? 0,
     wins: stats?.wins ?? 0,
     losses: stats?.losses ?? 0,
+    sackoAppearances: stats?.sackoAppearances ?? 0,
+    sackoWins: stats?.sackoWins ?? 0,
+    sackoLosses: stats?.sackoLosses ?? 0,
   };
 }
 

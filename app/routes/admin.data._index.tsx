@@ -339,8 +339,8 @@ export default function AdminDataIndex() {
           <p>
             Reads the winners and losers brackets from Sleeper for every league
             in every year. This is what league championships, playoff records
-            and toilet bowls are built from. Leagues Sleeper no longer serves
-            are skipped rather than failing the run.
+            and sackos are built from. Leagues Sleeper no longer serves are
+            skipped rather than failing the run.
           </p>
           <Button
             type='submit'

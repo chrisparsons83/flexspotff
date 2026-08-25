@@ -95,6 +95,7 @@ export async function getProfileSummary(
         topTeam: { select: { userId: true } },
         bottomTeam: { select: { userId: true } },
         winningTeam: { select: { userId: true } },
+        advancingTeam: { select: { userId: true } },
       },
     }),
     prisma.cupGame.count({
@@ -126,7 +127,7 @@ export async function getProfileSummary(
 
   const playoffs = aggregatePlayoffStats(playoffGames).get(userId);
   const championships = playoffs?.championships ?? 0;
-  const toiletBowls = playoffs?.toiletBowls ?? 0;
+  const sackos = playoffs?.sackos ?? 0;
 
   const seasons = [...teams].sort((a, b) => b.league.year - a.league.year);
   const latest = seasons[0] ?? null;
@@ -196,13 +197,13 @@ export async function getProfileSummary(
       description: 'Promoted to a higher tier',
     });
   }
-  if (toiletBowls > 0) {
+  if (sackos > 0) {
     add({
-      key: 'toilet-bowl',
-      label: 'Toilet Bowl',
+      key: 'sacko',
+      label: 'Sacko',
       emoji: '🚽',
-      count: toiletBowls,
-      description: 'Won the losers bracket',
+      count: sackos,
+      description: 'Finished last - scored lowest in the sacko final',
     });
   }
   if (bigWeeks > 0) {

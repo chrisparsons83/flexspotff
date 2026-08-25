@@ -114,6 +114,17 @@ function Highlights({
               : '—'
           }
         />
+        {/* Only shown for members who have actually been in the sacko bracket -
+            it is a separate record from the playoffs on purpose. */}
+        {playoffs.sackoAppearances > 0 && (
+          <StatTile
+            label='Sacko Bracket'
+            value={`${playoffs.sackoWins}-${playoffs.sackoLosses}`}
+          />
+        )}
+        {playoffs.sackos > 0 && (
+          <StatTile label='Sackos' value={playoffs.sackos.toString()} />
+        )}
       </div>
       {highlights.bestWeek && highlights.worstWeek && (
         <p className='mt-2 text-sm text-gray-400'>

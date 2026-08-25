@@ -319,6 +319,13 @@ model PlayoffGame {
   losingTeam   Team?   @relation(name: "PlayoffLosingTeam", fields: [losingTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   losingTeamId String?
 
+  /// Who moved on. In the winners bracket that is the winning team; in the
+  /// sacko bracket it is the losing team, because there you advance by scoring
+  /// least. Stored rather than derived so a reader never has to know which
+  /// bracket they are looking at to know who went through.
+  advancingTeam   Team?   @relation(name: "PlayoffAdvancingTeam", fields: [advancingTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  advancingTeamId String?
+
   @@unique([leagueId, bracket, matchupId])
   @@index([leagueId])
 }
@@ -796,6 +803,7 @@ model Team {
   PlayoffBottomTeamGames  PlayoffGame[] @relation(name: "PlayoffBottomTeam")
   PlayoffWinningTeamGames PlayoffGame[] @relation(name: "PlayoffWinningTeam")
   PlayoffLosingTeamGames  PlayoffGame[] @relation(name: "PlayoffLosingTeam")
+  PlayoffAdvancingGames   PlayoffGame[] @relation(name: "PlayoffAdvancingTeam")
 }
 
 model TeamGame {

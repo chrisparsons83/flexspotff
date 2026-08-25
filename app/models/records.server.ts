@@ -551,6 +551,9 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
       winningTeam: {
         select: { userId: true, user: { select: { discordName: true } } },
       },
+      advancingTeam: {
+        select: { userId: true, user: { select: { discordName: true } } },
+      },
     },
   });
 
@@ -617,17 +620,17 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most Toilet Bowls',
-      headers: ['Player', 'Toilet Bowls', 'Championships', 'Appearances'],
+      title: 'Most Sackos',
+      headers: ['Player', 'Sackos', 'Championships', 'Appearances'],
       rows: [...stats]
-        .filter(s => s.toiletBowls > 0)
-        .sort((a, b) => b.toiletBowls - a.toiletBowls)
+        .filter(s => s.sackos > 0)
+        .sort((a, b) => b.sackos - a.sackos)
         .slice(0, TOP_N)
         .map(s => ({
           playerUserId: s.userId,
           cells: [
             s.name,
-            s.toiletBowls.toString(),
+            s.sackos.toString(),
             s.championships.toString(),
             s.appearances.toString(),
           ],
