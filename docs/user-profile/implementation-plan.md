@@ -205,12 +205,11 @@ classifyBracket(entries: SleeperBracketEntry[]): ClassifiedGame[]
    against the fixtures rather than trusting the reasoning.
 4. Everything else is stored with its placement and shown in the game log with a
    round label, but excluded from the record.
-5. The losers bracket gets the same treatment; its title game is the toilet
-   bowl.
+5. The losers bracket gets the same treatment; its title game decides the sacko.
 
 > **Confirm before building:** in Sleeper's losers bracket, whether the
-> `p === 1` _winner_ is the toilet-bowl champion or the team that escaped it.
-> This inverts a badge, so it needs a human answer, not an inference.
+> `p === 1` _winner_ is the sacko or the team that escaped it. This inverts a
+> badge, so it needs a human answer, not an inference.
 
 ### Sync + backfill
 
@@ -222,7 +221,7 @@ classifyBracket(entries: SleeperBracketEntry[]): ClassifiedGame[]
 ### Payoff beyond the profile
 
 Add `getPlayoffRecords()` to `app/models/records.server.ts` — most
-championships, most playoff appearances, most toilet bowls — and render it on
+championships, most playoff appearances, most sackos — and render it on
 `/leagues/records`, which today can only count Cup titles.
 
 ---
@@ -396,7 +395,12 @@ season count, career record, and championships against `/leagues/standings` and
    profile must render "no playoff data" for those seasons rather than implying
    a missed playoff berth.
 
-3. **Toilet bowl semantics need a human answer** (see Phase 2).
+3. ~~**Toilet bowl semantics need a human answer**~~ — **answered.** You advance
+   in the sacko bracket by scoring _least_, so the sacko goes to whoever posts
+   the lowest score in that bracket's final. Rather than hardcode that,
+   `detectAdvancementDirection` reads the direction back out of the links
+   Sleeper emits, so either shape produces the right answer. It is called the
+   **sacko**, not the toilet bowl.
 
 4. **The hero loads on every tab view.** It is the one cross-contest query that
    per-tab routing does not avoid, making `getProfileSummary` the first

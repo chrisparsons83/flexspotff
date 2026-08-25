@@ -273,7 +273,8 @@ describe('aggregatePlayoffStats', () => {
       leagueId: string;
       topTeam: ReturnType<typeof side>;
       bottomTeam: ReturnType<typeof side>;
-      winningTeam: ReturnType<typeof side>;
+      winningTeam: ReturnType<typeof side> | null;
+      advancingTeam: ReturnType<typeof side> | null;
     }> = {},
   ) => ({
     bracket: overrides.bracket ?? ('WINNERS' as const),
@@ -282,18 +283,22 @@ describe('aggregatePlayoffStats', () => {
     leagueId: overrides.leagueId ?? 'league-1',
     topTeam: overrides.topTeam ?? side('u1'),
     bottomTeam: overrides.bottomTeam ?? side('u2'),
-    winningTeam: overrides.winningTeam ?? side('u1'),
+    winningTeam:
+      overrides.winningTeam === undefined ? side('u1') : overrides.winningTeam,
+    advancingTeam:
+      overrides.advancingTeam === undefined
+        ? side('u1')
+        : overrides.advancingTeam,
   });
 
-  it('records a win and a loss for a counting game', () => {
+  it('records a win and a loss for a counting playoff game', () => {
     const stats = aggregatePlayoffStats([playoffGame()]);
 
     expect(stats.get('u1')).toMatchObject({ wins: 1, losses: 0 });
     expect(stats.get('u2')).toMatchObject({ wins: 0, losses: 1 });
   });
 
-  // The rule the league asked for: winning the third-place game is not a
-  // playoff win.
+  // Winning the third-place game is not a playoff win.
   it('ignores results from games that do not count toward the record', () => {
     const stats = aggregatePlayoffStats([
       playoffGame({ countsTowardRecord: false }),
@@ -303,29 +308,31 @@ describe('aggregatePlayoffStats', () => {
     expect(stats.get('u2')).toMatchObject({ wins: 0, losses: 0 });
   });
 
-  it('credits a championship for the winners bracket title game', () => {
+  it('credits a championship to whoever advanced out of the final', () => {
     const stats = aggregatePlayoffStats([
       playoffGame({ isTitleGame: true, bracket: 'WINNERS' }),
     ]);
 
-    expect(stats.get('u1')).toMatchObject({
-      championships: 1,
-      toiletBowls: 0,
-    });
+    expect(stats.get('u1')).toMatchObject({ championships: 1, sackos: 0 });
   });
 
-  it('credits a toilet bowl for the losers bracket title game', () => {
+  // The whole point of the fix: in the sacko bracket you advance by scoring
+  // least, so the sacko goes to the team that *lost* the final.
+  it('gives the sacko to the advancing team, not the winner of the final', () => {
     const stats = aggregatePlayoffStats([
-      playoffGame({ isTitleGame: true, bracket: 'LOSERS' }),
+      playoffGame({
+        bracket: 'LOSERS',
+        isTitleGame: true,
+        winningTeam: side('u1'),
+        advancingTeam: side('u2'),
+      }),
     ]);
 
-    expect(stats.get('u1')).toMatchObject({
-      championships: 0,
-      toiletBowls: 1,
-    });
+    expect(stats.get('u2')).toMatchObject({ sackos: 1, championships: 0 });
+    expect(stats.get('u1')).toMatchObject({ sackos: 0 });
   });
 
-  it('counts one appearance per league however long the run', () => {
+  it('counts one playoff appearance per league however long the run', () => {
     const stats = aggregatePlayoffStats([
       playoffGame({ leagueId: 'league-1' }),
       playoffGame({ leagueId: 'league-1' }),
@@ -335,26 +342,38 @@ describe('aggregatePlayoffStats', () => {
     expect(stats.get('u1')!.appearances).toBe(2);
   });
 
-  // A losers bracket run is not a playoff berth.
-  it('does not count a losers bracket game as a playoff appearance', () => {
+  // A sacko run is not a playoff berth, and its games are not playoff games.
+  it('keeps the sacko bracket out of the playoff record entirely', () => {
     const stats = aggregatePlayoffStats([
       playoffGame({ bracket: 'LOSERS', leagueId: 'league-1' }),
     ]);
 
-    expect(stats.get('u1')!.appearances).toBe(0);
+    expect(stats.get('u1')).toMatchObject({
+      appearances: 0,
+      wins: 0,
+      losses: 0,
+      sackoAppearances: 1,
+      sackoWins: 1,
+    });
+    expect(stats.get('u2')).toMatchObject({ sackoLosses: 1, losses: 0 });
+  });
+
+  it('tracks the sacko bracket record by who outscored whom', () => {
+    const stats = aggregatePlayoffStats([
+      playoffGame({
+        bracket: 'LOSERS',
+        winningTeam: side('u2'),
+        advancingTeam: side('u1'),
+      }),
+    ]);
+
+    expect(stats.get('u2')).toMatchObject({ sackoWins: 1, sackoLosses: 0 });
+    expect(stats.get('u1')).toMatchObject({ sackoWins: 0, sackoLosses: 1 });
   });
 
   it('ignores a game that has not been played yet', () => {
     const stats = aggregatePlayoffStats([
-      {
-        bracket: 'WINNERS',
-        isTitleGame: false,
-        countsTowardRecord: true,
-        leagueId: 'league-1',
-        topTeam: side('u1'),
-        bottomTeam: side('u2'),
-        winningTeam: null,
-      },
+      playoffGame({ winningTeam: null, advancingTeam: null }),
     ]);
 
     expect(stats.get('u1')).toMatchObject({ wins: 0, losses: 0 });

@@ -7,8 +7,9 @@ import { getTeams } from '~/models/team.server';
  * Pulls both postseason brackets for a league out of Sleeper and stores them.
  *
  * Sleeper serves the winners and losers brackets separately, and they share a
- * shape, so both go through the same classification. The losers bracket's title
- * game is the toilet bowl.
+ * shape, so both go through the same classification. Which side advances is
+ * detected per bracket rather than assumed - the sacko bracket advances whoever
+ * scores least - so the sacko lands on the right member.
  */
 
 const BRACKETS = [
@@ -41,8 +42,15 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
     }
 
     const entries = sleeperBracketJson.parse(await res.json());
+    const { direction, games } = classifyBracket(entries);
 
-    for (const game of classifyBracket(entries)) {
+    console.log(
+      `${league.name} ${league.year} ${path}: ${
+        games.length
+      } games, advancing by ${direction === 'w' ? 'winner' : 'loser'}`,
+    );
+
+    for (const game of games) {
       await upsertPlayoffGame({
         leagueId: league.id,
         bracket,
@@ -55,6 +63,7 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
         bottomTeamId: resolve(game.bottomRosterId),
         winningTeamId: resolve(game.winningRosterId),
         losingTeamId: resolve(game.losingRosterId),
+        advancingTeamId: resolve(game.advancingRosterId),
       });
       gamesStored++;
     }

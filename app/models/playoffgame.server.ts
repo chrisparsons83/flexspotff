@@ -15,6 +15,7 @@ export type PlayoffGameUpsert = {
   bottomTeamId: string | null;
   winningTeamId: string | null;
   losingTeamId: string | null;
+  advancingTeamId: string | null;
 };
 
 /**

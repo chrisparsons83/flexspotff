@@ -26,7 +26,7 @@ implementation document; that comes after we iterate on this.
 | Player-level stats  | Out of scope — no starter/roster aggregation                         |
 | Badges              | Derived on the fly, no new schema                                    |
 | Record math         | Median era must be **detected from data**, never hardcoded           |
-| Playoffs            | New bracket storage + Sleeper sync; title path + toilet bowl count   |
+| Playoffs            | New bracket storage + Sleeper sync; title path + sacko count         |
 | Backfill            | All the way to 2018                                                  |
 | Head-to-head        | **Redraft league matches only** — no Cup, no side games              |
 | Performance         | Compute live per tab, structured so it can migrate to summary tables |
@@ -97,7 +97,7 @@ on. That is derivable from `Team` rows alone, retroactively, for every season.
 > `335507311525122048`, which appears in `league-sync.server.ts:41`) and confirm
 > the settings key before designing around it.
 
-### 2. Playoff brackets (blocks championships, playoff records, toilet bowl)
+### 2. Playoff brackets (blocks championships, playoff records, sacko)
 
 Nothing about playoffs is stored today beyond the `isRegularSeason` flag on
 `TeamGame`. Sleeper exposes `/winners_bracket` and `/losers_bracket` per league.
@@ -115,8 +115,8 @@ Scope for this piece:
   on the path to the title. 3rd-place, 7th-place, and other placement games are
   stored and shown in the game log with their round label, but excluded from the
   record.
-- The losers bracket's terminal game produces a **toilet bowl title**, tracked
-  as its own labeled honor.
+- The losers bracket's terminal game produces a **sacko**, tracked as its own
+  labeled honor.
 
 This ships as part of the same effort as the profile, so the page launches with
 real championship and playoff history rather than stubs. It also fixes the
@@ -154,7 +154,7 @@ deep-linkable.
 │  │    8    │148-92-3 │  .616   │  PF     │    2    │         │
 │  └─────────┴─────────┴─────────┴─────────┴─────────┘         │
 │                                                              │
-│  🏆 Cup Champion ×2   👑 Champions ×3   🚽 Toilet Bowl ×1     │  ← derived badges
+│  🏆 Cup Champion ×2   👑 Champions ×3   🚽 Sacko ×1     │  ← derived badges
 │  🎙 Podcast Host   📈 200-Pt Week   🔥 8-Game Streak          │
 ├──────────────────────────────────────────────────────────────┤
 │ League │ Cup │ D12 │ QB │ Spread │ Locks │ DFS │ F² │ Omni    │  ← tabs, by contest
@@ -217,7 +217,7 @@ the tab bar is stable across profiles.
 | -------------------------- | ----------------------------------------------- |
 | Seasons Played ×N          | count of `Team` rows                            |
 | League Champion ×N         | winners bracket — _depends on groundwork 2_     |
-| Toilet Bowl ×N             | losers bracket — _depends on groundwork 2_      |
+| Sacko ×N                   | losers bracket — _depends on groundwork 2_      |
 | Cup Champion / Finalist ×N | `CupGame` — available today                     |
 | Champions League ×N        | seasons in `League.tier === 1`                  |
 | Climber                    | promoted a tier between seasons                 |
