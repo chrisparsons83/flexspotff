@@ -55,6 +55,28 @@ export const sleeperDraftJson = z.object({
 });
 export type SleeperDraftJson = z.infer<typeof sleeperDraftJson>;
 
+// The /league/:id endpoint describes how the league was actually configured that
+// year. Everything here is optional and the whole settings object is passthrough
+// because Sleeper adds and removes settings between seasons - a missing key has
+// to degrade to "we don't know" rather than fail the whole league sync.
+export const sleeperLeagueJson = z.object({
+  league_id: z.string(),
+  season: z.string().optional(),
+  status: z.string().optional(),
+  bracket_id: z.union([z.string(), z.number()]).nullable().optional(),
+  loser_bracket_id: z.union([z.string(), z.number()]).nullable().optional(),
+  settings: z
+    .object({
+      playoff_week_start: z.number().optional(),
+      league_average_match: z.number().optional(),
+      playoff_teams: z.number().optional(),
+      num_teams: z.number().optional(),
+    })
+    .passthrough()
+    .optional(),
+});
+export type SleeperLeagueJson = z.infer<typeof sleeperLeagueJson>;
+
 // The /league/:id/users endpoint is how we find out what a Sleeper owner ID is
 // actually called, since we only ever store the ID on Team.
 export const sleeperLeagueUsersJson = z.array(

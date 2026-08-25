@@ -3,7 +3,13 @@ import { prisma } from '~/db.server';
 
 export type { League } from '@prisma/client';
 
-type LeagueCreateInput = Omit<League, 'id' | 'createdAt' | 'updatedAt'>;
+// playoffWeekStart and hasMedianScoring are filled in by the league sync once
+// Sleeper has been asked, so creating a league does not require knowing them.
+type LeagueCreateInput = Omit<
+  League,
+  'id' | 'createdAt' | 'updatedAt' | 'playoffWeekStart' | 'hasMedianScoring'
+> &
+  Partial<Pick<League, 'playoffWeekStart' | 'hasMedianScoring'>>;
 
 type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
   ? ElementType
@@ -118,6 +124,8 @@ export async function updateLeague({
   tier,
   isActive,
   isDrafted,
+  playoffWeekStart,
+  hasMedianScoring,
 }: LeagueUpdateInput) {
   return prisma.league.update({
     where: {
@@ -132,6 +140,8 @@ export async function updateLeague({
       tier,
       isActive,
       isDrafted,
+      playoffWeekStart,
+      hasMedianScoring,
     },
   });
 }

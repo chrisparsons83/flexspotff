@@ -5,12 +5,15 @@ import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { getUsersIncludingMerged } from '~/models/user.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
+import { leaguePlayedMedianGames } from '~/utils/seasonStructure';
 import {
   sleeperTeamJson,
   sleeperDraftJson,
+  sleeperLeagueJson,
   sleeperLeagueUsersJson,
   type SleeperTeamJson,
   type SleeperDraftJson,
+  type SleeperLeagueJson,
   type SleeperLeagueUsersJson,
 } from '~/utils/types';
 
@@ -152,10 +155,55 @@ export async function syncLeague(league: League): Promise<void> {
 
   await Promise.all(teamPromises);
 
+  await syncLeagueSeasonStructure(league);
+
   // Sync ADP if league hasn't drafted yet
   if (!league.isDrafted) {
     await syncAdp(league);
   }
+}
+
+/**
+ * Records how this league was actually configured: when its playoffs started,
+ * and whether it played median games.
+ *
+ * Both used to be inferred from hardcoded year rules. `playoffWeekStart` comes
+ * from Sleeper because only Sleeper knows it; `hasMedianScoring` is derived from
+ * the team rows we just wrote, because the median results are already in them
+ * and asking Sleeper would only duplicate a fact we hold.
+ *
+ * A failure here is logged rather than thrown. This runs after the teams are
+ * saved, and losing a whole league's roster sync over a settings lookup would be
+ * a bad trade - the fields stay null and the historical fallback keeps applying.
+ */
+export async function syncLeagueSeasonStructure(league: League): Promise<void> {
+  const teams = await getTeams(league.id);
+  const hasMedianScoring = leaguePlayedMedianGames(teams);
+
+  let playoffWeekStart: number | null = league.playoffWeekStart;
+  try {
+    const res = await fetch(
+      `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}`,
+    );
+    if (res.ok) {
+      const sleeperLeague: SleeperLeagueJson = sleeperLeagueJson.parse(
+        await res.json(),
+      );
+      playoffWeekStart =
+        sleeperLeague.settings?.playoff_week_start ?? playoffWeekStart;
+    } else {
+      console.warn(
+        `Could not read Sleeper settings for league ${league.name}: HTTP ${res.status}`,
+      );
+    }
+  } catch (error) {
+    console.warn(
+      `Could not read Sleeper settings for league ${league.name}:`,
+      error,
+    );
+  }
+
+  await updateLeague({ id: league.id, playoffWeekStart, hasMedianScoring });
 }
 
 /**

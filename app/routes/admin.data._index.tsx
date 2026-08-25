@@ -15,12 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { syncMultipleLeagueBrackets } from '~/libs/bracket-sync.server';
+import { syncLeagueSeasonStructure } from '~/libs/league-sync.server';
 import {
   getNflState,
   syncNflGameWeek,
   syncNflPlayers,
   syncSleeperWeeklyScores,
 } from '~/libs/syncs.server';
+import { getLeagues } from '~/models/league.server';
 import { createNflTeams } from '~/models/nflteam.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -90,6 +93,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return json<ActionData>({
         message: `League games have been synced for ${year}.`,
+      });
+    }
+    case 'resyncLeagueSettings': {
+      // Every league, every year - this backfills playoffWeekStart and
+      // hasMedianScoring onto seasons that predate those columns. Leagues are
+      // done one at a time because syncLeagueSeasonStructure swallows its own
+      // failures, so a league Sleeper no longer serves leaves that one row
+      // untouched instead of aborting the rest of the backfill.
+      const leagues = await getLeagues();
+      for (const league of leagues) {
+        await syncLeagueSeasonStructure(league);
+      }
+
+      return json<ActionData>({
+        message: `Season structure synced for ${leagues.length} leagues.`,
+      });
+    }
+    case 'resyncPlayoffBrackets': {
+      const leagues = await getLeagues();
+      const { syncedCount, gamesStored, errorCount } =
+        await syncMultipleLeagueBrackets(leagues);
+
+      return json<ActionData>({
+        message:
+          `Playoff brackets synced: ${gamesStored} games across ${syncedCount} leagues` +
+          (errorCount > 0 ? `, ${errorCount} failed.` : '.'),
       });
     }
     case 'syncTestDatabase': {
@@ -286,6 +315,40 @@ export default function AdminDataIndex() {
             disabled={navigation.state !== 'idle'}
           >
             Resync NFL Players
+          </Button>
+        </section>
+        <section>
+          <h3>Resync League Season Structure</h3>
+          <p>
+            Reads each league's playoff start week from Sleeper and works out
+            whether it played median games, for every league in every year. Run
+            this once to backfill seasons that predate those fields; the weekly
+            league sync keeps them current afterwards.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='resyncLeagueSettings'
+            disabled={navigation.state !== 'idle'}
+          >
+            Resync League Season Structure
+          </Button>
+        </section>
+        <section>
+          <h3>Resync Playoff Brackets</h3>
+          <p>
+            Reads the winners and losers brackets from Sleeper for every league
+            in every year. This is what league championships, playoff records
+            and toilet bowls are built from. Leagues Sleeper no longer serves
+            are skipped rather than failing the run.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='resyncPlayoffBrackets'
+            disabled={navigation.state !== 'idle'}
+          >
+            Resync Playoff Brackets
           </Button>
         </section>
         <section>

@@ -6,6 +6,7 @@ import type { RecordTable } from '~/models/records.server';
 import {
   getCareerRecords,
   getCupRecords,
+  getPlayoffRecords,
   getSingleGameRecords,
   getSingleSeasonRecords,
   getStreakRecords,
@@ -15,6 +16,7 @@ const CATEGORIES = [
   { key: 'career', label: 'Career' },
   { key: 'season', label: 'Single Season' },
   { key: 'game', label: 'Single Game' },
+  { key: 'playoffs', label: 'Playoffs' },
   { key: 'cup', label: 'Cup' },
   { key: 'streaks', label: 'Streaks' },
 ] as const;
@@ -26,12 +28,14 @@ export const loader = async () => {
     careerRecords,
     singleSeasonRecords,
     singleGameRecords,
+    playoffRecords,
     cupRecords,
     streakRecords,
   ] = await Promise.all([
     getCareerRecords(),
     getSingleSeasonRecords(),
     getSingleGameRecords(),
+    getPlayoffRecords(),
     getCupRecords(),
     getStreakRecords(),
   ]);
@@ -40,6 +44,7 @@ export const loader = async () => {
     careerRecords,
     singleSeasonRecords,
     singleGameRecords,
+    playoffRecords,
     cupRecords,
     streakRecords,
   });
@@ -54,6 +59,7 @@ export default function Records() {
     career: data.careerRecords,
     season: data.singleSeasonRecords,
     game: data.singleGameRecords,
+    playoffs: data.playoffRecords,
     cup: data.cupRecords,
     streaks: data.streakRecords,
   };

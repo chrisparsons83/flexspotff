@@ -257,7 +257,70 @@ model League {
   isActive  Boolean
   isDrafted Boolean @default(false)
 
-  teams Team[]
+  /// First week of the playoffs, read from Sleeper's league settings. The
+  /// regular season is every week before it. Null means it has not been synced
+  /// yet, which is why callers fall back to the historical hardcoded boundary
+  /// rather than treating null as week zero.
+  playoffWeekStart Int?
+
+  /// Whether this league played a weekly game against the league median. It
+  /// began partway through the site's history, so it is resolved per league per
+  /// year rather than from a hardcoded start year.
+  hasMedianScoring Boolean @default(false)
+
+  teams        Team[]
+  playoffGames PlayoffGame[]
+}
+
+enum BracketType {
+  WINNERS
+  LOSERS
+}
+
+/// One game from a league's postseason bracket, as Sleeper reports it.
+///
+/// Both brackets are stored in full, including consolation games, so the game
+/// log can show every postseason game a member played. `countsTowardRecord`
+/// is what separates the games that decide a title from placement games like
+/// the third-place game, which the league does not count.
+model PlayoffGame {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  leagueId String
+
+  bracket   BracketType
+  /// Sleeper's `r` - which round of the bracket this game sits in.
+  round     Int
+  /// Sleeper's `m` - unique per bracket, and what `t1_from`/`t2_from` point at.
+  matchupId Int
+  /// Sleeper's `p`. 1 is the game that decides the bracket's title, 3 the
+  /// third-place game, and so on. Null on games that decide no final placing.
+  placement Int?
+
+  /// The game that decides this bracket's title.
+  isTitleGame Boolean @default(false)
+
+  /// Whether this game is on the path to the title. Placement games are stored
+  /// but excluded, so a third-place game never counts toward a playoff record.
+  countsTowardRecord Boolean @default(false)
+
+  topTeam   Team?   @relation(name: "PlayoffTopTeam", fields: [topTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topTeamId String?
+
+  bottomTeam   Team?   @relation(name: "PlayoffBottomTeam", fields: [bottomTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  bottomTeamId String?
+
+  winningTeam   Team?   @relation(name: "PlayoffWinningTeam", fields: [winningTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  winningTeamId String?
+
+  losingTeam   Team?   @relation(name: "PlayoffLosingTeam", fields: [losingTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  losingTeamId String?
+
+  @@unique([leagueId, bracket, matchupId])
+  @@index([leagueId])
 }
 
 model DraftSlot {
@@ -728,6 +791,11 @@ model Team {
   DraftPicks         DraftPick[]
   TeamGames          TeamGame[]
   CupTeam            CupTeam?
+
+  PlayoffTopTeamGames     PlayoffGame[] @relation(name: "PlayoffTopTeam")
+  PlayoffBottomTeamGames  PlayoffGame[] @relation(name: "PlayoffBottomTeam")
+  PlayoffWinningTeamGames PlayoffGame[] @relation(name: "PlayoffWinningTeam")
+  PlayoffLosingTeamGames  PlayoffGame[] @relation(name: "PlayoffLosingTeam")
 }
 
 model TeamGame {

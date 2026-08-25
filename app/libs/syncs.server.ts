@@ -27,6 +27,7 @@ import {
   updateTeamGame,
 } from '~/models/teamgame.server';
 import { graphQLClient } from '~/services/sleeperGraphql.server';
+import { isRegularSeasonWeek } from '~/utils/seasonStructure';
 
 const sleeperADPJson = z.array(
   z.object({
@@ -280,7 +281,11 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
         teamGame => teamGame.teamId === team.id && teamGame.week === week,
       );
 
-      const isRegularSeason = week <= 13 || (week === 14 && year >= 2021);
+      const isRegularSeason = isRegularSeasonWeek({
+        week,
+        year,
+        playoffWeekStart: league.playoffWeekStart,
+      });
 
       if (existingTeamGame) {
         teamGameUpserts.push(
