@@ -80,18 +80,22 @@ own settings from Sleeper's `GET /v1/league/{id}` endpoint and store them on
 `League`:
 
 - `playoff_week_start` → regular season is `week < playoffWeekStart`
-- `league_average_match` → whether median games counted that year, per league
 
-That makes both the regular-season boundary and the median era **self-describing
-per league per year**, which also correctly handles the case where tiers differ
-in the same season. `syncLeague` in `app/libs/league-sync.server.ts:22` already
-fetches rosters and drafts; this adds one more fetch to the same function.
+That makes the regular-season boundary **self-describing per league per year**,
+which also correctly handles the case where tiers differ in the same season.
+`syncLeague` in `app/libs/league-sync.server.ts:22` already fetches rosters and
+drafts; this adds one more fetch to the same function.
+
+The **median era needs no API call at all.** Median data in the database is
+correct under the current sync code, and there is exactly one median game per
+week, so a league whose teams carry non-zero median records had median scoring
+on. That is derivable from `Team` rows alone, retroactively, for every season.
 
 > ⚠️ **Verify first.** Network egress to `api.sleeper.app` is blocked from this
-> environment, so I could not confirm those exact field names. Step one of
+> environment, so `playoff_week_start` could not be confirmed. Step one of
 > implementation is to hit the league endpoint for a real league ID (e.g.
 > `335507311525122048`, which appears in `league-sync.server.ts:41`) and confirm
-> the settings keys before designing around them.
+> the settings key before designing around it.
 
 ### 2. Playoff brackets (blocks championships, playoff records, toilet bowl)
 
@@ -269,12 +273,12 @@ This iteration produces no code — it's the design frame, not an implementation
 document. Before the next iteration:
 
 1. **Confirm the Sleeper API shapes against the live API.** Egress was blocked
-   from this environment, so the settings keys (`playoff_week_start`,
-   `league_average_match`) and the bracket entry shape are from knowledge, not
-   observation. Everything in the Groundwork section rests on them, so this is
-   the first thing to verify — and it can be done from any machine with network
-   access by fetching `https://api.sleeper.app/v1/league/335507311525122048` and
-   its `/winners_bracket`.
+   from this environment, so `playoff_week_start` and the bracket entry shape
+   are from knowledge, not observation. The bracket half of the Groundwork rests
+   on them — and it can be done from any machine with network access by fetching
+   `https://api.sleeper.app/v1/league/335507311525122048` and its
+   `/winners_bracket`. The median era does not depend on this; it comes from
+   `Team` rows.
 2. **Spot-check bracket coverage for 2018–2020**, which determines how much
    career championship history we can actually recover.
 3. **Resolve the open questions above**, particularly badge thresholds.
