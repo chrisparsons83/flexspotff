@@ -1,4 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
+import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import { useState } from 'react';
 import type { League } from '~/models/league.server';
@@ -55,7 +56,13 @@ export default function LeaderboardRow({ position, rank }: Props) {
           </div>
         </td>
         <td className='flex items-center gap-3'>
-          {position.team.user?.discordName || 'Missing user'}{' '}
+          {position.team.user ? (
+            <Link to={`/members/${position.team.user.id}/league`}>
+              {position.team.user.discordName}
+            </Link>
+          ) : (
+            'Missing user'
+          )}{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}

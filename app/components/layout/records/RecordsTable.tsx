@@ -1,3 +1,4 @@
+import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import type { RecordRow } from '~/models/records.server';
 import { isLeagueName, RANK_COLORS } from '~/utils/constants';
@@ -40,7 +41,17 @@ export default function RecordsTable({ title, headers, rows }: Props) {
                 </div>
               </td>
               {row.cells.map((cell, i) => (
-                <td key={i}>{cell}</td>
+                <td key={i}>
+                  {/* The first cell is always the player. Rows that aggregate
+                      several members carry no id and stay plain text. */}
+                  {i === 0 && row.playerUserId ? (
+                    <Link to={`/members/${row.playerUserId}/league`}>
+                      {cell}
+                    </Link>
+                  ) : (
+                    cell
+                  )}
+                </td>
               ))}
             </tr>
           ))}
