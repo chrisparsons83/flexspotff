@@ -1,7 +1,7 @@
 # User Profile — Implementation Plan
 
-> **Status: implemented.** Everything below shipped, with two deviations noted
-> in Phase 0. Kept as the record of why the design is shaped this way.
+> **Status: implemented and verified against real Sleeper data.** Kept as the
+> record of why the design is shaped this way.
 
 ## Context
 
@@ -19,10 +19,9 @@ hardcoded in a way that will break again the next time the schedule changes.
 
 ## Phase 0 — Verification (blocking)
 
-The Sleeper API shapes below have not been observed — network egress to
-`api.sleeper.app` was denied by organization policy from the planning
-environment — so they come from knowledge rather than from a response body.
-Confirm them before building on them.
+Both halves are now done. 0a settles the median era from the database alone; 0b
+was confirmed against real Sleeper payloads, which corrected a wrong reading of
+the losers bracket — see **The `p` trap**.
 
 Existing median data is **confirmed correct** under the current sync code, so
 pre-median seasons already parse to zeros and nothing needs repairing.
@@ -54,13 +53,9 @@ below.
 
 ### 0b. Sleeper API shapes — needs network access
 
-> **Still outstanding.** Egress to `api.sleeper.app` is denied by policy from
-> the development environment, so the shapes below were never observed. The
-> bracket parser was written defensively against that: it accepts unknown keys
-> and treats everything except round and matchup id as optional, and
-> `classifyBracket` is unit-tested against a hand-built bracket in Sleeper's
-> documented shape. **Run these before trusting a backfill** - if the shape
-> differs, `app/libs/bracket.ts` is the only file that needs to change.
+> **Resolved.** Real payloads were captured from league `335507311525122048` and
+> are checked in under `test/fixtures/sleeper/`. The classifier is tested
+> against them directly. Findings below.
 
 ```sh
 # A real league id, from app/libs/league-sync.server.ts:41
@@ -71,19 +66,39 @@ curl -s "https://api.sleeper.app/v1/league/$L/losers_bracket"   | jq '.'
 curl -s "https://api.sleeper.app/v1/league/$L/rosters"          | jq '.[0].metadata.record'
 ```
 
-Confirm, and correct this plan where reality differs:
+What the real responses showed:
 
-| Assumption                                                                      | Used for                                          |
-| ------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `settings.playoff_week_start` exists                                            | Regular-season boundary                           |
-| `settings.league_average_match` exists (0/1)                                    | Median era — _nice to have; 0a already covers it_ |
-| Bracket entries carry `r`, `m`, `t1`, `t2`, `w`, `l`, `t1_from`, `t2_from`, `p` | Bracket storage + title-path classification       |
-| `p` marks placement (1 = title game, 3 = third place)                           | Excluding consolation games                       |
-| `t1`/`t2` are **roster ids**, matching `Team.rosterId`                          | Mapping bracket sides to members                  |
+| Checked                                              | Result                                                                                                |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `settings.playoff_week_start`                        | **Exists** — `14` for this 2018 league, matching the historical fallback                              |
+| `settings.league_average_match`                      | **Absent entirely.** Deriving the median era from `Team` rows was not a convenience, it was necessary |
+| Bracket fields `r`/`m`/`t1`/`t2`/`w`/`l`/`_from`/`p` | **All present**, matching the zod schema                                                              |
+| `t1`/`t2` are roster ids                             | **Confirmed**                                                                                         |
+| `p` marks placement                                  | **Confirmed, and it restarts per bracket** — see below                                                |
 
-Save real responses as JSON fixtures under `test/fixtures/sleeper/`. The bracket
-classifier is the riskiest pure function in this plan and should be tested
-against real shapes, not invented ones.
+### The `p` trap
+
+The winner of a `p: N` game finishes Nth and the loser N+1 — but the numbering
+restarts in each bracket. For twelve teams with six playoff spots:
+
+| Bracket | `p: 1`      | `p: 3`   | `p: 5`        |
+| ------- | ----------- | -------- | ------------- |
+| Winners | 1st/2nd     | 3rd/4th  | 5th/6th       |
+| Losers  | **7th/8th** | 9th/10th | **11th/12th** |
+
+So the losers bracket's `p: 1` game decides _seventh_ — the best of the teams
+who missed the playoffs. **The sacko is the loser of the highest `p`.** All
+twelve places are covered exactly once, which is what proves the reading; there
+is a test asserting precisely that.
+
+An earlier attempt inferred which side advances by counting `w` versus `l`
+links. Against the real brackets those counts **tie exactly, 4-4, in both** — a
+Sleeper bracket branches both ways every round — so the heuristic was only ever
+landing on its default. The placement markers are the reliable signal.
+
+The real responses are checked in under `test/fixtures/sleeper/` and the
+classifier is tested directly against them. It is the riskiest pure function
+here, and inventing its inputs is what produced the wrong sacko twice.
 
 ---
 
@@ -109,8 +124,8 @@ pre-backfill rows are distinguishable from real values.
 
 `hasMedianScoring` is set from the league's own `Team` rows — non-zero median
 games means median scoring was on — with `settings.league_average_match` used
-only as a cross-check if 0b confirms it exists. **This half of Phase 1 therefore
-has no API dependency and can proceed even if 0b is blocked.**
+only as a cross-check. **0b showed that key does not exist at all**, so deriving
+it from `Team` rows is the only way this works.
 
 ### Sync
 

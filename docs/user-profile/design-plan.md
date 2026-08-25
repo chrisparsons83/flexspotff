@@ -91,11 +91,11 @@ correct under the current sync code, and there is exactly one median game per
 week, so a league whose teams carry non-zero median records had median scoring
 on. That is derivable from `Team` rows alone, retroactively, for every season.
 
-> ⚠️ **Verify first.** Network egress to `api.sleeper.app` is blocked from this
-> environment, so `playoff_week_start` could not be confirmed. Step one of
-> implementation is to hit the league endpoint for a real league ID (e.g.
-> `335507311525122048`, which appears in `league-sync.server.ts:41`) and confirm
-> the settings key before designing around it.
+> ✅ **Verified against the live API.** `playoff_week_start` exists and reads
+> `14` for the 2018 league, matching the historical fallback exactly.
+> `league_average_match` turned out **not to exist at all**, so deriving the
+> median era from `Team` rows was the only workable route, not merely the
+> convenient one.
 
 ### 2. Playoff brackets (blocks championships, playoff records, sacko)
 

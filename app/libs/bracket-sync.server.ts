@@ -42,13 +42,7 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
     }
 
     const entries = sleeperBracketJson.parse(await res.json());
-    const { direction, games } = classifyBracket(entries);
-
-    console.log(
-      `${league.name} ${league.year} ${path}: ${
-        games.length
-      } games, advancing by ${direction === 'w' ? 'winner' : 'loser'}`,
-    );
+    const { games } = classifyBracket(entries, bracket);
 
     for (const game of games) {
       await upsertPlayoffGame({
