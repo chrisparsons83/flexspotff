@@ -6,10 +6,11 @@ import clsx from 'clsx';
  *
  * These are links rather than a client-side tab component so each tab is its own
  * route with its own loader - opening a profile queries one contest instead of
- * all nine, and every tab can be linked to directly.
+ * all of them, and every tab can be linked to directly.
  *
- * Tabs a member has never played are still shown, greyed, so the bar does not
- * change shape from one profile to the next.
+ * Only contests a member actually played are shown. A row of tabs leading to
+ * "hasn't played this" is noise, and it reads the same whether they skipped the
+ * game or it did not exist during their seasons.
  */
 
 export const PROFILE_TABS = [
@@ -21,8 +22,10 @@ export const PROFILE_TABS = [
   { key: 'locks', label: 'Locks' },
   { key: 'dfs-survivor', label: 'DFS Survivor' },
   { key: 'f-squared', label: 'F²' },
-  { key: 'omni', label: 'Omni' },
 ] as const;
+
+/** Always shown, so a profile is never left with no tabs at all. */
+const ALWAYS_SHOWN = 'league';
 
 type Props = {
   userId: string;
@@ -32,14 +35,16 @@ type Props = {
 export default function ProfileTabs({ userId, contestsPlayed }: Props) {
   const { pathname } = useLocation();
   const played = new Set(contestsPlayed);
+  const visible = PROFILE_TABS.filter(
+    tab => tab.key === ALWAYS_SHOWN || played.has(tab.key),
+  );
 
   return (
     <nav className='not-prose mt-6 border-b border-gray-700'>
       <ul className='flex flex-wrap gap-1 p-0'>
-        {PROFILE_TABS.map(tab => {
+        {visible.map(tab => {
           const to = `/members/${userId}/${tab.key}`;
           const isActive = pathname === to;
-          const hasPlayed = played.has(tab.key);
 
           return (
             <li key={tab.key} className='list-none'>
@@ -50,9 +55,7 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
                   'inline-block rounded-t-md px-3 py-2 text-sm font-medium no-underline transition-colors',
                   isActive
                     ? 'bg-gray-700 text-white'
-                    : hasPlayed
-                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    : 'text-gray-500 hover:bg-gray-800',
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white',
                 )}
               >
                 {tab.label}
