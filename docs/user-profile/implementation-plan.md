@@ -221,24 +221,60 @@ championships, most playoff appearances, most toilet bowls — and render it on
 
 ## Phase 3 — Profile data layer
 
-New directory `app/models/profile/`. Every function takes a `userId`, returns a
-plain typed shape, and leaks no Prisma types. **That boundary is the whole
-point** — it is what lets these swap to materialized summary tables later
-without touching a single route.
+**`records.server.ts` already computes most of this.** Every function in it
+builds a per-user aggregate and then discards everything but the top 50. The
+profile needs the same aggregates, filtered to one member, with nothing
+discarded. So this phase is mostly an _extraction_, not new logic:
 
-| File                                                                                                                                                 | Exports                                                                        |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `shared.server.ts`                                                                                                                                   | `pairTeamGames()`, `resolveCanonicalUser()`, shared types                      |
-| `summary.server.ts`                                                                                                                                  | `getProfileSummary(userId)` — hero tiles + badges                              |
-| `league.server.ts`                                                                                                                                   | `getLeagueProfile(userId)` — tier table, season history, game log, splits, H2H |
-| `cup.server.ts`                                                                                                                                      | `getCupProfile(userId)`                                                        |
-| `d12.server.ts`, `qbStreaming.server.ts`, `spreadPool.server.ts`, `locks.server.ts`, `dfsSurvivor.server.ts`, `fSquared.server.ts`, `omni.server.ts` | one `get<Contest>Profile(userId)` each                                         |
+| Already in `records.server.ts` | What it computes                                                  | Profile use          |
+| ------------------------------ | ----------------------------------------------------------------- | -------------------- |
+| `getCareerRecords:17-75`       | `Map<userId, CareerStats>` — seasons, W/L/T, median W/L/T, PF, PA | Hero career tiles    |
+| `getSingleSeasonRecords:179`   | per-`Team` rows joined to league year + name                      | Season history table |
+| `getSingleGameRecords:266`     | best / worst single weeks                                         | Splits               |
+| `getCupRecords:330-430`        | per-user championships, finals, game wins, games played           | Cup tab, in full     |
+| `getStreakRecords:512-560`     | matchup pairing → per-game W/L/T with year, week, league          | Game log + H2H       |
+| `computeStreak:583`            | generic predicate-based streaks                                   | Badges               |
 
-**Extract, don't duplicate.** The matchup-pairing logic currently inline at
-`app/models/records.server.ts:512-560` (grouping `TeamGame`s by
-`leagueId:week:sleeperMatchupId`) becomes `pairTeamGames()` in
-`shared.server.ts`, and `getStreakRecords` is refactored to call it. Same for
-the career aggregation at `records.server.ts:17`.
+### The refactor
+
+Extract the computation core into `app/models/profile/shared.server.ts`, then
+have **both** consumers call it:
+
+- `records.server.ts` becomes a thin wrapper — aggregate, sort, take 50, format
+  as `RecordTable`.
+- The profile calls the same aggregates filtered to one `userId`.
+
+Functions to lift out:
+
+- `pairTeamGames(games)` — the `leagueId:week:sleeperMatchupId` grouping at
+  `records.server.ts:512-560`, returning both sides with W/L/T resolved
+- `aggregateCareerStats(teams)` — the `Map<userId, CareerStats>` build at
+  `:17-75`
+- `aggregateCupStats(cupGames)` — the `getOrCreate` accumulation at `:374-430`
+- `computeStreak(games, predicate)` — already generic, just move it
+- `totalGames` / `winPct` / `avgPF` — **currently duplicated** between `:66-70`
+  and `:188-193` with different parameter types; unify on one shape
+
+This is worth doing on its own merits: it removes the duplication and gives the
+Record Books page test coverage it doesn't have today.
+
+### Precedents to follow, not reinvent
+
+- **Cup rounds** are keyed by string with `ROUND_OF_2` meaning the final
+  (`records.server.ts:410`), labelled via `roundNameMapping` in
+  `app/utils/constants.ts:40`. The playoff bracket work in Phase 2 should label
+  rounds the same way rather than inventing a second convention.
+- **Merged accounts** need no special handling in aggregation — a merge
+  re-points `Team.userId` at the canonical member, so grouping by `userId`
+  already resolves correctly. Only the route needs the redirect.
+
+### New per-contest modules
+
+`app/models/profile/` — one `get<Contest>Profile(userId)` per side game (`d12`,
+`qbStreaming`, `spreadPool`, `locks`, `dfsSurvivor`, `fSquared`, `omni`), plus
+`summary.server.ts` for the hero. Each takes a `userId`, returns a plain typed
+shape, and leaks no Prisma types. **That boundary is what lets these swap to
+materialized summary tables later without touching a route.**
 
 Existing per-user functions worth reusing rather than rewriting:
 `getPoolGamePicksByUserAndYear`, `getLocksGamePicksByUserAndYear`,
@@ -319,11 +355,18 @@ Unit tests follow the existing mocked-Prisma pattern
 | Target                       | Why                                                                                                                |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `classifyBracket()`          | Highest-risk logic. Test against Phase 0 fixtures: title path included, third-place excluded, byes, losers bracket |
-| Median-era guard             | Pre-median league produces zeroed median values, not garbage                                                       |
-| `pairTeamGames()`            | Unpaired games skipped, ties handled — guard the `records.server.ts` refactor                                      |
+| `pairTeamGames()`            | Unpaired games skipped, ties handled — guards the `records.server.ts` refactor                                     |
+| `aggregateCareerStats()`     | Same — the extraction must not change what the Record Books page renders                                           |
+| `aggregateCupStats()`        | `ROUND_OF_2` counts as both a finals appearance and a championship for the winner                                  |
 | Badge derivation             | Thresholds fire exactly at the boundary                                                                            |
 | Tier movement                | Promotion/relegation across a gap year                                                                             |
 | `isRegularSeason` resolution | Uses `playoffWeekStart`; falls back correctly when null                                                            |
+
+The extraction in Phase 3 is the one change that can silently break an existing
+page. Write the `aggregate*` tests **before** moving the code, run them against
+the current implementation, then confirm they still pass after — that turns an
+untested refactor into a checked one, and leaves `/leagues/records` with
+coverage it does not have today.
 
 Then `npm run validate` (test + lint + typecheck).
 
