@@ -1,7 +1,7 @@
 # User Profile — Implementation Plan
 
-Companion to `design-plan.md`. That document settles _what_ the page shows; this
-one settles _how_ it gets built, in what order, and what could go wrong.
+> **Status: implemented.** Everything below shipped, with two deviations noted
+> in Phase 0. Kept as the record of why the design is shaped this way.
 
 ## Context
 
@@ -53,6 +53,14 @@ This also means the median half of Phase 1 needs no Sleeper call at all — see
 below.
 
 ### 0b. Sleeper API shapes — needs network access
+
+> **Still outstanding.** Egress to `api.sleeper.app` is denied by policy from
+> the development environment, so the shapes below were never observed. The
+> bracket parser was written defensively against that: it accepts unknown keys
+> and treats everything except round and matchup id as optional, and
+> `classifyBracket` is unit-tested against a hand-built bracket in Sleeper's
+> documented shape. **Run these before trusting a backfill** - if the shape
+> differs, `app/libs/bracket.ts` is the only file that needs to change.
 
 ```sh
 # A real league id, from app/libs/league-sync.server.ts:41
@@ -157,11 +165,11 @@ model PlayoffGame {
 
   bracket   BracketType
   round     Int
-  matchupId Int   // Sleeper's `m`
-  placement Int?  // Sleeper's `p`
+  matchupId Int // Sleeper's `m`
+  placement Int? // Sleeper's `p`
 
   /// True only for the game that decides the bracket's title.
-  isTitleGame Boolean @default(false)
+  isTitleGame        Boolean @default(false)
   /// True only for games on the path to the title. Third-place, seventh-place
   /// and other placement games are stored but excluded from playoff records.
   countsTowardRecord Boolean @default(false)
@@ -311,7 +319,7 @@ members.$userId.omni.tsx
 Parent loader:
 
 ```ts
-await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
+await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
 ```
 
 …matching `app/routes/admin.data._index.tsx:41`. Members-only, per the design

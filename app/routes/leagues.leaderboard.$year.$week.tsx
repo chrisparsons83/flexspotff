@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
+import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
@@ -44,7 +45,13 @@ export default function LeaderboardYearWeek() {
     return {
       id: position.id,
       rank: position.rank,
-      name: position.team.user?.discordName || 'Missing user',
+      name: position.team.user ? (
+        <Link to={`/members/${position.team.user.id}/league`}>
+          {position.team.user.discordName}
+        </Link>
+      ) : (
+        'Missing user'
+      ),
       badgeClassName: isLeagueName(leagueName)
         ? RANK_COLORS[leagueName]
         : undefined,

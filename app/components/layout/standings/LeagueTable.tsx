@@ -1,3 +1,4 @@
+import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import type { GetLeaguesByYearElement } from '~/models/league.server';
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
@@ -39,7 +40,13 @@ export default function LeagueTable({ league }: Props) {
                   {index + 1}
                 </div>
               </td>
-              <td>{team.user?.discordName}</td>
+              <td>
+                {team.user ? (
+                  <Link to={`/members/${team.user.id}/league`}>
+                    {team.user.discordName}
+                  </Link>
+                ) : null}
+              </td>
               <td>
                 {team.wins}-{team.losses}-{team.ties}
               </td>
