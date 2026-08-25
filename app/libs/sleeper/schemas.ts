@@ -73,7 +73,14 @@ export const sleeperLeagueInfoJson = z.object({
   // app/libs/sleeper/best-ball.ts. Nullish because the main-league flows share
   // this schema and read neither.
   roster_positions: z.array(z.string()).nullish(),
-  settings: z.object({ best_ball: z.number().nullish() }).nullish(),
+  settings: z
+    .object({
+      best_ball: z.number().nullish(),
+      // First week of the playoffs. Only Sleeper knows it, and it is what
+      // league-sync records on the League row.
+      playoff_week_start: z.number().nullish(),
+    })
+    .nullish(),
 });
 export type SleeperLeagueInfoJson = z.infer<typeof sleeperLeagueInfoJson>;
 

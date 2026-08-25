@@ -1,4 +1,14 @@
 import { prisma } from '~/db.server';
+import {
+  aggregateCareerStats,
+  aggregateCupStats,
+  aggregatePlayoffStats,
+  averagePerSeason,
+  computeStreak,
+  pairTeamGames,
+  winPct,
+  type CareerStats,
+} from '~/models/profile/shared.server';
 
 const TOP_N = 50;
 const MIN_SEASONS = 2;
@@ -6,6 +16,9 @@ const MIN_SEASONS = 2;
 export type RecordRow = {
   cells: string[];
   leagueName?: string;
+  /// Set when the row belongs to one member, so the table can link the player
+  /// cell to their profile. Rows that aggregate several members leave it unset.
+  playerUserId?: string;
 };
 
 export type RecordTable = {
@@ -22,54 +35,9 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
     },
   });
 
-  interface CareerStats {
-    name: string;
-    seasons: number;
-    wins: number;
-    losses: number;
-    ties: number;
-    pointsFor: number;
-    pointsAgainst: number;
-    medianWins: number;
-    medianLosses: number;
-    medianTies: number;
-  }
+  const careers = Array.from(aggregateCareerStats(teams).values());
 
-  const map = new Map<string, CareerStats>();
-
-  for (const team of teams) {
-    if (!team.userId) continue;
-    const existing = map.get(team.userId) || {
-      name: team.user?.discordName || 'Unknown',
-      seasons: 0,
-      wins: 0,
-      losses: 0,
-      ties: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-      medianWins: 0,
-      medianLosses: 0,
-      medianTies: 0,
-    };
-    existing.seasons++;
-    existing.wins += team.wins;
-    existing.losses += team.losses;
-    existing.ties += team.ties;
-    existing.pointsFor += team.pointsFor;
-    existing.pointsAgainst += team.pointsAgainst;
-    existing.medianWins += team.medianWins;
-    existing.medianLosses += team.medianLosses;
-    existing.medianTies += team.medianTies;
-    map.set(team.userId, existing);
-  }
-
-  const careers = Array.from(map.values());
-
-  const totalGames = (c: CareerStats) => c.wins + c.losses + c.ties;
-  const winPct = (c: CareerStats) =>
-    totalGames(c) > 0 ? c.wins / totalGames(c) : 0;
-  const avgPF = (c: CareerStats) =>
-    c.seasons > 0 ? c.pointsFor / c.seasons : 0;
+  const avgPF = (c: CareerStats) => averagePerSeason(c.pointsFor, c.seasons);
 
   return [
     {
@@ -79,6 +47,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.wins - a.wins)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.wins.toString(),
@@ -95,6 +64,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => winPct(b) - winPct(a))
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             (winPct(c) * 100).toFixed(1) + '%',
@@ -110,6 +80,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.pointsFor - a.pointsFor)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.pointsFor.toFixed(2),
@@ -125,6 +96,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.pointsAgainst - a.pointsAgainst)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [c.name, c.pointsAgainst.toFixed(2), c.seasons.toString()],
         })),
     },
@@ -136,6 +108,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => avgPF(b) - avgPF(a))
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             avgPF(c).toFixed(2),
@@ -151,6 +124,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.medianWins - a.medianWins)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.medianWins.toString(),
@@ -166,6 +140,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.seasons - a.seasons || b.wins - a.wins)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.seasons.toString(),
@@ -192,6 +167,7 @@ export async function getSingleSeasonRecords(): Promise<RecordTable[]> {
     t.pointsFor - t.pointsAgainst;
 
   const makeRow = (t: (typeof teams)[number], value: string): RecordRow => ({
+    playerUserId: t.userId ?? undefined,
     cells: [
       t.user?.discordName || 'Unknown',
       value,
@@ -303,6 +279,7 @@ export async function getSingleGameRecords(): Promise<RecordTable[]> {
   const makeRow = (
     g: (typeof highestGames)[number] | (typeof lowestGames)[number],
   ): RecordRow => ({
+    playerUserId: g.team.userId ?? undefined,
     cells: [
       g.team.user?.discordName || 'Unknown',
       g.pointsScored.toFixed(2),
@@ -363,74 +340,7 @@ export async function getCupRecords(): Promise<RecordTable[]> {
     },
   });
 
-  interface CupStats {
-    name: string;
-    championships: number;
-    finalsAppearances: number;
-    gameWins: number;
-    gamesPlayed: number;
-  }
-
-  const cupStatsMap = new Map<string, CupStats>();
-
-  const getOrCreate = (userId: string, name: string): CupStats => {
-    if (!cupStatsMap.has(userId)) {
-      cupStatsMap.set(userId, {
-        name,
-        championships: 0,
-        finalsAppearances: 0,
-        gameWins: 0,
-        gamesPlayed: 0,
-      });
-    }
-    return cupStatsMap.get(userId)!;
-  };
-
-  for (const game of cupGames) {
-    if (game.topTeam?.team.userId) {
-      const stats = getOrCreate(
-        game.topTeam.team.userId,
-        game.topTeam.team.user?.discordName || 'Unknown',
-      );
-      stats.gamesPlayed++;
-    }
-    if (game.bottomTeam?.team.userId) {
-      const stats = getOrCreate(
-        game.bottomTeam.team.userId,
-        game.bottomTeam.team.user?.discordName || 'Unknown',
-      );
-      stats.gamesPlayed++;
-    }
-    if (game.winningTeam?.team.userId) {
-      const stats = getOrCreate(
-        game.winningTeam.team.userId,
-        game.winningTeam.team.user?.discordName || 'Unknown',
-      );
-      stats.gameWins++;
-    }
-    if (game.round === 'ROUND_OF_2') {
-      if (game.topTeam?.team.userId) {
-        getOrCreate(
-          game.topTeam.team.userId,
-          game.topTeam.team.user?.discordName || 'Unknown',
-        ).finalsAppearances++;
-      }
-      if (game.bottomTeam?.team.userId) {
-        getOrCreate(
-          game.bottomTeam.team.userId,
-          game.bottomTeam.team.user?.discordName || 'Unknown',
-        ).finalsAppearances++;
-      }
-      if (game.winningTeam?.team.userId) {
-        getOrCreate(
-          game.winningTeam.team.userId,
-          game.winningTeam.team.user?.discordName || 'Unknown',
-        ).championships++;
-      }
-    }
-  }
-
-  const cupStats = Array.from(cupStatsMap.values());
+  const cupStats = Array.from(aggregateCupStats(cupGames).values());
 
   return [
     {
@@ -445,6 +355,7 @@ export async function getCupRecords(): Promise<RecordTable[]> {
         .filter(c => c.championships > 0)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.championships.toString(),
@@ -465,6 +376,7 @@ export async function getCupRecords(): Promise<RecordTable[]> {
         )
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.finalsAppearances.toString(),
@@ -480,6 +392,7 @@ export async function getCupRecords(): Promise<RecordTable[]> {
         .sort((a, b) => b.gameWins - a.gameWins)
         .slice(0, TOP_N)
         .map(c => ({
+          playerUserId: c.userId,
           cells: [
             c.name,
             c.gameWins.toString(),
@@ -510,69 +423,38 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
     },
   });
 
-  const matchupMap = new Map<string, (typeof allGames)[number][]>();
-  for (const game of allGames) {
-    const key = `${game.team.leagueId}:${game.week}:${game.sleeperMatchupId}`;
-    if (!matchupMap.has(key)) matchupMap.set(key, []);
-    matchupMap.get(key)!.push(game);
-  }
+  // Sleeper reuses matchup ids each week, so pairing has to key on the week as
+  // well as the league - see pairTeamGames.
+  const gameResults = pairTeamGames(allGames).map(({ game, result }) => ({
+    teamId: game.teamId,
+    userName: game.team.user?.discordName || 'Unknown',
+    userId: game.team.userId,
+    year: game.team.league.year,
+    week: game.week,
+    pointsScored: game.pointsScored,
+    leagueName: game.team.league.name,
+    result,
+  }));
 
-  interface GameResult {
-    teamId: string;
-    userName: string;
-    year: number;
-    week: number;
-    pointsScored: number;
-    leagueName: string;
-    result: 'W' | 'L' | 'T';
-  }
+  type GameResultRow = (typeof gameResults)[number];
 
-  const gameResults: GameResult[] = [];
-  for (const [, games] of matchupMap) {
-    if (games.length !== 2) continue;
-    const [g1, g2] = games;
-
-    const r1: 'W' | 'L' | 'T' =
-      g1.pointsScored > g2.pointsScored
-        ? 'W'
-        : g1.pointsScored < g2.pointsScored
-        ? 'L'
-        : 'T';
-    const r2: 'W' | 'L' | 'T' = r1 === 'W' ? 'L' : r1 === 'L' ? 'W' : 'T';
-
-    gameResults.push({
-      teamId: g1.teamId,
-      userName: g1.team.user?.discordName || 'Unknown',
-      year: g1.team.league.year,
-      week: g1.week,
-      pointsScored: g1.pointsScored,
-      leagueName: g1.team.league.name,
-      result: r1,
-    });
-
-    gameResults.push({
-      teamId: g2.teamId,
-      userName: g2.team.user?.discordName || 'Unknown',
-      year: g2.team.league.year,
-      week: g2.week,
-      pointsScored: g2.pointsScored,
-      leagueName: g2.team.league.name,
-      result: r2,
-    });
-  }
-
-  const teamGameMap = new Map<string, GameResult[]>();
+  const teamGameMap = new Map<string, GameResultRow[]>();
   for (const result of gameResults) {
-    if (!teamGameMap.has(result.teamId)) teamGameMap.set(result.teamId, []);
-    teamGameMap.get(result.teamId)!.push(result);
+    const existing = teamGameMap.get(result.teamId);
+    if (existing) {
+      existing.push(result);
+    } else {
+      teamGameMap.set(result.teamId, [result]);
+    }
   }
 
-  for (const [, games] of teamGameMap) {
+  for (const games of teamGameMap.values()) {
     games.sort((a, b) => a.week - b.week);
   }
 
   interface StreakInfo {
     userName: string;
+    userId: string | null;
     year: number;
     leagueName: string;
     length: number;
@@ -580,38 +462,21 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
     endWeek: number;
   }
 
-  function computeStreak(
-    games: GameResult[],
-    predicate: (g: GameResult) => boolean,
+  function longestStreak(
+    games: GameResultRow[],
+    predicate: (game: GameResultRow) => boolean,
   ): StreakInfo | null {
-    let maxLen = 0;
-    let currentLen = 0;
-    let maxStart = 0;
-    let maxEnd = 0;
-    let currentStart = 0;
+    const streak = computeStreak(games, predicate);
+    if (!streak) return null;
 
-    for (let i = 0; i < games.length; i++) {
-      if (predicate(games[i])) {
-        if (currentLen === 0) currentStart = i;
-        currentLen++;
-        if (currentLen > maxLen) {
-          maxLen = currentLen;
-          maxStart = currentStart;
-          maxEnd = i;
-        }
-      } else {
-        currentLen = 0;
-      }
-    }
-
-    if (maxLen === 0) return null;
     return {
       userName: games[0].userName,
+      userId: games[0].userId,
       year: games[0].year,
       leagueName: games[0].leagueName,
-      length: maxLen,
-      startWeek: games[maxStart].week,
-      endWeek: games[maxEnd].week,
+      length: streak.length,
+      startWeek: games[streak.startIndex].week,
+      endWeek: games[streak.endIndex].week,
     };
   }
 
@@ -620,13 +485,13 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
   const streak100: StreakInfo[] = [];
 
   for (const [, games] of teamGameMap) {
-    const ws = computeStreak(games, g => g.result === 'W');
+    const ws = longestStreak(games, g => g.result === 'W');
     if (ws) winStreaks.push(ws);
 
-    const ls = computeStreak(games, g => g.result === 'L');
+    const ls = longestStreak(games, g => g.result === 'L');
     if (ls) lossStreaks.push(ls);
 
-    const s100 = computeStreak(games, g => g.pointsScored >= 100);
+    const s100 = longestStreak(games, g => g.pointsScored >= 100);
     if (s100) streak100.push(s100);
   }
 
@@ -636,6 +501,7 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
 
   const makeStreakRows = (streaks: StreakInfo[]): RecordRow[] =>
     streaks.slice(0, TOP_N).map(s => ({
+      playerUserId: s.userId ?? undefined,
       cells: [
         s.userName,
         s.length.toString(),
@@ -662,6 +528,110 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
       title: 'Longest 100+ Point Streak',
       headers: ['Player', 'Games', 'Span', 'League'],
       rows: makeStreakRows(streak100),
+    },
+  ];
+}
+
+/**
+ * League postseason records, built from the synced brackets.
+ *
+ * Only games flagged `countsTowardRecord` move a playoff win/loss record, so
+ * placement games like the third-place game are excluded - consistent with how
+ * the league counts them.
+ */
+export async function getPlayoffRecords(): Promise<RecordTable[]> {
+  const games = await prisma.playoffGame.findMany({
+    include: {
+      topTeam: {
+        select: { userId: true, user: { select: { discordName: true } } },
+      },
+      bottomTeam: {
+        select: { userId: true, user: { select: { discordName: true } } },
+      },
+      winningTeam: {
+        select: { userId: true, user: { select: { discordName: true } } },
+      },
+    },
+  });
+
+  const stats = Array.from(aggregatePlayoffStats(games).values());
+
+  const playoffWinPct = (s: (typeof stats)[number]) => {
+    const played = s.wins + s.losses;
+    return played > 0 ? ((s.wins / played) * 100).toFixed(1) + '%' : '0%';
+  };
+
+  return [
+    {
+      title: 'Most League Championships',
+      headers: ['Player', 'Championships', 'Playoff Record', 'Appearances'],
+      rows: [...stats]
+        .filter(s => s.championships > 0)
+        .sort((a, b) => b.championships - a.championships || b.wins - a.wins)
+        .slice(0, TOP_N)
+        .map(s => ({
+          playerUserId: s.userId,
+          cells: [
+            s.name,
+            s.championships.toString(),
+            `${s.wins}-${s.losses}`,
+            s.appearances.toString(),
+          ],
+        })),
+    },
+    {
+      title: 'Most Playoff Appearances',
+      headers: ['Player', 'Appearances', 'Playoff Record', 'Championships'],
+      rows: [...stats]
+        .filter(s => s.appearances > 0)
+        .sort(
+          (a, b) =>
+            b.appearances - a.appearances || b.championships - a.championships,
+        )
+        .slice(0, TOP_N)
+        .map(s => ({
+          playerUserId: s.userId,
+          cells: [
+            s.name,
+            s.appearances.toString(),
+            `${s.wins}-${s.losses}`,
+            s.championships.toString(),
+          ],
+        })),
+    },
+    {
+      title: 'Most Playoff Wins',
+      headers: ['Player', 'Wins', 'Playoff Record', 'Win %'],
+      rows: [...stats]
+        .filter(s => s.wins > 0)
+        .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
+        .slice(0, TOP_N)
+        .map(s => ({
+          playerUserId: s.userId,
+          cells: [
+            s.name,
+            s.wins.toString(),
+            `${s.wins}-${s.losses}`,
+            playoffWinPct(s),
+          ],
+        })),
+    },
+    {
+      title: 'Most Toilet Bowls',
+      headers: ['Player', 'Toilet Bowls', 'Championships', 'Appearances'],
+      rows: [...stats]
+        .filter(s => s.toiletBowls > 0)
+        .sort((a, b) => b.toiletBowls - a.toiletBowls)
+        .slice(0, TOP_N)
+        .map(s => ({
+          playerUserId: s.userId,
+          cells: [
+            s.name,
+            s.toiletBowls.toString(),
+            s.championships.toString(),
+            s.appearances.toString(),
+          ],
+        })),
     },
   ];
 }
