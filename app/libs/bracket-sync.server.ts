@@ -41,7 +41,12 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
       continue;
     }
 
-    const entries = sleeperBracketJson.parse(await res.json());
+    // Before a bracket is generated Sleeper answers 200 with a null body rather
+    // than a 404, so this is the ordinary in-season case, not a failure.
+    const body = await res.json();
+    if (body === null) continue;
+
+    const entries = sleeperBracketJson.parse(body);
     const { games } = classifyBracket(entries, bracket);
 
     for (const game of games) {

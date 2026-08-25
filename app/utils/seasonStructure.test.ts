@@ -1,6 +1,7 @@
 import {
   historicalPlayoffWeekStart,
   isRegularSeasonWeek,
+  isUsablePlayoffWeekStart,
   leaguePlayedMedianGames,
 } from './seasonStructure';
 import { describe, expect, it } from 'vitest';
@@ -50,6 +51,26 @@ describe('isRegularSeasonWeek', () => {
     ).toBe(false);
   });
 
+  // Sleeper can report 0 for a league whose playoffs were never configured.
+  // `??` accepts it happily, and `week < 0` is false for every week - so the
+  // whole season silently became postseason.
+  it('ignores a zero playoff start rather than voiding the season', () => {
+    for (const week of [1, 5, 13]) {
+      expect(
+        isRegularSeasonWeek({ week, year: 2024, playoffWeekStart: 0 }),
+      ).toBe(true);
+    }
+    expect(
+      isRegularSeasonWeek({ week: 15, year: 2024, playoffWeekStart: 0 }),
+    ).toBe(false);
+  });
+
+  it('ignores a negative playoff start', () => {
+    expect(
+      isRegularSeasonWeek({ week: 3, year: 2024, playoffWeekStart: -1 }),
+    ).toBe(true);
+  });
+
   it('treats undefined the same as null', () => {
     expect(
       isRegularSeasonWeek({
@@ -84,5 +105,19 @@ describe('leaguePlayedMedianGames', () => {
 
   it('is false for a league with no teams yet', () => {
     expect(leaguePlayedMedianGames([])).toBe(false);
+  });
+});
+
+describe('isUsablePlayoffWeekStart', () => {
+  it('accepts a real week', () => {
+    expect(isUsablePlayoffWeekStart(15)).toBe(true);
+  });
+
+  it('rejects the values that would void a season', () => {
+    expect(isUsablePlayoffWeekStart(0)).toBe(false);
+    expect(isUsablePlayoffWeekStart(-1)).toBe(false);
+    expect(isUsablePlayoffWeekStart(null)).toBe(false);
+    expect(isUsablePlayoffWeekStart(undefined)).toBe(false);
+    expect(isUsablePlayoffWeekStart(14.5)).toBe(false);
   });
 });

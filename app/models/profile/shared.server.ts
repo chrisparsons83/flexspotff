@@ -115,6 +115,12 @@ type PairableGame = {
   team: { leagueId: string };
 };
 
+/**
+ * Stand-in `sleeperMatchupId` for a team-week with no opponent. Written by
+ * `syncSleeperWeeklyScores` when Sleeper reports a null matchup id.
+ */
+export const NO_MATCHUP = -1;
+
 export type PairedGame<T extends PairableGame> = {
   game: T;
   opponent: T;
@@ -135,6 +141,11 @@ export function pairTeamGames<T extends PairableGame>(
   const matchups = new Map<string, T[]>();
 
   for (const game of games) {
+    // The sync writes NO_MATCHUP when Sleeper reports no opponent - a bye, or a
+    // team sitting out the postseason. Those rows share a key, so two of them in
+    // one league-week would otherwise pair into a game nobody played.
+    if (game.sleeperMatchupId === NO_MATCHUP) continue;
+
     const key = `${game.team.leagueId}:${game.week}:${game.sleeperMatchupId}`;
     const group = matchups.get(key);
     if (group) {

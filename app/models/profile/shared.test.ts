@@ -163,6 +163,15 @@ describe('pairTeamGames', () => {
     expect(pairTeamGames([game('a', 1, 1, 120)])).toEqual([]);
   });
 
+  // Sleeper reports no matchup id for a bye or a team sitting out the
+  // postseason, and the sync stores -1. Two such rows in one league-week share
+  // a key and would otherwise pair into a game that never happened.
+  it('never pairs teams that had no opponent', () => {
+    expect(pairTeamGames([game('a', 15, -1, 0), game('b', 15, -1, 0)])).toEqual(
+      [],
+    );
+  });
+
   it('drops a group with more than two teams', () => {
     const paired = pairTeamGames([
       game('a', 1, 1, 120),

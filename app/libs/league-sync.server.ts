@@ -12,7 +12,10 @@ import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-import { leaguePlayedMedianGames } from '~/utils/seasonStructure';
+import {
+  isUsablePlayoffWeekStart,
+  leaguePlayedMedianGames,
+} from '~/utils/seasonStructure';
 
 /**
  * Syncs a single league with Sleeper API data
@@ -153,13 +156,25 @@ export async function syncLeague(
  */
 export async function syncLeagueSeasonStructure(league: League): Promise<void> {
   const teams = await getTeams(league.id);
-  const hasMedianScoring = leaguePlayedMedianGames(teams);
+
+  // Median results only appear in `metadata.record` once games have been
+  // played, so early in a season this reads false for a league that does play
+  // them. Once known to be true it stays true, rather than flickering back and
+  // hiding a member's median record mid-season.
+  const hasMedianScoring =
+    league.hasMedianScoring || leaguePlayedMedianGames(teams);
 
   let playoffWeekStart: number | null = league.playoffWeekStart;
   try {
     const sleeperLeague = await getLeagueInfo(league.sleeperLeagueId);
-    playoffWeekStart =
-      sleeperLeague.settings?.playoff_week_start ?? playoffWeekStart;
+    const reported = sleeperLeague.settings?.playoff_week_start;
+    if (isUsablePlayoffWeekStart(reported)) {
+      playoffWeekStart = reported;
+    } else if (reported !== undefined && reported !== null) {
+      console.warn(
+        `Ignoring implausible playoff_week_start ${reported} for league ${league.name} ${league.year}`,
+      );
+    }
   } catch (error) {
     console.warn(
       `Could not read Sleeper settings for league ${league.name}:`,
