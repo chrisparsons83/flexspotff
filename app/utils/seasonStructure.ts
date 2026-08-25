@@ -36,8 +36,25 @@ export function isRegularSeasonWeek({
   year: number;
   playoffWeekStart: number | null | undefined;
 }): boolean {
-  const boundary = playoffWeekStart ?? historicalPlayoffWeekStart(year);
+  // A boundary of zero or less cannot be real, and `??` would happily accept it
+  // and mark the entire season as playoffs. Anything non-positive is treated as
+  // "not synced" so the historical rule applies instead.
+  const boundary = isUsablePlayoffWeekStart(playoffWeekStart)
+    ? playoffWeekStart
+    : historicalPlayoffWeekStart(year);
   return week < boundary;
+}
+
+/**
+ * Whether a value from Sleeper is a believable playoff start week.
+ *
+ * Sleeper can report `0` for a league whose playoffs were never configured, and
+ * storing that would silently reclassify every game of the season.
+ */
+export function isUsablePlayoffWeekStart(
+  value: number | null | undefined,
+): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
 /**

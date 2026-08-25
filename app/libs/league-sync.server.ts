@@ -5,7 +5,10 @@ import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { getUsersIncludingMerged } from '~/models/user.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-import { leaguePlayedMedianGames } from '~/utils/seasonStructure';
+import {
+  isUsablePlayoffWeekStart,
+  leaguePlayedMedianGames,
+} from '~/utils/seasonStructure';
 import {
   sleeperTeamJson,
   sleeperDraftJson,
@@ -178,7 +181,13 @@ export async function syncLeague(league: League): Promise<void> {
  */
 export async function syncLeagueSeasonStructure(league: League): Promise<void> {
   const teams = await getTeams(league.id);
-  const hasMedianScoring = leaguePlayedMedianGames(teams);
+
+  // Median results only appear in `metadata.record` once games have been
+  // played, so early in a season this reads false for a league that does play
+  // them. Once known to be true it stays true, rather than flickering back and
+  // hiding a member's median record mid-season.
+  const hasMedianScoring =
+    league.hasMedianScoring || leaguePlayedMedianGames(teams);
 
   let playoffWeekStart: number | null = league.playoffWeekStart;
   try {
@@ -189,8 +198,14 @@ export async function syncLeagueSeasonStructure(league: League): Promise<void> {
       const sleeperLeague: SleeperLeagueJson = sleeperLeagueJson.parse(
         await res.json(),
       );
-      playoffWeekStart =
-        sleeperLeague.settings?.playoff_week_start ?? playoffWeekStart;
+      const reported = sleeperLeague.settings?.playoff_week_start;
+      if (isUsablePlayoffWeekStart(reported)) {
+        playoffWeekStart = reported;
+      } else if (reported !== undefined) {
+        console.warn(
+          `Ignoring implausible playoff_week_start ${reported} for league ${league.name} ${league.year}`,
+        );
+      }
     } else {
       console.warn(
         `Could not read Sleeper settings for league ${league.name}: HTTP ${res.status}`,

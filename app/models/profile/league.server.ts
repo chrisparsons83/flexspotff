@@ -186,8 +186,13 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
   ]);
 
   const teamIds = new Set(teams.map(team => team.id));
-  const mine = pairTeamGames(leagueGames).filter(pair =>
-    teamIds.has(pair.game.teamId),
+  const mine = pairTeamGames(leagueGames).filter(
+    pair =>
+      teamIds.has(pair.game.teamId) &&
+      // Rows are created when a week opens and only score as games finish, so
+      // an untouched week would otherwise show up as a 0.00-0.00 tie in the
+      // game log and in the head-to-head record.
+      hasBeenPlayed(pair.game.pointsScored, pair.opponent.pointsScored),
   );
 
   const gameLog: GameLogRow[] = mine
@@ -215,6 +220,11 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
     playoffs: buildPlayoffs(userId, playoffGames),
     highlights: buildHighlights(gameLog),
   };
+}
+
+/** Both sides on zero means the week has not been scored yet. */
+function hasBeenPlayed(points: number, opponentPoints: number): boolean {
+  return points > 0 || opponentPoints > 0;
 }
 
 function emptyProfile(): LeagueProfile {
