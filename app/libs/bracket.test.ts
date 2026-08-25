@@ -1,8 +1,5 @@
-import {
-  classifyBracket,
-  detectAdvancementDirection,
-  type SleeperBracketEntry,
-} from './bracket';
+import { classifyBracket, type SleeperBracketEntry } from './bracket';
+import fs from 'fs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -49,13 +46,16 @@ const sixTeamBracket: SleeperBracketEntry[] = [
 const byMatchup = (bracket: ReturnType<typeof classifyBracket>) =>
   new Map(bracket.games.map(game => [game.matchupId, game]));
 
+const fixture = (name: string): SleeperBracketEntry[] =>
+  JSON.parse(fs.readFileSync(`test/fixtures/sleeper/${name}.json`, 'utf8'));
+
 describe('classifyBracket', () => {
   it('returns every game, consolation games included', () => {
-    expect(classifyBracket(sixTeamBracket).games).toHaveLength(6);
+    expect(classifyBracket(sixTeamBracket, 'WINNERS').games).toHaveLength(6);
   });
 
   it('marks only the p:1 game as the title game', () => {
-    const games = byMatchup(classifyBracket(sixTeamBracket));
+    const games = byMatchup(classifyBracket(sixTeamBracket, 'WINNERS'));
 
     expect(games.get(5)!.isTitleGame).toBe(true);
     expect(games.get(6)!.isTitleGame).toBe(false);
@@ -63,7 +63,7 @@ describe('classifyBracket', () => {
   });
 
   it('counts the final and every game feeding it', () => {
-    const games = byMatchup(classifyBracket(sixTeamBracket));
+    const games = byMatchup(classifyBracket(sixTeamBracket, 'WINNERS'));
 
     // Final, both semifinals, and both first-round games that fed them.
     expect(games.get(5)!.countsTowardRecord).toBe(true);
@@ -76,14 +76,14 @@ describe('classifyBracket', () => {
   // The rule the league actually asked for: winning the third-place game is not
   // a playoff win. It is reached by losing, so the `w`-only walk excludes it.
   it('excludes the third-place game even though it shares the final round', () => {
-    const games = byMatchup(classifyBracket(sixTeamBracket));
+    const games = byMatchup(classifyBracket(sixTeamBracket, 'WINNERS'));
 
     expect(games.get(6)!.countsTowardRecord).toBe(false);
     expect(games.get(6)!.placement).toBe(3);
   });
 
   it('carries roster ids and results through', () => {
-    const final = byMatchup(classifyBracket(sixTeamBracket)).get(5)!;
+    const final = byMatchup(classifyBracket(sixTeamBracket, 'WINNERS')).get(5)!;
 
     expect(final).toMatchObject({
       round: 3,
@@ -96,10 +96,13 @@ describe('classifyBracket', () => {
   });
 
   it('handles an unplayed game with no winner yet', () => {
-    const { games } = classifyBracket([
-      { r: 1, m: 1, t1: 3, t2: 6 },
-      { r: 2, m: 2, t1_from: { w: 1 }, p: 1 },
-    ]);
+    const { games } = classifyBracket(
+      [
+        { r: 1, m: 1, t1: 3, t2: 6 },
+        { r: 2, m: 2, t1_from: { w: 1 }, p: 1 },
+      ],
+      'WINNERS',
+    );
 
     expect(games[0]).toMatchObject({
       winningRosterId: null,
@@ -115,20 +118,23 @@ describe('classifyBracket', () => {
   // Not every bracket carries placement markers.
   it('falls back to the last round when no game is flagged p:1', () => {
     const games = byMatchup(
-      classifyBracket([
-        { r: 1, m: 1, t1: 1, t2: 4, w: 1, l: 4 },
-        { r: 1, m: 2, t1: 2, t2: 3, w: 2, l: 3 },
-        {
-          r: 2,
-          m: 3,
-          t1: 1,
-          t2: 2,
-          w: 1,
-          l: 2,
-          t1_from: { w: 1 },
-          t2_from: { w: 2 },
-        },
-      ]),
+      classifyBracket(
+        [
+          { r: 1, m: 1, t1: 1, t2: 4, w: 1, l: 4 },
+          { r: 1, m: 2, t1: 2, t2: 3, w: 2, l: 3 },
+          {
+            r: 2,
+            m: 3,
+            t1: 1,
+            t2: 2,
+            w: 1,
+            l: 2,
+            t1_from: { w: 1 },
+            t2_from: { w: 2 },
+          },
+        ],
+        'WINNERS',
+      ),
     );
 
     expect(games.get(3)!.isTitleGame).toBe(true);
@@ -137,17 +143,20 @@ describe('classifyBracket', () => {
   });
 
   it('returns nothing for an empty bracket', () => {
-    expect(classifyBracket([]).games).toEqual([]);
+    expect(classifyBracket([], 'WINNERS').games).toEqual([]);
   });
 
   // A bye means the title path is shorter on one side; the other side must
   // still be walked in full.
   it('walks past a bye without losing the other half of the bracket', () => {
     const games = byMatchup(
-      classifyBracket([
-        { r: 1, m: 1, t1: 2, t2: 3, w: 2, l: 3 },
-        { r: 2, m: 2, t1: 1, t2: 2, w: 1, l: 2, t2_from: { w: 1 }, p: 1 },
-      ]),
+      classifyBracket(
+        [
+          { r: 1, m: 1, t1: 2, t2: 3, w: 2, l: 3 },
+          { r: 2, m: 2, t1: 1, t2: 2, w: 1, l: 2, t2_from: { w: 1 }, p: 1 },
+        ],
+        'WINNERS',
+      ),
     );
 
     expect(games.get(1)!.countsTowardRecord).toBe(true);
@@ -156,9 +165,10 @@ describe('classifyBracket', () => {
 
   // External data: a malformed bracket must not hang the sync.
   it('terminates on a bracket that points at itself', () => {
-    const { games } = classifyBracket([
-      { r: 1, m: 1, t1_from: { w: 1 }, p: 1 },
-    ]);
+    const { games } = classifyBracket(
+      [{ r: 1, m: 1, t1_from: { w: 1 }, p: 1 }],
+      'WINNERS',
+    );
 
     expect(games).toHaveLength(1);
     expect(games[0].countsTowardRecord).toBe(true);
@@ -166,146 +176,135 @@ describe('classifyBracket', () => {
 
   // A dangling _from reference should be ignored rather than throw.
   it('ignores a reference to a game that is not in the bracket', () => {
-    const { games } = classifyBracket([
-      { r: 2, m: 2, t1_from: { w: 99 }, t2_from: { w: 98 }, p: 1 },
-    ]);
+    const { games } = classifyBracket(
+      [{ r: 2, m: 2, t1_from: { w: 99 }, t2_from: { w: 98 }, p: 1 }],
+      'WINNERS',
+    );
 
     expect(games[0].countsTowardRecord).toBe(true);
   });
 });
 
 /**
- * The sacko bracket, wired the way a bracket looks when the *loser* moves on:
- * every link is `{l: n}`. You reach the sacko final by scoring least, and the
- * member who scores least there gets the sacko.
+ * Real payloads, captured from Sleeper for the 2018 Champions league
+ * (`335507311525122048`). Twelve teams, six playoff spots, so the winners
+ * bracket decides places 1-6 and the losers bracket decides 7-12.
  *
- *   m1 (5 beats 6)  ┐ loser 6 advances
- *                   ├─ m3 sacko final: 6 outscores 4, so 4 gets the sacko
- *   m2 (3 beats 4)  ┘ loser 4 advances
+ * These are the authority: the classifier was rewritten after these showed the
+ * previous reading of the losers bracket was wrong.
  */
-const sackoBracket: SleeperBracketEntry[] = [
-  { r: 1, m: 1, t1: 5, t2: 6, w: 5, l: 6 },
-  { r: 1, m: 2, t1: 3, t2: 4, w: 3, l: 4 },
-  {
-    r: 2,
-    m: 3,
-    t1: 6,
-    t2: 4,
-    w: 6,
-    l: 4,
-    t1_from: { l: 1 },
-    t2_from: { l: 2 },
-    p: 1,
-  },
-];
+describe('classifyBracket against real Sleeper brackets', () => {
+  const winners = fixture('winners-bracket-2018-champions');
+  const losers = fixture('losers-bracket-2018-champions');
 
-describe('detectAdvancementDirection', () => {
-  it('reads a winners bracket as advancing the winner', () => {
-    expect(detectAdvancementDirection(sixTeamBracket)).toBe('w');
+  describe('winners bracket', () => {
+    const games = byMatchup(classifyBracket(winners, 'WINNERS'));
+
+    it('crowns the winner of the p:1 game', () => {
+      expect(games.get(6)!.isTitleGame).toBe(true);
+      expect(games.get(6)!.advancingRosterId).toBe(4);
+    });
+
+    it('counts the title run and nothing else', () => {
+      for (const m of [1, 2, 3, 4, 6]) {
+        expect(games.get(m)!.countsTowardRecord).toBe(true);
+      }
+    });
+
+    // Reached by losing a semifinal, so neither counts - the rule the league
+    // asked for.
+    it('excludes the third and fifth place games', () => {
+      expect(games.get(7)!.placement).toBe(3);
+      expect(games.get(7)!.countsTowardRecord).toBe(false);
+      expect(games.get(5)!.placement).toBe(5);
+      expect(games.get(5)!.countsTowardRecord).toBe(false);
+    });
   });
 
-  it('reads a sacko bracket as advancing the loser', () => {
-    expect(detectAdvancementDirection(sackoBracket)).toBe('l');
+  describe('losers bracket', () => {
+    const games = byMatchup(classifyBracket(losers, 'LOSERS'));
+
+    /**
+     * The heart of it. Placement numbering restarts per bracket, so this
+     * bracket's p:1 decides *seventh* - the best of the teams who missed the
+     * playoffs. Roster 10 wins that game and is emphatically not the sacko.
+     */
+    it('does not treat the p:1 winner as the sacko', () => {
+      expect(games.get(6)!.placement).toBe(1);
+      expect(games.get(6)!.isTitleGame).toBe(false);
+      expect(games.get(6)!.winningRosterId).toBe(10);
+    });
+
+    it('gives the sacko to the loser of the highest placement game', () => {
+      const sackoGame = games.get(5)!;
+
+      expect(sackoGame.placement).toBe(5);
+      expect(sackoGame.isTitleGame).toBe(true);
+      expect(sackoGame.winningRosterId).toBe(6);
+      // Roster 8 lost it, so roster 8 finished twelfth of twelve.
+      expect(sackoGame.advancingRosterId).toBe(8);
+    });
+
+    // Roster 8 lost m1, which fed m5 via `t1_from: {l: 1}`, then lost m5. The
+    // road to the sacko really is the losing road.
+    it('counts the defeats that carried the sacko there', () => {
+      expect(games.get(1)!.countsTowardRecord).toBe(true);
+      expect(games.get(2)!.countsTowardRecord).toBe(true);
+      expect(games.get(5)!.countsTowardRecord).toBe(true);
+    });
+
+    it('excludes the games deciding seventh through tenth', () => {
+      for (const m of [3, 4, 6, 7]) {
+        expect(games.get(m)!.countsTowardRecord).toBe(false);
+      }
+    });
+
+    it('advances the loser of every game toward the bottom', () => {
+      expect(games.get(1)!.advancingRosterId).toBe(8);
+      expect(games.get(2)!.advancingRosterId).toBe(6);
+    });
   });
 
-  it('defaults to winner when there is nothing to go on', () => {
-    expect(detectAdvancementDirection([{ r: 1, m: 1, t1: 1, t2: 2 }])).toBe(
-      'w',
-    );
-    expect(detectAdvancementDirection([])).toBe('w');
-  });
+  // Every placement game covers two finishing spots, and across both brackets
+  // they must account for all twelve teams exactly once. This is what proves
+  // p:1 in the losers bracket means seventh rather than last.
+  it('accounts for all twelve places exactly once', () => {
+    // The winners bracket decides places 1-6 directly. The losers bracket
+    // restarts its numbering, so its places sit six lower - which is exactly
+    // why its p:1 is seventh overall and not first.
+    const PLAYOFF_TEAMS = 6;
+    const absolute = (
+      games: ReturnType<typeof classifyBracket>['games'],
+      offset: number,
+    ) =>
+      games
+        .filter(game => game.placement !== null)
+        .flatMap(game => [
+          game.placement! + offset,
+          game.placement! + offset + 1,
+        ]);
 
-  // Teams enter the sacko bracket by losing a winners-bracket game, so its
-  // opening round carries `{l: n}` refs pointing at a different bracket. Those
-  // must not be counted, or every bracket would look loser-advancing.
-  it('ignores links that point outside this bracket', () => {
-    const enteredByLosing: SleeperBracketEntry[] = [
-      { r: 1, m: 1, t1: 5, t2: 6, w: 5, l: 6, t1_from: { l: 91 } },
-      { r: 1, m: 2, t1: 3, t2: 4, w: 3, l: 4, t2_from: { l: 92 } },
-      {
-        r: 2,
-        m: 3,
-        t1: 5,
-        t2: 3,
-        w: 5,
-        l: 3,
-        t1_from: { w: 1 },
-        t2_from: { w: 2 },
-      },
-    ];
+    const places = [
+      ...absolute(classifyBracket(winners, 'WINNERS').games, 0),
+      ...absolute(classifyBracket(losers, 'LOSERS').games, PLAYOFF_TEAMS),
+    ].sort((a, b) => a - b);
 
-    expect(detectAdvancementDirection(enteredByLosing)).toBe('w');
+    expect(places).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 });
 
-describe('classifyBracket, sacko bracket', () => {
-  it('advances the lower scorer', () => {
-    const bracket = classifyBracket(sackoBracket);
-    const games = byMatchup(bracket);
-
-    expect(bracket.direction).toBe('l');
-    // 5 outscored 6, so 6 is the one who moves on toward the sacko.
-    expect(games.get(1)!.advancingRosterId).toBe(6);
-    expect(games.get(2)!.advancingRosterId).toBe(4);
-  });
-
-  // The whole point: the sacko goes to whoever scored least in the final, not
-  // to the team Sleeper records as that game's winner.
-  it('gives the sacko to the lowest scorer in the final', () => {
-    const final = byMatchup(classifyBracket(sackoBracket)).get(3)!;
-
-    expect(final.isTitleGame).toBe(true);
-    expect(final.winningRosterId).toBe(6);
-    expect(final.advancingRosterId).toBe(4);
-  });
-
-  it('counts the games that led to the sacko', () => {
-    const games = byMatchup(classifyBracket(sackoBracket));
-
-    expect(games.get(1)!.countsTowardRecord).toBe(true);
-    expect(games.get(2)!.countsTowardRecord).toBe(true);
-    expect(games.get(3)!.countsTowardRecord).toBe(true);
-  });
-
-  // A sacko bracket that Sleeper happens to wire by winner must still land on
-  // the right game - that is what detecting the direction buys.
-  it('handles a losers bracket wired by winner without a flag', () => {
-    const bracket = classifyBracket([
-      { r: 1, m: 1, t1: 5, t2: 6, w: 5, l: 6 },
-      { r: 2, m: 2, t1: 5, t2: 3, w: 3, l: 5, t1_from: { w: 1 }, p: 1 },
-    ]);
-
-    expect(bracket.direction).toBe('w');
-    const games = byMatchup(bracket);
-    expect(games.get(2)!.isTitleGame).toBe(true);
-    expect(games.get(2)!.advancingRosterId).toBe(3);
-  });
-});
-
-describe('classifyBracket, finding the final', () => {
-  // Placement numbering in a losers bracket is ambiguous, so the final is the
-  // game nothing advances out of - not whichever game carries p: 1.
-  it('prefers the terminal game over a misleading p:1', () => {
-    const games = byMatchup(
-      classifyBracket([
-        // p:1 here would mean "best of the rest", not the last game played.
-        { r: 1, m: 1, t1: 1, t2: 2, w: 1, l: 2, p: 1 },
-        { r: 2, m: 2, t1: 1, t2: 3, w: 1, l: 3, t1_from: { w: 1 } },
-      ]),
-    );
-
-    expect(games.get(2)!.isTitleGame).toBe(true);
-    expect(games.get(1)!.isTitleGame).toBe(false);
-  });
-
-  it('falls back to the highest round when no game carries p', () => {
-    const games = byMatchup(
-      classifyBracket([
+describe('classifyBracket, a losers bracket with no placement markers', () => {
+  // Crediting the wrong member with the sacko is worse than crediting nobody.
+  it('names no sacko rather than guessing', () => {
+    const { games } = classifyBracket(
+      [
         { r: 1, m: 1, t1: 1, t2: 2, w: 1, l: 2 },
-        { r: 3, m: 2, t1: 1, t2: 3, w: 1, l: 3 },
-      ]),
+        { r: 2, m: 2, t1: 1, t2: 3, w: 1, l: 3, t1_from: { l: 1 } },
+      ],
+      'LOSERS',
     );
 
-    expect(games.get(2)!.isTitleGame).toBe(true);
+    expect(games.some(game => game.isTitleGame)).toBe(false);
+    expect(games.every(game => !game.countsTowardRecord)).toBe(true);
   });
 });
