@@ -1,10 +1,20 @@
 import {
+  BADGE_DEFINITIONS,
+  SIDE_GAME_KEYS,
+  makeBadge,
+  makeSideGameBadge,
+  type Badge,
+} from './badges';
+import {
   aggregatePlayoffStats,
   computeStreak,
   pairTeamGames,
   winPct,
 } from './shared.server';
+import { getSideGameTitles } from './sideGameTitles.server';
 import { prisma } from '~/db.server';
+
+export type { Badge } from './badges';
 
 /**
  * The profile hero: who this is, their career headline numbers, and their
@@ -14,23 +24,6 @@ import { prisma } from '~/db.server';
  * narrowest of the profile aggregations - counts and sums, no game logs. If
  * profiles ever need caching, this is the function to cache.
  */
-
-/** A 200 point week is rare enough to be worth calling out. */
-const BIG_WEEK_POINTS = 200;
-
-/** Long enough to be a run rather than a hot fortnight. */
-const NOTABLE_STREAK = 6;
-
-/** Playing this many different contests makes someone a regular everywhere. */
-const MULTI_SPORT_CONTESTS = 4;
-
-export type Badge = {
-  key: string;
-  label: string;
-  emoji: string;
-  count?: number;
-  description: string;
-};
 
 export type ProfileSummary = {
   user: {
@@ -66,15 +59,13 @@ export async function getProfileSummary(
     playoffGames,
     cupFinalWins,
     cupSeasons,
-    bigWeeks,
-    episodeCount,
+    bestWeek,
     d12Count,
     qbCount,
     poolCount,
     locksCount,
     dfsCount,
     fSquaredCount,
-    omniCount,
   ] = await Promise.all([
     prisma.team.findMany({
       where: { userId },
@@ -102,17 +93,16 @@ export async function getProfileSummary(
       where: { round: 'ROUND_OF_2', winningTeam: { team: { userId } } },
     }),
     prisma.cupTeam.count({ where: { team: { userId } } }),
-    prisma.teamGame.count({
-      where: { team: { userId }, pointsScored: { gte: BIG_WEEK_POINTS } },
+    prisma.teamGame.aggregate({
+      where: { team: { userId } },
+      _max: { pointsScored: true },
     }),
-    prisma.episode.count({ where: { authorId: userId } }),
     prisma.d12WeekScore.count({ where: { userId } }),
     prisma.qBSelection.count({ where: { userId } }),
     prisma.poolGamePick.count({ where: { userId } }),
     prisma.locksGamePick.count({ where: { userId } }),
     prisma.dFSSurvivorUserYear.count({ where: { userId } }),
     prisma.fSquaredEntry.count({ where: { userId } }),
-    prisma.omniUserTeam.count({ where: { userId } }),
   ]);
 
   const career = teams.reduce(
@@ -133,19 +123,6 @@ export async function getProfileSummary(
   const latest = seasons[0] ?? null;
   const championsSeasons = teams.filter(team => team.league.tier === 1).length;
 
-  // The tiers are ordered so that 1 is the top league; moving to a lower number
-  // is a promotion.
-  const chronological = [...teams].sort(
-    (a, b) => a.league.year - b.league.year,
-  );
-  const promotions = chronological.reduce(
-    (count, team, index) =>
-      index > 0 && team.league.tier < chronological[index - 1].league.tier
-        ? count + 1
-        : count,
-    0,
-  );
-
   const contestsPlayed = [
     teams.length > 0 && 'league',
     cupSeasons > 0 && 'cup',
@@ -155,104 +132,26 @@ export async function getProfileSummary(
     locksCount > 0 && 'locks',
     dfsCount > 0 && 'dfs-survivor',
     fSquaredCount > 0 && 'f-squared',
-    omniCount > 0 && 'omni',
   ].filter((value): value is string => typeof value === 'string');
 
-  const badges: Badge[] = [];
-  const add = (badge: Badge) => badges.push(badge);
+  const [longestStreak, titles] = await Promise.all([
+    getLongestWinStreak(userId),
+    getSideGameTitles(userId),
+  ]);
 
-  if (championships > 0) {
-    add({
-      key: 'league-champion',
-      label: 'League Champion',
-      emoji: '🏆',
-      count: championships,
-      description: 'Won a league championship',
-    });
-  }
-  if (cupFinalWins > 0) {
-    add({
-      key: 'cup-champion',
-      label: 'Cup Champion',
-      emoji: '🥇',
-      count: cupFinalWins,
-      description: 'Won the Cup',
-    });
-  }
-  if (championsSeasons > 0) {
-    add({
-      key: 'champions-league',
-      label: 'Champions League',
-      emoji: '👑',
-      count: championsSeasons,
-      description: 'Played a season in the top tier',
-    });
-  }
-  if (promotions > 0) {
-    add({
-      key: 'climber',
-      label: 'Climber',
-      emoji: '📈',
-      count: promotions,
-      description: 'Promoted to a higher tier',
-    });
-  }
-  if (sackos > 0) {
-    add({
-      key: 'sacko',
-      label: 'Sacko',
-      emoji: '🚽',
-      count: sackos,
-      description: 'Finished last - scored lowest in the sacko final',
-    });
-  }
-  if (bigWeeks > 0) {
-    add({
-      key: 'big-week',
-      label: `${BIG_WEEK_POINTS}+ Point Week`,
-      emoji: '💥',
-      count: bigWeeks,
-      description: `Scored ${BIG_WEEK_POINTS} or more in a week`,
-    });
-  }
-  if (teams.length > 0) {
-    add({
-      key: 'seasons',
-      label: 'Seasons Played',
-      emoji: '📅',
-      count: teams.length,
-      description: 'Seasons in the redraft league',
-    });
-  }
-  if (episodeCount > 0) {
-    add({
-      key: 'podcast',
-      label: 'Podcast Host',
-      emoji: '🎙️',
-      count: episodeCount,
-      description: 'Recorded podcast episodes',
-    });
-  }
-  if (contestsPlayed.length >= MULTI_SPORT_CONTESTS) {
-    add({
-      key: 'multi-sport',
-      label: 'Multi-Sport',
-      emoji: '🎲',
-      count: contestsPlayed.length,
-      description: 'Played across many different contests',
-    });
-  }
-
-  const longestStreak = await getLongestWinStreak(userId);
-  if (longestStreak >= NOTABLE_STREAK) {
-    add({
-      key: 'streak',
-      label: 'Win Streak',
-      emoji: '🔥',
-      count: longestStreak,
-      description: 'Longest run of consecutive wins',
-    });
-  }
+  const badges = [
+    makeBadge(BADGE_DEFINITIONS.leagueChampion, championships),
+    makeBadge(BADGE_DEFINITIONS.cupChampion, cupFinalWins),
+    makeBadge(BADGE_DEFINITIONS.sacko, sackos),
+    ...SIDE_GAME_KEYS.map(game => makeSideGameBadge(game, titles[game] ?? 0)),
+    makeBadge(BADGE_DEFINITIONS.championsLeague, championsSeasons),
+    makeBadge(BADGE_DEFINITIONS.seasonsPlayed, teams.length),
+    makeBadge(
+      BADGE_DEFINITIONS.highScoringWeek,
+      bestWeek._max.pointsScored ?? 0,
+    ),
+    makeBadge(BADGE_DEFINITIONS.winStreak, longestStreak),
+  ].filter((badge): badge is Badge => badge !== null);
 
   return {
     user: {
