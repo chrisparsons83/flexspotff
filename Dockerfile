@@ -1,5 +1,5 @@
 # base node image
-FROM node:22-bullseye-slim AS base
+FROM node:22-bookworm-slim AS base
 
 ARG PROD_DATABASE_URL
 
