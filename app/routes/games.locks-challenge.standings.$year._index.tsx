@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { DateTime } from 'luxon';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import {
   getLocksGamePicksWonLoss,
   getLocksGamePicksWonLossWeek,
@@ -13,6 +13,8 @@ import {
 } from '~/models/locksweek.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
+import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import { getCurrentTime } from '~/utils/time';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const yearParam = params.year;
@@ -24,19 +26,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   // Get the most active week
   const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
 
-  const nextSunday = DateTime.now()
-    .setZone('America/New_York')
-    .minus({ day: 1 })
-    .set({ weekday: 7, hour: 13, minute: 0, second: 0 })
-    .toJSDate();
+  const now = getCurrentTime();
 
-  // Get current picks for the week
+  // Get current picks for the week. A pick is public once its game has kicked
+  // off, or once the whole week has locked at 1PM ET on its Sunday. The cutoff
+  // comes from the week's full game list rather than the picks, because scoring
+  // deletes the inactive pick rows and would leave a partial slate behind.
+  const weekLocked =
+    !!currentWeek &&
+    isLocksWeekLocked(
+      getLocksWeekCutoff(
+        (
+          await getLocksGamesByYearAndWeek(
+            currentWeek.year,
+            currentWeek.weekNumber,
+          )
+        ).map(({ game }) => game),
+      ),
+      now,
+    );
   const weeklyPicks =
     currentWeek &&
     (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
       locksGamePick =>
-        (locksGamePick.locksGame.game.gameStartTime < new Date() ||
-          nextSunday < new Date()) &&
+        (locksGamePick.locksGame.game.gameStartTime < now || weekLocked) &&
         locksGamePick.isActive !== 0,
     );
 

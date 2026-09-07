@@ -20,6 +20,8 @@ import {
 import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import { getCurrentTime } from '~/utils/time';
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -40,6 +42,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     locksWeek.year,
     locksWeek.weekNumber,
   );
+
+  // Once the week's Sunday 1PM ET deadline passes the picks are frozen for
+  // good, so reject the submission before touching anything.
+  const pickCutoff = getLocksWeekCutoff(locksGames.map(({ game }) => game));
+  if (isLocksWeekLocked(pickCutoff, getCurrentTime())) {
+    return typedjson({
+      status: 'error' as const,
+      message: `Picks for week ${locksWeek.weekNumber} locked at Sunday 1:00 PM ET and can no longer be changed.`,
+    });
+  }
 
   // Create list to hold all selected teams
   const nflTeamsPicked: string[] = [];
@@ -186,7 +198,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   await deleteLocksGamePicksForUserAndWeek(user, locksWeek);
   await createLocksGamePicks(dataToInsert);
 
-  return typedjson({ message: 'Your picks have been saved.' });
+  return typedjson({
+    status: 'success' as const,
+    message: 'Your picks have been saved.',
+  });
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -211,6 +226,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       locksGames: [],
       locksGamePicks: [],
       weekNumber: locksWeekId,
+      weekLocked: false,
     });
   }
   if (!locksWeek.isOpen) {
@@ -220,6 +236,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       locksGames: [],
       locksGamePicks: [],
       weekNumber: locksWeekId,
+      weekLocked: false,
     });
   }
 
@@ -235,6 +252,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const weekNumber = locksWeek.weekNumber;
 
+  const pickCutoff = getLocksWeekCutoff(locksGames.map(({ game }) => game));
+  const weekLocked = isLocksWeekLocked(pickCutoff, getCurrentTime());
+
   return typedjson(
     {
       notOpenYet: false,
@@ -242,6 +262,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       locksGames,
       locksGamePicks,
       weekNumber,
+      weekLocked,
     },
     { headers: { 'x-superjson': 'true' } },
   );
@@ -249,8 +270,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 export default function GamesLocksChallengeWeek() {
   const actionData = useTypedActionData<typeof action>();
-  const { notOpenYet, locksWeek, locksGames, locksGamePicks, weekNumber } =
-    useTypedLoaderData<typeof loader>();
+  const {
+    notOpenYet,
+    locksWeek,
+    locksGames,
+    locksGamePicks,
+    weekNumber,
+    weekLocked,
+  } = useTypedLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   const existingPicks: TeamPick[] =
@@ -273,14 +300,17 @@ export default function GamesLocksChallengeWeek() {
     });
   };
 
-  const disableSubmit = navigation.state !== 'idle' || locksWeek?.isWeekScored;
+  const disableSubmit =
+    navigation.state !== 'idle' || locksWeek?.isWeekScored || weekLocked;
   return (
     <>
       <h2>Week {weekNumber} Entry</h2>
       <Form method='POST' reloadDocument>
         {notOpenYet || (
           <>
-            {actionData?.message && <Alert message={actionData.message} />}
+            {actionData?.message && (
+              <Alert message={actionData.message} status={actionData.status} />
+            )}
             <div className='mb-4'>
               <div>Teams Picked: {gamesBetOn}</div>
             </div>
@@ -305,6 +335,7 @@ export default function GamesLocksChallengeWeek() {
                     locksGame={locksGame}
                     existingPick={existingPick}
                     existingLocksGamePick={existingLocksGamePick}
+                    weekLocked={weekLocked}
                   />
                 );
               })}

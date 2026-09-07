@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import { DateTime } from 'luxon';
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import type {
@@ -14,6 +13,7 @@ type Props = {
   locksGame: LocksGameByYearAndWeekElement;
   existingPick?: TeamPick;
   existingLocksGamePick?: LocksGamePick;
+  weekLocked: boolean;
 };
 
 export default function LocksChallengeGameComponent({
@@ -21,6 +21,7 @@ export default function LocksChallengeGameComponent({
   locksGame,
   existingPick,
   existingLocksGamePick,
+  weekLocked,
 }: Props) {
   const existingTeamPick =
     [locksGame.game.homeTeam, locksGame.game.awayTeam].find(
@@ -41,17 +42,10 @@ export default function LocksChallengeGameComponent({
   const now = new Date();
   const isWeekScored = existingLocksGamePick?.isScored;
 
-  const nextSunday = DateTime.now()
-    .setZone('America/New_York')
-    .minus({ day: 1 })
-    .set({ weekday: 7, hour: 13, minute: 0, second: 0 })
-    .toJSDate();
-
-  // Lock the pick under any of these consitions: the game has started, the week is scored, or the next Sunday at 1PM EST has passed
+  // Lock the pick under any of these conditions: the game has started, the week
+  // is scored, or the week's Sunday 1PM ET deadline has passed.
   const pickLocked =
-    (gameDateTime && gameDateTime < now) ||
-    isWeekScored ||
-    (nextSunday && nextSunday < now);
+    (gameDateTime && gameDateTime < now) || isWeekScored || weekLocked;
 
   const wonGame = existingLocksGamePick && existingLocksGamePick.isWin;
 
