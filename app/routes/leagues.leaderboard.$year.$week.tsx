@@ -1,12 +1,15 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LeaderboardRow from '~/components/layout/leaderboard/LeaderboardRow';
+import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import StarterGrid from '~/components/layout/leaderboard/StarterGrid';
 import GoBox from '~/components/ui/GoBox';
-import { getCurrentSeason } from '~/models/season.server';
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
 } from '~/models/teamgame.server';
+import { RANK_COLORS, isLeagueName } from '~/utils/constants';
+import { assignCompetitionRanks } from '~/utils/rank';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
@@ -14,13 +17,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const leaderboard = await getTeamGamesByYearAndWeek(year, week);
 
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
-
-  const maxWeek =
-    (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
+  // Bounded by the year being viewed, not the current season - otherwise the
+  // week picker on a past year stops at however far the current season has got.
+  const maxWeek = (await getNewestWeekTeamGameByYear(year))._max.week || 1;
 
   return typedjson({ leaderboard, week, maxWeek, year });
 };
@@ -36,6 +35,30 @@ export default function LeaderboardYearWeek() {
       url: `/leagues/leaderboard/${year}/${weekNumber}`,
     }));
 
+  const entries: LeaderboardEntry[] = assignCompetitionRanks(
+    leaderboard,
+    position => position.pointsScored,
+  ).map(position => {
+    const leagueName = position.team.league.name.toLocaleLowerCase();
+
+    return {
+      id: position.id,
+      rank: position.rank,
+      name: position.team.user?.discordName || 'Missing user',
+      badgeClassName: isLeagueName(leagueName)
+        ? RANK_COLORS[leagueName]
+        : undefined,
+      values: [position.pointsScored?.toFixed(2)],
+      details: (
+        <StarterGrid
+          starters={position.starters}
+          startingPlayers={position.startingPlayers}
+          startingPlayerPoints={position.startingPlayerPoints}
+        />
+      ),
+    };
+  });
+
   return (
     <>
       <h2>Week {week} Leaderboard</h2>
@@ -44,24 +67,11 @@ export default function LeaderboardYearWeek() {
         <GoBox options={weekArray} buttonText='Choose Week' />
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Player</th>
-            <th>Points For</th>
-          </tr>
-        </thead>
-        <tbody>
-          {leaderboard.map((position, index) => (
-            <LeaderboardRow
-              key={position.id}
-              position={position}
-              rank={index + 1}
-            />
-          ))}
-        </tbody>
-      </table>
+      <LeaderboardTable
+        entries={entries}
+        valueHeadings={['Points For']}
+        emptyMessage={`No scores recorded yet for week ${week}.`}
+      />
     </>
   );
 }

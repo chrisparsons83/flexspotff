@@ -7,6 +7,7 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
+import { getProjections, getRostership } from '~/libs/sleeper/api.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
 import {
@@ -80,10 +81,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     case 'importPlayers': {
       // Get the list of rosterships from sleeper
-      const newFetch = await fetch(
-        `https://api.sleeper.com/players/nfl/research/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
+      const rostershipData = await getRostership(
+        qbStreamingWeek.year,
+        qbStreamingWeek.week,
       );
-      const rostershipData = await newFetch.json();
 
       // Filter out the non-QBs
       const activeQBs = await getActivePlayersByPosition('QB');
@@ -93,7 +94,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         const rostershipInfo = rostershipData[qb.sleeperId];
         return {
           ...qb,
-          rostership: rostershipInfo ? rostershipInfo.owned : 0,
+          rostership: rostershipInfo?.owned ?? 0,
         };
       });
 
@@ -103,10 +104,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         .filter(qb => qb.rostership < 50);
 
       // Get Projects for the QBs
-      const newFetchTwo = await fetch(
-        `https://api.sleeper.com/v1/projections/nfl/regular/${qbStreamingWeek.year}/${qbStreamingWeek.week}`,
+      const projectionData = await getProjections(
+        qbStreamingWeek.year,
+        qbStreamingWeek.week,
       );
-      const projectionData = await newFetchTwo.json();
 
       // Remove QBs from topQBs that are projected below 1 point in half ppr
       const topQBsProjected = topQBs
@@ -117,7 +118,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
             projection,
           };
         })
-        .filter(qb => qb.projection?.pts_half_ppr > 1);
+        .filter(qb => (qb.projection?.pts_half_ppr ?? 0) > 1);
 
       // Add the QBs to the QB streaming week
       for (const qb of topQBsProjected) {

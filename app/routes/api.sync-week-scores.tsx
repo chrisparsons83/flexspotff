@@ -1,15 +1,20 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson } from 'remix-typedjson';
-import {
-  getNflState,
-  syncNflGameWeek,
-  syncSleeperWeeklyScores,
-} from '~/libs/syncs.server';
-import { getActiveNflGames } from '~/models/nflgame.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { syncCurrentWeekScores } from '~/libs/scoring.server';
 
+/**
+ * External cron entry point for the current week's scores.
+ *
+ * DEPRECATED. The `monitor-scores` job does this on a five-minute schedule, so
+ * this route only exists as a fallback for whatever external cron predates the
+ * scheduler. It no longer carries its own copy of the sync logic - that copy
+ * had drifted from the job's and knew nothing about D12.
+ *
+ * Once the scheduler process is confirmed healthy in production and any
+ * external caller has been turned off, delete this route and drop API_KEY.
+ */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Security check, since this will likely be a cron job at the start (maybe trigger.dev?)
+  // Security check, since this is called by a cron job outside the app.
   const url = new URL(request.url);
   const apiKey = url.searchParams.get('apiKey');
   if (process.env.API_KEY !== apiKey) {
@@ -18,28 +23,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  // Get state of NFL
-  const nflGameState = await getNflState();
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Response('No active season currently', {
-      status: 400,
-    });
-  }
-  const activeGames = await getActiveNflGames();
-
-  // If there are any active games in the system, let's get the scores
-  if (activeGames._count.id > 0) {
-    await syncSleeperWeeklyScores(
-      currentSeason.year,
-      nflGameState.display_week,
-    );
+  const report = await syncCurrentWeekScores();
+  if (!report.synced) {
+    throw new Response(report.message, { status: 400 });
   }
 
-  // Finally let's get the current state of the games. This will mean we'll start scores at the
-  // beginning a little late, but we should make sure we get the last set of scores for a team so
-  // there aren't any stragglers.
-  await syncNflGameWeek(currentSeason.year, [nflGameState.display_week]);
-
-  return typedjson({ message: 'League games have been synced.' });
+  return typedjson(report);
 };

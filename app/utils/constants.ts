@@ -25,6 +25,20 @@ export const POSITION_RANK_COLORS: Record<string, string> = {
   def: 'bg-def',
 };
 
+/**
+ * Left-border accents for a starter's position, used in the expandable rows on
+ * the weekly leaderboards. Distinct from POSITION_RANK_COLORS above, which
+ * fills a chip background rather than drawing a border.
+ */
+export const POSITION_BORDER_COLORS: Record<string, string> = {
+  qb: 'border-qb',
+  rb: 'border-rb',
+  wr: 'border-wr',
+  te: 'border-te',
+  def: 'border-def',
+  empty: 'border-gray-500',
+};
+
 export const RANK_COLORS: Record<Leagues, string> = {
   admiral: 'bg-admiral text-gray-900',
   champions: 'bg-champions text-gray-900',

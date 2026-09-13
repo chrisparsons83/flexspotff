@@ -1,53 +1,44 @@
 import { syncAdp } from './syncs.server';
 import { DateTime } from 'luxon';
 import { env } from 'process';
+import { ZodError } from 'zod';
+import {
+  getDraft,
+  getLeagueRosters,
+  getLeagueUsers,
+} from '~/libs/sleeper/api.server';
+import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
-import { getUsersIncludingMerged } from '~/models/user.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
-import {
-  sleeperTeamJson,
-  sleeperDraftJson,
-  sleeperLeagueUsersJson,
-  type SleeperTeamJson,
-  type SleeperDraftJson,
-  type SleeperLeagueUsersJson,
-} from '~/utils/types';
 
 /**
  * Syncs a single league with Sleeper API data
  * @param league - The league to sync
+ * @param ownerToUserId - a map from getOwnerToUserIdMap(). Callers syncing
+ * several leagues should build it once and pass it in, since it reads every
+ * member row.
  * @returns Promise that resolves when sync is complete
  */
-export async function syncLeague(league: League): Promise<void> {
+export async function syncLeague(
+  league: League,
+  ownerToUserId?: Map<string, string>,
+): Promise<void> {
   // Fetch data from Sleeper API
-  const teamsUrl = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/rosters`;
-  const draftsUrl = `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}`;
-
-  const [sleeperTeamsRes, sleeperDraftRes] = await Promise.all([
-    fetch(teamsUrl),
-    fetch(draftsUrl),
+  const [rosters, sleeperDraft] = await Promise.all([
+    getLeagueRosters(league.sleeperLeagueId),
+    getDraft(league.sleeperDraftId),
   ]);
 
-  if (!sleeperTeamsRes.ok || !sleeperDraftRes.ok) {
-    throw new Error(`API request failed for league ${league.name}`);
-  }
-
-  const sleeperTeams: SleeperTeamJson = sleeperTeamJson
-    .parse(await sleeperTeamsRes.json())
-    .map(team => ({
-      ...team,
-      owner_id: team.owner_id
-        ? team.owner_id
-        : team.league_id === '335507311525122048'
-        ? // Ice did something stupid with his team in Champs this year so this fixes that
-          '76491376673832960'
-        : SLEEPER_ADMIN_ID,
-    }));
-
-  const sleeperDraft: SleeperDraftJson = sleeperDraftJson.parse(
-    await sleeperDraftRes.json(),
-  );
+  const sleeperTeams = rosters.map(team => ({
+    ...team,
+    owner_id: team.owner_id
+      ? team.owner_id
+      : team.league_id === '335507311525122048'
+      ? // Ice did something stupid with his team in Champs this year so this fixes that
+        '76491376673832960'
+      : SLEEPER_ADMIN_ID,
+  }));
 
   // Get existing teams for this league
   const existingTeamsSleeperOwners = (await getTeams(league.id)).map(team => [
@@ -55,18 +46,8 @@ export async function syncLeague(league: League): Promise<void> {
     team.id,
   ]);
 
-  // Get users once for this sync operation
-  // Merged members are included and resolved to whoever absorbed them. Leaving
-  // them out instead would make a Sleeper link that still points at one fail to
-  // resolve, and the team below would be saved with userId: null - which drops
-  // those seasons out of the record book, since getCareerRecords skips them.
-  const existingUsersSleeperIds = (await getUsersIncludingMerged()).flatMap(
-    ({ id, mergedInto, sleeperUsers }) =>
-      sleeperUsers.map(sleeperUser => ({
-        id: mergedInto?.id ?? id,
-        sleeperOwnerID: sleeperUser.sleeperOwnerID,
-      })),
-  );
+  // Get users once for this sync operation.
+  const resolvedOwnerToUserId = ownerToUserId ?? (await getOwnerToUserIdMap());
 
   // Update league draft date if available. start_time is epoch milliseconds.
   if (sleeperDraft.start_time) {
@@ -96,11 +77,6 @@ export async function syncLeague(league: League): Promise<void> {
     ) {
       continue;
     }
-
-    // Build team object
-    const systemUser = existingUsersSleeperIds.filter(
-      user => user.sleeperOwnerID === sleeperTeam.owner_id,
-    );
 
     // Parse median record from metadata.record string
     // Each week has 2 characters: first is H2H result, second is median result
@@ -135,7 +111,7 @@ export async function syncLeague(league: League): Promise<void> {
       draftPosition: sleeperDraft.draft_order
         ? sleeperDraft.draft_order[sleeperTeam.owner_id]
         : null,
-      userId: systemUser.length > 0 ? systemUser[0].id : null,
+      userId: resolvedOwnerToUserId.get(sleeperTeam.owner_id!) ?? null,
     };
 
     // Update existing team or create new one
@@ -172,9 +148,12 @@ export async function syncMultipleLeagues(leagues: League[]): Promise<{
   let errorCount = 0;
   const errors: Array<{ leagueName: string; error: string }> = [];
 
+  // Built once for the whole run rather than per league.
+  const ownerToUserId = await getOwnerToUserIdMap();
+
   for (const league of leagues) {
     try {
-      await syncLeague(league);
+      await syncLeague(league, ownerToUserId);
       syncedCount++;
       console.log(`✅ Successfully synced league: ${league.name}`);
     } catch (error) {
@@ -206,26 +185,23 @@ export type SleeperLeagueUser = {
 export async function getSleeperLeagueUsers(
   sleeperLeagueId: League['sleeperLeagueId'],
 ): Promise<Map<string, SleeperLeagueUser>> {
-  const res = await fetch(
-    `https://api.sleeper.app/v1/league/${sleeperLeagueId}/users`,
-  );
-
-  if (!res.ok) {
-    throw new Error(
-      `Sleeper user lookup failed for league ${sleeperLeagueId} (${res.status})`,
-    );
-  }
-
   // Sleeper answers 200 with a null body for a league ID it doesn't know, so a
-  // bad ID lands here rather than above. Parse it by hand: a raw ZodError
+  // bad ID gets past the status check and fails to parse. A raw ZodError
   // message is a JSON blob, and this one goes in front of an admin.
-  const parsedUsers = sleeperLeagueUsersJson.safeParse(await res.json());
-  if (!parsedUsers.success) {
-    throw new Error(
-      `Sleeper returned no usable user list for league ${sleeperLeagueId}`,
-    );
+  let sleeperUsers;
+  try {
+    sleeperUsers = await getLeagueUsers(sleeperLeagueId);
+  } catch (error) {
+    // Only a parse failure means "that isn't a league we know". A bad status or
+    // a dead connection has to keep its own message, or a Sleeper outage tells
+    // the admin their league ID is wrong.
+    if (error instanceof ZodError) {
+      throw new Error(
+        `Sleeper returned no usable user list for league ${sleeperLeagueId}`,
+      );
+    }
+    throw error;
   }
-  const sleeperUsers: SleeperLeagueUsersJson = parsedUsers.data;
 
   return new Map(
     sleeperUsers.map(sleeperUser => [

@@ -1,4 +1,5 @@
 import { prisma } from '~/db.server';
+import { assignCompetitionRanks } from '~/utils/rank';
 
 export async function getD12WeekScoresBySeasonYear(year: number) {
   return prisma.d12WeekScore.findMany({
@@ -14,6 +15,43 @@ export async function getD12WeekScoresBySeasonYear(year: number) {
   });
 }
 
+/** The same rows, narrowed to one week, for the weekly leaderboard. */
+export async function getD12WeekScoresBySeasonYearAndWeek(
+  year: number,
+  week: number,
+) {
+  return prisma.d12WeekScore.findMany({
+    where: {
+      week,
+      league: {
+        season: { year },
+      },
+    },
+    include: {
+      league: true,
+      user: true,
+    },
+  });
+}
+
+/**
+ * Latest week with any scoring, which bounds the week picker. Mirrors
+ * getNewestWeekTeamGameByYear for the league boards.
+ */
+export async function getNewestD12WeekByYear(year: number) {
+  const result = await prisma.d12WeekScore.aggregate({
+    where: {
+      league: {
+        season: { year },
+      },
+      points: { gt: 0 },
+    },
+    _max: { week: true },
+  });
+
+  return result._max.week ?? 1;
+}
+
 export interface D12LeaderboardEntry {
   userId: string;
   discordName: string;
@@ -25,6 +63,14 @@ export interface D12LeaderboardEntry {
   rank: number;
 }
 
+/**
+ * Rolls week scores up per manager, summing across whichever D12 leagues they
+ * play in.
+ *
+ * Pass a whole season's rows for the season board, or a single week's for the
+ * weekly board - in that case `totalPoints` is that week's total and `byLeague`
+ * is that week's split.
+ */
 export function computeD12Leaderboard(
   weekScores: Awaited<ReturnType<typeof getD12WeekScoresBySeasonYear>>,
 ): D12LeaderboardEntry[] {
@@ -99,13 +145,5 @@ export function computeD12Leaderboard(
 
   leaderboard.sort((a, b) => b.totalPoints - a.totalPoints);
 
-  let rank = 1;
-  let prevPoints = -1;
-  return leaderboard.map((entry, i) => {
-    if (entry.totalPoints !== prevPoints) {
-      rank = i + 1;
-      prevPoints = entry.totalPoints;
-    }
-    return { ...entry, rank };
-  });
+  return assignCompetitionRanks(leaderboard, entry => entry.totalPoints);
 }

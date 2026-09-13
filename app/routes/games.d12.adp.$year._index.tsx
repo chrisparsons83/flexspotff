@@ -8,6 +8,7 @@ import {
   getSleeperDraftPicksForLeague,
   resolveLeagueOwners,
 } from '~/libs/d12-sync.server';
+import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
 import { getD12DraftPicksForLeagues } from '~/models/d12draftpick.server';
 import {
   getD12SeasonByYear,
@@ -15,6 +16,7 @@ import {
 } from '~/models/d12season.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
+import { getUsersByIds } from '~/models/user.server';
 import { POSITION_RANK_COLORS } from '~/utils/constants';
 
 type DraftBreakdownEntry = {
@@ -49,15 +51,22 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   // Only call Sleeper for leagues with no cached picks
   const uncachedLeagues = leagues.filter(l => !cachedLeagueIds.has(l.id));
+  // Built once rather than per league - it reads the whole member table.
+  const owners =
+    uncachedLeagues.length > 0 ? await getOwnerToUserIdMap() : new Map();
   const sleeperResults = await Promise.all(
     uncachedLeagues.map(async league => {
-      const [picks, { rosterToOwner, ownerToUserId, sleeperUsers }] =
-        await Promise.all([
-          getSleeperDraftPicksForLeague(league.sleeperLeagueId),
-          resolveLeagueOwners(league.sleeperLeagueId),
-        ]);
+      const [picks, { rosterToOwner, ownerToUserId }] = await Promise.all([
+        getSleeperDraftPicksForLeague(league.sleeperLeagueId),
+        resolveLeagueOwners(league.sleeperLeagueId, owners),
+      ]);
+      const users = await getUsersByIds(
+        Array.from(rosterToOwner.values())
+          .map(ownerId => ownerToUserId.get(ownerId))
+          .filter((userId): userId is string => Boolean(userId)),
+      );
       const userIdToName = new Map(
-        sleeperUsers.map(su => [su.userId, su.user.discordName]),
+        users.map(user => [user.id, user.discordName]),
       );
       return { league, picks, rosterToOwner, ownerToUserId, userIdToName };
     }),

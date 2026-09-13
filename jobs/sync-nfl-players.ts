@@ -3,7 +3,7 @@ import { parentPort } from 'worker_threads';
 
 /**
  * Job to sync NFL players database
- * Runs every Tuesday at 2:00 AM
+ * Scheduled in app/utils/jobs.ts (Tuesdays at 05:00 UTC).
  */
 async function syncNflPlayersJob() {
   try {
