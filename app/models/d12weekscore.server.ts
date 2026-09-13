@@ -12,6 +12,10 @@ export async function getD12WeekScoresBySeasonYear(year: number) {
       league: true,
       user: true,
     },
+    // Ordered so the breakdown rows under an expanded manager fall in a stable
+    // order when two of their teams are tied on points. computeD12Leaderboard
+    // breaks the same tie the same way, so the two agree.
+    orderBy: [{ league: { name: 'asc' } }, { week: 'asc' }],
   });
 }
 
@@ -31,6 +35,7 @@ export async function getD12WeekScoresBySeasonYearAndWeek(
       league: true,
       user: true,
     },
+    orderBy: { league: { name: 'asc' } },
   });
 }
 
@@ -59,6 +64,12 @@ export interface D12LeaderboardEntry {
   totalPoints: number;
   bestWeek: number;
   bestWeekPoints: number;
+  /**
+   * Name of the manager's highest-scoring team, or '' when no team of theirs
+   * scored above zero - matching how bestWeek is left at 0.
+   */
+  bestLeagueName: string;
+  bestLeaguePoints: number;
   byLeague: { leagueId: string; leagueName: string; points: number }[];
   rank: number;
 }
@@ -68,8 +79,8 @@ export interface D12LeaderboardEntry {
  * play in.
  *
  * Pass a whole season's rows for the season board, or a single week's for the
- * weekly board - in that case `totalPoints` is that week's total and `byLeague`
- * is that week's split.
+ * weekly board - in that case `totalPoints` is that week's total, `byLeague` is
+ * that week's split, and `bestLeague*` is their best team that week.
  */
 export function computeD12Leaderboard(
   weekScores: Awaited<ReturnType<typeof getD12WeekScoresBySeasonYear>>,
@@ -124,6 +135,25 @@ export function computeD12Leaderboard(
       }
     }
 
+    // Their single highest-scoring team, as opposed to bestWeek above, which is
+    // their best week summed across every team. Left blank on a manager with
+    // nothing but zeroes, the same way bestWeek is.
+    let bestLeagueName = '';
+    let bestLeaguePoints = 0;
+    for (const { leagueName, points } of data.byLeague.values()) {
+      // Ties break on league name rather than on whichever row arrived first,
+      // so the pick holds whether or not the caller ordered its query.
+      const beatsBest =
+        points > bestLeaguePoints ||
+        (points === bestLeaguePoints &&
+          bestLeagueName !== '' &&
+          leagueName < bestLeagueName);
+      if (beatsBest) {
+        bestLeaguePoints = points;
+        bestLeagueName = leagueName;
+      }
+    }
+
     const byLeague = Array.from(data.byLeague.entries()).map(
       ([leagueId, { leagueName, points }]) => ({
         leagueId,
@@ -139,6 +169,8 @@ export function computeD12Leaderboard(
       totalPoints,
       bestWeek,
       bestWeekPoints,
+      bestLeagueName,
+      bestLeaguePoints,
       byLeague,
     });
   }

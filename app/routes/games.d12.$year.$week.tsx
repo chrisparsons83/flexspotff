@@ -11,6 +11,7 @@ import {
   getD12WeekScoresBySeasonYearAndWeek,
   getNewestD12WeekByYear,
 } from '~/models/d12weekscore.server';
+import { LEADERBOARD_NAME_LINK, rankBadgeColor } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
@@ -46,10 +47,11 @@ export default function GamesD12YearWeek() {
   const entries: LeaderboardEntry[] = leaderboard.map(entry => ({
     id: entry.userId,
     rank: entry.rank,
+    badgeClassName: rankBadgeColor(entry.rank),
     name: (
       <Link
         to={`/games/d12/${year}/user/${entry.userId}`}
-        className='hover:underline'
+        className={LEADERBOARD_NAME_LINK}
       >
         {entry.discordName}
       </Link>
@@ -75,8 +77,6 @@ export default function GamesD12YearWeek() {
       <LeaderboardTable
         entries={entries}
         valueHeadings={['Points']}
-        nameHeading='Manager'
-        rankHeading='Rank'
         emptyMessage={`No scores recorded yet for week ${week}.`}
       />
     </div>

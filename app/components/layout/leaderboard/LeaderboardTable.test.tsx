@@ -61,6 +61,21 @@ describe('LeaderboardTable', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
+  // The D12 boards used to pass these explicitly while the league boards took a
+  // blank rank column and a 'Player' heading, which is how the two drifted.
+  it('heads the rank and name columns the same way for every board', () => {
+    render(
+      <LeaderboardTable entries={entries} valueHeadings={['Points For']} />,
+    );
+
+    expect(
+      screen.getByRole('columnheader', { name: 'Rank' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Manager' }),
+    ).toBeInTheDocument();
+  });
+
   it('shows the empty message rather than an empty table', () => {
     render(
       <LeaderboardTable

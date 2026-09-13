@@ -47,6 +47,36 @@ export const RANK_COLORS: Record<Leagues, string> = {
   monarch: 'bg-monarch text-gray-900',
 };
 
+/**
+ * Podium colours for the boards with no league colour to key off - the D12
+ * boards, where a manager's rows span several leagues. Fills the same badge as
+ * RANK_COLORS above, but by placement rather than by league. Everyone off the
+ * podium shares one colour, which is deliberately the galaxy blue - on the D12
+ * boards no badge means a league, so there is nothing to confuse it with.
+ */
+export const PODIUM_RANK_COLORS: Record<number, string> = {
+  1: 'bg-gold text-gray-900',
+  2: 'bg-silver text-gray-900',
+  3: 'bg-bronze text-gray-900',
+};
+export const DEFAULT_RANK_COLOR = 'bg-galaxy text-gray-900';
+
+/**
+ * Keyed off the rank rather than the row index, so competition ranking carries
+ * through: two managers tied for 2nd both take silver and nobody takes bronze.
+ */
+export const rankBadgeColor = (rank: number) =>
+  PODIUM_RANK_COLORS[rank] ?? DEFAULT_RANK_COLOR;
+
+/**
+ * A leaderboard name that links somewhere. Undoes the prose link treatment the
+ * root layout applies - underline, weight, colour - so a linked name sits flush
+ * with the unlinked names on the league boards, keeping the underline as a
+ * hover affordance only.
+ */
+export const LEADERBOARD_NAME_LINK =
+  'font-normal text-inherit no-underline hover:underline';
+
 type RoundName = {
   key: string;
   label: string;
