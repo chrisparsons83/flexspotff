@@ -22,8 +22,7 @@ type Props = {
   /** Headings for the trailing value cells. */
   valueHeadings: string[];
   nameHeading?: string;
-  /** Heading over the rank badge. Blank on the league boards, where the badge
-   * is a colour swatch rather than a labelled column. */
+  /** Heading over the rank badge. */
   rankHeading?: string;
   emptyMessage?: string;
 };
@@ -38,8 +37,8 @@ type Props = {
 export default function LeaderboardTable({
   entries,
   valueHeadings,
-  nameHeading = 'Player',
-  rankHeading = '',
+  nameHeading = 'Manager',
+  rankHeading = 'Rank',
   emptyMessage = 'No scores recorded yet.',
 }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
