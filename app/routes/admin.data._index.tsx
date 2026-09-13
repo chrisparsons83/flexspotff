@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { syncCurrentWeekScores } from '~/libs/scoring.server';
 import {
-  getNflState,
   syncNflGameWeek,
   syncNflPlayers,
   syncSleeperWeeklyScores,
@@ -71,14 +71,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return json<ActionData>({ message: 'NFL Games have been updated.' });
     }
     case 'resyncCurrentWeekScores': {
-      const nflGameState = await getNflState();
+      // An admin pressing this wants the scores pulled now, whether or not a
+      // game happens to be in progress.
+      const report = await syncCurrentWeekScores({ force: true });
 
-      await syncSleeperWeeklyScores(
-        currentSeason.year,
-        nflGameState.display_week,
-      );
+      if (report.d12Errors && report.d12Errors.length > 0) {
+        return json<ActionData>({
+          message: report.message,
+          formError: `D12 leagues that failed to sync: ${report.d12Errors.join(
+            '; ',
+          )}`,
+        });
+      }
 
-      return json<ActionData>({ message: 'League games have been synced.' });
+      return json<ActionData>({ message: report.message });
     }
     case 'resyncCurrentYearScores': {
       if (year < FIRST_YEAR || year > currentSeason.year) {
@@ -211,10 +217,9 @@ export default function AdminDataIndex() {
         <section>
           <h3>Update Current Week Scores</h3>
           <p>
-            This will resync all current week scores in the system. This can be
-            run at any time safely. This does run every minute during when most
-            games are normally playing. Weird Saturday games may be the
-            exception.
+            This will resync NFL game state plus league and D12 scores for the
+            current week. This can be run at any time safely. The scheduler
+            already does this every 5 minutes while games are in progress.
           </p>
           {actionData?.formError ? (
             <p className='form-validation-error' role='alert'>

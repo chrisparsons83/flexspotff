@@ -9,8 +9,9 @@ import {
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { scheduler } from '~/services/scheduler.server';
+import { getScheduler } from '~/services/scheduler.server';
 import { cronToHuman } from '~/utils/cron';
+import { SCHEDULED_JOBS } from '~/utils/jobs';
 
 type ActionData = {
   message?: string;
@@ -34,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return json<ActionData>({ error: 'Job name is required' });
         }
 
-        await scheduler.runJob(jobName);
+        await getScheduler().runJob(jobName);
         return json<ActionData>({
           message: `Job "${jobName}" executed successfully`,
         });
@@ -57,10 +58,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
   requireAdmin(user);
 
-  // Get current jobs configuration
-  const jobs = scheduler.getJobs();
-
-  return json({ jobs });
+  // Straight from the registry - listing jobs shouldn't need to construct a
+  // Bree instance inside the web server.
+  return json({ jobs: SCHEDULED_JOBS });
 };
 
 export default function AdminSchedulerIndex() {
@@ -82,9 +82,9 @@ export default function AdminSchedulerIndex() {
         <section>
           <h3>Scheduled Jobs</h3>
           <div className='space-y-4'>
-            {jobs.map((job, index: number) => (
+            {jobs.map(job => (
               <div
-                key={index}
+                key={job.name}
                 className='border rounded-lg p-4 bg-gray-50 dark:bg-gray-800'
               >
                 <div className='flex justify-between items-start'>
@@ -96,22 +96,9 @@ export default function AdminSchedulerIndex() {
                     <p className='text-xs text-gray-500 mt-1'>
                       Cron: {job.cron || 'Not scheduled'}
                     </p>
-                    {job.name === 'sync-nfl-players' && (
-                      <p className='text-sm text-gray-500 mt-1'>
-                        Syncs NFL players database from external API
-                      </p>
-                    )}
-                    {job.name === 'sync-leagues' && (
-                      <p className='text-sm text-gray-500 mt-1'>
-                        Syncs all leagues in the current season with team data
-                      </p>
-                    )}
-                    {job.name === 'monitor-nfl-games' && (
-                      <p className='text-sm text-gray-500 mt-1'>
-                        Monitors NFL games and triggers score resyncing when
-                        games finish
-                      </p>
-                    )}
+                    <p className='text-sm text-gray-500 mt-1'>
+                      {job.description}
+                    </p>
                   </div>
                   <Form method='POST' className='inline'>
                     <input type='hidden' name='jobName' value={job.name} />

@@ -5,9 +5,9 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
+import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import {
   createQBStreamingWeek,
@@ -22,24 +22,6 @@ import { authenticator, requireAdmin } from '~/services/auth.server';
 import { areAllNflGamesComplete } from '~/utils/helpers';
 
 // If the below fields do not exist, it is safe to assume they are 0.
-const sleeperJsonStats = z.record(
-  z.object({
-    pts_ppr: z.number().optional(),
-    pass_yd: z.number().optional(),
-    pass_td: z.number().optional(),
-    rush_yd: z.number().optional(),
-    rush_td: z.number().optional(),
-    rec_yd: z.number().optional(),
-    rec_td: z.number().optional(),
-    pass_int: z.number().optional(),
-    fum_lost: z.number().optional(),
-    rush_2pt: z.number().optional(),
-    rec_2pt: z.number().optional(),
-    pass_2pt: z.number().optional(),
-  }),
-);
-type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
-
 export const action = async ({ request }: ActionFunctionArgs) => {
   // The admin layout only requires an editor, and layout loaders do not guard
   // child actions, so this has to check for admin itself.
@@ -102,12 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
       }
 
-      const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/stats/nfl/regular/${year}/${weekNumber}?position[]=QB`,
-      );
-      const sleeperJson: SleeperJsonStats = sleeperJsonStats.parse(
-        await sleeperLeagueRes.json(),
-      );
+      const sleeperJson = await getWeeklyStats(year, weekNumber, ['QB']);
       const promises: Promise<QBStreamingWeekOption>[] = [];
       for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
         const stats = sleeperJson[qbStreamingOption.player.sleeperId] || {};

@@ -5,7 +5,7 @@ import { parentPort } from 'worker_threads';
 
 /**
  * Job to sync all leagues in the current season
- * Runs every Tuesday at 7:00 AM
+ * Scheduled in app/utils/jobs.ts (Tuesdays at 07:00 UTC).
  */
 async function syncLeaguesJob() {
   try {

@@ -10,7 +10,6 @@ const envSchema = z.object({
   ADMIRAL_ROLE_ID: z.optional(z.string().min(1)),
   API_KEY: z.string().min(1),
   CHAMPIONS_ROLE_ID: z.optional(z.string().min(1)),
-  BREE_RUN: z.enum(['off', 'on']),
   COOKIE_DOMAIN: z.optional(z.string().min(1)),
   DATABASE_URL: z.string().min(1),
   DEV_GUILD_ID: z.string().min(1),

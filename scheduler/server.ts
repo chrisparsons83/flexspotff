@@ -1,4 +1,5 @@
-import { scheduler } from '../app/services/scheduler.server.js';
+import { getScheduler } from '../app/services/scheduler.server.js';
+import { SCHEDULED_JOBS } from '../app/utils/jobs.js';
 import 'dotenv/config';
 
 /**
@@ -18,7 +19,7 @@ async function shutdown() {
   console.log('\n🛑 Shutting down scheduler...');
 
   try {
-    await scheduler.stop();
+    await getScheduler().stop();
     console.log('✅ Scheduler stopped gracefully');
   } catch (error) {
     console.error('❌ Error stopping scheduler:', error);
@@ -44,12 +45,11 @@ process.on('unhandledRejection', async (reason, promise) => {
 // Start the scheduler
 async function startScheduler() {
   try {
-    await scheduler.start();
+    await getScheduler().start();
     console.log('✅ Scheduler started successfully');
 
-    const jobs = scheduler.getJobs();
     console.log('📋 Active Jobs:');
-    jobs.forEach((job: any) => {
+    SCHEDULED_JOBS.forEach(job => {
       console.log(`   • ${job.name}: ${job.cron || 'No schedule'}`);
     });
 

@@ -1,6 +1,16 @@
 import type { SeasonWeek } from '@prisma/client';
 import { DateTime } from 'luxon';
-import z from 'zod';
+import {
+  getDraftPicksWithOwners,
+  getLeagueMatchups,
+  getNflPlayers,
+  getNflScores,
+  getNflState as fetchNflState,
+} from '~/libs/sleeper/api.server';
+import type {
+  SleeperGraphqlNflGames,
+  SleeperNflStateJson,
+} from '~/libs/sleeper/schemas';
 import type { DraftPickCreate } from '~/models/draftpick.server';
 import {
   createDraftPick,
@@ -26,76 +36,9 @@ import {
   getTeamGamesByYearAndWeek,
   updateTeamGame,
 } from '~/models/teamgame.server';
-import { graphQLClient } from '~/services/sleeperGraphql.server';
-
-const sleeperADPJson = z.array(
-  z.object({
-    round: z.number(),
-    roster_id: z.number(),
-    player_id: z.string(),
-    picked_by: z.string().nullable(),
-    pick_no: z.number(),
-  }),
-);
-type SleeperADPJson = z.infer<typeof sleeperADPJson>;
-
-const sleeperGraphqlNflGames = z.object({
-  scores: z.array(
-    z.object({
-      week: z.number(),
-      status: z.string(),
-      game_id: z.string(),
-      metadata: z.object({
-        home_team: z.string(),
-        home_score: z.number().optional(),
-        away_team: z.string(),
-        away_score: z.number().optional(),
-        date_time: z.string().datetime({ offset: true }),
-      }),
-    }),
-  ),
-});
-type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
-
-const sleeperJsonWeeklyMatchup = z.array(
-  z.object({
-    starters: z.array(z.string()).nullable(),
-    roster_id: z.number(),
-    points: z.number(),
-    matchup_id: z.number().nullable(),
-    starters_points: z.array(z.number()),
-  }),
-);
-type SleeperJsonWeeklyMatchup = z.infer<typeof sleeperJsonWeeklyMatchup>;
-
-const sleeperJsonNflPlayers = z.record(
-  z.object({
-    team: z.string().nullable(),
-    position: z.string().nullable(),
-    player_id: z.string(),
-    first_name: z.string(),
-    last_name: z.string(),
-    full_name: z.string().optional(),
-  }),
-);
-type SleeperJsonNflPlayers = z.infer<typeof sleeperJsonNflPlayers>;
-
-const sleeperJsonNflState = z.object({
-  week: z.number(),
-  season_type: z.string(),
-  season_start_date: z.string().nullable(),
-  season: z.string(),
-  display_week: z.number(),
-});
-type SleeperJsonNflState = z.infer<typeof sleeperJsonNflState>;
 
 export async function syncAdp(league: League) {
-  const sleeperLeagueRes = await fetch(
-    `https://api.sleeper.app/v1/draft/${league.sleeperDraftId}/picks`,
-  );
-  const sleeperJson: SleeperADPJson = sleeperADPJson.parse(
-    await sleeperLeagueRes.json(),
-  );
+  const sleeperJson = await getDraftPicksWithOwners(league.sleeperDraftId);
 
   const isDrafted = sleeperJson.length === 180;
 
@@ -164,22 +107,9 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
     sleeperTeamIdToID.set(nflTeam.sleeperId, nflTeam.id);
   }
 
-  const promises: Promise<SleeperGraphqlNflGames>[] = [];
-  for (const week of weeks) {
-    const query = `query scores {
-          scores(sport: "nfl",season_type: "regular",season: "${year}",week: ${week}){
-            date
-            game_id
-            metadata
-            season
-            season_type
-            sport
-            status
-            week
-          }
-        }`;
-    promises.push(graphQLClient.request<SleeperGraphqlNflGames>(query));
-  }
+  const promises: Promise<SleeperGraphqlNflGames>[] = weeks.map(week =>
+    getNflScores(year, week),
+  );
   const games = (await Promise.all(promises)).flatMap(result => result.scores);
 
   // If we don't have any weeks created, this is where we create the weeks for the season.
@@ -251,25 +181,16 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 
   const existingTeamGames = await getTeamGamesByYearAndWeek(year, week);
 
-  const leagueMatchupPromises: Promise<Response>[] = [];
-  for (const league of leagues) {
-    const url = `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/matchups/${week}`;
-    leagueMatchupPromises.push(fetch(url));
-  }
-  const leagueMatchupResponses = await Promise.all(leagueMatchupPromises);
+  const leagueMatchups = await Promise.all(
+    leagues.map(async league => ({
+      league,
+      matchups: await getLeagueMatchups(league.sleeperLeagueId, week),
+    })),
+  );
 
   const teamGameUpserts: Promise<TeamGame>[] = [];
-  for (const response of leagueMatchupResponses) {
-    const sleeperLeagueId = new URL(response.url).pathname.split('/')[3];
-    const matchups: SleeperJsonWeeklyMatchup = sleeperJsonWeeklyMatchup.parse(
-      await response.json(),
-    );
+  for (const { league, matchups } of leagueMatchups) {
     for (const matchup of matchups) {
-      const league = leagues.find(
-        league => league.sleeperLeagueId === sleeperLeagueId,
-      );
-      if (!league) continue;
-
       const team = teams.find(
         team =>
           team.leagueId === league.id && team.rosterId === matchup.roster_id,
@@ -282,16 +203,24 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 
       const isRegularSeason = week <= 13 || (week === 14 && year >= 2021);
 
+      // Sleeper leaves these null for a roster it hasn't scored yet, and the
+      // columns are non-nullable arrays. A missing starter slot is '0', which
+      // createTeamGame/updateTeamGame already filter out before connecting.
+      const starters = (matchup.starters ?? []).map(starter => starter ?? '0');
+      const startingPlayerPoints = (matchup.starters_points ?? []).map(
+        points => points ?? 0,
+      );
+
       if (existingTeamGame) {
         teamGameUpserts.push(
           updateTeamGame({
             id: existingTeamGame.id,
             sleeperMatchupId: matchup.matchup_id || -1,
             week,
-            starters: matchup.starters || [],
-            pointsScored: matchup.points,
+            starters,
+            pointsScored: matchup.points ?? 0,
             teamId: team.id,
-            startingPlayerPoints: matchup.starters_points,
+            startingPlayerPoints,
             isRegularSeason,
           }),
         );
@@ -300,10 +229,10 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
           createTeamGame({
             sleeperMatchupId: matchup.matchup_id || -1,
             week,
-            starters: matchup.starters || [],
-            pointsScored: matchup.points,
+            starters,
+            pointsScored: matchup.points ?? 0,
             teamId: team.id,
-            startingPlayerPoints: matchup.starters_points,
+            startingPlayerPoints,
             isRegularSeason,
           }),
         );
@@ -314,9 +243,7 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
 }
 
 export async function syncNflPlayers() {
-  const sleeperJson: SleeperJsonNflPlayers = sleeperJsonNflPlayers.parse(
-    await (await fetch(`https://api.sleeper.app/v1/players/nfl`)).json(),
-  );
+  const sleeperJson = await getNflPlayers();
 
   const nflTeamSleeperIdToLocalIdMap: Map<string, string> = new Map();
   const nflTeams = await getNflTeams();
@@ -365,11 +292,6 @@ export async function syncNflPlayers() {
   await Promise.all(promises);
 }
 
-export async function getNflState() {
-  const sleeperLeagueRes = await fetch(`https://api.sleeper.app/v1/state/nfl`);
-  const nflState: SleeperJsonNflState = sleeperJsonNflState.parse(
-    await sleeperLeagueRes.json(),
-  );
-
-  return nflState;
+export async function getNflState(): Promise<SleeperNflStateJson> {
+  return fetchNflState();
 }

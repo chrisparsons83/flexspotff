@@ -11,10 +11,10 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import z from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import { prisma } from '~/db.server';
+import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
@@ -30,45 +30,6 @@ type LoaderData = {
 };
 
 // If the below fields do not exist, it is safe to assume they are 0.
-const sleeperJsonStats = z.record(
-  z.object({
-    pts_ppr: z.number().optional(),
-    pass_yd: z.number().optional(),
-    pass_td: z.number().optional(),
-    rush_yd: z.number().optional(),
-    rush_td: z.number().optional(),
-    rec_yd: z.number().optional(),
-    rec_td: z.number().optional(),
-    rec: z.number().optional(),
-    pass_int: z.number().optional(),
-    fum_lost: z.number().optional(),
-    rush_2pt: z.number().optional(),
-    rec_2pt: z.number().optional(),
-    pass_2pt: z.number().optional(),
-    off_fum_rec_td: z.number().optional(),
-    punt_ret_td: z.number().optional(),
-    kick_ret_td: z.number().optional(),
-    pts_allow: z.number().optional(),
-    yds_allow: z.number().optional(),
-    def_st_td: z.number().optional(),
-    int: z.number().optional(),
-    fum_rec: z.number().optional(),
-    safe: z.number().optional(),
-    sack: z.number().optional(),
-    blk_kick: z.number().optional(),
-    tkl_loss: z.number().optional(),
-    fgm_0_19: z.number().optional(),
-    fgm_20_29: z.number().optional(),
-    fgm_30_39: z.number().optional(),
-    fgm_40_49: z.number().optional(),
-    fgm_50p: z.number().optional(),
-    fgmiss: z.number().optional(),
-    xpmiss: z.number().optional(),
-    xpm: z.number().optional(),
-  }),
-);
-type SleeperJsonStats = z.infer<typeof sleeperJsonStats>;
-
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
@@ -157,12 +118,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     } else {
       // SCORE: Calculate points and mark week as scored
       // Fetch stats from Sleeper API
-      const sleeperLeagueRes = await fetch(
-        `https://api.sleeper.app/v1/stats/nfl/regular/${year}/${weekNumber}`,
-      );
-      const sleeperJson: SleeperJsonStats = sleeperJsonStats.parse(
-        await sleeperLeagueRes.json(),
-      );
+      const sleeperJson = await getWeeklyStats(year, weekNumber);
 
       const promises: Promise<any>[] = [];
 

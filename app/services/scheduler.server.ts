@@ -1,5 +1,6 @@
 import Bree from 'bree';
 import path from 'path';
+import { SCHEDULED_JOBS } from '~/utils/jobs';
 
 /**
  * Scheduler service using Bree for running scheduled tasks
@@ -21,29 +22,7 @@ export class SchedulerService {
     this.bree = new Bree({
       root: jobsRoot,
       defaultExtension: jobExtension,
-      jobs: [
-        {
-          name: 'sync-nfl-players',
-          // Run every Tuesday at 2:00 AM
-          cron: '0 5 * * 2',
-        },
-        {
-          name: 'sync-leagues',
-          // Run every Tuesday at 7:00 AM
-          cron: '0 7 * * 2',
-        },
-        {
-          name: 'monitor-nfl-games',
-          // Run every 5 minutes
-          cron: '*/5 * * * *',
-        },
-        {
-          name: 'sync-d12-scores',
-          // Run every Tuesday at 7:00 AM UTC (midnight PT)
-          cron: '0 7 * * 2',
-        },
-        // Add more jobs here as needed
-      ],
+      jobs: SCHEDULED_JOBS.map(({ name, cron }) => ({ name, cron })),
       // Enable logging
       logger: console,
       // Handle job completion
@@ -103,20 +82,6 @@ export class SchedulerService {
   }
 
   /**
-   * Add a new job to the scheduler
-   */
-  addJob(jobConfig: any) {
-    this.bree.add(jobConfig);
-  }
-
-  /**
-   * Remove a job from the scheduler
-   */
-  removeJob(name: string) {
-    this.bree.remove(name);
-  }
-
-  /**
    * Run a job immediately (for testing)
    */
   async runJob(name: string) {
@@ -128,14 +93,19 @@ export class SchedulerService {
       throw error;
     }
   }
-
-  /**
-   * Get job status
-   */
-  getJobs() {
-    return this.bree.config.jobs;
-  }
 }
 
-// Export a singleton instance
-export const scheduler = new SchedulerService();
+let instance: SchedulerService | undefined;
+
+/**
+ * Built on first use rather than at import time. The admin scheduler page
+ * imports this module, and a module-scope instance meant the Remix server spun
+ * up its own second Bree alongside the scheduler process's - and inherited its
+ * startup failures, since Bree resolves every job path eagerly.
+ */
+export function getScheduler() {
+  if (!instance) {
+    instance = new SchedulerService();
+  }
+  return instance;
+}

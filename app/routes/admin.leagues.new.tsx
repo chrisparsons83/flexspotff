@@ -1,8 +1,8 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { redirect } from 'remix-typedjson';
-import z from 'zod';
 import Button from '~/components/ui/FlexSpotButton';
+import { getLeagueInfo } from '~/libs/sleeper/api.server';
 import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
@@ -15,13 +15,6 @@ type ActionData = {
     url: string;
   };
 };
-
-const sleeperJson = z.object({
-  draft_id: z.string(),
-  season: z.string(),
-  name: z.string(),
-});
-type SleeperJson = z.infer<typeof sleeperJson>;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -38,12 +31,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const urlObject = new URL(url);
   const sleeperLeagueId = urlObject.pathname.split('/')[2];
-  const sleeperLeagueRes = await fetch(
-    `https://api.sleeper.app/v1/league/${sleeperLeagueId}`,
-  );
-  const sleeperLeague: SleeperJson = sleeperJson.parse(
-    await sleeperLeagueRes.json(),
-  );
+  const sleeperLeague = await getLeagueInfo(sleeperLeagueId);
+
+  // A main league is stored against its draft, so one that hasn't been drafted
+  // yet can't be added here. Say so, rather than failing on a schema error.
+  if (!sleeperLeague.draft_id || !sleeperLeague.season) {
+    throw new Error(
+      `Sleeper league ${sleeperLeagueId} has no draft set up yet, so it can't be added.`,
+    );
+  }
+
   const year = Number.parseInt(sleeperLeague.season);
 
   const league = {

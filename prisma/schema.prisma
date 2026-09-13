@@ -744,6 +744,11 @@ model TeamGame {
 
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamId String
+
+  // Every leaderboard and record-book query filters on one or both of these,
+  // and the table had no indexes at all.
+  @@index([teamId, week])
+  @@index([week])
 }
 
 model User {

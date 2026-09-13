@@ -81,11 +81,23 @@ describe('getSleeperLeagueUsers', () => {
     );
   });
 
+  // A transport failure has to stay distinguishable from a parseable-but-wrong
+  // body, so it surfaces the status rather than the "no usable user list"
+  // message above.
   it('throws on a non-OK response', async () => {
     mockResponse(null, false, 500);
 
     await expect(getSleeperLeagueUsers('league-1')).rejects.toThrow(
-      'Sleeper user lookup failed for league league-1 (500)',
+      'Sleeper API error 500: GET /v1/league/league-1/users',
+    );
+  });
+
+  // Otherwise a Sleeper outage tells the admin their league ID is wrong.
+  it('lets a connection failure through rather than blaming the league ID', async () => {
+    mockFetch.mockRejectedValue(new TypeError('fetch failed'));
+
+    await expect(getSleeperLeagueUsers('league-1')).rejects.toThrow(
+      'fetch failed',
     );
   });
 });
