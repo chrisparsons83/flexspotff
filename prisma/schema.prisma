@@ -42,6 +42,14 @@ model D12WeekScore {
   week   Int
   points Float?
 
+  // The best-ball lineup `points` was computed from, so the number on the
+  // leaderboard can be shown as the eight players that made it. Mirrors
+  // TeamGame, minus the startingPlayers relation: the lineup is recomputed every
+  // five minutes while games are live, and a join table would churn with it for
+  // nothing the weekly loader can't get from one getPlayersBySleepersIds call.
+  starters             String[]
+  startingPlayerPoints Float[]
+
   league      D12League @relation(fields: [d12LeagueId], references: [id], onDelete: Cascade)
   d12LeagueId String
 
