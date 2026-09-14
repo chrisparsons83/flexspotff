@@ -11,6 +11,7 @@ import {
   getD12WeekScoresBySeasonYearAndWeek,
   getNewestD12WeekByYear,
 } from '~/models/d12weekscore.server';
+import { getPlayersBySleepersIds } from '~/models/players.server';
 import { LEADERBOARD_NAME_LINK, rankBadgeColor } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -30,11 +31,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const leaderboard = computeD12Leaderboard(weekScores);
   const maxWeek = await getNewestD12WeekByYear(year);
 
-  return typedjson({ leaderboard, year, week, maxWeek });
+  // Every starter on the page in one query, so the expanded lineups can show
+  // names rather than Sleeper IDs. '0' marks an empty slot and has no player.
+  const players = await getPlayersBySleepersIds(
+    Array.from(
+      new Set(
+        weekScores.flatMap(score =>
+          score.starters.filter(starter => starter !== '0'),
+        ),
+      ),
+    ),
+  );
+
+  return typedjson({ leaderboard, year, week, maxWeek, players });
 };
 
 export default function GamesD12YearWeek() {
-  const { leaderboard, year, week, maxWeek } =
+  const { leaderboard, year, week, maxWeek, players } =
     useTypedLoaderData<typeof loader>();
 
   const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
@@ -57,7 +70,13 @@ export default function GamesD12YearWeek() {
       </Link>
     ),
     values: [entry.totalPoints.toFixed(2)],
-    details: <D12LeagueBreakdown byLeague={entry.byLeague} />,
+    details: (
+      <D12LeagueBreakdown
+        byLeague={entry.byLeague}
+        showLineups
+        players={players}
+      />
+    ),
   }));
 
   return (

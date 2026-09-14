@@ -60,14 +60,20 @@ export type SleeperLeagueUsersJson = z.infer<typeof sleeperLeagueUsersJson>;
 
 /**
  * Shared by the main-league and D12 add-league flows. Only `name` is
- * guaranteed: D12 reads nothing else, and a league whose draft hasn't been
- * created yet has no draft_id. Callers that need the other two check for
- * themselves rather than failing everyone here with a ZodError.
+ * guaranteed: a league whose draft hasn't been created yet has no draft_id, and
+ * the add-league flows read neither the roster shape nor the settings. Callers
+ * that need any of the rest check for themselves rather than failing everyone
+ * here with a ZodError.
  */
 export const sleeperLeagueInfoJson = z.object({
   name: z.string(),
   season: z.string().nullish(),
   draft_id: z.string().nullish(),
+  // The D12 leagues are best ball, which changes how a week is scored - see
+  // app/libs/sleeper/best-ball.ts. Nullish because the main-league flows share
+  // this schema and read neither.
+  roster_positions: z.array(z.string()).nullish(),
+  settings: z.object({ best_ball: z.number().nullish() }).nullish(),
 });
 export type SleeperLeagueInfoJson = z.infer<typeof sleeperLeagueInfoJson>;
 
@@ -86,6 +92,10 @@ export const sleeperMatchupJson = z.array(
     matchup_id: z.number().nullable(),
     starters: z.array(z.string().nullable()).nullable(),
     starters_points: z.array(z.number().nullable()).nullable(),
+    // The whole roster's points, not just the starters'. Best-ball leagues are
+    // scored off this rather than off `points`, which only ever sums the frozen
+    // `starters` array.
+    players_points: z.record(z.number().nullable()).nullish(),
   }),
 );
 export type SleeperMatchupJson = z.infer<typeof sleeperMatchupJson>;

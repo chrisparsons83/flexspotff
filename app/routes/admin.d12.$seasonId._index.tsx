@@ -12,6 +12,8 @@ import {
   syncD12Season,
   syncD12DraftPicksForSeason,
   inferD12LeagueUsers,
+  getD12LeagueLineup,
+  LAST_D12_WEEK,
   getSleeperLeagueInfo,
   parseSleeperLeagueIdFromUrl,
   resolveLeagueOwners,
@@ -97,15 +99,25 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       const league = await getD12LeagueById(leagueId);
       if (!league) throw new Error('League not found');
 
-      const maxWeek = Math.min((await getNflState()).week, 17);
-      const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
-        league.sleeperLeagueId,
-      );
+      const maxWeek = Math.min((await getNflState()).week, LAST_D12_WEEK);
+      // Both are per-league rather than per-week, so they stay out of the loop.
+      const [{ rosterToOwner, ownerToUserId }, lineup] = await Promise.all([
+        resolveLeagueOwners(league.sleeperLeagueId),
+        getD12LeagueLineup(league.sleeperLeagueId),
+      ]);
 
       const errors: string[] = [];
       for (let week = 1; week <= maxWeek; week++) {
         try {
-          await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
+          errors.push(
+            ...(await syncD12LeagueWeek(
+              league,
+              week,
+              rosterToOwner,
+              ownerToUserId,
+              lineup,
+            )),
+          );
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           errors.push(`Week ${week}: ${msg}`);
@@ -130,6 +142,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
           message: 'Week must be greater than 0',
           errors: undefined as string[] | undefined,
         });
+      // Past week 17 a row would be summed into season totals by the unfiltered
+      // read query and then never refreshed, since syncD12Season only backfills
+      // that far. syncD12Week caps itself the same way.
+      if (week > LAST_D12_WEEK)
+        return typedjson({
+          message: `Week must be ${LAST_D12_WEEK} or less - D12 mirrors the NFL regular season`,
+          errors: undefined as string[] | undefined,
+        });
 
       const season = await getD12SeasonById(seasonId);
       if (!season) throw new Error('Season not found');
@@ -139,10 +159,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await Promise.all(
         leagues.map(async league => {
           try {
-            const { rosterToOwner, ownerToUserId } = await resolveLeagueOwners(
-              league.sleeperLeagueId,
+            const [{ rosterToOwner, ownerToUserId }, lineup] =
+              await Promise.all([
+                resolveLeagueOwners(league.sleeperLeagueId),
+                getD12LeagueLineup(league.sleeperLeagueId),
+              ]);
+            errors.push(
+              ...(await syncD12LeagueWeek(
+                league,
+                week,
+                rosterToOwner,
+                ownerToUserId,
+                lineup,
+              )),
             );
-            await syncD12LeagueWeek(league, week, rosterToOwner, ownerToUserId);
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             errors.push(`"${league.name}": ${msg}`);

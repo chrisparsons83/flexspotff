@@ -19,7 +19,11 @@ export async function getD12WeekScoresBySeasonYear(year: number) {
   });
 }
 
-/** The same rows, narrowed to one week, for the weekly leaderboard. */
+/**
+ * The same rows, narrowed to one week, for the weekly leaderboard. This is the
+ * caller that reads the lineup columns: with one week per league the best-ball
+ * lineup behind the score is well defined, so the board can show it.
+ */
 export async function getD12WeekScoresBySeasonYearAndWeek(
   year: number,
   week: number,
@@ -57,6 +61,36 @@ export async function getNewestD12WeekByYear(year: number) {
   return result._max.week ?? 1;
 }
 
+/**
+ * The row shape the leaderboard needs, described structurally rather than off
+ * one query's return type, so both the season and weekly queries satisfy it -
+ * and so a test can build a row without the lineup columns.
+ */
+export type D12WeekScoreRow = {
+  userId: string;
+  week: number;
+  points: number | null;
+  d12LeagueId: string;
+  league: { name: string };
+  user: { discordName: string; discordAvatar: string };
+  starters?: string[];
+  startingPlayerPoints?: number[];
+};
+
+export type D12LeagueTotal = {
+  leagueId: string;
+  leagueName: string;
+  points: number;
+  /** How many weeks went into `points`. */
+  weekCount: number;
+  /**
+   * The best-ball lineup behind `points`, populated only when a single week went
+   * into it - a lineup summed across weeks would mean nothing. Empty otherwise.
+   */
+  starters: string[];
+  startingPlayerPoints: number[];
+};
+
 export interface D12LeaderboardEntry {
   userId: string;
   discordName: string;
@@ -70,7 +104,7 @@ export interface D12LeaderboardEntry {
    */
   bestLeagueName: string;
   bestLeaguePoints: number;
-  byLeague: { leagueId: string; leagueName: string; points: number }[];
+  byLeague: D12LeagueTotal[];
   rank: number;
 }
 
@@ -83,14 +117,14 @@ export interface D12LeaderboardEntry {
  * that week's split, and `bestLeague*` is their best team that week.
  */
 export function computeD12Leaderboard(
-  weekScores: Awaited<ReturnType<typeof getD12WeekScoresBySeasonYear>>,
+  weekScores: D12WeekScoreRow[],
 ): D12LeaderboardEntry[] {
   const userMap = new Map<
     string,
     {
       discordName: string;
       discordAvatar: string;
-      byLeague: Map<string, { leagueName: string; points: number }>;
+      byLeague: Map<string, Omit<D12LeagueTotal, 'leagueId'>>;
       byWeek: Map<number, number>;
     }
   >();
@@ -106,12 +140,16 @@ export function computeD12Leaderboard(
     }
     const entry = userMap.get(score.userId)!;
 
-    const leaguePoints =
-      (entry.byLeague.get(score.d12LeagueId)?.points ?? 0) +
-      (score.points ?? 0);
+    const existing = entry.byLeague.get(score.d12LeagueId);
+    const weekCount = (existing?.weekCount ?? 0) + 1;
     entry.byLeague.set(score.d12LeagueId, {
       leagueName: score.league.name,
-      points: leaguePoints,
+      points: (existing?.points ?? 0) + (score.points ?? 0),
+      weekCount,
+      // Only meaningful for a single week, which is the weekly board's case.
+      starters: weekCount === 1 ? score.starters ?? [] : [],
+      startingPlayerPoints:
+        weekCount === 1 ? score.startingPlayerPoints ?? [] : [],
     });
 
     const weekTotal = (entry.byWeek.get(score.week) ?? 0) + (score.points ?? 0);
@@ -155,11 +193,7 @@ export function computeD12Leaderboard(
     }
 
     const byLeague = Array.from(data.byLeague.entries()).map(
-      ([leagueId, { leagueName, points }]) => ({
-        leagueId,
-        leagueName,
-        points,
-      }),
+      ([leagueId, total]) => ({ leagueId, ...total }),
     );
 
     leaderboard.push({
