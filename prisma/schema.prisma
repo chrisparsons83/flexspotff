@@ -265,7 +265,9 @@ model League {
   isActive  Boolean
   isDrafted Boolean @default(false)
 
-  teams Team[]
+  teams              Team[]
+  waiverTransactions WaiverTransaction[]
+  waiverReports      WaiverReport[]
 }
 
 model DraftSlot {
@@ -609,6 +611,8 @@ model Player {
   QBStreamingWeekOption QBStreamingWeekOption[]
   TeamGames             TeamGame[]
   dfsSurvivorEntries    DFSSurvivorUserEntry[]
+  waiverAdds            WaiverTransaction[]     @relation("WaiverAdd")
+  waiverDrops           WaiverTransaction[]     @relation("WaiverDrop")
 }
 
 model QBStreamingWeek {
@@ -794,6 +798,7 @@ model User {
   dfsSurvivorUserWeeks DFSSurvivorUserWeek[]
   omniTeams            OmniUserTeam[]
   draftSlotPreferences DraftSlotPreference[]
+  waiverTransactions   WaiverTransaction[]
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
 
@@ -825,4 +830,76 @@ model UserMerge {
 
   @@index([duplicateId])
   @@index([canonicalId])
+}
+
+/// One Sleeper waiver claim - winning or losing - from a single waiver batch.
+///
+/// Rows are only ever written for `type: "waiver"` transactions belonging to one
+/// batch (see waiver-sync.server.ts). A week's Sleeper endpoint also carries free
+/// agent adds, trades, and mid-week rolling waiver clears, none of which belong
+/// in the Wednesday report.
+model WaiverTransaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  leagueId String
+
+  /// The football week these claims are FOR - the upcoming games. This is what
+  /// the embed is titled by and what admins re-run by, and it is deliberately
+  /// not Sleeper's `leg`.
+  week Int
+
+  /// Sleeper's own leg, kept for provenance. Sleeper files the Wednesday batch
+  /// under the outgoing leg, so this is normally `week - 1`.
+  sleeperLeg Int
+
+  sleeperTransactionId String
+  /// "complete" or "failed".
+  status               String
+  /// settings.waiver_bid
+  bid                  Int
+  /// settings.seq - Sleeper's tiebreak order, lower wins an equal bid.
+  seq                  Int
+  /// metadata.notes, which carries the failure reason.
+  notes                String?
+
+  rosterId Int
+
+  /// Always set, so the report still renders for an owner we have never linked.
+  sleeperOwnerId String
+  user           User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId         String?
+
+  /// The raw Sleeper key for the added player: normally a numeric ID, but a
+  /// defense comes through as a team abbreviation ("DET"). Stored alongside the
+  /// resolved relation so a player missing from our table still renders.
+  addSleeperId String
+  addPlayer    Player? @relation("WaiverAdd", fields: [addPlayerId], references: [id])
+  addPlayerId  String?
+  dropPlayer   Player? @relation("WaiverDrop", fields: [dropPlayerId], references: [id])
+  dropPlayerId String?
+
+  /// From status_updated, which is identical across every row in a batch.
+  processedAt DateTime
+
+  @@unique([leagueId, sleeperTransactionId])
+  @@index([leagueId, week])
+}
+
+/// Marks a league-week as already posted to Discord, so the retry passes of the
+/// scheduled job do not double-post.
+model WaiverReport {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  leagueId String
+  week     Int
+
+  postedAt         DateTime @default(now())
+  discordMessageId String?
+
+  @@unique([leagueId, week])
 }

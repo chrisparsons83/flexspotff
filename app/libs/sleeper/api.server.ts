@@ -15,6 +15,7 @@ import {
   sleeperRostershipJson,
   sleeperStatsJson,
   sleeperTeamJson,
+  sleeperTransactionsJson,
   type SleeperGraphqlNflGames,
 } from './schemas';
 import { graphQLClient } from '~/services/sleeperGraphql.server';
@@ -51,6 +52,18 @@ export const getLeagueMatchups = (sleeperLeagueId: string, week: number) =>
   sleeperFetch(
     `/v1/league/${sleeperLeagueId}/matchups/${week}`,
     sleeperMatchupJson,
+  );
+
+/**
+ * Every transaction Sleeper filed under `week` - waivers, free agent adds and
+ * trades together. Note that Sleeper files a Wednesday waiver batch under the
+ * *outgoing* leg, so callers after a specific batch should fetch more than one
+ * week and select by `status_updated`. See waiver-sync.server.ts.
+ */
+export const getLeagueTransactions = (sleeperLeagueId: string, week: number) =>
+  sleeperFetch(
+    `/v1/league/${sleeperLeagueId}/transactions/${week}`,
+    sleeperTransactionsJson,
   );
 
 export const getLeagueDrafts = (sleeperLeagueId: string) =>

@@ -39,6 +39,23 @@ export const POSITION_BORDER_COLORS: Record<string, string> = {
   empty: 'border-gray-500',
 };
 
+/**
+ * Discord embed sidebar colours per league, keyed lowercase because League.name
+ * is stored capitalized ("Admiral") - the same convention as RANK_COLORS.
+ */
+export const LEAGUE_EMBED_COLORS: Record<Leagues, number> = {
+  admiral: 0x15c9bf,
+  champions: 0xc29f04,
+  dragon: 0x1f8b4c,
+  galaxy: 0x3498db,
+  monarch: 0xab59b6,
+};
+export const DEFAULT_EMBED_COLOR = 0x00ff00;
+
+export const leagueEmbedColor = (leagueName: string) =>
+  LEAGUE_EMBED_COLORS[leagueName.toLowerCase() as Leagues] ??
+  DEFAULT_EMBED_COLOR;
+
 export const RANK_COLORS: Record<Leagues, string> = {
   admiral: 'bg-admiral text-gray-900',
   champions: 'bg-champions text-gray-900',

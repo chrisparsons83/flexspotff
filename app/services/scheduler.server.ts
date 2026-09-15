@@ -22,7 +22,12 @@ export class SchedulerService {
     this.bree = new Bree({
       root: jobsRoot,
       defaultExtension: jobExtension,
-      jobs: SCHEDULED_JOBS.map(({ name, cron }) => ({ name, cron })),
+      // Spread the timezone conditionally: Bree rejects an explicit undefined.
+      jobs: SCHEDULED_JOBS.map(({ name, cron, timezone }) => ({
+        name,
+        cron,
+        ...(timezone ? { timezone } : {}),
+      })),
       // Enable logging
       logger: console,
       // Handle job completion

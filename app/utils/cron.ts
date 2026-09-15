@@ -1,9 +1,30 @@
 /**
+ * Short label for the zones a job can be scheduled in, so the admin page does
+ * not read a zoned job's time as UTC.
+ */
+const TIMEZONE_LABELS: Record<string, string> = {
+  'America/Los_Angeles': 'PT',
+  'America/Denver': 'MT',
+  'America/Chicago': 'CT',
+  'America/New_York': 'ET',
+};
+
+const timezoneSuffix = (timezone?: string) => {
+  if (!timezone) return ' UTC';
+  return ` ${TIMEZONE_LABELS[timezone] ?? timezone}`;
+};
+
+/**
  * Converts a cron expression to a human-readable string
  * @param cronExpression - Standard cron expression (minute hour day month dayOfWeek)
+ * @param timezone - IANA zone the expression is evaluated in; UTC when omitted,
+ * which is what the container runs in
  * @returns Human-readable description of the cron schedule
  */
-export function cronToHuman(cronExpression: string | undefined): string {
+export function cronToHuman(
+  cronExpression: string | undefined,
+  timezone?: string,
+): string {
   if (!cronExpression || typeof cronExpression !== 'string') {
     return 'No schedule';
   }
@@ -132,13 +153,17 @@ export function cronToHuman(cronExpression: string | undefined): string {
     return dow !== '*' ? `on day ${dow}` : '';
   };
 
+  const suffix = timezoneSuffix(timezone);
+
   // Handle common patterns first
-  if (cronExpression === '0 0 * * *') return 'Daily at 12:00 AM';
-  if (cronExpression === '0 12 * * *') return 'Daily at 12:00 PM';
-  if (cronExpression === '0 0 * * 0') return 'Weekly on Sunday at 12:00 AM';
-  if (cronExpression === '0 0 1 * *') return 'Monthly on the 1st at 12:00 AM';
+  if (cronExpression === '0 0 * * *') return `Daily at 12:00 AM${suffix}`;
+  if (cronExpression === '0 12 * * *') return `Daily at 12:00 PM${suffix}`;
+  if (cronExpression === '0 0 * * 0')
+    return `Weekly on Sunday at 12:00 AM${suffix}`;
+  if (cronExpression === '0 0 1 * *')
+    return `Monthly on the 1st at 12:00 AM${suffix}`;
   if (cronExpression === '0 0 1 1 *')
-    return 'Yearly on January 1st at 12:00 AM';
+    return `Yearly on January 1st at 12:00 AM${suffix}`;
 
   // Build description from parts
   let description = '';
@@ -176,11 +201,21 @@ export function cronToHuman(cronExpression: string | undefined): string {
     const hourText = getHourText(hour);
     const minuteText = getMinuteText(minute);
 
+    const hourNum = parseInt(hour);
+
     if (minute === '0') {
       description += `at ${hourText}`;
+    } else if (minute.includes(',') && !isNaN(hourNum)) {
+      // A list of minutes is every run, not just the first. The waiver report
+      // retries twice, and showing only 12:20 hid that from the scheduler page.
+      const times = minute
+        .split(',')
+        .map(part => parseInt(part))
+        .filter(part => !isNaN(part))
+        .map(part => formatTime(hourNum, part));
+      description += `at ${times.join(', ')}`;
     } else {
       // For non-zero minutes, construct full time
-      const hourNum = parseInt(hour);
       const minNum = parseInt(minute);
 
       if (!isNaN(hourNum) && !isNaN(minNum)) {
@@ -195,7 +230,7 @@ export function cronToHuman(cronExpression: string | undefined): string {
     description += getMinuteText(minute);
   }
 
-  return description.trim();
+  return hour !== '*' ? `${description.trim()}${suffix}` : description.trim();
 }
 
 /**

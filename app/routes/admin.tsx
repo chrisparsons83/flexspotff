@@ -76,6 +76,7 @@ export default function Admin() {
   const dataLinks = [
     { name: 'Syncing', href: '/admin/data', current: false },
     { name: 'Scheduler', href: '/admin/scheduler', current: false },
+    { name: 'Waiver Reports', href: '/admin/waivers', current: false },
   ];
 
   const botLinks = [{ name: 'Commands', href: '/admin/bot', current: false }];

@@ -14,8 +14,13 @@
  */
 export type ScheduledJob = {
   name: string;
-  /** UTC. The container has no TZ set, so these are not local times. */
+  /** UTC unless `timezone` is set. The container has no TZ set. */
   cron: string;
+  /**
+   * IANA zone for a job that has to hold a wall-clock local time across DST.
+   * Bree validates this and passes it through to its scheduler.
+   */
+  timezone?: string;
   description: string;
 };
 
@@ -43,6 +48,13 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     cron: '0 7 * * 2',
     description:
       'Full-season D12 backfill, to pick up weeks the live monitor missed and any late Sleeper corrections. Tuesdays at 07:00 UTC.',
+  },
+  {
+    name: 'post-waiver-report',
+    cron: '20,35,50 0 * * 3',
+    timezone: 'America/Los_Angeles',
+    description:
+      "Posts each league's waiver claims and failed bids to the waiver report channel. Wednesdays at 12:20am PT - the last league's batch lands around 12:14 - retrying at 12:35 and 12:50 for any league Sleeper has not finished processing.",
   },
 ];
 
