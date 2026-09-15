@@ -3,16 +3,16 @@ import type {
   GuildMemberRoleManager,
 } from 'discord.js';
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { postWaiverReports } from '~/libs/waiver-report.server';
+import {
+  leagueWaiverChannelIds,
+  postWaiverReports,
+} from '~/libs/waiver-report.server';
 import { getCurrentSeason } from '~/models/season.server';
 import {
   FIRST_YEAR,
   Leagues,
   SERVER_DISCORD_ADMIN_ROLE_ID,
 } from '~/utils/constants';
-import { envSchema } from '~/utils/helpers';
-
-const env = envSchema.parse(process.env);
 
 const WEEK_FIELD = 'week';
 const YEAR_FIELD = 'year';
@@ -108,9 +108,10 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     year = season.year;
   }
 
-  if (!preview && !env.WAIVER_REPORT_CHANNEL_ID) {
+  const channelIds = leagueWaiverChannelIds();
+  if (!preview && !Object.values(channelIds).some(Boolean)) {
     return interaction.editReply(
-      'No waiver report channel is configured, so there is nowhere to post. Try `preview: true`.',
+      'No league waiver channels are configured, so there is nowhere to post. Try `preview: true`.',
     );
   }
 
@@ -121,7 +122,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     // An admin asking for a week again means they want it posted again.
     force: true,
     preview,
-    channelId: env.WAIVER_REPORT_CHANNEL_ID,
+    channelIds,
   });
 
   if (results.length === 0) {

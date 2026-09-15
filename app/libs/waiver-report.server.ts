@@ -11,7 +11,9 @@ import {
   getWaiverTransactions,
   recordWaiverReport,
 } from '~/models/waiver.server';
+import type { Leagues } from '~/utils/constants';
 import { isLeagueName, leagueEmbedColor } from '~/utils/constants';
+import { envSchema } from '~/utils/helpers';
 
 /**
  * Discord allows 4096 characters in an embed description. Pack well short of it
@@ -274,6 +276,24 @@ async function getSleeperNames(sleeperLeagueId: string) {
   }
 }
 
+export type LeagueChannelIds = Partial<Record<Leagues, string>>;
+
+/**
+ * Each league posts its waiver report to its own channel, so managers only see
+ * the league they follow. Read lazily rather than at module load so importing
+ * this file - which the unit tests do - does not require a full environment.
+ */
+export const leagueWaiverChannelIds = (): LeagueChannelIds => {
+  const env = envSchema.parse(process.env);
+  return {
+    admiral: env.ADMIRAL_WAIVER_CHANNEL_ID,
+    champions: env.CHAMPIONS_WAIVER_CHANNEL_ID,
+    dragon: env.DRAGON_WAIVER_CHANNEL_ID,
+    galaxy: env.GALAXY_WAIVER_CHANNEL_ID,
+    monarch: env.MONARCH_WAIVER_CHANNEL_ID,
+  };
+};
+
 export type PostWaiverReportsArgs = {
   year: number;
   /**
@@ -294,7 +314,11 @@ export type PostWaiverReportsArgs = {
   force?: boolean;
   /** Build the embeds without posting to Discord or recording the report. */
   preview?: boolean;
-  channelId?: string;
+  /**
+   * Where each league's report is posted, keyed by lowercase league name.
+   * Defaults to the configured mapping.
+   */
+  channelIds?: LeagueChannelIds;
 };
 
 export type WaiverReportResult = {
@@ -327,7 +351,7 @@ export async function postWaiverReports({
   leagueNames,
   force = false,
   preview = false,
-  channelId,
+  channelIds,
 }: PostWaiverReportsArgs): Promise<WaiverReportResult[]> {
   const allLeagues = await getLeaguesByYear(year);
   const leagues = allLeagues.filter(league => {
@@ -337,6 +361,10 @@ export async function postWaiverReports({
   });
 
   if (leagues.length === 0) return [];
+
+  // Resolved once: every league reads from the same mapping, and when posting is
+  // skipped entirely (a preview) the environment is never touched.
+  const channels = channelIds ?? (preview ? {} : leagueWaiverChannelIds());
 
   // Read once and share: this walks every member row, so leaving it to each
   // league would run that query five times concurrently.
@@ -439,13 +467,17 @@ export async function postWaiverReports({
         continue;
       }
 
+      const channelId = channels[league.name.toLowerCase() as Leagues];
+
       if (!channelId) {
         results.push({
           leagueName: league.name,
           week,
           status: 'error',
           transactionCount: transactions.length,
-          message: 'No waiver report channel configured.',
+          message: `No waiver channel configured for ${
+            league.name
+          } (set ${league.name.toUpperCase()}_WAIVER_CHANNEL_ID).`,
         });
         continue;
       }
