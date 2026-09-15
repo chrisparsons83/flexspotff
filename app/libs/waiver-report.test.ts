@@ -1,4 +1,9 @@
-import { buildWaiverEmbeds, groupByPlayer } from './waiver-report.server';
+import {
+  buildWaiverEmbeds,
+  chunkEmbedsForMessages,
+  groupByPlayer,
+} from './waiver-report.server';
+import { EmbedBuilder, embedLength } from 'discord.js';
 import { describe, expect, it } from 'vitest';
 import type { WaiverTransactionWithRelations } from '~/models/waiver.server';
 
@@ -285,5 +290,74 @@ describe('buildWaiverEmbeds', () => {
     const all = embeds.map(e => e.data.description).join('');
     expect(all).toContain('Number 0');
     expect(all).toContain('Number 119');
+  });
+});
+
+describe('chunkEmbedsForMessages', () => {
+  const embedOf = (chars: number) =>
+    new EmbedBuilder().setDescription('x'.repeat(chars));
+
+  const charsIn = (group: EmbedBuilder[]) =>
+    group.reduce((total, embed) => total + embedLength(embed.data), 0);
+
+  it('keeps a normal week in a single message', () => {
+    const groups = chunkEmbedsForMessages([embedOf(500), embedOf(500)]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toHaveLength(2);
+  });
+
+  /**
+   * The bug this exists for. A five-league preview of 2025 week 2 came to 6235
+   * characters, and Discord rejects the whole message at 6000 rather than
+   * trimming it - so the command failed outright with 50035.
+   */
+  it('splits when the total would exceed the message budget', () => {
+    const groups = chunkEmbedsForMessages([
+      embedOf(1218),
+      embedOf(1526),
+      embedOf(1600),
+      embedOf(1020),
+      embedOf(871),
+    ]);
+
+    expect(groups.length).toBeGreaterThan(1);
+    for (const group of groups) {
+      expect(charsIn(group)).toBeLessThanOrEqual(6000);
+    }
+  });
+
+  it('never puts more than ten embeds in a message', () => {
+    const groups = chunkEmbedsForMessages(
+      Array.from({ length: 25 }, () => embedOf(10)),
+    );
+
+    expect(groups).toHaveLength(3);
+    for (const group of groups) {
+      expect(group.length).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('keeps every embed rather than dropping any', () => {
+    const embeds = Array.from({ length: 25 }, (_, index) =>
+      new EmbedBuilder().setDescription(`embed ${index}`),
+    );
+
+    const flattened = chunkEmbedsForMessages(embeds).flat();
+
+    expect(flattened).toHaveLength(25);
+    expect(flattened.map(embed => embed.data.description)).toEqual(
+      embeds.map(embed => embed.data.description),
+    );
+  });
+
+  it('gives an oversized embed its own message rather than dropping it', () => {
+    const groups = chunkEmbedsForMessages([embedOf(100), embedOf(4000)]);
+
+    expect(groups.flat()).toHaveLength(2);
+  });
+
+  it('handles an empty list', () => {
+    expect(chunkEmbedsForMessages([])).toEqual([]);
   });
 });

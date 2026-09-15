@@ -3,6 +3,7 @@ import * as sleeperApi from './sleeper/api.server';
 import * as ownersModule from './sleeper/owners.server';
 import { postWaiverReports } from './waiver-report.server';
 import * as waiverSync from './waiver-sync.server';
+import { embedLength } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as leagueModel from '~/models/league.server';
 import * as waiverModel from '~/models/waiver.server';
@@ -291,7 +292,7 @@ describe('postWaiverReports', () => {
    * whole message rather than trimming, so a long week posted as a single message
    * would get no report at all.
    */
-  it('posts each embed as its own message', async () => {
+  it('splits a long week across messages within Discord limits', async () => {
     const many = Array.from({ length: 120 }, (_, index) => ({
       ...(transaction() as Record<string, unknown>),
       id: `txn-${index}`,
@@ -311,7 +312,11 @@ describe('postWaiverReports', () => {
     const calls = vi.mocked(botUtils.sendMessageToChannel).mock.calls;
     expect(calls.length).toBeGreaterThan(1);
     for (const [call] of calls) {
-      expect(call.messageData.embeds).toHaveLength(1);
+      const embeds = call.messageData.embeds;
+      expect(embeds.length).toBeLessThanOrEqual(10);
+      expect(
+        embeds.reduce((total, embed) => total + embedLength(embed.data), 0),
+      ).toBeLessThanOrEqual(6000);
       expect(call.messageData.allowed_mentions).toEqual({ parse: [] });
     }
   });
