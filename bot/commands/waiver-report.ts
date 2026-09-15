@@ -5,12 +5,17 @@ import type {
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { postWaiverReports } from '~/libs/waiver-report.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { Leagues, SERVER_DISCORD_ADMIN_ROLE_ID } from '~/utils/constants';
+import {
+  FIRST_YEAR,
+  Leagues,
+  SERVER_DISCORD_ADMIN_ROLE_ID,
+} from '~/utils/constants';
 import { envSchema } from '~/utils/helpers';
 
 const env = envSchema.parse(process.env);
 
 const WEEK_FIELD = 'week';
+const YEAR_FIELD = 'year';
 const LEAGUE_FIELD = 'league';
 const PREVIEW_FIELD = 'preview';
 
@@ -30,6 +35,15 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .setMinValue(1)
       .setMaxValue(18),
+  )
+  .addIntegerOption(option =>
+    option
+      .setName(YEAR_FIELD)
+      .setDescription('The season to report on. Defaults to the current one.')
+      // No upper bound: the builder is serialized when commands are registered
+      // from /admin/bot, so a max pinned to the current year would quietly go
+      // stale in January.
+      .setMinValue(FIRST_YEAR),
   )
   .addStringOption(option =>
     option
@@ -81,9 +95,17 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   const week = interaction.options.getInteger(WEEK_FIELD, true);
   const league = interaction.options.getString(LEAGUE_FIELD) ?? ALL_LEAGUES;
 
-  const season = await getCurrentSeason();
-  if (!season) {
-    return interaction.editReply('There is no current season.');
+  const requestedYear = interaction.options.getInteger(YEAR_FIELD);
+
+  let year = requestedYear;
+  if (year === null) {
+    const season = await getCurrentSeason();
+    if (!season) {
+      return interaction.editReply(
+        'There is no current season, so pass a year explicitly.',
+      );
+    }
+    year = season.year;
   }
 
   if (!preview && !env.WAIVER_REPORT_CHANNEL_ID) {
@@ -93,7 +115,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   }
 
   const results = await postWaiverReports({
-    year: season.year,
+    year,
     week,
     leagueNames: league === ALL_LEAGUES ? undefined : [league],
     // An admin asking for a week again means they want it posted again.
@@ -103,9 +125,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   });
 
   if (results.length === 0) {
-    return interaction.editReply(
-      `No ${season.year} leagues matched that request.`,
-    );
+    return interaction.editReply(`No ${year} leagues matched that request.`);
   }
 
   if (preview) {
@@ -116,7 +136,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
     if (embeds.length === 0) {
       return interaction.editReply(
-        `Nothing to show for week ${week}.\n${summary}`,
+        `Nothing to show for ${year} week ${week}.\n${summary}`,
       );
     }
 
@@ -135,5 +155,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     )
     .join('\n');
 
-  return interaction.editReply(`Week ${week} waiver report:\n${summary}`);
+  return interaction.editReply(
+    `${year} week ${week} waiver report:\n${summary}`,
+  );
 };

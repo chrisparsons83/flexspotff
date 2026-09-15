@@ -1,5 +1,6 @@
 import week3Fixture from './__fixtures__/sleeper-transactions-champions-2025-week3.json';
 import week7Fixture from './__fixtures__/sleeper-transactions-champions-2025-week7.json';
+import dragonWeek2Fixture from './__fixtures__/sleeper-transactions-dragon-2025-week2.json';
 import * as ownersModule from './sleeper/owners.server';
 import type { SleeperTransaction } from './sleeper/schemas';
 import {
@@ -23,6 +24,8 @@ vi.mock('~/db.server', () => ({
 
 const week3 = week3Fixture as unknown as SleeperTransaction[];
 const week7 = week7Fixture as unknown as SleeperTransaction[];
+/** Leg 2: a 26-claim run at 00:13 PT and one stray clear at 19:23 the same day. */
+const dragonWeek2 = dragonWeek2Fixture as unknown as SleeperTransaction[];
 
 /** Midnight Pacific on the Wednesday the week 3 batch ran (2025-09-24). */
 const WEEK3_WEDNESDAY = DateTime.fromISO('2025-09-24T00:00:00', {
@@ -113,6 +116,38 @@ describe('selectWaiverBatch anchored by leg', () => {
     const batch = selectWaiverBatch(pooled, { leg: 7 });
 
     expect(batch).toHaveLength(22);
+  });
+
+  /**
+   * The real run is not always the last batch in its leg. Dragon cleared one more
+   * claim at 19:23 the same Wednesday, and taking the latest returned that single
+   * claim as the whole week's report.
+   */
+  it('prefers the midnight run over a later clear the same Wednesday', () => {
+    const waivers = dragonWeek2.filter(t => t.type === 'waiver');
+
+    const batch = selectWaiverBatch(waivers, { leg: 2 });
+
+    expect(batch).toHaveLength(26);
+    expect(legToReportWeek(batch[0].leg)).toBe(3);
+  });
+
+  it('applies the same preference on the scheduled path', () => {
+    const waivers = dragonWeek2.filter(t => t.type === 'waiver');
+    const wednesday = DateTime.fromISO('2025-09-17T00:00:00', {
+      zone: 'America/Los_Angeles',
+    }).toJSDate();
+
+    expect(selectWaiverBatch(waivers, { since: wednesday })).toHaveLength(26);
+  });
+
+  it('still returns an unusual run when nothing is in the window', () => {
+    const waivers = dragonWeek2
+      .filter(t => t.type === 'waiver')
+      // Drop the midnight run, leaving only the 19:23 clear.
+      .filter(t => t.status_updated !== 1758093206726);
+
+    expect(selectWaiverBatch(waivers, { leg: 2 })).toHaveLength(1);
   });
 
   it('returns nothing for a leg with no waiver batch', () => {

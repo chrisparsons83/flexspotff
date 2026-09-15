@@ -69,19 +69,37 @@ export type WaiverBatchSelector = {
 };
 
 /**
+ * True when a batch ran in the midnight hour of a Pacific Wednesday - the window
+ * the real waiver run lands in. Measured across the 2025 season, every league's
+ * run completed between 00:04 and 00:14 PT.
+ */
+function ranInWednesdayWindow(statusUpdated: number) {
+  const pacific = DateTime.fromMillis(statusUpdated).setZone(
+    'America/Los_Angeles',
+  );
+  return pacific.weekday === 3 && pacific.hour === 0;
+}
+
+/**
  * Narrows a set of waiver rows to the single batch we want to report on.
  *
- * Two things have to be excluded, and they need different anchors:
+ * Three things have to be excluded, and they need different anchors:
  *
  * - A week's endpoint carries more than the Wednesday run. Champions 2025 week 7
  *   also held rolling clears on Thursday 04:40, Thursday 05:10 and Sunday 11:11.
- *   Every row in one batch shares a `status_updated`, so grouping on it and
- *   taking the latest picks the Wednesday run out of that leg.
+ *   Every row in one batch shares a `status_updated`, so grouping on it
+ *   separates the runs.
  *
  * - Callers pool more than one Sleeper week, so rows from a *different* leg are
  *   in scope too, and those can be newer than the batch being asked for. Taking
  *   the latest batch overall would then quietly return the wrong week's claims,
  *   which is why `leg` exists as an anchor rather than relying on time alone.
+ *
+ * - Even inside one leg the real run is not always the last batch. A league can
+ *   clear a single late claim the same Wednesday: Dragon leg 2 ran 26 claims at
+ *   00:13 and one more at 19:23, and Champions leg 12 did the same at 07:40.
+ *   Preferring the midnight-Wednesday window picks the real run in all 45
+ *   multi-batch league-legs of the 2025 season, where taking the latest gets 43.
  *
  * Getting this wrong does not fail loudly - it posts a plausible report built
  * from the wrong transactions - so it is covered directly by waiver-sync.test.ts.
@@ -101,11 +119,20 @@ export function selectWaiverBatch(
   });
   if (eligible.length === 0) return [];
 
+  // Fall back to everything eligible if nothing landed in the window, so an
+  // unusual run is still reported rather than silently dropped.
+  const inWindow = eligible.filter(transaction =>
+    ranInWednesdayWindow(transaction.status_updated),
+  );
+  const candidates = inWindow.length > 0 ? inWindow : eligible;
+
   const latest = Math.max(
-    ...eligible.map(transaction => transaction.status_updated),
+    ...candidates.map(transaction => transaction.status_updated),
   );
 
-  return eligible.filter(transaction => transaction.status_updated === latest);
+  return candidates.filter(
+    transaction => transaction.status_updated === latest,
+  );
 }
 
 /**
