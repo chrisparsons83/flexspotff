@@ -234,3 +234,31 @@ export const sleeperGraphqlNflGames = z.object({
   ),
 });
 export type SleeperGraphqlNflGames = z.infer<typeof sleeperGraphqlNflGames>;
+
+/**
+ * League transactions for one week.
+ *
+ * `settings` is nullable because trades and free agent adds carry no bid, so
+ * every `waiver_bid` read must come after the `type === 'waiver'` filter.
+ *
+ * `adds`/`drops` map a player key to the roster it moved to or from. The key is
+ * normally a numeric Sleeper player ID, but a defense arrives as a team
+ * abbreviation ("DET"), which is also how our Player table stores them.
+ */
+export const sleeperTransactionsJson = z.array(
+  z.object({
+    type: z.string(),
+    status: z.string(),
+    transaction_id: z.string(),
+    leg: z.number(),
+    creator: z.string(),
+    roster_ids: z.array(z.number()),
+    settings: z.object({ waiver_bid: z.number(), seq: z.number() }).nullish(),
+    metadata: z.object({ notes: z.string() }).nullish(),
+    adds: z.record(z.number()).nullish(),
+    drops: z.record(z.number()).nullish(),
+    status_updated: z.number(),
+  }),
+);
+export type SleeperTransactionsJson = z.infer<typeof sleeperTransactionsJson>;
+export type SleeperTransaction = SleeperTransactionsJson[number];

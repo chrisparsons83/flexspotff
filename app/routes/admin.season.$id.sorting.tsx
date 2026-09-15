@@ -21,7 +21,7 @@ import { getLeaguesByYear } from '~/models/league.server';
 import { getRegistrationsByYear } from '~/models/registration.server';
 import { getSeasonById } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { SERVER_DISCORD_ID } from '~/utils/constants';
+import { SERVER_DISCORD_ID, leagueEmbedColor } from '~/utils/constants';
 import { envSchema, shuffleArray } from '~/utils/helpers';
 
 type PlayerTier = 'champions' | 'tier2';
@@ -173,7 +173,7 @@ const MAX_SLOT_COMBINATIONS = 15_000;
 const ROLE_ASSIGNMENT_CONCURRENCY = 5;
 
 // League.name is stored capitalized ("Admiral"), so keys are lowercased on
-// lookup -- same convention as leagueColors below.
+// lookup -- same convention as LEAGUE_EMBED_COLORS in utils/constants.
 const leagueRoleIds: Record<string, string | undefined> = {
   admiral: env.ADMIRAL_ROLE_ID,
   champions: env.CHAMPIONS_ROLE_ID,
@@ -573,19 +573,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // Create separate embeds for each league in alphabetical order
     const embeds: EmbedBuilder[] = [];
 
-    const leagueColors: Record<string, number> = {
-      admiral: 0x15c9bf,
-      champions: 0xc29f04,
-      dragon: 0x1f8b4c,
-      galaxy: 0x3498db,
-      monarch: 0xab59b6,
-    };
-
     sortedLeagueNames.forEach(leagueName => {
       const groups = leagueGroups[leagueName];
       const embed = new EmbedBuilder()
         .setTitle(`🏈 ${leagueName} League ${season.year}`)
-        .setColor(leagueColors[leagueName.toLowerCase()] || 0x00ff00);
+        .setColor(leagueEmbedColor(leagueName));
 
       groups.forEach((group: AnnouncementGroup) => {
         const playerList = group.players
@@ -608,7 +600,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           });
 
         embed.setDescription(`Draft Time: ${draftTime}`);
-        embed.setColor(leagueColors[leagueName.toLowerCase()] || 0x00ff00);
+        embed.setColor(leagueEmbedColor(leagueName));
 
         embed.addFields({
           name: `Members`,

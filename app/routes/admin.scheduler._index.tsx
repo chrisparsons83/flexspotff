@@ -91,7 +91,7 @@ export default function AdminSchedulerIndex() {
                   <div>
                     <h4 className='font-semibold text-lg'>{job.name}</h4>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      Schedule: {cronToHuman(job.cron)}
+                      Schedule: {cronToHuman(job.cron, job.timezone)}
                     </p>
                     <p className='text-xs text-gray-500 mt-1'>
                       Cron: {job.cron || 'Not scheduled'}

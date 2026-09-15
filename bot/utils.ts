@@ -92,6 +92,13 @@ interface SendMessageProps {
   messageData: {
     content?: string;
     embeds: EmbedBuilder[];
+    /**
+     * Passed straight through to Discord. `{ parse: [] }` stops every mention in
+     * the message from notifying, which is what the waiver report wants; leaving
+     * it off keeps Discord's default, which the omni scoring post relies on to
+     * actually ping people.
+     */
+    allowed_mentions?: { parse: string[] };
   };
 }
 export const sendMessageToChannel = async ({
