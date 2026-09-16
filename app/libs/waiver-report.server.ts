@@ -1,5 +1,5 @@
 import type { League } from '@prisma/client';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, embedLength } from 'discord.js';
 import { sendMessageToChannel } from '~/../bot/utils';
 import { getLeagueUsers } from '~/libs/sleeper/api.server';
 import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
@@ -20,6 +20,51 @@ import { envSchema } from '~/utils/helpers';
  * so a busy week splits into a second embed rather than silently truncating.
  */
 const MAX_DESCRIPTION_LENGTH = 3800;
+
+/**
+ * What one Discord message can carry: at most 10 embeds, and 6000 characters
+ * summed across all of them. Both are hard rejections - Discord 400s the whole
+ * message rather than trimming it - so anything sending embeds has to split them
+ * up rather than hope they fit.
+ */
+const MAX_EMBEDS_PER_MESSAGE = 10;
+const MAX_MESSAGE_EMBED_CHARS = 6000;
+
+/**
+ * Splits embeds into groups that each fit in a single message.
+ *
+ * `embedLength` is Discord's own accounting - title, description, footer, author
+ * and fields - so this measures what the API will measure rather than guessing.
+ * A single embed that somehow exceeds the whole message budget still gets its own
+ * group: it will be rejected either way, and dropping it silently would be worse.
+ */
+export function chunkEmbedsForMessages(
+  embeds: EmbedBuilder[],
+): EmbedBuilder[][] {
+  const groups: EmbedBuilder[][] = [];
+  let current: EmbedBuilder[] = [];
+  let currentLength = 0;
+
+  for (const embed of embeds) {
+    const length = embedLength(embed.data);
+    const wouldOverflow =
+      current.length >= MAX_EMBEDS_PER_MESSAGE ||
+      currentLength + length > MAX_MESSAGE_EMBED_CHARS;
+
+    if (wouldOverflow && current.length > 0) {
+      groups.push(current);
+      current = [];
+      currentLength = 0;
+    }
+
+    current.push(embed);
+    currentLength += length;
+  }
+
+  if (current.length > 0) groups.push(current);
+
+  return groups;
+}
 
 /**
  * Sleeper's note on a claim that lost to a higher bid. Anything else that failed
@@ -482,15 +527,14 @@ export async function postWaiverReports({
         continue;
       }
 
-      // One message per embed. Discord caps a single message at 6000 characters
-      // summed across its embeds, which a busy week clears on its own - and it
-      // rejects the whole message rather than trimming, so a long week would get
-      // no report at all.
-      for (const embed of embeds) {
+      // Split across messages if the week is long enough to clear Discord's
+      // per-message embed budget, which it rejects outright rather than
+      // trimming. A normal week is one message.
+      for (const group of chunkEmbedsForMessages(embeds)) {
         await sendMessageToChannel({
           channelId,
           messageData: {
-            embeds: [embed],
+            embeds: group,
             // Belt and braces: mentions in embeds do not notify, and this stops
             // anything in a name from resolving either.
             allowed_mentions: { parse: [] },
