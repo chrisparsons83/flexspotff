@@ -9,7 +9,10 @@ import {
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import { postWaiverReports } from '~/libs/waiver-report.server';
+import {
+  leagueWaiverChannelIds,
+  postWaiverReports,
+} from '~/libs/waiver-report.server';
 import { syncLeagueWaivers } from '~/libs/waiver-sync.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -18,10 +21,8 @@ import {
   getWaiverTransactions,
 } from '~/models/waiver.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import type { Leagues } from '~/utils/constants';
 import { isLeagueName } from '~/utils/constants';
-import { envSchema } from '~/utils/helpers';
-
-const env = envSchema.parse(process.env);
 
 type ActionData = {
   message?: string;
@@ -68,7 +69,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           year,
           week,
           force: true,
-          channelId: env.WAIVER_REPORT_CHANNEL_ID,
         });
         const summary = results
           .map(result => `${result.leagueName}: ${result.status}`)
@@ -103,6 +103,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const leagues = await getSeasonLeagues(year);
   const reports = await getWaiverReportsByYear(year);
 
+  // Each league posts to its own channel, so the warning names the leagues that
+  // have nowhere to post rather than a single missing setting.
+  const channelIds = leagueWaiverChannelIds();
+  const unconfiguredLeagues = leagues
+    .filter(league => !channelIds[league.name.toLowerCase() as Leagues])
+    .map(league => league.name);
+
   const byLeague = await Promise.all(
     leagues.map(async league => ({
       league: { id: league.id, name: league.name },
@@ -118,31 +125,42 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     year,
     week,
     byLeague,
-    channelConfigured: Boolean(env.WAIVER_REPORT_CHANNEL_ID),
+    unconfiguredLeagues,
   });
 };
 
 export default function AdminWaiversIndex() {
-  const { year, week, byLeague, channelConfigured } =
+  const { year, week, byLeague, unconfiguredLeagues } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const navigation = useNavigation();
   const [, setSearchParams] = useSearchParams();
 
   const isRunning = navigation.state !== 'idle';
+  // Only dead when nothing can post; a single unmapped league still leaves the
+  // other four worth posting.
+  const nothingToPostTo =
+    byLeague.length === 0 || unconfiguredLeagues.length === byLeague.length;
 
   return (
     <>
       <h2>Waiver Reports</h2>
       <p>
-        Inspect the stored waiver claims behind the weekly #waiver-report post,
-        and re-run a week without waiting for Wednesday.
+        Inspect the stored waiver claims behind the weekly report each league
+        gets in its own channel, and re-run a week without waiting for
+        Wednesday.
       </p>
 
       {actionData?.message && <Alert message={actionData.message} />}
       {actionData?.error && <Alert message={actionData.error} />}
-      {!channelConfigured && (
-        <Alert message='WAIVER_REPORT_CHANNEL_ID is not set, so posting to Discord is disabled.' />
+      {unconfiguredLeagues.length > 0 && (
+        <Alert
+          message={`No waiver channel is configured for ${unconfiguredLeagues.join(
+            ', ',
+          )}, so posting is disabled for ${
+            unconfiguredLeagues.length === 1 ? 'that league' : 'those leagues'
+          }.`}
+        />
       )}
 
       <Form
@@ -200,7 +218,7 @@ export default function AdminWaiversIndex() {
           type='submit'
           name='_action'
           value='post'
-          disabled={isRunning || !channelConfigured}
+          disabled={isRunning || nothingToPostTo}
         >
           Post to Discord
         </Button>

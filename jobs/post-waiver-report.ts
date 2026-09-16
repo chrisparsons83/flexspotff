@@ -1,19 +1,20 @@
 import { getNflState } from '../app/libs/sleeper/api.server.js';
-import { postWaiverReports } from '../app/libs/waiver-report.server.js';
+import {
+  leagueWaiverChannelIds,
+  postWaiverReports,
+} from '../app/libs/waiver-report.server.js';
 import { wednesdayMidnightPacific } from '../app/libs/waiver-sync.server.js';
 import { getCurrentSeason } from '../app/models/season.server.js';
-import { envSchema } from '../app/utils/helpers.js';
 import { parentPort } from 'worker_threads';
-
-const env = envSchema.parse(process.env);
 
 async function postWaiverReportJob() {
   try {
     console.log('Starting waiver report job...');
 
-    if (!env.WAIVER_REPORT_CHANNEL_ID) {
+    const channelIds = leagueWaiverChannelIds();
+    if (!Object.values(channelIds).some(Boolean)) {
       const message =
-        'WAIVER_REPORT_CHANNEL_ID is not set, skipping waiver report';
+        'No league waiver channels are set, skipping waiver report';
       console.log(message);
       if (parentPort) parentPort.postMessage({ success: true, message });
       return;
@@ -36,7 +37,7 @@ async function postWaiverReportJob() {
       year: season.year,
       batchAfter: wednesdayMidnightPacific(new Date()),
       nearWeek: nflState.week,
-      channelId: env.WAIVER_REPORT_CHANNEL_ID,
+      channelIds,
     });
 
     for (const result of results) {

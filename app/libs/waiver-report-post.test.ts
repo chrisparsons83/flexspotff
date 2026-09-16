@@ -19,6 +19,14 @@ vi.mock('~/db.server', () => ({
 }));
 
 const CHANNEL = 'channel-1';
+const CHANNELS = { champions: CHANNEL };
+const ALL_CHANNELS = {
+  admiral: 'channel-admiral',
+  champions: CHANNEL,
+  dragon: 'channel-dragon',
+  galaxy: 'channel-galaxy',
+  monarch: 'channel-monarch',
+};
 
 const league = (name: string, id = `${name}-id`) =>
   ({
@@ -72,7 +80,7 @@ describe('postWaiverReports', () => {
     await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(botUtils.sendMessageToChannel).toHaveBeenCalledTimes(1);
@@ -82,7 +90,7 @@ describe('postWaiverReports', () => {
   });
 
   it('records the league-week once it has posted', async () => {
-    await postWaiverReports({ year: 2026, week: 3, channelId: CHANNEL });
+    await postWaiverReports({ year: 2026, week: 3, channelIds: CHANNELS });
 
     expect(waiverModel.recordWaiverReport).toHaveBeenCalledWith({
       leagueId: 'Champions-id',
@@ -99,7 +107,7 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results[0].status).toBe('skipped');
@@ -115,7 +123,7 @@ describe('postWaiverReports', () => {
       year: 2026,
       week: 3,
       force: true,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results[0].status).toBe('posted');
@@ -127,7 +135,7 @@ describe('postWaiverReports', () => {
       year: 2026,
       week: 3,
       preview: true,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results[0].status).toBe('preview');
@@ -142,7 +150,7 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results[0].status).toBe('no-data');
@@ -151,7 +159,7 @@ describe('postWaiverReports', () => {
     expect(waiverModel.recordWaiverReport).not.toHaveBeenCalled();
   });
 
-  it('posts one message per league', async () => {
+  it('posts one message per league, each to its own channel', async () => {
     vi.mocked(leagueModel.getLeaguesByYear).mockResolvedValue([
       league('Champions'),
       league('Admiral'),
@@ -163,11 +171,45 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: ALL_CHANNELS,
     });
 
     expect(results).toHaveLength(5);
     expect(botUtils.sendMessageToChannel).toHaveBeenCalledTimes(5);
+    // The whole point of the mapping: five leagues, five channels.
+    expect(
+      vi
+        .mocked(botUtils.sendMessageToChannel)
+        .mock.calls.map(([call]) => call.channelId),
+    ).toEqual([
+      ALL_CHANNELS.champions,
+      ALL_CHANNELS.admiral,
+      ALL_CHANNELS.dragon,
+      ALL_CHANNELS.galaxy,
+      ALL_CHANNELS.monarch,
+    ]);
+  });
+
+  it('errors only for the league with no channel, and posts the rest', async () => {
+    vi.mocked(leagueModel.getLeaguesByYear).mockResolvedValue([
+      league('Champions'),
+      league('Dragon'),
+    ]);
+
+    const results = await postWaiverReports({
+      year: 2026,
+      week: 3,
+      // Dragon deliberately left out.
+      channelIds: CHANNELS,
+    });
+
+    expect(results[0].status).toBe('posted');
+    expect(results[1].status).toBe('error');
+    expect(results[1].message).toContain('DRAGON_WAIVER_CHANNEL_ID');
+    expect(botUtils.sendMessageToChannel).toHaveBeenCalledTimes(1);
+    expect(
+      vi.mocked(botUtils.sendMessageToChannel).mock.calls[0][0].channelId,
+    ).toBe(CHANNEL);
   });
 
   it('ignores leagues that are not one of the five', async () => {
@@ -179,7 +221,7 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results.map(result => result.leagueName)).toEqual(['Champions']);
@@ -195,7 +237,7 @@ describe('postWaiverReports', () => {
       year: 2026,
       week: 3,
       leagueNames: ['dragon'],
-      channelId: CHANNEL,
+      channelIds: ALL_CHANNELS,
     });
 
     expect(results.map(result => result.leagueName)).toEqual(['Dragon']);
@@ -214,7 +256,7 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: ALL_CHANNELS,
     });
 
     expect(results[0].status).toBe('error');
@@ -223,7 +265,11 @@ describe('postWaiverReports', () => {
   });
 
   it('errors rather than throwing when no channel is configured', async () => {
-    const results = await postWaiverReports({ year: 2026, week: 3 });
+    const results = await postWaiverReports({
+      year: 2026,
+      week: 3,
+      channelIds: {},
+    });
 
     expect(results[0].status).toBe('error');
     expect(results[0].message).toContain('channel');
@@ -237,7 +283,7 @@ describe('postWaiverReports', () => {
    * delete the good rows to do it.
    */
   it('does not re-sync a week that already has stored claims', async () => {
-    await postWaiverReports({ year: 2026, week: 3, channelId: CHANNEL });
+    await postWaiverReports({ year: 2026, week: 3, channelIds: CHANNELS });
 
     expect(waiverSync.syncLeagueWaivers).not.toHaveBeenCalled();
     expect(botUtils.sendMessageToChannel).toHaveBeenCalledTimes(1);
@@ -252,7 +298,7 @@ describe('postWaiverReports', () => {
     const results = await postWaiverReports({
       year: 2026,
       week: 3,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(waiverSync.syncLeagueWaivers).toHaveBeenCalledWith(
@@ -273,7 +319,7 @@ describe('postWaiverReports', () => {
       year: 2026,
       batchAfter: new Date('2026-11-04T08:00:00Z'),
       nearWeek: 8,
-      channelId: CHANNEL,
+      channelIds: CHANNELS,
     });
 
     expect(results[0].week).toBe(9);
@@ -307,7 +353,7 @@ describe('postWaiverReports', () => {
       many as never,
     );
 
-    await postWaiverReports({ year: 2026, week: 3, channelId: CHANNEL });
+    await postWaiverReports({ year: 2026, week: 3, channelIds: CHANNELS });
 
     const calls = vi.mocked(botUtils.sendMessageToChannel).mock.calls;
     expect(calls.length).toBeGreaterThan(1);
@@ -330,7 +376,7 @@ describe('postWaiverReports', () => {
       league('Monarch'),
     ]);
 
-    await postWaiverReports({ year: 2026, week: 3, channelId: CHANNEL });
+    await postWaiverReports({ year: 2026, week: 3, channelIds: ALL_CHANNELS });
 
     expect(ownersModule.getOwnerToUserIdMap).toHaveBeenCalledTimes(1);
   });
