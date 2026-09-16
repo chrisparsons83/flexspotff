@@ -3,7 +3,10 @@ import type {
   GuildMemberRoleManager,
 } from 'discord.js';
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { postWaiverReports } from '~/libs/waiver-report.server';
+import {
+  chunkEmbedsForMessages,
+  postWaiverReports,
+} from '~/libs/waiver-report.server';
 import { getCurrentSeason } from '~/models/season.server';
 import {
   FIRST_YEAR,
@@ -140,11 +143,22 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       );
     }
 
-    // Discord caps a message at 10 embeds; a multi-league preview can exceed it.
-    return interaction.editReply({
-      content: `Preview of week ${week} (not posted):\n${summary}`,
-      embeds: embeds.slice(0, 10),
+    // A five-league preview clears Discord's per-message embed budget on its own,
+    // and the whole message is rejected rather than trimmed. Send as many
+    // messages as it takes: the reply carries the first group, ephemeral
+    // follow-ups carry the rest. Slicing to fit would silently drop leagues.
+    const [first, ...rest] = chunkEmbedsForMessages(embeds);
+
+    await interaction.editReply({
+      content: `Preview of ${year} week ${week} (not posted):\n${summary}`,
+      embeds: first,
     });
+
+    for (const group of rest) {
+      await interaction.followUp({ embeds: group, ephemeral: true });
+    }
+
+    return;
   }
 
   const summary = results
