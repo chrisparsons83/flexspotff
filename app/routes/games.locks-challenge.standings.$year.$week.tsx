@@ -77,12 +77,28 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     });
   }
 
+  // Get users that have made bets = we can't do this in the query because prisma doesn't allow
+  // including on an aggregation. I guess we could write a raw query but I want to avoid that.
+  const totalPointsRaw = await getLocksGamePicksWonLossWeek(currentWeek);
+  const wonLossByUserId = new Map(
+    totalPointsRaw.map(point => [point.userId, point._sum]),
+  );
+
   // Create userIdToRankMap
   let userIdToRankMap: Map<string, number> = new Map();
   const userPointsArray = Array.from(userIdToPointsMap.entries());
 
-  // Sort the array by points in descending order
-  userPointsArray.sort((a, b) => b[1] - a[1]);
+  // Sort by points descending, then fewest losses, then most wins, so that
+  // e.g. 5-1 comes before 3-1, and 3-1 comes before 7-2.
+  userPointsArray.sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    const aLosses = wonLossByUserId.get(a[0])?.isLoss || 0;
+    const bLosses = wonLossByUserId.get(b[0])?.isLoss || 0;
+    if (aLosses !== bLosses) return aLosses - bLosses;
+    const aWins = wonLossByUserId.get(a[0])?.isWin || 0;
+    const bWins = wonLossByUserId.get(b[0])?.isWin || 0;
+    return bWins - aWins;
+  });
   // Assign ranks
   let currentRank = 1;
   let currentRankPoints = -1;
@@ -95,14 +111,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     userIdToRankMap.set(userId, currentRank);
   });
 
-  // Get users that have made bets = we can't do this in the query because prisma doesn't allow
-  // including on an aggregation. I guess we could write a raw query but I want to avoid that.
-  const totalPointsRaw = await getLocksGamePicksWonLossWeek(currentWeek);
-
-  // Get an array of user IDs sorted by rank
-  const sortedUserIds = Array.from(userIdToRankMap.entries())
-    .sort((a, b) => a[1] - b[1]) // Sort by rank
-    .map(([userId]) => userId); // Extract user IDs
+  // Get an array of user IDs, preserving the points/losses/wins sort order above
+  const sortedUserIds = userPointsArray.map(([userId]) => userId);
 
   // Create a map of totalPoints by userId for quick lookup
   const totalPointsMap = new Map<string, any>(
