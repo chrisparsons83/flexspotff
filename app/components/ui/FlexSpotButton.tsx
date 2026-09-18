@@ -9,6 +9,7 @@ type ButtonProps = {
   value?: string;
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   className?: string;
+  'data-testid'?: string;
 };
 
 export default function Button({
@@ -19,9 +20,11 @@ export default function Button({
   value = 'systemValue',
   onClick,
   className,
+  'data-testid': dataTestId,
 }: ButtonProps) {
   return (
     <button
+      data-testid={dataTestId}
       // cn (twMerge) rather than clsx so a caller-supplied color actually wins:
       // clsx only concatenates, leaving the defaults below to take the cascade.
       className={cn(

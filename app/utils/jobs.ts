@@ -50,6 +50,12 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       'Full-season D12 backfill, to pick up weeks the live monitor missed and any late Sleeper corrections. Tuesdays at 07:00 UTC.',
   },
   {
+    name: 'sync-player-scores',
+    cron: '0 * * * *',
+    description:
+      "Refreshes every NFL player's DFS Survivor points and Sleeper projections, which the DFS Survivor entry picker sorts on. Hourly.",
+  },
+  {
     name: 'post-waiver-report',
     cron: '20,35,50 0 * * 3',
     timezone: 'America/Los_Angeles',

@@ -1,588 +1,323 @@
-import type {
-  DFSSurvivorUserWeek,
-  DFSSurvivorUserEntry,
-  Season,
-  Player,
-  NFLGame,
-  NFLTeam,
-} from '@prisma/client';
+import type { Season } from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { useFetcher } from '@remix-run/react';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useFetcher, useSearchParams } from '@remix-run/react';
+import clsx from 'clsx';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import DfsSurvivorWeekComponent from '~/components/layout/dfs-survivor/DfsSurvivorWeek';
+import DfsSurvivorLineup from '~/components/layout/dfs-survivor/DfsSurvivorLineup';
+import DfsSurvivorPlayerTable from '~/components/layout/dfs-survivor/DfsSurvivorPlayerTable';
+import DfsSurvivorWeekRail from '~/components/layout/dfs-survivor/DfsSurvivorWeekRail';
 import Button from '~/components/ui/FlexSpotButton';
 import { prisma } from '~/db.server';
+import type { PickerPlayer, PlayerUsage } from '~/libs/dfs-survivor/picker';
+import { decoratePickerPlayers } from '~/libs/dfs-survivor/picker';
+import {
+  getSeasonTotalsByPlayer,
+  getWeekProjectionsByPlayer,
+} from '~/libs/dfs-survivor/player-week-scores.server';
+import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
+import {
+  DFS_SURVIVOR_LAST_WEEK,
+  DFS_SURVIVOR_POSITIONS,
+  DFS_SURVIVOR_SLOTS,
+  SLOT_POSITIONS,
+  isDfsSurvivorSlot,
+} from '~/libs/dfs-survivor/slots';
 import {
   createDfsSurvivorYear,
   getDfsSurvivorYearByUserAndYear,
 } from '~/models/dfssurvivoryear.server';
-import { getNflGamesBySeason, getWeekNflGames } from '~/models/nflgame.server';
+import { getCurrentNflWeek, getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { getCurrentTime } from '~/utils/time';
 
-// Define the AvailablePlayers type
-type AvailablePlayers = {
-  QB: Player[];
-  RB: Player[];
-  WR: Player[];
-  TE: Player[];
-  K: Player[];
-  DEF: Player[];
-  FLX: Player[];
+export type { PickerPlayer } from '~/libs/dfs-survivor/picker';
+
+export type WeekSummary = {
+  week: number;
+  filledSlots: number;
+  points: number;
+  isScored: boolean;
+  /** Every game of the week has kicked off. */
+  isLocked: boolean;
 };
 
-type WeekGameTiming = {
-  week: number;
-  lastGameStartTime: Date;
-  playerGameTimes: Record<string, Date>; // playerId -> game start time
+/**
+ * A saved pick, carrying everything its lineup row needs. Snapshotted from the
+ * entry rather than looked up in the picker list: a player who is released or
+ * loses their team drops out of that list, and the row would otherwise render
+ * as an empty slot - with its lock lost, letting a scored pick be cleared.
+ */
+export type SlotEntry = {
+  playerId: string;
+  points: number;
+  name: string;
+  teamAbbr: string;
+  opponentAbbr: string | null;
+  isHome: boolean;
+  projection: number | null;
+  /** Their game has kicked off, so the slot can no longer be edited. */
+  isLocked: boolean;
 };
 
 type LoaderData =
   | {
       isOpen: true;
       currentSeason: Season;
-      dfsSurvivorWeeks: Array<
-        DFSSurvivorUserWeek & {
-          entries: Array<
-            DFSSurvivorUserEntry & {
-              player: Player & {
-                currentNFLTeam?: { sleeperId: string } | null;
-              };
-            }
-          >;
-        }
-      >;
-      availablePlayers: AvailablePlayers;
-      weekGameTimings: WeekGameTiming[];
+      selectedWeek: number;
+      currentNflWeek: number;
+      weekSummaries: WeekSummary[];
+      entries: Partial<Record<DfsSurvivorSlot, SlotEntry>>;
+      players: PickerPlayer[];
+      isWeekScored: boolean;
       currentTime: Date;
-      lastWeekOfSeason: number;
-      nflGames: (NFLGame & {
-        homeTeam: NFLTeam;
-        awayTeam: NFLTeam;
-      })[];
     }
   | { isOpen: false; currentSeason: Season | null };
 
-// Type definition for the action response
-type ActionResponse =
-  | { message: string; error?: string }
-  | { error: string; message?: string };
+type ActionResponse = { message?: string; error?: string };
+
+/**
+ * Reads the eleven slots off a form submission, rejecting anything that isn't a
+ * known slot name so a hand-rolled POST can't write junk positions.
+ */
+function readSubmittedSlots(formData: FormData) {
+  const slots = new Map<DfsSurvivorSlot, string>();
+
+  for (const slot of DFS_SURVIVOR_SLOTS) {
+    const value = formData.get(`playerId-${slot}`);
+    if (typeof value !== 'string') continue;
+    if (value) slots.set(slot, value);
+    else slots.set(slot, '');
+  }
+
+  return slots;
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  try {
-    const user = await authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    });
-
-    const formData = await request.formData();
-    const weeks = formData.getAll('weekId');
-
-    // First, collect all player selections to check for duplicates
-    const playerSelections = new Map<
-      string,
-      { weeks: Set<number>; positions: string[]; playerName?: string }
-    >();
-    const submittedWeeks = new Set<number>();
-
-    // Collect all player selections from the form submission
-    for (const weekId of weeks) {
-      if (typeof weekId !== 'string') continue;
-
-      const week = await prisma.dFSSurvivorUserWeek.findUnique({
-        where: { id: weekId },
-        include: { userYear: true },
-      });
-
-      if (!week || week.userYear.userId !== user.id) {
-        return typedjson<ActionResponse>({
-          error: 'Invalid week or unauthorized',
-        });
-      }
-
-      // Track which weeks are being submitted
-      submittedWeeks.add(week.week);
-
-      const positions = [
-        'QB1',
-        'QB2',
-        'RB1',
-        'RB2',
-        'WR1',
-        'WR2',
-        'TE',
-        'FLEX1',
-        'FLEX2',
-        'K',
-        'DEF',
-      ];
-
-      for (const position of positions) {
-        const playerId = formData.get(`playerId-${weekId}-${position}`);
-
-        // Skip empty selections
-        if (typeof playerId !== 'string' || !playerId) {
-          continue;
-        }
-
-        // Get player info for better error messages
-        const player = await prisma.player.findUnique({
-          where: { id: playerId },
-        });
-
-        if (!player) {
-          console.error(`Player not found for ID: ${playerId}`);
-          return typedjson<ActionResponse>({
-            error: `Player not found for position ${position}`,
-          });
-        }
-
-        // Track this player selection
-        if (!playerSelections.has(playerId)) {
-          playerSelections.set(playerId, {
-            weeks: new Set([week.week]),
-            positions: [`${week.week}-${position}`],
-            playerName: player.fullName,
-          });
-        } else {
-          const info = playerSelections.get(playerId)!;
-          info.weeks.add(week.week);
-          info.positions.push(`${week.week}-${position}`);
-          // Add player name if not already set
-          if (!info.playerName) {
-            info.playerName = player.fullName;
-          }
-        }
-      }
-    }
-
-    // Check for duplicate players within the current submission
-    for (const [playerId, info] of playerSelections.entries()) {
-      if (info.weeks.size > 1) {
-        console.warn(
-          `Player ${playerId} (${info.playerName}) selected in multiple weeks:`,
-          Array.from(info.weeks),
-        );
-
-        // Return error response
-        return typedjson<ActionResponse>({
-          error: `Cannot select ${
-            info.playerName || 'player'
-          } in multiple weeks (${Array.from(info.weeks).join(', ')})`,
-        });
-      }
-
-      // Check for duplicate players within the same week
-      const weekPositions = new Map<number, string[]>();
-      for (const posInfo of info.positions) {
-        const [week, position] = posInfo.split('-');
-        const weekNum = parseInt(week);
-
-        if (!weekPositions.has(weekNum)) {
-          weekPositions.set(weekNum, []);
-        }
-
-        weekPositions.get(weekNum)!.push(position);
-      }
-
-      for (const [week, positions] of weekPositions.entries()) {
-        if (positions.length > 1) {
-          console.warn(
-            `Player ${playerId} (${info.playerName}) selected multiple times in week ${week}:`,
-            positions,
-          );
-
-          // Return error response
-          return typedjson<ActionResponse>({
-            error: `Cannot select ${
-              info.playerName || 'player'
-            } multiple times in week ${week} (${positions.join(', ')})`,
-          });
-        }
-      }
-    }
-
-    // Check for duplicate players against existing database entries
-    // Get the current season
-    const currentSeason = await getCurrentSeason();
-    if (!currentSeason) {
-      return typedjson<ActionResponse>({ error: 'No active season found' });
-    }
-
-    // Get all player IDs from the current submission
-    const playerIds = Array.from(playerSelections.keys());
-
-    // Find any existing entries for these players in weeks not included in this submission
-    const existingEntries = await prisma.dFSSurvivorUserEntry.findMany({
-      where: {
-        userId: user.id,
-        year: currentSeason.year,
-        playerId: { in: playerIds },
-        // Only look for entries in weeks not included in this submission
-        NOT: {
-          week: { in: Array.from(submittedWeeks) },
-        },
-      },
-      include: {
-        player: true,
-      },
-    });
-
-    // Check if any players in the current submission already exist in other weeks
-    if (existingEntries.length > 0) {
-      // Group by player ID for easier checking
-      const existingByPlayer = new Map<
-        string,
-        { playerName: string; weeks: number[] }
-      >();
-
-      for (const entry of existingEntries) {
-        if (!existingByPlayer.has(entry.playerId)) {
-          existingByPlayer.set(entry.playerId, {
-            playerName: entry.player.fullName,
-            weeks: [entry.week],
-          });
-        } else {
-          existingByPlayer.get(entry.playerId)!.weeks.push(entry.week);
-        }
-      }
-
-      // Check each player in the submission against existing entries
-      for (const [playerId, info] of playerSelections.entries()) {
-        if (existingByPlayer.has(playerId)) {
-          const existing = existingByPlayer.get(playerId)!;
-          const submittedWeek = Array.from(info.weeks)[0]; // We know there's only one week per player in the submission
-
-          console.warn(
-            `Player ${
-              info.playerName
-            } already exists in weeks ${existing.weeks.join(
-              ', ',
-            )} and is being submitted for week ${submittedWeek}`,
-          );
-
-          // Return error response
-          return typedjson<ActionResponse>({
-            error: `Cannot select ${
-              info.playerName || existing.playerName
-            } in multiple weeks (${existing.weeks.join(
-              ', ',
-            )} and ${submittedWeek})`,
-          });
-        }
-      }
-    }
-
-    // Check if any players selected are on a bye week
-    for (const weekId of weeks) {
-      if (typeof weekId !== 'string') continue;
-
-      const week = await prisma.dFSSurvivorUserWeek.findUnique({
-        where: { id: weekId },
-        include: { userYear: true },
-      });
-
-      if (!week) continue;
-
-      const positions = [
-        'QB1',
-        'QB2',
-        'RB1',
-        'RB2',
-        'WR1',
-        'WR2',
-        'TE',
-        'FLEX1',
-        'FLEX2',
-        'K',
-        'DEF',
-      ];
-
-      for (const position of positions) {
-        const playerId = formData.get(`playerId-${weekId}-${position}`);
-        if (typeof playerId !== 'string' || !playerId) continue;
-
-        const player = await prisma.player.findUnique({
-          where: { id: playerId },
-          include: { currentNFLTeam: true },
-        });
-
-        if (!player?.currentNFLTeam) {
-          console.error(
-            `Player not found or no team found for position ${position}`,
-          );
-          return typedjson<ActionResponse>({
-            error: `Player not found or no team found for position ${position}`,
-          });
-        }
-
-        const nflGame = await prisma.nFLGame.findFirst({
-          where: {
-            week: week.week,
-            year: week.year,
-            OR: [
-              { homeTeamId: player.currentNFLTeam.id },
-              { awayTeamId: player.currentNFLTeam.id },
-            ],
-          },
-        });
-
-        if (!nflGame) {
-          console.error(
-            `Player ${player.fullName} is on a bye week for Week ${week.week}`,
-          );
-          return typedjson<ActionResponse>({
-            error: `Error: ${player.fullName} is on a bye week during week ${week.week}`,
-          });
-        }
-
-        // Check if any players selected have a game that already started for that week
-        // But skip this check if the player was already in this position (unchanged selection)
-        const existingEntryForPosition =
-          await prisma.dFSSurvivorUserEntry.findFirst({
-            where: {
-              userId: user.id,
-              year: week.year,
-              week: week.week,
-              position: position,
-            },
-          });
-
-        // Only check game start time for new or changed player selections
-        const isPlayerChanged =
-          !existingEntryForPosition ||
-          existingEntryForPosition.playerId !== player.id;
-
-        if (isPlayerChanged) {
-          const testTime = formData.get('__test_current_time__') as
-            | string
-            | undefined;
-          const currentTime = getCurrentTime(testTime);
-
-          if (nflGame.gameStartTime <= currentTime) {
-            console.error(
-              `Game for player ${player.fullName} has already started for Week ${week.week}`,
-            );
-            return typedjson<ActionResponse>({
-              error: `Error: Game for ${player.fullName} has already started for week ${week.week}`,
-            });
-          }
-        }
-      }
-    }
-
-    // Check if any valid player selections were made AND if they are different from existing entries
-    let hasChangedPlayerSelections = false;
-
-    // First, get existing entries for the user
-    const existingUserEntries = await prisma.dFSSurvivorUserEntry.findMany({
-      where: {
-        userId: user.id,
-        year: currentSeason.year,
-        week: { in: Array.from(submittedWeeks) },
-      },
-    });
-
-    // Create a map of existing entries for easy comparison
-    const existingEntriesMap = new Map<string, string>();
-    existingUserEntries.forEach(entry => {
-      const key = `${entry.week}-${entry.position}`;
-      existingEntriesMap.set(key, entry.playerId);
-    });
-
-    // Check if any selections are different from what's already in the database
-    for (const weekId of weeks) {
-      if (typeof weekId !== 'string') continue;
-
-      const week = await prisma.dFSSurvivorUserWeek.findUnique({
-        where: { id: weekId },
-        include: { userYear: true },
-      });
-
-      if (!week) continue;
-
-      const positions = [
-        'QB1',
-        'QB2',
-        'RB1',
-        'RB2',
-        'WR1',
-        'WR2',
-        'TE',
-        'FLEX1',
-        'FLEX2',
-        'K',
-        'DEF',
-      ];
-
-      for (const position of positions) {
-        const playerId = formData.get(`playerId-${weekId}-${position}`);
-        const key = `${week.week}-${position}`;
-
-        // Check if this selection is different from what's already saved
-        if (typeof playerId === 'string') {
-          if (playerId) {
-            // If there's a player selected, check if it's different from existing
-            if (
-              !existingEntriesMap.has(key) ||
-              existingEntriesMap.get(key) !== playerId
-            ) {
-              hasChangedPlayerSelections = true;
-              break;
-            }
-          } else {
-            // If no player selected but one existed before, that's a change
-            if (existingEntriesMap.has(key)) {
-              hasChangedPlayerSelections = true;
-              break;
-            }
-          }
-        }
-      }
-
-      if (hasChangedPlayerSelections) break;
-    }
-
-    if (!hasChangedPlayerSelections) {
-      return typedjson<ActionResponse>({
-        message:
-          'No players saved. Please try selecting the player from the dropdown.',
-      });
-    }
-
-    // Now process each week and save entries
-    for (const weekId of weeks) {
-      if (typeof weekId !== 'string') continue;
-
-      const week = await prisma.dFSSurvivorUserWeek.findUnique({
-        where: { id: weekId },
-        include: { userYear: true },
-      });
-
-      if (!week || week.userYear.userId !== user.id) {
-        return typedjson<ActionResponse>({
-          error: 'Invalid week or unauthorized',
-        });
-      }
-
-      const positions = [
-        'QB1',
-        'QB2',
-        'RB1',
-        'RB2',
-        'WR1',
-        'WR2',
-        'TE',
-        'FLEX1',
-        'FLEX2',
-        'K',
-        'DEF',
-      ];
-
-      for (const position of positions) {
-        const searchPosition =
-          position === 'DEF' ? position : position.replace(/[12]/, '');
-        const playerId = formData.get(`playerId-${weekId}-${position}`);
-
-        // If playerId is empty string or not provided, delete any existing entry
-        if (typeof playerId !== 'string' || !playerId) {
-          await prisma.dFSSurvivorUserEntry.deleteMany({
-            where: {
-              userId: user.id,
-              year: week.year,
-              week: week.week,
-              position: position,
-            },
-          });
-          continue;
-        }
-
-        const player = await prisma.player.findUnique({
-          where: {
-            id: playerId,
-          },
-          include: { currentNFLTeam: true },
-        });
-
-        if (!player?.currentNFLTeam) {
-          console.error(
-            `Player not found or no team found for position ${searchPosition}`,
-          );
-          return typedjson<ActionResponse>({
-            error: `Player not found or no team found for position ${searchPosition}`,
-          });
-        }
-
-        const nflGame = await prisma.nFLGame.findFirst({
-          where: {
-            week: week.week,
-            year: week.year,
-            OR: [
-              { homeTeamId: player.currentNFLTeam.id },
-              { awayTeamId: player.currentNFLTeam.id },
-            ],
-          },
-        });
-
-        if (!nflGame) {
-          console.error(
-            `Player ${player.fullName} is on a bye week for Week ${week.week}`,
-          );
-          return typedjson<ActionResponse>({
-            error: `Error: ${player.fullName} is on a bye week during week ${week.week}`,
-          });
-        }
-
-        // First try to find an existing entry
-        const existingEntry = await prisma.dFSSurvivorUserEntry.findFirst({
-          where: {
-            userId: user.id,
-            year: week.year,
-            week: week.week,
-            position: position,
-          },
-        });
-
-        if (existingEntry) {
-          // Update existing entry
-          await prisma.dFSSurvivorUserEntry.update({
-            where: { id: existingEntry.id },
-            data: {
-              nflGameId: nflGame.id,
-              playerId: player.id,
-              points: 0,
-            },
-          });
-        } else {
-          // Create new entry
-          await prisma.dFSSurvivorUserEntry.create({
-            data: {
-              userId: user.id,
-              year: week.year,
-              week: week.week,
-              nflGameId: nflGame.id,
-              playerId: player.id,
-              points: 0,
-              position: position,
-            },
-          });
-        }
-      }
-    }
-
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
+
+  const formData = await request.formData();
+  const currentTime = getCurrentTime(
+    (formData.get('__test_current_time__') as string) || undefined,
+  );
+
+  const currentSeason = await getCurrentSeason();
+  if (!currentSeason) {
+    return typedjson<ActionResponse>({ error: 'No active season found' });
+  }
+  if (!currentSeason.isOpenForDFSSurvivor) {
     return typedjson<ActionResponse>({
-      message: 'Entries successfully submitted',
-    });
-  } catch (error) {
-    // Simple error handling
-    console.error(error);
-
-    return typedjson<ActionResponse>({
-      error:
-        error instanceof Error ? error.message : 'An unexpected error occurred',
+      error: 'DFS Survivor is closed for the season',
     });
   }
+
+  const weekNumber = Number(formData.get('week'));
+  if (!Number.isInteger(weekNumber)) {
+    return typedjson<ActionResponse>({ error: 'Invalid week' });
+  }
+
+  const week = await prisma.dFSSurvivorUserWeek.findUnique({
+    where: {
+      userId_year_week: {
+        userId: user.id,
+        year: currentSeason.year,
+        week: weekNumber,
+      },
+    },
+    include: { entries: true },
+  });
+
+  if (!week) {
+    return typedjson<ActionResponse>({ error: 'Week not found' });
+  }
+  if (week.isScored) {
+    return typedjson<ActionResponse>({
+      error: `Week ${weekNumber} has already been scored`,
+    });
+  }
+
+  const submitted = readSubmittedSlots(formData);
+  // Players the user explicitly agreed to move out of another week.
+  const released = new Set(formData.getAll('release').map(String));
+
+  const selectedIds = [...submitted.values()].filter(Boolean);
+
+  // Same player in two slots of the same week.
+  const seen = new Map<string, DfsSurvivorSlot>();
+  for (const [slot, playerId] of submitted) {
+    if (!playerId) continue;
+    const other = seen.get(playerId);
+    if (other) {
+      return typedjson<ActionResponse>({
+        error: `The same player can't fill both ${other} and ${slot}.`,
+      });
+    }
+    seen.set(playerId, slot);
+  }
+
+  const [players, games] = await Promise.all([
+    prisma.player.findMany({
+      where: { id: { in: selectedIds } },
+      include: { currentNFLTeam: true },
+    }),
+    getWeekNflGames(currentSeason.year, weekNumber),
+  ]);
+
+  const playersById = new Map(players.map(player => [player.id, player]));
+  const gameByTeamId = new Map<string, (typeof games)[number]>();
+  for (const game of games) {
+    gameByTeamId.set(game.homeTeamId, game);
+    gameByTeamId.set(game.awayTeamId, game);
+  }
+
+  const existingBySlot = new Map(
+    week.entries.map(entry => [entry.position, entry]),
+  );
+
+  const writes: { slot: DfsSurvivorSlot; playerId: string; gameId: string }[] =
+    [];
+  const clears: DfsSurvivorSlot[] = [];
+
+  for (const [slot, playerId] of submitted) {
+    const existing = existingBySlot.get(slot);
+    const unchanged = existing?.playerId === playerId;
+    if (unchanged) continue;
+
+    // Whatever is being replaced or removed must not have started yet either,
+    // otherwise a locked pick could be swapped out after kickoff.
+    if (existing) {
+      const existingGame = games.find(game => game.id === existing.nflGameId);
+      if (existingGame && existingGame.gameStartTime <= currentTime) {
+        return typedjson<ActionResponse>({
+          error: `${slot} is locked - that game has already started.`,
+        });
+      }
+    }
+
+    if (!playerId) {
+      clears.push(slot);
+      continue;
+    }
+
+    const player = playersById.get(playerId);
+    if (!player?.currentNFLTeam) {
+      return typedjson<ActionResponse>({
+        error: `No current team on file for the player picked at ${slot}.`,
+      });
+    }
+
+    if (!SLOT_POSITIONS[slot].includes(player.position ?? '')) {
+      return typedjson<ActionResponse>({
+        error: `${player.fullName} is a ${player.position} and can't fill ${slot}.`,
+      });
+    }
+
+    const game = gameByTeamId.get(player.currentNFLTeam.id);
+    if (!game) {
+      return typedjson<ActionResponse>({
+        error: `${player.fullName} is on a bye in week ${weekNumber}.`,
+      });
+    }
+    if (game.gameStartTime <= currentTime) {
+      return typedjson<ActionResponse>({
+        error: `${player.fullName}'s game has already started.`,
+      });
+    }
+
+    writes.push({ slot, playerId, gameId: game.id });
+  }
+
+  if (writes.length === 0 && clears.length === 0) {
+    return typedjson<ActionResponse>({ message: 'No changes to save.' });
+  }
+
+  // A player may only be used once all season. Anything already banked in
+  // another week has to be released first, which the UI asks about explicitly.
+  const elsewhere = await prisma.dFSSurvivorUserEntry.findMany({
+    where: {
+      userId: user.id,
+      year: currentSeason.year,
+      playerId: { in: writes.map(write => write.playerId) },
+      week: { not: weekNumber },
+    },
+    include: { player: true },
+  });
+
+  const blocked = elsewhere.filter(entry => !released.has(entry.playerId));
+  if (blocked.length > 0) {
+    const first = blocked[0];
+    return typedjson<ActionResponse>({
+      error: `${first.player.fullName} is already used in week ${first.week}. Move them here to free up that slot.`,
+    });
+  }
+
+  // A released player's other week must not have kicked off either.
+  for (const entry of elsewhere) {
+    const game = await prisma.nFLGame.findUnique({
+      where: { id: entry.nflGameId },
+      select: { gameStartTime: true },
+    });
+    if (game && game.gameStartTime <= currentTime) {
+      return typedjson<ActionResponse>({
+        error: `${entry.player.fullName} can't be moved - their week ${entry.week} game has already started.`,
+      });
+    }
+  }
+
+  await prisma.$transaction([
+    ...elsewhere.map(entry =>
+      prisma.dFSSurvivorUserEntry.delete({ where: { id: entry.id } }),
+    ),
+    ...clears.map(slot =>
+      prisma.dFSSurvivorUserEntry.deleteMany({
+        where: {
+          userId: user.id,
+          year: currentSeason.year,
+          week: weekNumber,
+          position: slot,
+        },
+      }),
+    ),
+    ...writes.map(write =>
+      prisma.dFSSurvivorUserEntry.upsert({
+        where: {
+          userId_year_week_position: {
+            userId: user.id,
+            year: currentSeason.year,
+            week: weekNumber,
+            position: write.slot,
+          },
+        },
+        update: {
+          playerId: write.playerId,
+          nflGameId: write.gameId,
+          points: 0,
+        },
+        create: {
+          userId: user.id,
+          year: currentSeason.year,
+          week: weekNumber,
+          position: write.slot,
+          playerId: write.playerId,
+          nflGameId: write.gameId,
+          points: 0,
+        },
+      }),
+    ),
+  ]);
+
+  const moved = elsewhere.length
+    ? ` ${elsewhere.length} pick${
+        elsewhere.length === 1 ? '' : 's'
+      } moved from another week.`
+    : '';
+
+  return typedjson<ActionResponse>({
+    message: `Week ${weekNumber} saved.${moved}`,
+  });
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -594,10 +329,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!currentSeason) {
     return typedjson<LoaderData>({ isOpen: false, currentSeason: null });
   }
-
   if (!currentSeason.isOpenForDFSSurvivor) {
     return typedjson<LoaderData>({ isOpen: false, currentSeason });
   }
+
+  const url = new URL(request.url);
+  const currentTime = getCurrentTime(
+    url.searchParams.get('__test_current_time__') || undefined,
+  );
 
   let dfsSurvivorYear = await getDfsSurvivorYearByUserAndYear(
     user.id,
@@ -607,445 +346,463 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     dfsSurvivorYear = await createDfsSurvivorYear(user.id, currentSeason.year);
   }
 
-  // Get all players with their current teams
-  const [qbPlayers, rbPlayers, wrPlayers, tePlayers, kPlayers, dstPlayersRaw] =
-    await Promise.all([
-      prisma.player.findMany({
-        where: {
-          position: 'QB',
-          currentNFLTeamId: { not: null },
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-      prisma.player.findMany({
-        where: {
-          position: 'RB',
-          currentNFLTeamId: { not: null },
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-      prisma.player.findMany({
-        where: {
-          position: 'WR',
-          currentNFLTeamId: { not: null },
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-      prisma.player.findMany({
-        where: {
-          position: 'TE',
-          currentNFLTeamId: { not: null },
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-      prisma.player.findMany({
-        where: {
-          position: 'K',
-          currentNFLTeamId: { not: null },
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-      prisma.player.findMany({
-        where: {
-          position: 'DEF',
-          currentNFLTeamId: { not: null },
-        },
-        include: {
-          currentNFLTeam: true,
-        },
-        orderBy: { fullName: 'asc' },
-      }),
-    ]);
+  const currentNflWeek =
+    (await getCurrentNflWeek(currentSeason.year, currentTime)) ?? 1;
 
-  // Transform DEF players to use team abbreviations instead of full names
-  const dstPlayers = dstPlayersRaw.map(player => ({
-    ...player,
-    fullName: player.currentNFLTeam?.sleeperId || player.fullName,
-  }));
-
-  // Create flex players list
-  const flexPlayers = [...rbPlayers, ...wrPlayers, ...tePlayers].sort((a, b) =>
-    a.fullName.localeCompare(b.fullName),
+  const requested = Number(url.searchParams.get('week'));
+  const selectedWeek = Math.min(
+    Math.max(
+      Number.isInteger(requested) && requested > 0 ? requested : currentNflWeek,
+      1,
+    ),
+    DFS_SURVIVOR_LAST_WEEK,
   );
 
-  // Get all NFL games this season
-  const nflGames = await getNflGamesBySeason(currentSeason.year);
-
-  const dfsSurvivorYearWithEntries =
-    await prisma.dFSSurvivorUserYear.findUnique({
-      where: { id: dfsSurvivorYear.id },
-      include: {
-        weeks: {
-          include: {
-            entries: {
-              include: {
-                player: {
-                  include: {
-                    currentNFLTeam: true,
-                  },
-                },
-              },
-            },
+  const yearWithEntries = await prisma.dFSSurvivorUserYear.findUnique({
+    where: { id: dfsSurvivorYear.id },
+    include: {
+      weeks: {
+        include: {
+          entries: {
+            include: { player: { include: { currentNFLTeam: true } } },
           },
         },
       },
-    });
+    },
+  });
 
-  // Get game timing information for all weeks
-  const weekGameTimings: WeekGameTiming[] = [];
-  // Extract mock time from request URL if present (for testing)
-  const url = new URL(request.url);
-  const testTime = url.searchParams.get('__test_current_time__');
-  const currentTime = getCurrentTime(testTime || undefined);
-  let lastWeekOfSeason = 17; // Default to week 17
+  const weeks = yearWithEntries?.weeks ?? [];
 
-  // Get all unique weeks that have DFS survivor entries or need to be created
-  const allWeeks = new Set<number>();
-  dfsSurvivorYearWithEntries?.weeks.forEach(week => allWeeks.add(week.week));
+  const [players, games, projections, seasonTotals] = await Promise.all([
+    prisma.player.findMany({
+      where: {
+        position: { in: DFS_SURVIVOR_POSITIONS },
+        currentNFLTeamId: { not: null },
+      },
+      include: { currentNFLTeam: true },
+    }),
+    getWeekNflGames(currentSeason.year, selectedWeek),
+    getWeekProjectionsByPlayer(currentSeason.year, selectedWeek),
+    getSeasonTotalsByPlayer(currentSeason.year),
+  ]);
 
-  // Add weeks 1-17 if they don't exist
-  for (let i = 1; i <= 17; i++) {
-    allWeeks.add(i);
-  }
-
-  // Get game timing for each week
-  for (const weekNumber of Array.from(allWeeks).sort()) {
-    try {
-      const nflGames = await getWeekNflGames(currentSeason.year, weekNumber);
-
-      if (nflGames.length > 0) {
-        // Find the last game of the week (latest start time)
-        const lastGame = nflGames.reduce((latest, current) =>
-          current.gameStartTime > latest.gameStartTime ? current : latest,
-        );
-
-        // Create player game times object
-        const playerGameTimes: Record<string, Date> = {};
-
-        // Get all players and their game times for this week
-        const allPlayers = [
-          ...qbPlayers,
-          ...rbPlayers,
-          ...wrPlayers,
-          ...tePlayers,
-          ...kPlayers,
-          ...dstPlayers,
-        ];
-
-        for (const player of allPlayers) {
-          if (player.currentNFLTeamId) {
-            // Find the game this player's team is playing in this week
-            const playerGame = nflGames.find(
-              game =>
-                game.homeTeamId === player.currentNFLTeamId ||
-                game.awayTeamId === player.currentNFLTeamId,
-            );
-
-            if (playerGame) {
-              playerGameTimes[player.id] = playerGame.gameStartTime;
-            }
-          }
-        }
-
-        weekGameTimings.push({
-          week: weekNumber,
-          lastGameStartTime: lastGame.gameStartTime,
-          playerGameTimes,
-        });
-
-        // Update last week of season based on available games
-        lastWeekOfSeason = Math.max(lastWeekOfSeason, weekNumber);
-      }
-    } catch (error) {
-      console.error(`Error fetching games for week ${weekNumber}:`, error);
+  // Which week (if any) each player is already banked in, across the season.
+  const usage = new Map<string, PlayerUsage>();
+  for (const week of weeks) {
+    for (const entry of week.entries) {
+      usage.set(entry.playerId, {
+        week: week.week,
+        points: entry.points,
+        isScored: week.isScored,
+      });
     }
   }
 
-  return typedjson<LoaderData>({
-    dfsSurvivorWeeks: dfsSurvivorYearWithEntries?.weeks || [],
-    currentSeason,
-    isOpen: true,
-    availablePlayers: {
-      QB: qbPlayers,
-      RB: rbPlayers,
-      WR: wrPlayers,
-      TE: tePlayers,
-      K: kPlayers,
-      DEF: dstPlayers,
-      FLX: flexPlayers,
-    },
-    weekGameTimings,
+  const pickerPlayers: PickerPlayer[] = decoratePickerPlayers({
+    players,
+    games,
+    projections,
+    seasonTotals,
+    usage,
     currentTime,
-    lastWeekOfSeason,
-    nflGames,
+  });
+
+  // Locking a week needs its own last kickoff, so fetch them in one grouped
+  // query rather than a request per week.
+  const weekKickoffs = await prisma.nFLGame.groupBy({
+    where: { year: currentSeason.year },
+    by: ['week'],
+    _max: { gameStartTime: true },
+  });
+  const lastKickoff = new Map(
+    weekKickoffs.map(row => [row.week, row._max.gameStartTime]),
+  );
+
+  const weekSummaries: WeekSummary[] = [];
+  for (let week = 1; week <= DFS_SURVIVOR_LAST_WEEK; week++) {
+    const record = weeks.find(candidate => candidate.week === week);
+    const last = lastKickoff.get(week);
+    weekSummaries.push({
+      week,
+      filledSlots: record?.entries.length ?? 0,
+      points: record?.entries.reduce((sum, e) => sum + e.points, 0) ?? 0,
+      isScored: record?.isScored ?? false,
+      isLocked: last ? last <= currentTime : false,
+    });
+  }
+
+  const gameById = new Map(games.map(game => [game.id, game]));
+
+  const selected = weeks.find(week => week.week === selectedWeek);
+  const entries: Partial<Record<DfsSurvivorSlot, SlotEntry>> = {};
+  for (const entry of selected?.entries ?? []) {
+    if (!isDfsSurvivorSlot(entry.position)) continue;
+
+    // Lock from the game the entry was actually saved against, not from the
+    // player's current team - a bye or a trade must not unlock a live pick.
+    const game = gameById.get(entry.nflGameId);
+    const isHome = !!game && game.homeTeamId === entry.player.currentNFLTeamId;
+    const opponent = game ? (isHome ? game.awayTeam : game.homeTeam) : null;
+
+    entries[entry.position] = {
+      playerId: entry.playerId,
+      points: entry.points,
+      name:
+        entry.player.position === 'DEF'
+          ? entry.player.currentNFLTeam?.sleeperId ?? entry.player.fullName
+          : entry.player.fullName,
+      teamAbbr: entry.player.currentNFLTeam?.sleeperId ?? '',
+      opponentAbbr: opponent?.sleeperId ?? null,
+      isHome,
+      projection: projections.get(entry.playerId) ?? null,
+      isLocked: game ? game.gameStartTime <= currentTime : false,
+    };
+  }
+
+  return typedjson<LoaderData>({
+    isOpen: true,
+    currentSeason,
+    selectedWeek,
+    currentNflWeek,
+    weekSummaries,
+    entries,
+    players: pickerPlayers,
+    isWeekScored: selected?.isScored ?? false,
+    currentTime,
   });
 };
+
+type Lineup = Record<DfsSurvivorSlot, string | null>;
+
+const EMPTY_LINEUP = Object.fromEntries(
+  DFS_SURVIVOR_SLOTS.map(slot => [slot, null]),
+) as Lineup;
+
+function lineupFromEntries(
+  entries: Partial<Record<DfsSurvivorSlot, SlotEntry>>,
+): Lineup {
+  const lineup = { ...EMPTY_LINEUP };
+  for (const slot of DFS_SURVIVOR_SLOTS) {
+    lineup[slot] = entries[slot]?.playerId ?? null;
+  }
+  return lineup;
+}
 
 export default function GamesDfsSurvivorMyEntry() {
   const data = useTypedLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [, setSearchParams] = useSearchParams();
 
-  // Track which weeks are expanded
-  const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
+  const isOpen = data.isOpen;
+  const selectedWeek = isOpen ? data.selectedWeek : 1;
 
-  // Create a callback for week components to report errors
-  const handleWeekError = useCallback((weekError: string | null) => {
-    setError(weekError);
-  }, []);
+  // Memoised so the closed-season fallbacks don't hand back a fresh object on
+  // every render, which would retrigger the reseeding effect in a loop.
+  const entries = useMemo(() => (data.isOpen ? data.entries : {}), [data]);
+  const players = useMemo(() => (data.isOpen ? data.players : []), [data]);
 
-  // Toggle week expansion
-  const toggleWeekExpansion = useCallback((weekId: string) => {
-    setExpandedWeeks(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(weekId)) {
-        newSet.delete(weekId);
-      } else {
-        newSet.add(weekId);
-      }
-      return newSet;
-    });
-  }, []);
+  const [lineup, setLineup] = useState<Lineup>(() =>
+    lineupFromEntries(entries),
+  );
+  const [activeSlot, setActiveSlot] = useState<DfsSurvivorSlot>('QB1');
+  const [released, setReleased] = useState<Set<string>>(new Set());
+  const [pendingMove, setPendingMove] = useState<PickerPlayer | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Get all selected players across all weeks to validate no duplicates
-  const allSelectedPlayers = useMemo(() => {
-    if (!('dfsSurvivorWeeks' in data))
-      return new Map<
-        string,
-        {
-          weekId: string;
-          weekNumber: number;
-          position: string;
-          playerName: string;
-        }
-      >();
-
-    const playerMap = new Map<
-      string,
-      {
-        weekId: string;
-        weekNumber: number;
-        position: string;
-        playerName: string;
-      }
-    >();
-
-    data.dfsSurvivorWeeks.forEach(week => {
-      week.entries.forEach(entry => {
-        playerMap.set(entry.playerId, {
-          weekId: week.id,
-          weekNumber: week.week,
-          position: entry.position,
-          playerName: entry.player.fullName,
-        });
-      });
-    });
-
-    return playerMap;
-  }, [data]);
-
-  // Track whether a player is already selected
-  const isPlayerSelected = useCallback(
-    (playerId: string, weekId: string, position: string) => {
-      if (allSelectedPlayers.has(playerId)) {
-        const selection = allSelectedPlayers.get(playerId)!;
-        // Allow the player to be selected in the same position they're already in
-        return !(
-          selection.weekId === weekId && selection.position === position
-        );
-      }
-      return false;
-    },
-    [allSelectedPlayers],
+  // Reseeding is keyed on a signature of what the server says is saved, not on
+  // `entries` identity (changes on every revalidation, discarding unsaved work)
+  // and not on `fetcher.data` (changes the moment the action replies, before
+  // the revalidated loader data lands - which reset the panel to pre-save state
+  // and left it reading "Unsaved changes" next to a success banner, and reset
+  // it on failed saves too). A signature only moves when server truth moves.
+  const savedSignature = useMemo(
+    () =>
+      [
+        selectedWeek,
+        ...DFS_SURVIVOR_SLOTS.map(slot => entries[slot]?.playerId ?? ''),
+      ].join('|'),
+    [selectedWeek, entries],
   );
 
-  // Simplified handleSaveAll function without unnecessary JSON checks
-  const handleSaveAll = useCallback(async () => {
-    if (!('dfsSurvivorWeeks' in data)) return;
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
 
-    setIsSaving(true);
-    setError(null);
+  useEffect(() => {
+    setLineup(lineupFromEntries(entriesRef.current));
+    setReleased(new Set());
+    setPendingMove(null);
+    setNotice(null);
+  }, [savedSignature]);
 
-    try {
-      const formData = new FormData();
+  const playersById = useMemo(
+    () => new Map(players.map(player => [player.id, player])),
+    [players],
+  );
 
-      // Get all the week forms from the DOM to ensure we're collecting the current state
-      const weekForms = document.querySelectorAll(`form[id^="week-"]`);
+  const lineupPlayerIds = useMemo(
+    () =>
+      new Set(
+        DFS_SURVIVOR_SLOTS.map(slot => lineup[slot]).filter(
+          (id): id is string => !!id,
+        ),
+      ),
+    [lineup],
+  );
 
-      // Track which week IDs we're submitting
-      const submittedWeekIds = new Set<string>();
+  /** Slots that can no longer be edited, mapped to why. */
+  const lockedSlots = useMemo(() => {
+    const locked: Partial<Record<DfsSurvivorSlot, string>> = {};
+    if (!isOpen) return locked;
 
-      // Collect all week IDs from visible forms first
-      weekForms.forEach(form => {
-        const weekIdInput = form.querySelector(
-          'input[name="weekId"]',
-        ) as HTMLInputElement;
-        if (weekIdInput && weekIdInput.value) {
-          submittedWeekIds.add(weekIdInput.value);
-          formData.append('weekId', weekIdInput.value);
-        }
-      });
+    for (const slot of DFS_SURVIVOR_SLOTS) {
+      if (data.isWeekScored) {
+        locked[slot] = 'Week has been scored';
+        continue;
+      }
+      // Only the saved pick locks a slot - an unsaved one can still be undone.
+      if (entries[slot]?.isLocked) locked[slot] = 'Game has already started';
+    }
+    return locked;
+  }, [isOpen, data, entries]);
 
-      // Now collect all player selections from the forms
-      weekForms.forEach(form => {
-        const weekIdInput = form.querySelector(
-          'input[name="weekId"]',
-        ) as HTMLInputElement;
-        if (!weekIdInput || !weekIdInput.value) return;
+  const isDirty = useMemo(
+    () =>
+      DFS_SURVIVOR_SLOTS.some(
+        slot => lineup[slot] !== (entries[slot]?.playerId ?? null),
+      ),
+    [lineup, entries],
+  );
 
-        const weekId = weekIdInput.value;
-        const playerInputs = form.querySelectorAll(
-          'input[name^="playerId-"]',
-        ) as NodeListOf<HTMLInputElement>;
+  /** Puts a player in a slot, vacating any other slot they already occupy. */
+  const assign = useCallback(
+    (slot: DfsSurvivorSlot, playerId: string) => {
+      const next = { ...lineup };
+      for (const candidate of DFS_SURVIVOR_SLOTS) {
+        if (next[candidate] === playerId) next[candidate] = null;
+      }
+      next[slot] = playerId;
+      setLineup(next);
 
-        playerInputs.forEach(input => {
-          if (input.name.startsWith(`playerId-${weekId}`)) {
-            formData.append(input.name, input.value || '');
-          }
-        });
+      // Jump to the next slot still waiting on a pick.
+      const start = DFS_SURVIVOR_SLOTS.indexOf(slot);
+      const nextEmpty = [
+        ...DFS_SURVIVOR_SLOTS.slice(start + 1),
+        ...DFS_SURVIVOR_SLOTS.slice(0, start),
+      ].find(candidate => !next[candidate]);
+      if (nextEmpty) setActiveSlot(nextEmpty);
+    },
+    [lineup],
+  );
 
-        // Also collect the test time input if it exists
-        const testTimeInput = form.querySelector(
-          'input[name="__test_current_time__"]',
-        ) as HTMLInputElement;
-        if (testTimeInput && testTimeInput.value) {
-          formData.append('__test_current_time__', testTimeInput.value);
-        }
-      });
+  const handleSelectPlayer = useCallback(
+    (player: PickerPlayer) => {
+      setNotice(null);
 
-      // If no weeks found in the DOM, fall back to the data from the server
-      if (submittedWeekIds.size === 0) {
-        data.dfsSurvivorWeeks.forEach(week => {
-          formData.append('weekId', week.id);
-
-          week.entries.forEach(entry => {
-            const inputName = `playerId-${week.id}-${entry.position}`;
-            formData.append(inputName, entry.playerId);
-          });
-        });
+      if (lockedSlots[activeSlot]) return;
+      if (!SLOT_POSITIONS[activeSlot].includes(player.position)) {
+        setNotice(
+          `${player.name} is a ${player.position} and can't fill ${activeSlot}.`,
+        );
+        return;
       }
 
-      // Use fetcher instead of fetch
-      fetcher.submit(formData, { method: 'post' });
-    } catch (err) {
-      console.error('Error during save:', err);
-      setError(
-        err instanceof Error ? err.message : 'An error occurred while saving',
+      // Already banked in another week: ask before moving them, rather than
+      // silently refusing the way the old dropdown did.
+      const usedElsewhere =
+        player.usedInWeek !== null &&
+        player.usedInWeek !== selectedWeek &&
+        !released.has(player.id);
+
+      if (usedElsewhere) {
+        setPendingMove(player);
+        return;
+      }
+
+      assign(activeSlot, player.id);
+    },
+    [activeSlot, assign, lockedSlots, released, selectedWeek],
+  );
+
+  const confirmMove = useCallback(() => {
+    if (!pendingMove) return;
+    setReleased(previous => new Set(previous).add(pendingMove.id));
+    assign(activeSlot, pendingMove.id);
+    setPendingMove(null);
+  }, [pendingMove, assign, activeSlot]);
+
+  const handleClearSlot = useCallback(
+    (slot: DfsSurvivorSlot) => {
+      if (lockedSlots[slot]) return;
+      setLineup(previous => ({ ...previous, [slot]: null }));
+      setActiveSlot(slot);
+    },
+    [lockedSlots],
+  );
+
+  const handleSave = useCallback(() => {
+    const formData = new FormData();
+    formData.append('week', String(selectedWeek));
+    for (const slot of DFS_SURVIVOR_SLOTS) {
+      formData.append(`playerId-${slot}`, lineup[slot] ?? '');
+    }
+    // Only the players actually still in the lineup need releasing.
+    for (const playerId of released) {
+      if (lineupPlayerIds.has(playerId)) formData.append('release', playerId);
+    }
+    fetcher.submit(formData, { method: 'post' });
+  }, [selectedWeek, lineup, released, lineupPlayerIds, fetcher]);
+
+  const handleDiscard = useCallback(() => {
+    setLineup(lineupFromEntries(entries));
+    setReleased(new Set());
+    setPendingMove(null);
+    setNotice(null);
+  }, [entries]);
+
+  const selectWeek = useCallback(
+    (week: number) => {
+      if (week === selectedWeek) return;
+      setSearchParams(
+        previous => {
+          const next = new URLSearchParams(previous);
+          next.set('week', String(week));
+          return next;
+        },
+        { preventScrollReset: true },
       );
-    } finally {
-      setIsSaving(false);
-    }
-  }, [data, fetcher]);
-
-  // Check if all weeks are scored
-  const areAllWeeksScored = useMemo(() => {
-    if (!('dfsSurvivorWeeks' in data)) return false;
-    return data.dfsSurvivorWeeks.every(week => week.isScored);
-  }, [data]);
-
-  // Check if Save All button should be disabled
-  const isSaveAllDisabled = useMemo(() => {
-    if (!('dfsSurvivorWeeks' in data)) return true;
-
-    // Disable if all weeks are scored
-    if (areAllWeeksScored) return true;
-
-    // Disable if the last game of the last week has begun
-    const finalWeekTiming = data.weekGameTimings.find(
-      timing => timing.week === data.lastWeekOfSeason,
-    );
-    if (
-      finalWeekTiming &&
-      data.currentTime >= finalWeekTiming.lastGameStartTime
-    ) {
-      return true;
-    }
-
-    return false;
-  }, [data, areAllWeeksScored]);
-
-  // Update error state when fetcher error changes
-  useEffect(() => {
-    if (fetcher.data?.error) {
-      setError(fetcher.data.error);
-    } else if (fetcher.data?.message) {
-      // Clear error when there's a success message
-      setError(null);
-    }
-  }, [fetcher.data]);
-
-  if (!data.currentSeason) {
-    return (
-      <div>
-        <h2>Season Not Available</h2>
-        <p>Season is currently not available.</p>
-      </div>
-    );
-  }
+    },
+    [setSearchParams, selectedWeek],
+  );
 
   if (!data.isOpen) {
     return (
       <div>
-        <h2>DFS Survivor Closed</h2>
-        <p>DFS survivor is currently closed for the season.</p>
+        <h2>
+          {data.currentSeason ? 'DFS Survivor Closed' : 'Season Not Available'}
+        </h2>
+        <p>
+          {data.currentSeason
+            ? 'DFS survivor is currently closed for the season.'
+            : 'Season is currently not available.'}
+        </p>
       </div>
     );
   }
 
+  const isSaving = fetcher.state !== 'idle';
+  const message = fetcher.data?.error ?? notice ?? fetcher.data?.message;
+  const isError = !!(fetcher.data?.error || notice);
+
   return (
-    <div>
+    // The app shell wraps every page in `prose lg:prose-xl` (root.tsx), which
+    // sets a 20px base and styles bare tables. Both wreck a dense data view, so
+    // this one opts out and sets its own scale.
+    <>
       <h2>My DFS Survivor Entries</h2>
+      <div className='not-prose text-slate-200'>
+        <DfsSurvivorWeekRail
+          weeks={data.weekSummaries}
+          selectedWeek={selectedWeek}
+          currentNflWeek={data.currentNflWeek}
+          onSelectWeek={selectWeek}
+          isLocked={isDirty}
+          lockedReason={`Save or discard your week ${selectedWeek} changes first`}
+        />
 
-      {/* Centralized success/error message display */}
-      {fetcher.data?.message && !error && (
-        <div className='text-white mb-4'>{fetcher.data.message}</div>
-      )}
-      {error && <div className='text-white mb-4'>{error}</div>}
+        {message && (
+          <div
+            role={isError ? 'alert' : 'status'}
+            className={clsx(
+              'mb-3 rounded-md px-3 py-2 text-sm',
+              isError
+                ? 'bg-red-900/50 text-red-100'
+                : 'bg-green-900/50 text-green-100',
+            )}
+          >
+            {message}
+          </div>
+        )}
 
-      {/* Save All Entries button */}
-      <div className='mb-4 flex justify-end'>
-        <Button
-          type='button'
-          onClick={handleSaveAll}
-          disabled={isSaving || isSaveAllDisabled}
-          data-testid='save-all-entries-button'
-        >
-          {isSaving ? 'Saving...' : 'Save All Entries'}
-        </Button>
-      </div>
+        {pendingMove && (
+          <div className='mb-3 flex flex-wrap items-center gap-3 rounded-md bg-amber-900/50 px-3 py-2 text-sm text-amber-100'>
+            <span>
+              {pendingMove.name} is already used in week{' '}
+              {pendingMove.usedInWeek}. Move them to week {selectedWeek}?
+            </span>
+            <Button type='button' onClick={confirmMove}>
+              Move here
+            </Button>
+            <Button type='button' onClick={() => setPendingMove(null)}>
+              Cancel
+            </Button>
+          </div>
+        )}
 
-      {/* Week cards */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {[...data.dfsSurvivorWeeks]
-          .sort((a, b) => a.week - b.week)
-          .map(week => (
-            <div
-              key={week.id}
-              className={`week-container ${
-                expandedWeeks.has(week.id) ? 'expanded-week' : 'collapsed-week'
-              }`}
-              data-expanded={expandedWeeks.has(week.id)}
-            >
-              <DfsSurvivorWeekComponent
-                week={week}
-                availablePlayers={data.availablePlayers}
-                isExpanded={expandedWeeks.has(week.id)}
-                onToggleExpand={() => toggleWeekExpansion(week.id)}
-                isPlayerSelected={isPlayerSelected}
-                formId={`week-${week.week}`}
-                onError={handleWeekError}
-                parentFetcher={fetcher}
-                weekGameTiming={data.weekGameTimings.find(
-                  timing => timing.week === week.week,
+        <div className='grid items-start gap-4 lg:grid-cols-[minmax(19rem,22rem)_1fr]'>
+          <section
+            className={clsx(
+              'overflow-hidden rounded-md border bg-slate-800/40 transition-colors',
+              isDirty ? 'border-amber-500/70' : 'border-slate-700',
+            )}
+          >
+            {/* Matches the player panel's control-bar height so the two columns
+                start on the same baseline. */}
+            <header className='flex h-12 items-center justify-between border-b border-slate-700 px-3'>
+              <h3 className='m-0 text-sm font-semibold text-white'>
+                Week {selectedWeek} lineup
+              </h3>
+              <span className='text-xs tabular-nums text-slate-400'>
+                {lineupPlayerIds.size}/11
+              </span>
+            </header>
+
+            <DfsSurvivorLineup
+              lineup={lineup}
+              playersById={playersById}
+              entries={entries}
+              activeSlot={activeSlot}
+              onActivateSlot={setActiveSlot}
+              onClearSlot={handleClearSlot}
+              lockedSlots={lockedSlots}
+              isWeekScored={data.isWeekScored}
+            />
+
+            <div className='sticky bottom-0 flex items-center justify-between gap-3 border-t border-slate-700 bg-slate-800/95 px-3 py-2 backdrop-blur'>
+              <span className='text-xs text-amber-300'>
+                {isDirty && !isSaving ? 'Unsaved changes' : '\u00a0'}
+              </span>
+              <span className='flex shrink-0 items-center gap-2'>
+                {isDirty && !isSaving && (
+                  <Button
+                    type='button'
+                    onClick={handleDiscard}
+                    className='bg-transparent text-slate-300 hover:bg-slate-700'
+                    data-testid='discard-week-button'
+                  >
+                    Discard
+                  </Button>
                 )}
-                currentTime={data.currentTime}
-                nflGames={data.nflGames.filter(game => game.week === week.week)}
-                allSelectedPlayers={allSelectedPlayers}
-              />
+                <Button
+                  type='button'
+                  onClick={handleSave}
+                  disabled={isSaving || !isDirty || data.isWeekScored}
+                  data-testid='save-week-button'
+                >
+                  {isSaving ? 'Saving\u2026' : 'Save'}
+                </Button>
+              </span>
             </div>
-          ))}
+          </section>
+
+          <DfsSurvivorPlayerTable
+            players={data.players}
+            activeSlot={activeSlot}
+            selectedWeek={selectedWeek}
+            lineupPlayerIds={lineupPlayerIds}
+            onSelectPlayer={handleSelectPlayer}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

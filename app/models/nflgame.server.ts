@@ -53,6 +53,33 @@ export async function getWeekNflGames(
   });
 }
 
+/**
+ * The week the season is currently on: the earliest week that still has a game
+ * left to kick off. Once every game of the year has started this returns the
+ * last week of the season, so the entry page always lands somewhere real.
+ *
+ * There is no `Season.currentWeek` column and Sleeper's NFL state is only
+ * fetched by sync jobs, so this derives it from the schedule we already store.
+ */
+export async function getCurrentNflWeek(
+  year: NFLGame['year'],
+  now: Date,
+): Promise<number | null> {
+  const upcoming = await prisma.nFLGame.findFirst({
+    where: { year, gameStartTime: { gt: now } },
+    orderBy: [{ week: 'asc' }, { gameStartTime: 'asc' }],
+    select: { week: true },
+  });
+  if (upcoming) return upcoming.week;
+
+  const last = await prisma.nFLGame.findFirst({
+    where: { year },
+    orderBy: { week: 'desc' },
+    select: { week: true },
+  });
+  return last?.week ?? null;
+}
+
 export async function getActiveNflGames() {
   return prisma.nFLGame.aggregate({
     where: {

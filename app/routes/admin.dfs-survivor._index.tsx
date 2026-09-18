@@ -14,7 +14,11 @@ import {
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import { prisma } from '~/db.server';
+import { syncPlayerWeekScores } from '~/libs/dfs-survivor/player-week-scores.server';
+import { scoreDfsSurvivorPlayer } from '~/libs/dfs-survivor/scoring';
+import { DFS_SURVIVOR_LAST_WEEK } from '~/libs/dfs-survivor/slots';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
+import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
@@ -126,106 +130,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       for (const weekRecord of allWeekRecords) {
         for (const entry of weekRecord.entries) {
           const stats = sleeperJson[entry.player.sleeperId] || {};
-          let score = 0;
-
-          // Calculate points based on position and stats
-          if (entry.player.position === 'QB') {
-            score =
-              Math.round(
-                100 *
-                  (0.04 * (stats.pass_yd || 0) +
-                    4 * (stats.pass_td || 0) +
-                    0.1 * (stats.rush_yd || 0) +
-                    6 * (stats.rush_td || 0) +
-                    0.1 * (stats.rec_yd || 0) +
-                    6 * (stats.rec_td || 0) +
-                    -2 * (stats.fum_lost || 0) +
-                    -2 * (stats.pass_int || 0) +
-                    2 * (stats.pass_2pt || 0) +
-                    2 * (stats.rush_2pt || 0) +
-                    2 * (stats.rec_2pt || 0)),
-              ) / 100;
-          } else if (entry.player.position === 'RB') {
-            score =
-              Math.round(
-                100 *
-                  (0.1 * (stats.rush_yd || 0) +
-                    6 * (stats.rush_td || 0) +
-                    0.5 * (stats.rec || 0) +
-                    0.1 * (stats.rec_yd || 0) +
-                    6 * (stats.rec_td || 0) +
-                    -2 * (stats.fum_lost || 0) +
-                    2 * (stats.rush_2pt || 0) +
-                    2 * (stats.rec_2pt || 0)),
-              ) / 100;
-          } else if (entry.player.position === 'WR') {
-            score =
-              Math.round(
-                100 *
-                  (0.5 * (stats.rec || 0) +
-                    0.1 * (stats.rec_yd || 0) +
-                    6 * (stats.rec_td || 0) +
-                    0.1 * (stats.rush_yd || 0) +
-                    6 * (stats.rush_td || 0) +
-                    -2 * (stats.fum_lost || 0) +
-                    2 * (stats.rec_2pt || 0) +
-                    2 * (stats.rush_2pt || 0)),
-              ) / 100;
-          } else if (entry.player.position === 'TE') {
-            score =
-              Math.round(
-                100 *
-                  (0.5 * (stats.rec || 0) +
-                    0.1 * (stats.rec_yd || 0) +
-                    6 * (stats.rec_td || 0) +
-                    0.1 * (stats.rush_yd || 0) +
-                    6 * (stats.rush_td || 0) +
-                    -2 * (stats.fum_lost || 0) +
-                    2 * (stats.rec_2pt || 0) +
-                    2 * (stats.rush_2pt || 0)),
-              ) / 100;
-          } else if (entry.player.position === 'K') {
-            score =
-              Math.round(
-                100 *
-                  (3 * (stats.fgm_0_19 || 0) +
-                    3 * (stats.fgm_20_29 || 0) +
-                    3 * (stats.fgm_30_39 || 0) +
-                    4 * (stats.fgm_40_49 || 0) +
-                    5 * (stats.fgm_50p || 0) +
-                    1 * (stats.xpm || 0) -
-                    1 * (stats.fgmiss || 0) -
-                    1 * (stats.xpmiss || 0)),
-              ) / 100;
-          } else if (entry.player.position === 'DEF') {
-            let defPoints = 0;
-            // Points allowed
-            if (stats.pts_allow !== undefined) {
-              if (stats.pts_allow <= 20) defPoints += 0;
-              else if (stats.pts_allow <= 27) defPoints -= 1;
-              else if (stats.pts_allow <= 34) defPoints -= 2;
-              else defPoints -= 3;
-            }
-            // Yards allowed
-            if (stats.yds_allow !== undefined) {
-              if (stats.yds_allow < 350) defPoints += 0;
-              else if (stats.yds_allow <= 399) defPoints -= 1;
-              else if (stats.yds_allow <= 449) defPoints -= 1;
-              else if (stats.yds_allow <= 499) defPoints -= 2;
-              else if (stats.yds_allow <= 549) defPoints -= 2;
-              else defPoints -= 3;
-            }
-            // Other defensive stats
-            defPoints +=
-              6 * (stats.def_st_td || 0) +
-              2 * (stats.int || 0) +
-              2 * (stats.fum_rec || 0) +
-              4 * (stats.safe || 0) +
-              1 * (stats.sack || 0) +
-              3 * (stats.blk_kick || 0) +
-              0.5 * (stats.tkl_loss || 0);
-            score = Math.round(100 * defPoints) / 100;
-          }
+          const score = scoreDfsSurvivorPlayer(entry.player.position, stats);
 
           promises.push(
             prisma.dFSSurvivorUserEntry.update({
@@ -253,8 +158,43 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
+      // Keep PlayerWeekScore in step, so the entry picker's season-to-date
+      // column agrees with what entries were just scored on. Scoring is already
+      // committed at this point, so a Sleeper outage here must not surface as a
+      // failed scoring run - it would invite a pointless re-score.
+      try {
+        await syncPlayerWeekScores(year, weekNumber);
+      } catch (error) {
+        console.error('Player score sync after scoring failed:', error);
+        return typedjson({
+          message:
+            'Week has been scored, but refreshing player scores failed. Use Sync Player Scores to retry.',
+        });
+      }
+
       return typedjson({ message: 'Week has been scored.' });
     }
+  } else if (_action === 'syncPlayerScores') {
+    const currentSeason = await getCurrentSeason();
+    if (!currentSeason) {
+      throw new Error('No active season currently');
+    }
+
+    const currentWeek = await getCurrentNflWeek(currentSeason.year, new Date());
+    if (!currentWeek) {
+      return typedjson({
+        message: `No NFL schedule stored for ${currentSeason.year}.`,
+      });
+    }
+
+    const through = Math.min(currentWeek + 1, DFS_SURVIVOR_LAST_WEEK);
+    for (let week = 1; week <= through; week++) {
+      await syncPlayerWeekScores(currentSeason.year, week);
+    }
+
+    return typedjson({
+      message: `Player scores and projections synced through week ${through}.`,
+    });
   }
 
   return typedjson({ message: 'Invalid action' });
@@ -323,7 +263,15 @@ export default function AdminDfsSurvivorIndex() {
     <>
       <h2>DFS Survivor</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'></Form>
+      <Form method='POST' className='mb-4'>
+        <Button type='submit' name='_action' value='syncPlayerScores'>
+          Sync Player Scores &amp; Projections
+        </Button>
+        <p className='mt-1 text-sm'>
+          Refreshes every player's weekly points and projections from Sleeper.
+          Runs hourly on its own; this is for backfilling.
+        </p>
+      </Form>
       <table className='w-full'>
         <thead>
           <tr>
