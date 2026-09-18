@@ -111,13 +111,19 @@ export default function DfsSurvivorLineup({
             </button>
 
             <span className='w-12 shrink-0 text-right text-xs tabular-nums'>
+              {/* Final points are white and bold, projections grey, so a
+                  half-played week reads at a glance. */}
               {isWeekScored ? (
-                <span className='font-semibold text-white'>
+                <span title='Final' className='font-semibold text-white'>
                   {(saved?.points ?? 0).toFixed(2)}
+                </span>
+              ) : saved?.playerId === playerId && saved.actualPoints != null ? (
+                <span title='Final' className='font-semibold text-white'>
+                  {saved.actualPoints.toFixed(2)}
                 </span>
               ) : (
                 player?.projection != null && (
-                  <span className='text-slate-400'>
+                  <span title='Projected' className='text-slate-400'>
                     {player.projection.toFixed(1)}
                   </span>
                 )
