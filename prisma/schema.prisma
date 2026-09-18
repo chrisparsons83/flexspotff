@@ -371,6 +371,8 @@ model NFLGame {
   locksGame             LocksGame?
   QBStreamingWeekOption QBStreamingWeekOption[]
   dfsSurvivorEntries    DFSSurvivorUserEntry[]
+
+  @@index([year, week])
 }
 
 model NFLTeam {
@@ -611,8 +613,28 @@ model Player {
   QBStreamingWeekOption QBStreamingWeekOption[]
   TeamGames             TeamGame[]
   dfsSurvivorEntries    DFSSurvivorUserEntry[]
+  weekScores            PlayerWeekScore[]
   waiverAdds            WaiverTransaction[]     @relation("WaiverAdd")
   waiverDrops           WaiverTransaction[]     @relation("WaiverDrop")
+}
+
+// Every player's DFS Survivor points and Sleeper projection for one NFL week,
+// for every player - not just the ones somebody picked. This is what lets the
+// entry picker sort by projection and season-to-date points. Populated by the
+// sync-player-scores job and by the admin week scorer.
+model PlayerWeekScore {
+  id         String   @id @default(cuid())
+  playerId   String
+  year       Int
+  week       Int
+  points     Float? // DFS Survivor scoring of the actual stat line; null until played
+  projection Float? // Sleeper's half-PPR projection for the week
+  updatedAt  DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([playerId, year, week])
+  @@index([year, week])
 }
 
 model QBStreamingWeek {
