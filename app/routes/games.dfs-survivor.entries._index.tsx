@@ -13,7 +13,7 @@ import type { PickerPlayer, PlayerUsage } from '~/libs/dfs-survivor/picker';
 import { decoratePickerPlayers } from '~/libs/dfs-survivor/picker';
 import {
   getSeasonTotalsByPlayer,
-  getWeekProjectionsByPlayer,
+  getWeekScoresByPlayer,
 } from '~/libs/dfs-survivor/player-week-scores.server';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
@@ -57,6 +57,11 @@ export type SlotEntry = {
   opponentAbbr: string | null;
   isHome: boolean;
   projection: number | null;
+  /**
+   * What they actually scored, once their game is final. Null while the game is
+   * still to come or in progress, which is when the projection is shown instead.
+   */
+  actualPoints: number | null;
   /** Their game has kicked off, so the slot can no longer be edited. */
   isLocked: boolean;
 };
@@ -76,6 +81,9 @@ type LoaderData =
   | { isOpen: false; currentSeason: Season | null };
 
 type ActionResponse = { message?: string; error?: string };
+
+/** Sleeper's terminal game status: its stat lines will not change again. */
+const GAME_COMPLETE = 'complete';
 
 /**
  * Reads the eleven slots off a form submission, rejecting anything that isn't a
@@ -373,7 +381,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const weeks = yearWithEntries?.weeks ?? [];
 
-  const [players, games, projections, seasonTotals] = await Promise.all([
+  const [players, games, weekScores, seasonTotals] = await Promise.all([
     prisma.player.findMany({
       where: {
         position: { in: DFS_SURVIVOR_POSITIONS },
@@ -382,9 +390,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       include: { currentNFLTeam: true },
     }),
     getWeekNflGames(currentSeason.year, selectedWeek),
-    getWeekProjectionsByPlayer(currentSeason.year, selectedWeek),
+    getWeekScoresByPlayer(currentSeason.year, selectedWeek),
     getSeasonTotalsByPlayer(currentSeason.year),
   ]);
+
+  const { projections, actuals } = weekScores;
 
   // Which week (if any) each player is already banked in, across the season.
   const usage = new Map<string, PlayerUsage>();
@@ -455,6 +465,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       opponentAbbr: opponent?.sleeperId ?? null,
       isHome,
       projection: projections.get(entry.playerId) ?? null,
+      // Only trusted once the game is final: a live stat line would otherwise
+      // read as a finished score while the player is still on the field.
+      // A player with no stored stat line stays null rather than falling back
+      // to 0 - the sync is a manual admin job, so a finished game can easily
+      // have no row yet, and a stale 0 would read as a real final score.
+      actualPoints:
+        game?.status === GAME_COMPLETE
+          ? actuals.get(entry.playerId) ?? null
+          : null,
       isLocked: game ? game.gameStartTime <= currentTime : false,
     };
   }

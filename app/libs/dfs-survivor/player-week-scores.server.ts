@@ -82,16 +82,28 @@ export async function getSeasonTotalsByPlayer(year: number) {
   return new Map(totals.map(row => [row.playerId, row._sum.points ?? 0]));
 }
 
-/** Projections for one week, as a playerId -> projection map. */
-export async function getWeekProjectionsByPlayer(year: number, week: number) {
+/**
+ * One week's stored numbers, as two playerId maps: `projections` holds Sleeper's
+ * projection and `actuals` the scored stat line. A player is absent from
+ * `actuals` until Sleeper has a stat line for them, so a missing key means "no
+ * stat line stored yet" rather than a zero.
+ *
+ * Both maps come off a single query - this runs on every entry page load.
+ */
+export async function getWeekScoresByPlayer(year: number, week: number) {
   const scores = await prisma.playerWeekScore.findMany({
     where: { year, week },
-    select: { playerId: true, projection: true },
+    select: { playerId: true, projection: true, points: true },
   });
 
-  return new Map(
-    scores
-      .filter(score => score.projection !== null)
-      .map(score => [score.playerId, score.projection as number]),
-  );
+  const projections = new Map<string, number>();
+  const actuals = new Map<string, number>();
+
+  for (const score of scores) {
+    if (score.projection !== null)
+      projections.set(score.playerId, score.projection);
+    if (score.points !== null) actuals.set(score.playerId, score.points);
+  }
+
+  return { projections, actuals };
 }
