@@ -10,7 +10,7 @@ import Button from '~/components/ui/FlexSpotButton';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -23,15 +23,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const action = formData.get('_action');
 
   switch (action) {
-    case 'createNewWeek': {
-      let currentSeason = await getCurrentSeason();
-      if (!currentSeason) {
-        throw new Error('No active season currently');
+    case 'createCup': {
+      const year = Number(formData.get('year'));
+      const seasons = await getSeasons();
+      if (!seasons.some(season => season.year === year)) {
+        return typedjson({ message: `There is no ${year} season.` });
+      }
+      if ((await getCups()).some(cup => cup.year === year)) {
+        return typedjson({ message: `The ${year} Cup already exists.` });
       }
 
-      const cup = await createCup({
-        year: currentSeason.year,
-      });
+      const cup = await createCup({ year });
 
       const promises: Promise<CupWeek>[] = [];
       for (let i = 1; i <= 14; i++) {
@@ -58,13 +60,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
   requireAdmin(user);
 
-  const cups = await getCups();
+  const [cups, seasons] = await Promise.all([getCups(), getSeasons()]);
+  const yearsWithCups = new Set(cups.map(cup => cup.year));
+  const availableSeasons = seasons.filter(
+    season => !yearsWithCups.has(season.year),
+  );
 
-  return typedjson({ cups });
+  return typedjson({ cups, availableSeasons });
 };
 
 export default function QBStreamingStandingsYearIndex() {
-  const { cups } = useTypedLoaderData<typeof loader>();
+  const { cups, availableSeasons } = useTypedLoaderData<typeof loader>();
   const actionData = useTypedActionData<typeof action>();
   const navigation = useNavigation();
 
@@ -73,12 +79,28 @@ export default function QBStreamingStandingsYearIndex() {
       <h2>Cups</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
-        <div>
+        <div className='flex items-center gap-2'>
+          <select
+            name='year'
+            aria-label='Year'
+            defaultValue={
+              availableSeasons.find(season => season.isCurrent)?.year
+            }
+            className='form-select dark:border-0 dark:bg-slate-800'
+          >
+            {availableSeasons.map(season => (
+              <option value={season.year} key={season.id}>
+                {season.year}
+              </option>
+            ))}
+          </select>
           <Button
             type='submit'
             name='_action'
-            value='createNewWeek'
-            disabled={navigation.state !== 'idle'}
+            value='createCup'
+            disabled={
+              navigation.state !== 'idle' || availableSeasons.length === 0
+            }
           >
             Create Cup
           </Button>
