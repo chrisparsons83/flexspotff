@@ -24,17 +24,13 @@ import {
   syncNflPlayers,
   syncSleeperWeeklyScores,
 } from '~/libs/syncs.server';
-import {
-  FEATURE_FLAGS,
-  getFeatureFlags,
-  isFeatureFlagKey,
-  setFeatureFlag,
-} from '~/models/featureFlag.server';
+import { getFeatureFlags, setFeatureFlag } from '~/models/featureFlag.server';
 import { getLeagues } from '~/models/league.server';
 import { createNflTeams } from '~/models/nflteam.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { FIRST_YEAR } from '~/utils/constants';
+import { FEATURE_FLAGS, isFeatureFlagKey } from '~/utils/featureFlags';
 
 type ActionData = {
   formError?: string;
