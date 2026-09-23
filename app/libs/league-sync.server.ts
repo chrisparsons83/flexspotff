@@ -4,6 +4,7 @@ import { env } from 'process';
 import { ZodError } from 'zod';
 import {
   getDraft,
+  getLeagueInfo,
   getLeagueRosters,
   getLeagueUsers,
 } from '~/libs/sleeper/api.server';
@@ -11,6 +12,12 @@ import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
+import {
+  isUsablePlayoffWeekStart,
+  leaguePlayedMedianGames,
+  regularSeasonWeeks,
+  teamsHaveMedianResults,
+} from '~/utils/seasonStructure';
 
 /**
  * Syncs a single league with Sleeper API data
@@ -128,10 +135,65 @@ export async function syncLeague(
 
   await Promise.all(teamPromises);
 
+  await syncLeagueSeasonStructure(league);
+
   // Sync ADP if league hasn't drafted yet
   if (!league.isDrafted) {
     await syncAdp(league);
   }
+}
+
+/**
+ * Records how this league was actually configured: when its playoffs started,
+ * and whether it played median games.
+ *
+ * Both used to be inferred from hardcoded year rules. `playoffWeekStart` comes
+ * from Sleeper because only Sleeper knows it; `hasMedianScoring` is derived from
+ * the team rows we just wrote, because the median results are already in them
+ * and asking Sleeper would only duplicate a fact we hold.
+ *
+ * A failure here is logged rather than thrown. This runs after the teams are
+ * saved, and losing a whole league's roster sync over a settings lookup would be
+ * a bad trade - the fields stay null and the historical fallback keeps applying.
+ */
+export async function syncLeagueSeasonStructure(league: League): Promise<void> {
+  const teams = await getTeams(league.id);
+
+  // Three signals, because no one of them covers every season. The stored value
+  // wins first so a league known to play medians never flickers back mid-season.
+  // Sleeper's median string covers a season in progress but only exists for
+  // recent years; the games count is retroactive and exact but only settles once
+  // the regular season is over. Together they cover every league we have.
+  const hasMedianScoring =
+    league.hasMedianScoring ||
+    teamsHaveMedianResults(teams) ||
+    leaguePlayedMedianGames({
+      teams,
+      regularSeasonWeeks: regularSeasonWeeks({
+        year: league.year,
+        playoffWeekStart: league.playoffWeekStart,
+      }),
+    });
+
+  let playoffWeekStart: number | null = league.playoffWeekStart;
+  try {
+    const sleeperLeague = await getLeagueInfo(league.sleeperLeagueId);
+    const reported = sleeperLeague.settings?.playoff_week_start;
+    if (isUsablePlayoffWeekStart(reported)) {
+      playoffWeekStart = reported;
+    } else if (reported !== undefined && reported !== null) {
+      console.warn(
+        `Ignoring implausible playoff_week_start ${reported} for league ${league.name} ${league.year}`,
+      );
+    }
+  } catch (error) {
+    console.warn(
+      `Could not read Sleeper settings for league ${league.name}:`,
+      error,
+    );
+  }
+
+  await updateLeague({ id: league.id, playoffWeekStart, hasMedianScoring });
 }
 
 /**

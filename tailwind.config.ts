@@ -40,6 +40,8 @@ const config: Config = {
         galaxy: '#3498db',
         monarch: '#ab59b6',
         gold: '#d4af37',
+        // The sacko's colour. `bronze` reads orange next to the poop emoji.
+        brown: '#a06a40',
         silver: '#c0c0c0',
         bronze: '#cd7f32',
         def: 'rgba(134, 73, 53, 0.8)',

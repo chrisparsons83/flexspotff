@@ -3,6 +3,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import StarterGrid from '~/components/layout/leaderboard/StarterGrid';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import GoBox from '~/components/ui/GoBox';
 import {
   getNewestWeekTeamGameByYear,
@@ -44,7 +45,13 @@ export default function LeaderboardYearWeek() {
     return {
       id: position.id,
       rank: position.rank,
-      name: position.team.user?.discordName || 'Missing user',
+      name: position.team.user ? (
+        <ProfileLink userId={position.team.user.id}>
+          {position.team.user.discordName}
+        </ProfileLink>
+      ) : (
+        'Missing user'
+      ),
       badgeClassName: isLeagueName(leagueName)
         ? RANK_COLORS[leagueName]
         : undefined,

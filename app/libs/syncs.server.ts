@@ -36,6 +36,7 @@ import {
   getTeamGamesByYearAndWeek,
   updateTeamGame,
 } from '~/models/teamgame.server';
+import { isRegularSeasonWeek } from '~/utils/seasonStructure';
 
 export async function syncAdp(league: League) {
   const sleeperJson = await getDraftPicksWithOwners(league.sleeperDraftId);
@@ -201,7 +202,11 @@ export async function syncSleeperWeeklyScores(year: number, week: number) {
         teamGame => teamGame.teamId === team.id && teamGame.week === week,
       );
 
-      const isRegularSeason = week <= 13 || (week === 14 && year >= 2021);
+      const isRegularSeason = isRegularSeasonWeek({
+        week,
+        year,
+        playoffWeekStart: league.playoffWeekStart,
+      });
 
       // Sleeper leaves these null for a roster it hasn't scored yet, and the
       // columns are non-nullable arrays. A missing starter slot is '0', which

@@ -15,12 +15,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { syncMultipleLeagueBrackets } from '~/libs/bracket-sync.server';
+import { syncLeagueSeasonStructure } from '~/libs/league-sync.server';
+import { backfillMedianRecords } from '~/libs/median-backfill.server';
 import { syncCurrentWeekScores } from '~/libs/scoring.server';
 import {
   syncNflGameWeek,
   syncNflPlayers,
   syncSleeperWeeklyScores,
 } from '~/libs/syncs.server';
+import {
+  FEATURE_FLAGS,
+  getFeatureFlags,
+  isFeatureFlagKey,
+  setFeatureFlag,
+} from '~/models/featureFlag.server';
+import { getLeagues } from '~/models/league.server';
 import { createNflTeams } from '~/models/nflteam.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -53,6 +63,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   switch (action) {
+    case 'setFeatureFlag': {
+      const key = String(formData.get('flag'));
+      if (!isFeatureFlagKey(key)) {
+        return json<ActionData>({ formError: `Unknown feature flag: ${key}` });
+      }
+
+      const enabled = formData.get('enabled') === 'true';
+      await setFeatureFlag(key, enabled);
+
+      return json<ActionData>({
+        message: `${FEATURE_FLAGS[key].label} turned ${
+          enabled ? 'on' : 'off'
+        }.`,
+      });
+    }
     case 'resyncNflPlayers': {
       await syncNflPlayers();
 
@@ -96,6 +121,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return json<ActionData>({
         message: `League games have been synced for ${year}.`,
+      });
+    }
+    case 'resyncLeagueSettings': {
+      // Every league, every year - this backfills playoffWeekStart and
+      // hasMedianScoring onto seasons that predate those columns. Leagues are
+      // done one at a time because syncLeagueSeasonStructure swallows its own
+      // failures, so a league Sleeper no longer serves leaves that one row
+      // untouched instead of aborting the rest of the backfill.
+      const leagues = await getLeagues();
+      for (const league of leagues) {
+        await syncLeagueSeasonStructure(league);
+      }
+
+      return json<ActionData>({
+        message: `Season structure synced for ${leagues.length} leagues.`,
+      });
+    }
+    case 'resyncPlayoffBrackets': {
+      const leagues = await getLeagues();
+      const { syncedCount, gamesStored, errorCount } =
+        await syncMultipleLeagueBrackets(leagues);
+
+      return json<ActionData>({
+        message:
+          `Playoff brackets synced: ${gamesStored} games across ${syncedCount} leagues` +
+          (errorCount > 0 ? `, ${errorCount} failed.` : '.'),
+      });
+    }
+    case 'backfillMedianRecords': {
+      const leagues = await getLeagues();
+      const { leaguesProcessed, medianLeagues, teamsUpdated, errors } =
+        await backfillMedianRecords(leagues);
+
+      return json<ActionData>({
+        message:
+          `Median records derived for ${leaguesProcessed} leagues ` +
+          `(${medianLeagues} played median games, ${teamsUpdated} teams updated)` +
+          (errors.length > 0 ? `, ${errors.length} failed.` : '.'),
       });
     }
     case 'syncTestDatabase': {
@@ -175,11 +238,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Error('No current season');
   }
 
-  return { currentSeason };
+  return { currentSeason, featureFlags: await getFeatureFlags() };
 };
 
 export default function AdminDataIndex() {
-  const { currentSeason } = useLoaderData<typeof loader>();
+  const { currentSeason, featureFlags } = useLoaderData<typeof loader>();
   const actionData = useActionData<ActionData>();
   const navigation = useNavigation();
 
@@ -193,6 +256,39 @@ export default function AdminDataIndex() {
       <h2>Data Updates</h2>
       <p>This is a good list of things to eventually automate.</p>
       {actionData?.message && <Alert message={actionData.message} />}
+      <section>
+        <h3>Feature Flags</h3>
+        <p>
+          Switches for features that are built but not open to every member yet.
+          Admins always see them either way.
+        </p>
+        {Object.entries(FEATURE_FLAGS).map(([key, flag]) => {
+          const enabled = featureFlags[key as keyof typeof FEATURE_FLAGS];
+
+          return (
+            <Form method='POST' key={key} className='mb-4'>
+              <input type='hidden' name='flag' value={key} />
+              <input type='hidden' name='enabled' value={String(!enabled)} />
+              <p className='mb-2'>
+                <strong>{flag.label}</strong>:{' '}
+                {enabled ? 'on for everyone' : 'admins only'}
+                <br />
+                <span className='text-base text-slate-300'>
+                  {flag.description}
+                </span>
+              </p>
+              <Button
+                type='submit'
+                name='_action'
+                value='setFeatureFlag'
+                disabled={navigation.state !== 'idle'}
+              >
+                {enabled ? `Turn off ${flag.label}` : `Turn on ${flag.label}`}
+              </Button>
+            </Form>
+          );
+        })}
+      </section>
       <Form method='POST'>
         <section>
           <h3>Update NFL Games</h3>
@@ -291,6 +387,58 @@ export default function AdminDataIndex() {
             disabled={navigation.state !== 'idle'}
           >
             Resync NFL Players
+          </Button>
+        </section>
+        <section>
+          <h3>Resync League Season Structure</h3>
+          <p>
+            Reads each league's playoff start week from Sleeper and works out
+            whether it played median games, for every league in every year. Run
+            this once to backfill seasons that predate those fields; the weekly
+            league sync keeps them current afterwards.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='resyncLeagueSettings'
+            disabled={navigation.state !== 'idle'}
+          >
+            Resync League Season Structure
+          </Button>
+        </section>
+        <section>
+          <h3>Resync Playoff Brackets</h3>
+          <p>
+            Reads the winners and losers brackets from Sleeper for every league
+            in every year. This is what league championships, playoff records
+            and sackos are built from. Leagues Sleeper no longer serves are
+            skipped rather than failing the run.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='resyncPlayoffBrackets'
+            disabled={navigation.state !== 'idle'}
+          >
+            Resync Playoff Brackets
+          </Button>
+        </section>
+        <section>
+          <h3>Backfill Median Records</h3>
+          <p>
+            Recomputes every team&rsquo;s record against the league median from
+            the scores already on file. Sleeper only describes median games for
+            recent seasons, so the stored columns are empty for 2018&ndash;2023
+            even where the games were played. Safe to re-run; a league that
+            never played medians has its columns cleared.
+          </p>
+          <Button
+            type='submit'
+            name='_action'
+            value='backfillMedianRecords'
+            disabled={navigation.state !== 'idle'}
+          >
+            Backfill Median Records
           </Button>
         </section>
         <section>

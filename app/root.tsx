@@ -11,6 +11,7 @@ import {
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import NavBar from '~/components/layout/NavBar';
+import { canViewProfiles } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 
 export const links: LinksFunction = () => [
@@ -29,6 +30,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return typedjson({
     user,
     userIsEditor,
+    // Read by every link into /members, so they drop to plain text while
+    // profiles are admin-only. See useCanViewProfiles.
+    canViewProfiles: await canViewProfiles(user),
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
@@ -59,14 +63,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { user, userIsEditor, ENV, currentPath } =
+  const { user, userIsEditor, canViewProfiles, ENV, currentPath } =
     useTypedLoaderData<typeof loader>();
 
   const regex = /omni\/\d{4}\/board$/gm;
 
   return (
     <>
-      <NavBar user={user} userIsEditor={userIsEditor} />
+      <NavBar
+        user={user}
+        userIsEditor={userIsEditor}
+        canViewProfiles={canViewProfiles}
+      />
       <div
         className={clsx(
           !regex.test(currentPath) && 'container',
@@ -104,7 +112,7 @@ export function ErrorBoundary() {
         <Links />
       </head>
       <body className='h-full bg-slate-700 text-white'>
-        <NavBar user={null} userIsEditor={false} />
+        <NavBar user={null} userIsEditor={false} canViewProfiles={false} />
         <div className='container relative mx-auto min-h-screen p-4 text-white'>
           <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
             <h1>Error</h1>

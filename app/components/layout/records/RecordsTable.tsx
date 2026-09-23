@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import type { RecordRow } from '~/models/records.server';
 import { isLeagueName, RANK_COLORS } from '~/utils/constants';
 
@@ -40,7 +41,15 @@ export default function RecordsTable({ title, headers, rows }: Props) {
                 </div>
               </td>
               {row.cells.map((cell, i) => (
-                <td key={i}>{cell}</td>
+                <td key={i}>
+                  {/* The first cell is always the player. Rows that aggregate
+                      several members carry no id and stay plain text. */}
+                  {i === 0 && row.playerUserId ? (
+                    <ProfileLink userId={row.playerUserId}>{cell}</ProfileLink>
+                  ) : (
+                    cell
+                  )}
+                </td>
               ))}
             </tr>
           ))}
