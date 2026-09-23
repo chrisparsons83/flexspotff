@@ -237,24 +237,23 @@ export function buildWaiverEmbeds({
     ];
   }
 
-  const groups = groupByPlayer(transactions);
-  const awarded = groups.filter(group => group.winner);
-  const unawarded = groups.filter(group => !group.winner);
+  // Only players someone actually won. Sleeper shows the failed bids on a
+  // player alongside the claim that beat them, but a player nobody landed shows
+  // nothing in its UI - so reporting those bids would leak who chased whom.
+  const groups = groupByPlayer(transactions).filter(group => group.winner);
 
-  const blocks: string[] = [];
-  for (const group of awarded) {
-    blocks.push(renderGroupLines(group, sleeperNamesByOwnerId).join('\n'));
+  if (groups.length === 0) {
+    return [
+      new EmbedBuilder()
+        .setTitle(title)
+        .setColor(color)
+        .setDescription('No claims awarded this week.'),
+    ];
   }
-  if (unawarded.length > 0) {
-    blocks.push(
-      [
-        '**No claim awarded**',
-        ...unawarded.flatMap(group =>
-          renderGroupLines(group, sleeperNamesByOwnerId),
-        ),
-      ].join('\n'),
-    );
-  }
+
+  const blocks = groups.map(group =>
+    renderGroupLines(group, sleeperNamesByOwnerId).join('\n'),
+  );
 
   // Pack blocks into descriptions, never splitting a player's block across two
   // embeds.
@@ -271,8 +270,10 @@ export function buildWaiverEmbeds({
   }
   if (current) descriptions.push(current);
 
-  const claims = transactions.filter(
-    transaction => transaction.status === 'complete',
+  const claims = groups.flatMap(group => (group.winner ? [group.winner] : []));
+  const failed = groups.reduce(
+    (total, group) => total + group.losers.length,
+    0,
   );
   const spent = claims.reduce((total, claim) => total + claim.bid, 0);
 
@@ -291,9 +292,7 @@ export function buildWaiverEmbeds({
       embed.setFooter({
         text: `${claims.length} claim${
           claims.length === 1 ? '' : 's'
-        } · $${spent} FAAB spent · ${
-          transactions.length - claims.length
-        } failed`,
+        } · $${spent} FAAB spent · ${failed} failed`,
       });
     }
 
