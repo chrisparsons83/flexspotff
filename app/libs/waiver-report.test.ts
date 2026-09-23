@@ -178,6 +178,7 @@ describe('buildWaiverEmbeds', () => {
 
   it('falls through to Sleeper wording for an unrecognised failure', () => {
     const description = describeOf([
+      row({ bid: 5, status: 'complete', notes: null }),
       row({
         bid: 3,
         status: 'failed',
@@ -188,22 +189,40 @@ describe('buildWaiverEmbeds', () => {
     expect(description).toContain('Some brand new Sleeper reason.');
   });
 
-  it('lists players nobody won in their own section', () => {
-    const description = describeOf([
-      row({ addSleeperId: 'p1', bid: 5, status: 'complete', notes: null }),
-      row({
-        addSleeperId: 'p2',
-        playerName: 'Tank Dell',
-        bid: 3,
-        status: 'failed',
-        notes: ROSTER_FULL,
-      }),
-    ]);
+  it('leaves out players nobody won, since Sleeper does not show those bids', () => {
+    const embeds = buildWaiverEmbeds({
+      league,
+      week: 3,
+      transactions: [
+        row({ addSleeperId: 'p1', bid: 5, status: 'complete', notes: null }),
+        row({
+          addSleeperId: 'p2',
+          playerName: 'Tank Dell',
+          bid: 3,
+          status: 'failed',
+          notes: ROSTER_FULL,
+        }),
+      ],
+    });
+    const description = embeds.map(embed => embed.data.description).join('\n');
+    const footer = embeds[embeds.length - 1].data.footer?.text ?? '';
 
-    expect(description).toContain('No claim awarded');
-    expect(description.indexOf('No claim awarded')).toBeGreaterThan(
-      description.indexOf('Jaylen Wright'),
-    );
+    expect(description).toContain('Jaylen Wright');
+    expect(description).not.toContain('Tank Dell');
+    expect(description).not.toContain('$3');
+    // The count would give the hidden bids away too.
+    expect(footer).toContain('0 failed');
+  });
+
+  it('says no claims were awarded when every bid failed', () => {
+    const embeds = buildWaiverEmbeds({
+      league,
+      week: 3,
+      transactions: [row({ bid: 3, status: 'failed', notes: ROSTER_FULL })],
+    });
+
+    expect(embeds).toHaveLength(1);
+    expect(embeds[0].data.description).toBe('No claims awarded this week.');
   });
 
   it('shows the dropped player alongside a winning claim', () => {
