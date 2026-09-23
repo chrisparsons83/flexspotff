@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import StarterGrid from '~/components/layout/leaderboard/StarterGrid';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import GoBox from '~/components/ui/GoBox';
 import {
   getNewestWeekTeamGameByYear,
@@ -46,9 +46,9 @@ export default function LeaderboardYearWeek() {
       id: position.id,
       rank: position.rank,
       name: position.team.user ? (
-        <Link to={`/members/${position.team.user.id}/league`}>
+        <ProfileLink userId={position.team.user.id}>
           {position.team.user.discordName}
-        </Link>
+        </ProfileLink>
       ) : (
         'Missing user'
       ),

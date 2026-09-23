@@ -8,6 +8,7 @@ import {
 import {
   aggregatePlayoffStats,
   computeStreak,
+  memberSinceYear,
   pairTeamGames,
   winPct,
 } from './shared.server';
@@ -30,9 +31,9 @@ export type ProfileSummary = {
     id: string;
     discordName: string;
     discordAvatar: string;
-    memberSince: Date;
+    /** First year this member shows up anywhere, not when their account was made. */
+    memberSince: number;
   };
-  currentTeam: { year: number; leagueName: string; tier: number } | null;
   headline: { label: string; value: string }[];
   badges: Badge[];
   /** Which tabs have anything in them, so the tab bar can show it. */
@@ -64,8 +65,8 @@ export async function getProfileSummary(
     qbCount,
     poolCount,
     locksCount,
-    dfsCount,
-    fSquaredCount,
+    dfs,
+    fSquared,
   ] = await Promise.all([
     prisma.team.findMany({
       where: { userId },
@@ -86,7 +87,10 @@ export async function getProfileSummary(
         topTeam: { select: { userId: true } },
         bottomTeam: { select: { userId: true } },
         winningTeam: { select: { userId: true } },
+        losingTeam: { select: { userId: true } },
         advancingTeam: { select: { userId: true } },
+        // Only to tell a Champions League title from any other one.
+        league: { select: { tier: true } },
       },
     }),
     prisma.cupGame.count({
@@ -101,8 +105,18 @@ export async function getProfileSummary(
     prisma.qBSelection.count({ where: { userId } }),
     prisma.poolGamePick.count({ where: { userId } }),
     prisma.locksGamePick.count({ where: { userId } }),
-    prisma.dFSSurvivorUserYear.count({ where: { userId } }),
-    prisma.fSquaredEntry.count({ where: { userId } }),
+    // Aggregated rather than counted so these also report the earliest year
+    // played - see memberSince below. Same query, one more column.
+    prisma.dFSSurvivorUserYear.aggregate({
+      where: { userId },
+      _count: { _all: true },
+      _min: { year: true },
+    }),
+    prisma.fSquaredEntry.aggregate({
+      where: { userId },
+      _count: { _all: true },
+      _min: { year: true },
+    }),
   ]);
 
   const career = teams.reduce(
@@ -119,8 +133,27 @@ export async function getProfileSummary(
   const championships = playoffs?.championships ?? 0;
   const sackos = playoffs?.sackos ?? 0;
 
-  const seasons = [...teams].sort((a, b) => b.league.year - a.league.year);
-  const latest = seasons[0] ?? null;
+  // Winning the top tier is its own award, so it is counted here rather than
+  // pulled out of the career totals - a title is a title, and this is the one
+  // that says which league it was won in.
+  const championOfChampions = playoffGames.filter(
+    game =>
+      game.bracket === 'WINNERS' &&
+      game.isTitleGame &&
+      game.league.tier === 1 &&
+      game.advancingTeam?.userId === userId,
+  ).length;
+
+  // The year a member has been around since is the earliest year they actually
+  // turn up, not when their account was made - see memberSinceYear. League
+  // seasons come free from `teams`; DFS Survivor and F-Squared are the side
+  // games that keep a year on the row we already aggregate. The rest reach
+  // their year only through a join, and a member who played one of those and
+  // nothing else does not exist yet, so they fall back to the account date.
+  const memberSince = memberSinceYear(
+    [...teams.map(team => team.league.year), dfs._min.year, fSquared._min.year],
+    user.createdAt.getFullYear(),
+  );
   const championsSeasons = teams.filter(team => team.league.tier === 1).length;
 
   const contestsPlayed = [
@@ -130,8 +163,8 @@ export async function getProfileSummary(
     qbCount > 0 && 'qb-streaming',
     poolCount > 0 && 'spread-pool',
     locksCount > 0 && 'locks',
-    dfsCount > 0 && 'dfs-survivor',
-    fSquaredCount > 0 && 'f-squared',
+    dfs._count._all > 0 && 'dfs-survivor',
+    fSquared._count._all > 0 && 'f-squared',
   ].filter((value): value is string => typeof value === 'string');
 
   const [longestStreak, titles] = await Promise.all([
@@ -140,6 +173,7 @@ export async function getProfileSummary(
   ]);
 
   const badges = [
+    makeBadge(BADGE_DEFINITIONS.championOfChampions, championOfChampions),
     makeBadge(BADGE_DEFINITIONS.leagueChampion, championships),
     makeBadge(BADGE_DEFINITIONS.cupChampion, cupFinalWins),
     makeBadge(BADGE_DEFINITIONS.sacko, sackos),
@@ -158,15 +192,8 @@ export async function getProfileSummary(
       id: user.id,
       discordName: user.discordName,
       discordAvatar: user.discordAvatar,
-      memberSince: user.createdAt,
+      memberSince,
     },
-    currentTeam: latest
-      ? {
-          year: latest.league.year,
-          leagueName: latest.league.name,
-          tier: latest.league.tier,
-        }
-      : null,
     headline: [
       { label: 'Seasons', value: teams.length.toString() },
       {
@@ -185,6 +212,12 @@ export async function getProfileSummary(
 /**
  * The member's longest run of consecutive wins.
  *
+ * Postseason games count, so a playoff win extends a streak rather than ending
+ * it. This used to read the regular season only, which put the badge one ahead
+ * of the Longest Win Streak tile on the same page - a playoff loss between two
+ * regular-season wins joined them into one run here and broke them into two
+ * there.
+ *
  * Every game in the leagues they played is fetched, not just their own, because
  * a result only exists once both sides of a matchup are known - that is what
  * pairTeamGames needs.
@@ -201,8 +234,6 @@ async function getLongestWinStreak(userId: string): Promise<number> {
 
   const games = await prisma.teamGame.findMany({
     where: {
-      isRegularSeason: true,
-      pointsScored: { gt: 0 },
       team: { leagueId: { in: leagueIds } },
     },
     select: {
@@ -221,7 +252,15 @@ async function getLongestWinStreak(userId: string): Promise<number> {
   });
 
   const mine = pairTeamGames(games)
-    .filter(pair => pair.game.team.userId === userId)
+    .filter(
+      pair =>
+        pair.game.team.userId === userId &&
+        // A week that has opened but not been scored is not a loss. Checked on
+        // the pair rather than in the query, because dropping a scoreless row
+        // in SQL would take its opponent's real result down with it.
+        (pair.game.pointsScored > 0 || pair.opponent.pointsScored > 0) &&
+        pair.game.pointsScored > 0,
+    )
     .sort(
       (a, b) =>
         a.game.team.league.year - b.game.team.league.year ||

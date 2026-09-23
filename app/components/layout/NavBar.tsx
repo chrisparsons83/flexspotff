@@ -17,9 +17,11 @@ const navigation = [
 interface Props {
   user: User | null;
   userIsEditor: boolean;
+  /** False while profiles are admin-only; hides the My Profile item. */
+  canViewProfiles: boolean;
 }
 
-export default function NavBar({ user, userIsEditor }: Props) {
+export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
   const avatarImage =
     user &&
     user.discordAvatar &&
@@ -117,19 +119,21 @@ export default function NavBar({ user, userIsEditor }: Props) {
                       )}
                       {user && (
                         <>
-                          <Menu.Item>
-                            {({ active }) => (
-                              <a
-                                href={`/members/${user.id}`}
-                                className={clsx(
-                                  active ? 'bg-gray-100' : '',
-                                  'block px-4 py-2 text-sm text-gray-700',
-                                )}
-                              >
-                                My Profile
-                              </a>
-                            )}
-                          </Menu.Item>
+                          {canViewProfiles && (
+                            <Menu.Item>
+                              {({ active }) => (
+                                <a
+                                  href={`/members/${user.id}`}
+                                  className={clsx(
+                                    active ? 'bg-gray-100' : '',
+                                    'block px-4 py-2 text-sm text-gray-700',
+                                  )}
+                                >
+                                  My Profile
+                                </a>
+                              )}
+                            </Menu.Item>
+                          )}
                           <Menu.Item>
                             {({ active }) => (
                               <a

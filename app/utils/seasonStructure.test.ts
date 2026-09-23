@@ -3,6 +3,8 @@ import {
   isRegularSeasonWeek,
   isUsablePlayoffWeekStart,
   leaguePlayedMedianGames,
+  regularSeasonWeeks,
+  teamsHaveMedianResults,
 } from './seasonStructure';
 import { describe, expect, it } from 'vitest';
 
@@ -82,7 +84,7 @@ describe('isRegularSeasonWeek', () => {
   });
 });
 
-describe('leaguePlayedMedianGames', () => {
+describe('teamsHaveMedianResults', () => {
   const team = (medianWins: number, medianLosses: number, medianTies = 0) => ({
     medianWins,
     medianLosses,
@@ -90,21 +92,109 @@ describe('leaguePlayedMedianGames', () => {
   });
 
   it('is false for a league whose teams have no median results', () => {
-    expect(leaguePlayedMedianGames([team(0, 0), team(0, 0)])).toBe(false);
+    expect(teamsHaveMedianResults([team(0, 0), team(0, 0)])).toBe(false);
   });
 
   it('is true once any team has a median result', () => {
-    expect(leaguePlayedMedianGames([team(0, 0), team(7, 6)])).toBe(true);
+    expect(teamsHaveMedianResults([team(0, 0), team(7, 6)])).toBe(true);
   });
 
   // A team can go winless against the median and still have played it.
   it('counts median losses and ties, not just wins', () => {
-    expect(leaguePlayedMedianGames([team(0, 13)])).toBe(true);
-    expect(leaguePlayedMedianGames([team(0, 0, 1)])).toBe(true);
+    expect(teamsHaveMedianResults([team(0, 13)])).toBe(true);
+    expect(teamsHaveMedianResults([team(0, 0, 1)])).toBe(true);
   });
 
   it('is false for a league with no teams yet', () => {
-    expect(leaguePlayedMedianGames([])).toBe(false);
+    expect(teamsHaveMedianResults([])).toBe(false);
+  });
+});
+
+describe('leaguePlayedMedianGames', () => {
+  const team = (wins: number, losses: number, ties = 0) => ({
+    wins,
+    losses,
+    ties,
+  });
+
+  // The real shape of every season on the site.
+  it('reads the seasons we have the way they actually ran', () => {
+    // 2018 and 2019: thirteen games in thirteen weeks.
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(9, 4), team(5, 8)],
+        regularSeasonWeeks: 13,
+      }),
+    ).toBe(false);
+
+    // 2020: twenty-six games in thirteen weeks.
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(18, 8), team(13, 13)],
+        regularSeasonWeeks: 13,
+      }),
+    ).toBe(true);
+
+    // 2021 onward: twenty-eight in fourteen.
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(17, 11), team(10, 18)],
+        regularSeasonWeeks: 14,
+      }),
+    ).toBe(true);
+  });
+
+  // The reason this takes the maximum rather than asking every team.
+  it('is not fooled by a replacement who joined mid-season', () => {
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(17, 11), team(3, 5)],
+        regularSeasonWeeks: 14,
+      }),
+    ).toBe(true);
+  });
+
+  it('is false before a ball has been played', () => {
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(0, 0), team(0, 0)],
+        regularSeasonWeeks: 14,
+      }),
+    ).toBe(false);
+    expect(leaguePlayedMedianGames({ teams: [], regularSeasonWeeks: 14 })).toBe(
+      false,
+    );
+  });
+
+  // Mid-season, a median league has not yet reached twice the week count.
+  it('is false part-way through a median season', () => {
+    expect(
+      leaguePlayedMedianGames({
+        teams: [team(8, 6)],
+        regularSeasonWeeks: 14,
+      }),
+    ).toBe(false);
+  });
+
+  it('is false for a season with no weeks', () => {
+    expect(
+      leaguePlayedMedianGames({ teams: [team(0, 0)], regularSeasonWeeks: 0 }),
+    ).toBe(false);
+  });
+});
+
+describe('regularSeasonWeeks', () => {
+  it('uses a synced playoff start when there is one', () => {
+    expect(regularSeasonWeeks({ year: 2020, playoffWeekStart: 15 })).toBe(14);
+  });
+
+  it('falls back to the historical boundary', () => {
+    expect(regularSeasonWeeks({ year: 2020, playoffWeekStart: null })).toBe(13);
+    expect(regularSeasonWeeks({ year: 2021, playoffWeekStart: null })).toBe(14);
+  });
+
+  it('ignores a playoff start that cannot be real', () => {
+    expect(regularSeasonWeeks({ year: 2021, playoffWeekStart: 0 })).toBe(14);
   });
 });
 

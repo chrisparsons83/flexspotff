@@ -7,6 +7,7 @@ import {
   winnersOf,
 } from './sideGameScoring';
 import { prisma } from '~/db.server';
+import { getCurrentSeason } from '~/models/season.server';
 
 /**
  * How many seasons of each side game a member has won.
@@ -18,20 +19,27 @@ import { prisma } from '~/db.server';
  * Only the seasons a member actually entered are ranked. Working out who won
  * 2019 tells us nothing about someone who did not play that year, and skipping
  * those years keeps this off the critical path for most profiles.
+ *
+ * And only seasons that are over. Whoever leads in September has not won
+ * anything yet, and a badge that appears in week 3 and vanishes in week 12 is
+ * worse than one that arrives late.
  */
 export type SideGameTitles = Partial<Record<SideGameKey, number>>;
 
 export async function getSideGameTitles(
   userId: string,
 ): Promise<SideGameTitles> {
+  // Read once and threaded through, rather than six times inside the counters.
+  const inProgress = (await getCurrentSeason())?.year ?? null;
+
   const [d12, qbStreaming, spreadPool, locks, dfsSurvivor, fSquared] =
     await Promise.all([
-      countD12Titles(userId),
-      countQbStreamingTitles(userId),
-      countSpreadPoolTitles(userId),
-      countLocksTitles(userId),
-      countDfsSurvivorTitles(userId),
-      countFSquaredTitles(userId),
+      countD12Titles(userId, inProgress),
+      countQbStreamingTitles(userId, inProgress),
+      countSpreadPoolTitles(userId, inProgress),
+      countLocksTitles(userId, inProgress),
+      countDfsSurvivorTitles(userId, inProgress),
+      countFSquaredTitles(userId, inProgress),
     ]);
 
   return { d12, qbStreaming, spreadPool, locks, dfsSurvivor, fSquared };
@@ -41,7 +49,10 @@ export async function getSideGameTitles(
 const distinct = (years: number[]) => [...new Set(years)];
 
 /** D12: total points across every league and week. */
-async function countD12Titles(userId: string): Promise<number> {
+async function countD12Titles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.d12WeekScore.findMany({
     where: { userId },
     select: { league: { select: { season: { select: { year: true } } } } },
@@ -65,14 +76,17 @@ async function countD12Titles(userId: string): Promise<number> {
     addTo(byYear.get(year)!, score.userId, score.points ?? 0);
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
 /**
  * QB Streaming: the best twelve weeks from 2025, every week before that.
  * `qbStreamingSeasonTotal` owns which rule applies.
  */
-async function countQbStreamingTitles(userId: string): Promise<number> {
+async function countQbStreamingTitles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.qBSelection.findMany({
     where: { userId },
     select: { qbStreamingWeek: { select: { year: true } } },
@@ -114,7 +128,7 @@ async function countQbStreamingTitles(userId: string): Promise<number> {
     byYear.set(year, totals);
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
 /**
@@ -122,7 +136,10 @@ async function countQbStreamingTitles(userId: string): Promise<number> {
  * Only bets that were actually placed and scored count, matching
  * `getPoolGamePicksWonLoss`.
  */
-async function countSpreadPoolTitles(userId: string): Promise<number> {
+async function countSpreadPoolTitles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.poolGamePick.findMany({
     where: { userId },
     select: { poolGame: { select: { poolWeek: { select: { year: true } } } } },
@@ -174,11 +191,14 @@ async function countSpreadPoolTitles(userId: string): Promise<number> {
     addTo(forYear(year), week.userId, week.resultWonLoss ?? 0);
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
 /** Locks: wins per week, but a week with any loss is worth nothing. */
-async function countLocksTitles(userId: string): Promise<number> {
+async function countLocksTitles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.locksGamePick.findMany({
     where: { userId },
     select: {
@@ -228,11 +248,14 @@ async function countLocksTitles(userId: string): Promise<number> {
     addTo(byYear.get(yearNumber)!, entrant, locksWeekPoints(totals));
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
 /** DFS Survivor: points from scored weeks. */
-async function countDfsSurvivorTitles(userId: string): Promise<number> {
+async function countDfsSurvivorTitles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.dFSSurvivorUserYear.findMany({
     where: { userId },
     select: { year: true },
@@ -256,11 +279,14 @@ async function countDfsSurvivorTitles(userId: string): Promise<number> {
     addTo(byYear.get(week.year)!, week.userId, points);
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
 /** F²: the combined points-for of the teams a member picked. */
-async function countFSquaredTitles(userId: string): Promise<number> {
+async function countFSquaredTitles(
+  userId: string,
+  inProgress: number | null,
+): Promise<number> {
   const entered = await prisma.fSquaredEntry.findMany({
     where: { userId },
     select: { year: true },
@@ -287,16 +313,24 @@ async function countFSquaredTitles(userId: string): Promise<number> {
     );
   }
 
-  return countWins(byYear, userId);
+  return countWins(byYear, userId, inProgress);
 }
 
-/** How many of these seasons the member topped. */
+/**
+ * How many of these finished seasons the member topped.
+ *
+ * The season still being played is skipped, along with anything later. Leading
+ * a side game in week 3 is not winning it, and the whole point of these badges
+ * is that they are settled.
+ */
 function countWins(
   byYear: Map<number, Map<string, number>>,
   userId: string,
+  inProgress: number | null,
 ): number {
   let titles = 0;
-  for (const totals of byYear.values()) {
+  for (const [year, totals] of byYear) {
+    if (inProgress !== null && year >= inProgress) continue;
     if (winnersOf(totals).has(userId)) titles++;
   }
   return titles;

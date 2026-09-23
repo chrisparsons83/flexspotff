@@ -1,5 +1,5 @@
-import { Link } from '@remix-run/react';
 import clsx from 'clsx';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import type { RecordRow } from '~/models/records.server';
 import { isLeagueName, RANK_COLORS } from '~/utils/constants';
 
@@ -45,9 +45,7 @@ export default function RecordsTable({ title, headers, rows }: Props) {
                   {/* The first cell is always the player. Rows that aggregate
                       several members carry no id and stay plain text. */}
                   {i === 0 && row.playerUserId ? (
-                    <Link to={`/members/${row.playerUserId}/league`}>
-                      {cell}
-                    </Link>
+                    <ProfileLink userId={row.playerUserId}>{cell}</ProfileLink>
                   ) : (
                     cell
                   )}

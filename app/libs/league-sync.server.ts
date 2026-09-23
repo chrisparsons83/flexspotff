@@ -15,6 +15,8 @@ import { SLEEPER_ADMIN_ID } from '~/utils/constants';
 import {
   isUsablePlayoffWeekStart,
   leaguePlayedMedianGames,
+  regularSeasonWeeks,
+  teamsHaveMedianResults,
 } from '~/utils/seasonStructure';
 
 /**
@@ -157,12 +159,21 @@ export async function syncLeague(
 export async function syncLeagueSeasonStructure(league: League): Promise<void> {
   const teams = await getTeams(league.id);
 
-  // Median results only appear in `metadata.record` once games have been
-  // played, so early in a season this reads false for a league that does play
-  // them. Once known to be true it stays true, rather than flickering back and
-  // hiding a member's median record mid-season.
+  // Three signals, because no one of them covers every season. The stored value
+  // wins first so a league known to play medians never flickers back mid-season.
+  // Sleeper's median string covers a season in progress but only exists for
+  // recent years; the games count is retroactive and exact but only settles once
+  // the regular season is over. Together they cover every league we have.
   const hasMedianScoring =
-    league.hasMedianScoring || leaguePlayedMedianGames(teams);
+    league.hasMedianScoring ||
+    teamsHaveMedianResults(teams) ||
+    leaguePlayedMedianGames({
+      teams,
+      regularSeasonWeeks: regularSeasonWeeks({
+        year: league.year,
+        playoffWeekStart: league.playoffWeekStart,
+      }),
+    });
 
   let playoffWeekStart: number | null = league.playoffWeekStart;
   try {

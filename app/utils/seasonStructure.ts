@@ -57,18 +57,33 @@ export function isUsablePlayoffWeekStart(
   return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
+/** How many weeks of a league's season are head-to-head games. */
+export function regularSeasonWeeks({
+  year,
+  playoffWeekStart,
+}: {
+  year: number;
+  playoffWeekStart: number | null | undefined;
+}): number {
+  const boundary = isUsablePlayoffWeekStart(playoffWeekStart)
+    ? playoffWeekStart
+    : historicalPlayoffWeekStart(year);
+  return boundary - 1;
+}
+
 /**
- * Whether a league played median games, inferred from its own team records.
+ * Whether Sleeper is still reporting median results for this league.
  *
- * There is exactly one median game per week, so a league that played them has
- * teams whose median game count matches their head-to-head game count. A league
- * that did not has all zeroes. This is why the median era needs no API call: it
- * is already recorded in every `Team` row, retroactively, for every season.
+ * `Team.median*` is parsed out of Sleeper's `metadata.record` string, which
+ * Sleeper only keeps for recent seasons - in production it is populated from
+ * 2024 on and all zeroes before that, even for seasons that certainly played
+ * medians. So this answers "does Sleeper still know", not "did it happen", and
+ * it is the only signal available part-way through a season.
  *
  * Teams are checked in aggregate rather than individually because a team added
  * late can carry a short record without meaning the league changed rules.
  */
-export function leaguePlayedMedianGames(
+export function teamsHaveMedianResults(
   teams: {
     medianWins: number;
     medianLosses: number;
@@ -78,4 +93,34 @@ export function leaguePlayedMedianGames(
   return teams.some(
     team => team.medianWins + team.medianLosses + team.medianTies > 0,
   );
+}
+
+/**
+ * Whether a league played median games, counted off the season itself.
+ *
+ * A median game is a second game every week, and Sleeper folds it into the
+ * record it reports, so a median league's teams finish with twice as many games
+ * as the season had weeks. That holds for every season we have, including the
+ * ones Sleeper has since forgotten the median string for: 2018 and 2019 played
+ * 13 games in 13 weeks, 2020 played 26 in 13, and 2021 onward 28 in 14.
+ *
+ * The maximum across teams is what counts, not any one team: a replacement
+ * joining mid-season carries a short record, which would make both `some` and
+ * `every` read a median league as a normal one.
+ */
+export function leaguePlayedMedianGames({
+  teams,
+  regularSeasonWeeks,
+}: {
+  teams: { wins: number; losses: number; ties: number }[];
+  regularSeasonWeeks: number;
+}): boolean {
+  if (regularSeasonWeeks <= 0) return false;
+
+  const mostGames = teams.reduce(
+    (most, team) => Math.max(most, team.wins + team.losses + team.ties),
+    0,
+  );
+
+  return mostGames > 0 && mostGames === 2 * regularSeasonWeeks;
 }

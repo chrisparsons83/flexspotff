@@ -7,6 +7,11 @@
  * drifting apart, and it is why these functions take already-fetched rows rather
  * than querying - the callers know which slice of data they need.
  */
+import {
+  finishLabelForPlace,
+  placesForPlacementGame,
+  type BracketKind,
+} from '~/libs/bracket';
 
 export type MedianRecord = {
   medianWins: number;
@@ -323,11 +328,14 @@ type AggregatablePlayoffGame = {
   leagueId: string;
   topTeam?: AggregatablePlayoffSide;
   bottomTeam?: AggregatablePlayoffSide;
+  /** Whoever outscored the other, in both brackets - see `classifyBracket`. */
   winningTeam?: AggregatablePlayoffSide;
+  /** Required, so a caller cannot forget the include and silently drop games. */
+  losingTeam: AggregatablePlayoffSide;
   /**
-   * Who moved on. The winners bracket advances whoever scored more; the sacko
-   * bracket advances whoever scored less, so this is the only field that means
-   * the same thing in both.
+   * Who moved on toward this bracket's outcome. The winners bracket advances
+   * whoever scored more; the sacko bracket advances whoever scored less, so
+   * this is the field that decides a title or a sacko rather than a result.
    */
   advancingTeam?: AggregatablePlayoffSide;
 };
@@ -341,8 +349,8 @@ type AggregatablePlayoffGame = {
  *
  * Titles go to whoever *advanced* out of the final rather than whoever won it.
  * In the winners bracket those are the same team. In the sacko bracket they are
- * opposites: you get the sacko by scoring least, so the member Sleeper records
- * as that game's winner is precisely the one who escaped it.
+ * opposites: you take the sacko by scoring least, so the member who advanced out
+ * of that final is the one who lost it.
  *
  * Only games flagged `countsTowardRecord` move a record, which is what keeps
  * third-place and other placement games out of it.
@@ -420,4 +428,137 @@ export function aggregatePlayoffStats(
   }
 
   return stats;
+}
+
+/**
+ * The year a profile should say a member has been around since.
+ *
+ * `User.createdAt` is not it. It records when the Discord account was first
+ * seen by this site, which is the year the site went up or the year the member
+ * was backfilled - every member with seasons back to 2018 has a createdAt of
+ * 2022 or later, so the hero used to contradict the season history directly
+ * beneath it.
+ *
+ * The account date survives only as a fallback, for a member who has no
+ * recorded participation to date from.
+ */
+export function memberSinceYear(
+  participationYears: (number | null | undefined)[],
+  accountCreatedYear: number,
+): number {
+  const known = participationYears.filter(
+    (year): year is number => year !== null && year !== undefined,
+  );
+
+  return Math.min(...known, accountCreatedYear);
+}
+
+export type SeasonPlayoffLine = {
+  leagueId: string;
+  /** Which bracket this member was in that season. */
+  bracket: BracketKind;
+  wins: number;
+  losses: number;
+  /** Absolute finishing place, 1..teamCount. Null until the bracket finishes. */
+  place: number | null;
+  finish: string | null;
+};
+
+type SeasonablePlayoffGame = AggregatablePlayoffGame & {
+  placement: number | null;
+};
+
+/**
+ * The same postseason, cut by season instead of by career.
+ *
+ * `aggregatePlayoffStats` answers "how has this member done in the playoffs";
+ * this answers "what happened to them in 2021", which is what a season history
+ * row needs. Both read the same rows, so they cannot disagree.
+ *
+ * A member appears once per league they have a bracket game in. `place` comes
+ * from the one placement game they finished in - every team ends in exactly one,
+ * because a placement game is terminal - and stays null while a bracket is still
+ * being played, which the season table shows as a dash.
+ */
+export function aggregatePlayoffSeasons(
+  games: SeasonablePlayoffGame[],
+  teamCountByLeague: Map<string, number>,
+): Map<string, Map<string, SeasonPlayoffLine>> {
+  const byUser = new Map<string, Map<string, SeasonPlayoffLine>>();
+
+  const lineFor = (
+    side: AggregatablePlayoffSide,
+    game: SeasonablePlayoffGame,
+  ): SeasonPlayoffLine | null => {
+    const userId = side?.userId;
+    if (!userId) return null;
+
+    let seasons = byUser.get(userId);
+    if (!seasons) {
+      seasons = new Map();
+      byUser.set(userId, seasons);
+    }
+
+    const existing = seasons.get(game.leagueId);
+    if (existing) return existing;
+
+    const created: SeasonPlayoffLine = {
+      leagueId: game.leagueId,
+      bracket: game.bracket,
+      wins: 0,
+      losses: 0,
+      place: null,
+      finish: null,
+    };
+    seasons.set(game.leagueId, created);
+    return created;
+  };
+
+  for (const game of games) {
+    const winnerId = game.winningTeam?.userId ?? null;
+
+    for (const side of [game.topTeam ?? null, game.bottomTeam ?? null]) {
+      const line = lineFor(side, game);
+      if (!line) continue;
+
+      if (game.countsTowardRecord && winnerId) {
+        if (side!.userId === winnerId) line.wins++;
+        else line.losses++;
+      }
+    }
+
+    if (game.placement === null) continue;
+
+    const teamCount = teamCountByLeague.get(game.leagueId);
+    if (teamCount === undefined) continue;
+
+    const places = placesForPlacementGame({
+      bracket: game.bracket,
+      placement: game.placement,
+      teamCount,
+    });
+    if (!places) continue;
+
+    const advancingId = game.advancingTeam?.userId ?? null;
+    // The other side of a placement game is whichever of the two results is not
+    // the one that advanced - they are opposites in the sacko bracket.
+    const other =
+      advancingId && game.winningTeam?.userId === advancingId
+        ? game.losingTeam
+        : game.winningTeam;
+
+    for (const [side, place] of [
+      [game.advancingTeam ?? null, places.advancingPlace],
+      [other ?? null, places.otherPlace],
+    ] as const) {
+      const line = lineFor(side, game);
+      // Never overwrite: a member finishes in exactly one placement game, so a
+      // second one would mean the bracket contradicts itself.
+      if (!line || line.place !== null) continue;
+      line.place = place;
+      line.finish = finishLabelForPlace(place, teamCount);
+    }
+  }
+
+  return byUser;
 }

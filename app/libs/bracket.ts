@@ -13,6 +13,19 @@ import { z } from 'zod';
  * A team reaches a placement game like third place by *losing* a semifinal, so
  * "games on the path to the title" cannot be defined by round number. It has to
  * be walked: start at the title game and follow the `_from` links backwards.
+ *
+ * The one thing about this format that is not self-evident, and that this file
+ * exists to get right: **the losers bracket advances the loser**. Sleeper still
+ * reports the higher scorer under `l` and the lower scorer under `w`, because
+ * `w` means "moves on in this bracket", and in a toilet bowl you move on by
+ * losing. Verified against every bracket game in all thirty league-seasons from
+ * 2020 to 2025: in the winners bracket `w` is the higher scorer 209 times out of
+ * 210, and in the losers bracket it is the *lower* scorer 209 times out of 209.
+ *
+ * Both brackets therefore read the same way - follow `w` - and the placement
+ * markers mirror rather than continue. In a twelve-team league the winners
+ * bracket's `p: 1` decides 1st and 2nd; the losers bracket's `p: 1` decides 11th
+ * and 12th, `p: 3` decides 9th and 10th, and `p: 5` decides 7th and 8th.
  */
 
 /**
@@ -62,12 +75,20 @@ export type ClassifiedBracketGame = {
   countsTowardRecord: boolean;
   topRosterId: number | null;
   bottomRosterId: number | null;
+  /**
+   * Whoever actually outscored the other, in both brackets. That is Sleeper's
+   * `w` in the winners bracket and its `l` in the losers bracket - see the note
+   * at the top of this file. Storing the sporting result rather than Sleeper's
+   * raw field is what lets every reader just ask who won.
+   */
   winningRosterId: number | null;
   losingRosterId: number | null;
   /**
-   * Who moved on toward this bracket's outcome. In the winners bracket that is
-   * whoever won; in the losers bracket it is whoever lost, because there every
-   * defeat carries you closer to last place.
+   * Who moved on toward this bracket's outcome - the title, or the sacko.
+   *
+   * This is Sleeper's `w` in both brackets, which is why it is the field worth
+   * reading: in the losers bracket `w` is the team that scored *less*, since
+   * every defeat there carries you closer to last place.
    */
   advancingRosterId: number | null;
 };
@@ -77,26 +98,21 @@ export type ClassifiedBracket = {
 };
 
 /**
- * Sleeper's placement marker: the winner of a `p: N` game finishes Nth and the
- * loser finishes N+1. Numbering restarts per bracket, so in a twelve-team league
- * with six playoff spots the winners bracket's `p: 1` is first overall while the
- * losers bracket's `p: 1` is *seventh* - the best of the teams who missed out.
+ * The game that decides the sacko.
  *
- * That is the trap this file exists to avoid. The sacko is not the winner of
- * anything: it is the loser of the losers bracket's **highest** `p`, the game
- * that decides the bottom two places.
+ * It is the losers bracket's `p: 1`, the same marker the winners bracket uses
+ * for its final, because the two brackets mirror: `p: 1` is the last game of
+ * each, and the last game of the toilet bowl decides last place overall. The
+ * sacko is that game's `advancingRosterId` - Sleeper's `w`, the lower scorer.
+ *
+ * Unlike a title game this has no fallback. A losers bracket with no placement
+ * markers at all gives no way to tell which game decides last place, and naming
+ * the wrong member the sacko is worse than naming nobody.
  */
-
-/** The game whose loser finishes last in this bracket. */
 function findSackoGame(
   entries: SleeperBracketEntry[],
 ): SleeperBracketEntry | undefined {
-  const placementGames = entries.filter(entry => typeof entry.p === 'number');
-  if (placementGames.length === 0) return undefined;
-
-  return placementGames.reduce((lowest, entry) =>
-    entry.p! > lowest.p! ? entry : lowest,
-  );
+  return entries.find(entry => entry.p === 1);
 }
 
 /** The game whose winner takes the title. */
@@ -127,16 +143,15 @@ function findTitleGame(
 /**
  * Every game on the path to this bracket's outcome, including the game itself.
  *
- * Which link is followed is what separates the two brackets. Walking `w` back
- * from the final gives the games a champion had to win, and leaves out the
- * third- and fifth-place games because a team reaches those by losing. Walking
- * `l` back from the last-place game gives the mirror image: the defeats that
- * carried someone to the sacko.
+ * Always walked along `w`, in both brackets. In the winners bracket that gives
+ * the games a champion had to win; in the losers bracket the same links give
+ * the defeats that carried someone to the sacko, because that is the direction
+ * Sleeper advances a toilet bowl. Either way the third- and fifth-place games
+ * drop out, which is the point: a team arrives at those by leaving the path.
  */
 function collectPath(
   from: SleeperBracketEntry,
   byMatchupId: Map<number, SleeperBracketEntry>,
-  direction: 'w' | 'l',
 ): Set<number> {
   const onPath = new Set<number>();
 
@@ -147,7 +162,7 @@ function collectPath(
     onPath.add(entry.m);
 
     for (const link of [entry.t1_from, entry.t2_from]) {
-      const source = direction === 'w' ? link?.w : link?.l;
+      const source = link?.w;
       if (source === undefined) continue;
       const previous = byMatchupId.get(source);
       if (previous) walk(previous);
@@ -165,29 +180,25 @@ function collectPath(
  * full postseason. `countsTowardRecord` is what keeps placement games out of the
  * records themselves.
  *
- * The two brackets are read in opposite directions on purpose - see
- * `findSackoGame`. An earlier attempt inferred the direction by counting `w`
- * versus `l` links; against real data those counts tie exactly, because a
- * Sleeper bracket splits both ways in every round. The placement markers are
- * the only reliable signal.
+ * Both brackets are read the same way, along `w`. What differs is only which
+ * game ends them and what a `w` means on the scoreboard - see the note at the
+ * top of this file. An earlier version of this file walked the losers bracket
+ * backwards along `l` and took the sacko from the highest placement marker;
+ * against real Sleeper data that names the wrong member in every league.
  */
 export function classifyBracket(
   entries: SleeperBracketEntry[],
   bracket: BracketKind,
 ): ClassifiedBracket {
   const isWinners = bracket === 'WINNERS';
-  const direction: 'w' | 'l' = isWinners ? 'w' : 'l';
 
   const byMatchupId = new Map(entries.map(entry => [entry.m, entry]));
   const decidingGame = isWinners
     ? findTitleGame(entries)
     : findSackoGame(entries);
 
-  // With no placement markers there is no way to tell which losers-bracket game
-  // decides last place, and crediting the wrong member is worse than crediting
-  // nobody.
   const path = decidingGame
-    ? collectPath(decidingGame, byMatchupId, direction)
+    ? collectPath(decidingGame, byMatchupId)
     : new Set<number>();
 
   return {
@@ -199,9 +210,80 @@ export function classifyBracket(
       countsTowardRecord: path.has(entry.m),
       topRosterId: entry.t1 ?? null,
       bottomRosterId: entry.t2 ?? null,
-      winningRosterId: entry.w ?? null,
-      losingRosterId: entry.l ?? null,
-      advancingRosterId: (direction === 'w' ? entry.w : entry.l) ?? null,
+      // Sleeper's `w` is whoever moved on, not whoever scored more. They are
+      // the same team in the winners bracket and opposites in the losers one.
+      winningRosterId: (isWinners ? entry.w : entry.l) ?? null,
+      losingRosterId: (isWinners ? entry.l : entry.w) ?? null,
+      advancingRosterId: entry.w ?? null,
     })),
   };
+}
+
+/**
+ * The two places one placement game decides, keyed to Sleeper's `w` and `l`.
+ *
+ * The brackets mirror. A winners `p: N` seats its advancing team Nth and the
+ * other N+1. A losers `p: N` counts from the bottom instead, so in a twelve-team
+ * league `p: 1` seats its advancing team 12th - and since that team is the one
+ * Sleeper records under `w`, the sacko really is the "winner" of the toilet
+ * bowl's final.
+ *
+ * Deliberately independent of how many teams made the playoffs: the placement
+ * markers already encode that, and a league that changes its playoff size does
+ * not change how Sleeper numbers them.
+ */
+export function placesForPlacementGame({
+  bracket,
+  placement,
+  teamCount,
+}: {
+  bracket: BracketKind;
+  placement: number;
+  teamCount: number;
+}): { advancingPlace: number; otherPlace: number } | null {
+  if (!Number.isInteger(placement) || placement < 1) return null;
+  if (!Number.isInteger(teamCount) || teamCount < 2) return null;
+
+  const places =
+    bracket === 'WINNERS'
+      ? { advancingPlace: placement, otherPlace: placement + 1 }
+      : {
+          advancingPlace: teamCount - placement + 1,
+          otherPlace: teamCount - placement,
+        };
+
+  const inRange = (place: number) => place >= 1 && place <= teamCount;
+  if (!inRange(places.advancingPlace) || !inRange(places.otherPlace)) {
+    return null;
+  }
+
+  return places;
+}
+
+function ordinal(value: number): string {
+  // 11th, 12th and 13th break the usual pattern, and they are exactly the
+  // places a twelve-team league lands on most often.
+  const teens = value % 100;
+  if (teens >= 11 && teens <= 13) return `${value}th`;
+
+  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[value % 10] ?? 'th';
+  return `${value}${suffix}`;
+}
+
+/**
+ * What to call a finishing place.
+ *
+ * The extremes are checked before the middle so that a small league, where the
+ * sacko places could overlap the semifinal ones, still reads sensibly. Places
+ * between the quarterfinals and the sacko final get a plain ordinal, because
+ * there is no name for finishing ninth.
+ */
+export function finishLabelForPlace(place: number, teamCount: number): string {
+  if (place === 1) return 'Champion';
+  if (place === 2) return 'Runner Up';
+  if (place === teamCount) return 'Sacko';
+  if (place === teamCount - 1) return 'Sacko Finalist';
+  if (place === 3 || place === 4) return 'Semifinalist';
+  if (place === 5 || place === 6) return 'Quarterfinalist';
+  return ordinal(place);
 }

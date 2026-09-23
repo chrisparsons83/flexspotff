@@ -323,6 +323,9 @@ model PlayoffGame {
   bottomTeam   Team?   @relation(name: "PlayoffBottomTeam", fields: [bottomTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   bottomTeamId String?
 
+  /// Whoever outscored the other, in both brackets. Note this is not always
+  /// Sleeper's `w`: the losers bracket advances the lower scorer, so there
+  /// Sleeper's winner is this row's losing team. See app/libs/bracket.ts.
   winningTeam   Team?   @relation(name: "PlayoffWinningTeam", fields: [winningTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   winningTeamId String?
 
@@ -331,8 +334,9 @@ model PlayoffGame {
 
   /// Who moved on. In the winners bracket that is the winning team; in the
   /// sacko bracket it is the losing team, because there you advance by scoring
-  /// least. Stored rather than derived so a reader never has to know which
-  /// bracket they are looking at to know who went through.
+  /// least - so the team that advances out of the sacko final is the sacko.
+  /// Stored rather than derived so a reader never has to know which bracket
+  /// they are looking at to know who went through.
   advancingTeam   Team?   @relation(name: "PlayoffAdvancingTeam", fields: [advancingTeamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   advancingTeamId String?
 
@@ -1000,4 +1004,13 @@ model WaiverReport {
   discordMessageId String?
 
   @@unique([leagueId, week])
+}
+
+/// Site-wide switches an admin flips from the Data Updates page, for features
+/// that are built but not ready for every member yet. A missing row reads as
+/// off, so a new flag needs no migration or seed to exist.
+model FeatureFlag {
+  key       String   @id
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 }

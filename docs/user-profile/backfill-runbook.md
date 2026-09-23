@@ -77,7 +77,28 @@ named.
 Pulls the winners and losers brackets for every league in every year. Leagues
 Sleeper no longer serves are skipped with a warning rather than failing the run.
 
-## Step 4 — Verify, and actually read this one
+## Step 4 — Median records
+
+`/admin/data` → **Backfill Median Records**
+
+Recomputes every team's record against the league median from the `TeamGame`
+scores already on file, and sets `League.hasMedianScoring` to match.
+
+This exists because the weekly sync reads medians out of Sleeper's per-team
+`metadata.record` string, and Sleeper drops that string for old seasons. In
+production it is populated from 2024 on and empty before that, so 2020-2023
+showed a dash for the median even though those seasons played it. The scores
+were always here, so none of it needs Sleeper.
+
+Run it after Step 1: it uses `League.playoffWeekStart` to decide where the
+regular season ends, and a league still on the historical fallback can classify
+a week differently from one that has been synced.
+
+Safe to re-run, and authoritative in both directions — a league that did not
+play median games has its columns cleared rather than left alone. Expect 30
+leagues to report median games (2020 through 2025) out of 44.
+
+## Step 5 — Verify, and actually read this one
 
 This is the check that matters, because you know the answers and the code does
 not:
@@ -144,6 +165,12 @@ historical rule.
 
 ## What this does not do
 
-Nothing here touches `Team`, `TeamGame`, or any existing standings — except step
-2, which rewrites `isRegularSeason`, and only for the years the query in that
-step names.
+Nothing here touches `TeamGame` or any existing standings — except step 2, which
+rewrites `isRegularSeason`, and only for the years the query in that step names.
+
+Step 4 does write to `Team`, but only the three median columns. It leaves
+`wins`, `losses` and `ties` alone, which matters: Sleeper counts the median game
+in the record it reports, so those totals include median results for every
+season from 2020 on. The profile takes the median back out to show a
+head-to-head record; the standings page and the Record Books still show
+Sleeper's combined total.

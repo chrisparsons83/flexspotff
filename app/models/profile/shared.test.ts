@@ -1,14 +1,18 @@
 import {
   aggregateCareerStats,
+  aggregatePlayoffSeasons,
   aggregateCupStats,
   aggregatePlayoffStats,
   computeStreak,
   medianGames,
+  memberSinceYear,
   pairTeamGames,
   totalGames,
   winPct,
 } from './shared.server';
+import fs from 'fs';
 import { describe, expect, it } from 'vitest';
+import { classifyBracket } from '~/libs/bracket';
 
 const team = (
   userId: string | null,
@@ -283,7 +287,9 @@ describe('aggregatePlayoffStats', () => {
       topTeam: ReturnType<typeof side>;
       bottomTeam: ReturnType<typeof side>;
       winningTeam: ReturnType<typeof side> | null;
+      losingTeam: ReturnType<typeof side> | null;
       advancingTeam: ReturnType<typeof side> | null;
+      placement: number | null;
     }> = {},
   ) => ({
     bracket: overrides.bracket ?? ('WINNERS' as const),
@@ -294,10 +300,13 @@ describe('aggregatePlayoffStats', () => {
     bottomTeam: overrides.bottomTeam ?? side('u2'),
     winningTeam:
       overrides.winningTeam === undefined ? side('u1') : overrides.winningTeam,
+    losingTeam:
+      overrides.losingTeam === undefined ? side('u2') : overrides.losingTeam,
     advancingTeam:
       overrides.advancingTeam === undefined
         ? side('u1')
         : overrides.advancingTeam,
+    placement: overrides.placement ?? null,
   });
 
   it('records a win and a loss for a counting playoff game', () => {
@@ -386,5 +395,150 @@ describe('aggregatePlayoffStats', () => {
     ]);
 
     expect(stats.get('u1')).toMatchObject({ wins: 0, losses: 0 });
+  });
+});
+
+describe('memberSinceYear', () => {
+  it('dates a member from their first season, not their account', () => {
+    // The bug this replaced: every profile said 2022 because that is when the
+    // site first saw the Discord account, however far back the seasons went.
+    expect(memberSinceYear([2018, 2019, 2025], 2022)).toBe(2018);
+  });
+
+  it('dates a backfilled member from their first season too', () => {
+    expect(memberSinceYear([2018, 2019], 2024)).toBe(2018);
+  });
+
+  it('takes the earliest year across contests', () => {
+    expect(memberSinceYear([2023, 2021, 2024], 2022)).toBe(2021);
+  });
+
+  it('ignores contests the member has never played', () => {
+    expect(memberSinceYear([2023, null, undefined], 2022)).toBe(2022);
+  });
+
+  it('falls back to the account year when nothing has been played', () => {
+    expect(memberSinceYear([], 2026)).toBe(2026);
+  });
+
+  it('keeps the account year when it predates every season played', () => {
+    expect(memberSinceYear([2025], 2024)).toBe(2024);
+  });
+});
+
+describe('aggregatePlayoffSeasons', () => {
+  const side = (userId: string) => ({
+    userId,
+    user: { discordName: userId },
+  });
+
+  /**
+   * The real 2020 Admiral losers bracket, run through `classifyBracket` so the
+   * season lines are built from the same shape the sync stores. Rosters are
+   * mapped to members of the same name, so roster 9 is 'u9'.
+   */
+  const admiralSackoGames = () => {
+    const entries = JSON.parse(
+      fs.readFileSync(
+        'test/fixtures/sleeper/losers-bracket-2020-admiral.json',
+        'utf8',
+      ),
+    );
+
+    return classifyBracket(entries, 'LOSERS').games.map(game => ({
+      bracket: 'LOSERS' as const,
+      leagueId: 'admiral-2020',
+      isTitleGame: game.isTitleGame,
+      countsTowardRecord: game.countsTowardRecord,
+      placement: game.placement,
+      topTeam: game.topRosterId ? side(`u${game.topRosterId}`) : null,
+      bottomTeam: game.bottomRosterId ? side(`u${game.bottomRosterId}`) : null,
+      winningTeam: game.winningRosterId
+        ? side(`u${game.winningRosterId}`)
+        : null,
+      losingTeam: game.losingRosterId ? side(`u${game.losingRosterId}`) : null,
+      advancingTeam: game.advancingRosterId
+        ? side(`u${game.advancingRosterId}`)
+        : null,
+    }));
+  };
+
+  const admiral = () =>
+    aggregatePlayoffSeasons(
+      admiralSackoGames(),
+      new Map([['admiral-2020', 12]]),
+    );
+
+  it('seats every team in the sacko bracket exactly once', () => {
+    const seasons = admiral();
+    const places = new Map(
+      [...seasons].map(([userId, leagues]) => [
+        userId,
+        leagues.get('admiral-2020')!.place,
+      ]),
+    );
+
+    expect(Object.fromEntries(places)).toEqual({
+      u4: 7,
+      u2: 8,
+      u12: 9,
+      u10: 10,
+      u11: 11,
+      u9: 12,
+    });
+  });
+
+  it('names the bottom two rather than numbering them', () => {
+    const seasons = admiral();
+
+    expect(seasons.get('u9')!.get('admiral-2020')!.finish).toBe('Sacko');
+    expect(seasons.get('u11')!.get('admiral-2020')!.finish).toBe(
+      'Sacko Finalist',
+    );
+    expect(seasons.get('u12')!.get('admiral-2020')!.finish).toBe('9th');
+  });
+
+  // Roster 9 was outscored in all three games on the road to last place.
+  it('scores the bracket record by who outscored whom', () => {
+    const line = admiral().get('u9')!.get('admiral-2020')!;
+
+    expect(line).toMatchObject({ bracket: 'LOSERS', wins: 0, losses: 3 });
+  });
+
+  it('leaves the place unset while a bracket is still being played', () => {
+    const seasons = aggregatePlayoffSeasons(
+      [
+        {
+          bracket: 'WINNERS',
+          leagueId: 'league-1',
+          isTitleGame: false,
+          countsTowardRecord: true,
+          placement: null,
+          topTeam: side('u1'),
+          bottomTeam: side('u2'),
+          winningTeam: side('u1'),
+          losingTeam: side('u2'),
+          advancingTeam: side('u1'),
+        },
+      ],
+      new Map([['league-1', 12]]),
+    );
+
+    expect(seasons.get('u1')!.get('league-1')).toMatchObject({
+      wins: 1,
+      place: null,
+      finish: null,
+    });
+  });
+
+  // A league whose team count we do not know cannot be seated, but its record
+  // is still real.
+  it('still counts the record for a league of unknown size', () => {
+    const seasons = aggregatePlayoffSeasons(admiralSackoGames(), new Map());
+
+    expect(seasons.get('u9')!.get('admiral-2020')).toMatchObject({
+      losses: 3,
+      place: null,
+    });
   });
 });

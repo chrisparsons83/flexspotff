@@ -71,6 +71,29 @@ export async function getTeamsInSeason(year: League['year']) {
   });
 }
 
+/**
+ * Writes just the median columns.
+ *
+ * Separate from `updateTeam` because `TeamUpdateInput` is the whole row, and
+ * the median backfill only knows these three fields - handing the rest back
+ * from a stale read is how a backfill quietly reverts a sync.
+ */
+export async function updateTeamMedianRecord(team: {
+  id: Team['id'];
+  medianWins: number;
+  medianLosses: number;
+  medianTies: number;
+}) {
+  return prisma.team.update({
+    where: { id: team.id },
+    data: {
+      medianWins: team.medianWins,
+      medianLosses: team.medianLosses,
+      medianTies: team.medianTies,
+    },
+  });
+}
+
 export async function updateTeam(team: TeamUpdateInput) {
   return prisma.team.update({
     where: {

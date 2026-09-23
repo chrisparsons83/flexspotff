@@ -1,4 +1,5 @@
 import {
+  aggregatePlayoffSeasons,
   aggregatePlayoffStats,
   computeStreak,
   medianGames,
@@ -6,8 +7,10 @@ import {
   totalGames,
   winPct,
   type GameResult,
+  type SeasonPlayoffLine,
 } from './shared.server';
 import { prisma } from '~/db.server';
+import type { BracketKind } from '~/libs/bracket';
 
 /**
  * The redraft league half of a member's profile: their career by tier, season
@@ -17,7 +20,8 @@ import { prisma } from '~/db.server';
 
 export type TierRecord = {
   tier: number;
-  leagueName: string;
+  /** "Champions" or "Non-Champions" - a tier spans several league names. */
+  label: string;
   seasons: number;
   wins: number;
   losses: number;
@@ -32,20 +36,36 @@ export type SeasonRow = {
   leagueId: string;
   leagueName: string;
   tier: number;
-  rank: number | null;
-  teamCount: number;
+  /**
+   * Where they finished, from the postseason brackets - "Champion", "Sacko",
+   * "9th". Null until that season's bracket has been played and synced.
+   */
+  finish: string | null;
+  place: number | null;
+  /** Which bracket they were in, so the record below can be labelled. */
+  playoffBracket: BracketKind | null;
+  playoffWins: number;
+  playoffLosses: number;
+  /**
+   * Head-to-head only. Sleeper folds median results into the record it reports,
+   * so this is that total with the median games taken back out.
+   */
   wins: number;
   losses: number;
   ties: number;
+  /** Sleeper's record, median games included. */
+  totalWins: number;
+  totalLosses: number;
+  totalTies: number;
   medianWins: number;
   medianLosses: number;
   medianTies: number;
   hasMedianScoring: boolean;
   pointsFor: number;
+  /** Where that points-for placed among every team in the league that year. */
+  pointsForRank: number | null;
   pointsAgainst: number;
   draftPosition: number | null;
-  /** Movement from the previous season they played: negative is a promotion. */
-  tierChange: number | null;
 };
 
 export type GameLogRow = {
@@ -54,6 +74,8 @@ export type GameLogRow = {
   leagueName: string;
   tier: number;
   isRegularSeason: boolean;
+  /** Which bracket a postseason game belonged to; null in the regular season. */
+  postseasonBracket: BracketKind | null;
   pointsScored: number;
   opponentPoints: number;
   opponentUserId: string | null;
@@ -67,10 +89,9 @@ export type HeadToHeadRow = {
   wins: number;
   losses: number;
   ties: number;
-  pointsFor: number;
-  pointsAgainst: number;
-  meetings: number;
-  years: number[];
+  meetingCount: number;
+  /** Every time they have played, oldest first. */
+  meetings: { year: number; week: number }[];
 };
 
 export type LeagueProfile = {
@@ -137,10 +158,11 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
   }
 
   const leagueIds = teams.map(team => team.league.id);
+  const years = [...new Set(teams.map(team => team.league.year))];
 
   // Every game in every league this member played, so opponents can be paired
   // up. Their own games alone would leave every matchup half-formed.
-  const [leagueGames, standings, playoffGames] = await Promise.all([
+  const [leagueGames, everyTeamThoseYears, playoffGames] = await Promise.all([
     prisma.teamGame.findMany({
       where: { team: { leagueId: { in: leagueIds } } },
       include: {
@@ -155,15 +177,17 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
         },
       },
     }),
+    // Every team in every year this member played, which answers two things at
+    // once: how big each league was, for seating its brackets, and where their
+    // points-for placed against the whole site rather than just their own
+    // league. Sixty rows a year, so cheaper than it looks.
     prisma.team.findMany({
-      where: { leagueId: { in: leagueIds } },
+      where: { league: { year: { in: years } } },
       select: {
         id: true,
         leagueId: true,
-        userId: true,
-        wins: true,
-        ties: true,
         pointsFor: true,
+        league: { select: { year: true } },
       },
     }),
     prisma.playoffGame.findMany({
@@ -176,6 +200,9 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
           select: { userId: true, user: { select: { discordName: true } } },
         },
         winningTeam: {
+          select: { userId: true, user: { select: { discordName: true } } },
+        },
+        losingTeam: {
           select: { userId: true, user: { select: { discordName: true } } },
         },
         advancingTeam: {
@@ -195,6 +222,20 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
       hasBeenPlayed(pair.game.pointsScored, pair.opponent.pointsScored),
   );
 
+  const teamCountByLeague = new Map<string, number>();
+  for (const row of everyTeamThoseYears) {
+    teamCountByLeague.set(
+      row.leagueId,
+      (teamCountByLeague.get(row.leagueId) ?? 0) + 1,
+    );
+  }
+
+  const pointsForRank = rankPointsForByYear(everyTeamThoseYears);
+
+  const playoffSeasons =
+    aggregatePlayoffSeasons(playoffGames, teamCountByLeague).get(userId) ??
+    new Map();
+
   const gameLog: GameLogRow[] = mine
     .map(({ game, opponent, result }) => ({
       year: game.team.league.year,
@@ -202,6 +243,11 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
       leagueName: game.team.league.name,
       tier: game.team.league.tier,
       isRegularSeason: game.isRegularSeason,
+      // Every postseason game a member plays is in whichever bracket they
+      // landed in, so the season's bracket labels all of them.
+      postseasonBracket: game.isRegularSeason
+        ? null
+        : playoffSeasons.get(game.team.leagueId)?.bracket ?? null,
       pointsScored: game.pointsScored,
       opponentPoints: opponent.pointsScored,
       opponentUserId: opponent.team.userId,
@@ -214,7 +260,7 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
     hasPlayed: true,
     career: buildCareer(teams),
     byTier: buildTierRecords(teams),
-    seasons: buildSeasons(teams, standings),
+    seasons: buildSeasons(teams, playoffSeasons, pointsForRank),
     gameLog,
     headToHead: buildHeadToHead(gameLog),
     playoffs: buildPlayoffs(userId, playoffGames),
@@ -287,19 +333,38 @@ type ProfileTeam = {
   };
 };
 
+/**
+ * A season's head-to-head record alone. Sleeper counts the median game in the
+ * record it reports, so a median season's `wins` is head-to-head plus median;
+ * taking the median back out is what lets the two sit side by side without
+ * double counting.
+ */
+function headToHeadRecord(team: ProfileTeam) {
+  const counted = team.league.hasMedianScoring || medianGames(team) > 0;
+
+  return {
+    wins: team.wins - (counted ? team.medianWins : 0),
+    losses: team.losses - (counted ? team.medianLosses : 0),
+    ties: team.ties - (counted ? team.medianTies : 0),
+  };
+}
+
 function buildCareer(teams: ProfileTeam[]): LeagueProfile['career'] {
   const career = teams.reduce(
-    (acc, team) => ({
-      seasons: acc.seasons + 1,
-      wins: acc.wins + team.wins,
-      losses: acc.losses + team.losses,
-      ties: acc.ties + team.ties,
-      medianWins: acc.medianWins + team.medianWins,
-      medianLosses: acc.medianLosses + team.medianLosses,
-      medianTies: acc.medianTies + team.medianTies,
-      pointsFor: acc.pointsFor + team.pointsFor,
-      pointsAgainst: acc.pointsAgainst + team.pointsAgainst,
-    }),
+    (acc, team) => {
+      const h2h = headToHeadRecord(team);
+      return {
+        seasons: acc.seasons + 1,
+        wins: acc.wins + h2h.wins,
+        losses: acc.losses + h2h.losses,
+        ties: acc.ties + h2h.ties,
+        medianWins: acc.medianWins + team.medianWins,
+        medianLosses: acc.medianLosses + team.medianLosses,
+        medianTies: acc.medianTies + team.medianTies,
+        pointsFor: acc.pointsFor + team.pointsFor,
+        pointsAgainst: acc.pointsAgainst + team.pointsAgainst,
+      };
+    },
     {
       seasons: 0,
       wins: 0,
@@ -328,7 +393,7 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
   for (const team of teams) {
     const existing = tiers.get(team.league.tier) ?? {
       tier: team.league.tier,
-      leagueName: team.league.name,
+      label: tierLabel(team.league.tier),
       seasons: 0,
       wins: 0,
       losses: 0,
@@ -338,10 +403,11 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
       pointsAgainst: 0,
     };
 
+    const h2h = headToHeadRecord(team);
     existing.seasons++;
-    existing.wins += team.wins;
-    existing.losses += team.losses;
-    existing.ties += team.ties;
+    existing.wins += h2h.wins;
+    existing.losses += h2h.losses;
+    existing.ties += h2h.ties;
     existing.pointsFor += team.pointsFor;
     existing.pointsAgainst += team.pointsAgainst;
 
@@ -353,72 +419,95 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
     .sort((a, b) => a.tier - b.tier);
 }
 
-type StandingRow = {
-  id: string;
-  leagueId: string;
-  userId: string | null;
-  wins: number;
-  ties: number;
-  pointsFor: number;
-};
+/**
+ * Tier 1 is the Champions League; tier 2 is the pool of leagues a member moves
+ * between below it, so a career line covering Admiral, Galaxy and Monarch
+ * cannot be labelled with any one of their names.
+ */
+function tierLabel(tier: number): string {
+  return `Tier ${tier}`;
+}
 
 /**
- * Final placing is not stored, so it is recomputed the same way the standings
- * page orders a league: wins, then ties, then points for.
+ * Where each team's points-for placed among every team that year.
+ *
+ * Across the whole site rather than within a league, because the leagues are
+ * tiers of one competition - finishing third for points in Champions is not
+ * the same achievement as finishing third in Dragon, and a season table that
+ * ranked within the league would say they were.
+ *
+ * Ties share a place, so two teams on identical points are both second and the
+ * next team is fourth.
  */
+function rankPointsForByYear(
+  rows: { id: string; pointsFor: number; league: { year: number } }[],
+): Map<string, number> {
+  const byYear = new Map<number, typeof rows>();
+  for (const row of rows) {
+    const year = byYear.get(row.league.year);
+    if (year) year.push(row);
+    else byYear.set(row.league.year, [row]);
+  }
+
+  const ranks = new Map<string, number>();
+  for (const year of byYear.values()) {
+    const sorted = [...year].sort((a, b) => b.pointsFor - a.pointsFor);
+    let place = 0;
+    let previous: number | null = null;
+
+    sorted.forEach((row, index) => {
+      if (previous === null || row.pointsFor !== previous) place = index + 1;
+      previous = row.pointsFor;
+      ranks.set(row.id, place);
+    });
+  }
+
+  return ranks;
+}
+
 function buildSeasons(
   teams: ProfileTeam[],
-  standings: StandingRow[],
+  playoffSeasons: Map<string, SeasonPlayoffLine>,
+  pointsForRank: Map<string, number>,
 ): SeasonRow[] {
-  const byLeague = new Map<string, StandingRow[]>();
-  for (const row of standings) {
-    const existing = byLeague.get(row.leagueId);
-    if (existing) {
-      existing.push(row);
-    } else {
-      byLeague.set(row.leagueId, [row]);
-    }
-  }
-
-  for (const rows of byLeague.values()) {
-    rows.sort(
-      (a, b) => b.wins - a.wins || b.ties - a.ties || b.pointsFor - a.pointsFor,
-    );
-  }
-
-  const ordered = [...teams].sort((a, b) => a.league.year - b.league.year);
-
-  return ordered
-    .map((team, index) => {
-      const leagueRows = byLeague.get(team.league.id) ?? [];
-      const position = leagueRows.findIndex(row => row.id === team.id);
-      const previous = index > 0 ? ordered[index - 1] : null;
+  return teams
+    .map(team => {
+      const playoffs = playoffSeasons.get(team.league.id) ?? null;
+      const hasMedianScoring =
+        team.league.hasMedianScoring || medianGames(team) > 0;
+      const h2h = headToHeadRecord(team);
 
       return {
         year: team.league.year,
         leagueId: team.league.id,
         leagueName: team.league.name,
         tier: team.league.tier,
-        rank: position >= 0 ? position + 1 : null,
-        teamCount: leagueRows.length,
-        wins: team.wins,
-        losses: team.losses,
-        ties: team.ties,
+        finish: playoffs?.finish ?? null,
+        place: playoffs?.place ?? null,
+        playoffBracket: playoffs?.bracket ?? null,
+        playoffWins: playoffs?.wins ?? 0,
+        playoffLosses: playoffs?.losses ?? 0,
+        wins: h2h.wins,
+        losses: h2h.losses,
+        ties: h2h.ties,
+        totalWins: team.wins,
+        totalLosses: team.losses,
+        totalTies: team.ties,
         medianWins: team.medianWins,
         medianLosses: team.medianLosses,
         medianTies: team.medianTies,
-        hasMedianScoring: team.league.hasMedianScoring || medianGames(team) > 0,
+        hasMedianScoring,
         pointsFor: team.pointsFor,
+        pointsForRank: pointsForRank.get(team.id) ?? null,
         pointsAgainst: team.pointsAgainst,
         draftPosition: team.draftPosition,
-        tierChange: previous ? team.league.tier - previous.league.tier : null,
       };
     })
     .sort((a, b) => b.year - a.year);
 }
 
 function buildHeadToHead(gameLog: GameLogRow[]): HeadToHeadRow[] {
-  const opponents = new Map<string, HeadToHeadRow & { yearSet: Set<number> }>();
+  const opponents = new Map<string, HeadToHeadRow>();
 
   for (const game of gameLog) {
     if (!game.opponentUserId) continue;
@@ -429,31 +518,30 @@ function buildHeadToHead(gameLog: GameLogRow[]): HeadToHeadRow[] {
       wins: 0,
       losses: 0,
       ties: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-      meetings: 0,
-      years: [],
-      yearSet: new Set<number>(),
+      meetingCount: 0,
+      meetings: [],
     };
 
     if (game.result === 'W') existing.wins++;
     else if (game.result === 'L') existing.losses++;
     else existing.ties++;
 
-    existing.pointsFor += game.pointsScored;
-    existing.pointsAgainst += game.opponentPoints;
-    existing.meetings++;
-    existing.yearSet.add(game.year);
+    existing.meetingCount++;
+    existing.meetings.push({ year: game.year, week: game.week });
 
     opponents.set(game.opponentUserId, existing);
   }
 
   return Array.from(opponents.values())
-    .map(({ yearSet, ...row }) => ({
+    .map(row => ({
       ...row,
-      years: Array.from(yearSet).sort((a, b) => a - b),
+      // The game log runs newest first; a list of meetings reads better the
+      // other way round.
+      meetings: [...row.meetings].sort(
+        (a, b) => a.year - b.year || a.week - b.week,
+      ),
     }))
-    .sort((a, b) => b.meetings - a.meetings || b.wins - a.wins);
+    .sort((a, b) => b.meetingCount - a.meetingCount || b.wins - a.wins);
 }
 
 type PlayoffGameRow = Parameters<typeof aggregatePlayoffStats>[0][number];

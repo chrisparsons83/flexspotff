@@ -2,12 +2,12 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useOutletContext } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import ContestTab from '~/components/layout/profile/ContestTab';
+import { requireProfileAccess } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/sideGames.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { authenticator } from '~/services/auth.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  await requireProfileAccess(request);
 
   const { userId } = params;
   if (!userId) throw new Response('Not Found', { status: 404 });

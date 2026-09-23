@@ -39,9 +39,16 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
     tab => tab.key === ALWAYS_SHOWN || played.has(tab.key),
   );
 
+  // A solid bar rather than bare text on the page background. Every section
+  // below is a bordered panel, so tabs drawn as loose links read as the least
+  // important thing on the page when they are the main way around it. It
+  // scrolls sideways on a phone instead of wrapping into a second row.
   return (
-    <nav className='not-prose mt-6 border-b border-gray-700'>
-      <ul className='flex flex-wrap gap-1 p-0'>
+    <nav
+      aria-label='Profile sections'
+      className='not-prose mt-6 overflow-x-auto rounded-lg border border-slate-600/50 bg-slate-900/70 p-1'
+    >
+      <ul className='m-0 flex min-w-max gap-1 p-0'>
         {visible.map(tab => {
           const to = `/members/${userId}/${tab.key}`;
           const isActive = pathname === to;
@@ -50,12 +57,13 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
             <li key={tab.key} className='list-none'>
               <Link
                 to={to}
+                prefetch='intent'
                 aria-current={isActive ? 'page' : undefined}
                 className={clsx(
-                  'inline-block rounded-t-md px-3 py-2 text-sm font-medium no-underline transition-colors',
+                  'block whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold no-underline transition-colors',
                   isActive
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                    ? 'bg-slate-100 text-slate-900 shadow'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white',
                 )}
               >
                 {tab.label}

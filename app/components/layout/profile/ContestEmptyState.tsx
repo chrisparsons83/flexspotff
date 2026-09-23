@@ -9,7 +9,7 @@ type Props = {
  */
 export default function ContestEmptyState({ contest, memberName }: Props) {
   return (
-    <p className='rounded-md bg-gray-800/50 px-4 py-8 text-center text-gray-400'>
+    <p className='rounded-lg border border-slate-600/50 bg-slate-800/60 px-4 py-8 text-center text-slate-400'>
       {memberName} hasn&rsquo;t played {contest}.
     </p>
   );

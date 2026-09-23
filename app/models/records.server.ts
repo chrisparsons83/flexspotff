@@ -551,6 +551,9 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
       winningTeam: {
         select: { userId: true, user: { select: { discordName: true } } },
       },
+      losingTeam: {
+        select: { userId: true, user: { select: { discordName: true } } },
+      },
       advancingTeam: {
         select: { userId: true, user: { select: { discordName: true } } },
       },

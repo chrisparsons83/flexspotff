@@ -5,8 +5,8 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import ProfileHero from '~/components/layout/profile/ProfileHero';
 import ProfileTabs from '~/components/layout/profile/ProfileTabs';
 import { prisma } from '~/db.server';
+import { requireProfileAccess } from '~/models/profile/access.server';
 import { getProfileSummary } from '~/models/profile/summary.server';
-import { authenticator } from '~/services/auth.server';
 
 /**
  * A member's profile. The hero and tab bar live here; each tab is a child route
@@ -16,9 +16,7 @@ import { authenticator } from '~/services/auth.server';
  * Profiles are members-only.
  */
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
-  });
+  await requireProfileAccess(request);
 
   const { userId } = params;
   if (!userId) throw new Response('Not Found', { status: 404 });

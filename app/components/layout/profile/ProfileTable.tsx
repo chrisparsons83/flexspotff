@@ -5,6 +5,8 @@ type Props = {
   headers: string[];
   /** Right-align numeric columns by index. */
   numericColumns?: number[];
+  /** A totals row, set apart from the body and pinned to the bottom. */
+  footer?: ReactNode;
   children: ReactNode;
 };
 
@@ -15,6 +17,7 @@ type Props = {
 export default function ProfileTable({
   headers,
   numericColumns = [],
+  footer,
   children,
 }: Props) {
   const numeric = new Set(numericColumns);
@@ -23,7 +26,7 @@ export default function ProfileTable({
     <div className='not-prose overflow-x-auto'>
       <table className='w-full text-sm'>
         <thead>
-          <tr className='border-b border-gray-700 text-left text-gray-400'>
+          <tr className='border-b border-slate-600 text-left text-slate-400'>
             {headers.map((header, index) => (
               <th
                 key={header}
@@ -39,6 +42,11 @@ export default function ProfileTable({
           </tr>
         </thead>
         <tbody>{children}</tbody>
+        {footer && (
+          <tfoot className='border-t-2 border-slate-600 font-medium'>
+            {footer}
+          </tfoot>
+        )}
       </table>
     </div>
   );
