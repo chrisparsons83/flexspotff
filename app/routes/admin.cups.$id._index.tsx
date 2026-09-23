@@ -1,30 +1,29 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import {
+  type TypedJsonResponse,
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
+import type { ChallongeMatchReport } from '~/libs/challonge-cup';
+import { importChallongeCup } from '~/libs/challonge-cup-import.server';
+import {
+  createCupBracket,
+  recordCupGameResult,
+} from '~/libs/cup-bracket.server';
 import type { ScoreArray } from '~/models/cup.server';
 import { getCup } from '~/models/cup.server';
-import type { CupGame } from '~/models/cupgame.server';
-import {
-  createCupGame,
-  deleteCupGamesByCup,
-  getCupGamesByCup,
-  updateCupGame,
-} from '~/models/cupgame.server';
+import { deleteCupGamesByCup, getCupGamesByCup } from '~/models/cupgame.server';
 import {
   type CupTeam,
   createCupTeam,
   deleteCupTeamsByCup,
-  getCupTeamsByCup,
 } from '~/models/cupteam.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { getCupWeeks, updateCupWeek } from '~/models/cupweek.server';
-import { getCurrentSeason } from '~/models/season.server';
 import {
   getTeamGameMultiweekTotals,
   getTeamGameMultiweekTotalsSeparated,
@@ -79,50 +78,12 @@ const selectOptions: CupMappingOptions[] = [
   },
 ];
 
-const rounds = [
-  'ROUND_OF_2',
-  'ROUND_OF_4',
-  'ROUND_OF_8',
-  'ROUND_OF_16',
-  'ROUND_OF_32',
-  'ROUND_OF_64',
-];
-const roundOf64Matches = [
-  [1, 64],
-  [32, 33],
-  [17, 48],
-  [16, 49],
-  [9, 56],
-  [24, 41],
-  [25, 40],
-  [8, 57],
-  [4, 61],
-  [29, 36],
-  [20, 45],
-  [13, 52],
-  [12, 53],
-  [21, 44],
-  [28, 37],
-  [5, 60],
-  [2, 63],
-  [31, 34],
-  [18, 47],
-  [15, 50],
-  [10, 55],
-  [23, 42],
-  [26, 39],
-  [7, 58],
-  [3, 62],
-  [30, 35],
-  [19, 46],
-  [14, 51],
-  [11, 54],
-  [22, 43],
-  [27, 38],
-  [6, 59],
-];
+type ActionData = { message: string; report?: ChallongeMatchReport };
 
-export const action = async ({ params, request }: ActionFunctionArgs) => {
+export const action = async ({
+  params,
+  request,
+}: ActionFunctionArgs): Promise<TypedJsonResponse<ActionData>> => {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -137,10 +98,32 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const action = formData.get('_action');
 
-  const currentSeason = await getCurrentSeason();
-  if (!currentSeason) throw new Error('No current season');
-
   switch (action) {
+    case 'challongePreview':
+    case 'challongeImport': {
+      const slug = formData.get('slug');
+      if (typeof slug !== 'string' || !slug.trim()) {
+        return typedjson({ message: 'Enter a Challonge bracket slug.' });
+      }
+
+      try {
+        const { report, imported } = await importChallongeCup(
+          cup,
+          slug.trim(),
+          { dryRun: action === 'challongePreview' },
+        );
+        const message = imported
+          ? `Imported ${slug} into the ${cup.year} Cup.`
+          : report.errors.length > 0
+          ? `${slug} can't be imported until the errors below are fixed.`
+          : `Preview of ${slug} - nothing has been written yet.`;
+        return typedjson({ message, report });
+      } catch (error) {
+        return typedjson({
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     case 'updateCup': {
       const promises: Promise<CupWeek>[] = [];
       for (const [key, mapping] of formData.entries()) {
@@ -171,10 +154,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         .filter(cupWeek => cupWeek.mapping === 'SEEDING')
         .map(cupWeek => cupWeek.week);
 
-      const scores = await getTeamGameMultiweekTotals(
-        weeksToScore,
-        currentSeason?.year,
-      );
+      const scores = await getTeamGameMultiweekTotals(weeksToScore, cup.year);
       const promises: Promise<CupTeam>[] = [];
       let seed = 1;
       for (const { teamId } of scores) {
@@ -189,140 +169,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       }
       await Promise.all(promises);
 
-      // Get all the teams now, we'll need this to reference later
-      const cupTeams = await getCupTeamsByCup(cup.id);
-
-      // Create all the matches
-      const lastRoundMatchIds = [];
-      for (const [index, round] of rounds.entries()) {
-        const matchIdsToLoop = [...lastRoundMatchIds];
-        lastRoundMatchIds.length = 0;
-
-        const numberOfMatchesToCreate = Math.pow(2, index);
-
-        if (numberOfMatchesToCreate === 1) {
-          const cupGame = await createCupGame({
-            cupId: cup.id,
-            round,
-            roundSort: index,
-            insideRoundSort: 0,
-            winnerToTop: false,
-            topTeamId: null,
-            bottomTeamId: null,
-            winningTeamId: null,
-            losingTeamId: null,
-            winnerToGameId: null,
-            containsBye: false,
-          });
-          lastRoundMatchIds.push(cupGame.id);
-        } else if (numberOfMatchesToCreate !== 32) {
-          for (let i = 0; i < numberOfMatchesToCreate; i += 2) {
-            const prevIndex = i / 2;
-            const upperCupGame: CupGame = await createCupGame({
-              cupId: cup.id,
-              round,
-              roundSort: index,
-              insideRoundSort: i,
-              winnerToTop: true,
-              topTeamId: null,
-              bottomTeamId: null,
-              winningTeamId: null,
-              losingTeamId: null,
-              winnerToGameId: matchIdsToLoop[prevIndex],
-              containsBye: false,
-            });
-            const lowerCupGame: CupGame = await createCupGame({
-              cupId: cup.id,
-              round,
-              roundSort: index,
-              insideRoundSort: i + 1,
-              winnerToTop: false,
-              topTeamId: null,
-              bottomTeamId: null,
-              winningTeamId: null,
-              losingTeamId: null,
-              winnerToGameId: matchIdsToLoop[prevIndex],
-              containsBye: false,
-            });
-            lastRoundMatchIds.push(upperCupGame.id, lowerCupGame.id);
-          }
-        } else {
-          for (let i = 0; i < numberOfMatchesToCreate; i += 2) {
-            const prevIndex = i / 2;
-            const getMatchOne = roundOf64Matches[i];
-            const getMatchTwo = roundOf64Matches[i + 1];
-            const upperCupGame: CupGame = await createCupGame({
-              cupId: cup.id,
-              round,
-              roundSort: index,
-              insideRoundSort: i,
-              winnerToTop: true,
-              topTeamId:
-                cupTeams.find(cupTeam => cupTeam.seed === getMatchOne[0])?.id ||
-                null,
-              bottomTeamId:
-                cupTeams.find(cupTeam => cupTeam.seed === getMatchOne[1])?.id ||
-                null,
-              winningTeamId: null,
-              losingTeamId: null,
-              winnerToGameId: matchIdsToLoop[prevIndex],
-              containsBye: cupTeams.find(
-                cupTeam => cupTeam.seed === getMatchOne[1],
-              )?.id
-                ? false
-                : true,
-            });
-            const lowerCupGame: CupGame = await createCupGame({
-              cupId: cup.id,
-              round,
-              roundSort: index,
-              insideRoundSort: i + 1,
-              winnerToTop: false,
-              topTeamId:
-                cupTeams.find(cupTeam => cupTeam.seed === getMatchTwo[0])?.id ||
-                null,
-              bottomTeamId:
-                cupTeams.find(cupTeam => cupTeam.seed === getMatchTwo[1])?.id ||
-                null,
-              winningTeamId: null,
-              losingTeamId: null,
-              winnerToGameId: matchIdsToLoop[prevIndex],
-              containsBye: cupTeams.find(
-                cupTeam => cupTeam.seed === getMatchTwo[1],
-              )?.id
-                ? false
-                : true,
-            });
-            lastRoundMatchIds.push(upperCupGame.id, lowerCupGame.id);
-          }
-        }
-      }
-
-      // Automatically advance bye winners for round one.
-      const cupGamesWithBye = (await getCupGamesByCup(cup.id)).filter(
-        cupGame => cupGame.containsBye,
-      );
-
-      const updates: Promise<CupGame>[] = [];
-      for (const cupGame of cupGamesWithBye) {
-        updates.push(
-          updateCupGame(cupGame.id, {
-            id: cupGame.id,
-            winningTeamId: cupGame.topTeamId,
-          }),
-        );
-        // We won't do this for the final, but this is byes so whatever
-        const updateCupGameData: Partial<CupGame> = {
-          id: cupGame.winnerToGameId!,
-        };
-        if (cupGame.winnerToTop) {
-          updateCupGameData.topTeamId = cupGame.topTeamId;
-        } else {
-          updateCupGameData.bottomTeamId = cupGame.topTeamId;
-        }
-        updates.push(updateCupGame(cupGame.winnerToGameId!, updateCupGameData));
-      }
-      await Promise.all(updates);
+      await createCupBracket(cup.id);
 
       return typedjson({
         message: 'Seeding created.',
@@ -366,7 +213,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         }
       }
 
-      const promises: Promise<CupGame>[] = [];
+      const promises: Promise<void>[] = [];
       for (const cupGame of cupGames) {
         if (cupGame.containsBye) {
           continue;
@@ -389,27 +236,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
             ? [cupGame.topTeamId, cupGame.bottomTeamId]
             : [cupGame.bottomTeamId, cupGame.topTeamId];
         promises.push(
-          updateCupGame(cupGame.id, {
-            id: cupGame.id,
-            winningTeamId,
-            losingTeamId,
-          }),
+          recordCupGameResult(cupGame, winningTeamId, losingTeamId),
         );
-        if (cupGame.winnerToTop && cupGame.winnerToGameId) {
-          promises.push(
-            updateCupGame(cupGame.winnerToGameId!, {
-              id: cupGame.winnerToGameId,
-              topTeamId: winningTeamId,
-            }),
-          );
-        } else if (cupGame.winnerToGameId) {
-          promises.push(
-            updateCupGame(cupGame.winnerToGameId!, {
-              id: cupGame.winnerToGameId,
-              bottomTeamId: winningTeamId,
-            }),
-          );
-        }
       }
       await Promise.all(promises);
 
@@ -511,6 +339,104 @@ export default function CupAdministerPage() {
           </Button>
         </div>
       </Form>
+      <h3>Import from Challonge</h3>
+      <p>
+        For cups played on Challonge before the site ran them. Map the weeks
+        above first. Importing replaces this cup's seeds and games with
+        Challonge's.
+      </p>
+      <Form method='POST' className='flex flex-wrap items-center gap-2'>
+        <label htmlFor='slug'>challonge.com/</label>
+        <input
+          type='text'
+          name='slug'
+          id='slug'
+          defaultValue={`${cup.year}FSCup`}
+          className='form-input dark:border-0 dark:bg-slate-800'
+        />
+        <Button type='submit' name='_action' value='challongePreview'>
+          Preview Import
+        </Button>
+        <Button type='submit' name='_action' value='challongeImport'>
+          Import
+        </Button>
+      </Form>
+      {actionData?.report && <ChallongeReport report={actionData.report} />}
+    </>
+  );
+}
+
+function ChallongeReport({ report }: { report: ChallongeMatchReport }) {
+  return (
+    <>
+      {report.errors.length > 0 && (
+        <>
+          <h4>Errors</h4>
+          <ul>
+            {report.errors.map(error => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {report.winnerDisagreements.length > 0 && (
+        <>
+          <h4>Results the site's scores would have decided differently</h4>
+          <p>Challonge's result is kept.</p>
+          <ul>
+            {report.winnerDisagreements.map(disagreement => (
+              <li key={`${disagreement.round}-${disagreement.challongeWinner}`}>
+                Round {disagreement.round}: {disagreement.challongeWinner} beat{' '}
+                {disagreement.challongeLoser}{' '}
+                {disagreement.challongeScores.join('-')} on Challonge; the site
+                has{' '}
+                {disagreement.siteScores
+                  .map(score => score.toFixed(2))
+                  .join('-')}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <h4>
+        Participants ({report.assignments.length} matched,{' '}
+        {report.seedDifferences.length} seeded differently,{' '}
+        {report.scoreDeltas.length} scores differ)
+      </h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Seed</th>
+            <th>Challonge</th>
+            <th>Team</th>
+            <th>League</th>
+            <th>Seed on site points</th>
+            <th>Score differences</th>
+          </tr>
+        </thead>
+        <tbody>
+          {report.assignments.map(({ participant, team, seedRank }) => (
+            <tr key={participant.id}>
+              <td>{participant.seed}</td>
+              <td>{participant.name}</td>
+              <td>{team.name}</td>
+              <td>{team.league}</td>
+              <td>{seedRank === participant.seed ? '' : seedRank}</td>
+              <td>
+                {report.scoreDeltas
+                  .filter(delta => delta.participantName === participant.name)
+                  .map(
+                    delta =>
+                      `R${delta.round}: ${
+                        delta.challongeScore
+                      } vs ${delta.sitePoints.toFixed(2)}`,
+                  )
+                  .join(', ')}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 }
