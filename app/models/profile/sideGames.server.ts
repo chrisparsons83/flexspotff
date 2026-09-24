@@ -36,65 +36,6 @@ const round = (value: number, digits = 2) => value.toFixed(digits);
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/** Cup: bracket runs, seeds, titles. Rounds are named, and ROUND_OF_2 is the final. */
-export async function getCupProfile(userId: string): Promise<ContestProfile> {
-  const cupTeams = await prisma.cupTeam.findMany({
-    where: { team: { userId } },
-    include: {
-      cup: { select: { year: true } },
-      TopTeamGames: { select: { id: true, round: true, winningTeamId: true } },
-      BottomTeamGames: {
-        select: { id: true, round: true, winningTeamId: true },
-      },
-    },
-  });
-
-  if (cupTeams.length === 0) return empty;
-
-  let championships = 0;
-  let finals = 0;
-  let wins = 0;
-  let played = 0;
-
-  const seasons: SeasonTotal[] = cupTeams
-    .map(cupTeam => {
-      const games = [...cupTeam.TopTeamGames, ...cupTeam.BottomTeamGames];
-      const decided = games.filter(game => game.winningTeamId !== null);
-      const seasonWins = decided.filter(
-        game => game.winningTeamId === cupTeam.id,
-      ).length;
-      const reachedFinal = decided.some(game => game.round === 'ROUND_OF_2');
-      const wonFinal = decided.some(
-        game =>
-          game.round === 'ROUND_OF_2' && game.winningTeamId === cupTeam.id,
-      );
-
-      played += decided.length;
-      wins += seasonWins;
-      if (reachedFinal) finals++;
-      if (wonFinal) championships++;
-
-      return {
-        year: cupTeam.cup.year,
-        label: `Seed ${cupTeam.seed}`,
-        value: `${seasonWins}-${decided.length - seasonWins}`,
-        detail: wonFinal ? 'Champion' : reachedFinal ? 'Finalist' : undefined,
-      };
-    })
-    .sort((a, b) => b.year - a.year);
-
-  return {
-    hasPlayed: true,
-    seasonsPlayed: cupTeams.length,
-    headline: [
-      { label: 'Championships', value: championships.toString() },
-      { label: 'Finals', value: finals.toString() },
-      { label: 'Game Record', value: `${wins}-${played - wins}` },
-    ],
-    seasons,
-  };
-}
-
 /** D12: weekly points across a separate set of leagues. */
 export async function getD12Profile(userId: string): Promise<ContestProfile> {
   const scores = await prisma.d12WeekScore.findMany({

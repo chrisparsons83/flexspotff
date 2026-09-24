@@ -1,12 +1,16 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import SplitBar from '~/components/layout/profile/SplitBar';
+import WinLoss from '~/components/layout/profile/WinLoss';
+import YearFilter from '~/components/layout/profile/YearFilter';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type {
   GameLogRow,
@@ -16,7 +20,6 @@ import type {
 } from '~/models/profile/league.server';
 import { getLeagueProfile } from '~/models/profile/league.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireProfileAccess(request);
@@ -31,20 +34,6 @@ const record = (wins: number, losses: number, ties: number) =>
   `${wins}-${losses}-${ties}`;
 
 const pct = (value: number) => value.toFixed(3).replace(/^0/, '');
-
-function LeagueChip({ name }: { name: string }) {
-  const key = name.toLocaleLowerCase();
-  return (
-    <span
-      className={clsx(
-        'rounded px-1.5 py-0.5 text-xs font-medium',
-        isLeagueName(key) ? RANK_COLORS[key] : 'bg-slate-700 text-slate-100',
-      )}
-    >
-      {name}
-    </span>
-  );
-}
 
 export default function MemberLeague() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -201,105 +190,6 @@ const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /**
- * A W-L(-T) record with the dashes knocked back, so the numbers carry the
- * weight at display sizes. Ties are left off when there are none to show.
- */
-function WinLoss({
-  wins,
-  losses,
-  ties,
-}: {
-  wins: number;
-  losses: number;
-  ties?: number;
-}) {
-  const parts = ties ? [wins, losses, ties] : [wins, losses];
-  return (
-    <>
-      {parts.map((part, index) => (
-        <span key={index}>
-          {index > 0 && (
-            <span className='mx-0.5 font-normal text-slate-500'>–</span>
-          )}
-          {part}
-        </span>
-      ))}
-    </>
-  );
-}
-
-function CareerCard({
-  title,
-  lead,
-  leadNote,
-  meter,
-  children,
-}: {
-  title: string;
-  lead: ReactNode;
-  leadNote: string;
-  /** A full-width bar under the headline, so a wide card is not mostly air. */
-  meter?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className='rounded-md bg-slate-900/50 p-4'>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
-      <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
-        {lead}
-      </div>
-      <div className='mt-1.5 text-sm text-slate-400'>{leadNote}</div>
-      {/* Flowed from the top rather than pinned to the bottom. The headlines
-          are all the same height, so the bars and stat labels line up across
-          cards; pinning to the bottom misaligned them whenever one card's small
-          stats had a detail line and another's did not. */}
-      <div className='mt-5'>
-        {meter}
-        <dl className='m-0 mt-4 grid auto-cols-fr grid-flow-col gap-4'>
-          {children}
-        </dl>
-      </div>
-    </div>
-  );
-}
-
-/** Wins against losses (and ties) as one bar, in proportion. */
-function SplitBar({
-  wins,
-  losses,
-  ties = 0,
-}: {
-  wins: number;
-  losses: number;
-  ties?: number;
-}) {
-  const total = wins + losses + ties;
-  const segments = [
-    { value: wins, className: 'bg-emerald-400' },
-    { value: ties, className: 'bg-slate-400' },
-    { value: losses, className: 'bg-rose-400' },
-  ];
-
-  return (
-    <div
-      aria-hidden='true'
-      className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
-    >
-      {total > 0 &&
-        segments
-          .filter(segment => segment.value > 0)
-          .map(segment => (
-            <div
-              key={segment.className}
-              className={segment.className}
-              style={{ width: `${(segment.value / total) * 100}%` }}
-            />
-          ))}
-    </div>
-  );
-}
-
-/**
  * Worst week to best week as a track, with the average marked on it - how far
  * a typical week sits from the floor and the ceiling.
  */
@@ -323,43 +213,6 @@ function RangeBar({
         className='absolute top-1/2 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow'
         style={{ left: `${position}%` }}
       />
-    </div>
-  );
-}
-
-function MiniStat({
-  label,
-  value,
-  unit,
-  detail,
-  tone = 'text-slate-100',
-}: {
-  label: string;
-  value: ReactNode;
-  /** Trails the value in small type, e.g. the W on a streak. */
-  unit?: string;
-  /** Trails the value in muted type, e.g. which week a best score came in. */
-  detail?: string | null;
-  tone?: string;
-}) {
-  return (
-    <div className='flex flex-col'>
-      <dt className='text-xs text-slate-400'>{label}</dt>
-      <dd className={clsx('m-0 mt-0.5 text-xl font-bold tabular-nums', tone)}>
-        {value}
-        {unit && (
-          <span className='ml-0.5 text-xs font-semibold text-slate-400'>
-            {unit}
-          </span>
-        )}
-        {/* Inline rather than on a line of its own, so every small stat is the
-            same height and the cards stay level. */}
-        {detail && (
-          <span className='ml-2 text-xs font-normal text-slate-500'>
-            {detail}
-          </span>
-        )}
-      </dd>
     </div>
   );
 }
@@ -705,25 +558,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
   return (
     <ProfileSection
       title='Game Log'
-      action={
-        <div className='flex flex-wrap gap-1'>
-          {[...years, 'all' as const].map(option => (
-            <button
-              key={option}
-              type='button'
-              onClick={() => setYear(option)}
-              className={clsx(
-                'rounded px-2.5 py-1 text-sm',
-                year === option
-                  ? 'bg-white font-medium text-slate-900'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-              )}
-            >
-              {option === 'all' ? 'All' : option}
-            </button>
-          ))}
-        </div>
-      }
+      action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <ProfileTable
         headers={['Year', 'Wk', '', 'League', 'Opponent', 'Score', 'Result']}
