@@ -46,3 +46,29 @@ export const roundOf64Matches = [
   [27, 38],
   [6, 59],
 ];
+
+/**
+ * Which side of a cup game advances. The higher seed - the lower seed number -
+ * takes a tie (rule 12.4), and a side with no opponent walks through.
+ *
+ * Scores are compared to the hundredth, since a two-week round is a sum of
+ * floats and a real tie can come out a hair apart.
+ */
+export function decideCupGame({
+  topScore,
+  bottomScore,
+  topSeed,
+  bottomSeed,
+}: {
+  topScore: number;
+  bottomScore: number;
+  topSeed: number;
+  bottomSeed: number | null;
+}): 'top' | 'bottom' {
+  if (bottomSeed === null) return 'top';
+
+  const top = Math.round(topScore * 100);
+  const bottom = Math.round(bottomScore * 100);
+  if (top !== bottom) return top > bottom ? 'top' : 'bottom';
+  return topSeed < bottomSeed ? 'top' : 'bottom';
+}

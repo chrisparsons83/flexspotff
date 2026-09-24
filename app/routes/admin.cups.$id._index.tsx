@@ -10,6 +10,7 @@ import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
 import type { ChallongeMatchReport } from '~/libs/challonge-cup';
 import { importChallongeCup } from '~/libs/challonge-cup-import.server';
+import { decideCupGame } from '~/libs/cup-bracket';
 import {
   createCupBracket,
   recordCupGameResult,
@@ -218,21 +219,21 @@ export const action = async ({
         if (cupGame.containsBye) {
           continue;
         }
-        const tiebreaker =
-          !cupGame.bottomTeam ||
-          cupGame.topTeam!.seed > cupGame.bottomTeam!.seed
-            ? 0.001
-            : -0.001;
         const topTeamScore =
-          (scoreArray.find(
+          scoreArray.find(
             scoreObject => scoreObject.teamId === cupGame.topTeam?.teamId,
-          )?.pointsScored || 0) + tiebreaker;
+          )?.pointsScored || 0;
         const bottomTeamScore =
           scoreArray.find(
             scoreObject => scoreObject.teamId === cupGame.bottomTeam?.teamId,
           )?.pointsScored || 0;
         const [winningTeamId, losingTeamId] =
-          topTeamScore > bottomTeamScore
+          decideCupGame({
+            topScore: topTeamScore,
+            bottomScore: bottomTeamScore,
+            topSeed: cupGame.topTeam!.seed,
+            bottomSeed: cupGame.bottomTeam?.seed ?? null,
+          }) === 'top'
             ? [cupGame.topTeamId, cupGame.bottomTeamId]
             : [cupGame.bottomTeamId, cupGame.topTeamId];
         promises.push(

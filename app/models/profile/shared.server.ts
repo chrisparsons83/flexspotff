@@ -243,6 +243,11 @@ type AggregatableCupSide = {
 
 type AggregatableCupGame = {
   round: string;
+  /**
+   * A first-round slot with no opponent. The top seed is recorded as its
+   * winner so the bracket can advance them, but nobody played it.
+   */
+  containsBye?: boolean;
   topTeam?: AggregatableCupSide;
   bottomTeam?: AggregatableCupSide;
   winningTeam?: AggregatableCupSide;
@@ -253,7 +258,8 @@ type AggregatableCupGame = {
  * titles.
  *
  * Callers pass only games that have a winner, so an unplayed bracket slot never
- * counts as a game played.
+ * counts as a game played. Byes are skipped here: the top four seeds would
+ * otherwise bank a free win every year.
  */
 export function aggregateCupStats(
   cupGames: AggregatableCupGame[],
@@ -280,6 +286,8 @@ export function aggregateCupStats(
   };
 
   for (const game of cupGames) {
+    if (game.containsBye) continue;
+
     const top = forSide(game.topTeam ?? null);
     const bottom = forSide(game.bottomTeam ?? null);
     const winner = forSide(game.winningTeam ?? null);
