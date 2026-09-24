@@ -8,6 +8,7 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import RangeBar from '~/components/layout/profile/RangeBar';
 import SplitBar from '~/components/layout/profile/SplitBar';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
@@ -188,34 +189,6 @@ function Highlights({
 
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-/**
- * Worst week to best week as a track, with the average marked on it - how far
- * a typical week sits from the floor and the ceiling.
- */
-function RangeBar({
-  low,
-  high,
-  mark,
-}: {
-  low: number;
-  high: number;
-  mark: number;
-}) {
-  const position = high > low ? ((mark - low) / (high - low)) * 100 : 50;
-
-  return (
-    <div
-      aria-hidden='true'
-      className='relative h-2 rounded-full bg-gradient-to-r from-rose-400/80 via-slate-500 to-emerald-400/80'
-    >
-      <div
-        className='absolute top-1/2 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow'
-        style={{ left: `${position}%` }}
-      />
-    </div>
-  );
-}
 
 function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
   return (
