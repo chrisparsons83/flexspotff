@@ -26,6 +26,20 @@ export const POSITION_RANK_COLORS: Record<string, string> = {
 };
 
 /**
+ * The same position colours, faded to a tint, for a large area like a draft
+ * board cell where the full-strength chip colour would drown out what sits on
+ * top of it. Written out as arbitrary values because the theme's position
+ * colours are rgba strings, which Tailwind's `/30` opacity modifier ignores.
+ */
+export const POSITION_TINT_COLORS: Record<string, string> = {
+  qb: 'bg-[rgba(129,15,57,0.3)]',
+  rb: 'bg-[rgba(13,113,83,0.3)]',
+  wr: 'bg-[rgba(6,109,150,0.3)]',
+  te: 'bg-[rgba(151,79,1,0.3)]',
+  def: 'bg-[rgba(134,73,53,0.3)]',
+};
+
+/**
  * Left-border accents for a starter's position, used in the expandable rows on
  * the weekly leaderboards. Distinct from POSITION_RANK_COLORS above, which
  * fills a chip background rather than drawing a border.

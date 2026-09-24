@@ -36,50 +36,6 @@ const round = (value: number, digits = 2) => value.toFixed(digits);
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/** D12: weekly points across a separate set of leagues. */
-export async function getD12Profile(userId: string): Promise<ContestProfile> {
-  const scores = await prisma.d12WeekScore.findMany({
-    where: { userId },
-    include: { league: { include: { season: { select: { year: true } } } } },
-  });
-
-  if (scores.length === 0) return empty;
-
-  const byYear = new Map<number, number[]>();
-  for (const score of scores) {
-    if (score.points === null) continue;
-    const year = score.league.season.year;
-    const existing = byYear.get(year);
-    if (existing) {
-      existing.push(score.points);
-    } else {
-      byYear.set(year, [score.points]);
-    }
-  }
-
-  const allPoints = Array.from(byYear.values()).flat();
-  const best = allPoints.length > 0 ? Math.max(...allPoints) : 0;
-  const total = allPoints.reduce((sum, points) => sum + points, 0);
-
-  return {
-    hasPlayed: true,
-    seasonsPlayed: byYear.size,
-    headline: [
-      { label: 'Total Points', value: round(total) },
-      { label: 'Best Week', value: round(best) },
-      { label: 'Weeks Played', value: allPoints.length.toString() },
-    ],
-    seasons: Array.from(byYear.entries())
-      .map(([year, points]) => ({
-        year,
-        label: plural(points.length, 'week'),
-        value: round(points.reduce((sum, p) => sum + p, 0)),
-        detail: `Best ${round(Math.max(...points))}`,
-      }))
-      .sort((a, b) => b.year - a.year),
-  };
-}
-
 /** QB Streaming: a standard and a deep pick each week. */
 export async function getQbStreamingProfile(
   userId: string,

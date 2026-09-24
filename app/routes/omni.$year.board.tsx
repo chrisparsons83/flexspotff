@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
-import DraftBoardColumn from '~/components/layout/omni/DraftBoardColumn';
+import OmniDraftBoard from '~/components/layout/omni/OmniDraftBoard';
 import { getOmniSeason } from '~/models/omniseason.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -29,13 +29,7 @@ const OmniYearDraftboard = () => {
   return (
     <div>
       <h2>Omni Draftboard for {year}</h2>
-      <div className='flex overflow-x-auto w-full flex-column'>
-        <div className='columns-16 gap-1'>
-          {season.omniTeams.map(omniTeam => (
-            <DraftBoardColumn key={omniTeam.id} omniTeam={omniTeam} />
-          ))}
-        </div>
-      </div>
+      <OmniDraftBoard teams={season.omniTeams} />
     </div>
   );
 };
