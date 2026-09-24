@@ -8,6 +8,8 @@ node_modules
 
 /coverage
 
+/dev.log
+
 /*.sql
 /*.sql.gz
 
