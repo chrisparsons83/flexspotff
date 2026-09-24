@@ -50,10 +50,14 @@ export default function MemberProfile() {
 
   return (
     <>
-      <ProfileHero summary={summary} />
-      <ProfileTabs
-        userId={summary.user.id}
-        contestsPlayed={summary.contestsPlayed}
+      <ProfileHero
+        summary={summary}
+        tabs={
+          <ProfileTabs
+            userId={summary.user.id}
+            contestsPlayed={summary.contestsPlayed}
+          />
+        }
       />
       <div className='mt-6'>
         <Outlet context={summary} />

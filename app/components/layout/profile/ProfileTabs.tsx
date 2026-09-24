@@ -39,14 +39,14 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
     tab => tab.key === ALWAYS_SHOWN || played.has(tab.key),
   );
 
-  // A solid bar rather than bare text on the page background. Every section
-  // below is a bordered panel, so tabs drawn as loose links read as the least
-  // important thing on the page when they are the main way around it. It
+  // Drawn as a strip along the bottom of the hero, so the member's header and
+  // the way around their profile read as one unit. The active tab is marked
+  // with an underline sitting on the strip's edge, like a page header. It
   // scrolls sideways on a phone instead of wrapping into a second row.
   return (
     <nav
       aria-label='Profile sections'
-      className='not-prose mt-6 overflow-x-auto rounded-lg border border-slate-600/50 bg-slate-900/70 p-1'
+      className='not-prose overflow-x-auto border-t border-slate-600/40 bg-slate-900/50 px-2 md:px-4'
     >
       <ul className='m-0 flex min-w-max gap-1 p-0'>
         {visible.map(tab => {
@@ -60,10 +60,10 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
                 prefetch='intent'
                 aria-current={isActive ? 'page' : undefined}
                 className={clsx(
-                  'block whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold no-underline transition-colors',
+                  'block whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold no-underline transition-colors',
                   isActive
-                    ? 'bg-slate-100 text-slate-900 shadow'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white',
+                    ? 'border-blue-400 text-white'
+                    : 'border-transparent text-slate-400 hover:border-slate-500 hover:text-white',
                 )}
               >
                 {tab.label}
