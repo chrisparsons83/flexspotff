@@ -258,6 +258,22 @@ describe('aggregateCupStats', () => {
     });
   });
 
+  // A bye records the top seed as its winner so the bracket can advance them,
+  // but it is not a game - counting it handed the top four seeds a free win.
+  it('does not count a bye as a game or a win', () => {
+    const stats = aggregateCupStats([
+      {
+        round: 'ROUND_OF_64',
+        containsBye: true,
+        topTeam: side('u1'),
+        bottomTeam: null,
+        winningTeam: side('u1'),
+      },
+    ]);
+
+    expect(stats.get('u1')).toBeUndefined();
+  });
+
   it('ignores sides with no member attached', () => {
     const stats = aggregateCupStats([
       {
