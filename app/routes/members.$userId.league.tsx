@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
@@ -579,18 +579,55 @@ function Finish({ season }: { season: SeasonRow }) {
   );
 }
 
-/** "2020 (W2, W13) \u00b7 2021 (W7, W16)" - weeks collected under their season. */
-function meetingsByYear(meetings: HeadToHeadRow['meetings']): string {
-  const byYear = new Map<number, number[]>();
+const MEETING_TONE: Record<
+  HeadToHeadRow['meetings'][number]['result'],
+  string
+> = {
+  W: 'text-green-400',
+  L: 'text-red-400',
+  T: 'text-slate-400',
+};
+
+/**
+ * "2020 (W2, W13) \u00b7 2021 (W7, W16)" - weeks collected under their season,
+ * each coloured by how that meeting went.
+ */
+function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
+  const byYear = new Map<number, HeadToHeadRow['meetings']>();
   for (const meeting of meetings) {
-    const weeks = byYear.get(meeting.year);
-    if (weeks) weeks.push(meeting.week);
-    else byYear.set(meeting.year, [meeting.week]);
+    const games = byYear.get(meeting.year);
+    if (games) games.push(meeting);
+    else byYear.set(meeting.year, [meeting]);
   }
 
-  return Array.from(byYear.entries())
-    .map(([year, weeks]) => `${year} (${weeks.map(w => `W${w}`).join(', ')})`)
-    .join(' \u00b7 ');
+  return (
+    <>
+      {Array.from(byYear.entries()).map(([year, games], i) => (
+        <Fragment key={year}>
+          {i > 0 && ' \u00b7 '}
+          {year} (
+          {games.map((game, j) => (
+            <Fragment key={game.week}>
+              {j > 0 && ', '}
+              <span
+                className={MEETING_TONE[game.result]}
+                title={
+                  game.result === 'W'
+                    ? 'Win'
+                    : game.result === 'L'
+                    ? 'Loss'
+                    : 'Tie'
+                }
+              >
+                W{game.week}
+              </span>
+            </Fragment>
+          ))}
+          )
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
@@ -617,7 +654,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
             </td>
             <td className='px-2 py-2 text-right'>{row.meetingCount}</td>
             <td className='px-2 py-2 text-xs text-slate-400'>
-              {meetingsByYear(row.meetings)}
+              <MeetingsByYear meetings={row.meetings} />
             </td>
           </tr>
         ))}

@@ -91,7 +91,7 @@ export type HeadToHeadRow = {
   ties: number;
   meetingCount: number;
   /** Every time they have played, oldest first. */
-  meetings: { year: number; week: number }[];
+  meetings: { year: number; week: number; result: GameResult }[];
 };
 
 export type LeagueProfile = {
@@ -527,7 +527,11 @@ function buildHeadToHead(gameLog: GameLogRow[]): HeadToHeadRow[] {
     else existing.ties++;
 
     existing.meetingCount++;
-    existing.meetings.push({ year: game.year, week: game.week });
+    existing.meetings.push({
+      year: game.year,
+      week: game.week,
+      result: game.result,
+    });
 
     opponents.set(game.opponentUserId, existing);
   }
