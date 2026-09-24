@@ -17,6 +17,7 @@
     "dev": "remix vite:dev",
     "dev:all": "run-p dev dev:bot dev:scheduler",
     "dev:bot": "tsx watch bot/server.ts",
+    "dev:log": "remix vite:dev 2>&1 | tee dev.log",
     "dev:scheduler": "tsx watch scheduler/server.ts",
     "docker": "docker-compose up -d",
     "format": "prettier --check . '!./postgres-data'",
