@@ -209,6 +209,30 @@ export const sleeperStatsJson = z.record(
 export type SleeperStatsJson = z.infer<typeof sleeperStatsJson>;
 
 /**
+ * Weekly stat lines from the undocumented `/stats/nfl/{year}/{week}` endpoint.
+ * Unlike `/v1/stats`, each row says which team the player was on and which
+ * game it was, as of that week - the only way to place a player who has since
+ * moved teams or retired.
+ */
+export const sleeperHistoricalStatsJson = z.array(
+  z.object({
+    player_id: z.string(),
+    team: z.string().nullable(),
+    game_id: z.string().nullable(),
+    week: z.number(),
+    stats: sleeperStatsJson.element,
+    player: z.object({
+      first_name: z.string(),
+      last_name: z.string(),
+      position: z.string().nullable(),
+    }),
+  }),
+);
+export type SleeperHistoricalStatsJson = z.infer<
+  typeof sleeperHistoricalStatsJson
+>;
+
+/**
  * Rostership research, keyed by Sleeper player ID. Only `owned` is read, and
  * the entries are permissive because Sleeper adds fields to this one freely.
  */
@@ -232,9 +256,10 @@ export const sleeperGraphqlNflGames = z.object({
       game_id: z.string(),
       metadata: z.object({
         home_team: z.string(),
-        home_score: z.number().optional(),
+        // Null for a game that was postponed, like DEN @ NE in 2020 week 5.
+        home_score: z.number().nullish(),
         away_team: z.string(),
-        away_score: z.number().optional(),
+        away_score: z.number().nullish(),
         date_time: z.string().datetime({ offset: true }),
       }),
     }),

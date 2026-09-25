@@ -903,6 +903,7 @@ model User {
   waiverTransactions   WaiverTransaction[]
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
+  memberAliases        MemberAlias[]
 
   @@index([mergedIntoId])
 }
@@ -1013,4 +1014,20 @@ model FeatureFlag {
   key       String   @id
   enabled   Boolean  @default(false)
   updatedAt DateTime @updatedAt
+}
+
+// A name someone went by in a spreadsheet the site imports history from, tied
+// to the member it belongs to. Matching is saved as it is made so an import can
+// be worked through over several sittings, and the next import reuses it.
+model MemberAlias {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // normalizeName() of the name as the sheet spells it.
+  alias String @unique
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@index([userId])
 }

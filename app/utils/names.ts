@@ -32,3 +32,55 @@ export const namesLookAlike = (a: string, b: string) => {
 
   return shorter.length >= MIN_CONTAINMENT_LENGTH && longer.includes(shorter);
 };
+
+type SuggestableMember = { id: string; discordName: string };
+
+/**
+ * Builds a lookup that suggests the member a name probably belongs to. A name
+ * only suggests someone when exactly one member matches - with two candidates
+ * there is no telling which of them it is, and a wrong suggestion is worse
+ * than none.
+ *
+ * `lookAlike` falls back to `namesLookAlike` when nobody matches exactly. Old
+ * spreadsheets are full of names like "Klay" for "klaystation", but the
+ * fallback is looser, so it is opt-in.
+ */
+export const createMemberSuggester = (
+  members: SuggestableMember[],
+  { lookAlike = false }: { lookAlike?: boolean } = {},
+) => {
+  const memberIdsByName = new Map<string, string[]>();
+  for (const member of members) {
+    const key = normalizeName(member.discordName);
+    // A name that is all emoji or all punctuation normalizes away to nothing,
+    // and nothing is not a name that matches anybody.
+    if (!key) {
+      continue;
+    }
+    memberIdsByName.set(key, [...(memberIdsByName.get(key) ?? []), member.id]);
+  }
+
+  return (...names: (string | null)[]) => {
+    for (const name of names) {
+      const key = name ? normalizeName(name) : '';
+      const matches = key ? memberIdsByName.get(key) : undefined;
+      if (matches?.length === 1) {
+        return matches[0];
+      }
+    }
+
+    if (lookAlike) {
+      for (const name of names) {
+        if (!name) continue;
+        const matches = members.filter(member =>
+          namesLookAlike(name, member.discordName),
+        );
+        if (matches.length === 1) {
+          return matches[0].id;
+        }
+      }
+    }
+
+    return '';
+  };
+};

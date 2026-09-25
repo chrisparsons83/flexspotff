@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
+import GoBox from '~/components/ui/GoBox';
 import {
   QB_STREAMING_COUNTING_WEEKS,
   qbStreamingSeasonTotal,
@@ -12,7 +13,10 @@ import {
   getQBSelectionsByYear,
 } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
-import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
+import {
+  getQBStreamingWeeks,
+  getQBStreamingYears,
+} from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -25,8 +29,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Error('No active season currently');
   }
 
-  const qbStreamingWeeks = await getQBStreamingWeeks(year);
-  const qbSelections = await getQBSelectionsByYear(year);
+  const [qbStreamingWeeks, qbSelections, years] = await Promise.all([
+    getQBStreamingWeeks(year),
+    getQBSelectionsByYear(year),
+    getQBStreamingYears(),
+  ]);
+  // The current season is linked from the nav before its first week exists,
+  // so it shows an empty table rather than a 404.
+  if (qbStreamingWeeks.length === 0 && year !== currentSeason.year) {
+    throw new Response('No QB streaming that year', { status: 404 });
+  }
 
   // The best-twelve rule only applies from 2025; qbStreamingUsesTopWeeks owns
   // the cutover, shared with the profile title badges.
@@ -120,6 +132,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       year,
       currentSeason,
       isTop12Season: true,
+      years,
       qbStreamingWeeks: qbStreamingWeeks
         .filter(week => week.isScored)
         .sort((a, b) => a.week - b.week),
@@ -127,7 +140,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   }
 
   // Original logic for pre-2025 seasons
-  const currentWeekPicks = await getQBSelectionsByWeek(qbStreamingWeeks[0].id);
+  const currentWeekPicks =
+    qbStreamingWeeks.length > 0
+      ? await getQBSelectionsByWeek(qbStreamingWeeks[0].id)
+      : [];
 
   const qbStreamingResults: QBStreamingStandingsRow[] = [];
   for (const qbSelection of qbSelections) {
@@ -170,6 +186,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     year,
     currentSeason,
     isTop12Season: false,
+    years,
     qbStreamingWeeks: [],
   });
 };
@@ -182,13 +199,27 @@ export default function QBStreamingStandingsYearIndex() {
     currentSeason,
     isTop12Season,
     qbStreamingWeeks,
+    years,
   } = useTypedLoaderData<typeof loader>();
 
   const displayYear = +year !== currentSeason.year ? year : '';
 
+  const yearPicker = (
+    <div className='float-right mb-4'>
+      <GoBox
+        options={years.map(optionYear => ({
+          label: `${optionYear}`,
+          url: `/games/qb-streaming/standings/${optionYear}`,
+        }))}
+        buttonText='Choose Year'
+      />
+    </div>
+  );
+
   if (isTop12Season) {
     return (
       <>
+        {yearPicker}
         <h2>{displayYear} Overall Standings</h2>
         <table>
           <thead>
@@ -249,6 +280,7 @@ export default function QBStreamingStandingsYearIndex() {
   // Original rendering for pre-2025 seasons
   return (
     <>
+      {yearPicker}
       <h2>{displayYear} Overall Standings</h2>
       <table>
         <thead>

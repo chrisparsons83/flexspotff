@@ -119,6 +119,24 @@ describe('userMerge', () => {
     expect(link?.userId).toBe(canon.id);
   });
 
+  it('moves imported sheet names so later imports land on the canonical member', async () => {
+    const [stub, canon, admin] = await Promise.all([
+      makeUser('Tre Duce'),
+      makeUser('treduce'),
+      makeUser('Admin'),
+    ]);
+    await prisma.memberAlias.create({
+      data: { alias: 'treduce', userId: stub.id },
+    });
+
+    await mergeUsers(stub.id, canon.id, admin.id);
+
+    const alias = await prisma.memberAlias.findUnique({
+      where: { alias: 'treduce' },
+    });
+    expect(alias?.userId).toBe(canon.id);
+  });
+
   it('moves non-colliding entries and leaves colliding ones behind', async () => {
     const [dup, canon, admin] = await Promise.all([
       makeUser('Dup'),

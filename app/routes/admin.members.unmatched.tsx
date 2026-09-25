@@ -19,7 +19,7 @@ import {
 } from '~/models/sleeperUser.server';
 import { getUser, getUsers } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { normalizeName } from '~/utils/names';
+import { createMemberSuggester } from '~/utils/names';
 
 const zFormData = z.object({
   sleeperOwnerID: z.string().min(1, 'No Sleeper owner ID was submitted.'),
@@ -120,26 +120,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // A Discord name that belongs to two members can't be suggested, since there
   // is no way to tell which of them the Sleeper account is.
-  const memberIdsByName = new Map<string, string[]>();
-  for (const member of members) {
-    const key = normalizeName(member.discordName);
-    // A name that is all emoji or all punctuation normalizes away to nothing,
-    // and nothing is not a name that matches anybody.
-    if (!key) {
-      continue;
-    }
-    memberIdsByName.set(key, [...(memberIdsByName.get(key) ?? []), member.id]);
-  }
-  const suggestMemberId = (...names: (string | null)[]) => {
-    for (const name of names) {
-      const key = name ? normalizeName(name) : '';
-      const matches = key ? memberIdsByName.get(key) : undefined;
-      if (matches?.length === 1) {
-        return matches[0];
-      }
-    }
-    return '';
-  };
+  const suggestMemberId = createMemberSuggester(members);
 
   const leaguesWithUnmatched = await Promise.all(
     leagues.map(async league => {
