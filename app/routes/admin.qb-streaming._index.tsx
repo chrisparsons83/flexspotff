@@ -7,6 +7,7 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
+import { scoreQbStats } from '~/libs/qb-streaming/scoring';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import {
@@ -21,7 +22,6 @@ import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { areAllNflGamesComplete } from '~/utils/helpers';
 
-// If the below fields do not exist, it is safe to assume they are 0.
 export const action = async ({ request }: ActionFunctionArgs) => {
   // The admin layout only requires an editor, and layout loaders do not guard
   // child actions, so this has to check for admin itself.
@@ -88,21 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const promises: Promise<QBStreamingWeekOption>[] = [];
       for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
         const stats = sleeperJson[qbStreamingOption.player.sleeperId] || {};
-        const score =
-          Math.round(
-            100 *
-              (0.04 * (stats.pass_yd || 0) +
-                4 * (stats.pass_td || 0) +
-                0.1 * (stats.rush_yd || 0) +
-                6 * (stats.rush_td || 0) +
-                0.1 * (stats.rec_yd || 0) +
-                6 * (stats.rec_td || 0) +
-                -2 * (stats.fum_lost || 0) +
-                -2 * (stats.pass_int || 0) +
-                2 * (stats.pass_2pt || 0) +
-                2 * (stats.rush_2pt || 0) +
-                2 * (stats.rec_2pt || 0)),
-          ) / 100;
+        const score = scoreQbStats(stats);
         promises.push(
           updateQBStreamingWeekOptionScore(qbStreamingOption.id, score),
         );
@@ -148,6 +134,10 @@ export default function AdminQBStreaming() {
   return (
     <>
       <h2>QB Streaming</h2>
+      <p>
+        Seasons before the site ran QB streaming can be brought in from their
+        Google Sheets on the <Link to='./import'>import page</Link>.
+      </p>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>

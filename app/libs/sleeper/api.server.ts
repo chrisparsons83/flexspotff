@@ -5,6 +5,7 @@ import {
   sleeperDraftListJson,
   sleeperDraftPicksJson,
   sleeperGraphqlNflGames,
+  sleeperHistoricalStatsJson,
   sleeperLeagueInfoJson,
   sleeperLeagueUsersJson,
   sleeperMatchupJson,
@@ -90,6 +91,17 @@ export const getWeeklyStats = (
     sleeperStatsJson,
   );
 };
+
+/**
+ * A week's stat lines with the player's team and game attached, for seasons
+ * the site did not run live. Both positions QB streaming picks were ever made
+ * from are asked for - Sleeper lists Taysom Hill as a TE.
+ */
+export const getHistoricalWeeklyStats = (year: number, week: number) =>
+  sleeperFetch(
+    `/stats/nfl/${year}/${week}?season_type=regular&position[]=QB&position[]=TE`,
+    sleeperHistoricalStatsJson,
+  );
 
 /**
  * Rostership and projections live on api.sleeper.com rather than

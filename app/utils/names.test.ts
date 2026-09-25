@@ -1,4 +1,4 @@
-import { namesLookAlike, normalizeName } from './names';
+import { createMemberSuggester, namesLookAlike, normalizeName } from './names';
 import { describe, expect, it } from 'vitest';
 
 describe('normalizeName', () => {
@@ -38,5 +38,42 @@ describe('namesLookAlike', () => {
 
   it('does not match unrelated names', () => {
     expect(namesLookAlike('Panda', 'iWaffle')).toBe(false);
+  });
+});
+
+describe('createMemberSuggester', () => {
+  const members = [
+    { id: 'klay', discordName: 'klaystation' },
+    { id: 'panda', discordName: 'Panda' },
+    { id: 'pandabair', discordName: 'pandabair' },
+    { id: 'rob-1', discordName: 'Rob' },
+    { id: 'rob-2', discordName: 'rob' },
+  ];
+
+  it('suggests an exact match only when it is unique', () => {
+    const suggest = createMemberSuggester(members);
+
+    expect(suggest('PANDA')).toBe('panda');
+    expect(suggest('Rob')).toBe('');
+  });
+
+  it('tries each name in turn', () => {
+    expect(createMemberSuggester(members)(null, 'nobody', 'Pandabair')).toBe(
+      'pandabair',
+    );
+  });
+
+  it('only falls back to look-alikes when asked to', () => {
+    expect(createMemberSuggester(members)('Klay')).toBe('');
+    expect(createMemberSuggester(members, { lookAlike: true })('Klay')).toBe(
+      'klay',
+    );
+  });
+
+  it('does not suggest a look-alike two members share', () => {
+    // Both "Panda" and "pandabair" are inside "pandabair2".
+    expect(
+      createMemberSuggester(members, { lookAlike: true })('pandabair2'),
+    ).toBe('');
   });
 });

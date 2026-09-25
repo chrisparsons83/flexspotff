@@ -11,3 +11,6 @@ app/styles/tailwind.css
 postgres-data
 # Captured from Challonge as-is; formatting turns its embedded JSON into JS
 app/libs/__fixtures__/*.html
+
+# Captured from Google Sheets and Sleeper as-is
+app/libs/__fixtures__/qb-streaming-*

@@ -175,6 +175,14 @@ const MERGE_TABLES = [
     slotOf: null,
   },
   {
+    table: 'memberAlias',
+    label: 'Imported sheet names',
+    select: {},
+    // An alias is unique on its own, so the canonical member can never already
+    // hold the same one.
+    slotOf: null,
+  },
+  {
     table: 'dFSSurvivorUserYear',
     label: 'DFS Survivor seasons',
     select: { year: true },

@@ -75,3 +75,13 @@ export async function updateQBStreamingWeek(qbStreamingWeek: QBStreamingWeek) {
     data: qbStreamingWeek,
   });
 }
+
+/** Every season with at least one QB streaming week, newest first. */
+export async function getQBStreamingYears() {
+  const years = await prisma.qBStreamingWeek.groupBy({
+    by: ['year'],
+    orderBy: { year: 'desc' },
+  });
+
+  return years.map(({ year }) => year);
+}
