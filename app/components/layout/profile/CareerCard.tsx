@@ -12,7 +12,7 @@ export default function CareerCard({
   meter,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   lead: ReactNode;
   leadNote: ReactNode;
   /** A full-width bar under the headline, so a wide card is not mostly air. */
@@ -45,6 +45,7 @@ export function MiniStat({
   value,
   unit,
   detail,
+  hint,
   tone = 'text-slate-100',
 }: {
   label: string;
@@ -53,11 +54,18 @@ export function MiniStat({
   unit?: string;
   /** Trails the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
+  /** Hover text for a stat whose label cannot say everything it counts. */
+  hint?: string;
   tone?: string;
 }) {
   return (
     <div className='flex flex-col'>
-      <dt className='text-xs text-slate-400'>{label}</dt>
+      <dt
+        className={clsx('text-xs text-slate-400', hint && 'cursor-help')}
+        title={hint}
+      >
+        {label}
+      </dt>
       <dd className={clsx('m-0 mt-0.5 text-xl font-bold tabular-nums', tone)}>
         {value}
         {unit && (
@@ -68,7 +76,7 @@ export function MiniStat({
         {/* Inline rather than on a line of its own, so every small stat is the
             same height and the cards stay level. */}
         {detail && (
-          <span className='ml-2 text-xs font-normal text-slate-500'>
+          <span className='ml-2 whitespace-nowrap text-xs font-normal text-slate-500'>
             {detail}
           </span>
         )}
