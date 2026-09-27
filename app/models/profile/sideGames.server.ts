@@ -36,52 +36,6 @@ const round = (value: number, digits = 2) => value.toFixed(digits);
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/** QB Streaming: a standard and a deep pick each week. */
-export async function getQbStreamingProfile(
-  userId: string,
-): Promise<ContestProfile> {
-  const selections = await prisma.qBSelection.findMany({
-    where: { userId },
-    include: {
-      qbStreamingWeek: { select: { year: true, week: true } },
-      standardPlayer: { select: { pointsScored: true } },
-      deepPlayer: { select: { pointsScored: true } },
-    },
-  });
-
-  if (selections.length === 0) return empty;
-
-  const byYear = new Map<number, number>();
-  let total = 0;
-  let bestWeek = 0;
-
-  for (const selection of selections) {
-    const points =
-      selection.standardPlayer.pointsScored + selection.deepPlayer.pointsScored;
-    total += points;
-    bestWeek = Math.max(bestWeek, points);
-    const year = selection.qbStreamingWeek.year;
-    byYear.set(year, (byYear.get(year) ?? 0) + points);
-  }
-
-  return {
-    hasPlayed: true,
-    seasonsPlayed: byYear.size,
-    headline: [
-      { label: 'Total Points', value: round(total) },
-      { label: 'Best Week', value: round(bestWeek) },
-      { label: 'Weeks Entered', value: selections.length.toString() },
-    ],
-    seasons: Array.from(byYear.entries())
-      .map(([year, points]) => ({
-        year,
-        label: 'Points',
-        value: round(points),
-      }))
-      .sort((a, b) => b.year - a.year),
-  };
-}
-
 /**
  * Spread Pool: the only contest with a bankroll. Missed weeks carry their own
  * penalty row, so they are added in separately.
