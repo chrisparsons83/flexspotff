@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
+import MemberName from '~/components/ui/MemberName';
 import type { GetLeaguesByYearElement } from '~/models/league.server';
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
@@ -43,7 +44,7 @@ export default function LeagueTable({ league }: Props) {
               <td>
                 {team.user ? (
                   <ProfileLink userId={team.user.id}>
-                    {team.user.discordName}
+                    <MemberName user={team.user} />
                   </ProfileLink>
                 ) : null}
               </td>

@@ -8,7 +8,7 @@ import {
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import MemberSelect from '~/components/ui/MemberSelect';
+import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
 import type { SheetPick } from '~/libs/qb-streaming/history';
 import { resolutionField } from '~/libs/qb-streaming/history';
 import {
@@ -173,10 +173,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const members = (await getUsers()).map(({ id, discordName }) => ({
-    id,
-    discordName,
-  }));
+  const members = (await getUsers()).map(toSelectableMember);
 
   try {
     const preview = await previewQbStreamingHistory({

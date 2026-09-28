@@ -1,14 +1,25 @@
 import FlexSpotClient, { getCommandsFromLocal } from './client.js';
-import type { ChatInputCommandInteraction } from 'discord.js';
-import { Events, GatewayIntentBits } from 'discord.js';
+import type {
+  ChatInputCommandInteraction,
+  GuildMember,
+  PartialGuildMember,
+} from 'discord.js';
+import { Events, GatewayIntentBits, Partials } from 'discord.js';
 import 'dotenv/config';
 import { prisma } from '~/db.server';
+import { markMemberLeft, syncOneMember } from '~/libs/discord-members.server';
+import type { DiscordProfile } from '~/models/user.server';
+import { SERVER_DISCORD_ID } from '~/utils/constants';
 import { envSchema } from '~/utils/helpers';
 
 const env = envSchema.parse(process.env);
 
 const client = FlexSpotClient.getClient({
-  intents: [GatewayIntentBits.Guilds],
+  // GuildMembers is privileged (Server Members Intent in the developer portal).
+  // It is what delivers nickname, avatar and role changes as they happen.
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  // Without this, a member leaving is only reported if they were cached.
+  partials: [Partials.GuildMember],
 });
 
 /**
@@ -79,6 +90,69 @@ client.on(Events.InteractionCreate, async interaction => {
     } catch (error) {
       console.error(error);
     }
+  }
+});
+
+function profileFromGuildMember(member: GuildMember): DiscordProfile {
+  return {
+    discordId: member.id,
+    username: member.user.username,
+    globalName: member.user.globalName,
+    userAvatar: member.user.avatar,
+    inGuild: true,
+    nick: member.nickname,
+    guildAvatar: member.avatar,
+    // The @everyone role shares the server's ID, and Discord leaves it out of
+    // the member objects the login and the hourly sync read.
+    roles: member.roles.cache
+      .filter(role => role.id !== member.guild.id)
+      .map(role => role.id),
+  };
+}
+
+/**
+ * Keeps the site's copy of a member's name, avatar and roles current as they
+ * change on the server. The hourly sync-member-profiles job backs this up for
+ * anything missed while the bot was down, so a failure here is only logged.
+ */
+async function syncMember(member: GuildMember | PartialGuildMember) {
+  if (member.guild.id !== SERVER_DISCORD_ID || member.user?.bot) {
+    return;
+  }
+
+  try {
+    const full = member.partial ? await member.fetch() : member;
+    await syncOneMember(profileFromGuildMember(full));
+  } catch (error) {
+    console.error(`Could not sync member ${member.id}:`, error);
+  }
+}
+
+client.on(Events.GuildMemberAdd, syncMember);
+client.on(Events.GuildMemberAvailable, syncMember);
+client.on(Events.GuildMemberUpdate, (_oldMember, newMember) =>
+  syncMember(newMember),
+);
+
+// A change to someone's account (display name, account avatar) arrives as a
+// user update rather than a member update.
+client.on(Events.UserUpdate, async (_oldUser, newUser) => {
+  const guild = client.guilds.cache.get(SERVER_DISCORD_ID);
+  const member = guild?.members.cache.get(newUser.id);
+  if (member) {
+    await syncMember(member);
+  }
+});
+
+client.on(Events.GuildMemberRemove, async member => {
+  if (member.guild.id !== SERVER_DISCORD_ID) {
+    return;
+  }
+
+  try {
+    await markMemberLeft(member.id);
+  } catch (error) {
+    console.error(`Could not mark member ${member.id} as left:`, error);
   }
 });
 

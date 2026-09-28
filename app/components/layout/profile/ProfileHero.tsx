@@ -2,6 +2,7 @@ import BadgeRow from './BadgeRow';
 import StatTile from './StatTile';
 import { Link } from '@remix-run/react';
 import type { ReactNode } from 'react';
+import MemberAvatar from '~/components/ui/MemberAvatar';
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 type Props = {
@@ -12,33 +13,29 @@ type Props = {
 
 export default function ProfileHero({ summary, tabs }: Props) {
   const { user, headline, badges } = summary;
-  const avatar = user.discordAvatar
-    ? `https://cdn.discordapp.com/${user.discordAvatar}`
-    : null;
+  // A long run of nicknames would swamp the header; the latest few say enough.
+  const pastNames = user.pastNames.slice(0, 5);
 
   return (
     <section className='not-prose overflow-hidden rounded-lg border border-slate-600/40 bg-slate-800/40'>
       <div className='p-4 md:p-6'>
         <div className='flex flex-wrap items-center gap-4'>
-          {avatar ? (
-            <img
-              src={avatar}
-              alt=''
-              className='h-16 w-16 rounded-full bg-slate-700'
-            />
-          ) : (
-            <div
-              aria-hidden='true'
-              className='h-16 w-16 rounded-full bg-slate-700'
-            />
-          )}
+          <MemberAvatar user={user} size={64} />
           <div>
             <h2 className='m-0 text-2xl font-bold text-white'>
               {user.discordName}
             </h2>
             <p className='m-0 mt-1 text-sm text-slate-400'>
+              {user.discordUsername && user.discordUsername !== user.discordName
+                ? `@${user.discordUsername} · `
+                : ''}
               Member since {user.memberSince}
             </p>
+            {pastNames.length > 0 && (
+              <p className='m-0 mt-1 text-xs text-slate-400'>
+                Also known as {pastNames.join(', ')}
+              </p>
+            )}
           </div>
         </div>
 

@@ -1,4 +1,7 @@
+import type { DiscordProfile } from './user.server';
 import {
+  applyDiscordProfile,
+  getPastNames,
   getUserByDiscordId,
   getUsers,
   getUsersIncludingMerged,
@@ -99,13 +102,16 @@ describe('resolveMemberForLogin', () => {
     await truncateDB();
   });
 
-  const login = (discordId: string, overrides = {}) =>
+  const login = (discordId: string) =>
     resolveMemberForLogin({
       discordId,
-      discordName: 'New Nick',
-      discordAvatar: 'new-avatar',
-      discordRoles: ['role-member'],
-      ...overrides,
+      username: 'handle',
+      globalName: 'Display',
+      userAvatar: 'user-hash',
+      inGuild: true,
+      nick: 'New Nick',
+      guildAvatar: 'new-avatar',
+      roles: ['role-member'],
     });
 
   it('refreshes the profile of the member who actually signed in', async () => {
@@ -172,5 +178,147 @@ describe('resolveMemberForLogin', () => {
     expect(stored?.discordName).toBe('pandabair');
     expect(stored?.discordRoles).toEqual(['role-admin']);
     expect(stored?.discordAvatar).toBe('main-avatar');
+  });
+});
+
+describe('applyDiscordProfile', () => {
+  beforeEach(async () => {
+    await truncateDB();
+  });
+
+  const inServer = (
+    overrides: Partial<Extract<DiscordProfile, { inGuild: true }>> = {},
+  ): DiscordProfile => ({
+    discordId: 'discord-a',
+    username: 'pandabair',
+    globalName: 'Panda Bair',
+    userAvatar: 'user-hash',
+    inGuild: true,
+    nick: null,
+    guildAvatar: null,
+    roles: ['role-member'],
+    ...overrides,
+  });
+
+  const member = () =>
+    prisma.user.create({
+      data: {
+        discordId: 'discord-a',
+        discordName: 'pandabair',
+        discordAvatar: '',
+        createdAt: new Date('2020-01-01'),
+      },
+    });
+
+  it('shows the server nickname over the display name and handle', async () => {
+    const user = await member();
+
+    const updated = await applyDiscordProfile(
+      user,
+      inServer({ nick: 'Panda' }),
+    );
+
+    expect(updated.discordName).toBe('Panda');
+    expect(updated.discordUsername).toBe('pandabair');
+    expect(updated.inGuild).toBe(true);
+  });
+
+  it('shows the display name, not the handle, when there is no nickname', async () => {
+    const user = await member();
+
+    const updated = await applyDiscordProfile(user, inServer());
+
+    expect(updated.discordName).toBe('Panda Bair');
+  });
+
+  it('prefers the server avatar, falling back to the account avatar', async () => {
+    const user = await member();
+
+    const withServerAvatar = await applyDiscordProfile(
+      user,
+      inServer({ guildAvatar: 'guild-hash' }),
+    );
+    expect(withServerAvatar.discordAvatar).toBe(
+      'guilds/214093545747906562/users/discord-a/avatars/guild-hash.webp',
+    );
+
+    const without = await applyDiscordProfile(withServerAvatar, inServer());
+    expect(without.discordAvatar).toBe('avatars/discord-a/user-hash.webp');
+  });
+
+  it('records each name the member goes by', async () => {
+    const user = await member();
+
+    const first = await applyDiscordProfile(
+      user,
+      inServer({ nick: 'Panda' }),
+      new Date('2026-01-01'),
+    );
+    await applyDiscordProfile(
+      first,
+      inServer({ nick: 'Bamboo Eater' }),
+      new Date('2026-02-01'),
+    );
+
+    const past = await getPastNames(user.id, 'Bamboo Eater');
+    expect(past.map(p => p.name)).toEqual(['Panda', 'pandabair']);
+
+    // The name they had before history began is backfilled from when they
+    // joined.
+    const original = await prisma.userNameHistory.findFirst({
+      where: { userId: user.id, name: 'pandabair' },
+    });
+    expect(original?.firstSeenAt).toEqual(new Date('2020-01-01'));
+  });
+
+  it('does not write when nothing changed', async () => {
+    const user = await member();
+    const synced = await applyDiscordProfile(user, inServer());
+
+    const again = await applyDiscordProfile(synced, inServer());
+
+    expect(again).toBe(synced);
+  });
+
+  it('keeps the last server name, avatar and roles once they leave', async () => {
+    const user = await member();
+    const synced = await applyDiscordProfile(
+      user,
+      inServer({ nick: 'Panda', guildAvatar: 'guild-hash', roles: ['admin'] }),
+    );
+
+    const left = await applyDiscordProfile(synced, {
+      discordId: 'discord-a',
+      username: 'pandabair',
+      globalName: 'Panda Bair',
+      userAvatar: 'new-user-hash',
+      inGuild: false,
+    });
+
+    expect(left.inGuild).toBe(false);
+    expect(left.discordName).toBe('Panda');
+    expect(left.discordAvatar).toContain('guild-hash');
+    expect(left.discordUserAvatar).toBe('new-user-hash');
+    // Not confirmed gone (a failed login lookup, say): roles stay.
+    expect(left.discordRoles).toEqual(['admin']);
+
+    const gone = await applyDiscordProfile(left, {
+      discordId: 'discord-a',
+      username: 'pandabair',
+      globalName: 'Panda Bair',
+      userAvatar: 'new-user-hash',
+      inGuild: false,
+      confirmedGone: true,
+    });
+    expect(gone.discordRoles).toEqual([]);
+    expect(gone.discordName).toBe('Panda');
+  });
+
+  it('refuses a profile that belongs to another account', async () => {
+    const user = await member();
+
+    await expect(
+      applyDiscordProfile(user, inServer({ discordId: 'discord-b' })),
+    ).rejects.toThrow();
   });
 });

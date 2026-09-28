@@ -137,6 +137,34 @@ describe('userMerge', () => {
     expect(alias?.userId).toBe(canon.id);
   });
 
+  it('carries past display names over, so the member is findable by either', async () => {
+    const [dup, canon, admin] = await Promise.all([
+      makeUser('Panda'),
+      makeUser('pandabair'),
+      makeUser('Admin'),
+    ]);
+    await prisma.userNameHistory.createMany({
+      data: [
+        { userId: dup.id, name: 'Panda' },
+        { userId: dup.id, name: 'Shared Nick' },
+        { userId: canon.id, name: 'pandabair' },
+        { userId: canon.id, name: 'Shared Nick' },
+      ],
+    });
+
+    await mergeUsers(dup.id, canon.id, admin.id);
+
+    const names = await prisma.userNameHistory.findMany({
+      where: { userId: canon.id },
+    });
+    // Sorted here, not by the database, whose collation differs by setup.
+    expect(names.map(n => n.name).sort()).toEqual([
+      'Panda',
+      'Shared Nick',
+      'pandabair',
+    ]);
+  });
+
   it('moves non-colliding entries and leaves colliding ones behind', async () => {
     const [dup, canon, admin] = await Promise.all([
       makeUser('Dup'),

@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import GoBox from '~/components/ui/GoBox';
+import MemberName from '~/components/ui/MemberName';
 import {
   QB_STREAMING_COUNTING_WEEKS,
   qbStreamingSeasonTotal,
@@ -105,6 +106,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
       qbStreamingResults.push({
         discordName: user.discordName,
+        discordUsername: user.discordUsername,
         userId: user.id,
         pointsScored: totalPoints,
         weeklyScores: weeklyScoresWithStatus,
@@ -148,8 +150,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const qbStreamingResults: QBStreamingStandingsRow[] = [];
   for (const qbSelection of qbSelections) {
     const existingResult = qbStreamingResults.findIndex(
-      qbStreamingResult =>
-        qbStreamingResult.discordName === qbSelection.user.discordName,
+      qbStreamingResult => qbStreamingResult.userId === qbSelection.user.id,
     );
     if (existingResult !== -1) {
       qbStreamingResults[existingResult].pointsScored +=
@@ -158,6 +159,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     } else {
       qbStreamingResults.push({
         discordName: qbSelection.user.discordName,
+        discordUsername: qbSelection.user.discordUsername,
         userId: qbSelection.user.id,
         pointsScored:
           qbSelection.standardPlayer.pointsScored +
@@ -244,7 +246,9 @@ export default function QBStreamingStandingsYearIndex() {
               return (
                 <tr key={result.userId}>
                   <td>{result.rank}</td>
-                  <td>{result.discordName}</td>
+                  <td>
+                    <MemberName user={result} />
+                  </td>
                   <td>{result.pointsScored.toFixed(2)}</td>
                   {qbStreamingWeeks.map(week => {
                     const weekScore = resultWithWeekly.weeklyScores?.find(
@@ -311,7 +315,7 @@ export default function QBStreamingStandingsYearIndex() {
               <QBStreamingStandingsRowComponent
                 key={result.userId}
                 rank={result.rank}
-                discordName={result.discordName}
+                user={result}
                 pointsScored={result.pointsScored}
                 standardPlayer={standardPlayer}
                 deepPlayer={deepPlayer}

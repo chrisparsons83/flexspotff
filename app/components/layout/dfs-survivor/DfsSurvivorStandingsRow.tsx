@@ -1,6 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import type { DFSSurvivorUserEntry, User } from '@prisma/client';
 import { useState } from 'react';
+import MemberName from '~/components/ui/MemberName';
 
 type Props = {
   rank: number | undefined;
@@ -112,7 +113,7 @@ export default function DfsSurvivorStandingsRow({
       <tr>
         <td>{rank}</td>
         <td className='flex items-center gap-3'>
-          {user.discordName}{' '}
+          <MemberName user={user} />{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}

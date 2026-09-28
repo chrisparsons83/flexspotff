@@ -11,6 +11,7 @@ type QBStreamingWeekCreateInput = Omit<
 export type QBStreamingStandingsRow = {
   rank?: number;
   discordName: User['discordName'];
+  discordUsername: User['discordUsername'];
   userId: User['id'];
   pointsScored: number;
 };

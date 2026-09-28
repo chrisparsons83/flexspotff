@@ -871,9 +871,26 @@ model User {
   updatedAt DateTime @updatedAt
 
   discordId     String   @unique
+  // What the Discord server shows for this member: server nickname, else
+  // Discord display name, else @username. Derived from the fields below by
+  // resolveDisplayName(); written on login and by the member sync, never by hand.
   discordName   String
+  // CDN path of the server avatar, else the account avatar, else empty (the
+  // client falls back to Discord's default avatar). See resolveAvatarPath().
   discordAvatar String
   discordRoles  String[]
+
+  // The raw pieces discordName and discordAvatar are built from, as Discord
+  // last reported them. Null until the member's first login or sync.
+  discordUsername    String?
+  discordGlobalName  String?
+  discordNick        String?
+  discordUserAvatar  String?
+  discordGuildAvatar String?
+  // False once the member sync stops finding them in the server. Their last
+  // known name and avatar are kept. Null means never synced.
+  inGuild            Boolean?
+  discordSyncedAt    DateTime?
 
   // A merged-away account. The row is kept as a tombstone so its discordId
   // stays claimed and a re-login resolves back to the canonical member instead
@@ -904,6 +921,7 @@ model User {
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
   memberAliases        MemberAlias[]
+  nameHistory          UserNameHistory[]
 
   @@index([mergedIntoId])
 }
@@ -1014,6 +1032,22 @@ model FeatureFlag {
   key       String   @id
   enabled   Boolean  @default(false)
   updatedAt DateTime @updatedAt
+}
+
+// Every display name a member has gone by, so a nickname that changed last week
+// can still be recognised. Written when the member sync or a login sees the
+// display name change.
+model UserNameHistory {
+  id String @id @default(cuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  name        String
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, name])
 }
 
 // A name someone went by in a spreadsheet the site imports history from, tied

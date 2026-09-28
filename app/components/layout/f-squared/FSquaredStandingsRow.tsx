@@ -1,6 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
+import MemberName from '~/components/ui/MemberName';
 import type { currentResultsBase } from '~/models/fsquared.server';
 
 type Props = {
@@ -33,7 +34,7 @@ export default function FSquaredStandingsRow({ rank, result }: Props) {
       <tr>
         <td>{rank}</td>
         <td className='flex items-center gap-3'>
-          {result.user.discordName}{' '}
+          <MemberName user={result.user} />{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}
@@ -73,7 +74,7 @@ export default function FSquaredStandingsRow({ rank, result }: Props) {
                     `Pending`
                   ) : (
                     <div className='flex items-baseline gap-2'>
-                      <div>{team.user?.discordName}</div>
+                      <div>{team.user && <MemberName user={team.user} />}</div>
                       <div className='text-sm italic text-gray-400'>
                         {team.pointsFor} pts
                       </div>

@@ -183,6 +183,14 @@ const MERGE_TABLES = [
     slotOf: null,
   },
   {
+    table: 'userNameHistory',
+    label: 'Past display names',
+    select: { name: true },
+    // Unique per member and name, so a name both accounts went by stays behind.
+    slotOf: (row: { name: string }) => row.name,
+    stayingReason: 'already went by that name',
+  },
+  {
     table: 'dFSSurvivorUserYear',
     label: 'DFS Survivor seasons',
     select: { year: true },

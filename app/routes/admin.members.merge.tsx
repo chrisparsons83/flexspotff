@@ -8,7 +8,7 @@ import {
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import MemberSelect from '~/components/ui/MemberSelect';
+import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
 import { getUsers } from '~/models/user.server';
 import {
   MergeGuardError,
@@ -115,7 +115,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ]);
 
   return typedjson({
-    members: members.map(({ id, discordName }) => ({ id, discordName })),
+    members: members.map(toSelectableMember),
     suggestions,
     alreadyMerged,
   });

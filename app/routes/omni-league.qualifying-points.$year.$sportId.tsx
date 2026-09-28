@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
 import { useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
+import MemberName from '~/components/ui/MemberName';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
@@ -128,7 +129,11 @@ export default function OmniQualifyingPointsYearIndex() {
                   </div>
                 </td>
                 <td>{position.player.displayName}</td>
-                <td>{position.player.draftPick?.team.user?.discordName}</td>
+                <td>
+                  {position.player.draftPick?.team.user && (
+                    <MemberName user={position.player.draftPick.team.user} />
+                  )}
+                </td>
                 <td>{position.points.toFixed(2)}</td>
               </tr>
             );

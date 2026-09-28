@@ -1,6 +1,7 @@
 import { LockClosedIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
+import MemberName from '~/components/ui/MemberName';
 import type { League } from '~/models/league.server';
 import type { Team, getTeamsInSeason } from '~/models/team.server';
 
@@ -66,7 +67,7 @@ export default function FSquaredEntryFormSection({
                 existingPicks ? existingPicks.includes(team.id) : false
               }
             />{' '}
-            {team.user?.discordName || 'N/A'}
+            {team.user ? <MemberName user={team.user} /> : 'N/A'}
           </label>
         </div>
       ))}
