@@ -78,6 +78,7 @@ export async function getProfileSummary(
         medianLosses: true,
         medianTies: true,
         pointsFor: true,
+        pointsAgainst: true,
         league: { select: { year: true, name: true, tier: true } },
       },
     }),
@@ -125,8 +126,9 @@ export async function getProfileSummary(
       losses: acc.losses + team.losses,
       ties: acc.ties + team.ties,
       pointsFor: acc.pointsFor + team.pointsFor,
+      pointsAgainst: acc.pointsAgainst + team.pointsAgainst,
     }),
-    { wins: 0, losses: 0, ties: 0, pointsFor: 0 },
+    { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 },
   );
 
   const playoffs = aggregatePlayoffStats(playoffGames).get(userId);
@@ -202,6 +204,10 @@ export async function getProfileSummary(
       },
       { label: 'Win %', value: winPct(career).toFixed(3).replace(/^0/, '') },
       { label: 'Points For', value: Math.round(career.pointsFor).toString() },
+      {
+        label: 'Points Against',
+        value: Math.round(career.pointsAgainst).toString(),
+      },
       { label: 'Titles', value: championships.toString() },
     ],
     badges,

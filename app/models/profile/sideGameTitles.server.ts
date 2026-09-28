@@ -6,6 +6,8 @@ import {
   qbStreamingSeasonTotal,
   winnersOf,
 } from './sideGameScoring';
+import { getSpreadPoolYears } from './spreadPool.server';
+import { buildSeasonTotals } from './spreadPoolProfile';
 import { prisma } from '~/db.server';
 import { getCurrentSeason } from '~/models/season.server';
 
@@ -134,21 +136,14 @@ async function countQbStreamingTitles(
 /**
  * Spread Pool: net won and lost, including the penalty for a missed week.
  * Only bets that were actually placed and scored count, matching
- * `getPoolGamePicksWonLoss`.
+ * `getPoolGamePicksWonLoss`. Totalled by `buildSeasonTotals`, so the badge and
+ * the finishes on the Spread Pool tab cannot disagree.
  */
 async function countSpreadPoolTitles(
   userId: string,
   inProgress: number | null,
 ): Promise<number> {
-  const entered = await prisma.poolGamePick.findMany({
-    where: { userId },
-    select: { poolGame: { select: { poolWeek: { select: { year: true } } } } },
-  });
-  const years = distinct(
-    entered
-      .map(row => row.poolGame.poolWeek?.year)
-      .filter((year): year is number => year !== undefined),
-  );
+  const years = await getSpreadPoolYears(userId);
   if (years.length === 0) return 0;
 
   const [picks, missed] = await Promise.all([
@@ -174,24 +169,32 @@ async function countSpreadPoolTitles(
     }),
   ]);
 
-  const byYear = new Map<number, Map<string, number>>();
-  const forYear = (year: number) => {
-    if (!byYear.has(year)) byYear.set(year, new Map());
-    return byYear.get(year)!;
-  };
+  // Rows whose week has gone missing have no season to count toward.
+  const seasonRow = (row: {
+    userId: string;
+    resultWonLoss: number | null;
+    poolWeek: { year: number } | null;
+  }) =>
+    row.poolWeek
+      ? [
+          {
+            userId: row.userId,
+            year: row.poolWeek.year,
+            net: row.resultWonLoss ?? 0,
+          },
+        ]
+      : [];
 
-  for (const pick of picks) {
-    const year = pick.poolGame.poolWeek?.year;
-    if (year === undefined) continue;
-    addTo(forYear(year), pick.userId, pick.resultWonLoss ?? 0);
-  }
-  for (const week of missed) {
-    const year = week.poolWeek?.year;
-    if (year === undefined) continue;
-    addTo(forYear(year), week.userId, week.resultWonLoss ?? 0);
-  }
-
-  return countWins(byYear, userId, inProgress);
+  return countWins(
+    buildSeasonTotals(
+      picks.flatMap(pick =>
+        seasonRow({ ...pick, poolWeek: pick.poolGame.poolWeek }),
+      ),
+      missed.flatMap(seasonRow),
+    ),
+    userId,
+    inProgress,
+  );
 }
 
 /** Locks: wins per week, but a week with any loss is worth nothing. */
