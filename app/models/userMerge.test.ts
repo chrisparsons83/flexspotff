@@ -156,9 +156,9 @@ describe('userMerge', () => {
 
     const names = await prisma.userNameHistory.findMany({
       where: { userId: canon.id },
-      orderBy: { name: 'asc' },
     });
-    expect(names.map(n => n.name)).toEqual([
+    // Sorted here, not by the database, whose collation differs by setup.
+    expect(names.map(n => n.name).sort()).toEqual([
       'Panda',
       'Shared Nick',
       'pandabair',
