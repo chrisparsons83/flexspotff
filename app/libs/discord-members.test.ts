@@ -103,7 +103,7 @@ describe('syncMemberProfiles', () => {
     expect(result.renamed).toHaveLength(2);
   });
 
-  it('keeps the last known name for members who left the server', async () => {
+  it('keeps the last known name for members who left, but not their roles', async () => {
     await makeUser('101', 'Here');
     await makeUser('104', 'Gone But Remembered', {
       discordNick: 'Gone But Remembered',
@@ -121,9 +121,47 @@ describe('syncMemberProfiles', () => {
     const gone = await prisma.user.findUnique({ where: { discordId: '104' } });
     expect(gone?.inGuild).toBe(false);
     expect(gone?.discordName).toBe('Gone But Remembered');
-    expect(gone?.discordRoles).toEqual(['admin']);
+    // Kicked or banned admins must lose access to the site.
+    expect(gone?.discordRoles).toEqual([]);
     expect(gone?.discordUserAvatar).toBe('new-account-avatar');
     expect(result.notInServer).toBe(1);
+  });
+
+  it('looks up a departed account at most once a day', async () => {
+    await makeUser('101', 'Here');
+    await makeUser('104', 'Gone');
+    const { client, calls } = fakeDiscord({
+      members: [{ id: '101', username: 'here', nick: 'Here' }],
+      accounts: [{ id: '104', username: 'gone' }],
+    });
+    const lookups = () => calls.filter(c => c === '/users/104').length;
+
+    await syncMemberProfiles({ client, now: new Date('2026-09-01T00:00Z') });
+    await syncMemberProfiles({ client, now: new Date('2026-09-01T12:00Z') });
+    expect(lookups()).toBe(1);
+
+    await syncMemberProfiles({ client, now: new Date('2026-09-02T01:00Z') });
+    expect(lookups()).toBe(2);
+  });
+
+  it('carries on past a member that fails to sync', async () => {
+    await makeUser('101', 'First');
+    await makeUser('102', 'Second');
+    const { client } = fakeDiscord({
+      members: [
+        // Postgres rejects a NUL byte in text, so this member's write fails.
+        { id: '101', username: 'first', nick: 'bad\u0000nick' },
+        { id: '102', username: 'second', nick: 'Second Nick' },
+      ],
+    });
+
+    const result = await syncMemberProfiles({ client });
+
+    expect(result.failed).toHaveLength(1);
+    const second = await prisma.user.findUnique({
+      where: { discordId: '102' },
+    });
+    expect(second?.discordName).toBe('Second Nick');
   });
 
   it('marks a departed member whose account cannot be looked up', async () => {
@@ -256,8 +294,8 @@ describe('syncOneMember', () => {
     expect(stored?.discordName).toBe('Main');
   });
 
-  it('marks a member who left', async () => {
-    await makeUser('101', 'Leaving');
+  it('marks a member who left and drops their roles', async () => {
+    await makeUser('101', 'Leaving', { discordRoles: ['admin'] });
 
     await markMemberLeft('101');
 
@@ -266,5 +304,6 @@ describe('syncOneMember', () => {
     });
     expect(stored?.inGuild).toBe(false);
     expect(stored?.discordName).toBe('Leaving');
+    expect(stored?.discordRoles).toEqual([]);
   });
 });

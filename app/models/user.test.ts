@@ -299,7 +299,19 @@ describe('applyDiscordProfile', () => {
     expect(left.discordName).toBe('Panda');
     expect(left.discordAvatar).toContain('guild-hash');
     expect(left.discordUserAvatar).toBe('new-user-hash');
+    // Not confirmed gone (a failed login lookup, say): roles stay.
     expect(left.discordRoles).toEqual(['admin']);
+
+    const gone = await applyDiscordProfile(left, {
+      discordId: 'discord-a',
+      username: 'pandabair',
+      globalName: 'Panda Bair',
+      userAvatar: 'new-user-hash',
+      inGuild: false,
+      confirmedGone: true,
+    });
+    expect(gone.discordRoles).toEqual([]);
+    expect(gone.discordName).toBe('Panda');
   });
 
   it('refuses a profile that belongs to another account', async () => {

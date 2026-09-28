@@ -119,9 +119,13 @@ export async function updateUser(user: Partial<User>) {
  * What Discord reports about a member, from a login or from the bot.
  *
  * `inGuild` false means they are not in the server right now, so there is no
- * nickname, server avatar or roles to read. Those keep their last known values
- * rather than being cleared: the site goes on showing the name people last knew
- * them by, and a Discord hiccup cannot quietly strip someone's admin role.
+ * nickname or server avatar to read. Those keep their last known values, so the
+ * site goes on showing the name people last knew them by.
+ *
+ * Roles are cleared only when `confirmedGone` says Discord's own member list
+ * shows them gone - someone kicked or banned must lose admin access. A login
+ * whose member lookup merely failed keeps them, so a Discord hiccup cannot
+ * quietly strip an admin.
  */
 export type DiscordProfile = {
   discordId: string;
@@ -135,7 +139,7 @@ export type DiscordProfile = {
       guildAvatar: string | null;
       roles: string[];
     }
-  | { inGuild: false }
+  | { inGuild: false; confirmedGone?: boolean }
 );
 
 /** The User columns a Discord profile sets. */
@@ -167,7 +171,11 @@ export function discordProfileFields(
       guildAvatar,
       userAvatar: profile.userAvatar,
     }),
-    discordRoles: profile.inGuild ? profile.roles : user.discordRoles,
+    discordRoles: profile.inGuild
+      ? profile.roles
+      : profile.confirmedGone
+      ? []
+      : user.discordRoles,
     discordUsername: profile.username,
     discordGlobalName: profile.globalName,
     discordNick: nick,

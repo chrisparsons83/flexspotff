@@ -11,11 +11,21 @@ async function syncMemberProfilesJob() {
       console.log(`Renamed ${rename.userId}: ${rename.from} -> ${rename.to}`);
     }
 
-    const message = `Checked ${result.checked} members: ${result.updated} updated, ${result.notInServer} not in the server`;
+    const message = `Checked ${result.checked} members: ${result.updated} updated, ${result.notInServer} not in the server, ${result.failed.length} failed`;
     console.log(message);
 
     if (parentPort) {
-      parentPort.postMessage({ success: true, message, result });
+      parentPort.postMessage({
+        success: result.failed.length === 0,
+        message,
+        result,
+      });
+    }
+
+    // Everyone else was still synced, but a failure should show on the
+    // scheduler rather than pass as a clean run.
+    if (result.failed.length > 0) {
+      process.exit(1);
     }
   } catch (error) {
     console.error('Member profile sync failed:', error);

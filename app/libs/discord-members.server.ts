@@ -101,6 +101,8 @@ async function fetchDepartedProfile(
       globalName: account.global_name ?? null,
       userAvatar: account.avatar ?? null,
       inGuild: false,
+      // Only called for someone missing from the full member list.
+      confirmedGone: true,
     };
   } catch (error) {
     console.warn(`Could not look up Discord account ${discordId}:`, error);
@@ -108,12 +110,61 @@ async function fetchDepartedProfile(
   }
 }
 
+/**
+ * How long to trust what we know about someone who has left the server before
+ * asking Discord about their account again. Members who left pile up over the
+ * seasons, and a lookup each hour for every one of them buys nothing.
+ */
+const DEPARTED_RECHECK_MS = 24 * 60 * 60 * 1000;
+
 export type MemberSyncResult = {
   checked: number;
   updated: number;
   notInServer: number;
   renamed: { userId: string; from: string; to: string }[];
+  failed: { userId: string; error: string }[];
 };
+
+/** Syncs one member against the fetched member list. */
+async function syncMember(
+  client: DiscordRestClient,
+  user: User,
+  member: DiscordProfile | undefined,
+  now: Date,
+): Promise<User> {
+  if (member) {
+    return applyDiscordProfile(user, member, now);
+  }
+
+  const recentlyChecked =
+    user.inGuild === false &&
+    user.discordSyncedAt &&
+    now.getTime() - user.discordSyncedAt.getTime() < DEPARTED_RECHECK_MS;
+  if (recentlyChecked) {
+    return user;
+  }
+
+  const profile = await fetchDepartedProfile(client, user.discordId);
+  if (profile) {
+    const updated = await applyDiscordProfile(user, profile, now);
+    if (updated !== user) {
+      return updated;
+    }
+  }
+
+  // Stamp the check even when nothing changed, so the next one waits a day.
+  // Without an account to read (deleted, or the lookup failed) the name and
+  // avatar stay as they were; the roles still go, since the member list is
+  // what says they left.
+  return prisma.user.update({
+    where: { id: user.id },
+    data: {
+      inGuild: false,
+      discordSyncedAt: now,
+      ...(profile ? {} : { discordRoles: [] }),
+    },
+  });
+}
 
 /**
  * Brings every member's name, avatar and roles in line with the Discord server.
@@ -141,29 +192,27 @@ export async function syncMemberProfiles({
     updated: 0,
     notInServer: 0,
     renamed: [],
+    failed: [],
   };
 
   for (const user of users) {
-    let profile: DiscordProfile | null =
-      byDiscordId.get(user.discordId) ?? null;
-
-    if (!profile) {
+    const member = byDiscordId.get(user.discordId);
+    if (!member) {
       result.notInServer++;
-      profile = await fetchDepartedProfile(client, user.discordId);
     }
 
+    // One member's failure (a write racing the bot, say) should not stop
+    // everyone after them from syncing.
     let updated: User;
-    if (profile) {
-      updated = await applyDiscordProfile(user, profile, now);
-    } else if (user.inGuild !== false) {
-      // Not in the server and nothing else to go on: keep everything shown as
-      // it is, and just note they are gone.
-      updated = await prisma.user.update({
-        where: { id: user.id },
-        data: { inGuild: false, discordSyncedAt: now },
+    try {
+      updated = await syncMember(client, user, member, now);
+    } catch (error) {
+      console.error(`Could not sync member ${user.id}:`, error);
+      result.failed.push({
+        userId: user.id,
+        error: error instanceof Error ? error.message : String(error),
       });
-    } else {
-      updated = user;
+      continue;
     }
 
     if (updated !== user) {
@@ -198,10 +247,13 @@ export async function syncOneMember(profile: DiscordProfile) {
   return applyDiscordProfile(user, profile);
 }
 
-/** Marks a member who just left the server, keeping what the site shows. */
+/**
+ * Marks a member who just left the server (or was kicked or banned). What the
+ * site shows stays as it was, but their roles go with them.
+ */
 export async function markMemberLeft(discordId: string) {
   await prisma.user.updateMany({
     where: { discordId, mergedIntoId: null },
-    data: { inGuild: false, discordSyncedAt: new Date() },
+    data: { inGuild: false, discordRoles: [], discordSyncedAt: new Date() },
   });
 }
