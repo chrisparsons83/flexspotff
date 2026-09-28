@@ -8,7 +8,7 @@ import {
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import MemberSelect from '~/components/ui/MemberSelect';
+import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
 import { getSleeperLeagueUsers } from '~/libs/league-sync.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -169,7 +169,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return typedjson({
     year: currentSeason.year,
     leagues: leaguesWithUnmatched,
-    members: members.map(({ id, discordName }) => ({ id, discordName })),
+    members: members.map(toSelectableMember),
     totalUnmatched: leaguesWithUnmatched.reduce(
       (total, league) => total + league.unmatchedTeams.length,
       0,

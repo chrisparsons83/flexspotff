@@ -14,6 +14,7 @@ import {
 } from './shared.server';
 import { getSideGameTitles } from './sideGameTitles.server';
 import { prisma } from '~/db.server';
+import { getPastNames } from '~/models/user.server';
 
 export type { Badge } from './badges';
 
@@ -29,8 +30,13 @@ export type { Badge } from './badges';
 export type ProfileSummary = {
   user: {
     id: string;
+    discordId: string;
     discordName: string;
     discordAvatar: string;
+    discordUsername: string | null;
+    discordUserAvatar: string | null;
+    /** Other names they went by on the server, most recent first. */
+    pastNames: string[];
     /** First year this member shows up anywhere, not when their account was made. */
     memberSince: number;
   };
@@ -47,8 +53,11 @@ export async function getProfileSummary(
     where: { id: userId },
     select: {
       id: true,
+      discordId: true,
       discordName: true,
       discordAvatar: true,
+      discordUsername: true,
+      discordUserAvatar: true,
       createdAt: true,
     },
   });
@@ -173,9 +182,10 @@ export async function getProfileSummary(
     fSquared._count._all > 0 && 'f-squared',
   ].filter((value): value is string => typeof value === 'string');
 
-  const [longestStreak, titles] = await Promise.all([
+  const [longestStreak, titles, pastNames] = await Promise.all([
     getLongestWinStreak(userId),
     getSideGameTitles(userId),
+    getPastNames(userId, user.discordName),
   ]);
 
   const badges = [
@@ -196,8 +206,12 @@ export async function getProfileSummary(
   return {
     user: {
       id: user.id,
+      discordId: user.discordId,
       discordName: user.discordName,
       discordAvatar: user.discordAvatar,
+      discordUsername: user.discordUsername,
+      discordUserAvatar: user.discordUserAvatar,
+      pastNames: pastNames.map(past => past.name),
       memberSince,
     },
     headline: [

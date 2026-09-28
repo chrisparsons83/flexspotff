@@ -40,6 +40,13 @@ const mockUser: User = {
   discordRoles: [],
   mergedIntoId: null,
   mergedAt: null,
+  discordUsername: null,
+  discordGlobalName: null,
+  discordNick: null,
+  discordUserAvatar: null,
+  discordGuildAvatar: null,
+  inGuild: null,
+  discordSyncedAt: null,
 };
 
 const URL_BASE = 'http://localhost/admin/qb-streaming/import';
@@ -108,7 +115,13 @@ describe('admin.qb-streaming.import', () => {
 
   it('suggests look-alike members for unmatched names', async () => {
     vi.mocked(userModel.getUsers).mockResolvedValue([
-      { ...mockUser, id: 'klay', discordName: 'klaystation', sleeperUsers: [] },
+      {
+        ...mockUser,
+        id: 'klay',
+        discordName: 'klaystation',
+        sleeperUsers: [],
+        nameHistory: [],
+      },
     ]);
     vi.mocked(historyImport.previewQbStreamingHistory).mockResolvedValue({
       ...emptyPreview,

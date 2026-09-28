@@ -1,6 +1,8 @@
 import DraftBoard, {
   DraftBoardCell,
 } from '~/components/layout/draftboard/DraftBoard';
+import MemberAvatar from '~/components/ui/MemberAvatar';
+import MemberName from '~/components/ui/MemberName';
 import type { DraftBoardColumnProps } from '~/models/omniseason.server';
 
 type OmniTeam = DraftBoardColumnProps['omniTeam'];
@@ -52,23 +54,15 @@ export default function OmniDraftBoard({ teams }: { teams: OmniTeam[] }) {
 }
 
 function TeamHeader({ team }: { team: OmniTeam }) {
-  const avatarImage =
-    team.user?.discordAvatar &&
-    `https://cdn.discordapp.com/${team.user.discordAvatar}`;
-
   return (
     <div className='flex h-16 flex-col justify-between rounded bg-slate-800 p-1'>
-      {avatarImage ? (
-        <img
-          src={avatarImage}
-          className='mx-auto h-8 w-8 rounded-2xl'
-          alt={team.user?.discordName}
-        />
+      {team.user ? (
+        <MemberAvatar user={team.user} size={32} className='mx-auto' />
       ) : (
         <div className='mx-auto h-8 w-8 rounded-2xl bg-slate-700' />
       )}
       <div className='line-clamp-1 w-full text-center'>
-        {team.user?.discordName}
+        {team.user && <MemberName user={team.user} />}
       </div>
     </div>
   );

@@ -28,6 +28,13 @@ const mockAdmin: User = {
   discordRoles: [],
   mergedIntoId: null,
   mergedAt: null,
+  discordUsername: null,
+  discordGlobalName: null,
+  discordNick: null,
+  discordUserAvatar: null,
+  discordGuildAvatar: null,
+  inGuild: null,
+  discordSyncedAt: null,
 };
 
 const mockMember: User = { ...mockAdmin, id: 'member-1', discordName: 'Panda' };

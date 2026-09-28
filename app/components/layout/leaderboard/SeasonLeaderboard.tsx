@@ -1,6 +1,7 @@
 import type { LeaderboardEntry } from './LeaderboardTable';
 import LeaderboardTable from './LeaderboardTable';
 import GoBox from '~/components/ui/GoBox';
+import MemberName from '~/components/ui/MemberName';
 import { FIRST_YEAR, RANK_COLORS, isLeagueName } from '~/utils/constants';
 import { assignCompetitionRanks } from '~/utils/rank';
 
@@ -14,7 +15,7 @@ type SeasonTotal = {
 type SeasonTeam = {
   id: string;
   league: { name: string };
-  user: { discordName: string } | null;
+  user: { discordName: string; discordUsername?: string | null } | null;
 };
 
 type Props = {
@@ -62,7 +63,7 @@ export default function SeasonLeaderboard({
       return {
         id: position.teamId,
         rank: position.rank,
-        name: team.user?.discordName || 'Missing user',
+        name: team.user ? <MemberName user={team.user} /> : 'Missing user',
         badgeClassName: isLeagueName(teamLeague)
           ? RANK_COLORS[teamLeague]
           : undefined,

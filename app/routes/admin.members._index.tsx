@@ -34,6 +34,17 @@ export default function PodcastEpisodeList() {
             <tr key={user.id}>
               <td>
                 {user.discordName}
+                {user.discordUsername &&
+                  user.discordUsername !== user.discordName && (
+                    <span className='ml-2 text-sm opacity-75'>
+                      @{user.discordUsername}
+                    </span>
+                  )}
+                {user.inGuild === false && (
+                  <span className='ml-2 text-sm opacity-75'>
+                    (not in server)
+                  </span>
+                )}
                 {user.mergedInto && (
                   <span className='ml-2 text-sm opacity-75'>
                     (merged into {user.mergedInto.discordName})

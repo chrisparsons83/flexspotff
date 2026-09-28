@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import MemberName from '~/components/ui/MemberName';
 import type { ScoreArray } from '~/models/cup.server';
 import { getCupByYear } from '~/models/cup.server';
 import { getCupGamesByCup } from '~/models/cupgame.server';
@@ -130,7 +131,9 @@ export default function CupYear() {
                             )}
                           </div>
                           <div className='flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis'>
-                            {game.topTeam?.team.user?.discordName}
+                            {game.topTeam?.team.user && (
+                              <MemberName user={game.topTeam.team.user} />
+                            )}
                           </div>
                           <div className='flex-none w-1/3 text-right'>
                             {topTeamScore && topTeamScore.toFixed(2)}
@@ -164,7 +167,11 @@ export default function CupYear() {
                           <div className='flex-none w-1/2 overflow-hidden whitespace-nowrap text-ellipsis'>
                             {game.containsBye
                               ? 'Bye'
-                              : game.bottomTeam?.team.user?.discordName}
+                              : game.bottomTeam?.team.user && (
+                                  <MemberName
+                                    user={game.bottomTeam.team.user}
+                                  />
+                                )}
                           </div>
                           <div className='flex-none w-1/3 text-right'>
                             {bottomTeamScore && bottomTeamScore.toFixed(2)}

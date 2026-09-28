@@ -34,6 +34,13 @@ describe('QB Streaming Entries Action', () => {
     discordRoles: [],
     mergedIntoId: null,
     mergedAt: null,
+    discordUsername: null,
+    discordGlobalName: null,
+    discordNick: null,
+    discordUserAvatar: null,
+    discordGuildAvatar: null,
+    inGuild: null,
+    discordSyncedAt: null,
   };
   const weekId = 'week-123';
   const standardOptionId = 'standard-option-123';

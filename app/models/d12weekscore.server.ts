@@ -72,7 +72,11 @@ export type D12WeekScoreRow = {
   points: number | null;
   d12LeagueId: string;
   league: { name: string };
-  user: { discordName: string; discordAvatar: string };
+  user: {
+    discordName: string;
+    discordAvatar: string;
+    discordUsername?: string | null;
+  };
   starters?: string[];
   startingPlayerPoints?: number[];
 };
@@ -94,6 +98,7 @@ export type D12LeagueTotal = {
 export interface D12LeaderboardEntry {
   userId: string;
   discordName: string;
+  discordUsername: string | null;
   discordAvatar: string;
   totalPoints: number;
   bestWeek: number;
@@ -123,6 +128,7 @@ export function computeD12Leaderboard(
     string,
     {
       discordName: string;
+      discordUsername: string | null;
       discordAvatar: string;
       byLeague: Map<string, Omit<D12LeagueTotal, 'leagueId'>>;
       byWeek: Map<number, number>;
@@ -133,6 +139,7 @@ export function computeD12Leaderboard(
     if (!userMap.has(score.userId)) {
       userMap.set(score.userId, {
         discordName: score.user.discordName,
+        discordUsername: score.user.discordUsername ?? null,
         discordAvatar: score.user.discordAvatar,
         byLeague: new Map(),
         byWeek: new Map(),
@@ -199,6 +206,7 @@ export function computeD12Leaderboard(
     leaderboard.push({
       userId,
       discordName: data.discordName,
+      discordUsername: data.discordUsername,
       discordAvatar: data.discordAvatar,
       totalPoints,
       bestWeek,

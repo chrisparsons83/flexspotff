@@ -5,6 +5,7 @@ import D12LeagueBreakdown from '~/components/layout/leaderboard/D12LeagueBreakdo
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import GoBox from '~/components/ui/GoBox';
+import MemberName from '~/components/ui/MemberName';
 import { getAllD12SeasonYears } from '~/models/d12season.server';
 import {
   computeD12Leaderboard,
@@ -44,7 +45,7 @@ export default function GamesD12YearIndex() {
         to={`/games/d12/${year}/user/${entry.userId}`}
         className={LEADERBOARD_NAME_LINK}
       >
-        {entry.discordName}
+        <MemberName user={entry} />
       </Link>
     ),
     values: [

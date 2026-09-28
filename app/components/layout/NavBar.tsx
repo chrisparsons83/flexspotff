@@ -4,6 +4,7 @@ import { MenuIcon, UserIcon, XIcon } from '@heroicons/react/outline';
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import { Fragment } from 'react';
+import MemberAvatar from '~/components/ui/MemberAvatar';
 import type { User } from '~/models/user.server';
 
 const navigation = [
@@ -22,11 +23,6 @@ interface Props {
 }
 
 export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
-  const avatarImage =
-    user &&
-    user.discordAvatar &&
-    `https://cdn.discordapp.com/${user.discordAvatar}`;
-
   return (
     <Disclosure as='nav' className='bg-gray-800'>
       {({ open }) => (
@@ -79,9 +75,10 @@ export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
                     <Menu.Button className='flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800'>
                       <span className='sr-only'>Open user menu</span>
                       {user ? (
-                        <img
-                          src={avatarImage!}
-                          className='block h-8 w-8 rounded-2xl'
+                        <MemberAvatar
+                          user={user}
+                          size={32}
+                          className='block'
                           alt={user.discordName}
                         />
                       ) : (

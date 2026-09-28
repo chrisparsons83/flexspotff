@@ -5,6 +5,7 @@ import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import StarterGrid from '~/components/layout/leaderboard/StarterGrid';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import GoBox from '~/components/ui/GoBox';
+import MemberName from '~/components/ui/MemberName';
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
@@ -47,7 +48,7 @@ export default function LeaderboardYearWeek() {
       rank: position.rank,
       name: position.team.user ? (
         <ProfileLink userId={position.team.user.id}>
-          {position.team.user.discordName}
+          <MemberName user={position.team.user} />
         </ProfileLink>
       ) : (
         'Missing user'

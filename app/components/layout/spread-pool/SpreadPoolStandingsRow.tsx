@@ -1,6 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { useState } from 'react';
+import MemberName from '~/components/ui/MemberName';
 import type {
   PoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
@@ -43,7 +44,7 @@ export default function SpreadPoolStandingsRow({
       <tr>
         <td>{rank}</td>
         <td className='flex items-center gap-3'>
-          {user.discordName}{' '}
+          <MemberName user={user} />{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}

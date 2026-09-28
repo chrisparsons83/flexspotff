@@ -30,6 +30,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   for (const qbSelection of qbSelections) {
     rankings.push({
       discordName: qbSelection.user.discordName,
+      discordUsername: qbSelection.user.discordUsername,
       pointsScored:
         qbSelection.standardPlayer.pointsScored +
         qbSelection.deepPlayer.pointsScored,
@@ -107,7 +108,7 @@ export default function QBStreamingStandingsYearWeek() {
               <QBStreamingStandingsRowComponent
                 key={result.userId}
                 rank={result.rank}
-                discordName={result.discordName}
+                user={result}
                 pointsScored={result.pointsScored}
                 standardPlayer={standardPlayer}
                 deepPlayer={deepPlayer}

@@ -62,6 +62,12 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     description:
       "Posts each league's waiver claims and failed bids to the waiver report channel. Wednesdays at 12:20am PT - the last league's batch lands around 12:14 - retrying at 12:35 and 12:50 for any league Sleeper has not finished processing.",
   },
+  {
+    name: 'sync-member-profiles',
+    cron: '15 * * * *',
+    description:
+      "Updates every member's name, avatar and roles to match the Discord server, catching any change the bot missed while it was down. Hourly at :15.",
+  },
 ];
 
 export const SCHEDULED_JOB_ENTRIES = SCHEDULED_JOBS.map(

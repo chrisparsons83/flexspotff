@@ -14,7 +14,31 @@ import { cn } from '~/utils';
 export type SelectableMember = {
   id: string;
   discordName: string;
+  discordUsername?: string | null;
+  /** Names they went by before, so an old nickname still finds them. */
+  pastNames?: string[];
 };
+
+/**
+ * What a member picker needs to find someone: their current name, plus their
+ * @username and past names, since the name an admin remembers may be one they
+ * have since changed.
+ */
+export function toSelectableMember(user: {
+  id: string;
+  discordName: string;
+  discordUsername: string | null;
+  nameHistory?: { name: string }[];
+}): SelectableMember {
+  return {
+    id: user.id,
+    discordName: user.discordName,
+    discordUsername: user.discordUsername,
+    pastNames: (user.nameHistory ?? [])
+      .map(entry => entry.name)
+      .filter(name => name !== user.discordName),
+  };
+}
 
 type Props = {
   name: string;
@@ -47,6 +71,25 @@ export default function MemberSelect({
     [members],
   );
 
+  // Everything a member can be searched by: nicknames change often, so their
+  // @username and past names find them too.
+  const searchTextById = useMemo(
+    () =>
+      new Map(
+        members.map(member => [
+          member.id,
+          [
+            member.discordName,
+            member.discordUsername ?? '',
+            ...(member.pastNames ?? []),
+          ]
+            .join('\n')
+            .toLowerCase(),
+        ]),
+      ),
+    [members],
+  );
+
   const selectedName = namesById.get(selectedId);
 
   return (
@@ -71,9 +114,7 @@ export default function MemberSelect({
           <Command
             className='bg-slate-700 text-slate-100'
             filter={(value, search) =>
-              (namesById.get(value) ?? '')
-                .toLowerCase()
-                .includes(search.toLowerCase())
+              (searchTextById.get(value) ?? '').includes(search.toLowerCase())
                 ? 1
                 : 0
             }
@@ -98,7 +139,15 @@ export default function MemberSelect({
                         member.id === selectedId ? 'opacity-100' : 'opacity-0',
                       )}
                     />
-                    {member.discordName}
+                    <span className='truncate'>
+                      {member.discordName}
+                      {member.discordUsername &&
+                        member.discordUsername !== member.discordName && (
+                          <span className='ml-1 text-xs text-slate-400'>
+                            @{member.discordUsername}
+                          </span>
+                        )}
+                    </span>
                   </CommandItem>
                 ))}
               </CommandGroup>

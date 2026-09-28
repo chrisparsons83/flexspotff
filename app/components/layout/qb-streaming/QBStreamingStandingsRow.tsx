@@ -1,9 +1,10 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import { useState } from 'react';
+import MemberName from '~/components/ui/MemberName';
 
 type Props = {
   rank?: number;
-  discordName: string;
+  user: { discordName: string; discordUsername?: string | null };
   pointsScored: number;
   standardPlayer: string;
   deepPlayer?: string;
@@ -11,7 +12,7 @@ type Props = {
 
 export default function QBStreamingStandingsRowComponent({
   rank,
-  discordName,
+  user,
   pointsScored,
   standardPlayer,
   deepPlayer,
@@ -27,7 +28,7 @@ export default function QBStreamingStandingsRowComponent({
       <tr>
         <td>{rank}</td>
         <td className='flex items-center gap-3'>
-          {discordName}{' '}
+          <MemberName user={user} />{' '}
           {showDetails ? (
             <ChevronUpIcon
               width={20}

@@ -34,6 +34,13 @@ const mockUser: User = {
   discordRoles: [],
   mergedIntoId: null,
   mergedAt: null,
+  discordUsername: null,
+  discordGlobalName: null,
+  discordNick: null,
+  discordUserAvatar: null,
+  discordGuildAvatar: null,
+  inGuild: null,
+  discordSyncedAt: null,
 };
 
 const makeMember = (id: string, discordName: string) => ({
