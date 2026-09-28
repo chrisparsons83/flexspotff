@@ -15,6 +15,7 @@ import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import { assignCompetitionRanks } from '~/utils/rank';
 import { getCurrentTime } from '~/utils/time';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -111,25 +112,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         return (a._sum.isLoss || 0) - (b._sum.isLoss || 0); // Ascending order
       }
     });
-  // Assign ranks
-  let currentRank = 1;
-  let currentRankPoints = -1;
-  let currentRankWins = -1;
-  let currentRankLosses = Infinity; // Initialize with highest possible value
-  totalPoints.forEach((point, index) => {
-    // If points change, update the rank
-    if (
-      point._sum.points !== currentRankPoints ||
-      point._sum.isWin !== currentRankWins ||
-      (point._sum.isLoss || 0) < currentRankLosses // Check if current losses are fewer
-    ) {
-      currentRank = index + 1;
-      currentRankPoints = point._sum.points;
-      currentRankWins = point._sum.isWin || 0;
-      currentRankLosses = point._sum.isLoss || 0;
-    }
-    point._sum.rank = currentRank;
-  });
+  // The rules name no tiebreaker - most points wins - so equal points share a
+  // rank, the same way the profile finishes and the champion badge read it.
+  // Wins and losses above only order the rows within a tie.
+  for (const { _sum, rank } of assignCompetitionRanks(
+    totalPoints,
+    point => point._sum.points,
+  )) {
+    _sum.rank = rank;
+  }
 
   // Create userIdToRankMap
   let userIdToRankMap: Map<string, number> = new Map();
