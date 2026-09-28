@@ -105,7 +105,11 @@ export async function getProfileSummary(
     prisma.d12WeekScore.count({ where: { userId } }),
     prisma.qBSelection.count({ where: { userId } }),
     prisma.poolGamePick.count({ where: { userId } }),
-    prisma.locksGamePick.count({ where: { userId } }),
+    // Scored picks only: saving an empty entry writes inactive rows, and that
+    // alone should not open the tab.
+    prisma.locksGamePick.count({
+      where: { userId, isScored: true, isActive: { gt: 0 } },
+    }),
     // Aggregated rather than counted so these also report the earliest year
     // played - see memberSince below. Same query, one more column.
     prisma.dFSSurvivorUserYear.aggregate({

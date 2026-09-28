@@ -1,8 +1,9 @@
 import type { SideGameKey } from './badges';
+import { getLocksYears } from './locks.server';
+import { buildSeasonTotals as buildLocksSeasonTotals } from './locksProfile';
 import {
   addTo,
   fSquaredEntryPoints,
-  locksWeekPoints,
   qbStreamingSeasonTotal,
   winnersOf,
 } from './sideGameScoring';
@@ -202,22 +203,13 @@ async function countLocksTitles(
   userId: string,
   inProgress: number | null,
 ): Promise<number> {
-  const entered = await prisma.locksGamePick.findMany({
-    where: { userId },
-    select: {
-      locksGame: { select: { locksWeek: { select: { year: true } } } },
-    },
-  });
-  const years = distinct(
-    entered
-      .map(row => row.locksGame.locksWeek?.year)
-      .filter((year): year is number => year !== undefined),
-  );
+  const years = await getLocksYears(userId);
   if (years.length === 0) return 0;
 
   const picks = await prisma.locksGamePick.findMany({
     where: {
       isScored: true,
+      isActive: { gt: 0 },
       locksGame: { locksWeek: { year: { in: years } } },
     },
     select: {
@@ -230,28 +222,28 @@ async function countLocksTitles(
     },
   });
 
-  // Wins and losses are tallied per member per week before scoring, because a
-  // single loss voids the whole week.
-  const weekly = new Map<string, { isWin: number; isLoss: number }>();
-  for (const pick of picks) {
-    const week = pick.locksGame.locksWeek;
-    if (!week) continue;
-    const key = `${week.year}:${week.weekNumber}:${pick.userId}`;
-    const running = weekly.get(key) ?? { isWin: 0, isLoss: 0 };
-    running.isWin += pick.isWin;
-    running.isLoss += pick.isLoss;
-    weekly.set(key, running);
-  }
+  // Totalled week by week before the season, since a single loss voids the
+  // whole week - buildSeasonTotals owns that, shared with the Locks tab.
+  const totals = buildLocksSeasonTotals(
+    picks.flatMap(pick => {
+      const week = pick.locksGame.locksWeek;
+      if (!week) return [];
+      return [
+        {
+          userId: pick.userId,
+          year: week.year,
+          week: week.weekNumber,
+          result: pick.isWin
+            ? ('win' as const)
+            : pick.isLoss
+            ? ('loss' as const)
+            : ('tie' as const),
+        },
+      ];
+    }),
+  );
 
-  const byYear = new Map<number, Map<string, number>>();
-  for (const [key, totals] of weekly) {
-    const [year, , entrant] = key.split(':');
-    const yearNumber = Number(year);
-    if (!byYear.has(yearNumber)) byYear.set(yearNumber, new Map());
-    addTo(byYear.get(yearNumber)!, entrant, locksWeekPoints(totals));
-  }
-
-  return countWins(byYear, userId, inProgress);
+  return countWins(totals, userId, inProgress);
 }
 
 /** DFS Survivor: points from scored weeks. */

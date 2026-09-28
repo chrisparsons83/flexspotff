@@ -36,58 +36,6 @@ const round = (value: number, digits = 2) => value.toFixed(digits);
 const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/** Locks Challenge: straight win/loss picks, no wagering. */
-export async function getLocksProfile(userId: string): Promise<ContestProfile> {
-  const picks = await prisma.locksGamePick.findMany({
-    where: { userId, isScored: true },
-    include: { locksGame: { include: { locksWeek: true } } },
-  });
-
-  if (picks.length === 0) return empty;
-
-  const byYear = new Map<number, { w: number; l: number; t: number }>();
-  let wins = 0;
-  let losses = 0;
-  let ties = 0;
-
-  for (const pick of picks) {
-    const year = pick.locksGame.locksWeek?.year;
-    if (year === undefined) continue;
-
-    const entry = byYear.get(year) ?? { w: 0, l: 0, t: 0 };
-    entry.w += pick.isWin;
-    entry.l += pick.isLoss;
-    entry.t += pick.isTie;
-    byYear.set(year, entry);
-
-    wins += pick.isWin;
-    losses += pick.isLoss;
-    ties += pick.isTie;
-  }
-
-  const decided = wins + losses;
-
-  return {
-    hasPlayed: true,
-    seasonsPlayed: byYear.size,
-    headline: [
-      { label: 'Record', value: `${wins}-${losses}-${ties}` },
-      {
-        label: 'Win %',
-        value: decided > 0 ? `${((wins / decided) * 100).toFixed(1)}%` : '0%',
-      },
-      { label: 'Picks', value: picks.length.toString() },
-    ],
-    seasons: Array.from(byYear.entries())
-      .map(([year, entry]) => ({
-        year,
-        label: 'Record',
-        value: `${entry.w}-${entry.l}-${entry.t}`,
-      }))
-      .sort((a, b) => b.year - a.year),
-  };
-}
-
 /** DFS Survivor: a scored lineup each week, totalled over a season. */
 export async function getDfsSurvivorProfile(
   userId: string,
