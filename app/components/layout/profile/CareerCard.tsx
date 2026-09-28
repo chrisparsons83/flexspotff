@@ -14,7 +14,11 @@ export default function CareerCard({
 }: {
   title: ReactNode;
   lead: ReactNode;
-  leadNote: ReactNode;
+  /**
+   * A line under the headline. Leave it out to set the context inline with
+   * the headline instead; do it for every card in a row, so they stay level.
+   */
+  leadNote?: ReactNode;
   /** A full-width bar under the headline, so a wide card is not mostly air. */
   meter?: ReactNode;
   children: ReactNode;
@@ -25,7 +29,9 @@ export default function CareerCard({
       <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
         {lead}
       </div>
-      <div className='mt-1.5 text-sm text-slate-400'>{leadNote}</div>
+      {leadNote !== undefined && (
+        <div className='mt-1.5 text-sm text-slate-400'>{leadNote}</div>
+      )}
       {/* Flowed from the top rather than pinned to the bottom. The headlines
           are all the same height, so the bars and stat labels line up across
           cards; pinning to the bottom misaligned them whenever one card's small

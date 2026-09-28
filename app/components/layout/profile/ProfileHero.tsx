@@ -42,7 +42,7 @@ export default function ProfileHero({ summary, tabs }: Props) {
           </div>
         </div>
 
-        <div className='mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5'>
+        <div className='mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6'>
           {headline.map(stat => (
             <StatTile key={stat.label} label={stat.label} value={stat.value} />
           ))}
