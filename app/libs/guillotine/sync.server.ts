@@ -172,10 +172,43 @@ export async function syncGuillotineLeague(
   const nameByOwner = new Map(
     users.map(user => [user.user_id, user.display_name ?? user.username]),
   );
-  const draftSlotByRoster = new Map<number, number>();
+  // The draft's own order, by owner. The first-round pick is only a fallback
+  // for a draft Sleeper has no order for: a traded first would give one
+  // roster two slots and leave another with none.
+  const firstRoundSlot = new Map<number, number>();
   for (const pick of picks) {
-    if (pick.round === 1) draftSlotByRoster.set(pick.roster_id, pick.pick_no);
+    if (pick.round === 1 && !firstRoundSlot.has(pick.roster_id)) {
+      firstRoundSlot.set(pick.roster_id, pick.pick_no);
+    }
   }
+  const draftSlotFor = (rosterId: number, ownerId: string | null) =>
+    (ownerId ? draft?.draft_order?.[ownerId] : undefined) ??
+    firstRoundSlot.get(rosterId) ??
+    null;
+
+  // If this sync could not load projections, keep the ones the last sync
+  // stored for the live week rather than wiping them: one failed request
+  // would otherwise project every starter yet to play at zero, and reorder
+  // the chop line around it until the next sync.
+  const keptProjections = new Map<string, number>();
+  if (liveWeek && !projections) {
+    const stored = await prisma.guillotineWeekScore.findMany({
+      where: { week: liveWeek, team: { guillotineLeagueId: league.id } },
+      select: { starters: true, starterProjections: true },
+    });
+    for (const row of stored) {
+      row.starters.forEach((starter, index) => {
+        const projection = row.starterProjections[index];
+        if (projection !== undefined) keptProjections.set(starter, projection);
+      });
+    }
+  }
+  const projectStarter = (starter: string | null) => {
+    if (!starter) return 0;
+    if (projections)
+      return scoreProjection(projections[starter], scoringSettings);
+    return keptProjections.get(starter) ?? 0;
+  };
 
   const unmatchedTeams = [...ownerByRoster.values()].filter(
     owner => !owner || !owners.has(owner),
@@ -188,7 +221,7 @@ export async function syncGuillotineLeague(
       sleeperOwnerId: ownerId,
       sleeperDisplayName: ownerId ? nameByOwner.get(ownerId) ?? null : null,
       userId: ownerId ? owners.get(ownerId) ?? null : null,
-      draftSlot: draftSlotByRoster.get(roster.roster_id) ?? null,
+      draftSlot: draftSlotFor(roster.roster_id, ownerId),
       choppedWeek,
       finish: chops.finish.get(roster.roster_id) ?? null,
       waiverBudgetUsed: roster.settings?.waiver_budget_used ?? 0,
@@ -212,13 +245,7 @@ export async function syncGuillotineLeague(
             startingPlayerPoints: (row.starters_points ?? []).map(p => p ?? 0),
             players: row.players ?? [],
             starterProjections:
-              week === liveWeek && projections
-                ? (row.starters ?? []).map(starter =>
-                    starter
-                      ? scoreProjection(projections[starter], scoringSettings)
-                      : 0,
-                  )
-                : [],
+              week === liveWeek ? (row.starters ?? []).map(projectStarter) : [],
           },
         ];
       });
@@ -243,8 +270,12 @@ export async function syncGuillotineLeague(
     });
   });
 
-  // One transaction, so a page never reads a league half rewritten.
+  // One transaction, so a page never reads a league half rewritten. The live
+  // monitor and the hourly job can both sync a league in the same minute, and
+  // two rewrites interleaving would trip over each other's inserts, so the
+  // transaction first takes a lock on this league and the second one waits.
   await prisma.$transaction([
+    prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${league.id}))`,
     prisma.guillotineLeague.update({
       where: { id: league.id },
       data: {

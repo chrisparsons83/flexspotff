@@ -165,6 +165,10 @@ export const sleeperDraftListJson = z.array(
   z.object({
     draft_id: z.string(),
     status: z.string(),
+    // Sleeper owner ID -> draft slot. Guillotine leagues read each team's
+    // slot from here, since a traded first-round pick breaks reading it off
+    // the picks.
+    draft_order: z.record(z.number()).nullish(),
   }),
 );
 export type SleeperDraftListJson = z.infer<typeof sleeperDraftListJson>;

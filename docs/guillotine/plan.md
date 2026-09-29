@@ -143,8 +143,17 @@ the D12 admin:
 
 **Live season**: `syncCurrentWeekScores` in `scoring.server.ts` already resyncs
 D12 every 5 minutes while NFL games are in progress. Guillotine hooks in beside
-it. An hourly pass also syncs transactions, so waiver results appear on
-Wednesday without an admin pressing anything.
+it. An hourly pass also syncs transactions, so waiver results appear without an
+admin pressing anything.
+
+**Waiver timing is not the main leagues'.** Guillotine waivers run overnight
+Wednesday into Thursday: every weekly run in the 2021, 2025 and 2026 leagues
+landed between 00:00 and 00:06 Thursday Pacific, filed under the leg of the week
+just played, so its claims are for the next week. Smaller clears later in the
+week (Thursday night to Sunday morning) are filed under the new leg and are for
+that same week. `waiverClaimWeek` in `app/libs/guillotine/views.ts` holds the
+rule, tested against those real timestamps. Chops land Monday night (Sleeper's
+own format) or Tuesday (by hand).
 
 ## Phase 3 — Live projections
 

@@ -205,8 +205,10 @@ model GuillotineTransaction {
   type                 String
   /// "complete" or "failed".
   status               String
-  /// Sleeper's leg. A Wednesday waiver batch is filed under the outgoing leg,
-  /// so its claims are for week `leg + 1` - see waiver-sync.server.ts.
+  /// Sleeper's leg. Guillotine waivers run overnight Wednesday into Thursday,
+  /// filed under the leg of the week just played, so those claims are for
+  /// week `leg + 1`; a later clear is for week `leg`. See waiverClaimWeek in
+  /// app/libs/guillotine/views.ts.
   leg                  Int
   rosterIds            Int[]
   /// Player key -> roster ID, as Sleeper sends them. A defense's key is its

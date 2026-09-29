@@ -28,7 +28,8 @@ const waiver = (
   drops: null,
   bid,
   notes: null,
-  processedAt: new Date(),
+  // A weekly run: Thursday just after midnight Pacific.
+  processedAt: new Date('2025-09-11T07:01:00Z'),
 });
 
 // Three teams. Roster 3 goes in week 1, roster 2 in week 2; roster 1 (the

@@ -4,9 +4,9 @@ import { parentPort } from 'worker_threads';
 
 /**
  * Keeps this season's guillotine leagues current between games. The live score
- * monitor only syncs while games are on, but a chop lands on Tuesday and the
- * waiver run early Wednesday, so this picks them up within the hour. Scheduled
- * in app/utils/jobs.ts.
+ * monitor only syncs while games are on, but a chop lands Monday night or
+ * Tuesday and the waiver run just after midnight Thursday (Pacific), so this
+ * picks them up within the hour. Scheduled in app/utils/jobs.ts.
  */
 async function syncGuillotineJob() {
   try {

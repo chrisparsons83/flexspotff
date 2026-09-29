@@ -1,10 +1,10 @@
 import type { ViewTeam, ViewTransaction, ViewWeekScore } from './views';
 import {
   buildChopGrid,
-  buildFaabRemaining,
   buildStandings,
   buildWaiverRuns,
   cutLineForWeek,
+  waiverClaimWeek,
 } from './views';
 
 // Three teams, two weeks played. Roster 3 is chopped in week 1, roster 2 in
@@ -41,8 +41,31 @@ const transaction = (
   drops: null,
   bid: 0,
   notes: null,
-  processedAt: new Date(),
+  // A weekly run: Thursday just after midnight Pacific.
+  processedAt: new Date('2025-09-11T07:01:00Z'),
   ...overrides,
+});
+
+describe('waiverClaimWeek', () => {
+  // Real batches. Weekly runs land Thursday 00:00-00:06 Pacific under the leg
+  // of the week just played; everything else is a clear later that week.
+  it('puts the Thursday run on the week after its leg', () => {
+    // 2025 leg 5, Thu 2025-10-09 00:01 PDT: week 5 was played Oct 2-6.
+    expect(waiverClaimWeek(5, new Date('2025-10-09T07:01:00Z'))).toBe(6);
+    // 2026 leg 2, Thu 2026-09-24 00:01 PDT.
+    expect(waiverClaimWeek(2, new Date('2026-09-24T07:01:00Z'))).toBe(3);
+    // 2021 leg 16, Thu 2021-12-30 00:06 PST - outside daylight saving.
+    expect(waiverClaimWeek(16, new Date('2021-12-30T08:06:00Z'))).toBe(17);
+  });
+
+  it('keeps a later clear on its own leg', () => {
+    // 2026 leg 2, Thu 2026-09-17 23:01 PDT, the night after the leg 1 run.
+    expect(waiverClaimWeek(2, new Date('2026-09-18T06:01:00Z'))).toBe(2);
+    // 2021 leg 4, Sun 2021-10-03 06:26 PDT, before that week's games.
+    expect(waiverClaimWeek(4, new Date('2021-10-03T13:26:00Z'))).toBe(4);
+    // 2021 leg 1, Fri 2021-09-10 13:06 PDT, during week 1.
+    expect(waiverClaimWeek(1, new Date('2021-09-10T20:06:00Z'))).toBe(1);
+  });
 });
 
 describe('cutLineForWeek', () => {
@@ -167,6 +190,25 @@ describe('buildWaiverRuns', () => {
     });
   });
 
+  it('credits a mid-week clear only to chops before that week', () => {
+    // A clear under leg 2, Friday of week 2: roster 2's week-2 chop has not
+    // happened yet, so p3 cannot have come from it.
+    const runs = buildWaiverRuns({
+      teams,
+      scores,
+      transactions: [
+        transaction({
+          adds: { p3: 1 },
+          leg: 2,
+          processedAt: new Date('2025-09-19T20:00:00Z'),
+        }),
+      ],
+    });
+
+    expect(runs[0].week).toBe(2);
+    expect(runs[0].claims[0].releasedBy).toBeNull();
+  });
+
   it('ignores a release that came after the run', () => {
     const runs = buildWaiverRuns({
       teams,
@@ -175,40 +217,5 @@ describe('buildWaiverRuns', () => {
     });
 
     expect(runs[0].claims[0].releasedBy).toBeNull();
-  });
-});
-
-describe('buildFaabRemaining', () => {
-  it("tracks each team's budget left after every run", () => {
-    const remaining = buildFaabRemaining({
-      budget: 1000,
-      runs: [
-        {
-          week: 3,
-          claims: [
-            {
-              sleeperId: 'b',
-              winner: { rosterId: 1, bid: 50, notes: null },
-              losingBids: [],
-              releasedBy: null,
-            },
-          ],
-        },
-        {
-          week: 2,
-          claims: [
-            {
-              sleeperId: 'a',
-              winner: { rosterId: 1, bid: 300, notes: null },
-              losingBids: [],
-              releasedBy: null,
-            },
-          ],
-        },
-      ],
-    });
-
-    expect(remaining.get(1)?.get(2)).toBe(700);
-    expect(remaining.get(1)?.get(3)).toBe(650);
   });
 });

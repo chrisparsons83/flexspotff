@@ -53,7 +53,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     name: 'sync-guillotine',
     cron: '40 * * * *',
     description:
-      'Syncs every guillotine league still running this season - chops, waiver claims and scores - so a Tuesday chop or Wednesday waiver run shows up without waiting for games. Hourly at :40.',
+      'Syncs every guillotine league still running this season - chops, waiver claims and scores - so a Monday-night or Tuesday chop, and the waiver run just after midnight Thursday Pacific, show up without waiting for games. Hourly at :40.',
   },
   {
     name: 'sync-player-scores',

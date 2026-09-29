@@ -186,6 +186,37 @@ describe('resolveChops', () => {
     expect(result.warnings).toHaveLength(1);
   });
 
+  it('dates a manual chop made before Sleeper marks the week scored', () => {
+    // Week 2 is still unscored in Sleeper, but the commissioner has already
+    // emptied roster 2 after its week-2 game.
+    const result = resolveChops({
+      format: 'MANUAL',
+      rosters: [
+        { rosterId: 1, eliminated: null, hasPlayers: true },
+        { rosterId: 2, eliminated: null, hasPlayers: false },
+      ],
+      weeks: new Map([
+        [
+          1,
+          [
+            { rosterId: 1, points: 90, playerCount: 14 },
+            { rosterId: 2, points: 95, playerCount: 14 },
+          ],
+        ],
+        [
+          2,
+          [
+            { rosterId: 1, points: 90, playerCount: 14 },
+            { rosterId: 2, points: 60, playerCount: 14 },
+          ],
+        ],
+      ]),
+      lastScoredWeek: 1,
+    });
+
+    expect(result.choppedWeek.get(2)).toBe(2);
+  });
+
   it('warns about an empty roster that never played', () => {
     const result = resolveChops({
       format: 'MANUAL',

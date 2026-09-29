@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 /**
  * Turns a guillotine league's stored rows into what its pages show. Kept free
  * of Prisma and React so the maths can be tested directly.
@@ -183,11 +185,30 @@ export type WaiverRun = {
 };
 
 /**
- * Every waiver run in a league, newest first, with each player's bids gathered
- * together and the chopped team they came from.
+ * The football week a guillotine waiver claim is for.
  *
- * A Wednesday run is filed under the outgoing leg, so its claims are for week
- * `leg + 1` - the same rule the main leagues' waiver report uses.
+ * Guillotine waivers do not run on the main leagues' schedule. Checked against
+ * every batch of the 2021, 2025 and 2026 leagues:
+ *
+ * - The weekly run lands on Thursday between 00:00 and 00:06 Pacific, the
+ *   night after Wednesday, and Sleeper files it under the leg of the week that
+ *   just ended. Its claims are for the next week: `leg + 1`.
+ * - Any other batch is a rolling clear later in the week (Thursday night to
+ *   Sunday morning), after Sleeper has moved on to the new leg. Its claims are
+ *   for that same week: `leg`.
+ */
+export function waiverClaimWeek(leg: number, processedAt: Date): number {
+  const pacific = DateTime.fromJSDate(processedAt).setZone(
+    'America/Los_Angeles',
+  );
+  const isWeeklyRun = pacific.weekday === 4 && pacific.hour < 3;
+  return isWeeklyRun ? leg + 1 : leg;
+}
+
+/**
+ * Every waiver run in a league, newest first, with each player's bids gathered
+ * together and the chopped team they came from. See `waiverClaimWeek` for how
+ * a batch is matched to the week its claims are for.
  */
 export function buildWaiverRuns({
   transactions,
@@ -219,7 +240,7 @@ export function buildWaiverRuns({
   const byWeek = new Map<number, Map<string, WaiverClaim>>();
   for (const t of transactions) {
     if (t.type !== 'waiver' || !t.adds) continue;
-    const week = t.leg + 1;
+    const week = waiverClaimWeek(t.leg, t.processedAt);
     const claims = byWeek.get(week) ?? new Map<string, WaiverClaim>();
     byWeek.set(week, claims);
 
@@ -230,10 +251,10 @@ export function buildWaiverRuns({
         losingBids: [],
         releasedBy: null,
       };
-      // The latest release before this run is where the player came from. A
-      // release after it belongs to a later run.
+      // The latest chop before the week this claim is for is where the player
+      // came from. A chop in that week or later happened after the claim.
       const release = (releases.get(sleeperId) ?? [])
-        .filter(r => r.week <= t.leg)
+        .filter(r => r.week < week)
         .at(-1);
       if (release) claim.releasedBy = release;
 
@@ -259,35 +280,4 @@ export function buildWaiverRuns({
             b.losingBids.length - a.losingBids.length,
         ),
     }));
-}
-
-/**
- * Each team's FAAB left after every run, from the winning bids. The budget is
- * the same for every team.
- */
-export function buildFaabRemaining({
-  runs,
-  budget,
-}: {
-  runs: WaiverRun[];
-  budget: number;
-}): Map<number, Map<number, number>> {
-  const spent = new Map<number, number>();
-  const remaining = new Map<number, Map<number, number>>();
-  const chronological = [...runs].sort((a, b) => a.week - b.week);
-
-  for (const run of chronological) {
-    for (const claim of run.claims) {
-      if (!claim.winner) continue;
-      const { rosterId, bid } = claim.winner;
-      spent.set(rosterId, (spent.get(rosterId) ?? 0) + bid);
-    }
-    for (const [rosterId, total] of spent) {
-      const byWeek = remaining.get(rosterId) ?? new Map<number, number>();
-      byWeek.set(run.week, budget - total);
-      remaining.set(rosterId, byWeek);
-    }
-  }
-
-  return remaining;
 }

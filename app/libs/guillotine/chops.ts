@@ -80,8 +80,11 @@ export function resolveChops({
       continue;
     }
 
+    // Every week we have, not just the finished ones: a commissioner can empty
+    // the roster before Sleeper marks the week scored, and stopping at the
+    // last scored week would then date the chop a week early.
     let lastWeekWithPlayers: number | null = null;
-    for (let week = 1; week <= scoredThrough; week++) {
+    for (let week = 1; week <= GUILLOTINE_FINAL_WEEK; week++) {
       const row = weeks.get(week)?.find(r => r.rosterId === roster.rosterId);
       if (row && row.playerCount > 0) lastWeekWithPlayers = week;
     }
