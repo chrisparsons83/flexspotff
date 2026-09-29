@@ -24,6 +24,7 @@ member profiles.
 | Rule variations     | None across 2022–present                                                  |
 | Backfill            | Admin adds each 2022–2025 league by Sleeper URL, the same as a new league |
 | Live season         | Yes: synced on the existing 5-minute live-scores job                      |
+| Parallel leagues    | Fully independent: no combined standings or overall champion              |
 
 ## Phase 0 — Verify Sleeper's shapes (blocking)
 
@@ -113,9 +114,11 @@ Per team, while a week is live:
 - **Points so far**: Sleeper's live matchup points.
 - **Players remaining**: starters whose game has not finished.
 - **Projected total**: points so far, plus the full projection for starters yet
-  to play, plus the unplayed share of the projection for starters mid-game
-  (scaled by game clock where Sleeper gives it; otherwise the full projection
-  less points already scored, floored at zero).
+  to play, plus the unplayed share of the projection for starters mid-game.
+  The unplayed share is by game clock: with two minutes left in the first half
+  the game is about 47% done, so the player is credited their points so far
+  plus about 53% of their projection. Once a game is final, only the actual
+  points count.
 
 The live page ranks surviving teams by projected total and draws the **chop
 line** above the bottom team, marking who is on the block and the margin
