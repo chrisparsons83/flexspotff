@@ -21,6 +21,7 @@ CREATE TABLE "GuillotineLeague" (
     "sleeperDraftId" TEXT,
     "format" "GuillotineFormat" NOT NULL,
     "teamCount" INTEGER NOT NULL,
+    "waiverBudget" INTEGER NOT NULL DEFAULT 0,
     "scoringSettings" JSONB,
     "lastScoredWeek" INTEGER NOT NULL DEFAULT 0,
     "isComplete" BOOLEAN NOT NULL DEFAULT false,
@@ -58,6 +59,7 @@ CREATE TABLE "GuillotineWeekScore" (
     "starters" TEXT[],
     "startingPlayerPoints" DOUBLE PRECISION[],
     "players" TEXT[],
+    "starterProjections" DOUBLE PRECISION[],
     "guillotineTeamId" TEXT NOT NULL,
 
     CONSTRAINT "GuillotineWeekScore_pkey" PRIMARY KEY ("id")

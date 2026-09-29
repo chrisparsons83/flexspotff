@@ -87,6 +87,8 @@ export const sleeperLeagueInfoJson = z.object({
       type: z.number().nullish(),
       // The last week Sleeper has finished scoring.
       last_scored_leg: z.number().nullish(),
+      // Each team's FAAB budget.
+      waiver_budget: z.number().nullish(),
     })
     .nullish(),
 });

@@ -108,6 +108,8 @@ model GuillotineLeague {
   sleeperDraftId  String?
   format          GuillotineFormat
   teamCount       Int
+  /// Each team's FAAB budget for the season.
+  waiverBudget    Int              @default(0)
 
   /// Sleeper's scoring_settings, kept for scoring projections the way the
   /// league scores real stats.
@@ -177,6 +179,10 @@ model GuillotineWeekScore {
   /// The whole roster that week. For the week a team is chopped, this is the
   /// list of players it released.
   players              String[]
+  /// Each starter's projected points under the league's own scoring, in the
+  /// same order as `starters`. Only filled for a week still being played,
+  /// since a finished week has real points instead.
+  starterProjections   Float[]
 
   team             GuillotineTeam @relation(fields: [guillotineTeamId], references: [id], onDelete: Cascade)
   guillotineTeamId String

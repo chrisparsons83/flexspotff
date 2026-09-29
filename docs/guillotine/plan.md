@@ -148,6 +148,17 @@ Wednesday without an admin pressing anything.
 
 ## Phase 3 — Live projections
 
+**Built, with one gap.** Each starter's projection is scored with the league's
+own `scoring_settings` at sync time (checked against Sleeper's own projected
+totals: within 0.05 points) and stored in `starterProjections`. How far through
+a game is comes from the time since kickoff (a game counted as about 185
+minutes, and never treated as finished before it is final), because the game
+clock lives on Sleeper's GraphQL endpoint at `sleeper.com`, which the
+development container could not reach to confirm the field names. Swapping in
+the real clock is a change to `gameProgress` in
+`app/libs/guillotine/projection.ts` once those are confirmed. Teams with no
+lineup yet are listed below the chop line instead of counting as the bottom.
+
 What the site already has:
 
 - `NFLGame.status` per game, kept current by the same 5-minute job, so we know
@@ -224,7 +235,7 @@ Unit tests for the pure pieces, in the style of the D12 tests:
 
 ## Sequencing
 
-Status: steps 1 and 2 are done (schema, sync, admin, live and hourly sync).
+Status: steps 1–4 are done. The profile tab is next.
 
 1. Phase 0 verification (needs Sleeper access).
 2. Schema and sync, plus admin: enough to backfill 2021–2025 and track 2026.

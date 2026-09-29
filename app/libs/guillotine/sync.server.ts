@@ -5,6 +5,7 @@ import {
   weeksToSync,
 } from './chops';
 import type { ChopWeekRow } from './chops';
+import { scoreProjection } from './projection';
 import type { GuillotineLeague, Prisma } from '@prisma/client';
 import { prisma } from '~/db.server';
 import {
@@ -15,6 +16,7 @@ import {
   getLeagueMatchups,
   getLeagueTransactions,
   getLeagueUsers,
+  getProjections,
 } from '~/libs/sleeper/api.server';
 import { parseSleeperLeagueIdFromUrl } from '~/libs/sleeper/league-url';
 import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
@@ -66,8 +68,22 @@ export async function addGuillotineLeague(sleeperUrl: string) {
     },
   });
 
-  const result = await syncGuillotineLeague(league);
-  return { league, year, ...result };
+  // The league is kept even if its first sync fails, so the admin can retry
+  // from its Sync button rather than add it again.
+  try {
+    const result = await syncGuillotineLeague(league);
+    return { league, year, ...result };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      league,
+      year,
+      warnings: [
+        `The first sync failed (${message}). Press Sync to try again.`,
+      ],
+      unmatchedTeams: 0,
+    };
+  }
 }
 
 /**
@@ -107,10 +123,24 @@ export async function syncGuillotineLeague(
   const draft =
     drafts.find(d => d.status === 'complete') ?? drafts[0] ?? undefined;
 
-  const [matchups, transactions, picks] = await Promise.all([
+  // The week still being played, if there is one: the only week projections
+  // mean anything for.
+  const liveWeek = throughWeek > lastScoredWeek ? throughWeek : null;
+  const scoringSettings = info.scoring_settings ?? {};
+
+  let projectionError: string | null = null;
+  const [matchups, transactions, picks, projections] = await Promise.all([
     Promise.all(weekNumbers.map(week => getLeagueMatchups(id, week))),
     Promise.all(weekNumbers.map(leg => getLeagueTransactions(id, leg))),
     draft ? getDraftPicksWithOwners(draft.draft_id) : Promise.resolve([]),
+    // Projections are a nice-to-have on top of real scores, so a failed fetch
+    // is reported rather than allowed to stop the league syncing.
+    liveWeek && info.season
+      ? getProjections(Number(info.season), liveWeek).catch((e: unknown) => {
+          projectionError = e instanceof Error ? e.message : String(e);
+          return null;
+        })
+      : Promise.resolve(null),
   ]);
 
   const matchupsByWeek = new Map<number, SleeperMatchupJson>(
@@ -181,6 +211,14 @@ export async function syncGuillotineLeague(
             starters: (row.starters ?? []).map(s => s ?? '0'),
             startingPlayerPoints: (row.starters_points ?? []).map(p => p ?? 0),
             players: row.players ?? [],
+            starterProjections:
+              week === liveWeek && projections
+                ? (row.starters ?? []).map(starter =>
+                    starter
+                      ? scoreProjection(projections[starter], scoringSettings)
+                      : 0,
+                  )
+                : [],
           },
         ];
       });
@@ -213,6 +251,7 @@ export async function syncGuillotineLeague(
         name: info.name,
         sleeperDraftId: draft?.draft_id ?? null,
         teamCount: info.total_rosters ?? rosters.length,
+        waiverBudget: info.settings?.waiver_budget ?? 0,
         scoringSettings: info.scoring_settings ?? undefined,
         lastScoredWeek,
         isComplete: chops.championRosterId !== null,
@@ -255,7 +294,14 @@ export async function syncGuillotineLeague(
     }),
   ]);
 
-  return { warnings: chops.warnings, unmatchedTeams };
+  const warnings = [...chops.warnings];
+  if (projectionError) {
+    warnings.push(
+      `Week ${liveWeek} projections could not be loaded (${projectionError}), so the chop line shows points only.`,
+    );
+  }
+
+  return { warnings, unmatchedTeams };
 }
 
 /**

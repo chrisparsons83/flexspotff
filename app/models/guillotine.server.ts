@@ -56,3 +56,83 @@ export async function deleteGuillotineLeague(id: string) {
   }
   return league;
 }
+
+const teamMember = {
+  select: {
+    id: true,
+    discordName: true,
+    discordUsername: true,
+  },
+} as const;
+
+/** Every season with each league's podium, for the public history page. */
+export async function getGuillotineHistory() {
+  return prisma.guillotineSeason.findMany({
+    orderBy: { year: 'desc' },
+    include: {
+      leagues: {
+        orderBy: { name: 'asc' },
+        include: {
+          teams: {
+            select: {
+              rosterId: true,
+              finish: true,
+              choppedWeek: true,
+              sleeperDisplayName: true,
+              user: teamMember,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+/** The newest season's leagues, for the Games sidebar. */
+export async function getLatestGuillotineLeagues() {
+  const season = await prisma.guillotineSeason.findFirst({
+    orderBy: { year: 'desc' },
+    include: {
+      leagues: { orderBy: { name: 'asc' }, select: { id: true, name: true } },
+    },
+  });
+  return season ? { year: season.year, leagues: season.leagues } : null;
+}
+
+/** Every league, for the league switcher. */
+export async function getAllGuillotineLeagues() {
+  return prisma.guillotineLeague.findMany({
+    select: { id: true, name: true, season: { select: { year: true } } },
+    orderBy: [{ season: { year: 'desc' } }, { name: 'asc' }],
+  });
+}
+
+/** A league with every team, its member and every week it played. */
+export async function getGuillotineLeagueForPage(id: string) {
+  return prisma.guillotineLeague.findUnique({
+    where: { id },
+    include: {
+      season: { select: { year: true } },
+      teams: {
+        include: {
+          user: teamMember,
+          weekScores: { orderBy: { week: 'asc' } },
+        },
+      },
+    },
+  });
+}
+
+export async function getGuillotineTransactions(guillotineLeagueId: string) {
+  return prisma.guillotineTransaction.findMany({
+    where: { guillotineLeagueId },
+    orderBy: { processedAt: 'asc' },
+  });
+}
+
+export async function getGuillotineDraftPicks(guillotineLeagueId: string) {
+  return prisma.guillotineDraftPick.findMany({
+    where: { guillotineLeagueId },
+    orderBy: { pickNo: 'asc' },
+  });
+}
