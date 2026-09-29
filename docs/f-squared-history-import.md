@@ -57,8 +57,8 @@ Names that don't match a team fall back to members with similar names.
 
 In a trial run of all three years against a copy of the dev database, every name
 got a suggestion except `moose#0017` (2019), who managed no team that year. That
-is almost certainly tHEmOOSE 💎, so match them by hand. Look over the suggestions
-before pressing **Match**, as always.
+is almost certainly tHEmOOSE 💎, so match them by hand. Look over the
+suggestions before pressing **Match**, as always.
 
 ## Steps
 
