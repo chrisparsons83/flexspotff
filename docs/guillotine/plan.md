@@ -21,7 +21,7 @@ member profiles.
 | Placement           | Under Games (`/games/guillotine`) until the site-wide nav redesign        |
 | Visibility          | Members only                                                              |
 | Who was chopped     | What Sleeper recorded: `eliminated` on native leagues, the emptied roster on manual ones. No override |
-| Rule variations     | None across 2022–present                                                  |
+| Rule variations     | None across 2021–present                                                  |
 | Backfill            | Admin adds each 2021–2025 league by Sleeper URL, the same as a new league |
 | Live season         | Yes: synced on the existing 5-minute live-scores job                      |
 | Parallel leagues    | Fully independent: no combined standings or overall champion              |
@@ -141,7 +141,7 @@ from the D12 admin:
 - Season page: add a league from a Sleeper URL (name and year read from
   Sleeper), with the unmatched-owner warning D12 shows. Per-league buttons:
   full sync / backfill, resync one week, sync draft, delete.
-- Adding a 2022 league and pressing "full sync" is the whole backfill.
+- Adding a 2021 league and pressing "full sync" is the whole backfill.
 
 **Live season**: `syncCurrentWeekScores` in `scoring.server.ts` already resyncs
 D12 every 5 minutes while NFL games are in progress. Guillotine hooks in beside
@@ -227,7 +227,7 @@ Unit tests for the pure pieces, in the style of the D12 tests:
 ## Sequencing
 
 1. Phase 0 verification (needs Sleeper access).
-2. Schema and sync, plus admin: enough to backfill 2022–2025 and track 2026.
+2. Schema and sync, plus admin: enough to backfill 2021–2025 and track 2026.
 3. Live projections and the chop-line view, since the season is running.
 4. The remaining public pages.
 5. Profile tab.
