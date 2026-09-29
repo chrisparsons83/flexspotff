@@ -1,4 +1,5 @@
 import { syncD12Week } from '~/libs/d12-sync.server';
+import { syncActiveGuillotineLeagues } from '~/libs/guillotine/sync.server';
 import {
   getNflState,
   syncNflGameWeek,
@@ -19,6 +20,8 @@ export type SyncReport = {
   scoresResynced?: boolean;
   /** Per-league failures from the D12 sync. Empty when everything landed. */
   d12Errors?: string[];
+  /** Per-league failures from the guillotine sync. */
+  guillotineErrors?: string[];
 };
 
 /**
@@ -65,6 +68,7 @@ export async function syncCurrentWeekScores({
     force || gamesInProgressBefore > 0 || gamesInProgressAfter > 0;
 
   let d12Errors: string[] = [];
+  let guillotineErrors: string[] = [];
   if (scoresResynced) {
     await syncSleeperWeeklyScores(year, week);
 
@@ -73,6 +77,14 @@ export async function syncCurrentWeekScores({
     const d12Season = await getD12SeasonByYear(year);
     if (d12Season) {
       d12Errors = await syncD12Week(year, week);
+    }
+
+    // Guillotine leagues are Sleeper leagues on the same NFL week too. Only
+    // leagues still running are touched, so this is free once a season ends.
+    try {
+      guillotineErrors = await syncActiveGuillotineLeagues(year);
+    } catch (e) {
+      guillotineErrors = [e instanceof Error ? e.message : String(e)];
     }
   }
 
@@ -87,5 +99,6 @@ export async function syncCurrentWeekScores({
     gamesInProgressAfter,
     scoresResynced,
     d12Errors,
+    guillotineErrors,
   };
 }

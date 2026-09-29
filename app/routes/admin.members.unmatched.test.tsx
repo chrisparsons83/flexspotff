@@ -301,6 +301,7 @@ describe('Admin unmatched Sleeper users', () => {
       vi.mocked(sleeperUserModel.matchSleeperOwnerToUser).mockResolvedValue({
         sleeperUser: { sleeperOwnerID: 'owner-2', userId: 'user-1' },
         teamsUpdated: 2,
+        guillotineTeamsUpdated: 0,
       });
 
       const data = await (

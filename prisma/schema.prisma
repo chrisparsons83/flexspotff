@@ -78,6 +78,161 @@ model D12DraftPick {
   @@index([d12LeagueId])
 }
 
+/// How a guillotine league's chops are recorded in Sleeper, which decides how
+/// the sync reads them. See docs/guillotine/plan.md, Phase 0.
+enum GuillotineFormat {
+  /// Sleeper's own guillotine league type (settings.type 3, 2026 on). Each
+  /// chopped roster carries the week it was chopped.
+  NATIVE
+  /// An ordinary redraft league where the commissioner emptied the lowest
+  /// scorer's roster by hand each week (2021-2025).
+  MANUAL
+}
+
+model GuillotineSeason {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year    Int                @unique
+  leagues GuillotineLeague[]
+}
+
+model GuillotineLeague {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name            String
+  sleeperLeagueId String           @unique
+  sleeperDraftId  String?
+  format          GuillotineFormat
+  teamCount       Int
+
+  /// Sleeper's scoring_settings, kept for scoring projections the way the
+  /// league scores real stats.
+  scoringSettings Json?
+
+  /// The last week Sleeper has finished scoring, capped at the final (17).
+  lastScoredWeek Int       @default(0)
+  isComplete     Boolean   @default(false)
+  lastSyncedAt   DateTime?
+
+  season             GuillotineSeason @relation(fields: [guillotineSeasonId], references: [id], onDelete: Cascade)
+  guillotineSeasonId String
+
+  teams        GuillotineTeam[]
+  transactions GuillotineTransaction[]
+  draftPicks   GuillotineDraftPick[]
+
+  @@index([guillotineSeasonId])
+}
+
+/// One Sleeper roster in a guillotine league, and how far it got.
+model GuillotineTeam {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rosterId Int
+
+  /// Null only when Sleeper has lost the owner and the draft could not supply
+  /// one either. The 2021 league removed its managers once it ended, so there
+  /// the owner comes from whoever made the roster's draft picks.
+  sleeperOwnerId     String?
+  sleeperDisplayName String?
+  user               User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId             String?
+
+  draftSlot Int?
+
+  /// The week this team was chopped, as Sleeper recorded it. Null while the
+  /// team is alive, and for the champion.
+  choppedWeek Int?
+  /// 1 is the champion. Null until the team's place is settled.
+  finish      Int?
+
+  waiverBudgetUsed Int @default(0)
+
+  league             GuillotineLeague @relation(fields: [guillotineLeagueId], references: [id], onDelete: Cascade)
+  guillotineLeagueId String
+
+  weekScores GuillotineWeekScore[]
+
+  @@unique([guillotineLeagueId, rosterId])
+  @@index([userId])
+}
+
+/// A team's score for one week it was still alive.
+model GuillotineWeekScore {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  week   Int
+  points Float
+
+  starters             String[]
+  startingPlayerPoints Float[]
+  /// The whole roster that week. For the week a team is chopped, this is the
+  /// list of players it released.
+  players              String[]
+
+  team             GuillotineTeam @relation(fields: [guillotineTeamId], references: [id], onDelete: Cascade)
+  guillotineTeamId String
+
+  @@unique([guillotineTeamId, week])
+}
+
+/// Every Sleeper transaction in a guillotine league: waiver claims won and
+/// lost, free agent adds, trades, and the releases that follow a chop
+/// (`chopped` in native leagues, `commissioner` drops in manual ones).
+///
+/// Rosters are stored rather than members: GuillotineTeam maps a roster to its
+/// member, so re-matching a Sleeper account never has to touch these rows.
+model GuillotineTransaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sleeperTransactionId String
+  type                 String
+  /// "complete" or "failed".
+  status               String
+  /// Sleeper's leg. A Wednesday waiver batch is filed under the outgoing leg,
+  /// so its claims are for week `leg + 1` - see waiver-sync.server.ts.
+  leg                  Int
+  rosterIds            Int[]
+  /// Player key -> roster ID, as Sleeper sends them. A defense's key is its
+  /// team abbreviation rather than a numeric ID.
+  adds                 Json?
+  drops                Json?
+  bid                  Int?
+  seq                  Int?
+  notes                String?
+  processedAt          DateTime
+
+  league             GuillotineLeague @relation(fields: [guillotineLeagueId], references: [id], onDelete: Cascade)
+  guillotineLeagueId String
+
+  @@unique([guillotineLeagueId, sleeperTransactionId])
+  @@index([guillotineLeagueId, leg])
+}
+
+model GuillotineDraftPick {
+  id String @id @default(cuid())
+
+  pickNo    Int
+  round     Int
+  rosterId  Int
+  sleeperId String
+
+  league             GuillotineLeague @relation(fields: [guillotineLeagueId], references: [id], onDelete: Cascade)
+  guillotineLeagueId String
+
+  @@unique([guillotineLeagueId, pickNo])
+}
+
 model Cup {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -920,6 +1075,7 @@ model User {
   waiverTransactions   WaiverTransaction[]
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
+  guillotineTeams      GuillotineTeam[]
   memberAliases        MemberAlias[]
   nameHistory          UserNameHistory[]
 

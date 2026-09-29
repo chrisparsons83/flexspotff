@@ -175,6 +175,13 @@ const MERGE_TABLES = [
     slotOf: null,
   },
   {
+    table: 'guillotineTeam',
+    label: 'Guillotine teams',
+    select: {},
+    // Like league teams: nothing limits a member to one per anything.
+    slotOf: null,
+  },
+  {
     table: 'memberAlias',
     label: 'Imported sheet names',
     select: {},
@@ -672,6 +679,7 @@ export async function getMergedUsersWithLeftovers() {
           omniTeams: true,
           d12WeekScores: true,
           d12DraftPicks: true,
+          guillotineTeams: true,
           dfsSurvivorUserYears: true,
           dfsSurvivorUserWeeks: true,
         },

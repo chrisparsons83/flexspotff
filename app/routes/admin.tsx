@@ -53,6 +53,10 @@ export default function Admin() {
     { name: 'D12 Seasons & Leagues', href: '/admin/d12', current: false },
   ];
 
+  const guillotineLinks = [
+    { name: 'Guillotine Leagues', href: '/admin/guillotine', current: false },
+  ];
+
   const omniLinks = [
     { name: 'Score Update', href: '/admin/omni/scoring', current: false },
     {
@@ -108,6 +112,11 @@ export default function Admin() {
                 title='D12'
                 links={d12Links}
                 headingId='admin-d12-heading'
+              />
+              <NavigationSection
+                title='Guillotine'
+                links={guillotineLinks}
+                headingId='admin-guillotine-heading'
               />
               <NavigationSection
                 title='Omni'

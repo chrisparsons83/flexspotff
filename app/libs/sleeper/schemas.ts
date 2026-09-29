@@ -68,6 +68,10 @@ export type SleeperLeagueUsersJson = z.infer<typeof sleeperLeagueUsersJson>;
 export const sleeperLeagueInfoJson = z.object({
   name: z.string(),
   season: z.string().nullish(),
+  // Guillotine leagues read these to tell a finished season from a live one.
+  status: z.string().nullish(),
+  total_rosters: z.number().nullish(),
+  scoring_settings: z.record(z.number()).nullish(),
   draft_id: z.string().nullish(),
   // The D12 leagues are best ball, which changes how a week is scored - see
   // app/libs/sleeper/best-ball.ts. Nullish because the main-league flows share
@@ -79,6 +83,10 @@ export const sleeperLeagueInfoJson = z.object({
       // First week of the playoffs. Only Sleeper knows it, and it is what
       // league-sync records on the League row.
       playoff_week_start: z.number().nullish(),
+      // 3 is Sleeper's own guillotine league type. See docs/guillotine/plan.md.
+      type: z.number().nullish(),
+      // The last week Sleeper has finished scoring.
+      last_scored_leg: z.number().nullish(),
     })
     .nullish(),
 });
@@ -103,6 +111,9 @@ export const sleeperMatchupJson = z.array(
     // scored off this rather than off `points`, which only ever sums the frozen
     // `starters` array.
     players_points: z.record(z.number().nullable()).nullish(),
+    // The whole roster that week. Guillotine leagues read it to see which
+    // rosters had been emptied by a chop.
+    players: z.array(z.string()).nullish(),
   }),
 );
 export type SleeperMatchupJson = z.infer<typeof sleeperMatchupJson>;
@@ -114,6 +125,28 @@ export const sleeperRosterOwnersJson = z.array(
   }),
 );
 export type SleeperRosterOwnersJson = z.infer<typeof sleeperRosterOwnersJson>;
+
+/**
+ * Rosters as a guillotine league needs them. A chopped roster is emptied and
+ * locked; in Sleeper's own guillotine format it also carries `eliminated`, the
+ * week it was chopped.
+ */
+export const sleeperGuillotineRostersJson = z.array(
+  z.object({
+    roster_id: z.number(),
+    owner_id: z.string().nullable(),
+    players: z.array(z.string()).nullish(),
+    settings: z
+      .object({
+        eliminated: z.number().nullish(),
+        waiver_budget_used: z.number().nullish(),
+      })
+      .nullish(),
+  }),
+);
+export type SleeperGuillotineRostersJson = z.infer<
+  typeof sleeperGuillotineRostersJson
+>;
 
 export const sleeperAdpJson = z.array(
   z.object({
@@ -285,7 +318,12 @@ export const sleeperTransactionsJson = z.array(
     leg: z.number(),
     creator: z.string(),
     roster_ids: z.array(z.number()),
-    settings: z.object({ waiver_bid: z.number(), seq: z.number() }).nullish(),
+    // A waiver claim always has both. Other types can send an object with
+    // neither - the 2021 guillotine league's free agent adds do - which used
+    // to fail the whole week's parse.
+    settings: z
+      .object({ waiver_bid: z.number().nullish(), seq: z.number().nullish() })
+      .nullish(),
     metadata: z.object({ notes: z.string() }).nullish(),
     adds: z.record(z.number()).nullish(),
     drops: z.record(z.number()).nullish(),

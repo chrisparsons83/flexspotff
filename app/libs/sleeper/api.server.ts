@@ -5,6 +5,7 @@ import {
   sleeperDraftListJson,
   sleeperDraftPicksJson,
   sleeperGraphqlNflGames,
+  sleeperGuillotineRostersJson,
   sleeperHistoricalStatsJson,
   sleeperLeagueInfoJson,
   sleeperLeagueUsersJson,
@@ -44,6 +45,13 @@ export const getLeagueRosterOwners = (sleeperLeagueId: string) =>
   sleeperFetch(
     `/v1/league/${sleeperLeagueId}/rosters`,
     sleeperRosterOwnersJson,
+  );
+
+/** The same endpoint again, with what a guillotine league reads off a roster. */
+export const getGuillotineRosters = (sleeperLeagueId: string) =>
+  sleeperFetch(
+    `/v1/league/${sleeperLeagueId}/rosters`,
+    sleeperGuillotineRostersJson,
   );
 
 export const getLeagueUsers = (sleeperLeagueId: string) =>
