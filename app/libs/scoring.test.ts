@@ -1,6 +1,7 @@
 import { syncCurrentWeekScores } from './scoring.server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as d12Sync from '~/libs/d12-sync.server';
+import * as guillotineSync from '~/libs/guillotine/sync.server';
 import * as syncs from '~/libs/syncs.server';
 import * as d12SeasonModel from '~/models/d12season.server';
 import * as nflGameModel from '~/models/nflgame.server';
@@ -9,6 +10,7 @@ import * as seasonModel from '~/models/season.server';
 
 vi.mock('~/libs/syncs.server');
 vi.mock('~/libs/d12-sync.server');
+vi.mock('~/libs/guillotine/sync.server');
 vi.mock('~/models/d12season.server');
 vi.mock('~/models/nflgame.server');
 vi.mock('~/models/nflteam.server');
@@ -33,6 +35,7 @@ describe('syncCurrentWeekScores', () => {
     vi.mocked(syncs.syncNflGameWeek).mockResolvedValue(true as never);
     vi.mocked(syncs.syncSleeperWeeklyScores).mockResolvedValue(undefined);
     vi.mocked(d12Sync.syncD12Week).mockResolvedValue([]);
+    vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockResolvedValue([]);
     vi.mocked(d12SeasonModel.getD12SeasonByYear).mockResolvedValue({
       id: 'season-1',
     } as never);
@@ -54,6 +57,7 @@ describe('syncCurrentWeekScores', () => {
     expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [3]);
     expect(syncs.syncSleeperWeeklyScores).not.toHaveBeenCalled();
     expect(d12Sync.syncD12Week).not.toHaveBeenCalled();
+    expect(guillotineSync.syncActiveGuillotineLeagues).not.toHaveBeenCalled();
     expect(report.scoresResynced).toBe(false);
     expect(report.message).toContain('left alone');
   });
@@ -66,6 +70,9 @@ describe('syncCurrentWeekScores', () => {
 
     expect(syncs.syncSleeperWeeklyScores).toHaveBeenCalledWith(2026, 3);
     expect(d12Sync.syncD12Week).toHaveBeenCalledWith(2026, 3);
+    expect(guillotineSync.syncActiveGuillotineLeagues).toHaveBeenCalledWith(
+      2026,
+    );
     expect(report.scoresResynced).toBe(true);
   });
 
@@ -98,5 +105,17 @@ describe('syncCurrentWeekScores', () => {
 
     expect(report.synced).toBe(true);
     expect(report.d12Errors).toEqual(['"League A" week 3: 500']);
+  });
+
+  it('reports a guillotine failure without failing the run', async () => {
+    vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockRejectedValue(
+      new Error('database is down'),
+    );
+
+    const report = await syncCurrentWeekScores({ force: true });
+
+    expect(report.synced).toBe(true);
+    expect(d12Sync.syncD12Week).toHaveBeenCalled();
+    expect(report.guillotineErrors).toEqual(['database is down']);
   });
 });

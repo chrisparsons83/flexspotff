@@ -4,6 +4,7 @@ import { NavigationSection } from '~/components/layout/NavigationSection';
 import { prisma } from '~/db.server';
 import { getLatestD12Season } from '~/models/d12season.server';
 import { getNewestD12WeekByYear } from '~/models/d12weekscore.server';
+import { getLatestGuillotineLeagues } from '~/models/guillotine.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
@@ -51,8 +52,11 @@ export const loader = async () => {
     ? await getNewestD12WeekByYear(latestD12Season.year)
     : 1;
 
+  const guillotine = await getLatestGuillotineLeagues();
+
   return typedjson(
     {
+      guillotine,
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
       locksChallengeCurrentWeek,
@@ -67,6 +71,7 @@ export const loader = async () => {
 
 export default function GamesIndex() {
   const {
+    guillotine,
     qbStreamingCurrentWeek,
     spreadPoolCurrentWeek,
     locksChallengeCurrentWeek,
@@ -196,8 +201,26 @@ export default function GamesIndex() {
               headingId='games-d12-heading'
             />
           )}
+          {guillotine && (
+            <NavigationSection
+              title='Guillotine'
+              links={[
+                ...guillotine.leagues.map(league => ({
+                  name: `${guillotine.year} ${league.name}`,
+                  href: `/games/guillotine/${league.id}`,
+                  current: false,
+                })),
+                {
+                  name: 'All Seasons',
+                  href: '/games/guillotine',
+                  current: false,
+                },
+              ]}
+              headingId='games-guillotine-heading'
+            />
+          )}
         </div>
-        <div className='md:col-span-10'>
+        <div className='min-w-0 md:col-span-10'>
           <Outlet />
         </div>
       </div>

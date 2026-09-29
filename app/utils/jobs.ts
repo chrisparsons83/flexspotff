@@ -41,13 +41,19 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     name: 'monitor-scores',
     cron: '*/5 * * * *',
     description:
-      'Syncs NFL game state every 5 minutes, and resyncs league and D12 scores whenever games are in progress.',
+      'Syncs NFL game state every 5 minutes, and resyncs league, D12 and guillotine scores whenever games are in progress.',
   },
   {
     name: 'sync-d12-scores',
     cron: '0 7 * * 2',
     description:
       'Full-season D12 backfill, to pick up weeks the live monitor missed and any late Sleeper corrections. Tuesdays at 07:00 UTC.',
+  },
+  {
+    name: 'sync-guillotine',
+    cron: '40 * * * *',
+    description:
+      'Syncs every guillotine league still running this season - chops, waiver claims and scores - so a Monday-night or Tuesday chop, and the waiver run just after midnight Thursday Pacific, show up without waiting for games. Hourly at :40.',
   },
   {
     name: 'sync-player-scores',

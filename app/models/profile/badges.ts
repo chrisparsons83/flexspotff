@@ -233,6 +233,15 @@ export const SIDE_GAME_BADGES = {
       bg: 'bg-lime-950/60',
     },
   },
+  guillotine: {
+    label: 'Guillotine Champion',
+    emoji: '🪓',
+    accent: {
+      border: 'border-pink-400',
+      text: 'text-pink-300',
+      bg: 'bg-pink-950/60',
+    },
+  },
   fSquared: {
     label: 'F² Champion',
     emoji: '🧮',

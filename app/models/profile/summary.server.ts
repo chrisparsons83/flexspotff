@@ -76,6 +76,7 @@ export async function getProfileSummary(
     locksCount,
     dfs,
     fSquared,
+    guillotineTeams,
   ] = await Promise.all([
     prisma.team.findMany({
       where: { userId },
@@ -131,6 +132,11 @@ export async function getProfileSummary(
       _count: { _all: true },
       _min: { year: true },
     }),
+    // The years too, since guillotine seasons count towards memberSince.
+    prisma.guillotineTeam.findMany({
+      where: { userId },
+      select: { league: { select: { season: { select: { year: true } } } } },
+    }),
   ]);
 
   const career = teams.reduce(
@@ -166,7 +172,12 @@ export async function getProfileSummary(
   // their year only through a join, and a member who played one of those and
   // nothing else does not exist yet, so they fall back to the account date.
   const memberSince = memberSinceYear(
-    [...teams.map(team => team.league.year), dfs._min.year, fSquared._min.year],
+    [
+      ...teams.map(team => team.league.year),
+      ...guillotineTeams.map(team => team.league.season.year),
+      dfs._min.year,
+      fSquared._min.year,
+    ],
     user.createdAt.getFullYear(),
   );
   const championsSeasons = teams.filter(team => team.league.tier === 1).length;
@@ -175,6 +186,7 @@ export async function getProfileSummary(
     teams.length > 0 && 'league',
     cupSeasons > 0 && 'cup',
     d12Count > 0 && 'd12',
+    guillotineTeams.length > 0 && 'guillotine',
     qbCount > 0 && 'qb-streaming',
     poolCount > 0 && 'spread-pool',
     locksCount > 0 && 'locks',

@@ -35,17 +35,33 @@ export async function getSideGameTitles(
   // Read once and threaded through, rather than six times inside the counters.
   const inProgress = (await getCurrentSeason())?.year ?? null;
 
-  const [d12, qbStreaming, spreadPool, locks, dfsSurvivor, fSquared] =
-    await Promise.all([
-      countD12Titles(userId, inProgress),
-      countQbStreamingTitles(userId, inProgress),
-      countSpreadPoolTitles(userId, inProgress),
-      countLocksTitles(userId, inProgress),
-      countDfsSurvivorTitles(userId, inProgress),
-      countFSquaredTitles(userId, inProgress),
-    ]);
+  const [
+    d12,
+    qbStreaming,
+    spreadPool,
+    locks,
+    dfsSurvivor,
+    guillotine,
+    fSquared,
+  ] = await Promise.all([
+    countD12Titles(userId, inProgress),
+    countQbStreamingTitles(userId, inProgress),
+    countSpreadPoolTitles(userId, inProgress),
+    countLocksTitles(userId, inProgress),
+    countDfsSurvivorTitles(userId, inProgress),
+    countGuillotineTitles(userId),
+    countFSquaredTitles(userId, inProgress),
+  ]);
 
-  return { d12, qbStreaming, spreadPool, locks, dfsSurvivor, fSquared };
+  return {
+    d12,
+    qbStreaming,
+    spreadPool,
+    locks,
+    dfsSurvivor,
+    guillotine,
+    fSquared,
+  };
 }
 
 /** Distinct values, so a member's seasons are only ranked once each. */
@@ -329,4 +345,13 @@ function countWins(
     if (winnersOf(totals).has(userId)) titles++;
   }
   return titles;
+}
+
+/**
+ * Guillotine: last team standing. There is no ranking to redo here - the sync
+ * only records a champion once week 17 has settled it, so a live season can
+ * never award one early.
+ */
+async function countGuillotineTitles(userId: string): Promise<number> {
+  return prisma.guillotineTeam.count({ where: { userId, finish: 1 } });
 }

@@ -21,22 +21,10 @@ import { getPlayersBySleepersIds } from '~/models/players.server';
 export const LAST_D12_WEEK = 17;
 
 export { resolveLeagueOwners };
+export { parseSleeperLeagueIdFromUrl } from '~/libs/sleeper/league-url';
 
 export async function getSleeperLeagueInfo(sleeperLeagueId: string) {
   return getLeagueInfo(sleeperLeagueId);
-}
-
-export function parseSleeperLeagueIdFromUrl(input: string): string {
-  // Accept a raw numeric ID or a full sleeper.com URL such as:
-  // https://sleeper.com/leagues/123456789/...
-  // https://sleeper.app/leagues/123456789/...
-  const match = input.match(/\/leagues\/(\d+)/);
-  if (match) return match[1];
-  // Fall back: if the input is already a plain numeric ID
-  if (/^\d+$/.test(input.trim())) return input.trim();
-  throw new Error(
-    `Could not parse a Sleeper league ID from: "${input}". Paste the full league URL from sleeper.com.`,
-  );
 }
 
 /**

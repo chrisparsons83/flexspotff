@@ -15,3 +15,4 @@ app/libs/__fixtures__/*.html
 # Captured from Google Sheets and Sleeper as-is
 app/libs/__fixtures__/qb-streaming-*
 app/libs/__fixtures__/f-squared-*
+app/libs/__fixtures__/guillotine-*

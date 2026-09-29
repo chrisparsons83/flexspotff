@@ -16,6 +16,15 @@ async function monitorScoresJob() {
       }
     }
 
+    if (report.guillotineErrors && report.guillotineErrors.length > 0) {
+      console.error(
+        `Guillotine sync had ${report.guillotineErrors.length} league error(s):`,
+      );
+      for (const err of report.guillotineErrors) {
+        console.error(` - ${err}`);
+      }
+    }
+
     // Send success message to parent
     if (parentPort) {
       parentPort.postMessage({ success: true, ...report });

@@ -96,12 +96,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // game happens to be in progress.
       const report = await syncCurrentWeekScores({ force: true });
 
-      if (report.d12Errors && report.d12Errors.length > 0) {
+      const failures = [
+        ...(report.d12Errors?.length
+          ? [`D12 leagues that failed to sync: ${report.d12Errors.join('; ')}`]
+          : []),
+        ...(report.guillotineErrors?.length
+          ? [
+              `Guillotine leagues that failed to sync: ${report.guillotineErrors.join(
+                '; ',
+              )}`,
+            ]
+          : []),
+      ];
+      if (failures.length > 0) {
         return json<ActionData>({
           message: report.message,
-          formError: `D12 leagues that failed to sync: ${report.d12Errors.join(
-            '; ',
-          )}`,
+          formError: failures.join(' '),
         });
       }
 
@@ -309,9 +319,10 @@ export default function AdminDataIndex() {
         <section>
           <h3>Update Current Week Scores</h3>
           <p>
-            This will resync NFL game state plus league and D12 scores for the
-            current week. This can be run at any time safely. The scheduler
-            already does this every 5 minutes while games are in progress.
+            This will resync NFL game state plus league, D12 and guillotine
+            scores for the current week. This can be run at any time safely. The
+            scheduler already does this every 5 minutes while games are in
+            progress.
           </p>
           {actionData?.formError ? (
             <p className='form-validation-error' role='alert'>
