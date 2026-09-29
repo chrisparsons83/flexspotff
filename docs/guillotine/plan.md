@@ -235,7 +235,7 @@ Unit tests for the pure pieces, in the style of the D12 tests:
 
 ## Sequencing
 
-Status: steps 1–4 are done. The profile tab is next.
+Status: all five steps are done.
 
 1. Phase 0 verification (needs Sleeper access).
 2. Schema and sync, plus admin: enough to backfill 2021–2025 and track 2026.
