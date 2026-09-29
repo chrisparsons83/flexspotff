@@ -20,32 +20,71 @@ member profiles.
 | Shape               | Standalone contest modelled on D12: a season holds several leagues        |
 | Placement           | Under Games (`/games/guillotine`) until the site-wide nav redesign        |
 | Visibility          | Members only                                                              |
-| Who was chopped     | Sleeper's elimination is the only source of truth. No derivation, no override |
+| Who was chopped     | What Sleeper recorded: `eliminated` on native leagues, the emptied roster on manual ones. No override |
 | Rule variations     | None across 2022–present                                                  |
 | Backfill            | Admin adds each 2022–2025 league by Sleeper URL, the same as a new league |
 | Live season         | Yes: synced on the existing 5-minute live-scores job                      |
 | Parallel leagues    | Fully independent: no combined standings or overall champion              |
 
-## Phase 0 — Verify Sleeper's shapes (blocking)
+## Phase 0 — What Sleeper returns (verified 2026-09-29)
 
-The container this plan was written in could not reach `api.sleeper.app`, so
-nothing below about Sleeper's guillotine data has been confirmed. Against one
-real league, record:
+Checked against three real leagues: the 2026 league (Sleeper's built-in
+guillotine), the 2025 league (chops done by hand by the commissioner) and the
+first league, from 2021 (chops by hand, and managers removed from the league
+once it ended). Every league is 18 teams, half PPR, $1,000 FAAB, with the same
+roster shape.
 
-- How `GET /v1/league/{id}` marks a guillotine league (settings type and flags).
-- **Where Sleeper records an elimination**, and the week it happened. This
-  decides the whole schema, since we trust it and nothing else. Check roster
-  `settings` and `metadata`, the league object, and the matchups of the weeks
-  after a chop.
-- What a chopped roster looks like afterwards (empty `players`, kept owner?).
-- The transaction type and leg of the mass release (`commissioner`? a `drops`
-  batch with no `adds`?), and whether the players go through the Wednesday
-  waiver batch like any other drop.
-- Whether `matchup_id` is null for every team, since there are no opponents.
-- The league's `scoring_settings`, needed for projections below.
+### Three formats, one signal
 
-Findings get written into `app/libs/sleeper/schemas.ts` and into this document
-before the schema is finalised.
+| Format    | Seasons                | How Sleeper records a chop                                                                                   |
+| --------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Native    | 2026 on                | League `settings.type === 3`. The roster gets `settings.eliminated = <week>` and `locked: 1`, and a `chopped` transaction drops its whole roster |
+| Manual    | 2022–2025              | League `settings.type === 0`. The commissioner drops every player (one `commissioner` transaction per player) and the roster is left empty and `locked: 1` |
+| Manual, owners removed | 2021 (first league) | As manual, but chopped rosters now have `owner_id: null`. The owner comes from the draft instead: every pick carries `picked_by` and `roster_id` |
+
+In all three, **a chopped team's roster is empty in every matchup from the week
+after its chop**. For the native format that agrees with `eliminated`
+exactly. For both manual leagues it picks out exactly one team per week, and
+that team was the week's lowest scorer every single week, so the manual chop
+Sleeper recorded matches the rules with no exceptions.
+
+The rule the sync uses:
+
+- **Native**: `choppedWeek = roster.settings.eliminated`.
+- **Manual**: `choppedWeek` = the last week the roster had players, for any
+  roster that is empty and locked now.
+
+This is still "trust Sleeper": it reads what the commissioner did in Sleeper,
+it does not work out who should have been chopped.
+
+### Other findings
+
+- **Matchups**: native leagues give every roster its own `matchup_id`; the
+  manual leagues kept normal head-to-head pairings, which the site ignores.
+  Native leagues also pre-create zero-point rows for future weeks, so a week
+  only counts once somebody has scored.
+- **Weeks after the end**: the 2021 league shows every roster with players and
+  points again in week 18, after the final. The sync stops at the final week.
+- **Released players**: the chop week's matchup row lists the full roster in
+  `players`, which is what "players released" is built from, whichever format
+  the release transactions took.
+- **Waivers**: the same shape as the main leagues (`waiver` claims, complete
+  and failed, with `waiver_bid` and `seq`), and filed under the outgoing leg in
+  the same way. The existing transaction schema already parses `chopped` and
+  `commissioner` rows.
+- **Final**: the last two teams are never emptied in the manual leagues, so the
+  champion cannot be read from rosters. See open questions.
+- **League history**: the "Guillotine for the People" leagues are linked by
+  `previous_league_id` from 2022 to 2025. 2026 was cloned rather than
+  continued, so it is not linked, and "Guillotine for Business Edition 2022" is
+  a second, separate line.
+
+### Open questions
+
+- The first league is filed by Sleeper as the **2021** season, not 2022.
+- **How the final was decided in the manual years.** 2025 ended with two teams
+  playing both weeks 17 and 18 (the same team won both weeks); 2021 ended with
+  two teams in week 17 only.
 
 ## Phase 1 — Schema
 
@@ -54,16 +93,20 @@ parallel.
 
 - **`GuillotineSeason`**: `year` (unique), leagues.
 - **`GuillotineLeague`**: `name`, `sleeperLeagueId` (unique), `sleeperDraftId`,
-  `teamCount`, `scoringSettings` (JSON, for projections), season.
+  `format` (`NATIVE` or `MANUAL`, read from `settings.type` when the league is
+  added), `teamCount`, `scoringSettings` (JSON, for projections), season.
 - **`GuillotineTeam`**: league, `rosterId`, `sleeperOwnerId`, `user?`,
   `choppedWeek?` (null = still alive, or the champion), `finish?`,
-  `draftSlot?`. `choppedWeek` is copied from Sleeper, never computed.
+  `draftSlot?`. `choppedWeek` is read from Sleeper as Phase 0 describes. The
+  owner falls back to the draft's `picked_by` when Sleeper's roster no longer
+  has one (2021).
 - **`GuillotineWeekScore`**: team, `week`, `points`, `starters`,
   `startingPlayerPoints`, `players` (whole roster that week, which is what
   "players released" reads from), and live fields `projectedPoints` and
   `playersRemaining`.
 - **`GuillotineTransaction`**: league, `week`, `sleeperLeg`, `type`
-  (waiver / free agent / release), `status`, `bid`, `seq`, `notes`, roster,
+  (waiver / free agent / trade / release, where release covers both
+  `chopped` and the manual years' `commissioner` drops), `status`, `bid`, `seq`, `notes`, roster,
   owner, `user?`, add and drop player (raw Sleeper key plus a `Player`
   relation, as `WaiverTransaction` does), `processedAt`, and
   `fromChoppedTeam?` so a claim can say where the player came from.
