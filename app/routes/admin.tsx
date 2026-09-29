@@ -44,6 +44,7 @@ export default function Admin() {
   const gamesLinks = [
     { name: 'Spread Pool', href: '/admin/spread-pool', current: false },
     { name: 'QB Streaming', href: '/admin/qb-streaming', current: false },
+    { name: 'F² History', href: '/admin/f-squared/import', current: false },
     { name: 'Locks Challenge', href: '/admin/locks-challenge', current: false },
     { name: 'DFS Survivor', href: '/admin/dfs-survivor', current: false },
   ];

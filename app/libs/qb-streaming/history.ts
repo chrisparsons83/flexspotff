@@ -1,5 +1,8 @@
 import { scoreQbStats } from './scoring';
+import type { SheetMember, SheetName } from '~/libs/sheet-names';
+import { groupSheetNames, unmatchedNamesMessage } from '~/libs/sheet-names';
 import type { SleeperHistoricalStatsJson } from '~/libs/sleeper/schemas';
+import { parseCsv } from '~/utils/googleSheets';
 import { normalizeName } from '~/utils/names';
 
 /**
@@ -26,79 +29,6 @@ const CONSENSUS = 'consensus';
 
 /** Points a sheet total and a Sleeper re-score may differ by from rounding. */
 export const POINTS_TOLERANCE = 0.05;
-
-/**
- * A minimal RFC 4180 reader: quoted fields, doubled quotes, and commas and
- * newlines inside quotes. Enough for a Google Sheets CSV export, where a
- * manager name like "Smash, Criosphinx Sovereign" would split a naive reader.
- */
-export function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-
-    if (inQuotes) {
-      if (char === '"' && text[i + 1] === '"') {
-        field += '"';
-        i++;
-      } else if (char === '"') {
-        inQuotes = false;
-      } else {
-        field += char;
-      }
-    } else if (char === '"') {
-      inQuotes = true;
-    } else if (char === ',') {
-      row.push(field);
-      field = '';
-    } else if (char === '\n' || char === '\r') {
-      if (char === '\r' && text[i + 1] === '\n') i++;
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = '';
-    } else {
-      field += char;
-    }
-  }
-
-  if (field !== '' || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-/**
- * Turns any link to a Google Sheet into its CSV export URL, keeping the tab
- * the link points at. A link with no tab gets the first one, which in both
- * QB streaming sheets is the "Data" tab.
- */
-export function sheetCsvUrl(url: string): string {
-  let parsed: URL;
-  try {
-    parsed = new URL(url.trim());
-  } catch {
-    throw new Error('That is not a link.');
-  }
-
-  const id = parsed.pathname.match(/\/spreadsheets\/d\/([\w-]+)/)?.[1];
-  if (parsed.hostname !== 'docs.google.com' || !id) {
-    throw new Error('That is not a link to a Google Sheet.');
-  }
-
-  const gid =
-    parsed.searchParams.get('gid') ??
-    parsed.hash.match(/gid=(\d+)/)?.[1] ??
-    '0';
-
-  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-}
 
 /** Each column the Data tab needs, by the heading the sheets give it. */
 const REQUIRED_COLUMNS = {
@@ -391,16 +321,9 @@ export function matchSeasonQb(
   };
 }
 
-export type HistoryMember = { id: string; discordName: string };
+export type HistoryMember = SheetMember;
 
-export type HistoryManager = {
-  /** normalizeName of the spelling - how aliases are stored. */
-  alias: string;
-  /** Every spelling in the sheet that normalizes to `alias`. */
-  spellings: string[];
-  picks: number;
-  member: HistoryMember | null;
-};
+export type HistoryManager = SheetName;
 
 export type PlannedOption = {
   sleeperId: string;
@@ -477,33 +400,14 @@ export function buildHistoryImport({
 }): HistoryImport {
   const blocking: string[] = [];
 
-  const managersByAlias = new Map<string, HistoryManager>();
-  for (const pick of picks) {
-    const alias = normalizeName(pick.manager);
-    const manager = managersByAlias.get(alias) ?? {
-      alias,
-      spellings: [],
-      picks: 0,
-      member: memberFor(alias),
-    };
-    if (!manager.spellings.includes(pick.manager)) {
-      manager.spellings.push(pick.manager);
-    }
-    manager.picks++;
-    managersByAlias.set(alias, manager);
-  }
-  const managers = [...managersByAlias.values()].sort((a, b) =>
-    a.alias.localeCompare(b.alias),
+  const managers = groupSheetNames(
+    picks.map(pick => pick.manager),
+    memberFor,
   );
 
   const unmatched = managers.filter(manager => !manager.member);
-  if (unmatched.length > 0) {
-    blocking.push(
-      `${unmatched.length} sheet name${
-        unmatched.length === 1 ? ' is' : 's are'
-      } not matched to a member yet.`,
-    );
-  }
+  const unmatchedMessage = unmatchedNamesMessage(managers);
+  if (unmatchedMessage) blocking.push(unmatchedMessage);
 
   // One lookup per quarterback per week - the sheet repeats each one for
   // everyone who picked him.

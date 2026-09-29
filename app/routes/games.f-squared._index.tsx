@@ -1,12 +1,13 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import FSquaredStandingsRow from '~/components/layout/f-squared/FSquaredStandingsRow';
+import FSquaredStandingsTable from '~/components/layout/f-squared/FSquaredStandingsTable';
+import FSquaredYearPicker from '~/components/layout/f-squared/FSquaredYearPicker';
 import {
   getEntryByUserAndYear,
-  getResultsForYear,
+  getFSquaredYears,
+  getStandingsForYear,
 } from '~/models/fsquared.server';
-import { fSquaredEntryPoints } from '~/models/profile/sideGameScoring';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
@@ -18,38 +19,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Error('No active season currently');
   }
 
-  const existingEntry = user
-    ? await getEntryByUserAndYear(user.id, currentSeason.year)
-    : null;
+  const [existingEntry, currentResults, years] = await Promise.all([
+    user ? getEntryByUserAndYear(user.id, currentSeason.year) : null,
+    getStandingsForYear(currentSeason.year),
+    getFSquaredYears(),
+  ]);
 
-  const currentResults = (await getResultsForYear(currentSeason.year))
-    .map(entry => {
-      const totalPoints = fSquaredEntryPoints(entry.teams);
-      return { ...entry, totalPoints };
-    })
-    .sort((a, b) => {
-      const pointsDiff = b.totalPoints - a.totalPoints;
-      if (pointsDiff !== 0) return pointsDiff;
-
-      return a.user.discordName.localeCompare(b.user.discordName);
-    });
-
-  // Sort the teams in each entry by league and name
-  for (const entry of currentResults) {
-    entry.teams.sort((a, b) => {
-      if (a.league.tier !== b.league.tier) {
-        return a.league.tier - b.league.tier;
-      }
-
-      return a.league.name.localeCompare(b.league.name);
-    });
-  }
-
-  return typedjson({ currentResults, existingEntry, currentSeason });
+  return typedjson({ currentResults, existingEntry, currentSeason, years });
 };
 
 export default function FSquaredIndex() {
-  const { currentResults, existingEntry, currentSeason } =
+  const { currentResults, existingEntry, currentSeason, years } =
     useTypedLoaderData<typeof loader>();
 
   return (
@@ -70,25 +50,9 @@ export default function FSquaredIndex() {
         </p>
       </div>
       <section>
+        <FSquaredYearPicker years={years} />
         <h3>Standings</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentResults.map((result, index) => (
-              <FSquaredStandingsRow
-                rank={index + 1}
-                result={result}
-                key={result.id}
-              />
-            ))}
-          </tbody>
-        </table>
+        <FSquaredStandingsTable results={currentResults} />
       </section>
     </>
   );
