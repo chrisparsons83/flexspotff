@@ -1,14 +1,15 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import { z } from 'zod';
+import SheetNamesTable from '~/components/layout/admin/SheetNamesTable';
 import Alert from '~/components/ui/Alert';
 import Button from '~/components/ui/FlexSpotButton';
-import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { toSelectableMember } from '~/components/ui/MemberSelect';
 import type { SheetPick } from '~/libs/qb-streaming/history';
 import { resolutionField } from '~/libs/qb-streaming/history';
 import {
@@ -17,14 +18,13 @@ import {
   importQbStreamingHistory,
   previewQbStreamingHistory,
 } from '~/libs/qb-streaming/history-import.server';
+import { withSuggestions } from '~/libs/sheet-names';
 import {
-  createStubMemberForAlias,
-  deleteMemberAlias,
-  upsertMemberAlias,
-} from '~/models/memberAlias.server';
-import { getUser, getUsers } from '~/models/user.server';
+  SHEET_NAME_ACTIONS,
+  handleSheetNameAction,
+} from '~/libs/sheet-names.server';
+import { getUsers } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { createMemberSuggester } from '~/utils/names';
 
 /** The Data tab of each season's sheet, from issue #155. */
 const KNOWN_SHEETS: Record<number, string> = {
@@ -44,8 +44,6 @@ const zSource = z.object({
   sheet: z.string().min(1, 'Paste a link to the sheet.'),
 });
 
-const zName = z.string().trim().min(1, 'No sheet name was submitted.');
-
 const errorMessage = (error: unknown) => {
   if (error instanceof HistoryImportError) return error.message;
   throw error;
@@ -63,52 +61,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const fail = (message: string) =>
     typedjson({ message, status: 'error' as const });
 
-  switch (formData.get('_action')) {
-    case 'matchName': {
-      const name = zName.safeParse(formData.get('name'));
-      const userId = z
-        .string()
-        .min(1, 'Pick a member to match this name to.')
-        .safeParse(formData.get('userId'));
-      if (!name.success) return fail(name.error.issues[0].message);
-      if (!userId.success) return fail(userId.error.issues[0].message);
+  const intent = formData.get('_action');
+  if (SHEET_NAME_ACTIONS.includes(String(intent))) {
+    return typedjson(await handleSheetNameAction(formData));
+  }
 
-      const member = await getUser(userId.data);
-      if (!member) return fail('Member not found.');
-      // The picker only lists live members, so a merged-away one came from a
-      // form loaded before the merge.
-      if (member.mergedIntoId) {
-        return fail(
-          `${member.discordName} was merged into another member. Reload the page and pick the member they were merged into.`,
-        );
-      }
-
-      await upsertMemberAlias(name.data, member.id);
-      return typedjson({
-        message: `${name.data} is now matched to ${member.discordName}.`,
-        status: 'success' as const,
-      });
-    }
-    case 'createStub': {
-      const name = zName.safeParse(formData.get('name'));
-      if (!name.success) return fail(name.error.issues[0].message);
-
-      await createStubMemberForAlias(name.data);
-      return typedjson({
-        message: `Created a stub member for ${name.data}. Merge it into their real account if they ever join.`,
-        status: 'success' as const,
-      });
-    }
-    case 'unmatch': {
-      const name = zName.safeParse(formData.get('name'));
-      if (!name.success) return fail(name.error.issues[0].message);
-
-      await deleteMemberAlias(name.data);
-      return typedjson({
-        message: `${name.data} is no longer matched to anyone.`,
-        status: 'success' as const,
-      });
-    }
+  switch (intent) {
     case 'import': {
       const source = zSource.safeParse({
         year: formData.get('year'),
@@ -180,18 +138,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       year: parsedSource.data.year,
       sheetUrl: parsedSource.data.sheet,
     });
-    const suggest = createMemberSuggester(members, { lookAlike: true });
 
     return typedjson({
       source,
       preview: {
         ...preview,
-        managers: preview.managers.map(manager => ({
-          ...manager,
-          suggestedMemberId: manager.member
-            ? ''
-            : suggest(...manager.spellings),
-        })),
+        managers: withSuggestions(preview.managers, members),
       },
       error: null,
       members,
@@ -215,8 +167,6 @@ export default function ImportQbStreamingHistory() {
   const navigation = useNavigation();
   const busy = navigation.state !== 'idle';
 
-  const unmatched = preview?.managers.filter(manager => !manager.member) ?? [];
-  const matched = preview?.managers.filter(manager => manager.member) ?? [];
   // Duplicate picks are chosen in the import form itself, so only the rest
   // stop the button from being pressed.
   const otherBlocking = preview
@@ -295,113 +245,11 @@ export default function ImportQbStreamingHistory() {
             />
           )}
 
-          <h3>Names ({preview.managers.length})</h3>
-          <p>
-            Match every name in the sheet to a member. A name that belongs to
-            someone who never joined the site can get a stub member instead,
-            which can be merged into their real account later from{' '}
-            <Link to='/admin/members/merge'>Merge members</Link>. Matches are
-            saved as you go and reused by later imports.
-          </p>
-          {unmatched.length > 0 && (
-            <table className='w-full'>
-              <thead>
-                <tr>
-                  <th>Sheet name</th>
-                  <th>Picks</th>
-                  <th>Member</th>
-                </tr>
-              </thead>
-              <tbody>
-                {unmatched.map(manager => (
-                  <tr key={manager.alias}>
-                    <td>{manager.spellings.join(', ')}</td>
-                    <td>{manager.picks}</td>
-                    <td className='not-prose'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Form method='POST' className='flex items-center gap-2'>
-                          <input
-                            type='hidden'
-                            name='name'
-                            value={manager.spellings[0]}
-                          />
-                          <MemberSelect
-                            name='userId'
-                            members={members}
-                            defaultValue={manager.suggestedMemberId}
-                          />
-                          <Button
-                            type='submit'
-                            name='_action'
-                            value='matchName'
-                            disabled={busy}
-                          >
-                            Match
-                          </Button>
-                        </Form>
-                        <Form method='POST'>
-                          <input
-                            type='hidden'
-                            name='name'
-                            value={manager.spellings[0]}
-                          />
-                          <Button
-                            type='submit'
-                            name='_action'
-                            value='createStub'
-                            disabled={busy}
-                          >
-                            Create stub member
-                          </Button>
-                        </Form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {matched.length > 0 && (
-            <details open={unmatched.length === 0}>
-              <summary>{matched.length} matched</summary>
-              <table className='w-full'>
-                <thead>
-                  <tr>
-                    <th>Sheet name</th>
-                    <th>Picks</th>
-                    <th>Member</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {matched.map(manager => (
-                    <tr key={manager.alias}>
-                      <td>{manager.spellings.join(', ')}</td>
-                      <td>{manager.picks}</td>
-                      <td>{manager.member?.discordName}</td>
-                      <td>
-                        <Form method='POST'>
-                          <input
-                            type='hidden'
-                            name='name'
-                            value={manager.spellings[0]}
-                          />
-                          <Button
-                            type='submit'
-                            name='_action'
-                            value='unmatch'
-                            disabled={busy}
-                          >
-                            Unmatch
-                          </Button>
-                        </Form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </details>
-          )}
+          <SheetNamesTable
+            names={preview.managers}
+            members={members}
+            busy={busy}
+          />
 
           {preview.parseErrors.length > 0 && (
             <>

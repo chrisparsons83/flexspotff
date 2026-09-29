@@ -1,5 +1,5 @@
 import type { HistoryImport, StatRow } from './history';
-import { buildHistoryImport, parseHistoryRows, sheetCsvUrl } from './history';
+import { buildHistoryImport, parseHistoryRows } from './history';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '~/db.server';
 import { getHistoricalWeeklyStats } from '~/libs/sleeper/api.server';
@@ -7,6 +7,11 @@ import { syncNflGameWeek } from '~/libs/syncs.server';
 import { getMemberAliases } from '~/models/memberAlias.server';
 import { getNflGamesBySeason } from '~/models/nflgame.server';
 import { getSeason } from '~/models/season.server';
+import {
+  SheetDownloadError,
+  downloadSheetCsv,
+  sheetCsvUrl,
+} from '~/utils/googleSheets';
 
 /**
  * QB streaming ran on the site from 2022. Anything from then on was played
@@ -51,16 +56,14 @@ async function fetchSheet(sheetUrl: string) {
     throw new HistoryImportError((error as Error).message);
   }
 
-  const res = await fetch(csvUrl);
-  // A private sheet redirects to a Google sign-in page rather than failing.
-  const isCsv = res.headers.get('content-type')?.includes('text/csv');
-  if (!res.ok || !isCsv) {
-    throw new HistoryImportError(
-      `Could not download the sheet (${res.status}). Check that anyone with the link can view it.`,
-    );
+  try {
+    return await downloadSheetCsv(csvUrl);
+  } catch (error) {
+    if (error instanceof SheetDownloadError) {
+      throw new HistoryImportError(error.message);
+    }
+    throw error;
   }
-
-  return res.text();
 }
 
 export type HistoryPreview = HistoryImport & { parseErrors: string[] };

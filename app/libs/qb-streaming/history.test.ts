@@ -5,14 +5,13 @@ import {
   groupEntries,
   matchQb,
   matchSeasonQb,
-  parseCsv,
   parseHistoryRows,
   resolutionField,
-  sheetCsvUrl,
 } from './history';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
+import { parseCsv } from '~/utils/googleSheets';
 import { normalizeName } from '~/utils/names';
 
 // The Data and leaderboard tabs of the two sheets linked from issue #155, and
@@ -52,49 +51,6 @@ const matchEveryone = (picks: SheetPick[]) => {
   }
   return (alias: string) => members.get(alias) ?? null;
 };
-
-describe('parseCsv', () => {
-  it('handles quoted commas, doubled quotes and CRLF', () => {
-    expect(parseCsv('a,"b, c","say ""hi"""\r\n1,2,3')).toEqual([
-      ['a', 'b, c', 'say "hi"'],
-      ['1', '2', '3'],
-    ]);
-  });
-
-  it('keeps an empty last field', () => {
-    expect(parseCsv('a,b,\n')).toEqual([['a', 'b', '']]);
-  });
-});
-
-describe('sheetCsvUrl', () => {
-  it('keeps the tab from the hash or the query', () => {
-    expect(
-      sheetCsvUrl(
-        'https://docs.google.com/spreadsheets/d/abc_123/edit?gid=276913576#gid=276913576',
-      ),
-    ).toBe(
-      'https://docs.google.com/spreadsheets/d/abc_123/export?format=csv&gid=276913576',
-    );
-    expect(
-      sheetCsvUrl('https://docs.google.com/spreadsheets/d/abc/edit#gid=42'),
-    ).toBe(
-      'https://docs.google.com/spreadsheets/d/abc/export?format=csv&gid=42',
-    );
-  });
-
-  it('uses the first tab when the link names none', () => {
-    expect(sheetCsvUrl('https://docs.google.com/spreadsheets/d/abc')).toBe(
-      'https://docs.google.com/spreadsheets/d/abc/export?format=csv&gid=0',
-    );
-  });
-
-  it('rejects anything that is not a Google Sheet', () => {
-    expect(() => sheetCsvUrl('not a url')).toThrow('not a link');
-    expect(() => sheetCsvUrl('https://example.com/spreadsheets/d/abc')).toThrow(
-      'not a link to a Google Sheet',
-    );
-  });
-});
 
 describe('parseHistoryRows', () => {
   it('reads every pick in both sheets and drops CONSENSUS', () => {
