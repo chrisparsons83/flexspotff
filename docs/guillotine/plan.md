@@ -7,7 +7,7 @@ is chopped: it is out, and its whole roster is released to waivers. Waivers are
 therefore the heart of the format, and the order of chops is the story of a
 season.
 
-The site has run guillotine leagues since 2022: one league in 2022, and usually
+The site has run guillotine leagues since 2021: one league in 2021, and usually
 two in parallel since then. None of it exists on the site today. This plan adds
 an admin section to add and backfill the leagues, a members-only public section
 under Games, live chop-line tracking during the season, and a Guillotine tab on
@@ -22,7 +22,7 @@ member profiles.
 | Visibility          | Members only                                                              |
 | Who was chopped     | What Sleeper recorded: `eliminated` on native leagues, the emptied roster on manual ones. No override |
 | Rule variations     | None across 2022–present                                                  |
-| Backfill            | Admin adds each 2022–2025 league by Sleeper URL, the same as a new league |
+| Backfill            | Admin adds each 2021–2025 league by Sleeper URL, the same as a new league |
 | Live season         | Yes: synced on the existing 5-minute live-scores job                      |
 | Parallel leagues    | Fully independent: no combined standings or overall champion              |
 
@@ -53,6 +53,8 @@ The rule the sync uses:
 - **Native**: `choppedWeek = roster.settings.eliminated`.
 - **Manual**: `choppedWeek` = the last week the roster had players, for any
   roster that is empty and locked now.
+- **Both**: in week 17, the lower of the last two scores is chopped and the
+  other team is champion.
 
 This is still "trust Sleeper": it reads what the commissioner did in Sleeper,
 it does not work out who should have been chopped.
@@ -73,18 +75,23 @@ it does not work out who should have been chopped.
   the same way. The existing transaction schema already parses `chopped` and
   `commissioner` rows.
 - **Final**: the last two teams are never emptied in the manual leagues, so the
-  champion cannot be read from rosters. See open questions.
+  champion cannot be read from rosters. It comes from week 17's scores instead.
 - **League history**: the "Guillotine for the People" leagues are linked by
   `previous_league_id` from 2022 to 2025. 2026 was cloned rather than
   continued, so it is not linked, and "Guillotine for Business Edition 2022" is
   a second, separate line.
 
-### Open questions
+### Settled after Phase 0
 
-- The first league is filed by Sleeper as the **2021** season, not 2022.
-- **How the final was decided in the manual years.** 2025 ended with two teams
-  playing both weeks 17 and 18 (the same team won both weeks); 2021 ended with
-  two teams in week 17 only.
+- The first league, "Last Minute Head-Cutting-Off League", is the **2021**
+  season, and the history starts there.
+- **Week 17 is the final, and week 18 never counts.** The last two teams play
+  week 17 and the lower score is chopped, which makes the other team champion.
+  This fits both manual years (2025: roster 14 beat roster 11, 118.80 to
+  114.48; 2021: roster 3 beat roster 15, 154.00 to 95.36). The sync reads
+  weeks 1–17 only, which also sidesteps the 2021 week 18 rows.
+- Leagues are only ever added through the admin page, including this season's.
+  Nothing is hardcoded.
 
 ## Phase 1 — Schema
 
