@@ -138,11 +138,14 @@ model GuillotineTeam {
 
   rosterId Int
 
-  /// Null only when Sleeper has lost the owner and the draft could not supply
-  /// one either. The 2021 league removed its managers once it ended, so there
-  /// the owner comes from whoever made the roster's draft picks.
+  /// Null only when Sleeper has lost the owner and neither the draft nor the
+  /// roster's transactions could supply one. The 2021 league removed its
+  /// managers once it ended, so there the owner comes from whoever made the
+  /// roster's draft picks.
   sleeperOwnerId     String?
   sleeperDisplayName String?
+  /// Follows sleeperOwnerId's match when there is an owner. A roster with no
+  /// owner is assigned a member by hand, and sync leaves that alone.
   user               User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId             String?
 

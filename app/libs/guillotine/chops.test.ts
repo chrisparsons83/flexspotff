@@ -250,6 +250,34 @@ describe('resolveRosterOwners', () => {
     expect(owners.get(2)).toBe('b');
     expect(owners.get(3)).toBeNull();
   });
+
+  it('falls back to whoever made the roster its moves when nobody drafted it', () => {
+    const owners = resolveRosterOwners(
+      [
+        { roster_id: 1, owner_id: 'commish' },
+        { roster_id: 2, owner_id: null },
+        { roster_id: 3, owner_id: null },
+        { roster_id: 4, owner_id: null },
+      ],
+      [
+        { roster_id: 2, picked_by: '' },
+        { roster_id: 3, picked_by: '' },
+        { roster_id: 4, picked_by: '' },
+      ],
+      [
+        { type: 'waiver', roster_ids: [2], creator: 'b' },
+        { type: 'free_agent', roster_ids: [2], creator: 'b' },
+        { type: 'free_agent', roster_ids: [2], creator: 'commish' },
+        { type: 'trade', roster_ids: [2, 3], creator: 'b' },
+        { type: 'commissioner', roster_ids: [3], creator: 'someone' },
+        { type: 'free_agent', roster_ids: [4], creator: 'commish' },
+      ],
+    );
+
+    expect(owners.get(2)).toBe('b');
+    expect(owners.get(3)).toBeNull();
+    expect(owners.get(4)).toBeNull();
+  });
 });
 
 describe('weeksToSync', () => {

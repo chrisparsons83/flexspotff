@@ -11,6 +11,7 @@ import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
 import { syncGuillotineLeague } from '~/libs/guillotine/sync.server';
 import {
+  assignOwnerlessGuillotineTeam,
   getGuillotineLeagueById,
   getGuillotineLeagueWithTeams,
 } from '~/models/guillotine.server';
@@ -31,6 +32,11 @@ type ActionResult = {
 const zMatch = z.object({
   sleeperOwnerID: z.string().min(1, 'No Sleeper owner ID was submitted.'),
   userId: z.string().min(1, 'Pick a member to match this Sleeper user to.'),
+});
+
+const zAssign = z.object({
+  teamId: z.string().min(1, 'No team was submitted.'),
+  userId: z.string().min(1, 'Pick a member to assign this roster to.'),
 });
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -109,6 +115,71 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         } (${guillotineTeamsUpdated} guillotine team${
           guillotineTeamsUpdated === 1 ? '' : 's'
         } updated).`,
+        status: 'success',
+      });
+    }
+
+    case 'assign': {
+      const parsed = zAssign.safeParse({
+        teamId: formData.get('teamId'),
+        userId: formData.get('userId'),
+      });
+      if (!parsed.success) {
+        return typedjson<ActionResult>({
+          message: parsed.error.issues[0].message,
+          status: 'error',
+        });
+      }
+      const { teamId, userId } = parsed.data;
+
+      const member = await getUser(userId);
+      if (!member || member.mergedIntoId) {
+        return typedjson<ActionResult>({
+          message:
+            'That member no longer exists or was merged. Reload the page and pick again.',
+          status: 'error',
+        });
+      }
+      const updated = await assignOwnerlessGuillotineTeam({
+        guillotineLeagueId: league.id,
+        teamId,
+        userId,
+      });
+      if (updated === 0) {
+        return typedjson<ActionResult>({
+          message:
+            'That roster has a Sleeper owner now, or is gone. Reload the page.',
+          status: 'error',
+        });
+      }
+      return typedjson<ActionResult>({
+        message: `Assigned the roster to ${member.discordName}.`,
+        status: 'success',
+      });
+    }
+
+    case 'unassign': {
+      const teamId = formData.get('teamId');
+      if (typeof teamId !== 'string' || !teamId) {
+        return typedjson<ActionResult>({
+          message: 'No team was submitted.',
+          status: 'error',
+        });
+      }
+      const cleared = await assignOwnerlessGuillotineTeam({
+        guillotineLeagueId: league.id,
+        teamId,
+        userId: null,
+      });
+      if (cleared === 0) {
+        return typedjson<ActionResult>({
+          message:
+            'That roster has a Sleeper owner now, or is gone. Reload the page.',
+          status: 'error',
+        });
+      }
+      return typedjson<ActionResult>({
+        message: 'Unassigned the roster.',
         status: 'success',
       });
     }
@@ -228,7 +299,9 @@ export default function AdminGuillotineLeague() {
           <h3>Unmatched Teams</h3>
           <p className='text-sm'>
             These Sleeper accounts aren't tied to a member yet. Matching one
-            here links it everywhere on the site, not just in this league.
+            here links it everywhere on the site, not just in this league. A
+            roster Sleeper has no owner for is assigned to a member for this
+            league only, and resyncing keeps it.
           </p>
           <table className='w-full'>
             <thead>
@@ -270,7 +343,18 @@ export default function AdminGuillotineLeague() {
                         </Button>
                       </Form>
                     ) : (
-                      'Sleeper has no owner for this roster.'
+                      <Form method='POST' className='flex items-center gap-2'>
+                        <input type='hidden' name='teamId' value={team.id} />
+                        <MemberSelect name='userId' members={members} />
+                        <Button
+                          type='submit'
+                          name='_action'
+                          value='assign'
+                          disabled={isSubmitting}
+                        >
+                          Assign
+                        </Button>
+                      </Form>
                     )}
                   </td>
                 </tr>
@@ -306,6 +390,24 @@ export default function AdminGuillotineLeague() {
                         {team.sleeperDisplayName} on Sleeper
                       </div>
                     )}
+                  {team.member && !team.sleeperOwnerId && (
+                    <Form
+                      method='POST'
+                      className='not-prose flex items-center gap-2 text-xs opacity-75'
+                    >
+                      Assigned by hand
+                      <input type='hidden' name='teamId' value={team.id} />
+                      <button
+                        type='submit'
+                        name='_action'
+                        value='unassign'
+                        disabled={isSubmitting}
+                        className='underline'
+                      >
+                        Unassign
+                      </button>
+                    </Form>
+                  )}
                 </td>
                 <td>{team.choppedWeek ? `Week ${team.choppedWeek}` : '—'}</td>
                 <td>{team.draftSlot ?? '—'}</td>

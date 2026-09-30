@@ -18,6 +18,7 @@ import {
   sleeperStatsJson,
   sleeperTeamJson,
   sleeperTransactionsJson,
+  sleeperUserJson,
   type SleeperGraphqlNflGames,
 } from './schemas';
 import { graphQLClient } from '~/services/sleeperGraphql.server';
@@ -56,6 +57,13 @@ export const getGuillotineRosters = (sleeperLeagueId: string) =>
 
 export const getLeagueUsers = (sleeperLeagueId: string) =>
   sleeperFetch(`/v1/league/${sleeperLeagueId}/users`, sleeperLeagueUsersJson);
+
+/**
+ * A single account, for someone who has left a league and so is missing from
+ * its users list.
+ */
+export const getSleeperUser = (sleeperUserId: string) =>
+  sleeperFetch(`/v1/user/${sleeperUserId}`, sleeperUserJson);
 
 export const getLeagueMatchups = (sleeperLeagueId: string, week: number) =>
   sleeperFetch(

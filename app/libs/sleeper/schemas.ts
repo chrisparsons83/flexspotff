@@ -58,6 +58,15 @@ export const sleeperLeagueUsersJson = z.array(
 );
 export type SleeperLeagueUsersJson = z.infer<typeof sleeperLeagueUsersJson>;
 
+/** One account by ID. Sleeper answers null for an ID it does not know. */
+export const sleeperUserJson = z
+  .object({
+    user_id: z.string(),
+    username: z.string().nullish(),
+    display_name: z.string().nullish(),
+  })
+  .nullable();
+
 /**
  * Shared by the main-league and D12 add-league flows. Only `name` is
  * guaranteed: a league whose draft hasn't been created yet has no draft_id, and
