@@ -76,6 +76,7 @@ export async function getProfileSummary(
     locksCount,
     dfs,
     fSquared,
+    fSquaredPicked,
     guillotineTeams,
   ] = await Promise.all([
     prisma.team.findMany({
@@ -131,6 +132,11 @@ export async function getProfileSummary(
       where: { userId },
       _count: { _all: true },
       _min: { year: true },
+    }),
+    // F² is played on other people's entries too: a member whose team was
+    // picked has a tab saying who backed them, even if they never entered.
+    prisma.team.count({
+      where: { userId, FSquaredSelections: { some: {} } },
     }),
     // The years too, since guillotine seasons count towards memberSince.
     prisma.guillotineTeam.findMany({
@@ -191,7 +197,7 @@ export async function getProfileSummary(
     poolCount > 0 && 'spread-pool',
     locksCount > 0 && 'locks',
     dfs._count._all > 0 && 'dfs-survivor',
-    fSquared._count._all > 0 && 'f-squared',
+    (fSquared._count._all > 0 || fSquaredPicked > 0) && 'f-squared',
   ].filter((value): value is string => typeof value === 'string');
 
   const [longestStreak, titles, pastNames] = await Promise.all([
