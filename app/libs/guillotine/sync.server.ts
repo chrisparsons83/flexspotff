@@ -18,6 +18,7 @@ import {
   getLeagueTransactions,
   getLeagueUsers,
   getProjections,
+  getSleeperUser,
 } from '~/libs/sleeper/api.server';
 import { parseSleeperLeagueIdFromUrl } from '~/libs/sleeper/league-url';
 import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
@@ -169,10 +170,29 @@ export async function syncGuillotineLeague(
     lastScoredWeek,
   });
 
-  const ownerByRoster = resolveRosterOwners(rosters, picks);
+  // Two legs can carry the same transaction at the boundary; counted twice,
+  // it would weigh double in picking a roster's owner from its moves.
+  const uniqueTransactions = [
+    ...new Map(transactions.flat().map(t => [t.transaction_id, t])).values(),
+  ];
+  const ownerByRoster = resolveRosterOwners(rosters, picks, uniqueTransactions);
   const nameByOwner = new Map(
     users.map(user => [user.user_id, user.display_name ?? user.username]),
   );
+  // An owner found from the draft or the transactions has usually left the
+  // league, so is not in its users list. Their name is looked up one by one;
+  // a failed lookup only costs the name.
+  const departed = [...new Set(ownerByRoster.values())].filter(
+    (owner): owner is string => !!owner && !nameByOwner.has(owner),
+  );
+  const departedUsers = await Promise.all(
+    departed.map(owner => getSleeperUser(owner).catch(() => null)),
+  );
+  for (const user of departedUsers) {
+    if (user) {
+      nameByOwner.set(user.user_id, user.display_name ?? user.username);
+    }
+  }
   // The draft's own order, by owner. The first-round pick is only a fallback
   // for a draft Sleeper has no order for: a traded first would give one
   // roster two slots and leave another with none.
@@ -211,17 +231,15 @@ export async function syncGuillotineLeague(
     return keptProjections.get(starter) ?? 0;
   };
 
-  const unmatchedTeams = [...ownerByRoster.values()].filter(
-    owner => !owner || !owners.has(owner),
-  ).length;
-
   const teamWrites = rosters.map(roster => {
     const ownerId = ownerByRoster.get(roster.roster_id) ?? null;
     const choppedWeek = chops.choppedWeek.get(roster.roster_id) ?? null;
     const teamData = {
       sleeperOwnerId: ownerId,
       sleeperDisplayName: ownerId ? nameByOwner.get(ownerId) ?? null : null,
-      userId: ownerId ? owners.get(ownerId) ?? null : null,
+      // A roster nobody can be found for is assigned a member by hand on the
+      // admin page, and a resync must not wipe that.
+      ...(ownerId ? { userId: owners.get(ownerId) ?? null } : {}),
       draftSlot: draftSlotFor(roster.roster_id, ownerId),
       choppedWeek,
       finish: chops.finish.get(roster.roster_id) ?? null,
@@ -332,6 +350,11 @@ export async function syncGuillotineLeague(
       })),
     }),
   ]);
+
+  // Read back rather than worked out, so rosters assigned by hand count.
+  const unmatchedTeams = await prisma.guillotineTeam.count({
+    where: { guillotineLeagueId: league.id, userId: null },
+  });
 
   const warnings = [...chops.warnings];
   if (projectionError) {

@@ -41,6 +41,30 @@ export async function getGuillotineLeagueWithTeams(id: string) {
 }
 
 /**
+ * Sets, or clears with null, the member for a roster Sleeper has no owner
+ * for. Only ownerless rosters: one with an owner follows that Sleeper
+ * account's match instead.
+ *
+ * @returns how many teams changed - 0 if the team is gone, is in another
+ * league, or has an owner after all.
+ */
+export async function assignOwnerlessGuillotineTeam({
+  guillotineLeagueId,
+  teamId,
+  userId,
+}: {
+  guillotineLeagueId: string;
+  teamId: string;
+  userId: string | null;
+}) {
+  const { count } = await prisma.guillotineTeam.updateMany({
+    where: { id: teamId, guillotineLeagueId, sleeperOwnerId: null },
+    data: { userId },
+  });
+  return count;
+}
+
+/**
  * Deletes a league, and its season too once nothing is left in it, so a
  * league added by mistake leaves no empty year behind.
  */

@@ -181,10 +181,18 @@ export function weekStarters({
  * Who owns each roster. Sleeper's own `owner_id` wins; the draft fills the
  * gap for a roster whose manager has since been removed from the league,
  * which is how the 2021 league ended up.
+ *
+ * An autodrafted roster whose manager then left has neither, as three of the
+ * 2025 league's did. The roster's own waiver and free agent moves still name
+ * who made them, so the last fallback is whoever made the most of those.
+ * Commissioner moves, trades (either side can create one) and anyone who owns
+ * another roster are left out, so a commissioner tidying up an abandoned
+ * roster is never taken for its owner.
  */
 export function resolveRosterOwners(
   rosters: { roster_id: number; owner_id: string | null }[],
   draftPicks: { roster_id: number; picked_by: string | null }[],
+  transactions: { type: string; roster_ids: number[]; creator: string }[] = [],
 ): Map<number, string | null> {
   const drafter = new Map<number, string>();
   for (const pick of draftPicks) {
@@ -193,10 +201,34 @@ export function resolveRosterOwners(
     }
   }
 
+  const knownOwners = new Set<string>();
+  for (const roster of rosters) {
+    const owner = roster.owner_id ?? drafter.get(roster.roster_id);
+    if (owner) knownOwners.add(owner);
+  }
+
+  const movesByRoster = new Map<number, Map<string, number>>();
+  for (const t of transactions) {
+    if (t.type === 'commissioner' || t.roster_ids.length !== 1) continue;
+    if (!t.creator || knownOwners.has(t.creator)) continue;
+    const rosterId = t.roster_ids[0];
+    const counts = movesByRoster.get(rosterId) ?? new Map<string, number>();
+    counts.set(t.creator, (counts.get(t.creator) ?? 0) + 1);
+    movesByRoster.set(rosterId, counts);
+  }
+  const mover = (rosterId: number) => {
+    const counts = movesByRoster.get(rosterId);
+    if (!counts) return undefined;
+    return [...counts].sort((a, b) => b[1] - a[1])[0][0];
+  };
+
   return new Map(
     rosters.map(roster => [
       roster.roster_id,
-      roster.owner_id ?? drafter.get(roster.roster_id) ?? null,
+      roster.owner_id ??
+        drafter.get(roster.roster_id) ??
+        mover(roster.roster_id) ??
+        null,
     ]),
   );
 }
