@@ -95,6 +95,25 @@ describe('groupByPlayer', () => {
     expect(groups).toHaveLength(2);
   });
 
+  it('orders players by winning bid, most expensive first', () => {
+    const groups = groupByPlayer([
+      row({ addSleeperId: 'cheap', bid: 2, status: 'complete', notes: null }),
+      row({ addSleeperId: 'cheap', bid: 1, status: 'failed' }),
+      row({ addSleeperId: 'cheap', bid: 0, status: 'failed' }),
+      row({ addSleeperId: 'pricey', bid: 40, status: 'complete', notes: null }),
+      row({ addSleeperId: 'mid', bid: 10, status: 'complete', notes: null }),
+      row({ addSleeperId: 'tied', bid: 10, status: 'complete', notes: null }),
+      row({ addSleeperId: 'tied', bid: 8, status: 'failed' }),
+    ]);
+
+    expect(groups.map(group => group.addSleeperId)).toEqual([
+      'pricey',
+      'tied',
+      'mid',
+      'cheap',
+    ]);
+  });
+
   it('leaves a group with no winner when every bid failed', () => {
     const groups = groupByPlayer([
       row({ bid: 3, status: 'failed', notes: ROSTER_FULL }),

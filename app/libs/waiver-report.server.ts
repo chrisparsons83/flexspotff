@@ -168,12 +168,12 @@ export function groupByPlayer(
     }
   }
 
-  // Most contested players first, then by winning bid - the interesting rows
-  // belong at the top.
+  // Biggest winning bid first, so the most expensive pickups lead the report;
+  // on a tie, the more contested player goes first.
   return [...groups.values()].sort(
     (a, b) =>
-      b.losers.length - a.losers.length ||
-      (b.winner?.bid ?? 0) - (a.winner?.bid ?? 0),
+      (b.winner?.bid ?? 0) - (a.winner?.bid ?? 0) ||
+      b.losers.length - a.losers.length,
   );
 }
 
