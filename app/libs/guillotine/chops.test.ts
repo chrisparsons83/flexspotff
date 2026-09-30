@@ -4,6 +4,7 @@ import {
   GUILLOTINE_FINAL_WEEK,
   resolveChops,
   resolveRosterOwners,
+  weekStarters,
   weeksToSync,
 } from './chops';
 
@@ -264,5 +265,68 @@ describe('weeksToSync', () => {
   it('never goes past the final', () => {
     expect(weeksToSync({ status: 'in_season', lastScoredWeek: 17 })).toBe(17);
     expect(weeksToSync({ status: 'complete', lastScoredWeek: 18 })).toBe(17);
+  });
+});
+
+describe('weekStarters', () => {
+  const lineup = ['4046', '9221', '13287'];
+
+  it("uses the matchup's lineup when Sleeper has one", () => {
+    expect(
+      weekStarters({
+        matchupStarters: ['1', '2', '3'],
+        rosterStarters: lineup,
+        isLiveWeek: true,
+      }),
+    ).toEqual(['1', '2', '3']);
+  });
+
+  it("falls back to the roster's lineup for the live week", () => {
+    // 2026 week 4: Sleeper sent null starters for rosters that had not
+    // touched their lineup since week 1.
+    expect(
+      weekStarters({
+        matchupStarters: null,
+        rosterStarters: lineup,
+        isLiveWeek: true,
+      }),
+    ).toEqual(lineup);
+    expect(
+      weekStarters({
+        matchupStarters: [],
+        rosterStarters: lineup,
+        isLiveWeek: true,
+      }),
+    ).toEqual(lineup);
+  });
+
+  it('never falls back for a finished week', () => {
+    expect(
+      weekStarters({
+        matchupStarters: null,
+        rosterStarters: lineup,
+        isLiveWeek: false,
+      }),
+    ).toEqual([]);
+  });
+
+  it('keeps an empty slot as 0', () => {
+    expect(
+      weekStarters({
+        matchupStarters: null,
+        rosterStarters: ['4046', null],
+        isLiveWeek: true,
+      }),
+    ).toEqual(['4046', '0']);
+  });
+
+  it('is empty when Sleeper has no lineup anywhere', () => {
+    expect(
+      weekStarters({
+        matchupStarters: null,
+        rosterStarters: undefined,
+        isLiveWeek: true,
+      }),
+    ).toEqual([]);
   });
 });

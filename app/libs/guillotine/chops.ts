@@ -151,6 +151,33 @@ export function resolveChops({
 }
 
 /**
+ * The lineup to store for a week: the matchup's own, or for the week still
+ * being played, the roster's current lineup when Sleeper hasn't copied it in.
+ *
+ * Sleeper leaves a matchup's starters null until the week starts for a team
+ * that hasn't touched its lineup, even though that lineup is set and is what
+ * will lock at kickoff. A finished week never falls back: the roster's lineup
+ * today says nothing about what started back then.
+ */
+export function weekStarters({
+  matchupStarters,
+  rosterStarters,
+  isLiveWeek,
+}: {
+  matchupStarters: (string | null)[] | null | undefined;
+  rosterStarters: (string | null)[] | null | undefined;
+  isLiveWeek: boolean;
+}): string[] {
+  const starters =
+    matchupStarters && matchupStarters.length > 0
+      ? matchupStarters
+      : isLiveWeek
+      ? rosterStarters ?? []
+      : [];
+  return starters.map(starter => starter ?? '0');
+}
+
+/**
  * Who owns each roster. Sleeper's own `owner_id` wins; the draft fills the
  * gap for a roster whose manager has since been removed from the league,
  * which is how the 2021 league ended up.

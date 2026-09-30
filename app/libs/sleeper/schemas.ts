@@ -138,6 +138,10 @@ export const sleeperGuillotineRostersJson = z.array(
     roster_id: z.number(),
     owner_id: z.string().nullable(),
     players: z.array(z.string()).nullish(),
+    // The lineup as it stands now. Sleeper only copies an untouched lineup
+    // into a week's matchup once that week starts, so until then this is the
+    // only place it can be read.
+    starters: z.array(z.string().nullable()).nullish(),
     settings: z
       .object({
         eliminated: z.number().nullish(),

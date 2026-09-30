@@ -2,6 +2,7 @@ import {
   GUILLOTINE_FINAL_WEEK,
   resolveChops,
   resolveRosterOwners,
+  weekStarters,
   weeksToSync,
 } from './chops';
 import type { ChopWeekRow } from './chops';
@@ -237,15 +238,22 @@ export async function syncGuillotineLeague(
           .get(week)
           ?.find(r => r.roster_id === roster.roster_id);
         if (!row) return [];
+        const starters = weekStarters({
+          matchupStarters: row.starters,
+          rosterStarters: roster.starters,
+          isLiveWeek: week === liveWeek,
+        });
         return [
           {
             week,
             points: row.points ?? 0,
-            starters: (row.starters ?? []).map(s => s ?? '0'),
+            starters,
             startingPlayerPoints: (row.starters_points ?? []).map(p => p ?? 0),
             players: row.players ?? [],
             starterProjections:
-              week === liveWeek ? (row.starters ?? []).map(projectStarter) : [],
+              week === liveWeek
+                ? starters.map(s => projectStarter(s === '0' ? null : s))
+                : [],
           },
         ];
       });
