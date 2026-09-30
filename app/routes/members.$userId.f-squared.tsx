@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
@@ -9,19 +9,16 @@ import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import MemberName from '~/components/ui/MemberName';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
 import type {
   FSquaredCareer,
-  FSquaredFan,
-  FSquaredFavoriteManager,
+  FSquaredPickedManager,
   FSquaredMember,
   FSquaredPick,
   FSquaredPickedBy,
-  FSquaredPickedBySeason,
   FSquaredSeason,
 } from '~/models/profile/fSquaredProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
@@ -85,15 +82,15 @@ export default function MemberFSquared() {
     );
   }
 
-  const { seasons, career, favoriteManagers, pickedBy } = profile;
+  const { seasons, career, mostPickedManagers, pickedBy } = profile;
 
   return (
     <div className='space-y-8'>
       <Career career={career} pickedBy={pickedBy} />
       {seasons.length > 0 && <BySeason seasons={seasons} />}
       {seasons.length > 0 && <PickBoard seasons={seasons} />}
-      {favoriteManagers.length > 0 && (
-        <FavoriteManagers managers={favoriteManagers} />
+      {mostPickedManagers.length > 0 && (
+        <MostPickedManagers managers={mostPickedManagers} />
       )}
       {pickedBy.seasons.length > 0 && (
         <WhoPickedThem
@@ -132,17 +129,29 @@ function Career({
   );
 }
 
+/** Small print beside a headline, saying what the number counts. */
+function LeadContext({ children }: { children: string }) {
+  return (
+    <span className='ml-1.5 text-sm font-normal text-slate-400'>
+      {children}
+    </span>
+  );
+}
+
+const whole = (value: number) => Math.round(value).toLocaleString('en-US');
+
 /**
  * Totals are measured against the field rather than shown raw: a season's
  * points depend on how the leagues scored that year, which no pick controls.
  */
 function PointsCard({ career }: { career: FSquaredCareer }) {
-  const { bestSeason, worstSeason, averageVsField } = career;
+  const { bestSeason, worstSeason, averageVsField, averageTotal } = career;
+  const title = 'Points vs Average Entry';
 
   // Only a running season so far: nothing settled to measure yet.
-  if (averageVsField === null) {
+  if (averageVsField === null || averageTotal === null) {
     return (
-      <CareerCard title='Points' lead='—' leadNote='No finished seasons yet'>
+      <CareerCard title={title} lead='—'>
         <MiniStat label='Seasons' value={career.seasons} />
       </CareerCard>
     );
@@ -150,41 +159,28 @@ function PointsCard({ career }: { career: FSquaredCareer }) {
 
   return (
     <CareerCard
-      title='Points vs Field'
+      title={title}
       lead={
         <span className={signedTone(averageVsField)}>
           {signed(averageVsField, 1)}
         </span>
       }
-      leadNote={`a season over the average entry · avg ${pts(
-        career.averageTotal,
-        0,
-      )}`}
-      meter={
-        bestSeason &&
-        worstSeason && (
-          <>
-            <RangeBar
-              low={worstSeason.vsField}
-              high={bestSeason.vsField}
-              mark={averageVsField}
-            />
-            <div className='mt-1.5 flex justify-between text-xs text-slate-500'>
-              <span>{worstSeason.year}</span>
-              <span>{bestSeason.year}</span>
-            </div>
-          </>
-        )
-      }
     >
+      <MiniStat
+        label='Average Score'
+        value={whole(averageTotal)}
+        hint='Their average season score'
+      />
       <MiniStat
         label='Best'
         value={bestSeason ? signed(bestSeason.vsField, 0) : '—'}
+        detail={bestSeason ? String(bestSeason.year) : null}
         tone={signedTone(bestSeason?.vsField ?? null)}
       />
       <MiniStat
         label='Worst'
         value={worstSeason ? signed(worstSeason.vsField, 0) : '—'}
+        detail={worstSeason ? String(worstSeason.year) : null}
         tone={signedTone(worstSeason?.vsField ?? null)}
       />
     </CareerCard>
@@ -200,8 +196,12 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
     return current ? (
       <CareerCard
         title='Standing'
-        lead={ordinal(current.rank)}
-        leadNote={`of ${current.fieldSize} so far in ${current.year}`}
+        lead={
+          <>
+            {ordinal(current.rank)}
+            <LeadContext>{`of ${current.fieldSize}`}</LeadContext>
+          </>
+        }
       >
         <MiniStat label='Seasons' value={career.seasons} />
       </CareerCard>
@@ -210,24 +210,19 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
 
   return (
     <CareerCard
-      title='Finishes'
+      title='Best Finish'
       lead={
         career.titles > 0 ? (
           <span className='text-gold'>
             🏆{career.titles > 1 && ` × ${career.titles}`}
           </span>
         ) : (
-          ordinal(bestFinish.rank)
+          <>
+            {ordinal(bestFinish.rank)}
+            <LeadContext>{String(bestFinish.year)}</LeadContext>
+          </>
         )
       }
-      leadNote={[
-        career.titles > 0
-          ? plural(career.titles, 'title')
-          : `best finish, ${bestFinish.year}`,
-        current && `${ordinal(current.rank)} in ${current.year}`,
-      ]
-        .filter(Boolean)
-        .join(' · ')}
     >
       <MiniStat
         label='Wins'
@@ -236,22 +231,26 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       />
       <MiniStat label='Top 3' value={career.podiums} />
       <MiniStat
-        label='Percentile'
-        value={pct(career.averagePercentile)}
-        hint='Average share of the field finished behind them. 100% is first every season.'
+        label='Top Half'
+        value={career.topHalves}
+        unit={`/${career.completedSeasons}`}
+        hint='Finished seasons in the top half of the field'
       />
     </CareerCard>
   );
 }
 
+/**
+ * How often a pick came good, rather than by how much - Points vs Average
+ * Entry already covers the margin. A pick "beats the average" when its team
+ * outscores the average team in its league, so a high-scoring league does not
+ * flatter the picks made in it.
+ */
 function PickQualityCard({ career }: { career: FSquaredCareer }) {
-  const best = career.bestPickEver;
-
   return (
     <CareerCard
-      title='Pick Quality'
-      lead={career.averagePickRank?.toFixed(1) ?? '—'}
-      leadNote={`average league finish of ${plural(career.picks, 'pick')}`}
+      title='Picks That Beat League Average'
+      lead={pct(career.beatAverageShare)}
     >
       <MiniStat
         label='Top 3'
@@ -265,15 +264,7 @@ function PickQualityCard({ career }: { career: FSquaredCareer }) {
         hint='Picks that finished in the bottom 3 of their league on points'
         tone='text-rose-300'
       />
-      <MiniStat
-        label='Best Pick'
-        value={best ? signed(best.vsLeague, 0) : '—'}
-        detail={
-          best ? `${best.manager?.discordName ?? '?'} ${best.year}` : null
-        }
-        hint='Most points over their league average of any pick'
-        tone={signedTone(best?.vsLeague ?? null)}
-      />
+      <MiniStat label='Picks' value={career.picks} />
     </CareerCard>
   );
 }
@@ -282,26 +273,21 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
   const { mostPicked } = pickedBy;
 
   return (
-    <CareerCard
-      title='Picked By Others'
-      lead={pct(pickedBy.averageShare)}
-      leadNote='of entries picked their team, on average'
-    >
+    <CareerCard title='Picked By Others' lead={pct(pickedBy.averageShare)}>
       <MiniStat
         label='Times Picked'
         value={pickedBy.timesPicked}
         hint='Entries that picked a team they managed, over every season'
       />
       <MiniStat
+        label='Unique Pickers'
+        value={pickedBy.frequentPickers.length}
+        hint='Different members who have picked them'
+      />
+      <MiniStat
         label='Most Picked'
         value={mostPicked ? pct(mostPicked.share) : '—'}
         detail={mostPicked ? String(mostPicked.year) : null}
-      />
-      <MiniStat
-        label='Top Fan'
-        value={pickedBy.topFans[0]?.picks ?? 0}
-        detail={pickedBy.topFans[0]?.member.discordName ?? null}
-        hint='The member whose entries picked them most often'
       />
     </CareerCard>
   );
@@ -328,7 +314,6 @@ function SeasonFinish({ season }: { season: FSquaredSeason }) {
       <span className='font-normal text-slate-400'>
         {' '}
         of {season.finish.fieldSize}
-        {season.inProgress && ' so far'}
       </span>
     </span>
   );
@@ -341,8 +326,8 @@ function PickCell({ pick }: { pick: FSquaredPick | null }) {
       <span className={signedTone(pick.vsLeague)}>
         {pick.manager?.discordName ?? 'Unknown'}
       </span>
-      <span className='ml-1.5 text-xs text-slate-500'>
-        {ordinal(pick.leagueRank)} {pick.leagueName}
+      <span className='ml-1.5 text-xs tabular-nums text-slate-500'>
+        {pts(pick.pointsFor)}
       </span>
     </>
   );
@@ -355,9 +340,9 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
         headers={[
           'Year',
           'Finish',
-          'Points',
+          'Score',
           'vs Field',
-          'Avg Pick',
+          'Beat Average',
           'Best Pick',
           'Worst Pick',
           'Picked By',
@@ -388,9 +373,10 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
             </td>
             <td
               className='px-2 py-2 text-right tabular-nums'
-              title='Average league finish of their picks, on points'
+              title="Picks that outscored their league's average team"
             >
-              {season.averagePickRank?.toFixed(1) ?? '—'}
+              {season.beatAverage}
+              <span className='text-slate-500'>/{season.picks.length}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <PickCell pick={season.bestPick} />
@@ -409,25 +395,19 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
 }
 
 /**
- * Where a team finished in its league, top to bottom as bright green to dark
- * red. Lightness climbs with the rank as well as hue, so the scale still reads
- * for red-green colour blindness: bright is good, dark is bad.
+ * Whether a team finished in the top or bottom half of its league. Two bands
+ * rather than a gradient, since the rank is written on the badge anyway.
+ *
+ * Light green against dark red, so the halves differ in lightness as well as
+ * hue and still read apart with red-green colour blindness.
  */
-const RANK_SCALE = [
-  { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 20%' },
-  { tone: 'bg-emerald-500 text-emerald-950', label: '60-80%' },
-  { tone: 'bg-slate-600 text-slate-100', label: '40-60%' },
-  { tone: 'bg-rose-800 text-rose-50', label: '20-40%' },
-  { tone: 'bg-rose-950 text-rose-200', label: 'Bottom 20%' },
-];
+const HALVES = {
+  top: { tone: 'bg-emerald-300 text-emerald-950', label: 'Top half' },
+  bottom: { tone: 'bg-rose-900 text-rose-50', label: 'Bottom half' },
+} as const;
 
 function rankTone(rank: number, size: number): string {
-  const percentile = size > 1 ? (size - rank) / (size - 1) : 1;
-  const band = Math.min(
-    RANK_SCALE.length - 1,
-    Math.floor((1 - percentile) * RANK_SCALE.length),
-  );
-  return RANK_SCALE[band].tone;
+  return rank <= size / 2 ? HALVES.top.tone : HALVES.bottom.tone;
 }
 
 /** A season's entry laid out league by league, the way it was picked. */
@@ -454,20 +434,6 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
           onChange={value => value !== 'all' && setYear(value)}
           showAll={false}
         />
-      }
-      footnote={
-        <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
-          {RANK_SCALE.map(band => (
-            <span key={band.label} className='inline-flex items-center gap-1.5'>
-              <span
-                aria-hidden='true'
-                className={clsx('inline-block h-2.5 w-4 rounded-sm', band.tone)}
-              />
-              {band.label}
-            </span>
-          ))}
-          <span>★ their own team</span>
-        </span>
       }
     >
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
@@ -499,17 +465,6 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
                     </div>
                     <div className='text-xs text-slate-400 tabular-nums'>
                       {pts(pick.pointsFor)}
-                      <span
-                        className={clsx('ml-1.5', signedTone(pick.vsLeague))}
-                      >
-                        {signed(pick.vsLeague, 0)}
-                      </span>
-                      <span
-                        className='ml-1.5 text-slate-500'
-                        title='Other entries that made the same pick'
-                      >
-                        · {pick.sharedBy === 0 ? 'unique' : `+${pick.sharedBy}`}
-                      </span>
                     </div>
                   </div>
                 </li>
@@ -522,23 +477,20 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
   );
 }
 
-const FAVORITES_SHOWN = 10;
+const MANAGERS_SHOWN = 10;
 
-function FavoriteManagers({
+function MostPickedManagers({
   managers,
 }: {
-  managers: FSquaredFavoriteManager[];
+  managers: FSquaredPickedManager[];
 }) {
   return (
-    <ProfileSection
-      title='Favorite Managers'
-      description='The managers they picked most often'
-    >
+    <ProfileSection title='Most Picked Managers'>
       <ProfileTable
-        headers={['Manager', 'Picks', 'Years', 'Avg Finish', 'vs League']}
+        headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
         numericColumns={[1, 3, 4]}
       >
-        {managers.slice(0, FAVORITES_SHOWN).map(row => (
+        {managers.slice(0, MANAGERS_SHOWN).map(row => (
           <tr key={row.manager.id} className='border-b border-slate-700/70'>
             <td className='whitespace-nowrap px-2 py-2'>
               <Member member={row.manager} />
@@ -571,9 +523,8 @@ function FavoriteManagers({
 }
 
 /**
- * The other side of the game: the teams they managed, and who bet on them.
- * Popularity sits beside the team's actual finish, so a crowd favourite that
- * flopped - or a team everyone passed on that won the league - stands out.
+ * The other side of the game: everyone whose entries picked a team this member
+ * managed, most often first, with the years they did it.
  */
 function WhoPickedThem({
   pickedBy,
@@ -582,133 +533,35 @@ function WhoPickedThem({
   pickedBy: FSquaredPickedBy;
   memberName: string;
 }) {
-  return (
-    <ProfileSection
-      title={`Who Picked ${memberName}`}
-      description='Entries that picked a team they managed'
-    >
-      <div className='grid gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-2'>
-          <ProfileTable
-            headers={['Year', 'League', 'Picked By', 'Popularity', 'Finish']}
-            numericColumns={[2, 3, 4]}
-          >
-            {pickedBy.seasons.map(season => (
-              <PickedByRow key={season.teamId} season={season} />
-            ))}
-          </ProfileTable>
-        </div>
-        <TopFans fans={pickedBy.topFans} />
-      </div>
-    </ProfileSection>
-  );
-}
-
-function PickedByRow({ season }: { season: FSquaredPickedBySeason }) {
-  const [open, setOpen] = useState(false);
-  const count = season.pickers.length;
+  const pickers = pickedBy.frequentPickers;
 
   return (
-    <Fragment>
-      <tr className='border-b border-slate-700/70'>
-        <td className='whitespace-nowrap px-2 py-2'>
-          {season.year}
-          {season.inProgress && <CurrentTag />}
-        </td>
-        <td className='px-2 py-2'>
-          <LeagueChip name={season.leagueName} />
-        </td>
-        <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
-          {count > 0 ? (
-            <button
-              type='button'
-              onClick={() => setOpen(value => !value)}
-              aria-expanded={open}
-              className='font-medium text-slate-100 underline decoration-slate-500 decoration-dotted underline-offset-2 hover:decoration-slate-200'
-            >
-              {count}
-            </button>
-          ) : (
-            <span className='text-slate-500'>0</span>
-          )}
-          <span className='text-slate-400'>
-            {' '}
-            of {season.fieldSize}
-            <span className='ml-1.5 text-xs text-slate-500'>
-              {pct(season.share)}
-            </span>
-          </span>
-        </td>
-        <td
-          className='px-2 py-2 text-right tabular-nums'
-          title={`${ordinal(season.popularityRank)} most picked of ${
-            season.leagueSize
-          } teams`}
-        >
-          {ordinal(season.popularityRank)}
-        </td>
-        <td className='px-2 py-2 text-right'>
-          <span
-            className={clsx(
-              'inline-block rounded px-1.5 py-0.5 text-xs font-bold tabular-nums',
-              rankTone(season.leagueRank, season.leagueSize),
-            )}
-            title={`${pts(season.pointsFor)} points`}
-          >
-            {ordinal(season.leagueRank)}
-          </span>
-        </td>
-      </tr>
-      {open && (
-        <tr className='border-b border-slate-700/70 bg-slate-900/40'>
-          <td colSpan={5} className='px-2 py-2 text-sm'>
-            <ul className='m-0 flex flex-wrap gap-x-3 gap-y-1 p-0'>
-              {season.pickers.map(picker => (
-                <li key={picker.id} className='list-none'>
-                  <Member member={picker} />
-                  {picker.isSelf && (
-                    <span className='ml-1 text-gold' title='Picked themselves'>
-                      ★
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </td>
-        </tr>
-      )}
-    </Fragment>
-  );
-}
-
-const FANS_SHOWN = 10;
-
-function TopFans({ fans }: { fans: FSquaredFan[] }) {
-  return (
-    <div className='rounded-md bg-slate-900/50 p-4'>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>Biggest Fans</h4>
-      {fans.length === 0 ? (
-        <p className='m-0 mt-3 text-sm text-slate-400'>Nobody yet.</p>
+    <ProfileSection title={`Who Picked ${memberName}`}>
+      {pickers.length === 0 ? (
+        <p className='m-0 text-sm text-slate-400'>Nobody yet.</p>
       ) : (
-        <ol className='m-0 mt-3 space-y-1.5 p-0'>
-          {fans.slice(0, FANS_SHOWN).map(fan => (
+        <ol className='m-0 p-0'>
+          {pickers.map(row => (
             <li
-              key={fan.member.id}
-              className='flex list-none items-baseline justify-between gap-3 text-sm'
+              key={row.member.id}
+              className='flex list-none items-baseline gap-4 border-b border-slate-700/70 py-2 text-sm last:border-b-0'
             >
-              <span className='truncate'>
-                <Member member={fan.member} />
-              </span>
               <span
-                className='shrink-0 tabular-nums text-slate-400'
-                title={fan.years.join(', ')}
+                className='w-6 shrink-0 text-right text-lg font-bold tabular-nums text-white'
+                title={`Picked them ${plural(row.picks, 'time')}`}
               >
-                <span className='font-medium text-slate-100'>{fan.picks}</span>×
+                {row.picks}
+              </span>
+              <span className='min-w-0 truncate'>
+                <Member member={row.member} />
+              </span>
+              <span className='ml-auto shrink-0 text-xs tabular-nums text-slate-500'>
+                {row.years.join(', ')}
               </span>
             </li>
           ))}
         </ol>
       )}
-    </div>
+    </ProfileSection>
   );
 }

@@ -74,7 +74,7 @@ describe('buildFSquaredSeasons', () => {
     expect(worst.vsLeague).toBe(-150);
     expect(seasons[0].bestPick?.teamId).toBe('t-a');
     expect(seasons[0].worstPick?.teamId).toBe('t-c');
-    expect(seasons[0].averagePickRank).toBe(2.5);
+    expect(seasons[0].beatAverage).toBe(1);
   });
 
   it('ranks the entry against the field, sharing ties', () => {
@@ -88,16 +88,6 @@ describe('buildFSquaredSeasons', () => {
     expect(seasons[0].finish).toEqual({ rank: 2, fieldSize: 3 });
     expect(seasons[0].vsField).toBeCloseTo(500 - 1700 / 3);
     expect(seasons[0].champion).toBe(false);
-  });
-
-  it('counts the other entries that made the same pick', () => {
-    const { seasons } = build([
-      entry('me', ['t-a', 't-c']),
-      entry('x', ['t-a', 't-b']),
-      entry('y', ['t-a', 't-b']),
-    ]);
-
-    expect(seasons[0].picks.map(pick => pick.sharedBy)).toEqual([2, 0]);
   });
 
   it('marks a pick of their own team', () => {
@@ -172,18 +162,24 @@ describe('buildFSquaredCareer', () => {
 
     expect(career?.titles).toBe(0);
     expect(career?.bestFinish?.rank).toBe(1);
+    expect(career?.topHalves).toBe(1);
   });
 
   it('scores pick quality across every season, the running one included', () => {
-    const { career } = build(entries, teams, 2025);
+    const { career } = build(
+      [entry('me', ['t-c']), entry('x', ['t-a']), entry('me', ['u-me'], 2025)],
+      teams,
+      2025,
+    );
 
-    expect(career?.picks).toBe(3);
-    expect(career?.averagePickRank).toBeCloseTo((1 + 2 + 1) / 3);
-    expect(career?.bestPickEver?.teamId).toBe('t-a');
+    // t-c is 150 under its league's average; u-me is 50 over its own.
+    expect(career?.picks).toBe(2);
+    expect(career?.beatAverageShare).toBe(0.5);
+    expect(career?.topThreeShare).toBe(0.5);
   });
 });
 
-describe('buildFavoriteManagers', () => {
+describe('buildMostPickedManagers', () => {
   it('orders managers by picks, then how their picks finished', () => {
     const teams = [
       ...league,
@@ -191,18 +187,18 @@ describe('buildFavoriteManagers', () => {
       team('u-b', 'b', 150, { year: 2025 }),
       team('u-c', 'c', 100, { year: 2025 }),
     ];
-    const { favoriteManagers } = build(
+    const { mostPickedManagers } = build(
       [entry('me', ['t-b', 't-c']), entry('me', ['u-a', 'u-b'], 2025)],
       teams,
     );
 
     // a's one pick finished 3rd, c's 4th.
-    expect(favoriteManagers.map(row => row.manager.id)).toEqual([
+    expect(mostPickedManagers.map(row => row.manager.id)).toEqual([
       'b',
       'a',
       'c',
     ]);
-    expect(favoriteManagers[0]).toMatchObject({
+    expect(mostPickedManagers[0]).toMatchObject({
       picks: 2,
       years: [2024, 2025],
       averageRank: 2,
@@ -211,7 +207,7 @@ describe('buildFavoriteManagers', () => {
 });
 
 describe('buildPickedBy', () => {
-  it('lists who picked their team and how it ranked for popularity', () => {
+  it('lists who picked their team', () => {
     const { pickedBy } = build([
       entry('x', ['t-me', 't-a']),
       entry('y', ['t-me', 't-b']),
@@ -222,8 +218,6 @@ describe('buildPickedBy', () => {
     expect(season.pickers.map(picker => picker.id)).toEqual(['x', 'y']);
     expect(season.fieldSize).toBe(3);
     expect(season.share).toBeCloseTo(2 / 3);
-    // t-a, t-me and t-b were each picked twice.
-    expect(season.popularityRank).toBe(1);
     expect(season.leagueRank).toBe(2);
   });
 
@@ -233,11 +227,10 @@ describe('buildPickedBy', () => {
     expect(profile.seasons).toEqual([]);
     expect(profile.pickedBy.seasons).toHaveLength(1);
     expect(profile.pickedBy.seasons[0].pickers).toEqual([]);
-    expect(profile.pickedBy.seasons[0].popularityRank).toBe(3);
     expect(profile.pickedBy.timesPicked).toBe(0);
   });
 
-  it('ranks their biggest fans, leaving themselves out', () => {
+  it('ranks who picked them most often, leaving themselves out', () => {
     const teams = [...league, team('u-me', 'me', 100, { year: 2025 })];
     const { pickedBy } = build(
       [
@@ -249,11 +242,13 @@ describe('buildPickedBy', () => {
       teams,
     );
 
-    expect(pickedBy.topFans.map(fan => [fan.member.id, fan.picks])).toEqual([
+    expect(
+      pickedBy.frequentPickers.map(row => [row.member.id, row.picks]),
+    ).toEqual([
       ['y', 2],
       ['x', 1],
     ]);
-    expect(pickedBy.topFans[0].years).toEqual([2024, 2025]);
+    expect(pickedBy.frequentPickers[0].years).toEqual([2024, 2025]);
     expect(pickedBy.timesPicked).toBe(4);
     expect(pickedBy.seasons[1].pickers.find(p => p.id === 'me')?.isSelf).toBe(
       true,

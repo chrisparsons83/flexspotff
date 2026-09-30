@@ -17,12 +17,11 @@ const memberSelect = {
  *
  * A member turns up in F² two ways: by entering, and by managing a team other
  * entries picked. Both count, so someone who never entered still has a tab
- * saying who backed them.
+ * saying who picked them.
  *
  * The whole field is loaded for those years, along with every team in them,
  * because every number on the tab is measured against it: a finish against
- * the other entries, a pick against the rest of its league, and a team's
- * popularity against the other teams it could have been.
+ * the other entries, and a pick against the rest of its league.
  */
 export async function getFSquaredProfile(userId: string) {
   const played = await prisma.fSquaredEntry.groupBy({ by: ['year'] });

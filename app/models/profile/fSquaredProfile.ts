@@ -52,8 +52,6 @@ export type FSquaredPick = {
   leagueSize: number;
   /** Points-for over the average team in its league. */
   vsLeague: number;
-  /** The other entrants who picked the same team. */
-  sharedBy: number;
   /** The member picked a team they manage. */
   isSelf: boolean;
 };
@@ -67,7 +65,8 @@ export type FSquaredSeason = {
   /** Total over the average entry that year. */
   vsField: number;
   picks: FSquaredPick[];
-  averagePickRank: number | null;
+  /** Picks that outscored their league's average team. */
+  beatAverage: number;
   bestPick: FSquaredPick | null;
   worstPick: FSquaredPick | null;
   pickedSelf: boolean;
@@ -81,22 +80,25 @@ export type FSquaredCareer = {
   titles: number;
   podiums: number;
   bestFinish: (FSquaredFinish & { year: number }) | null;
-  /** 100% is first every time, 0% last every time. */
-  averagePercentile: number | null;
+  /** Finished seasons in the top half of the field. */
+  topHalves: number;
   averageTotal: number | null;
   averageVsField: number | null;
   bestSeason: { year: number; vsField: number } | null;
   worstSeason: { year: number; vsField: number } | null;
   picks: number;
-  averagePickRank: number | null;
+  /**
+   * Share of picks that outscored their league's average team: how often
+   * they picked well, where points vs the field says by how much.
+   */
+  beatAverageShare: number | null;
   topThreeShare: number | null;
   bottomThreeShare: number | null;
-  bestPickEver: FSquaredPick | null;
   selfPicks: number;
   current: (FSquaredFinish & { year: number }) | null;
 };
 
-export type FSquaredFavoriteManager = {
+export type FSquaredPickedManager = {
   manager: FSquaredMember;
   picks: number;
   years: number[];
@@ -118,11 +120,9 @@ export type FSquaredPickedBySeason = {
   pickers: (FSquaredMember & { isSelf: boolean })[];
   fieldSize: number;
   share: number;
-  /** Where the team ranked in its league on how many entries picked it. */
-  popularityRank: number;
 };
 
-export type FSquaredFan = {
+export type FSquaredFrequentPicker = {
   member: FSquaredMember;
   picks: number;
   years: number[];
@@ -133,9 +133,8 @@ export type FSquaredPickedBy = {
   timesPicked: number;
   averageShare: number | null;
   mostPicked: FSquaredPickedBySeason | null;
-  bestPopularityRank: number | null;
   /** Other members who picked them, most often first. */
-  topFans: FSquaredFan[];
+  frequentPickers: FSquaredFrequentPicker[];
 };
 
 const sum = (values: number[]) =>
@@ -180,14 +179,10 @@ type TeamStats = FSquaredTeamRow & {
   leagueRank: number;
   leagueSize: number;
   vsLeague: number;
-  popularityRank: number;
   pickers: FSquaredMember[];
 };
 
-/**
- * Every drafted team with its standing in its league, both on points-for and
- * on how many entries picked it.
- */
+/** Every drafted team with its standing in its league on points-for. */
 function buildTeamStats(
   teams: FSquaredTeamRow[],
   entries: FSquaredEntryRow[],
@@ -215,12 +210,6 @@ function buildTeamStats(
       [...withPickers].sort((a, b) => b.pointsFor - a.pointsFor),
       team => team.pointsFor,
     );
-    const popularity = new Map(
-      assignCompetitionRanks(
-        [...withPickers].sort((a, b) => b.pickers.length - a.pickers.length),
-        team => team.pickers.length,
-      ).map(team => [team.id, team.rank]),
-    );
 
     for (const team of byPoints) {
       const { rank, ...rest } = team;
@@ -229,7 +218,6 @@ function buildTeamStats(
         leagueRank: rank,
         leagueSize: league.length,
         vsLeague: team.pointsFor - leagueAverage,
-        popularityRank: popularity.get(team.id)!,
       });
     }
   }
@@ -287,7 +275,6 @@ export function buildFSquaredSeasons({
         leagueRank: team.leagueRank,
         leagueSize: team.leagueSize,
         vsLeague: team.vsLeague,
-        sharedBy: team.pickers.filter(picker => picker.id !== userId).length,
         isSelf: team.manager?.id === userId,
       }))
       .sort((a, b) => byLeague(a, b) || a.leagueRank - b.leagueRank);
@@ -313,7 +300,7 @@ export function buildFSquaredSeasons({
         ).has(userId),
       vsField: mine.total - (average(totals.map(entry => entry.total)) ?? 0),
       picks,
-      averagePickRank: average(picks.map(pick => pick.leagueRank)),
+      beatAverage: picks.filter(pick => pick.vsLeague > 0).length,
       bestPick: best,
       worstPick: worst,
       pickedSelf: picks.some(pick => pick.isSelf),
@@ -357,19 +344,18 @@ export function buildFSquaredCareer(seasons: FSquaredSeason[]): FSquaredCareer {
     titles: completed.filter(season => season.champion).length,
     podiums: completed.filter(season => season.finish.rank <= 3).length,
     bestFinish,
-    averagePercentile: average(
-      completed.map(({ finish }) =>
-        finish.fieldSize > 1
-          ? (finish.fieldSize - finish.rank) / (finish.fieldSize - 1)
-          : 1,
-      ),
-    ),
+    topHalves: completed.filter(
+      ({ finish }) => finish.rank <= finish.fieldSize / 2,
+    ).length,
     averageTotal: average(completed.map(season => season.total)),
     averageVsField: average(completed.map(season => season.vsField)),
     bestSeason,
     worstSeason,
     picks: picks.length,
-    averagePickRank: average(picks.map(pick => pick.leagueRank)),
+    beatAverageShare:
+      picks.length > 0
+        ? picks.filter(pick => pick.vsLeague > 0).length / picks.length
+        : null,
     topThreeShare:
       picks.length > 0
         ? picks.filter(pick => pick.leagueRank <= 3).length / picks.length
@@ -379,16 +365,15 @@ export function buildFSquaredCareer(seasons: FSquaredSeason[]): FSquaredCareer {
         ? picks.filter(pick => pick.leagueRank > pick.leagueSize - 3).length /
           picks.length
         : null,
-    bestPickEver: extremes(picks, pick => pick.vsLeague).best,
     selfPicks: picks.filter(pick => pick.isSelf).length,
     current: running ? { ...running.finish, year: running.year } : null,
   };
 }
 
 /** The managers the member backed most, most picked first. */
-export function buildFavoriteManagers(
+export function buildMostPickedManagers(
   seasons: FSquaredSeason[],
-): FSquaredFavoriteManager[] {
+): FSquaredPickedManager[] {
   const picks = seasons.flatMap(season =>
     season.picks.flatMap(pick =>
       pick.manager ? [{ ...pick, manager: pick.manager }] : [],
@@ -416,8 +401,8 @@ export function buildFavoriteManagers(
 
 /**
  * The member's own teams as everyone else saw them: how many entries picked
- * each one, and who. A season nobody picked them still shows, as 0 of the
- * field - being passed over is part of the story too.
+ * each one, and who. A season nobody picked them still counts, as 0 of the
+ * field, so it pulls down their average share like any other season.
  */
 export function buildPickedBy({
   userId,
@@ -453,18 +438,17 @@ export function buildPickedBy({
           .sort((a, b) => a.discordName.localeCompare(b.discordName)),
         fieldSize,
         share: team.pickers.length / fieldSize,
-        popularityRank: team.popularityRank,
       };
     })
     .sort((a, b) => b.year - a.year || byLeague(a, b));
 
-  const fans = seasons.flatMap(season =>
+  const otherPickers = seasons.flatMap(season =>
     season.pickers
       .filter(picker => !picker.isSelf)
       .map(picker => ({ picker, year: season.year })),
   );
-  const topFans: FSquaredFan[] = Array.from(
-    groupBy(fans, fan => fan.picker.id).values(),
+  const frequentPickers: FSquaredFrequentPicker[] = Array.from(
+    groupBy(otherPickers, row => row.picker.id).values(),
   )
     .map(picks => {
       const { isSelf: _, ...member } = picks[0].picker;
@@ -493,11 +477,7 @@ export function buildPickedBy({
     timesPicked: sum(seasons.map(season => season.pickers.length)),
     averageShare: average(seasons.map(season => season.share)),
     mostPicked,
-    bestPopularityRank:
-      seasons.length > 0
-        ? Math.min(...seasons.map(season => season.popularityRank))
-        : null,
-    topFans,
+    frequentPickers,
   };
 }
 
@@ -526,7 +506,7 @@ export function buildFSquaredProfile({
   return {
     seasons,
     career: seasons.length > 0 ? buildFSquaredCareer(seasons) : null,
-    favoriteManagers: buildFavoriteManagers(seasons),
+    mostPickedManagers: buildMostPickedManagers(seasons),
     pickedBy: buildPickedBy({ userId, entries, teamStats, inProgressYear }),
   };
 }
