@@ -1,0 +1,3026 @@
+[
+  {
+    "pick_no": 1,
+    "round": 1,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "9221",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Jahmyr",
+      "last_name": "Gibbs",
+      "position": "RB",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 2,
+    "round": 1,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "9509",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Bijan",
+      "last_name": "Robinson",
+      "position": "RB",
+      "team": "ATL"
+    }
+  },
+  {
+    "pick_no": 3,
+    "round": 1,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "7564",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Ja'Marr",
+      "last_name": "Chase",
+      "position": "WR",
+      "team": "CIN"
+    }
+  },
+  {
+    "pick_no": 4,
+    "round": 1,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "9493",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Puka",
+      "last_name": "Nacua",
+      "position": "WR",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 5,
+    "round": 1,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "8138",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "James",
+      "last_name": "Cook",
+      "position": "RB",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 6,
+    "round": 1,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "7547",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Amon-Ra",
+      "last_name": "St. Brown",
+      "position": "WR",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 7,
+    "round": 1,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "6813",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Jonathan",
+      "last_name": "Taylor",
+      "position": "RB",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 8,
+    "round": 1,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "4034",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Christian",
+      "last_name": "McCaffrey",
+      "position": "RB",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 9,
+    "round": 1,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9488",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Jaxon",
+      "last_name": "Smith-Njigba",
+      "position": "WR",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 10,
+    "round": 1,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "4866",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Saquon",
+      "last_name": "Barkley",
+      "position": "RB",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 11,
+    "round": 1,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "6794",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Justin",
+      "last_name": "Jefferson",
+      "position": "WR",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 12,
+    "round": 1,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "6786",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "CeeDee",
+      "last_name": "Lamb",
+      "position": "WR",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 13,
+    "round": 2,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "9226",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "De'Von",
+      "last_name": "Achane",
+      "position": "RB",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 14,
+    "round": 2,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "12507",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Omarion",
+      "last_name": "Hampton",
+      "position": "RB",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 15,
+    "round": 2,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "12527",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Ashton",
+      "last_name": "Jeanty",
+      "position": "RB",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 16,
+    "round": 2,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9224",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Chase",
+      "last_name": "Brown",
+      "position": "RB",
+      "team": "CIN"
+    }
+  },
+  {
+    "pick_no": 17,
+    "round": 2,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "3198",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Derrick",
+      "last_name": "Henry",
+      "position": "RB",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 18,
+    "round": 2,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "8151",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Kenneth",
+      "last_name": "Walker",
+      "position": "RB",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 19,
+    "round": 2,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "12517",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Colston",
+      "last_name": "Loveland",
+      "position": "TE",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 20,
+    "round": 2,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "5859",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "A.J.",
+      "last_name": "Brown",
+      "position": "WR",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 21,
+    "round": 2,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "8112",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Drake",
+      "last_name": "London",
+      "position": "WR",
+      "team": "ATL"
+    }
+  },
+  {
+    "pick_no": 22,
+    "round": 2,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "11604",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Brock",
+      "last_name": "Bowers",
+      "position": "TE",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 23,
+    "round": 2,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "7569",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Nico",
+      "last_name": "Collins",
+      "position": "WR",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 24,
+    "round": 2,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "8150",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Kyren",
+      "last_name": "Williams",
+      "position": "RB",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 25,
+    "round": 3,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "8137",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "George",
+      "last_name": "Pickens",
+      "position": "WR",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 26,
+    "round": 3,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "11632",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Malik",
+      "last_name": "Nabers",
+      "position": "WR",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 27,
+    "round": 3,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "8144",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Chris",
+      "last_name": "Olave",
+      "position": "WR",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 28,
+    "round": 3,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "10229",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Rashee",
+      "last_name": "Rice",
+      "position": "WR",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 29,
+    "round": 3,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "7525",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "DeVonta",
+      "last_name": "Smith",
+      "position": "WR",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 30,
+    "round": 3,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "8130",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Trey",
+      "last_name": "McBride",
+      "position": "TE",
+      "team": "ARI"
+    }
+  },
+  {
+    "pick_no": 31,
+    "round": 3,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "8155",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Breece",
+      "last_name": "Hall",
+      "position": "RB",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 32,
+    "round": 3,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "12526",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Tetairoa",
+      "last_name": "McMillan",
+      "position": "WR",
+      "team": "CAR"
+    }
+  },
+  {
+    "pick_no": 33,
+    "round": 3,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "4984",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Josh",
+      "last_name": "Allen",
+      "position": "QB",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 34,
+    "round": 3,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "7588",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Javonte",
+      "last_name": "Williams",
+      "position": "RB",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 35,
+    "round": 3,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "11635",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Ladd",
+      "last_name": "McConkey",
+      "position": "WR",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 36,
+    "round": 3,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "13287",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Jeremiyah",
+      "last_name": "Love",
+      "position": "RB",
+      "team": "ARI"
+    }
+  },
+  {
+    "pick_no": 37,
+    "round": 4,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "4881",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Lamar",
+      "last_name": "Jackson",
+      "position": "QB",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 38,
+    "round": 4,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "9997",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Zay",
+      "last_name": "Flowers",
+      "position": "WR",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 39,
+    "round": 4,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "12481",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Cam",
+      "last_name": "Skattebo",
+      "position": "RB",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 40,
+    "round": 4,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "7543",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Travis",
+      "last_name": "Etienne",
+      "position": "RB",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 41,
+    "round": 4,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "6790",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "D'Andre",
+      "last_name": "Swift",
+      "position": "RB",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 42,
+    "round": 4,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "7526",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Jaylen",
+      "last_name": "Waddle",
+      "position": "WR",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 43,
+    "round": 4,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "12518",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Tyler",
+      "last_name": "Warren",
+      "position": "TE",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 44,
+    "round": 4,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "11564",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Drake",
+      "last_name": "Maye",
+      "position": "QB",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 45,
+    "round": 4,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "12514",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Emeka",
+      "last_name": "Egbuka",
+      "position": "WR",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 46,
+    "round": 4,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "4983",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "DJ",
+      "last_name": "Moore",
+      "position": "WR",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 47,
+    "round": 4,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "6801",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Tee",
+      "last_name": "Higgins",
+      "position": "WR",
+      "team": "CIN"
+    }
+  },
+  {
+    "pick_no": 48,
+    "round": 4,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "5892",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "David",
+      "last_name": "Montgomery",
+      "position": "RB",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 49,
+    "round": 5,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "11584",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Bucky",
+      "last_name": "Irving",
+      "position": "RB",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 50,
+    "round": 5,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "8146",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Garrett",
+      "last_name": "Wilson",
+      "position": "WR",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 51,
+    "round": 5,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "12519",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Luther",
+      "last_name": "Burden",
+      "position": "WR",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 52,
+    "round": 5,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "12512",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Quinshon",
+      "last_name": "Judkins",
+      "position": "RB",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 53,
+    "round": 5,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "6770",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Joe",
+      "last_name": "Burrow",
+      "position": "QB",
+      "team": "CIN"
+    }
+  },
+  {
+    "pick_no": 54,
+    "round": 5,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "10859",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Sam",
+      "last_name": "LaPorta",
+      "position": "TE",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 55,
+    "round": 5,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "8148",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Jameson",
+      "last_name": "Williams",
+      "position": "WR",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 56,
+    "round": 5,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "2133",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Davante",
+      "last_name": "Adams",
+      "position": "WR",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 57,
+    "round": 5,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "13286",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Jadarian",
+      "last_name": "Price",
+      "position": "RB",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 58,
+    "round": 5,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "5927",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Terry",
+      "last_name": "McLaurin",
+      "position": "WR",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 59,
+    "round": 5,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "8167",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Christian",
+      "last_name": "Watson",
+      "position": "WR",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 60,
+    "round": 5,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "11620",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Rome",
+      "last_name": "Odunze",
+      "position": "WR",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 61,
+    "round": 6,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "9487",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Parker",
+      "last_name": "Washington",
+      "position": "WR",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 62,
+    "round": 6,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "7611",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Rhamondre",
+      "last_name": "Stevenson",
+      "position": "RB",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 63,
+    "round": 6,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "12490",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Bhayshul",
+      "last_name": "Tuten",
+      "position": "RB",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 64,
+    "round": 6,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "2216",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Mike",
+      "last_name": "Evans",
+      "position": "WR",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 65,
+    "round": 6,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "5850",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Josh",
+      "last_name": "Jacobs",
+      "position": "RB",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 66,
+    "round": 6,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "13279",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Carnell",
+      "last_name": "Tate",
+      "position": "WR",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 67,
+    "round": 6,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "9484",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Tucker",
+      "last_name": "Kraft",
+      "position": "TE",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 68,
+    "round": 6,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "8228",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Jaylen",
+      "last_name": "Warren",
+      "position": "RB",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 69,
+    "round": 6,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "7553",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Kyle",
+      "last_name": "Pitts",
+      "position": "TE",
+      "team": "ATL"
+    }
+  },
+  {
+    "pick_no": 70,
+    "round": 6,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "11628",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Marvin",
+      "last_name": "Harrison",
+      "position": "WR",
+      "team": "ARI"
+    }
+  },
+  {
+    "pick_no": 71,
+    "round": 6,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "11560",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Caleb",
+      "last_name": "Williams",
+      "position": "QB",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 72,
+    "round": 6,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "6904",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Jalen",
+      "last_name": "Hurts",
+      "position": "QB",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 73,
+    "round": 7,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "11631",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Brian",
+      "last_name": "Thomas",
+      "position": "WR",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 74,
+    "round": 7,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "7594",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Chuba",
+      "last_name": "Hubbard",
+      "position": "RB",
+      "team": "CAR"
+    }
+  },
+  {
+    "pick_no": 75,
+    "round": 7,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "5045",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Courtland",
+      "last_name": "Sutton",
+      "position": "WR",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 76,
+    "round": 7,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "12529",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "TreVeyon",
+      "last_name": "Henderson",
+      "position": "RB",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 77,
+    "round": 7,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "4217",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "George",
+      "last_name": "Kittle",
+      "position": "TE",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 78,
+    "round": 7,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "3294",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Dak",
+      "last_name": "Prescott",
+      "position": "QB",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 79,
+    "round": 7,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "5846",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "DK",
+      "last_name": "Metcalf",
+      "position": "WR",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 80,
+    "round": 7,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "11566",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Jayden",
+      "last_name": "Daniels",
+      "position": "QB",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 81,
+    "round": 7,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "11581",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "MarShawn",
+      "last_name": "Lloyd",
+      "position": "RB",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 82,
+    "round": 7,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "7021",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Rico",
+      "last_name": "Dowdle",
+      "position": "RB",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 83,
+    "round": 7,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "4037",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Chris",
+      "last_name": "Godwin",
+      "position": "WR",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 84,
+    "round": 7,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "5967",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Tony",
+      "last_name": "Pollard",
+      "position": "RB",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 85,
+    "round": 8,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "12506",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Harold",
+      "last_name": "Fannin",
+      "position": "TE",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 86,
+    "round": 8,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "11583",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Jonathon",
+      "last_name": "Brooks",
+      "position": "RB",
+      "team": "CAR"
+    }
+  },
+  {
+    "pick_no": 87,
+    "round": 8,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "6797",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Justin",
+      "last_name": "Herbert",
+      "position": "QB",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 88,
+    "round": 8,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "6806",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "J.K.",
+      "last_name": "Dobbins",
+      "position": "RB",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 89,
+    "round": 8,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "10232",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Michael",
+      "last_name": "Wilson",
+      "position": "WR",
+      "team": "ARI"
+    }
+  },
+  {
+    "pick_no": 90,
+    "round": 8,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "12489",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "RJ",
+      "last_name": "Harvey",
+      "position": "RB",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 91,
+    "round": 8,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "7523",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Trevor",
+      "last_name": "Lawrence",
+      "position": "QB",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 92,
+    "round": 8,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "11586",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Blake",
+      "last_name": "Corum",
+      "position": "RB",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 93,
+    "round": 8,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "13294",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Makai",
+      "last_name": "Lemon",
+      "position": "WR",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 94,
+    "round": 8,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "7567",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Kenny",
+      "last_name": "Gainwell",
+      "position": "RB",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 95,
+    "round": 8,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "13417",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "De'Zhaun",
+      "last_name": "Stribling",
+      "position": "WR",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 96,
+    "round": 8,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "10236",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Dalton",
+      "last_name": "Kincaid",
+      "position": "TE",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 97,
+    "round": 9,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "8408",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Jordan",
+      "last_name": "Mason",
+      "position": "RB",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 98,
+    "round": 9,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "8142",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Alec",
+      "last_name": "Pierce",
+      "position": "WR",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 99,
+    "round": 9,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "2449",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Stefon",
+      "last_name": "Diggs",
+      "position": "WR",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 100,
+    "round": 9,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "12534",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Kyle",
+      "last_name": "Monangai",
+      "position": "RB",
+      "team": "CHI"
+    }
+  },
+  {
+    "pick_no": 101,
+    "round": 9,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "12533",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Jacory",
+      "last_name": "Croskey-Merritt",
+      "position": "RB",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 102,
+    "round": 9,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "12508",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Jaxson",
+      "last_name": "Dart",
+      "position": "QB",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 103,
+    "round": 9,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "9500",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Josh",
+      "last_name": "Downs",
+      "position": "WR",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 104,
+    "round": 9,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "10222",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Jayden",
+      "last_name": "Reed",
+      "position": "WR",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 105,
+    "round": 9,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9754",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Quentin",
+      "last_name": "Johnston",
+      "position": "WR",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 106,
+    "round": 9,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "9756",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Jordan",
+      "last_name": "Addison",
+      "position": "WR",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 107,
+    "round": 9,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "12501",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Matthew",
+      "last_name": "Golden",
+      "position": "WR",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 108,
+    "round": 9,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "8131",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Isaiah",
+      "last_name": "Likely",
+      "position": "TE",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 109,
+    "round": 10,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "421",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Matthew",
+      "last_name": "Stafford",
+      "position": "QB",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 110,
+    "round": 10,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "11646",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Jalen",
+      "last_name": "Coker",
+      "position": "WR",
+      "team": "CAR"
+    }
+  },
+  {
+    "pick_no": 111,
+    "round": 10,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "6819",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Michael",
+      "last_name": "Pittman",
+      "position": "WR",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 112,
+    "round": 10,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "1466",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Travis",
+      "last_name": "Kelce",
+      "position": "TE",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 113,
+    "round": 10,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "4199",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Aaron",
+      "last_name": "Jones",
+      "position": "RB",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 114,
+    "round": 10,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "13298",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "KC",
+      "last_name": "Concepcion",
+      "position": "WR",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 115,
+    "round": 10,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "13305",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Mike",
+      "last_name": "Washington",
+      "position": "RB",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 116,
+    "round": 10,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "8136",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Rachaad",
+      "last_name": "White",
+      "position": "RB",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 117,
+    "round": 10,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "4046",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Patrick",
+      "last_name": "Mahomes",
+      "position": "QB",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 118,
+    "round": 10,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "8126",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Wan'Dale",
+      "last_name": "Robinson",
+      "position": "WR",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 119,
+    "round": 10,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "11563",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Bo",
+      "last_name": "Nix",
+      "position": "QB",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 120,
+    "round": 10,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "5947",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Jakobi",
+      "last_name": "Meyers",
+      "position": "WR",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 121,
+    "round": 11,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "8110",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Jake",
+      "last_name": "Ferguson",
+      "position": "TE",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 122,
+    "round": 11,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "10219",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Chris",
+      "last_name": "Rodriguez",
+      "position": "RB",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 123,
+    "round": 11,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "5872",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Deebo",
+      "last_name": "Samuel",
+      "position": "WR",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 124,
+    "round": 11,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "13281",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Jordyn",
+      "last_name": "Tyson",
+      "position": "WR",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 125,
+    "round": 11,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "5012",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Mark",
+      "last_name": "Andrews",
+      "position": "TE",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 126,
+    "round": 11,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "8132",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Tyler",
+      "last_name": "Allgeier",
+      "position": "RB",
+      "team": "ARI"
+    }
+  },
+  {
+    "pick_no": 127,
+    "round": 11,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "11624",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Xavier",
+      "last_name": "Worthy",
+      "position": "WR",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 128,
+    "round": 11,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "5022",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Dallas",
+      "last_name": "Goedert",
+      "position": "TE",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 129,
+    "round": 11,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "8121",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Romeo",
+      "last_name": "Doubs",
+      "position": "WR",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 130,
+    "round": 11,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "8183",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Brock",
+      "last_name": "Purdy",
+      "position": "QB",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 131,
+    "round": 11,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "13293",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Ja'Kobi",
+      "last_name": "Lane",
+      "position": "WR",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 132,
+    "round": 11,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "12474",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Woody",
+      "last_name": "Marks",
+      "position": "RB",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 133,
+    "round": 12,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "13345",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Jonah",
+      "last_name": "Coleman",
+      "position": "RB",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 134,
+    "round": 12,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "8676",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Rashid",
+      "last_name": "Shaheed",
+      "position": "WR",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 135,
+    "round": 12,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "3163",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Jared",
+      "last_name": "Goff",
+      "position": "QB",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 136,
+    "round": 12,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9753",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Zach",
+      "last_name": "Charbonnet",
+      "position": "RB",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 137,
+    "round": 12,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "5849",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Kyler",
+      "last_name": "Murray",
+      "position": "QB",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 138,
+    "round": 12,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "7002",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Juwan",
+      "last_name": "Johnson",
+      "position": "TE",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 139,
+    "round": 12,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "9225",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Tank",
+      "last_name": "Bigsby",
+      "position": "RB",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 140,
+    "round": 12,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "11655",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Tyrone",
+      "last_name": "Tracy",
+      "position": "RB",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 141,
+    "round": 12,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "13414",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Kaelon",
+      "last_name": "Black",
+      "position": "RB",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 142,
+    "round": 12,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "8134",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Khalil",
+      "last_name": "Shakir",
+      "position": "WR",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 143,
+    "round": 12,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "1479",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Keenan",
+      "last_name": "Allen",
+      "position": "WR",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 144,
+    "round": 12,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "3214",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Hunter",
+      "last_name": "Henry",
+      "position": "TE",
+      "team": "NE"
+    }
+  },
+  {
+    "pick_no": 145,
+    "round": 13,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "4035",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Alvin",
+      "last_name": "Kamara",
+      "position": "RB",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 146,
+    "round": 13,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "9511",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Keaton",
+      "last_name": "Mitchell",
+      "position": "RB",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 147,
+    "round": 13,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "13337",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Emmett",
+      "last_name": "Johnson",
+      "position": "RB",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 148,
+    "round": 13,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "8154",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Brian",
+      "last_name": "Robinson",
+      "position": "RB",
+      "team": "ATL"
+    }
+  },
+  {
+    "pick_no": 149,
+    "round": 13,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "8180",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Jalen",
+      "last_name": "Nailor",
+      "position": "WR",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 150,
+    "round": 13,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "11576",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Braelon",
+      "last_name": "Allen",
+      "position": "RB",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 151,
+    "round": 13,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "13346",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Denzel",
+      "last_name": "Boston",
+      "position": "WR",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 152,
+    "round": 13,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "9508",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Tyjae",
+      "last_name": "Spears",
+      "position": "RB",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 153,
+    "round": 13,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "11610",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Malik",
+      "last_name": "Washington",
+      "position": "WR",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 154,
+    "round": 13,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "9480",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Brenton",
+      "last_name": "Strange",
+      "position": "TE",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 155,
+    "round": 13,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "6804",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Jordan",
+      "last_name": "Love",
+      "position": "QB",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 156,
+    "round": 13,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "13413",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Cyrus",
+      "last_name": "Allen",
+      "position": "WR",
+      "team": "KC"
+    }
+  },
+  {
+    "pick_no": 157,
+    "round": 14,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "9504",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Kayshon",
+      "last_name": "Boutte",
+      "position": "WR",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 158,
+    "round": 14,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "12545",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Tyler",
+      "last_name": "Shough",
+      "position": "QB",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 159,
+    "round": 14,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "10213",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Tre",
+      "last_name": "Tucker",
+      "position": "WR",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 160,
+    "round": 14,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "4892",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Baker",
+      "last_name": "Mayfield",
+      "position": "QB",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 161,
+    "round": 14,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "5844",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "T.J.",
+      "last_name": "Hockenson",
+      "position": "TE",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 162,
+    "round": 14,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "13276",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Omar",
+      "last_name": "Cooper",
+      "position": "WR",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 163,
+    "round": 14,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "12469",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Dylan",
+      "last_name": "Sampson",
+      "position": "RB",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 164,
+    "round": 14,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "13311",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Chris",
+      "last_name": "Bell",
+      "position": "WR",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 165,
+    "round": 14,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "4943",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Sam",
+      "last_name": "Darnold",
+      "position": "QB",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 166,
+    "round": 14,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "13285",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Malachi",
+      "last_name": "Fields",
+      "position": "WR",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 167,
+    "round": 14,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "11625",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Adonai",
+      "last_name": "Mitchell",
+      "position": "WR",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 168,
+    "round": 14,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "12493",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Oronde",
+      "last_name": "Gadsden",
+      "position": "TE",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 169,
+    "round": 15,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "13296",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Caleb",
+      "last_name": "Douglas",
+      "position": "WR",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 170,
+    "round": 15,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "9486",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Dontayvion",
+      "last_name": "Wicks",
+      "position": "WR",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 171,
+    "round": 15,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "11618",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Jalen",
+      "last_name": "McMillan",
+      "position": "WR",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 172,
+    "round": 15,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "12504",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Kaleb",
+      "last_name": "Johnson",
+      "position": "RB",
+      "team": "GB"
+    }
+  },
+  {
+    "pick_no": 173,
+    "round": 15,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "12530",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Travis",
+      "last_name": "Hunter",
+      "position": "DB",
+      "team": "JAX"
+    }
+  },
+  {
+    "pick_no": 174,
+    "round": 15,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "8205",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Isiah",
+      "last_name": "Pacheco",
+      "position": "RB",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 175,
+    "round": 15,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "12487",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Terrance",
+      "last_name": "Ferguson",
+      "position": "TE",
+      "team": "LAR"
+    }
+  },
+  {
+    "pick_no": 176,
+    "round": 15,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "4039",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Cooper",
+      "last_name": "Kupp",
+      "position": "WR",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 177,
+    "round": 15,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9502",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Tank",
+      "last_name": "Dell",
+      "position": "WR",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 178,
+    "round": 15,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "13330",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Kenyon",
+      "last_name": "Sadiq",
+      "position": "TE",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 179,
+    "round": 15,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "5001",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Dalton",
+      "last_name": "Schultz",
+      "position": "TE",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 180,
+    "round": 15,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "11575",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Ray",
+      "last_name": "Davis",
+      "position": "RB",
+      "team": "BUF"
+    }
+  },
+  {
+    "pick_no": 181,
+    "round": 16,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "6783",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Jerry",
+      "last_name": "Jeudy",
+      "position": "WR",
+      "team": "CLE"
+    }
+  },
+  {
+    "pick_no": 182,
+    "round": 16,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "13288",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Nicholas",
+      "last_name": "Singleton",
+      "position": "RB",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 183,
+    "round": 16,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "8210",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Chig",
+      "last_name": "Okonkwo",
+      "position": "TE",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 184,
+    "round": 16,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "9758",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "C.J.",
+      "last_name": "Stroud",
+      "position": "QB",
+      "team": "HOU"
+    }
+  },
+  {
+    "pick_no": 185,
+    "round": 16,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "3321",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Tyreek",
+      "last_name": "Hill",
+      "position": "WR",
+      "team": ""
+    }
+  },
+  {
+    "pick_no": 186,
+    "round": 16,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "8800",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Malik",
+      "last_name": "Davis",
+      "position": "RB",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 187,
+    "round": 16,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "11783",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Ryan",
+      "last_name": "Flournoy",
+      "position": "WR",
+      "team": "DAL"
+    }
+  },
+  {
+    "pick_no": 188,
+    "round": 16,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "12492",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Pat",
+      "last_name": "Bryant",
+      "position": "WR",
+      "team": "DEN"
+    }
+  },
+  {
+    "pick_no": 189,
+    "round": 16,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "11643",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Jaylen",
+      "last_name": "Wright",
+      "position": "RB",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 190,
+    "round": 16,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "12509",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Tre'",
+      "last_name": "Harris",
+      "position": "WR",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 191,
+    "round": 16,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "7528",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Najee",
+      "last_name": "Harris",
+      "position": "RB",
+      "team": "NYG"
+    }
+  },
+  {
+    "pick_no": 192,
+    "round": 16,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "11834",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Devaughn",
+      "last_name": "Vele",
+      "position": "WR",
+      "team": "NO"
+    }
+  },
+  {
+    "pick_no": 193,
+    "round": 17,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "8161",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Malik",
+      "last_name": "Willis",
+      "position": "QB",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 194,
+    "round": 17,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "8172",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Greg",
+      "last_name": "Dulcich",
+      "position": "TE",
+      "team": "MIA"
+    }
+  },
+  {
+    "pick_no": 195,
+    "round": 17,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "5995",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "Justice",
+      "last_name": "Hill",
+      "position": "RB",
+      "team": "BAL"
+    }
+  },
+  {
+    "pick_no": 196,
+    "round": 17,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "6031",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Alex",
+      "last_name": "Barnes",
+      "position": "RB",
+      "team": ""
+    }
+  },
+  {
+    "pick_no": 197,
+    "round": 17,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "12535",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Isaac",
+      "last_name": "TeSlaa",
+      "position": "WR",
+      "team": "DET"
+    }
+  },
+  {
+    "pick_no": 198,
+    "round": 17,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "13274",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Germie",
+      "last_name": "Bernard",
+      "position": "WR",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 199,
+    "round": 17,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "5870",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Daniel",
+      "last_name": "Jones",
+      "position": "QB",
+      "team": "IND"
+    }
+  },
+  {
+    "pick_no": 200,
+    "round": 17,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "12467",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Jordan",
+      "last_name": "James",
+      "position": "RB",
+      "team": "SF"
+    }
+  },
+  {
+    "pick_no": 201,
+    "round": 17,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "13269",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Fernando",
+      "last_name": "Mendoza",
+      "position": "QB",
+      "team": "LV"
+    }
+  },
+  {
+    "pick_no": 202,
+    "round": 17,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "11603",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "AJ",
+      "last_name": "Barner",
+      "position": "TE",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 203,
+    "round": 17,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "4033",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "David",
+      "last_name": "Njoku",
+      "position": "TE",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 204,
+    "round": 17,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "11647",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Kimani",
+      "last_name": "Vidal",
+      "position": "RB",
+      "team": "LAC"
+    }
+  },
+  {
+    "pick_no": 205,
+    "round": 18,
+    "draft_slot": 12,
+    "roster_id": 6,
+    "player_id": "13320",
+    "picked_by": "429850536536195072",
+    "metadata": {
+      "first_name": "Zachariah",
+      "last_name": "Branch",
+      "position": "WR",
+      "team": "ATL"
+    }
+  },
+  {
+    "pick_no": 206,
+    "round": 18,
+    "draft_slot": 11,
+    "roster_id": 8,
+    "player_id": "12457",
+    "picked_by": "330481181348876288",
+    "metadata": {
+      "first_name": "Jaydon",
+      "last_name": "Blue",
+      "position": "RB",
+      "team": "PHI"
+    }
+  },
+  {
+    "pick_no": 207,
+    "round": 18,
+    "draft_slot": 10,
+    "roster_id": 11,
+    "player_id": "7049",
+    "picked_by": "601495211075485696",
+    "metadata": {
+      "first_name": "Jauan",
+      "last_name": "Jennings",
+      "position": "WR",
+      "team": "MIN"
+    }
+  },
+  {
+    "pick_no": 208,
+    "round": 18,
+    "draft_slot": 9,
+    "roster_id": 2,
+    "player_id": "12522",
+    "picked_by": "605101667972628480",
+    "metadata": {
+      "first_name": "Cam",
+      "last_name": "Ward",
+      "position": "QB",
+      "team": "TEN"
+    }
+  },
+  {
+    "pick_no": 209,
+    "round": 18,
+    "draft_slot": 8,
+    "roster_id": 9,
+    "player_id": "7600",
+    "picked_by": "431201599533088768",
+    "metadata": {
+      "first_name": "Pat",
+      "last_name": "Freiermuth",
+      "position": "TE",
+      "team": "PIT"
+    }
+  },
+  {
+    "pick_no": 210,
+    "round": 18,
+    "draft_slot": 7,
+    "roster_id": 1,
+    "player_id": "13317",
+    "picked_by": "202517573990879232",
+    "metadata": {
+      "first_name": "Ted",
+      "last_name": "Hurst",
+      "position": "WR",
+      "team": "TB"
+    }
+  },
+  {
+    "pick_no": 211,
+    "round": 18,
+    "draft_slot": 6,
+    "roster_id": 10,
+    "player_id": "10226",
+    "picked_by": "466661929692164096",
+    "metadata": {
+      "first_name": "Andrei",
+      "last_name": "Iosivas",
+      "position": "WR",
+      "team": "CIN"
+    }
+  },
+  {
+    "pick_no": 212,
+    "round": 18,
+    "draft_slot": 5,
+    "roster_id": 4,
+    "player_id": "13405",
+    "picked_by": "77283242814095360",
+    "metadata": {
+      "first_name": "Kaytron",
+      "last_name": "Allen",
+      "position": "RB",
+      "team": "WAS"
+    }
+  },
+  {
+    "pick_no": 213,
+    "round": 18,
+    "draft_slot": 4,
+    "roster_id": 12,
+    "player_id": "3465",
+    "picked_by": "308146422971129856",
+    "metadata": {
+      "first_name": "Ben",
+      "last_name": "Braunecker",
+      "position": "TE",
+      "team": ""
+    }
+  },
+  {
+    "pick_no": 214,
+    "round": 18,
+    "draft_slot": 3,
+    "roster_id": 3,
+    "player_id": "12048",
+    "picked_by": "784860156038144000",
+    "metadata": {
+      "first_name": "George",
+      "last_name": "Holani",
+      "position": "RB",
+      "team": "SEA"
+    }
+  },
+  {
+    "pick_no": 215,
+    "round": 18,
+    "draft_slot": 2,
+    "roster_id": 5,
+    "player_id": "1373",
+    "picked_by": "448681729813639168",
+    "metadata": {
+      "first_name": "Geno",
+      "last_name": "Smith",
+      "position": "QB",
+      "team": "NYJ"
+    }
+  },
+  {
+    "pick_no": 216,
+    "round": 18,
+    "draft_slot": 1,
+    "roster_id": 7,
+    "player_id": "2505",
+    "picked_by": "209110960747581440",
+    "metadata": {
+      "first_name": "Darren",
+      "last_name": "Waller",
+      "position": "TE",
+      "team": "CAR"
+    }
+  }
+]

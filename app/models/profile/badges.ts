@@ -242,6 +242,15 @@ export const SIDE_GAME_BADGES = {
       bg: 'bg-pink-950/60',
     },
   },
+  bestBall: {
+    label: 'Autodraft BBM Champion',
+    emoji: '🤖',
+    accent: {
+      border: 'border-teal-400',
+      text: 'text-teal-300',
+      bg: 'bg-teal-950/60',
+    },
+  },
   fSquared: {
     label: 'F² Champion',
     emoji: '🧮',

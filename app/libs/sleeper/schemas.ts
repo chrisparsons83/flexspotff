@@ -195,6 +195,33 @@ export const sleeperDraftPicksJson = z.array(
 );
 export type SleeperDraftPicksJson = z.infer<typeof sleeperDraftPicksJson>;
 
+/**
+ * Picks as best ball needs them: who drafted whom, and the player as Sleeper
+ * recorded him at the pick. Positions come from here rather than our player
+ * table, so a pick reads the way the CPU took it.
+ */
+export const sleeperBestBallDraftPicksJson = z.array(
+  z.object({
+    pick_no: z.number(),
+    round: z.number(),
+    draft_slot: z.number(),
+    roster_id: z.number(),
+    player_id: z.string(),
+    picked_by: z.string().nullish(),
+    metadata: z
+      .object({
+        first_name: z.string().nullish(),
+        last_name: z.string().nullish(),
+        position: z.string().nullish(),
+        team: z.string().nullish(),
+      })
+      .nullish(),
+  }),
+);
+export type SleeperBestBallDraftPicksJson = z.infer<
+  typeof sleeperBestBallDraftPicksJson
+>;
+
 export const sleeperNflPlayersJson = z.record(
   z.object({
     team: z.string().nullable(),

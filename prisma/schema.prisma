@@ -244,6 +244,113 @@ model GuillotineDraftPick {
   @@unique([guillotineLeagueId, pickNo])
 }
 
+/// Autodraft Best Ball Mania: one Sleeper best-ball league a year, drafted
+/// entirely by CPU autopick. Ranked on points for over weeks 1-17; the
+/// win-loss record Sleeper keeps means nothing here.
+model BestBallSeason {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year   Int             @unique
+  league BestBallLeague?
+}
+
+model BestBallLeague {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name            String
+  sleeperLeagueId String  @unique
+  sleeperDraftId  String?
+  teamCount       Int
+
+  /// The last week stored, capped at 17. Week 18 never counts.
+  lastScoredWeek Int       @default(0)
+  /// Set once week 17 is final, which is when each team's finish is settled.
+  isComplete     Boolean   @default(false)
+  lastSyncedAt   DateTime?
+
+  /// One league a season.
+  season           BestBallSeason @relation(fields: [bestBallSeasonId], references: [id], onDelete: Cascade)
+  bestBallSeasonId String         @unique
+
+  teams      BestBallTeam[]
+  draftPicks BestBallDraftPick[]
+}
+
+/// One Sleeper roster in a best ball league.
+model BestBallTeam {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rosterId Int
+
+  sleeperOwnerId     String?
+  sleeperDisplayName String?
+  /// Follows sleeperOwnerId's match when there is an owner. A roster with no
+  /// owner is assigned a member by hand, and sync leaves that alone.
+  user               User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId             String?
+
+  draftSlot Int?
+
+  /// The sum of the stored week scores, weeks 1-17.
+  pointsFor Float @default(0)
+  /// Rank by pointsFor, 1 being the champion. Null until the league is complete.
+  finish    Int?
+
+  league           BestBallLeague @relation(fields: [bestBallLeagueId], references: [id], onDelete: Cascade)
+  bestBallLeagueId String
+
+  weekScores BestBallWeekScore[]
+
+  @@unique([bestBallLeagueId, rosterId])
+  @@index([userId])
+}
+
+/// A team's best-ball score for one week: its optimal lineup, worked out here
+/// since Sleeper's matchup points only sum the frozen starters.
+model BestBallWeekScore {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  week   Int
+  points Float
+
+  starters             String[]
+  startingPlayerPoints Float[]
+
+  team           BestBallTeam @relation(fields: [bestBallTeamId], references: [id], onDelete: Cascade)
+  bestBallTeamId String
+
+  @@unique([bestBallTeamId, week])
+}
+
+/// A pick from the autodraft. Name, position and NFL team are copied from the
+/// pick as Sleeper recorded it, so the positions-drafted breakdown reads what
+/// the CPU actually took, even if the player changes position later.
+model BestBallDraftPick {
+  id String @id @default(cuid())
+
+  pickNo     Int
+  round      Int
+  draftSlot  Int
+  rosterId   Int
+  sleeperId  String
+  position   String
+  playerName String
+  nflTeam    String?
+
+  league           BestBallLeague @relation(fields: [bestBallLeagueId], references: [id], onDelete: Cascade)
+  bestBallLeagueId String
+
+  @@unique([bestBallLeagueId, pickNo])
+}
+
 model Cup {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -1087,6 +1194,7 @@ model User {
   d12WeekScores        D12WeekScore[]
   d12DraftPicks        D12DraftPick[]
   guillotineTeams      GuillotineTeam[]
+  bestBallTeams        BestBallTeam[]
   memberAliases        MemberAlias[]
   nameHistory          UserNameHistory[]
 

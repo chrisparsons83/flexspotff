@@ -1,6 +1,7 @@
 import { sleeperFetch } from './client.server';
 import {
   sleeperAdpJson,
+  sleeperBestBallDraftPicksJson,
   sleeperDraftJson,
   sleeperDraftListJson,
   sleeperDraftPicksJson,
@@ -95,6 +96,12 @@ export const getDraftPicks = (sleeperDraftId: string) =>
 /** Draft picks with the `picked_by` owner ID, which the ADP sync keys on. */
 export const getDraftPicksWithOwners = (sleeperDraftId: string) =>
   sleeperFetch(`/v1/draft/${sleeperDraftId}/picks`, sleeperAdpJson);
+
+export const getBestBallDraftPicks = (sleeperDraftId: string) =>
+  sleeperFetch(
+    `/v1/draft/${sleeperDraftId}/picks`,
+    sleeperBestBallDraftPicksJson,
+  );
 
 export const getWeeklyStats = (
   year: number,

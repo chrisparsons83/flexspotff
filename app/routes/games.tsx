@@ -2,6 +2,7 @@ import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { NavigationSection } from '~/components/layout/NavigationSection';
 import { prisma } from '~/db.server';
+import { getLatestBestBallLeague } from '~/models/bestball.server';
 import { getLatestD12Season } from '~/models/d12season.server';
 import { getNewestD12WeekByYear } from '~/models/d12weekscore.server';
 import { getLatestGuillotineLeagues } from '~/models/guillotine.server';
@@ -53,9 +54,13 @@ export const loader = async () => {
     : 1;
 
   const guillotine = await getLatestGuillotineLeagues();
+  const bestBall = await getLatestBestBallLeague();
 
   return typedjson(
     {
+      bestBall: bestBall
+        ? { year: bestBall.season.year, name: bestBall.name }
+        : null,
       guillotine,
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
@@ -71,6 +76,7 @@ export const loader = async () => {
 
 export default function GamesIndex() {
   const {
+    bestBall,
     guillotine,
     qbStreamingCurrentWeek,
     spreadPoolCurrentWeek,
@@ -217,6 +223,29 @@ export default function GamesIndex() {
                 },
               ]}
               headingId='games-guillotine-heading'
+            />
+          )}
+          {bestBall && (
+            <NavigationSection
+              title='Autodraft BBM'
+              links={[
+                {
+                  name: `${bestBall.year} Standings`,
+                  href: `/games/best-ball/${bestBall.year}`,
+                  current: false,
+                },
+                {
+                  name: `${bestBall.year} Draft`,
+                  href: `/games/best-ball/${bestBall.year}/draft`,
+                  current: false,
+                },
+                {
+                  name: 'All Seasons',
+                  href: '/games/best-ball',
+                  current: false,
+                },
+              ]}
+              headingId='games-best-ball-heading'
             />
           )}
         </div>

@@ -70,33 +70,46 @@ export async function matchSleeperOwnerToUser({
   sleeperOwnerID,
   userId,
 }: SleeperUser) {
-  const [sleeperUser, { count }, { count: guillotineTeamsUpdated }] =
-    await prisma.$transaction([
-      prisma.sleeperUser.upsert({
-        where: {
-          sleeperOwnerID,
-        },
-        update: {
-          userId,
-        },
-        create: {
-          sleeperOwnerID,
-          userId,
-        },
-      }),
-      prisma.team.updateMany({
-        where: {
-          sleeperOwnerId: sleeperOwnerID,
-        },
-        data: {
-          userId,
-        },
-      }),
-      prisma.guillotineTeam.updateMany({
-        where: { sleeperOwnerId: sleeperOwnerID },
-        data: { userId },
-      }),
-    ]);
+  const [
+    sleeperUser,
+    { count },
+    { count: guillotineTeamsUpdated },
+    { count: bestBallTeamsUpdated },
+  ] = await prisma.$transaction([
+    prisma.sleeperUser.upsert({
+      where: {
+        sleeperOwnerID,
+      },
+      update: {
+        userId,
+      },
+      create: {
+        sleeperOwnerID,
+        userId,
+      },
+    }),
+    prisma.team.updateMany({
+      where: {
+        sleeperOwnerId: sleeperOwnerID,
+      },
+      data: {
+        userId,
+      },
+    }),
+    prisma.guillotineTeam.updateMany({
+      where: { sleeperOwnerId: sleeperOwnerID },
+      data: { userId },
+    }),
+    prisma.bestBallTeam.updateMany({
+      where: { sleeperOwnerId: sleeperOwnerID },
+      data: { userId },
+    }),
+  ]);
 
-  return { sleeperUser, teamsUpdated: count, guillotineTeamsUpdated };
+  return {
+    sleeperUser,
+    teamsUpdated: count,
+    guillotineTeamsUpdated,
+    bestBallTeamsUpdated,
+  };
 }

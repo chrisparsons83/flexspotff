@@ -182,6 +182,12 @@ const MERGE_TABLES = [
     slotOf: null,
   },
   {
+    table: 'bestBallTeam',
+    label: 'Best ball teams',
+    select: {},
+    slotOf: null,
+  },
+  {
     table: 'memberAlias',
     label: 'Imported sheet names',
     select: {},
@@ -680,6 +686,7 @@ export async function getMergedUsersWithLeftovers() {
           d12WeekScores: true,
           d12DraftPicks: true,
           guillotineTeams: true,
+          bestBallTeams: true,
           dfsSurvivorUserYears: true,
           dfsSurvivorUserWeeks: true,
         },

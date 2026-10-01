@@ -107,6 +107,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               )}`,
             ]
           : []),
+        ...(report.bestBallErrors?.length
+          ? [`Best ball sync problems: ${report.bestBallErrors.join('; ')}`]
+          : []),
       ];
       if (failures.length > 0) {
         return json<ActionData>({
@@ -319,10 +322,10 @@ export default function AdminDataIndex() {
         <section>
           <h3>Update Current Week Scores</h3>
           <p>
-            This will resync NFL game state plus league, D12 and guillotine
-            scores for the current week. This can be run at any time safely. The
-            scheduler already does this every 5 minutes while games are in
-            progress.
+            This will resync NFL game state plus league, D12, guillotine and
+            best ball scores for the current week. This can be run at any time
+            safely. The scheduler already does this every 5 minutes while games
+            are in progress.
           </p>
           {actionData?.formError ? (
             <p className='form-validation-error' role='alert'>

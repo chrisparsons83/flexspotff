@@ -1,3 +1,4 @@
+import { syncActiveBestBallLeagues } from '~/libs/best-ball/sync.server';
 import { syncD12Week } from '~/libs/d12-sync.server';
 import { syncActiveGuillotineLeagues } from '~/libs/guillotine/sync.server';
 import {
@@ -22,6 +23,8 @@ export type SyncReport = {
   d12Errors?: string[];
   /** Per-league failures from the guillotine sync. */
   guillotineErrors?: string[];
+  /** Failures and warnings from the best ball sync. */
+  bestBallErrors?: string[];
 };
 
 /**
@@ -69,6 +72,7 @@ export async function syncCurrentWeekScores({
 
   let d12Errors: string[] = [];
   let guillotineErrors: string[] = [];
+  let bestBallErrors: string[] = [];
   if (scoresResynced) {
     await syncSleeperWeeklyScores(year, week);
 
@@ -86,6 +90,14 @@ export async function syncCurrentWeekScores({
     } catch (e) {
       guillotineErrors = [e instanceof Error ? e.message : String(e)];
     }
+
+    // Best ball is one more Sleeper league on the same week, and like the
+    // guillotine is left alone once its season is over.
+    try {
+      bestBallErrors = await syncActiveBestBallLeagues(year);
+    } catch (e) {
+      bestBallErrors = [e instanceof Error ? e.message : String(e)];
+    }
   }
 
   return {
@@ -100,5 +112,6 @@ export async function syncCurrentWeekScores({
     scoresResynced,
     d12Errors,
     guillotineErrors,
+    bestBallErrors,
   };
 }
