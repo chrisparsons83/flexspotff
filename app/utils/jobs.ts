@@ -41,7 +41,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     name: 'monitor-scores',
     cron: '*/5 * * * *',
     description:
-      'Syncs NFL game state every 5 minutes, and resyncs league, D12 and guillotine scores whenever games are in progress.',
+      'Syncs NFL game state every 5 minutes, and resyncs league, D12, guillotine and best ball scores whenever games are in progress.',
   },
   {
     name: 'sync-d12-scores',
@@ -54,6 +54,12 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     cron: '40 * * * *',
     description:
       'Syncs every guillotine league still running this season - chops, waiver claims and scores - so a Monday-night or Tuesday chop, and the waiver run just after midnight Thursday Pacific, show up without waiting for games. Hourly at :40.',
+  },
+  {
+    name: 'sync-best-ball',
+    cron: '25 * * * *',
+    description:
+      "Syncs this season's Autodraft Best Ball Mania league - weekly best-ball scores and points for - picking up Sleeper's stat corrections between games. Hourly at :25.",
   },
   {
     name: 'sync-player-scores',

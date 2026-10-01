@@ -78,6 +78,7 @@ export async function getProfileSummary(
     fSquared,
     fSquaredPicked,
     guillotineTeams,
+    bestBallTeams,
   ] = await Promise.all([
     prisma.team.findMany({
       where: { userId },
@@ -143,6 +144,11 @@ export async function getProfileSummary(
       where: { userId },
       select: { league: { select: { season: { select: { year: true } } } } },
     }),
+    // Same again for best ball.
+    prisma.bestBallTeam.findMany({
+      where: { userId },
+      select: { league: { select: { season: { select: { year: true } } } } },
+    }),
   ]);
 
   const career = teams.reduce(
@@ -181,6 +187,7 @@ export async function getProfileSummary(
     [
       ...teams.map(team => team.league.year),
       ...guillotineTeams.map(team => team.league.season.year),
+      ...bestBallTeams.map(team => team.league.season.year),
       dfs._min.year,
       fSquared._min.year,
     ],
@@ -193,6 +200,7 @@ export async function getProfileSummary(
     cupSeasons > 0 && 'cup',
     d12Count > 0 && 'd12',
     guillotineTeams.length > 0 && 'guillotine',
+    bestBallTeams.length > 0 && 'best-ball',
     qbCount > 0 && 'qb-streaming',
     poolCount > 0 && 'spread-pool',
     locksCount > 0 && 'locks',

@@ -25,6 +25,15 @@ async function monitorScoresJob() {
       }
     }
 
+    if (report.bestBallErrors && report.bestBallErrors.length > 0) {
+      console.error(
+        `Best ball sync had ${report.bestBallErrors.length} error(s):`,
+      );
+      for (const err of report.bestBallErrors) {
+        console.error(` - ${err}`);
+      }
+    }
+
     // Send success message to parent
     if (parentPort) {
       parentPort.postMessage({ success: true, ...report });

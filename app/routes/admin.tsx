@@ -57,6 +57,10 @@ export default function Admin() {
     { name: 'Guillotine Leagues', href: '/admin/guillotine', current: false },
   ];
 
+  const bestBallLinks = [
+    { name: 'Best Ball Leagues', href: '/admin/best-ball', current: false },
+  ];
+
   const omniLinks = [
     { name: 'Score Update', href: '/admin/omni/scoring', current: false },
     {
@@ -117,6 +121,11 @@ export default function Admin() {
                 title='Guillotine'
                 links={guillotineLinks}
                 headingId='admin-guillotine-heading'
+              />
+              <NavigationSection
+                title='Autodraft BBM'
+                links={bestBallLinks}
+                headingId='admin-best-ball-heading'
               />
               <NavigationSection
                 title='Omni'

@@ -42,6 +42,7 @@ export async function getSideGameTitles(
     locks,
     dfsSurvivor,
     guillotine,
+    bestBall,
     fSquared,
   ] = await Promise.all([
     countD12Titles(userId, inProgress),
@@ -50,6 +51,7 @@ export async function getSideGameTitles(
     countLocksTitles(userId, inProgress),
     countDfsSurvivorTitles(userId, inProgress),
     countGuillotineTitles(userId),
+    countBestBallTitles(userId),
     countFSquaredTitles(userId, inProgress),
   ]);
 
@@ -60,6 +62,7 @@ export async function getSideGameTitles(
     locks,
     dfsSurvivor,
     guillotine,
+    bestBall,
     fSquared,
   };
 }
@@ -354,4 +357,12 @@ function countWins(
  */
 async function countGuillotineTitles(userId: string): Promise<number> {
   return prisma.guillotineTeam.count({ where: { userId, finish: 1 } });
+}
+
+/**
+ * Best ball: like the guillotine, sync only settles a finish once week 17 is
+ * final, so a stored first place is a season that is over.
+ */
+async function countBestBallTitles(userId: string): Promise<number> {
+  return prisma.bestBallTeam.count({ where: { userId, finish: 1 } });
 }

@@ -302,6 +302,7 @@ describe('Admin unmatched Sleeper users', () => {
         sleeperUser: { sleeperOwnerID: 'owner-2', userId: 'user-1' },
         teamsUpdated: 2,
         guillotineTeamsUpdated: 0,
+        bestBallTeamsUpdated: 0,
       });
 
       const data = await (
