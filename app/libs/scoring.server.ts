@@ -23,8 +23,15 @@ export type SyncReport = {
   d12Errors?: string[];
   /** Per-league failures from the guillotine sync. */
   guillotineErrors?: string[];
-  /** Failures and warnings from the best ball sync. */
+  /**
+   * Guillotine leagues that synced but could not settle something, like a
+   * tied final. Not failures.
+   */
+  guillotineWarnings?: string[];
+  /** A failure from the best ball sync. */
   bestBallErrors?: string[];
+  /** Best ball problems that did not stop it syncing. Not failures. */
+  bestBallWarnings?: string[];
 };
 
 /**
@@ -72,7 +79,9 @@ export async function syncCurrentWeekScores({
 
   let d12Errors: string[] = [];
   let guillotineErrors: string[] = [];
+  let guillotineWarnings: string[] = [];
   let bestBallErrors: string[] = [];
+  let bestBallWarnings: string[] = [];
   if (scoresResynced) {
     await syncSleeperWeeklyScores(year, week);
 
@@ -86,7 +95,8 @@ export async function syncCurrentWeekScores({
     // Guillotine leagues are Sleeper leagues on the same NFL week too. Only
     // leagues still running are touched, so this is free once a season ends.
     try {
-      guillotineErrors = await syncActiveGuillotineLeagues(year);
+      ({ errors: guillotineErrors, warnings: guillotineWarnings } =
+        await syncActiveGuillotineLeagues(year));
     } catch (e) {
       guillotineErrors = [e instanceof Error ? e.message : String(e)];
     }
@@ -94,7 +104,8 @@ export async function syncCurrentWeekScores({
     // Best ball is one more Sleeper league on the same week, and like the
     // guillotine is left alone once its season is over.
     try {
-      bestBallErrors = await syncActiveBestBallLeagues(year);
+      ({ errors: bestBallErrors, warnings: bestBallWarnings } =
+        await syncActiveBestBallLeagues(year));
     } catch (e) {
       bestBallErrors = [e instanceof Error ? e.message : String(e)];
     }
@@ -112,6 +123,8 @@ export async function syncCurrentWeekScores({
     scoresResynced,
     d12Errors,
     guillotineErrors,
+    guillotineWarnings,
     bestBallErrors,
+    bestBallWarnings,
   };
 }

@@ -8,6 +8,7 @@ import {
 } from './views';
 import type { BestBallLeague } from '@prisma/client';
 import { prisma } from '~/db.server';
+import type { ActiveSyncReport } from '~/libs/guillotine/sync.server';
 import {
   getBestBallDraftPicks,
   getGuillotineRosters,
@@ -350,26 +351,27 @@ export async function syncBestBallLeague(
  * the hourly job call this; a finished league never changes, so it is left
  * alone and only resynced from the admin page.
  *
- * @returns one message per warning or failure.
+ * @returns an error if the league failed to sync, or its warnings if it
+ * synced, each prefixed with the league's name.
  */
 export async function syncActiveBestBallLeagues(
   year: number,
-): Promise<string[]> {
+): Promise<ActiveSyncReport> {
+  const report: ActiveSyncReport = { errors: [], warnings: [] };
   const leagues = await prisma.bestBallLeague.findMany({
     where: { season: { year }, isComplete: false },
   });
-  if (leagues.length === 0) return [];
+  if (leagues.length === 0) return report;
 
   const owners = await getOwnerToUserIdMap();
-  const messages: string[] = [];
   for (const league of leagues) {
     try {
       const { warnings } = await syncBestBallLeague(league, owners);
-      messages.push(...warnings.map(w => `"${league.name}": ${w}`));
+      report.warnings.push(...warnings.map(w => `"${league.name}": ${w}`));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      messages.push(`"${league.name}": ${msg}`);
+      report.errors.push(`"${league.name}": ${msg}`);
     }
   }
-  return messages;
+  return report;
 }

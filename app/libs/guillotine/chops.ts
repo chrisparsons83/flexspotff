@@ -65,6 +65,14 @@ export function resolveChops({
   const choppedWeek = new Map<number, number | null>();
   const scoredThrough = Math.min(lastScoredWeek, GUILLOTINE_FINAL_WEEK);
 
+  // A manual league added before its draft: every roster is empty because
+  // nobody has drafted, not because anyone was chopped, so there is nothing
+  // to warn about.
+  const preDraft =
+    lastScoredWeek === 0 &&
+    rosters.every(roster => !roster.hasPlayers) &&
+    [...weeks.values()].every(rows => rows.every(row => row.playerCount === 0));
+
   for (const roster of rosters) {
     if (format === 'NATIVE') {
       const week = roster.eliminated;
@@ -89,7 +97,7 @@ export function resolveChops({
       if (row && row.playerCount > 0) lastWeekWithPlayers = week;
     }
 
-    if (lastWeekWithPlayers === null) {
+    if (lastWeekWithPlayers === null && !preDraft) {
       // An empty roster that never played is not a chop we can date.
       warnings.push(
         `Roster ${roster.rosterId} is empty but never had players in a scored week, so it has no chop week.`,

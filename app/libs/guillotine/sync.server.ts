@@ -367,6 +367,16 @@ export async function syncGuillotineLeague(
 }
 
 /**
+ * What a sync of every running league came to. Kept apart because only
+ * `errors` means a league failed to sync: a warning is a league that synced
+ * but has something the data could not settle, like a tied final.
+ */
+export type ActiveSyncReport = {
+  errors: string[];
+  warnings: string[];
+};
+
+/**
  * Syncs every league of a year that is still running. The live score monitor
  * and the hourly job call this; finished leagues never change, so they are
  * left alone and only resynced from the admin page.
@@ -374,31 +384,32 @@ export async function syncGuillotineLeague(
  * Unmatched members are left out of what this returns: they are the admin
  * page's to show, and would otherwise be logged every five minutes.
  *
- * @returns one message per league that failed or could not settle its chops.
+ * @returns one error per league that failed to sync, and the warnings of
+ * those that synced, each prefixed with its league's name.
  */
 export async function syncActiveGuillotineLeagues(
   year: number,
-): Promise<string[]> {
+): Promise<ActiveSyncReport> {
+  const report: ActiveSyncReport = { errors: [], warnings: [] };
   const leagues = await prisma.guillotineLeague.findMany({
     where: { season: { year }, isComplete: false },
   });
-  if (leagues.length === 0) return [];
+  if (leagues.length === 0) return report;
 
   // Read once for every league - it walks the whole member table.
   const owners = await getOwnerToUserIdMap();
-  const messages: string[] = [];
 
   await Promise.all(
     leagues.map(async league => {
       try {
         const { warnings } = await syncGuillotineLeague(league, owners);
-        messages.push(...warnings.map(w => `"${league.name}": ${w}`));
+        report.warnings.push(...warnings.map(w => `"${league.name}": ${w}`));
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        messages.push(`"${league.name}": ${msg}`);
+        report.errors.push(`"${league.name}": ${msg}`);
       }
     }),
   );
 
-  return messages;
+  return report;
 }

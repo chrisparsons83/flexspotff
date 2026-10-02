@@ -17,14 +17,18 @@ async function syncBestBallJob() {
       return;
     }
 
-    const errors = await syncActiveBestBallLeagues(season.year);
+    const { errors, warnings } = await syncActiveBestBallLeagues(season.year);
     for (const err of errors) {
       console.error(` - ${err}`);
+    }
+    for (const warning of warnings) {
+      console.warn(` - ${warning}`);
     }
 
     const message = `Best ball league synced for ${season.year}`;
     console.log(message);
-    if (parentPort) parentPort.postMessage({ success: true, message, errors });
+    if (parentPort)
+      parentPort.postMessage({ success: true, message, errors, warnings });
   } catch (error) {
     console.error('Best ball sync job failed:', error);
     if (parentPort) {

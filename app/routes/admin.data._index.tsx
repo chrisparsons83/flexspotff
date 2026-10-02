@@ -34,6 +34,8 @@ import { FEATURE_FLAGS, isFeatureFlagKey } from '~/utils/featureFlags';
 
 type ActionData = {
   formError?: string;
+  /** Things worth knowing that did not stop the action working. */
+  warnings?: string[];
   fieldErrors?: {
     url: string | undefined;
   };
@@ -108,17 +110,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             ]
           : []),
         ...(report.bestBallErrors?.length
-          ? [`Best ball sync problems: ${report.bestBallErrors.join('; ')}`]
+          ? [
+              `Best ball league failed to sync: ${report.bestBallErrors.join(
+                '; ',
+              )}`,
+            ]
           : []),
+      ];
+      // Leagues that synced but could not settle something. Shown, but not
+      // as a failure.
+      const warnings = [
+        ...(report.guillotineWarnings ?? []),
+        ...(report.bestBallWarnings ?? []),
       ];
       if (failures.length > 0) {
         return json<ActionData>({
           message: report.message,
           formError: failures.join(' '),
+          warnings,
         });
       }
 
-      return json<ActionData>({ message: report.message });
+      return json<ActionData>({ message: report.message, warnings });
     }
     case 'resyncCurrentYearScores': {
       if (year < FIRST_YEAR || year > currentSeason.year) {
@@ -265,6 +278,9 @@ export default function AdminDataIndex() {
       <h2>Data Updates</h2>
       <p>This is a good list of things to eventually automate.</p>
       {actionData?.message && <Alert message={actionData.message} />}
+      {actionData?.warnings?.map(warning => (
+        <Alert key={warning} message={warning} status='warning' />
+      ))}
       <section>
         <h3>Feature Flags</h3>
         <p>

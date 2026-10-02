@@ -1,5 +1,6 @@
 import { syncCurrentWeekScores } from './scoring.server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as bestBallSync from '~/libs/best-ball/sync.server';
 import * as d12Sync from '~/libs/d12-sync.server';
 import * as guillotineSync from '~/libs/guillotine/sync.server';
 import * as syncs from '~/libs/syncs.server';
@@ -11,6 +12,7 @@ import * as seasonModel from '~/models/season.server';
 vi.mock('~/libs/syncs.server');
 vi.mock('~/libs/d12-sync.server');
 vi.mock('~/libs/guillotine/sync.server');
+vi.mock('~/libs/best-ball/sync.server');
 vi.mock('~/models/d12season.server');
 vi.mock('~/models/nflgame.server');
 vi.mock('~/models/nflteam.server');
@@ -35,7 +37,14 @@ describe('syncCurrentWeekScores', () => {
     vi.mocked(syncs.syncNflGameWeek).mockResolvedValue(true as never);
     vi.mocked(syncs.syncSleeperWeeklyScores).mockResolvedValue(undefined);
     vi.mocked(d12Sync.syncD12Week).mockResolvedValue([]);
-    vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockResolvedValue([]);
+    vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockResolvedValue({
+      errors: [],
+      warnings: [],
+    });
+    vi.mocked(bestBallSync.syncActiveBestBallLeagues).mockResolvedValue({
+      errors: [],
+      warnings: [],
+    });
     vi.mocked(d12SeasonModel.getD12SeasonByYear).mockResolvedValue({
       id: 'season-1',
     } as never);
@@ -117,5 +126,39 @@ describe('syncCurrentWeekScores', () => {
     expect(report.synced).toBe(true);
     expect(d12Sync.syncD12Week).toHaveBeenCalled();
     expect(report.guillotineErrors).toEqual(['database is down']);
+  });
+
+  it('reports warnings apart from failures', async () => {
+    vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockResolvedValue({
+      errors: [],
+      warnings: ['"League A": the week 17 final is tied'],
+    });
+    vi.mocked(bestBallSync.syncActiveBestBallLeagues).mockResolvedValue({
+      errors: ['"Mania": 500'],
+      warnings: ['"Mania": 1 player has no position'],
+    });
+
+    const report = await syncCurrentWeekScores({ force: true });
+
+    expect(report.guillotineErrors).toEqual([]);
+    expect(report.guillotineWarnings).toEqual([
+      '"League A": the week 17 final is tied',
+    ]);
+    expect(report.bestBallErrors).toEqual(['"Mania": 500']);
+    expect(report.bestBallWarnings).toEqual([
+      '"Mania": 1 player has no position',
+    ]);
+  });
+
+  it('reports a best ball failure without failing the run', async () => {
+    vi.mocked(bestBallSync.syncActiveBestBallLeagues).mockRejectedValue(
+      new Error('sleeper is down'),
+    );
+
+    const report = await syncCurrentWeekScores({ force: true });
+
+    expect(report.synced).toBe(true);
+    expect(report.bestBallErrors).toEqual(['sleeper is down']);
+    expect(report.bestBallWarnings).toEqual([]);
   });
 });

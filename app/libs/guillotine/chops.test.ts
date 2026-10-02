@@ -229,6 +229,41 @@ describe('resolveChops', () => {
     expect(result.choppedWeek.get(1)).toBeNull();
     expect(result.warnings).toHaveLength(1);
   });
+
+  it('says nothing about a manual league added before its draft', () => {
+    const rosterIds = Array.from({ length: 18 }, (_, i) => i + 1);
+    const result = resolveChops({
+      format: 'MANUAL',
+      rosters: rosterIds.map(rosterId => ({
+        rosterId,
+        eliminated: null,
+        hasPlayers: false,
+      })),
+      weeks: new Map(),
+      lastScoredWeek: 0,
+    });
+
+    expect(result.warnings).toEqual([]);
+    expect(rosterIds.map(id => result.choppedWeek.get(id))).toEqual(
+      rosterIds.map(() => null),
+    );
+    expect(result.championRosterId).toBeNull();
+  });
+
+  it('still warns about one empty roster once the league has drafted', () => {
+    const result = resolveChops({
+      format: 'MANUAL',
+      rosters: [
+        { rosterId: 1, eliminated: null, hasPlayers: true },
+        { rosterId: 2, eliminated: null, hasPlayers: false },
+      ],
+      weeks: new Map(),
+      lastScoredWeek: 0,
+    });
+
+    expect(result.choppedWeek.get(2)).toBeNull();
+    expect(result.warnings).toHaveLength(1);
+  });
 });
 
 describe('resolveRosterOwners', () => {

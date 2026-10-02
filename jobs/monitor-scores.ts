@@ -25,6 +25,9 @@ async function monitorScoresJob() {
       }
     }
 
+    // Warnings are left out: one that stands, like a tied final, would be
+    // logged every five minutes. The hourly guillotine and best ball jobs
+    // log them instead.
     if (report.bestBallErrors && report.bestBallErrors.length > 0) {
       console.error(
         `Best ball sync had ${report.bestBallErrors.length} error(s):`,
