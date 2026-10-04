@@ -28,7 +28,7 @@
     "start": "remix-serve ./build/server/index.js",
     "start:bot": "node ./build/bot/server.cjs",
     "start:scheduler": "node ./build/scheduler/server.cjs",
-    "start:production": "prisma migrate deploy && run-p start start:bot start:scheduler",
+    "start:production": "prisma migrate deploy && node ./scripts/start-production.mjs",
     "test": "run-s db:migrate:test test:unit",
     "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
     "typecheck": "tsc -b",

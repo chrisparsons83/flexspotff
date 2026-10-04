@@ -3,12 +3,20 @@ import path from 'path';
 import { SCHEDULED_JOBS } from '~/utils/jobs';
 
 /**
+ * Which process started a job. Each process builds its own Bree: the scheduler
+ * process runs jobs on their cron, the web server only runs them when an admin
+ * presses "Run Now". Jobs record the difference so a manual run can't pass for
+ * a scheduler heartbeat.
+ */
+export type JobTrigger = 'scheduled' | 'manual';
+
+/**
  * Scheduler service using Bree for running scheduled tasks
  */
 export class SchedulerService {
   private bree: Bree;
 
-  constructor() {
+  constructor(trigger: JobTrigger) {
     const isProduction = process.env.NODE_ENV === 'production';
     const jobsRoot = isProduction
       ? path.join(process.cwd(), 'build/jobs')
@@ -28,6 +36,8 @@ export class SchedulerService {
         cron,
         ...(timezone ? { timezone } : {}),
       })),
+      // Read by app/libs/job-runner.server.ts inside each job's worker.
+      worker: { workerData: { trigger } },
       // Enable logging
       logger: console,
       // Handle job completion
@@ -108,9 +118,9 @@ let instance: SchedulerService | undefined;
  * up its own second Bree alongside the scheduler process's - and inherited its
  * startup failures, since Bree resolves every job path eagerly.
  */
-export function getScheduler() {
+export function getScheduler(trigger: JobTrigger) {
   if (!instance) {
-    instance = new SchedulerService();
+    instance = new SchedulerService(trigger);
   }
   return instance;
 }

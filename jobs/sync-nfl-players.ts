@@ -1,38 +1,14 @@
+import { runJob } from '../app/libs/job-runner.server.js';
 import { syncNflPlayers } from '../app/libs/syncs.server.js';
-import { parentPort } from 'worker_threads';
 
 /**
  * Job to sync NFL players database
  * Scheduled in app/utils/jobs.ts (Tuesdays at 05:00 UTC).
  */
-async function syncNflPlayersJob() {
-  try {
-    console.log('Starting NFL players sync job...');
-    await syncNflPlayers();
-    console.log('NFL players sync job completed successfully');
+runJob('sync-nfl-players', async () => {
+  console.log('Starting NFL players sync job...');
+  await syncNflPlayers();
+  console.log('NFL players sync job completed successfully');
 
-    // Send success message to parent
-    if (parentPort) {
-      parentPort.postMessage({
-        success: true,
-        message: 'NFL players synced successfully',
-      });
-    }
-  } catch (error) {
-    console.error('NFL players sync job failed:', error);
-
-    // Send error message to parent
-    if (parentPort) {
-      parentPort.postMessage({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-
-    // Exit with error code
-    process.exit(1);
-  }
-}
-
-// Run the job
-syncNflPlayersJob();
+  return { message: 'NFL players synced successfully' };
+});
