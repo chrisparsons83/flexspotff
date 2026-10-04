@@ -19,7 +19,7 @@ async function shutdown() {
   console.log('\n🛑 Shutting down scheduler...');
 
   try {
-    await getScheduler().stop();
+    await getScheduler('scheduled').stop();
     console.log('✅ Scheduler stopped gracefully');
   } catch (error) {
     console.error('❌ Error stopping scheduler:', error);
@@ -45,7 +45,7 @@ process.on('unhandledRejection', async (reason, promise) => {
 // Start the scheduler
 async function startScheduler() {
   try {
-    await getScheduler().start();
+    await getScheduler('scheduled').start();
     console.log('✅ Scheduler started successfully');
 
     console.log('📋 Active Jobs:');

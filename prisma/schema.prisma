@@ -1340,3 +1340,20 @@ model MemberAlias {
 
   @@index([userId])
 }
+
+// The latest run of each scheduled job in app/utils/jobs.ts, written by the job
+// itself (app/libs/job-runner.server.ts). The admin scheduler page reads it to
+// show when each job last ran, and to flag a scheduler process that has died -
+// which otherwise looks exactly like a quiet week.
+model ScheduledJobRun {
+  name                 String    @id
+  lastStartedAt        DateTime?
+  // Only runs the scheduler process started on its cron, not "Run Now" from
+  // the admin page - those run in the web server, so they say nothing about
+  // whether the scheduler is alive.
+  lastScheduledStartAt DateTime?
+  lastSucceededAt      DateTime?
+  lastFailedAt         DateTime?
+  lastError            String?
+  updatedAt            DateTime  @updatedAt
+}

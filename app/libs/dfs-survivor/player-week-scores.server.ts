@@ -15,6 +15,11 @@ import { getProjections, getWeeklyStats } from '~/libs/sleeper/api.server';
  * one transaction. A single `$transaction` held ~2,000 statements open per week
  * and ran inline in the admin score-week request, which invites statement and
  * transaction timeouts; a partial batch just gets corrected on the next run.
+ *
+ * Each batch is its own short `$transaction`, so it runs on one connection. The
+ * batches used to be fired with `Promise.all`, 100 upserts at once against a
+ * pool of 3 connections. Overlapping a live-game score sync, that queue blew
+ * the pool timeout (P2024), and the failure aborted the whole scheduler.
  */
 const UPSERT_BATCH_SIZE = 100;
 
@@ -62,7 +67,7 @@ export async function syncPlayerWeekScores(year: number, week: number) {
   });
 
   for (let i = 0; i < upserts.length; i += UPSERT_BATCH_SIZE) {
-    await Promise.all(upserts.slice(i, i + UPSERT_BATCH_SIZE));
+    await prisma.$transaction(upserts.slice(i, i + UPSERT_BATCH_SIZE));
   }
 
   return { year, week, playersWritten: upserts.length };
