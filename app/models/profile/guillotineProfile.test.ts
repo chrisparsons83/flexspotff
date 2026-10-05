@@ -2,7 +2,7 @@ import type { GuillotineLeagueInput } from './guillotineProfile';
 import {
   buildGuillotineCareer,
   buildGuillotineSeason,
-  topClaims,
+  winningClaims,
 } from './guillotineProfile';
 import type { ViewTransaction, ViewWeekScore } from '~/libs/guillotine/views';
 
@@ -44,6 +44,7 @@ const league = (
   isComplete: false,
   lastScoredWeek: 2,
   rosterId: 1,
+  faabLeft: 700,
   teams: [
     { rosterId: 1, choppedWeek: null, finish: null },
     { rosterId: 2, choppedWeek: 2, finish: 2 },
@@ -85,8 +86,22 @@ describe('buildGuillotineSeason', () => {
       bidsLost: 1,
       faabSpent: 300,
       biggestClaim: { sleeperId: 'p1', bid: 300, week: 2 },
+      weeksPlayed: 2,
+      // Top of the field both weeks.
+      weeklyPercentiles: [1, 1],
+      topScoreWeeks: 2,
     });
     expect(season.picks.map(p => p.pickNo)).toEqual([1, 4]);
+  });
+
+  it('measures each week against the teams still in it', () => {
+    // Roster 2: 2nd of 3 beats half the field, then last of 2 beats none.
+    const season = buildGuillotineSeason(league({ rosterId: 2 }));
+
+    expect(season).toMatchObject({
+      weeklyPercentiles: [0.5, 0],
+      topScoreWeeks: 0,
+    });
   });
 
   it('marks each week of the survival strip', () => {
@@ -135,11 +150,14 @@ describe('buildGuillotineCareer', () => {
       titles: 1,
       podiums: 2,
       bestFinish: { place: 1, year: 2025 },
-      // The champion lasted every scored week (2), the week-1 chop none.
-      averageWeeksSurvived: 1,
-      weekOneChops: 1,
+      // The live season counts towards the longest run, never the shortest.
+      longestRun: { weeks: 2, year: 2026, alive: true },
+      shortestRun: { weeks: 1, year: 2024 },
       averagePoints: 110,
       bestWeek: { points: 130, year: 2025 },
+      // Weeks at 1, 1 (live), 0.5, 0 (won) and 0 (first out).
+      averagePercentile: 0.5,
+      biggestBid: { bid: 300, year: 2026 },
     });
     expect(career.bidWinRate).toBeCloseTo(
       career.claimsWon / (career.claimsWon + career.bidsLost),
@@ -151,17 +169,20 @@ describe('buildGuillotineCareer', () => {
 
     expect(career).toMatchObject({
       seasons: 0,
-      averageWeeksSurvived: null,
+      longestRun: null,
+      shortestRun: null,
       averagePoints: null,
+      averagePercentile: null,
+      biggestBid: null,
       bestFinish: null,
       bidWinRate: null,
     });
   });
 });
 
-describe('topClaims', () => {
+describe('winningClaims', () => {
   it('ranks their winning bids across seasons', () => {
-    const claims = topClaims([
+    const claims = winningClaims([
       league(),
       league({ leagueId: 'league-b', year: 2025, rosterId: 2 }),
     ]);
@@ -170,5 +191,46 @@ describe('topClaims', () => {
       [2026, 'p1', 300],
       [2025, 'p2', 50],
     ]);
+  });
+});
+
+describe('averageWinningBid', () => {
+  it('averages the bids that won, not the ones that lost', () => {
+    const season = buildGuillotineSeason(
+      league({
+        transactions: [
+          waiver({ p1: 1 }, 30),
+          waiver({ p2: 1 }, 10),
+          waiver({ p2: 2 }, 50),
+        ],
+      }),
+    );
+
+    expect(buildGuillotineCareer([season], [])).toMatchObject({
+      claimsWon: 1,
+      averageWinningBid: 30,
+    });
+  });
+});
+
+describe('draft pick teams', () => {
+  it('counts every roster a drafted player was on, the drafter included', () => {
+    const season = buildGuillotineSeason(
+      league({
+        picks: [
+          // Rostered by 3 in week 1, after roster 1 drafted and let him go.
+          { pickNo: 1, round: 1, sleeperId: 'p1' },
+          // Never on a scored roster: just the drafter.
+          { pickNo: 2, round: 1, sleeperId: 'p9' },
+        ],
+        scores: [
+          score(1, 1, 90),
+          score(3, 1, 70, ['p1']),
+          score(2, 2, 60, ['p1']),
+        ],
+      }),
+    );
+
+    expect(season.picks.map(pick => pick.teams)).toEqual([3, 1]);
   });
 });

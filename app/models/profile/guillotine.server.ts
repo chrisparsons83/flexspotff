@@ -2,7 +2,7 @@ import type { GuillotineLeagueInput } from './guillotineProfile';
 import {
   buildGuillotineCareer,
   buildGuillotineSeason,
-  topClaims,
+  winningClaims,
 } from './guillotineProfile';
 import { prisma } from '~/db.server';
 import type { ViewTransaction } from '~/libs/guillotine/views';
@@ -31,6 +31,7 @@ export async function getGuillotineProfile(userId: string) {
             rosterId: true,
             choppedWeek: true,
             finish: true,
+            waiverBudgetUsed: true,
             weekScores: {
               select: { week: true, points: true, players: true },
             },
@@ -58,6 +59,9 @@ export async function getGuillotineProfile(userId: string) {
       const rosterId = myTeams.find(
         team => team.guillotineLeagueId === league.id,
       )!.rosterId;
+      const used =
+        league.teams.find(team => team.rosterId === rosterId)
+          ?.waiverBudgetUsed ?? 0;
       return {
         leagueId: league.id,
         leagueName: league.name,
@@ -66,6 +70,7 @@ export async function getGuillotineProfile(userId: string) {
         isComplete: league.isComplete,
         lastScoredWeek: league.lastScoredWeek,
         rosterId,
+        faabLeft: Math.max(0, league.waiverBudget - used),
         teams: league.teams,
         scores: league.teams.flatMap(team =>
           team.weekScores.map(score => ({
@@ -111,7 +116,7 @@ export async function getGuillotineProfile(userId: string) {
       })),
   );
 
-  const claims = topClaims(inputs);
+  const claims = winningClaims(inputs);
   const sleeperIds = new Set([
     ...claims.map(claim => claim.sleeperId),
     ...seasons.flatMap(season => season.picks.map(pick => pick.sleeperId)),
@@ -136,7 +141,7 @@ export async function getGuillotineProfile(userId: string) {
     hasPlayed: true as const,
     career: buildGuillotineCareer(seasons, myScores),
     seasons,
-    topClaims: claims,
+    claims,
     players,
   };
 }

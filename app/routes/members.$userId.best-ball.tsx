@@ -101,7 +101,7 @@ function Career({ career }: { career: BestBallCareer }) {
             tone='text-emerald-300'
             detail={
               career.bestWeek &&
-              `${career.bestWeek.year} wk ${career.bestWeek.week}`
+              `${career.bestWeek.year}, Wk ${career.bestWeek.week}`
             }
           />
         </CareerCard>
@@ -157,10 +157,17 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
             <td className='px-2 py-2 text-right tabular-nums text-slate-300'>
               {season.gap > 0 ? `-${pts(season.gap)}` : '—'}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums'>
-              {season.bestWeek
-                ? `${pts(season.bestWeek.points)} (Wk ${season.bestWeek.week})`
-                : '—'}
+            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
+              {season.bestWeek ? (
+                <>
+                  {pts(season.bestWeek.points)}
+                  <span className='ml-1.5 text-xs text-slate-500'>
+                    Wk {season.bestWeek.week}
+                  </span>
+                </>
+              ) : (
+                '—'
+              )}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
               {season.topScores || '—'}
