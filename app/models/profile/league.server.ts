@@ -1,5 +1,6 @@
 import {
   aggregatePlayoffSeasons,
+  averagePerSeason,
   aggregatePlayoffStats,
   computeStreak,
   medianGames,
@@ -29,6 +30,8 @@ export type TierRecord = {
   winPct: number;
   pointsFor: number;
   pointsAgainst: number;
+  pointsForPerSeason: number;
+  pointsAgainstPerSeason: number;
 };
 
 export type SeasonRow = {
@@ -98,10 +101,14 @@ export type LeagueProfile = {
   hasPlayed: boolean;
   career: {
     seasons: number;
+    /** Sleeper's record, median games included. */
     wins: number;
     losses: number;
     ties: number;
     winPct: number;
+    h2hWins: number;
+    h2hLosses: number;
+    h2hTies: number;
     medianWins: number;
     medianLosses: number;
     medianTies: number;
@@ -282,6 +289,9 @@ function emptyProfile(): LeagueProfile {
       losses: 0,
       ties: 0,
       winPct: 0,
+      h2hWins: 0,
+      h2hLosses: 0,
+      h2hTies: 0,
       medianWins: 0,
       medianLosses: 0,
       medianTies: 0,
@@ -355,9 +365,12 @@ function buildCareer(teams: ProfileTeam[]): LeagueProfile['career'] {
       const h2h = headToHeadRecord(team);
       return {
         seasons: acc.seasons + 1,
-        wins: acc.wins + h2h.wins,
-        losses: acc.losses + h2h.losses,
-        ties: acc.ties + h2h.ties,
+        wins: acc.wins + team.wins,
+        losses: acc.losses + team.losses,
+        ties: acc.ties + team.ties,
+        h2hWins: acc.h2hWins + h2h.wins,
+        h2hLosses: acc.h2hLosses + h2h.losses,
+        h2hTies: acc.h2hTies + h2h.ties,
         medianWins: acc.medianWins + team.medianWins,
         medianLosses: acc.medianLosses + team.medianLosses,
         medianTies: acc.medianTies + team.medianTies,
@@ -370,6 +383,9 @@ function buildCareer(teams: ProfileTeam[]): LeagueProfile['career'] {
       wins: 0,
       losses: 0,
       ties: 0,
+      h2hWins: 0,
+      h2hLosses: 0,
+      h2hTies: 0,
       medianWins: 0,
       medianLosses: 0,
       medianTies: 0,
@@ -401,13 +417,16 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
       winPct: 0,
       pointsFor: 0,
       pointsAgainst: 0,
+      pointsForPerSeason: 0,
+      pointsAgainstPerSeason: 0,
     };
 
-    const h2h = headToHeadRecord(team);
+    // The record Sleeper reports, median games included - in a median season
+    // those count in the standings exactly like the head-to-head game does.
     existing.seasons++;
-    existing.wins += h2h.wins;
-    existing.losses += h2h.losses;
-    existing.ties += h2h.ties;
+    existing.wins += team.wins;
+    existing.losses += team.losses;
+    existing.ties += team.ties;
     existing.pointsFor += team.pointsFor;
     existing.pointsAgainst += team.pointsAgainst;
 
@@ -415,7 +434,15 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
   }
 
   return Array.from(tiers.values())
-    .map(tier => ({ ...tier, winPct: winPct(tier) }))
+    .map(tier => ({
+      ...tier,
+      winPct: winPct(tier),
+      pointsForPerSeason: averagePerSeason(tier.pointsFor, tier.seasons),
+      pointsAgainstPerSeason: averagePerSeason(
+        tier.pointsAgainst,
+        tier.seasons,
+      ),
+    }))
     .sort((a, b) => a.tier - b.tier);
 }
 

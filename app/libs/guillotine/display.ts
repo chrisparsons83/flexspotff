@@ -23,3 +23,10 @@ export const ordinal = (n: number) => {
 
 export const pts = (value: number | null | undefined, digits = 2) =>
   value === null || value === undefined ? '—' : value.toFixed(digits);
+
+/**
+ * Which of the two guillotine leagues this is. The buy-in league has always had
+ * "Business" in its name; every other one, 2021's included, was free.
+ */
+export const leagueKind = (leagueName: string) =>
+  /business/i.test(leagueName) ? ('Buy-in' as const) : ('Free' as const);

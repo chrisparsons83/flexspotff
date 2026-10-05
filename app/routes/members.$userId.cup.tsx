@@ -502,7 +502,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                 {ROUND_LABEL[game.round]}
                 {game.weeks > 1 && game.status !== 'BYE' && (
                   <span className='ml-1.5 text-xs text-slate-500'>
-                    {game.weeks} wks
+                    {game.weeks} weeks
                   </span>
                 )}
               </td>

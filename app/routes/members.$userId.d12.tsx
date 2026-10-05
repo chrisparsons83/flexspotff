@@ -8,6 +8,7 @@ import DraftBoard, {
 } from '~/components/layout/draftboard/DraftBoard';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
@@ -27,7 +28,7 @@ import {
   shortD12LeagueName,
 } from '~/models/profile/d12Profile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { POSITION_RANK_COLORS, POSITION_TINT_COLORS } from '~/utils/constants';
+import { POSITION_TINT_COLORS } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireProfileAccess(request);
@@ -350,19 +351,6 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
 }
 
 const EXPOSURE_PREVIEW = 20;
-
-function PositionChip({ position }: { position: string | null }) {
-  return (
-    <span
-      className={clsx(
-        'inline-block w-8 rounded px-1 text-center text-[0.65rem] font-bold text-white',
-        POSITION_RANK_COLORS[position?.toLowerCase() ?? ''] ?? 'bg-slate-600',
-      )}
-    >
-      {position ?? '?'}
-    </span>
-  );
-}
 
 /** Who they kept drafting, across all of a season's teams. */
 function Exposure({ boards }: { boards: D12Board[] }) {

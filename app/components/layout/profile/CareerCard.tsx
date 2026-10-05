@@ -72,17 +72,25 @@ export function MiniStat({
       >
         {label}
       </dt>
-      <dd className={clsx('m-0 mt-0.5 text-xl font-bold tabular-nums', tone)}>
-        {value}
-        {unit && (
-          <span className='ml-0.5 text-xs font-semibold text-slate-400'>
-            {unit}
-          </span>
+      <dd
+        className={clsx(
+          'm-0 mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xl font-bold tabular-nums',
+          tone,
         )}
-        {/* Inline rather than on a line of its own, so every small stat is the
-            same height and the cards stay level. */}
+      >
+        <span>
+          {value}
+          {unit && (
+            <span className='ml-0.5 text-xs font-semibold text-slate-400'>
+              {unit}
+            </span>
+          )}
+        </span>
+        {/* Inline where it fits, so the small stats stay the same height and
+            the cards level; a detail too long for its column wraps under the
+            value instead of running into the next stat. */}
         {detail && (
-          <span className='ml-2 whitespace-nowrap text-xs font-normal text-slate-500'>
+          <span className='whitespace-nowrap text-xs font-normal text-slate-500'>
             {detail}
           </span>
         )}
