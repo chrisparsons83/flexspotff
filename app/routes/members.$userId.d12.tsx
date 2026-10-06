@@ -12,7 +12,17 @@ import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
+import { Trophies } from '~/components/layout/profile/SeasonFinish';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
+import { CurrentTag } from '~/components/layout/profile/Tag';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import {
+  ordinal,
+  plural,
+  pts,
+  weekLabel,
+} from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
 import type {
@@ -37,18 +47,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!userId) throw new Response('Not Found', { status: 404 });
 
   return typedjson({ profile: await getD12Profile(userId) });
-};
-
-const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
 };
 
 export default function MemberD12() {
@@ -102,13 +100,13 @@ function Career({ career }: { career: D12Career }) {
             label='Worst Week'
             value={pts(worstWeek?.points)}
             tone='text-rose-300'
-            detail={worstWeek && `${worstWeek.year}, Wk ${worstWeek.week}`}
+            detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
             value={pts(bestWeek?.points)}
             tone='text-emerald-300'
-            detail={bestWeek && `${bestWeek.year}, Wk ${bestWeek.week}`}
+            detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
 
@@ -134,9 +132,9 @@ function Career({ career }: { career: D12Career }) {
             tone='text-rose-300'
             detail={
               worstTeamWeek &&
-              `${shortD12LeagueName(worstTeamWeek.leagueName)}, ${
-                worstTeamWeek.year
-              } Wk ${worstTeamWeek.week}`
+              `${shortD12LeagueName(worstTeamWeek.leagueName)}, ${weekLabel(
+                worstTeamWeek,
+              )}`
             }
           />
           <MiniStat
@@ -145,9 +143,9 @@ function Career({ career }: { career: D12Career }) {
             tone='text-emerald-300'
             detail={
               bestTeamWeek &&
-              `${shortD12LeagueName(bestTeamWeek.leagueName)}, ${
-                bestTeamWeek.year
-              } Wk ${bestTeamWeek.week}`
+              `${shortD12LeagueName(bestTeamWeek.leagueName)}, ${weekLabel(
+                bestTeamWeek,
+              )}`
             }
           />
         </CareerCard>
@@ -190,9 +188,7 @@ function Career({ career }: { career: D12Career }) {
               title='Finishes'
               lead={
                 career.titles > 0 ? (
-                  <span className='text-gold'>
-                    🏆{career.titles > 1 && ` × ${career.titles}`}
-                  </span>
+                  <Trophies titles={career.titles} />
                 ) : career.bestFinish ? (
                   ordinal(career.bestFinish.rank)
                 ) : (
@@ -212,11 +208,11 @@ function Career({ career }: { career: D12Career }) {
               <MiniStat
                 label='Titles'
                 value={career.titles}
-                tone={career.titles > 0 ? 'text-gold' : undefined}
+                tone={career.titles > 0 ? TEXT.champion : undefined}
               />
               <MiniStat label='Top 3' value={career.topThrees} />
               <MiniStat
-                label='Avg Finish'
+                label='Average Finish'
                 value={
                   career.averageFinish === null
                     ? '—'
@@ -235,17 +231,19 @@ const teamDetail = (team: TeamSeasonMark) =>
   `${team.year} · ${shortD12LeagueName(team.leagueName)}`;
 
 /**
- * The strip down the left of a board cell: starter points ranked against
- * the rest of the board, dim to bright green, or red for a pick that has
- * never scored. The cell itself is coloured by position.
+ * The strip down the left of a board cell: starter points ranked against the
+ * rest of the board, from dim to bright in one colour, or red stripes for a
+ * pick that has never scored. One hue and a pattern rather than green against
+ * red, so it reads the same with red-green colour blindness. The cell itself
+ * is coloured by position.
  */
 const HEAT_BAR: Record<D12Heat, string | undefined> = {
-  5: 'bg-green-300',
-  4: 'bg-green-400',
-  3: 'bg-green-500',
-  2: 'bg-green-700',
-  1: 'bg-green-900',
-  bust: 'bg-red-500',
+  5: 'bg-sky-200',
+  4: 'bg-sky-300',
+  3: 'bg-sky-500',
+  2: 'bg-sky-700',
+  1: 'bg-sky-900',
+  bust: 'bg-[repeating-linear-gradient(180deg,theme(colors.rose.400)_0_3px,transparent_3px_6px)]',
   none: undefined,
 };
 
@@ -266,6 +264,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
   return (
     <ProfileSection
       title='Draft Board'
+      footnote={<HeatKey />}
       action={
         boards.length > 1 && (
           <YearFilter
@@ -300,10 +299,10 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
             {column.league ? (
               <div className='tabular-nums text-slate-200'>
                 {pts(column.teamPoints, 1)}
-                <span className='ml-1 text-slate-500'>pts</span>
+                <span className='ml-1 text-slate-400'>points</span>
               </div>
             ) : (
-              <div className='text-slate-500'>No picks</div>
+              <div className='text-slate-400'>No picks</div>
             )}
           </div>
         )}
@@ -336,7 +335,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
               } (#${pick.pickNo}) in ${column.league?.name ?? ''} · ${
                 pick.points === null
                   ? 'no lineups yet'
-                  : `${pick.points.toFixed(2)} starter pts`
+                  : `${pick.points.toFixed(2)} starter points`
               }`}
               highlighted={hovered === pick.sleeperId}
               dimmed={hovered !== null && hovered !== pick.sleeperId}
@@ -347,6 +346,26 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
         }}
       />
     </ProfileSection>
+  );
+}
+
+/** What the strip down each pick's left edge means. */
+function HeatKey() {
+  return (
+    <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
+      <span className='inline-flex items-center gap-1.5'>
+        <span aria-hidden='true' className='flex h-3 gap-px'>
+          {([1, 2, 3, 4, 5] as const).map(level => (
+            <span key={level} className={clsx('w-1', HEAT_BAR[level])} />
+          ))}
+        </span>
+        Starter points, fewest to most on the board
+      </span>
+      <span className='inline-flex items-center gap-1.5'>
+        <span aria-hidden='true' className={clsx('h-3 w-1', HEAT_BAR.bust)} />
+        Never scored
+      </span>
+    </span>
   );
 }
 
@@ -366,7 +385,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
       description={`${plural(players.length, 'player')} across ${plural(
         teams,
         'team',
-      )}`}
+      )}.`}
       action={
         boards.length > 1 && (
           <YearFilter
@@ -379,18 +398,19 @@ function Exposure({ boards }: { boards: D12Board[] }) {
       }
     >
       <ProfileTable
-        headers={['Player', 'Teams', 'Avg Pick', 'Range', 'Starter Pts']}
+        headers={['Player', 'Teams', 'Average Pick', 'Range', 'Starter Points']}
+        primaryColumns={[1, 4]}
         numericColumns={[2, 3, 4]}
       >
         {visible.map(player => (
           <tr key={player.sleeperId} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2'>
-              <span className='inline-flex items-center gap-2'>
+            <td className='px-2 py-2 sm:whitespace-nowrap'>
+              <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
                 <PositionChip position={player.position} />
                 <span className='font-medium text-slate-100'>
                   {player.firstName} {player.lastName}
                 </span>
-                <span className='text-xs text-slate-500'>
+                <span className='text-xs text-slate-400'>
                   {player.nflTeam ?? 'FA'}
                 </span>
               </span>
@@ -399,7 +419,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
               <div className='flex items-center gap-2'>
                 <span className='w-12 tabular-nums'>
                   {player.leagues}
-                  <span className='text-slate-500'>/{teams}</span>
+                  <span className='text-slate-400'>/{teams}</span>
                 </span>
                 <div
                   aria-hidden='true'
@@ -429,13 +449,12 @@ function Exposure({ boards }: { boards: D12Board[] }) {
         ))}
       </ProfileTable>
       {players.length > EXPOSURE_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${players.length} players`}
-        </button>
+        <ShowAllButton
+          total={players.length}
+          noun='players'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -449,18 +468,20 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
           'Year',
           'Finish',
           'Total',
-          'Best Wk',
-          'Worst Wk',
+          'Best Week',
+          'Worst Week',
           'Best Team',
           'Worst Team',
-          'Avg Team',
+          'Average Team',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
       >
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>
               <Link to={`/games/d12/${season.year}`}>{season.year}</Link>
+              {season.inProgress && <CurrentTag />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               {season.finish ? (
@@ -468,7 +489,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
                   className={clsx(
                     'font-medium',
                     season.finish.rank === 1 && !season.inProgress
-                      ? 'text-gold'
+                      ? TEXT.champion
                       : 'text-slate-100',
                   )}
                 >
@@ -481,11 +502,6 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
                 </span>
               ) : (
                 '—'
-              )}
-              {season.inProgress && (
-                <span className='ml-2 rounded bg-amber-400/15 px-1.5 py-0.5 text-xs text-amber-200'>
-                  In progress
-                </span>
               )}
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
@@ -517,7 +533,9 @@ function WeekCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(2)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>Wk {mark.week}</span>
+          <span className='ml-1.5 text-xs text-slate-400'>
+            Week {mark.week}
+          </span>
         </>
       ) : (
         '—'
@@ -538,7 +556,7 @@ function TeamCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(1)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>
+          <span className='ml-1.5 text-xs text-slate-400'>
             {shortD12LeagueName(mark.leagueName)}
           </span>
         </>

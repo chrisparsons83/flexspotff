@@ -2,16 +2,54 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import FinishMeter from '~/components/layout/profile/FinishMeter';
+import LabelledRange from '~/components/layout/profile/LabelledRange';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
-import SplitBar from '~/components/layout/profile/SplitBar';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
+import SeasonFinish, {
+  Trophies,
+} from '~/components/layout/profile/SeasonFinish';
+import SegmentedControl from '~/components/layout/profile/SegmentedControl';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
+import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
+import WeekGrid, {
+  LegendItem,
+  ScaleKey,
+  Swatch,
+  WeekLegend,
+  WonKey,
+  rankTone,
+} from '~/components/layout/profile/WeekGrid';
+import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  FieldBandKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/layout/profile/chart';
+import {
+  line,
+  ordinal,
+  pct as pctBy,
+  plural,
+  signed,
+  weekLabel,
+} from '~/components/layout/profile/format';
+import type { TagTone } from '~/components/layout/profile/tones';
+import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getSpreadPoolProfile } from '~/models/profile/spreadPool.server';
 import {
@@ -39,42 +77,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return typedjson({ profile: await getSpreadPoolProfile(userId) });
 };
 
-/** "+120", "−40" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 0) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
-
-const signedTone = (value: number | null) =>
-  value === null || value === 0
-    ? 'text-slate-400'
-    : value > 0
-    ? 'text-emerald-300'
-    : 'text-rose-300';
-
-const pct = (value: number | null, digits = 1) =>
-  value === null ? '—' : `${(value * 100).toFixed(digits)}%`;
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
-};
+/** Win rates to a tenth of a percent, since a season's bets run to hundreds. */
+const pct = (value: number | null) => pctBy(value, 1);
 
 const record = ({ wins, losses, pushes }: Record3) =>
   `${wins}-${losses}${pushes ? `-${pushes}` : ''}`;
-
-/** The line as a bettor reads it: "−3", "+6.5", "PK". */
-const line = (spread: number) =>
-  spread === 0 ? 'PK' : signed(spread, spread % 1 === 0 ? 0 : 1);
-
-const weekLabel = (week: { year: number; week: number }) =>
-  `${week.year} Week ${week.week}`;
 
 export default function MemberSpreadPool() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -100,43 +107,6 @@ export default function MemberSpreadPool() {
       <Teams rows={profile.teams} names={profile.teamNames} />
       <BetLog seasons={profile.seasons} />
     </div>
-  );
-}
-
-/** A RangeBar with its two ends named underneath. */
-function LabelledRange({
-  low,
-  high,
-  mark,
-  lowLabel,
-  highLabel,
-  format = value => value.toString(),
-}: {
-  low: number;
-  high: number;
-  mark: number;
-  lowLabel: string;
-  highLabel: string;
-  format?: (value: number) => string;
-}) {
-  return (
-    <>
-      <RangeBar low={low} high={high} mark={mark} />
-      <div className='mt-2 flex justify-between gap-2 text-xs'>
-        <span className='min-w-0 truncate'>
-          <span className='font-semibold tabular-nums text-rose-300'>
-            {format(low)}
-          </span>{' '}
-          <span className='text-slate-500'>{lowLabel}</span>
-        </span>
-        <span className='min-w-0 truncate text-right'>
-          <span className='text-slate-500'>{highLabel}</span>{' '}
-          <span className='font-semibold tabular-nums text-emerald-300'>
-            {format(high)}
-          </span>
-        </span>
-      </div>
-    </>
   );
 }
 
@@ -213,7 +183,7 @@ function Career({
             hint='Every point bet, won or lost'
           />
           <MiniStat
-            label='Avg Bet'
+            label='Average Bet'
             value={
               career.averageBet === null ? '—' : career.averageBet.toFixed(1)
             }
@@ -230,17 +200,10 @@ function Career({
           title='Bets Won'
           lead={pct(career.winRate)}
           meter={
-            <>
-              <SplitBar
-                wins={career.record.wins}
-                losses={career.record.losses}
-                ties={career.record.pushes}
-              />
-              <SplitKey
-                record={career.record}
-                labels={['won', 'pushed', 'lost']}
-              />
-            </>
+            <SplitKey
+              record={career.record}
+              labels={['won', 'pushed', 'lost']}
+            />
           }
         >
           <MiniStat
@@ -264,10 +227,7 @@ function Career({
   );
 }
 
-/**
- * The counts under a SplitBar, in its colours. Every card with a bar has a row
- * like this under it, which is also what keeps their small stats level.
- */
+/** A record as a split bar, with each part's count under it. */
 function SplitKey({
   record,
   labels,
@@ -275,27 +235,14 @@ function SplitKey({
   record: Record3;
   labels: [win: string, push: string, loss: string];
 }) {
-  const keys = [
-    { count: record.wins, label: labels[0], tone: 'bg-emerald-400' },
-    { count: record.pushes, label: labels[1], tone: 'bg-slate-400' },
-    { count: record.losses, label: labels[2], tone: 'bg-rose-400' },
-  ];
-
   return (
-    <div className='mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[0.65rem] text-slate-400'>
-      {keys.map(({ count, label, tone }) => (
-        <span key={label} className='inline-flex items-center gap-1'>
-          <span
-            aria-hidden='true'
-            className={clsx('inline-block h-1.5 w-3 rounded-full', tone)}
-          />
-          <span className='font-semibold tabular-nums text-slate-200'>
-            {count}
-          </span>
-          {label}
-        </span>
-      ))}
-    </div>
+    <KeyedBar
+      entries={[
+        { count: record.wins, label: labels[0], tone: BAR.win },
+        { count: record.pushes, label: labels[1], tone: BAR.tie },
+        { count: record.losses, label: labels[2], tone: BAR.loss },
+      ]}
+    />
   );
 }
 
@@ -313,33 +260,24 @@ function WeeksCard({ career }: { career: PoolCareer }) {
             : '—'}
         </>
       }
-      meter={
-        <>
-          <SplitBar
-            wins={weeks.wins}
-            losses={weeks.losses}
-            ties={weeks.pushes}
-          />
-          <SplitKey record={weeks} labels={['up', 'even', 'down']} />
-        </>
-      }
+      meter={<SplitKey record={weeks} labels={['up', 'even', 'down']} />}
     >
       <MiniStat
         label='Won'
         value={career.weeksWon}
         hint='Weeks with the top net of everyone who played'
-        tone={career.weeksWon > 0 ? 'text-gold' : undefined}
+        tone={career.weeksWon > 0 ? TEXT.champion : undefined}
       />
       <MiniStat
         label='Best'
         value={bestWeek ? signed(bestWeek.net) : '—'}
-        hint={bestWeek ? `Best week: ${weekLabel(bestWeek)}` : undefined}
+        detail={bestWeek && weekLabel(bestWeek)}
         tone={bestWeek ? signedTone(bestWeek.net) : undefined}
       />
       <MiniStat
         label='Worst'
         value={worstWeek ? signed(worstWeek.net) : '—'}
-        hint={worstWeek ? `Worst week: ${weekLabel(worstWeek)}` : undefined}
+        detail={worstWeek && weekLabel(worstWeek)}
         tone={worstWeek ? signedTone(worstWeek.net) : undefined}
       />
       <MiniStat
@@ -350,23 +288,11 @@ function WeeksCard({ career }: { career: PoolCareer }) {
             ? `Weeks with no bets, which cost ${signed(career.missedCost)}`
             : 'Weeks with no bets'
         }
-        tone={career.missedWeeks > 0 ? 'text-rose-300' : undefined}
+        tone={career.missedWeeks > 0 ? TEXT.bad : undefined}
       />
     </CareerCard>
   );
 }
-
-/**
- * Finished seasons grouped by how they ended, lightest for the best, so the
- * bar reads the same without the gold. Each season sits in its best band
- * only, so a title is gold alone rather than also filling Top 3 and Top 5.
- */
-const FINISH_BANDS = [
-  { label: 'Won', max: 1, tone: 'bg-gold' },
-  { label: 'Top 3', max: 3, tone: 'bg-slate-200' },
-  { label: 'Top 5', max: 5, tone: 'bg-slate-400' },
-  { label: '6th+', max: Infinity, tone: 'bg-slate-600' },
-];
 
 /** How their seasons have ended, as counts rather than a list of years. */
 function FinishesCard({
@@ -401,22 +327,15 @@ function FinishesCard({
     ) : null;
   }
 
-  const bandCounts = FINISH_BANDS.map((band, index) => ({
-    ...band,
-    count: finished.filter(
-      rank => rank <= band.max && rank > (FINISH_BANDS[index - 1]?.max ?? 0),
-    ).length,
-  }));
-
   return (
     <CareerCard
-      title='Best Season Results'
+      title='Finishes'
       lead={
         career.titles > 0 ? (
-          <span className='text-gold'>
-            🏆{career.titles > 1 && ` × ${career.titles}`}
+          <>
+            <Trophies titles={career.titles} />
             <LeadContext>{plural(career.titles, 'title')}</LeadContext>
-          </span>
+          </>
         ) : (
           <>
             {ordinal(career.bestFinish!.rank)}
@@ -424,44 +343,10 @@ function FinishesCard({
           </>
         )
       }
-      meter={
-        <>
-          <div
-            aria-hidden='true'
-            className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
-          >
-            {bandCounts
-              .filter(band => band.count > 0)
-              .map(band => (
-                <div
-                  key={band.label}
-                  className={band.tone}
-                  style={{ width: `${(band.count / finished.length) * 100}%` }}
-                />
-              ))}
-          </div>
-          <div className='mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[0.65rem] text-slate-400'>
-            {bandCounts.map(band => (
-              <span key={band.label} className='inline-flex items-center gap-1'>
-                <span
-                  aria-hidden='true'
-                  className={clsx(
-                    'inline-block h-1.5 w-3 rounded-full',
-                    band.tone,
-                  )}
-                />
-                <span className='font-semibold tabular-nums text-slate-200'>
-                  {band.count}
-                </span>
-                {band.label}
-              </span>
-            ))}
-          </div>
-        </>
-      }
+      meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Avg Finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -477,16 +362,12 @@ function FinishesCard({
   );
 }
 
-/** Context set inline after a card's headline, in place of a line under it. */
-function LeadContext({ children }: { children: ReactNode }) {
-  return (
-    <span className='ml-2 text-sm font-normal text-slate-400'>{children}</span>
-  );
-}
-
 function BySeason({ seasons }: { seasons: PoolSeason[] }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection
+      title='By Season'
+      footnote='ROE is return on everything bet: the net as a share of the total bet.'
+    >
       <ProfileTable
         headers={[
           'Year',
@@ -500,6 +381,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
           'Missed',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7, 8]}
+        primaryColumns={[1, 2]}
       >
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
@@ -510,7 +392,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
               {season.inProgress && <CurrentTag />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              <SeasonFinish season={season} />
+              <SeasonFinish finish={season.finish} champion={season.champion} />
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               <span className='font-medium'>{season.bank}</span>
@@ -542,7 +424,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
             <td
               className={clsx(
                 'px-2 py-2 text-right tabular-nums',
-                season.missedWeeks > 0 ? 'text-rose-300' : 'text-slate-500',
+                season.missedWeeks > 0 ? TEXT.bad : 'text-slate-400',
               )}
             >
               {season.missedWeeks}
@@ -560,7 +442,7 @@ function WeekCell({ week }: { week: PoolWeek | null }) {
       {week ? (
         <>
           <span className={signedTone(week.net)}>{signed(week.net)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>
+          <span className='ml-1.5 text-xs text-slate-400'>
             Week {week.week}
           </span>
         </>
@@ -571,58 +453,7 @@ function WeekCell({ week }: { week: PoolWeek | null }) {
   );
 }
 
-function SeasonFinish({ season }: { season: PoolSeason }) {
-  if (!season.finish) return <>—</>;
-
-  return (
-    <span
-      className={clsx(
-        'font-medium',
-        season.champion ? 'text-gold' : 'text-slate-100',
-      )}
-    >
-      {season.champion && '🏆 '}
-      {ordinal(season.finish.rank)}
-      <span className='font-normal text-slate-400'>
-        {' '}
-        of {season.finish.fieldSize}
-      </span>
-    </span>
-  );
-}
-
-/** Marks the season still being played, whose numbers are still moving. */
-function CurrentTag() {
-  return (
-    <span className='ml-2 rounded bg-sky-400/15 px-1.5 py-0.5 text-xs font-medium text-sky-200'>
-      Current
-    </span>
-  );
-}
-
-const CHART = { height: 260, left: 44, right: 12, top: 12, bottom: 28 };
-
-/**
- * The element's width in pixels, so a chart can be drawn at its real size and
- * keep its labels at 11px on a phone and a desktop alike, rather than scaling
- * them with a viewBox. Starts from a guess for the server render.
- */
-function useWidth<T extends HTMLElement>(initial: number) {
-  const ref = useRef<T>(null);
-  const [width, setWidth] = useState(initial);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(Math.round(entry.contentRect.width)),
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, width] as const;
-}
+const CHART_LEFT = 44;
 
 /**
  * The member's bank through a season, over the field's: the middle half of
@@ -634,7 +465,7 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
   const years = seasons.map(season => season.year);
   const [year, setYear] = useState<number | 'all'>(years[0]);
   const season = seasons.find(entry => entry.year === year) ?? seasons[0];
-  const [chartRef, width] = useWidth<HTMLDivElement>(720);
+  const [chartRef, width] = useChartWidth<HTMLDivElement>();
 
   const points = [
     { week: 0, bank: STARTING_BANK, missed: false, net: 0, label: 'Start' },
@@ -671,9 +502,9 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
   const floor = Math.floor(Math.min(...values) / 250) * 250;
   const ceiling = Math.ceil(Math.max(...values) / 250) * 250;
 
-  const plotWidth = width - CHART.left - CHART.right;
+  const plotWidth = width - CHART_LEFT - CHART.right;
   const plotHeight = CHART.height - CHART.top - CHART.bottom;
-  const x = (week: number) => CHART.left + (week / lastWeek) * plotWidth;
+  const x = (week: number) => CHART_LEFT + (week / lastWeek) * plotWidth;
   const y = (bank: number) =>
     CHART.top + (1 - (bank - floor) / (ceiling - floor || 1)) * plotHeight;
 
@@ -691,8 +522,7 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
   ).filter((_, index, all) => all.length <= 8 || index % 2 === 0);
 
   const final = points[points.length - 1];
-  // Every other week once they get too close to label, as on a phone.
-  const weekStep = plotWidth / lastWeek < 24 ? 2 : 1;
+  const weekStep = weekLabelStep(plotWidth, lastWeek);
 
   return (
     <ProfileSection
@@ -723,28 +553,17 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
         />
       }
       footnote={
-        <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
+        <ChartKeys>
           <ChartKey>
             <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
             Bank
           </ChartKey>
-          <ChartKey>
-            <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/30' />
-            Middle half of the field
-          </ChartKey>
-          <ChartKey>
-            <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/10' />
-            Lowest to highest
-          </ChartKey>
-          <ChartKey>
-            <span className='inline-block w-4 border-t border-dashed border-slate-300' />
-            Median
-          </ChartKey>
+          <FieldBandKeys rangeLabel='Lowest to highest' />
           <ChartKey>
             <span className='inline-block h-2 w-2 rounded-full border-2 border-rose-400' />
             Missed week
           </ChartKey>
-        </span>
+        </ChartKeys>
       }
     >
       <div ref={chartRef}>
@@ -759,7 +578,7 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
           {gridlines.map(value => (
             <g key={value}>
               <line
-                x1={CHART.left}
+                x1={CHART_LEFT}
                 x2={width - CHART.right}
                 y1={y(value)}
                 y2={y(value)}
@@ -771,7 +590,7 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
                 strokeWidth={1}
               />
               <text
-                x={CHART.left - 6}
+                x={CHART_LEFT - 6}
                 y={y(value)}
                 textAnchor='end'
                 dominantBaseline='middle'
@@ -840,12 +659,15 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
               }
               strokeWidth={2}
             >
+              {/* One string: a <title> with several children breaks hydration. */}
               <title>
-                {point.label}: {point.bank}
-                {point.week > 0 &&
-                  ` (${signed(point.net)}${
-                    point.missed ? ', missed week' : ''
-                  })`}
+                {`${point.label}: ${point.bank}${
+                  point.week > 0
+                    ? ` (${signed(point.net)}${
+                        point.missed ? ', missed week' : ''
+                      })`
+                    : ''
+                }`}
               </title>
             </circle>
           ))}
@@ -855,48 +677,8 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
   );
 }
 
-function ChartKey({ children }: { children: ReactNode }) {
-  return <span className='inline-flex items-center gap-1.5'>{children}</span>;
-}
-
-/**
- * Where a week's net ranked in the field, bottom to top as dark red to bright
- * green. Ranking rather than raw points, so a week where every favourite
- * covered does not paint the whole column green.
- *
- * Lightness climbs with the rank as well as hue, so the scale still reads for
- * red-green colour blindness: bright is good, dark is bad.
- */
-const WEEK_SCALE = [
-  { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 20%' },
-  { tone: 'bg-emerald-500 text-emerald-950', label: '60-80%' },
-  { tone: 'bg-slate-600 text-slate-100', label: '40-60%' },
-  { tone: 'bg-rose-800 text-rose-50', label: '20-40%' },
-  { tone: 'bg-rose-950 text-rose-200', label: 'Bottom 20%' },
-];
-
-/**
- * A week won is set in underlined type, so it stands out by shape and never
- * relies on its colour, which it shares with the rest of the top band.
- */
-const WEEK_WON_TEXT = 'underline decoration-2 underline-offset-2';
-
 const MISSED_TONE =
   'border border-dashed border-rose-400/70 bg-transparent text-rose-300';
-
-function weekTone(week: PoolWeek): string {
-  if (week.missed) return MISSED_TONE;
-  const percentile =
-    week.fieldSize > 1
-      ? (week.fieldSize - week.rank) / (week.fieldSize - 1)
-      : 1;
-  // Walks down from the top band; a week won is always in it.
-  const band =
-    week.rank === 1
-      ? 0
-      : [0.8, 0.6, 0.4, 0.2].findIndex(floor => percentile >= floor);
-  return WEEK_SCALE[band === -1 ? WEEK_SCALE.length - 1 : band].tone;
-}
 
 const describeBet = (bet: PoolBet) =>
   `${
@@ -919,124 +701,42 @@ function WeekByWeek({ seasons }: { seasons: PoolSeason[] }) {
   const lastWeek = Math.max(
     ...seasons.flatMap(season => season.weeks.map(week => week.week)),
   );
-  const weekNumbers = Array.from({ length: lastWeek }, (_, i) => i + 1);
   const anyMissed = seasons.some(season => season.missedWeeks > 0);
 
   return (
     <ProfileSection
       title='Week by Week'
-      description='Each week’s net, shaded by where it ranked among everyone who played it'
+      description='Each week’s net, shaded by where it ranked among everyone who played it.'
     >
-      <div className='overflow-x-auto'>
-        <div
-          className='grid gap-1.5 p-0.5 text-xs'
-          style={{
-            gridTemplateColumns: `3rem repeat(${lastWeek}, minmax(3rem, 1fr))`,
-          }}
-        >
-          <div />
-          {weekNumbers.map(week => (
-            <div key={week} className='text-center text-slate-500'>
-              {week}
-            </div>
-          ))}
-
-          {seasons.map(season => {
-            const byWeek = new Map(season.weeks.map(week => [week.week, week]));
-            return (
-              <SeasonStrip key={season.year} year={season.year}>
-                {weekNumbers.map(number => {
-                  const week = byWeek.get(number);
-                  return week ? (
-                    <div
-                      key={number}
-                      title={describeWeek(week)}
-                      className={clsx(
-                        // Relative, so the sr-only text inside is placed within the scroller
-                        // rather than stretching the page on a phone.
-                        'relative flex h-8 items-center justify-center rounded font-semibold tabular-nums',
-                        weekTone(week),
-                        week.rank === 1 && !week.missed && WEEK_WON_TEXT,
-                      )}
-                    >
-                      {signed(week.net)}
-                      <span className='sr-only'>. {describeWeek(week)}</span>
-                    </div>
-                  ) : (
-                    <div
-                      key={number}
-                      aria-hidden='true'
-                      className='flex h-8 items-center justify-center rounded bg-slate-900/40 text-slate-600'
-                    >
-                      ·
-                    </div>
-                  );
-                })}
-              </SeasonStrip>
-            );
-          })}
-        </div>
-      </div>
-      <WeekLegend showMissed={anyMissed} />
+      <WeekGrid
+        lastWeek={lastWeek}
+        rows={seasons.map(season => ({
+          year: season.year,
+          weeks: new Map(
+            season.weeks.map((week): [number, WeekGridCell] => [
+              week.week,
+              {
+                value: signed(week.net),
+                title: describeWeek(week),
+                tone: week.missed
+                  ? MISSED_TONE
+                  : rankTone(week.rank, week.fieldSize),
+                won: week.rank === 1 && !week.missed,
+              },
+            ]),
+          ),
+        }))}
+      />
+      <WeekLegend>
+        <WonKey sample='+150' />
+        <ScaleKey />
+        {anyMissed && (
+          <LegendItem swatch={<Swatch tone={MISSED_TONE} />}>
+            Missed week
+          </LegendItem>
+        )}
+      </WeekLegend>
     </ProfileSection>
-  );
-}
-
-function SeasonStrip({
-  year,
-  children,
-}: {
-  year: number;
-  children: ReactNode;
-}) {
-  return (
-    <>
-      <div className='flex h-8 items-center font-medium tabular-nums text-slate-300'>
-        {year}
-      </div>
-      {children}
-    </>
-  );
-}
-
-function Swatch({ tone, children }: { tone: string; children?: ReactNode }) {
-  return (
-    <span
-      className={clsx(
-        'relative inline-flex h-4 w-5 items-center justify-center rounded-sm',
-        tone,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function WeekLegend({ showMissed }: { showMissed: boolean }) {
-  return (
-    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400'>
-      <span className='inline-flex items-center gap-1.5'>
-        <Swatch tone={clsx(WEEK_SCALE[0].tone, 'w-8 text-[0.65rem]')}>
-          <span className={clsx('font-semibold', WEEK_WON_TEXT)}>+150</span>
-        </Swatch>
-        Week won
-      </span>
-      <span className='inline-flex items-center gap-1'>
-        {WEEK_SCALE[0].label}
-        {WEEK_SCALE.map(({ tone, label }) => (
-          <span key={tone} title={label}>
-            <Swatch tone={tone} />
-          </span>
-        ))}
-        {WEEK_SCALE[WEEK_SCALE.length - 1].label}
-      </span>
-      {showMissed && (
-        <span className='inline-flex items-center gap-1.5'>
-          <Swatch tone={MISSED_TONE} />
-          Missed week
-        </span>
-      )}
-    </div>
   );
 }
 
@@ -1068,7 +768,7 @@ function WinRateBar({
   return (
     <div
       aria-hidden='true'
-      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700'
+      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700 max-sm:hidden'
     >
       <div className={clsx('left-1/2', BREAK_EVEN_LINE)} />
       {member !== null && (
@@ -1118,6 +818,7 @@ function SplitTable({
         'Net',
       ]}
       numericColumns={[1, 2, 4]}
+      primaryColumns={[3, 4]}
     >
       {buckets.map(bucket => (
         <tr key={bucket.key} className='border-b border-slate-700/70'>
@@ -1126,7 +827,7 @@ function SplitTable({
           </td>
           <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
             {bucket.member.bets}
-            <span className='ml-1.5 text-xs text-slate-500'>
+            <span className='ml-1.5 text-xs text-slate-400'>
               {memberBets > 0
                 ? `${Math.round((bucket.member.bets / memberBets) * 100)}%`
                 : ''}
@@ -1147,10 +848,10 @@ function SplitTable({
             }
           >
             <div className='flex items-center gap-3'>
-              <span className='w-24 shrink-0 whitespace-nowrap'>
+              <span className='shrink-0 whitespace-nowrap sm:w-24'>
                 {pct(bucket.member.winRate)}
                 {showField && (
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {pct(bucket.field.winRate)}
                   </span>
                 )}
@@ -1243,7 +944,7 @@ function SideCard({
         hint='Share of their bets'
       />
       <MiniStat
-        label='Avg Bet'
+        label='Average Bet'
         value={averageBet === null ? '—' : averageBet.toFixed(1)}
       />
     </CareerCard>
@@ -1370,11 +1071,11 @@ function Tendencies({ splits }: { splits: PoolSplits }) {
 
 type TeamSort = 'net' | 'backing' | 'fading' | 'bets';
 
-const TEAM_SORTS: { key: TeamSort; label: string }[] = [
-  { key: 'net', label: 'Total' },
-  { key: 'backing', label: 'Backing' },
-  { key: 'fading', label: 'Fading' },
-  { key: 'bets', label: 'Most bet' },
+const TEAM_SORTS: { value: TeamSort; label: string }[] = [
+  { value: 'net', label: 'Total' },
+  { value: 'backing', label: 'Backing' },
+  { value: 'fading', label: 'Fading' },
+  { value: 'bets', label: 'Most bet' },
 ];
 
 const TEAMS_PREVIEW = 12;
@@ -1536,23 +1237,12 @@ function Teams({
     <ProfileSection
       title='By NFL Team'
       action={
-        <div className='flex flex-wrap gap-1'>
-          {TEAM_SORTS.map(option => (
-            <button
-              key={option.key}
-              type='button'
-              onClick={() => setSort(option.key)}
-              className={clsx(
-                'rounded px-2.5 py-1 text-sm',
-                sort === option.key
-                  ? 'bg-white font-medium text-slate-900'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          label='Sort by'
+          value={sort}
+          onChange={setSort}
+          options={TEAM_SORTS}
+        />
       }
     >
       <div className='mb-5 grid gap-3 sm:grid-cols-3'>
@@ -1574,6 +1264,7 @@ function Teams({
       <ProfileTable
         headers={['Team', 'Backing', 'Fading', 'Total']}
         numericColumns={[3]}
+        primaryColumns={[1, 3]}
       >
         {visible.map(row => (
           <tr key={row.team} className='border-b border-slate-700/70'>
@@ -1597,13 +1288,12 @@ function Teams({
         ))}
       </ProfileTable>
       {rows.length > TEAMS_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${rows.length} teams`}
-        </button>
+        <ShowAllButton
+          total={rows.length}
+          noun='teams'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -1630,25 +1320,39 @@ function TeamSide({
           <NetBar value={side.net} widest={widest} />
         </div>
       ) : (
-        <span className='text-slate-600'>—</span>
+        <span className='text-slate-400'>—</span>
       )}
     </td>
   );
 }
 
-function Tag({ tone, children }: { tone: string; children: ReactNode }) {
+const RESULT_TAG: Record<PoolBet['result'], { tone: TagTone; label: string }> =
+  {
+    win: { tone: 'win', label: 'Won' },
+    loss: { tone: 'loss', label: 'Lost' },
+    push: { tone: 'neutral', label: 'Push' },
+  };
+
+/** How a bet went, and whether it went against the crowd. */
+function BetTags({ bet }: { bet: PoolBet }) {
   return (
-    <span className={clsx('rounded px-1.5 py-0.5 text-xs', tone)}>
-      {children}
-    </span>
+    <>
+      <Tag tone={RESULT_TAG[bet.result].tone}>
+        {RESULT_TAG[bet.result].label}
+      </Tag>
+      {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
+        <Tag
+          tone='accent'
+          title={`${Math.round(
+            bet.fieldShare * 100,
+          )}% of the others who bet this game took the same side`}
+        >
+          Contrarian
+        </Tag>
+      )}
+    </>
   );
 }
-
-const RESULT_TAG: Record<PoolBet['result'], { tone: string; label: string }> = {
-  win: { tone: 'bg-emerald-400/15 text-emerald-200', label: 'Won' },
-  loss: { tone: 'bg-rose-400/15 text-rose-200', label: 'Lost' },
-  push: { tone: 'bg-slate-600/40 text-slate-300', label: 'Push' },
-};
 
 function BetLog({ seasons }: { seasons: PoolSeason[] }) {
   const years = seasons.map(season => season.year);
@@ -1684,6 +1388,34 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
           'Result',
         ]}
         numericColumns={[3, 5, 6]}
+        mobileCards={
+          <MobileCards>
+            {bets.map((bet, index) => (
+              <MobileCard
+                key={`${bet.year}-${bet.week}-${bet.team}-${index}`}
+                title={
+                  <>
+                    <span className='font-medium'>
+                      {bet.team} {line(bet.spread)}
+                    </span>
+                    <span className='ml-1.5 text-slate-400'>
+                      {bet.isHome ? 'vs' : '@'} {bet.opponent}
+                    </span>
+                  </>
+                }
+                subtitle={`${
+                  year === 'all' ? weekLabel(bet) : `Week ${bet.week}`
+                } · ${bet.amount} bet · final ${bet.teamScore}–${
+                  bet.opponentScore
+                }`}
+                value={
+                  <span className={signedTone(bet.net)}>{signed(bet.net)}</span>
+                }
+                status={<BetTags bet={bet} />}
+              />
+            ))}
+          </MobileCards>
+        }
       >
         {bets.map((bet, index) => (
           <tr
@@ -1728,20 +1460,9 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
               {signed(bet.net)}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              <Tag tone={RESULT_TAG[bet.result].tone}>
-                {RESULT_TAG[bet.result].label}
-              </Tag>
-              {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
-                <Tag tone='ml-1 bg-violet-400/15 text-violet-200'>
-                  <span
-                    title={`${Math.round(
-                      bet.fieldShare * 100,
-                    )}% of the others who bet this game took the same side`}
-                  >
-                    Contrarian
-                  </span>
-                </Tag>
-              )}
+              <span className='inline-flex gap-1'>
+                <BetTags bet={bet} />
+              </span>
             </td>
           </tr>
         ))}

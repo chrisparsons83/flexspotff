@@ -28,7 +28,7 @@ export default function CareerCard({
   children: ReactNode;
 }) {
   return (
-    <div className={clsx('rounded-md bg-slate-900/50 p-4', className)}>
+    <div className={clsx('rounded-md bg-slate-900/50 p-3 sm:p-4', className)}>
       <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
       <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
         {lead}
@@ -42,7 +42,9 @@ export default function CareerCard({
           stats had a detail line and another's did not. */}
       <div className='mt-5'>
         {meter}
-        <dl className='m-0 mt-4 grid auto-cols-fr grid-flow-col gap-4'>
+        {/* As many equal columns as fit, so four small stats sit in a row on
+            a desktop and wrap to two rows on a phone rather than squeeze. */}
+        <dl className='m-0 mt-4 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-4'>
           {children}
         </dl>
       </div>
@@ -102,9 +104,10 @@ export function MiniStat({
         </span>
         {/* Inline where it fits, so the small stats stay the same height and
             the cards level; a detail too long for its column wraps under the
-            value instead of running into the next stat. */}
+            value, and then onto a second line, instead of running into the
+            next stat. */}
         {detail && (
-          <span className='whitespace-nowrap text-xs font-normal text-slate-500'>
+          <span className='min-w-0 text-xs font-normal text-slate-400'>
             {detail}
           </span>
         )}

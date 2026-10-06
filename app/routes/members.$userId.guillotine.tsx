@@ -9,9 +9,19 @@ import PercentileStrip from '~/components/layout/profile/PercentileStrip';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import { Trophies } from '~/components/layout/profile/SeasonFinish';
+import SegmentedControl from '~/components/layout/profile/SegmentedControl';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
+import {
+  LegendItem,
+  Swatch,
+  WeekLegend,
+} from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
-import { leagueKind, ordinal, pts } from '~/libs/guillotine/display';
+import { ordinal, plural, pts } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
+import { leagueKind } from '~/libs/guillotine/display';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getGuillotineProfile } from '~/models/profile/guillotine.server';
 import type {
@@ -42,15 +52,12 @@ type Players = Record<
   }
 >;
 
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
 /** "2025 Free" - the full names are long, and only the year and kind differ. */
 const seasonLabel = (season: { year: number; leagueName: string }) =>
   `${season.year} ${leagueKind(season.leagueName)}`;
 
 const finishLabel = (season: GuillotineSeason) => {
-  if (season.place === 1) return 'Champion';
+  if (season.place === 1) return '🏆 1st';
   if (season.alive) return 'Alive';
   return season.place ? ordinal(season.place) : '—';
 };
@@ -71,8 +78,8 @@ export default function MemberGuillotine() {
   return (
     <div className='space-y-8'>
       <Career career={profile.career} seasons={profile.seasons} />
-      <Survival seasons={profile.seasons} />
       <BySeason seasons={profile.seasons} players={profile.players} />
+      <Survival seasons={profile.seasons} />
       {profile.claims.length > 0 && (
         <WaiverClaims claims={profile.claims} players={profile.players} />
       )}
@@ -104,12 +111,12 @@ function Career({
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-3'>
         <CareerCard
-          title='Best Finish'
+          title='Finishes'
           lead={
-            best ? (
-              <span className={best.place === 1 ? 'text-amber-300' : undefined}>
-                {best.place === 1 ? '🏆 Champion' : ordinal(best.place)}
-              </span>
+            career.titles > 0 ? (
+              <Trophies titles={career.titles} />
+            ) : best ? (
+              ordinal(best.place)
             ) : (
               '—'
             )
@@ -119,7 +126,7 @@ function Career({
               ? 'no finishes yet'
               : best.place === 1
               ? `${plural(career.titles, 'title')}, latest ${seasonLabel(best)}`
-              : seasonLabel(best)
+              : `best finish, ${seasonLabel(best)}`
           }
           meter={
             <PercentileStrip
@@ -175,7 +182,7 @@ function Career({
             tone='text-emerald-300'
             detail={
               career.bestWeek &&
-              `${seasonLabel(career.bestWeek)}, Wk ${career.bestWeek.week}`
+              `${seasonLabel(career.bestWeek)}, week ${career.bestWeek.week}`
             }
           />
           <MiniStat
@@ -189,7 +196,7 @@ function Career({
             hint='The fewest points they ever survived the chop by'
             detail={
               career.closestEscape &&
-              `${seasonLabel(career.closestEscape)}, Wk ${
+              `${seasonLabel(career.closestEscape)}, week ${
                 career.closestEscape.week
               }`
             }
@@ -233,19 +240,38 @@ function Career({
   );
 }
 
-const survivalTone = (week: SurvivalWeek) => {
+/**
+ * What each square means. They differ by lightness and by shape as well as by
+ * hue - bright for a top-three week, mid grey for a safe one, an amber outline
+ * for a narrow escape and a dark square marked ✕ for the chop - so they read
+ * apart with red-green colour blindness too.
+ */
+const SURVIVAL = {
+  top: { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 3 that week' },
+  survived: { tone: 'bg-slate-500 text-white', label: 'Survived' },
+  close: {
+    tone: 'bg-slate-500 text-white ring-2 ring-inset ring-amber-300',
+    label: 'Survived by under 5',
+  },
+  chopped: { tone: 'bg-rose-800 text-rose-50', label: 'Chopped' },
+  gone: { tone: 'bg-slate-800', label: 'Already out' },
+  future: {
+    tone: 'border border-dashed border-slate-500',
+    label: 'Still to play',
+  },
+} as const;
+
+const survivalKind = (week: SurvivalWeek): keyof typeof SURVIVAL => {
   switch (week.state) {
     case 'chopped':
-      return 'bg-rose-600 text-white';
+      return 'chopped';
     case 'survived':
-      if (week.margin !== null && week.margin < 5)
-        return 'bg-amber-500 text-slate-950';
-      if (week.rank <= 3) return 'bg-emerald-500 text-slate-950';
-      return 'bg-slate-400 text-slate-950';
+      if (week.margin !== null && week.margin < 5) return 'close';
+      return week.rank <= 3 ? 'top' : 'survived';
     case 'gone':
-      return 'bg-slate-800';
+      return 'gone';
     default:
-      return 'border border-dashed border-slate-600';
+      return 'future';
   }
 };
 
@@ -255,11 +281,11 @@ const survivalTitle = (week: SurvivalWeek) => {
       ? `Week ${week.week}: already chopped`
       : `Week ${week.week}: not played yet`;
   }
-  const base = `Week ${week.week}: ${pts(week.points)} pts, ${ordinal(
+  const base = `Week ${week.week}: ${pts(week.points)} points, ${ordinal(
     week.rank,
   )} of the week`;
   return week.state === 'chopped'
-    ? `${base} - chopped`
+    ? `${base}, chopped`
     : week.margin !== null
     ? `${base}, ${pts(week.margin)} above the chop`
     : base;
@@ -271,7 +297,10 @@ const survivalTitle = (week: SurvivalWeek) => {
  */
 function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
   return (
-    <ProfileSection title='Survival by Week'>
+    <ProfileSection
+      title='Week by Week'
+      description='A square for each week of each season: how long they lasted, and how close each week was.'
+    >
       <div className='space-y-2'>
         {seasons.map(season => (
           <div
@@ -289,9 +318,9 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
               className={clsx(
                 'text-right text-sm font-semibold md:order-last',
                 season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : season.alive
-                  ? 'text-emerald-300'
+                  ? TEXT.good
                   : 'text-slate-300',
               )}
             >
@@ -305,33 +334,56 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                 gridTemplateColumns: `repeat(${season.weeks.length}, minmax(0, 1fr))`,
               }}
             >
-              {season.weeks.map(week => (
-                <div
-                  key={week.week}
-                  title={survivalTitle(week)}
-                  className={clsx(
-                    'flex h-4 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
-                    survivalTone(week),
-                  )}
-                >
-                  {/* Too narrow to read on a phone, and for decimals until the
-                      squares are wide; the hover text always has it. */}
-                  {'points' in week && (
-                    <>
-                      <span className='hidden md:inline xl:hidden'>
-                        {Math.round(week.points)}
-                      </span>
-                      <span className='hidden xl:inline'>
-                        {pts(week.points)}
-                      </span>
-                    </>
-                  )}
-                </div>
-              ))}
+              {season.weeks.map(week => {
+                const kind = survivalKind(week);
+                return (
+                  <div
+                    key={week.week}
+                    title={survivalTitle(week)}
+                    className={clsx(
+                      'relative flex h-5 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
+                      SURVIVAL[kind].tone,
+                    )}
+                  >
+                    {/* The chop is marked at every size. Scores are too narrow
+                        to read on a phone, and decimals wait until the squares
+                        are wide; the hover text always has them. */}
+                    {kind === 'chopped' ? (
+                      <span aria-hidden='true'>✕</span>
+                    ) : (
+                      'points' in week && (
+                        <span aria-hidden='true'>
+                          <span className='hidden md:inline xl:hidden'>
+                            {Math.round(week.points)}
+                          </span>
+                          <span className='hidden xl:inline'>
+                            {pts(week.points)}
+                          </span>
+                        </span>
+                      )
+                    )}
+                    <span className='sr-only'>{survivalTitle(week)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
+      <WeekLegend>
+        {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
+          <LegendItem
+            key={kind}
+            swatch={
+              <Swatch tone={clsx(SURVIVAL[kind].tone, 'text-[0.6rem]')}>
+                {kind === 'chopped' && '✕'}
+              </Swatch>
+            }
+          >
+            {SURVIVAL[kind].label}
+          </LegendItem>
+        ))}
+      </WeekLegend>
     </ProfileSection>
   );
 }
@@ -351,7 +403,7 @@ function WeekMark({
       ) : (
         <>
           {value}
-          <span className='ml-1.5 text-xs text-slate-500'>Wk {week}</span>
+          <span className='ml-1.5 text-xs text-slate-400'>Week {week}</span>
         </>
       )}
     </td>
@@ -372,7 +424,7 @@ function BySeason({
           'Season',
           'Finish',
           'Chopped',
-          'Avg',
+          'Average',
           'Best Week',
           'Closest Escape',
           'Claims',
@@ -380,6 +432,7 @@ function BySeason({
           'FAAB Left',
           'Biggest Claim',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[3, 4, 5, 6, 7, 8]}
       >
         {seasons.map(season => (
@@ -397,9 +450,9 @@ function BySeason({
               className={clsx(
                 'px-2 py-2 font-semibold',
                 season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : season.alive
-                  ? 'text-emerald-300'
+                  ? TEXT.good
                   : 'text-slate-200',
               )}
             >
@@ -421,7 +474,7 @@ function BySeason({
             />
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.claimsWon}
-              <span className='ml-1 text-slate-500'>
+              <span className='ml-1 text-slate-400'>
                 / {season.claimsWon + season.bidsLost}
               </span>
             </td>
@@ -464,12 +517,12 @@ function PlayerCell({
 }) {
   const player = players[sleeperId];
   return (
-    <span className='inline-flex items-center gap-2'>
+    <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
       <PositionChip position={player?.position ?? null} />
       <span className='font-medium text-slate-100'>
         {player?.name ?? sleeperId}
       </span>
-      <span className='text-xs text-slate-500'>{player?.nflTeam ?? 'FA'}</span>
+      <span className='text-xs text-slate-400'>{player?.nflTeam ?? 'FA'}</span>
     </span>
   );
 }
@@ -506,7 +559,7 @@ function WaiverClaims({
   const years = [...new Set(claims.map(claim => claim.year))].sort(
     (a, b) => b - a,
   );
-  const [year, setYear] = useState<number | 'all'>('all');
+  const [year, setYear] = useState<number | 'all'>(years[0] ?? 'all');
   const [sort, setSort] = useState<ClaimSort>('bid');
   const [showAll, setShowAll] = useState(false);
 
@@ -520,23 +573,16 @@ function WaiverClaims({
       title='Waiver Claims'
       action={
         <div className='flex flex-wrap items-center gap-3'>
-          <div className='flex items-center gap-1'>
-            <span className='mr-1 text-sm text-slate-400'>Sort by</span>
-            {(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(option => (
-              <button
-                key={option}
-                type='button'
-                onClick={() => setSort(option)}
-                className={clsx(
-                  'rounded px-2.5 py-1 text-sm',
-                  sort === option
-                    ? 'bg-white font-medium text-slate-900'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-                )}
-              >
-                {CLAIM_SORTS[option].label}
-              </button>
-            ))}
+          <div className='flex items-center gap-2'>
+            <span className='text-sm text-slate-400'>Sort by</span>
+            <SegmentedControl
+              label='Sort by'
+              value={sort}
+              onChange={setSort}
+              options={(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(
+                option => ({ value: option, label: CLAIM_SORTS[option].label }),
+              )}
+            />
           </div>
           {years.length > 1 && (
             <YearFilter years={years} value={year} onChange={setYear} />
@@ -546,6 +592,7 @@ function WaiverClaims({
     >
       <ProfileTable
         headers={['Player', 'Bid', 'Season', 'Week']}
+        primaryColumns={[1]}
         numericColumns={[1, 3]}
       >
         {visible.map(claim => (
@@ -553,7 +600,7 @@ function WaiverClaims({
             key={`${claim.year}-${claim.leagueName}-${claim.sleeperId}-${claim.week}`}
             className='border-b border-slate-700/60'
           >
-            <td className='whitespace-nowrap px-2 py-2'>
+            <td className='px-2 py-2 sm:whitespace-nowrap'>
               <PlayerCell sleeperId={claim.sleeperId} players={players} />
             </td>
             <td className='px-2 py-2 text-right font-semibold tabular-nums text-white'>
@@ -569,13 +616,12 @@ function WaiverClaims({
         ))}
       </ProfileTable>
       {filtered.length > CLAIMS_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${filtered.length} claims`}
-        </button>
+        <ShowAllButton
+          total={filtered.length}
+          noun='claims'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -614,29 +660,22 @@ function DraftPicks({
           )}
           {/* Only when they played both leagues that year. */}
           {inYear.length > 1 && (
-            <div className='flex gap-1'>
-              {inYear.map(candidate => (
-                <button
-                  key={candidate.leagueId}
-                  type='button'
-                  onClick={() => setKind(leagueKind(candidate.leagueName))}
-                  className={clsx(
-                    'rounded px-2.5 py-1 text-sm',
-                    candidate.leagueId === season.leagueId
-                      ? 'bg-white font-medium text-slate-900'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-                  )}
-                >
-                  {leagueKind(candidate.leagueName)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              label='League'
+              value={leagueKind(season.leagueName)}
+              onChange={setKind}
+              options={inYear.map(candidate => ({
+                value: leagueKind(candidate.leagueName),
+                label: leagueKind(candidate.leagueName),
+              }))}
+            />
           )}
         </div>
       }
     >
       <ProfileTable
-        headers={['Rd', 'Pick', 'Player', 'Teams']}
+        headers={['Round', 'Pick', 'Player', 'Teams']}
+        primaryColumns={[2, 3]}
         numericColumns={[0, 1, 3]}
       >
         {season.picks.map(pick => (
@@ -647,14 +686,14 @@ function DraftPicks({
             <td className='w-12 px-2 py-1.5 text-right tabular-nums text-slate-400'>
               {pick.pickNo}
             </td>
-            <td className='whitespace-nowrap px-2 py-1.5'>
+            <td className='px-2 py-1.5 sm:whitespace-nowrap'>
               <PlayerCell sleeperId={pick.sleeperId} players={players} />
             </td>
             <td
               title={`On ${plural(pick.teams, 'team')} over the season`}
               className={clsx(
                 'w-16 px-2 py-1.5 text-right tabular-nums',
-                pick.teams > 1 ? 'text-white' : 'text-slate-500',
+                pick.teams > 1 ? 'text-white' : 'text-slate-400',
               )}
             >
               {pick.teams}

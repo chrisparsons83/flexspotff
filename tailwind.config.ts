@@ -41,7 +41,9 @@ const config: Config = {
         monarch: '#ab59b6',
         gold: '#d4af37',
         // The sacko's colour. `bronze` reads orange next to the poop emoji.
-        brown: '#a06a40',
+        // `light` is the same brown lifted far enough to read as text on the
+        // dark panels; the base shade only has contrast enough for fills.
+        brown: { DEFAULT: '#a06a40', light: '#c99568' },
         silver: '#c0c0c0',
         bronze: '#cd7f32',
         def: 'rgba(134, 73, 53, 0.8)',

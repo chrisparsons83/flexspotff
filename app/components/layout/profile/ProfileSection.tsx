@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 
 type Props = {
   title: string;
-  /** Sits under the title, for what the section is actually counting. */
+  /**
+   * Sits under the title, for what the section is actually counting. A full
+   * sentence, ending in a full stop.
+   */
   description?: string;
   /** Controls belonging to this section, e.g. the game log's year filter. */
   action?: ReactNode;
@@ -20,6 +23,9 @@ type Props = {
  * behind it, with the stat tiles inside a step darker again. That ordering is
  * what makes the nesting legible; the headings are `not-prose` for the same
  * reason, since prose sizing made every title compete with the member's name.
+ *
+ * The padding steps down on a phone, where three nested panels' worth of it
+ * would take a fifth of the screen's width.
  */
 export default function ProfileSection({
   title,
@@ -29,7 +35,7 @@ export default function ProfileSection({
   children,
 }: Props) {
   return (
-    <section className='not-prose rounded-lg border border-slate-600/50 bg-slate-800/60 p-4 md:p-5'>
+    <section className='not-prose rounded-lg border border-slate-600/50 bg-slate-800/60 p-3 sm:p-4 md:p-5'>
       <div className='mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2'>
         <div>
           <h3 className='m-0 text-lg font-semibold text-white'>{title}</h3>

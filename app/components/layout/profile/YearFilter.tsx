@@ -1,8 +1,11 @@
-import clsx from 'clsx';
+import SegmentedControl from './SegmentedControl';
 
 /**
  * Year buttons plus "All", for narrowing a log to one season. `showAll={false}`
  * drops "All" for views that only make sense one season at a time.
+ *
+ * Every log opens on the latest season, so the year to pass in first is the
+ * newest one.
  */
 export default function YearFilter({
   years,
@@ -16,22 +19,14 @@ export default function YearFilter({
   showAll?: boolean;
 }) {
   return (
-    <div className='flex flex-wrap gap-1'>
-      {[...years, ...(showAll ? ['all' as const] : [])].map(option => (
-        <button
-          key={option}
-          type='button'
-          onClick={() => onChange(option)}
-          className={clsx(
-            'rounded px-2.5 py-1 text-sm',
-            value === option
-              ? 'bg-white font-medium text-slate-900'
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-          )}
-        >
-          {option === 'all' ? 'All' : option}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl<number | 'all'>
+      label='Season'
+      value={value}
+      onChange={onChange}
+      options={[
+        ...years.map(year => ({ value: year, label: String(year) })),
+        ...(showAll ? [{ value: 'all' as const, label: 'All' }] : []),
+      ]}
+    />
   );
 }

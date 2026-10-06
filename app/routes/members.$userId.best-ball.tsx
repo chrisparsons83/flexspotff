@@ -10,8 +10,15 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import { CurrentTag } from '~/components/layout/profile/Tag';
+import {
+  ordinal,
+  plural,
+  pts,
+  weekLabel,
+} from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { POSITION_GROUPS } from '~/libs/best-ball/views';
-import { ordinal, pts } from '~/libs/guillotine/display';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
 import type {
@@ -31,9 +38,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 const finishLabel = (season: BestBallSeason) =>
-  season.isComplete && season.place === 1
-    ? 'Champion'
-    : `${ordinal(season.place)}${season.isComplete ? '' : ' (live)'}`;
+  season.isComplete && season.place === 1 ? '🏆 1st' : ordinal(season.place);
 
 export default function MemberBestBall() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -42,7 +47,7 @@ export default function MemberBestBall() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Autodraft Best Ball Mania'
+        contest='Best Ball'
         memberName={summary.user.discordName}
       />
     );
@@ -67,18 +72,19 @@ function Career({ career }: { career: BestBallCareer }) {
         <CareerCard
           title='Finishes'
           lead={career.titles}
-          leadNote={`title${career.titles === 1 ? '' : 's'} in ${
-            career.seasons
-          } season${career.seasons === 1 ? '' : 's'}`}
+          leadNote={`${career.titles === 1 ? 'title' : 'titles'} in ${plural(
+            career.seasons,
+            'season',
+          )}`}
         >
           <MiniStat
             label='Best Finish'
             value={career.bestFinish ? ordinal(career.bestFinish.place) : '—'}
-            tone={career.bestFinish?.place === 1 ? 'text-amber-300' : undefined}
+            tone={career.bestFinish?.place === 1 ? TEXT.champion : undefined}
             detail={career.bestFinish && `${career.bestFinish.year}`}
           />
           <MiniStat
-            label='Avg Finish'
+            label='Average Finish'
             value={pts(career.averageFinish, 1)}
             hint='Across finished seasons'
           />
@@ -99,10 +105,7 @@ function Career({ career }: { career: BestBallCareer }) {
             label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-emerald-300'
-            detail={
-              career.bestWeek &&
-              `${career.bestWeek.year}, Wk ${career.bestWeek.week}`
-            }
+            detail={career.bestWeek && weekLabel(career.bestWeek)}
           />
         </CareerCard>
       </div>
@@ -118,14 +121,15 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
     >
       <ProfileTable
         headers={[
-          'Season',
+          'Year',
           'Finish',
           'Points For',
-          'Back',
+          'Behind 1st',
           'Best Week',
-          'Top Wks',
+          'Top Weeks',
           'Draft Slot',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6]}
       >
         {seasons.map(season => (
@@ -137,17 +141,18 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               >
                 {season.year}
               </Link>
+              {!season.isComplete && <CurrentTag />}
             </td>
             <td
               className={clsx(
                 'px-2 py-2 font-semibold',
                 season.isComplete && season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : 'text-slate-200',
               )}
             >
               {finishLabel(season)}
-              <span className='ml-1 text-xs font-normal text-slate-500'>
+              <span className='ml-1 text-xs font-normal text-slate-400'>
                 of {season.teamCount}
               </span>
             </td>
@@ -161,8 +166,8 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               {season.bestWeek ? (
                 <>
                   {pts(season.bestWeek.points)}
-                  <span className='ml-1.5 text-xs text-slate-500'>
-                    Wk {season.bestWeek.week}
+                  <span className='ml-1.5 text-xs text-slate-400'>
+                    Week {season.bestWeek.week}
                   </span>
                 </>
               ) : (
@@ -303,7 +308,7 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
                       </span>
                       {pick.nflTeam ?? 'FA'}
                       <span className='ml-auto tabular-nums text-white/50'>
-                        R{pick.round}
+                        Round {pick.round}
                       </span>
                     </div>
                   </li>

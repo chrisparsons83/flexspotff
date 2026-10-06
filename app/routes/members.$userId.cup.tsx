@@ -8,10 +8,17 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import SplitBar from '~/components/layout/profile/SplitBar';
+import Tag from '~/components/layout/profile/Tag';
+import Truncate from '~/components/layout/profile/Truncate';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import { plural, pts, signed } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type { CurrentCup } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
@@ -40,20 +47,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return typedjson({ profile: await getCupProfile(userId) });
 };
 
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const points = (value: number | null) =>
-  value === null ? '—' : value.toFixed(2);
-
-/** "+2", "−1", "0" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 0) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
-
 export default function MemberCup() {
   const { profile } = useTypedLoaderData<typeof loader>();
   const summary = useOutletContext<ProfileSummary>();
@@ -63,7 +56,7 @@ export default function MemberCup() {
       <div className='space-y-8'>
         {profile.current && <CurrentCupBanner current={profile.current} />}
         <ContestEmptyState
-          contest='in the Cup'
+          contest='the Cup'
           memberName={summary.user.discordName}
         />
       </div>
@@ -74,8 +67,8 @@ export default function MemberCup() {
     <div className='space-y-8'>
       {profile.current && <CurrentCupBanner current={profile.current} />}
       <Career career={profile.career} />
-      <BracketRuns runs={profile.runs} />
       <SeedingHistory runs={profile.runs} />
+      <BracketRuns runs={profile.runs} />
       <MatchLog games={profile.matchLog} />
     </div>
   );
@@ -84,11 +77,13 @@ export default function MemberCup() {
 function OpponentLink({ opponent }: { opponent: CupOpponent }) {
   return (
     <>
-      {opponent.userId ? (
-        <Link to={`/members/${opponent.userId}/cup`}>{opponent.name}</Link>
-      ) : (
-        opponent.name
-      )}{' '}
+      <Truncate title={opponent.name}>
+        {opponent.userId ? (
+          <Link to={`/members/${opponent.userId}/cup`}>{opponent.name}</Link>
+        ) : (
+          opponent.name
+        )}
+      </Truncate>{' '}
       <span className='text-slate-400'>(#{opponent.seed})</span>
     </>
   );
@@ -110,11 +105,12 @@ function CurrentCupBanner({ current }: { current: CurrentCup }) {
           </span>{' '}
           of {current.fieldSize} after {current.weeksPlayed} of{' '}
           {plural(current.seedingWeeks, 'seeding week')} ·{' '}
-          <span className='tabular-nums'>{current.points.toFixed(2)}</span> pts
+          <span className='tabular-nums'>{current.points.toFixed(2)}</span>{' '}
+          points
         </p>
         <p className='m-0 mt-1 text-sm text-slate-400'>
           {onByePace
-            ? 'On pace for a first-round bye - the top 4 seeds skip the Round of 64.'
+            ? 'On pace for a first-round bye: the top 4 seeds skip the Round of 64.'
             : 'Seeds are set by total points across the seeding weeks; the top 4 get a bye.'}
         </p>
       </Banner>
@@ -208,7 +204,7 @@ function Career({ career }: { career: CupCareer }) {
           <MiniStat
             label='Titles'
             value={career.titles}
-            tone={career.titles > 0 ? 'text-gold' : undefined}
+            tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat label='Finals' value={career.finals} />
           <MiniStat label='Final Fours' value={career.finalFours} />
@@ -252,7 +248,7 @@ function DepthMeter({ depth }: { depth: number }) {
             'flex-1 first:rounded-l-full last:rounded-r-full',
             index < depth
               ? depth >= ROUNDS_TO_WIN
-                ? 'bg-amber-300'
+                ? 'bg-gold'
                 : 'bg-emerald-400'
               : 'bg-slate-700',
           )}
@@ -277,11 +273,17 @@ function SeedChip({ seed, leagueName }: { seed: number; leagueName: string }) {
   );
 }
 
+/**
+ * A pill names its round, so how it went is in its look alone - and that has
+ * to survive red-green colour blindness. A win is bright and solid, a loss
+ * dark with a dashed edge, a bye an empty outline and a game still being
+ * played a dotted one.
+ */
 const PILL_TONE: Record<RoundResult['status'], string> = {
-  W: 'bg-emerald-400/90 text-emerald-950',
-  L: 'bg-rose-400/90 text-rose-950',
+  W: 'bg-emerald-300 text-emerald-950',
+  L: 'border border-dashed border-rose-400 bg-rose-950 text-rose-200',
   BYE: 'border border-slate-400 text-slate-300',
-  PENDING: 'border border-amber-300 text-amber-200',
+  PENDING: 'border border-dotted border-amber-300 text-amber-200',
 };
 
 function describeRound(result: RoundResult): string {
@@ -292,7 +294,7 @@ function describeRound(result: RoundResult): string {
     result.status === 'W' ? 'won' : result.status === 'L' ? 'lost' : 'playing';
   const against = result.opponent
     ? ` vs ${result.opponent.name} (#${result.opponent.seed})`
-    : ' - opponent to be decided';
+    : ', opponent to be decided';
   const score =
     result.points !== null && result.opponentPoints !== null
       ? `, ${result.points.toFixed(2)}–${result.opponentPoints.toFixed(2)}`
@@ -308,7 +310,10 @@ function describeRound(result: RoundResult): string {
  */
 function BracketRuns({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection title='Bracket Runs'>
+    <ProfileSection
+      title='Bracket Runs'
+      description='Every Cup as a row of rounds, filled as far as the run went.'
+    >
       <ul className='m-0 list-none space-y-2 p-0'>
         {runs.map(run => (
           <RunRow key={run.year} run={run} />
@@ -365,7 +370,9 @@ function RunRow({ run }: { run: CupRun }) {
         </li>
       </ol>
 
-      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
+      {/* Its own line on a phone, where squeezing it beside the rounds
+          left a column a word wide. */}
+      <div className='flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:basis-0'>
         <Finish run={run} />
         {run.eliminatedBy && (
           <span className='text-slate-400'>
@@ -388,7 +395,7 @@ function Finish({ run }: { run: CupRun }) {
       className={clsx(
         'font-medium',
         run.status === 'champion'
-          ? 'text-gold'
+          ? TEXT.champion
           : run.status === 'alive'
           ? 'text-amber-200'
           : 'text-slate-100',
@@ -421,9 +428,20 @@ function RunLegend() {
 /** Seed and seeding points by year, with the byes they earned. */
 function SeedingHistory({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection title='Seeding'>
+    <ProfileSection
+      title='By Season'
+      description='Seeds come from total points across the seeding weeks; the top 4 get a bye.'
+    >
       <ProfileTable
-        headers={['Year', 'League', 'Seed', 'Seeding Pts', 'Finish', 'Field']}
+        headers={[
+          'Year',
+          'League',
+          'Seed',
+          'Seeding Points',
+          'Finish',
+          'Field',
+        ]}
+        primaryColumns={[2, 4]}
         numericColumns={[2, 3, 5]}
       >
         {runs.map(run => (
@@ -441,7 +459,7 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
               #{run.seed}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
-              {points(run.seedingPoints)}
+              {pts(run.seedingPoints)}
             </td>
             <td className='px-2 py-2'>
               <Finish run={run} />
@@ -457,17 +475,27 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
 }
 
 const RESULT_TONE: Record<RoundResult['status'], string> = {
-  W: 'text-green-400',
-  L: 'text-red-400',
+  W: TEXT.good,
+  L: TEXT.bad,
   BYE: 'text-slate-400',
-  PENDING: 'text-amber-300',
+  PENDING: TEXT.live,
 };
 
-function Tag({ tone, children }: { tone: string; children: string }) {
+/** How a Cup game went: the result, and whether it was an upset. */
+function MatchResult({ game }: { game: MatchLogRow }) {
   return (
-    <span className={clsx('rounded px-1.5 py-0.5 text-xs', tone)}>
-      {children}
-    </span>
+    <>
+      <span className={clsx('font-bold', RESULT_TONE[game.status])}>
+        {game.status === 'PENDING' ? 'Live' : game.status}
+      </span>
+      {game.upset && game.status === 'W' && (
+        <Tag tone='win'>Beat higher seed</Tag>
+      )}
+      {game.upset && game.status === 'L' && (
+        <Tag tone='loss'>Lost to lower seed</Tag>
+      )}
+      {game.decidedBySeed && <Tag tone='neutral'>Tie, higher seed</Tag>}
+    </>
   );
 }
 
@@ -475,7 +503,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
   const years = Array.from(new Set(games.map(game => game.year))).sort(
     (a, b) => b - a,
   );
-  const [year, setYear] = useState<number | 'all'>('all');
+  const [year, setYear] = useState<number | 'all'>(years[0] ?? 'all');
   const visible = year === 'all' ? games : games.filter(g => g.year === year);
 
   return (
@@ -486,6 +514,39 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
       <ProfileTable
         headers={['Year', 'Round', 'Opponent', 'Score', 'Margin', 'Result']}
         numericColumns={[3, 4]}
+        mobileCards={
+          <MobileCards>
+            {visible.map(game => (
+              <MobileCard
+                key={`${game.year}-${game.round}`}
+                title={
+                  game.status === 'BYE' ? (
+                    <span className='text-slate-400'>Bye</span>
+                  ) : game.opponent ? (
+                    <>
+                      vs <OpponentLink opponent={game.opponent} />
+                    </>
+                  ) : (
+                    <span className='text-slate-400'>To be decided</span>
+                  )
+                }
+                subtitle={`${year === 'all' ? `${game.year} · ` : ''}${
+                  ROUND_LABEL[game.round]
+                }${
+                  game.weeks > 1 && game.status !== 'BYE'
+                    ? `, ${game.weeks} weeks`
+                    : ''
+                }`}
+                value={
+                  game.status === 'BYE'
+                    ? undefined
+                    : `${pts(game.points)} – ${pts(game.opponentPoints)}`
+                }
+                status={<MatchResult game={game} />}
+              />
+            ))}
+          </MobileCards>
+        }
       >
         {visible.map(game => {
           const margin =
@@ -501,7 +562,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
               <td className='whitespace-nowrap px-2 py-2'>
                 {ROUND_LABEL[game.round]}
                 {game.weeks > 1 && game.status !== 'BYE' && (
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {game.weeks} weeks
                   </span>
                 )}
@@ -518,17 +579,17 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {game.status === 'BYE'
                   ? '—'
-                  : `${points(game.points)} – ${points(game.opponentPoints)}`}
+                  : `${pts(game.points)} – ${pts(game.opponentPoints)}`}
               </td>
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
                   margin === null
-                    ? 'text-slate-500'
+                    ? 'text-slate-400'
                     : margin > 0
-                    ? 'text-emerald-300'
+                    ? TEXT.good
                     : margin < 0
-                    ? 'text-rose-300'
+                    ? TEXT.bad
                     : 'text-slate-300',
                 )}
               >
@@ -537,26 +598,9 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                   : signed(margin, 2)}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
-                <span
-                  className={clsx('mr-2 font-bold', RESULT_TONE[game.status])}
-                >
-                  {game.status === 'PENDING' ? 'Live' : game.status}
+                <span className='inline-flex items-center gap-2'>
+                  <MatchResult game={game} />
                 </span>
-                {game.upset && game.status === 'W' && (
-                  <Tag tone='bg-emerald-400/15 text-emerald-300'>
-                    Beat higher seed
-                  </Tag>
-                )}
-                {game.upset && game.status === 'L' && (
-                  <Tag tone='bg-rose-400/15 text-rose-300'>
-                    Lost to lower seed
-                  </Tag>
-                )}
-                {game.decidedBySeed && (
-                  <Tag tone='bg-slate-600/40 text-slate-300'>
-                    Tie, higher seed
-                  </Tag>
-                )}
               </td>
             </tr>
           );
