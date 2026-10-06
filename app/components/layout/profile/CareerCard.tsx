@@ -1,3 +1,4 @@
+import InfoTip from './InfoTip';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -10,6 +11,7 @@ export default function CareerCard({
   lead,
   leadNote,
   meter,
+  className,
   children,
 }: {
   title: ReactNode;
@@ -21,10 +23,12 @@ export default function CareerCard({
   leadNote?: ReactNode;
   /** A full-width bar under the headline, so a wide card is not mostly air. */
   meter?: ReactNode;
+  /** Placement in the parent grid, e.g. a card two rows tall. */
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className='rounded-md bg-slate-900/50 p-4'>
+    <div className={clsx('rounded-md bg-slate-900/50 p-4', className)}>
       <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
       <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
         {lead}
@@ -52,6 +56,7 @@ export function MiniStat({
   unit,
   detail,
   hint,
+  info,
   tone = 'text-slate-100',
 }: {
   label: string;
@@ -62,15 +67,24 @@ export function MiniStat({
   detail?: string | null;
   /** Hover text for a stat whose label cannot say everything it counts. */
   hint?: string;
+  /**
+   * A fuller explanation behind an ⓘ beside the label, for a stat that needs
+   * more than a line of hover text to make sense.
+   */
+  info?: ReactNode;
   tone?: string;
 }) {
   return (
     <div className='flex flex-col'>
       <dt
-        className={clsx('text-xs text-slate-400', hint && 'cursor-help')}
+        className={clsx(
+          'flex items-center gap-1 text-xs text-slate-400',
+          hint && 'cursor-help',
+        )}
         title={hint}
       >
         {label}
+        {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
       </dt>
       <dd
         className={clsx(

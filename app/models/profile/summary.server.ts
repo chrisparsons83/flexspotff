@@ -124,8 +124,11 @@ export async function getProfileSummary(
     }),
     // Aggregated rather than counted so these also report the earliest year
     // played - see memberSince below. Same query, one more column.
-    prisma.dFSSurvivorUserYear.aggregate({
-      where: { userId },
+    // Entries in scored weeks, not season rows: a season is created with its
+    // seventeen weeks up front, so a member can have one and never have set
+    // a lineup.
+    prisma.dFSSurvivorUserEntry.aggregate({
+      where: { userId, userWeek: { isScored: true } },
       _count: { _all: true },
       _min: { year: true },
     }),
