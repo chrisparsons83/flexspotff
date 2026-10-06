@@ -40,6 +40,8 @@ type Props = {
  * The selector walks down from the table by child steps, so it never reaches
  * the folded-away cells shown again inside a row's own panel.
  */
+// Up to 24 columns, which covers Most Streamed's column per season for a
+// decade and more to come.
 const HIDE_ON_PHONE: Record<number, string> = {
   2: 'max-lg:[&>table>*>tr>*:nth-child(2)]:hidden',
   3: 'max-lg:[&>table>*>tr>*:nth-child(3)]:hidden',
@@ -56,6 +58,14 @@ const HIDE_ON_PHONE: Record<number, string> = {
   14: 'max-lg:[&>table>*>tr>*:nth-child(14)]:hidden',
   15: 'max-lg:[&>table>*>tr>*:nth-child(15)]:hidden',
   16: 'max-lg:[&>table>*>tr>*:nth-child(16)]:hidden',
+  17: 'max-lg:[&>table>*>tr>*:nth-child(17)]:hidden',
+  18: 'max-lg:[&>table>*>tr>*:nth-child(18)]:hidden',
+  19: 'max-lg:[&>table>*>tr>*:nth-child(19)]:hidden',
+  20: 'max-lg:[&>table>*>tr>*:nth-child(20)]:hidden',
+  21: 'max-lg:[&>table>*>tr>*:nth-child(21)]:hidden',
+  22: 'max-lg:[&>table>*>tr>*:nth-child(22)]:hidden',
+  23: 'max-lg:[&>table>*>tr>*:nth-child(23)]:hidden',
+  24: 'max-lg:[&>table>*>tr>*:nth-child(24)]:hidden',
 };
 
 /**
@@ -96,6 +106,23 @@ export default function ProfileTable({
     : [];
   const folds = folded.length > 0;
 
+  // The footer folds as well as the body, so a totals row's hidden cells
+  // can still be opened on a phone.
+  const foldRows = (rows: ReactNode) =>
+    flatten(rows).map((row, index) =>
+      isValidElement(row) && row.type === 'tr' ? (
+        <FoldingRow
+          key={row.key ?? index}
+          row={row as ReactElement<{ children?: ReactNode }>}
+          headers={headers}
+          folded={folded}
+          span={headers.length - folded.length + 1}
+        />
+      ) : (
+        row
+      ),
+    );
+
   return (
     <>
       <div
@@ -129,26 +156,10 @@ export default function ProfileTable({
               )}
             </tr>
           </thead>
-          <tbody>
-            {folds
-              ? flatten(children).map((row, index) =>
-                  isValidElement(row) && row.type === 'tr' ? (
-                    <FoldingRow
-                      key={row.key ?? index}
-                      row={row as ReactElement<{ children?: ReactNode }>}
-                      headers={headers}
-                      folded={folded}
-                      span={headers.length - folded.length + 1}
-                    />
-                  ) : (
-                    row
-                  ),
-                )
-              : children}
-          </tbody>
+          <tbody>{folds ? foldRows(children) : children}</tbody>
           {footer && (
             <tfoot className='border-t-2 border-slate-600 font-medium'>
-              {footer}
+              {folds ? foldRows(footer) : footer}
             </tfoot>
           )}
         </table>
@@ -176,7 +187,17 @@ function FoldingRow({
 }) {
   const [open, setOpen] = useState(false);
   const cells = flatten(row.props.children);
-  const hidden = folded.filter(index => cells[index] !== undefined);
+  // An empty placeholder cell, like a totals row's blank under a rank, has
+  // nothing worth a line in the panel.
+  const hidden = folded.filter(index => {
+    const cell = cells[index];
+    if (cell === undefined) return false;
+    return !(
+      isValidElement<{ children?: ReactNode }>(cell) &&
+      typeof cell.type === 'string' &&
+      cell.props.children == null
+    );
+  });
 
   // A row with fewer cells than columns, like a divider, has nothing to fold.
   if (hidden.length === 0) return row;

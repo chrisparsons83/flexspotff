@@ -104,9 +104,10 @@ export function MiniStat({
         </span>
         {/* Inline where it fits, so the small stats stay the same height and
             the cards level; a detail too long for its column wraps under the
-            value instead of running into the next stat. */}
+            value, and then onto a second line, instead of running into the
+            next stat. */}
         {detail && (
-          <span className='whitespace-nowrap text-xs font-normal text-slate-400'>
+          <span className='min-w-0 text-xs font-normal text-slate-400'>
             {detail}
           </span>
         )}

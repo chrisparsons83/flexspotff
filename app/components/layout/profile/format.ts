@@ -3,9 +3,12 @@
  * the same on each tab.
  */
 
-/** A score to a fixed number of places, or a dash when there is none. */
-export const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
+/**
+ * A score to a fixed number of places, or a dash when there is none; and
+ * "1st", "22nd". The game pages already write them this way, so the profile
+ * shares their copy rather than keeping a second one.
+ */
+export { ordinal, pts } from '~/libs/guillotine/display';
 
 /** "+2.10", "−1.35", "0.00" - a proper minus, so a column of them lines up. */
 export const signed = (value: number, digits = 0) =>
@@ -23,12 +26,6 @@ export const pct = (value: number | null | undefined, digits = 0) =>
 
 export const plural = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-export const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
-};
 
 /**
  * "2024, week 3" - a week inside a sentence or a stat's small print. A week
