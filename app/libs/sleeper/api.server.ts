@@ -17,6 +17,7 @@ import {
   sleeperRosterOwnersJson,
   sleeperRostershipJson,
   sleeperStatsJson,
+  sleeperSurvivorRostersJson,
   sleeperTeamJson,
   sleeperTransactionsJson,
   sleeperUserJson,
@@ -54,6 +55,13 @@ export const getGuillotineRosters = (sleeperLeagueId: string) =>
   sleeperFetch(
     `/v1/league/${sleeperLeagueId}/rosters`,
     sleeperGuillotineRostersJson,
+  );
+
+/** The same endpoint again, with a survivor pool's picks and eliminations. */
+export const getSurvivorRosters = (sleeperLeagueId: string) =>
+  sleeperFetch(
+    `/v1/league/${sleeperLeagueId}/rosters`,
+    sleeperSurvivorRostersJson,
   );
 
 export const getLeagueUsers = (sleeperLeagueId: string) =>

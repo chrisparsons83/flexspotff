@@ -303,6 +303,7 @@ describe('Admin unmatched Sleeper users', () => {
         teamsUpdated: 2,
         guillotineTeamsUpdated: 0,
         bestBallTeamsUpdated: 0,
+        survivorEntriesUpdated: 0,
       });
 
       const data = await (

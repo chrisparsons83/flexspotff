@@ -244,6 +244,117 @@ model GuillotineDraftPick {
   @@unique([guillotineLeagueId, pickNo])
 }
 
+/// Where a survivor pool was played, which decides how it is loaded. See
+/// docs/survivor/plan.md, Phase 0.
+enum SurvivorSource {
+  /// A Sleeper Pick'em league of the survivor type (2024 on). Added by URL
+  /// and kept in sync.
+  SLEEPER
+  /// A Yahoo Survival Football group (2022-2023). Loaded once from the
+  /// bundled history file; Yahoo is never called.
+  YAHOO
+}
+
+enum SurvivorPickResult {
+  WIN
+  LOSS
+  /// The pick's game has not finished.
+  PENDING
+}
+
+/// One survivor pool: pick a team to win each week, never the same team
+/// twice, and one loss or missed pick is out. A season can hold several pools,
+/// one after another: when everyone is out, a new pool starts the next week.
+model SurvivorPool {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  year       Int
+  name       String
+  source     SurvivorSource
+  /// The Sleeper league ID, or the Yahoo group key ("426.g.24316").
+  externalId String         @unique
+  /// The first week anyone picked in, which orders pools within a season.
+  startWeek  Int            @default(1)
+  /// A Sleeper invite link for the pool, shown on the Games page while the
+  /// pool is open. Set by hand on the admin page.
+  inviteUrl  String?
+
+  /// Settled once the pool is over: everyone is out but the winner(s), or the
+  /// season has ended. Finishes are only written then.
+  isComplete   Boolean   @default(false)
+  lastSyncedAt DateTime?
+
+  entries SurvivorEntry[]
+
+  @@index([year])
+}
+
+/// One entry in a pool, and how far it got.
+model SurvivorEntry {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// The Sleeper roster ID, or the Yahoo team key.
+  externalId  String
+  /// What the source calls the player: their Sleeper display name, or the
+  /// Yahoo manager's nickname.
+  displayName String?
+  /// The Yahoo pick set's own name ("Bakron's B Team"). Null on Sleeper.
+  entryName   String?
+
+  sleeperOwnerId String?
+  /// Yahoo's account ID for the manager. Null when Yahoo has hidden it (it
+  /// sends "--" for a closed account).
+  yahooGuid      String?
+  /// Follows the Sleeper or Yahoo account's match when there is one. An entry
+  /// with neither is assigned a member by hand, and sync leaves that alone.
+  user           User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId         String?
+
+  /// The week this entry lost or missed its pick. Null while alive, and for a
+  /// winner who was never knocked out.
+  eliminatedWeek Int?
+  /// The last week this entry picked a winner: how far it got. 0 if it never
+  /// won a pick.
+  survivedWeek   Int  @default(0)
+  /// 1 is a winner, and ties share a place. Null until the pool is complete.
+  finish         Int?
+
+  pool           SurvivorPool @relation(fields: [survivorPoolId], references: [id], onDelete: Cascade)
+  survivorPoolId String
+
+  picks SurvivorPick[]
+
+  @@unique([survivorPoolId, externalId])
+  @@index([userId])
+}
+
+model SurvivorPick {
+  id String @id @default(cuid())
+
+  week   Int
+  /// NFL team abbreviation, as NFLTeam.sleeperId has it.
+  team   String
+  result SurvivorPickResult
+
+  entry           SurvivorEntry @relation(fields: [survivorEntryId], references: [id], onDelete: Cascade)
+  survivorEntryId String
+
+  @@unique([survivorEntryId, week])
+}
+
+/// A Yahoo account linked to a member, as SleeperUser is for Sleeper. Only
+/// the Yahoo survivor history uses it.
+model YahooUser {
+  yahooGuid String @unique
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+}
+
 /// Autodraft Best Ball Mania: one Sleeper best-ball league a year, drafted
 /// entirely by CPU autopick. Ranked on points for over weeks 1-17; the
 /// win-loss record Sleeper keeps means nothing here.
@@ -1195,6 +1306,8 @@ model User {
   d12DraftPicks        D12DraftPick[]
   guillotineTeams      GuillotineTeam[]
   bestBallTeams        BestBallTeam[]
+  survivorEntries      SurvivorEntry[]
+  yahooUsers           YahooUser[]
   memberAliases        MemberAlias[]
   nameHistory          UserNameHistory[]
 

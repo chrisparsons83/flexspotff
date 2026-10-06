@@ -188,6 +188,20 @@ const MERGE_TABLES = [
     slotOf: null,
   },
   {
+    table: 'survivorEntry',
+    label: 'Survivor entries',
+    select: {},
+    slotOf: null,
+  },
+  {
+    table: 'yahooUser',
+    label: 'Yahoo account links',
+    select: {},
+    slotOf: null,
+    // Like Sleeper links: identified by the Yahoo account it points at.
+    pk: 'yahooGuid' as const,
+  },
+  {
     table: 'memberAlias',
     label: 'Imported sheet names',
     select: {},
@@ -218,7 +232,11 @@ const columnFor = (table: MergeTableName) =>
   table === 'episode' ? 'authorId' : 'userId';
 
 const pkFor = (table: MergeTableName) =>
-  table === 'sleeperUser' ? 'sleeperOwnerID' : 'id';
+  table === 'sleeperUser'
+    ? 'sleeperOwnerID'
+    : table === 'yahooUser'
+    ? 'yahooGuid'
+    : 'id';
 
 // $transaction only accepts Prisma's own promise type, and Prisma 3 does not
 // re-export it under a stable name - derive it from a real delegate instead.
@@ -687,6 +705,8 @@ export async function getMergedUsersWithLeftovers() {
           d12DraftPicks: true,
           guillotineTeams: true,
           bestBallTeams: true,
+          survivorEntries: true,
+          yahooUsers: true,
           dfsSurvivorUserYears: true,
           dfsSurvivorUserWeeks: true,
         },

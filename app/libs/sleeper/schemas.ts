@@ -82,6 +82,9 @@ export const sleeperLeagueInfoJson = z.object({
   total_rosters: z.number().nullish(),
   scoring_settings: z.record(z.number()).nullish(),
   draft_id: z.string().nullish(),
+  // "nfl" for a fantasy league, "pickem:nfl" for a pick'em pool such as
+  // survivor.
+  sport: z.string().nullish(),
   // The D12 leagues are best ball, which changes how a week is scored - see
   // app/libs/sleeper/best-ball.ts. Nullish because the main-league flows share
   // this schema and read neither.
@@ -98,6 +101,8 @@ export const sleeperLeagueInfoJson = z.object({
       last_scored_leg: z.number().nullish(),
       // Each team's FAAB budget.
       waiver_budget: z.number().nullish(),
+      // A pick'em pool's game: 1 is survivor. See docs/survivor/plan.md.
+      pickem_type: z.number().nullish(),
     })
     .nullish(),
 });
@@ -161,6 +166,30 @@ export const sleeperGuillotineRostersJson = z.array(
 );
 export type SleeperGuillotineRostersJson = z.infer<
   typeof sleeperGuillotineRostersJson
+>;
+
+/**
+ * Rosters in a survivor pool. Everything about an entry lives in its metadata,
+ * which changed shape between 2024 and 2025 - see readSleeperEntry in
+ * app/libs/survivor/standings.ts.
+ */
+export const sleeperSurvivorRostersJson = z.array(
+  z.object({
+    roster_id: z.number(),
+    owner_id: z.string().nullable(),
+    metadata: z
+      .object({
+        is_eliminated: z.string().nullish(),
+        lost_leg_ids: z.array(z.string()).nullish(),
+        eliminated_leg_id: z.string().nullish(),
+        previous_picks: z.record(z.array(z.string()).nullable()).nullish(),
+        points_by_leg: z.record(z.number().nullable()).nullish(),
+      })
+      .nullish(),
+  }),
+);
+export type SleeperSurvivorRostersJson = z.infer<
+  typeof sleeperSurvivorRostersJson
 >;
 
 export const sleeperAdpJson = z.array(
