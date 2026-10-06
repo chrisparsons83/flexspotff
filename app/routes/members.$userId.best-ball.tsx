@@ -17,6 +17,7 @@ import {
   pts,
   weekLabel,
 } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { POSITION_GROUPS } from '~/libs/best-ball/views';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
@@ -79,7 +80,7 @@ function Career({ career }: { career: BestBallCareer }) {
           <MiniStat
             label='Best Finish'
             value={career.bestFinish ? ordinal(career.bestFinish.place) : '—'}
-            tone={career.bestFinish?.place === 1 ? 'text-amber-300' : undefined}
+            tone={career.bestFinish?.place === 1 ? TEXT.champion : undefined}
             detail={career.bestFinish && `${career.bestFinish.year}`}
           />
           <MiniStat
@@ -145,12 +146,12 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               className={clsx(
                 'px-2 py-2 font-semibold',
                 season.isComplete && season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : 'text-slate-200',
               )}
             >
               {finishLabel(season)}
-              <span className='ml-1 text-xs font-normal text-slate-500'>
+              <span className='ml-1 text-xs font-normal text-slate-400'>
                 of {season.teamCount}
               </span>
             </td>
@@ -164,7 +165,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               {season.bestWeek ? (
                 <>
                   {pts(season.bestWeek.points)}
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     Week {season.bestWeek.week}
                   </span>
                 </>

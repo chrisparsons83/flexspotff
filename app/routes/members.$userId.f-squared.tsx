@@ -22,7 +22,7 @@ import {
   pts,
   signed,
 } from '~/components/layout/profile/format';
-import { signedTone } from '~/components/layout/profile/tones';
+import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import MemberName from '~/components/ui/MemberName';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
@@ -47,7 +47,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 /** A member's name, linked to their profile for anyone who can open it. */
 function Member({ member }: { member: FSquaredMember | null }) {
-  if (!member) return <span className='text-slate-500'>Unknown</span>;
+  if (!member) return <span className='text-slate-400'>Unknown</span>;
   return (
     <ProfileLink userId={member.id}>
       <MemberName user={member} />
@@ -199,7 +199,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       <MiniStat
         label='Titles'
         value={career.titles}
-        tone={career.titles > 0 ? 'text-gold' : undefined}
+        tone={career.titles > 0 ? TEXT.champion : undefined}
       />
       <MiniStat label='Top 3' value={career.podiums} />
       <MiniStat
@@ -267,15 +267,21 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
 
 function PickCell({ pick }: { pick: FSquaredPick | null }) {
   if (!pick) return <>—</>;
+  // The margin is written with its sign, so the colour only repeats it.
   return (
-    <>
-      <span className={signedTone(pick.vsLeague)}>
+    <span title={`${pts(pick.pointsFor)} points`}>
+      <span className='text-slate-100'>
         {pick.manager?.discordName ?? 'Unknown'}
       </span>
-      <span className='ml-1.5 text-xs tabular-nums text-slate-500'>
-        {pts(pick.pointsFor)}
+      <span
+        className={clsx(
+          'ml-1.5 text-xs tabular-nums',
+          signedTone(pick.vsLeague),
+        )}
+      >
+        {signed(pick.vsLeague, 1)}
       </span>
-    </>
+    </span>
   );
 }
 
@@ -322,7 +328,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               title="Picks that outscored their league's average team"
             >
               {season.beatAverage}
-              <span className='text-slate-500'>/{season.picks.length}</span>
+              <span className='text-slate-400'>/{season.picks.length}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <PickCell pick={season.bestPick} />
@@ -501,7 +507,7 @@ function WhoPickedThem({
               <span className='min-w-0 truncate'>
                 <Member member={row.member} />
               </span>
-              <span className='ml-auto shrink-0 text-xs tabular-nums text-slate-500'>
+              <span className='ml-auto shrink-0 text-xs tabular-nums text-slate-400'>
                 {row.years.join(', ')}
               </span>
             </li>

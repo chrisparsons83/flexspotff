@@ -25,7 +25,7 @@ const useIsomorphicLayoutEffect =
 export default function InfoTip({
   label,
   icon,
-  iconClassName = 'text-slate-500 hover:text-slate-300 focus-visible:text-slate-300',
+  iconClassName = 'text-slate-400 hover:text-slate-300 focus-visible:text-slate-300',
   children,
 }: {
   /** What the button is for, read by screen readers, e.g. "About Timing". */

@@ -46,7 +46,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import type { TagTone } from '~/components/layout/profile/tones';
-import { BAR, signedTone } from '~/components/layout/profile/tones';
+import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getSpreadPoolProfile } from '~/models/profile/spreadPool.server';
 import {
@@ -263,7 +263,7 @@ function WeeksCard({ career }: { career: PoolCareer }) {
         label='Won'
         value={career.weeksWon}
         hint='Weeks with the top net of everyone who played'
-        tone={career.weeksWon > 0 ? 'text-gold' : undefined}
+        tone={career.weeksWon > 0 ? TEXT.champion : undefined}
       />
       <MiniStat
         label='Best'
@@ -285,7 +285,7 @@ function WeeksCard({ career }: { career: PoolCareer }) {
             ? `Weeks with no bets, which cost ${signed(career.missedCost)}`
             : 'Weeks with no bets'
         }
-        tone={career.missedWeeks > 0 ? 'text-rose-300' : undefined}
+        tone={career.missedWeeks > 0 ? TEXT.bad : undefined}
       />
     </CareerCard>
   );
@@ -420,7 +420,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
             <td
               className={clsx(
                 'px-2 py-2 text-right tabular-nums',
-                season.missedWeeks > 0 ? 'text-rose-300' : 'text-slate-500',
+                season.missedWeeks > 0 ? TEXT.bad : 'text-slate-400',
               )}
             >
               {season.missedWeeks}
@@ -438,7 +438,7 @@ function WeekCell({ week }: { week: PoolWeek | null }) {
       {week ? (
         <>
           <span className={signedTone(week.net)}>{signed(week.net)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>
+          <span className='ml-1.5 text-xs text-slate-400'>
             Week {week.week}
           </span>
         </>
@@ -822,7 +822,7 @@ function SplitTable({
           </td>
           <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
             {bucket.member.bets}
-            <span className='ml-1.5 text-xs text-slate-500'>
+            <span className='ml-1.5 text-xs text-slate-400'>
               {memberBets > 0
                 ? `${Math.round((bucket.member.bets / memberBets) * 100)}%`
                 : ''}
@@ -846,7 +846,7 @@ function SplitTable({
               <span className='w-24 shrink-0 whitespace-nowrap'>
                 {pct(bucket.member.winRate)}
                 {showField && (
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {pct(bucket.field.winRate)}
                   </span>
                 )}
@@ -1314,7 +1314,7 @@ function TeamSide({
           <NetBar value={side.net} widest={widest} />
         </div>
       ) : (
-        <span className='text-slate-600'>—</span>
+        <span className='text-slate-400'>—</span>
       )}
     </td>
   );

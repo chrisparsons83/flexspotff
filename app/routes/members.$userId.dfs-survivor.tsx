@@ -47,7 +47,7 @@ import {
   signed as signedBy,
   weekLabel,
 } from '~/components/layout/profile/format';
-import { signedTone } from '~/components/layout/profile/tones';
+import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
   DFS_SURVIVOR_LAST_WEEK,
@@ -172,7 +172,7 @@ function Career({
               career.weeks,
               'week',
             )} with the top lineup of everyone who played`}
-            tone={career.weeklyWins > 0 ? 'text-gold' : undefined}
+            tone={career.weeklyWins > 0 ? TEXT.champion : undefined}
           />
           <RateStat
             label='Above Average'
@@ -437,7 +437,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {season.weeks.length}
-                <span className='text-slate-500'>
+                <span className='text-slate-400'>
                   {' '}
                   / {season.weeksAvailable}
                 </span>
@@ -464,7 +464,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
                     <span className='text-emerald-300'>
                       {season.bestWeek.total.toFixed(2)}
                     </span>
-                    <span className='ml-1.5 text-xs text-slate-500'>
+                    <span className='ml-1.5 text-xs text-slate-400'>
                       Week {season.bestWeek.week}
                     </span>
                   </>
@@ -475,7 +475,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
-                  season.weeklyWins > 0 ? 'text-gold' : 'text-slate-400',
+                  season.weeklyWins > 0 ? TEXT.champion : 'text-slate-400',
                 )}
               >
                 {season.weeklyWins}
@@ -775,7 +775,7 @@ function StageCell({
   digits?: number;
 }) {
   if (split.mine === null) {
-    return <td className='px-2 py-2 text-right text-slate-600'>—</td>;
+    return <td className='px-2 py-2 text-right text-slate-400'>—</td>;
   }
   const diff = split.field === null ? null : split.mine - split.field;
 
@@ -839,7 +839,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
           <tr key={group} className='border-b border-slate-700/70'>
             <td className='px-2 py-2 text-slate-300'>
               {GROUP_LABEL[group]}
-              <span className='ml-1 text-xs text-slate-500'>per pick</span>
+              <span className='ml-1 text-xs text-slate-400'>per pick</span>
             </td>
             {stages.map(split => (
               <StageCell key={split.stage} split={split} />
@@ -901,7 +901,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
           {weekNumbers.map(week => (
             <div
               key={week}
-              className='border-b border-slate-700 pb-1 text-center text-slate-500'
+              className='border-b border-slate-700 pb-1 text-center text-slate-400'
             >
               {week}
             </div>
@@ -1038,7 +1038,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
               </td>
               <td className='px-2 py-2'>
                 <div
-                  className='flex items-center gap-2 text-xs tabular-nums text-slate-500'
+                  className='flex items-center gap-2 text-xs tabular-nums text-slate-400'
                   title={`Everyone who used him: ${pick.others.worst.toFixed(
                     2,
                   )} to ${pick.others.best.toFixed(2)}`}
@@ -1130,11 +1130,7 @@ function PositionCard({ row }: { row: DfsPositionRow }) {
         value={row.best ? row.best.points.toFixed(1) : '—'}
         detail={row.best?.shortName}
         hint={row.best ? `${row.best.name}, ${weekLabel(row.best)}` : undefined}
-        tone={
-          row.best && row.best.points >= BIG_PICK
-            ? 'text-emerald-300'
-            : undefined
-        }
+        tone={row.best && row.best.points >= BIG_PICK ? TEXT.good : undefined}
       />
       <LowestStat row={row} />
     </CareerCard>
@@ -1171,7 +1167,7 @@ function FlexFills({ row }: { row: DfsPositionRow }) {
             <span className='ml-auto font-semibold tabular-nums text-slate-100'>
               {pts(fill.average)}
             </span>
-            <span className='text-xs text-slate-500'>average</span>
+            <span className='text-xs text-slate-400'>average</span>
           </li>
         ))}
       </ul>
@@ -1252,7 +1248,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                     <span
                       aria-hidden='true'
                       className={clsx(
-                        'inline-block text-[0.6rem] text-slate-500 transition-transform',
+                        'inline-block text-[0.6rem] text-slate-400 transition-transform',
                         isOpen && 'rotate-90',
                       )}
                     >
@@ -1275,7 +1271,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                 </td>
                 <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                   {ordinal(week.rank)}
-                  <span className='text-slate-500'> / {week.fieldSize}</span>
+                  <span className='text-slate-400'> / {week.fieldSize}</span>
                 </td>
                 <td className='whitespace-nowrap px-2 py-2'>
                   {week.rank === 1 && (
@@ -1313,7 +1309,7 @@ function LineupDetail({ week }: { week: DfsWeek }) {
           key={pick.slot}
           className='flex items-center gap-2 border-b border-slate-800 py-1 text-sm last:border-b-0'
         >
-          <span className='w-11 shrink-0 text-right text-[0.7rem] font-bold uppercase tracking-wide text-slate-500'>
+          <span className='w-11 shrink-0 text-right text-[0.7rem] font-bold uppercase tracking-wide text-slate-400'>
             {formatSlotName(pick.slot as DfsSurvivorSlot)}
           </span>
           <PositionChip position={pick.position} />
@@ -1321,7 +1317,7 @@ function LineupDetail({ week }: { week: DfsWeek }) {
             {pick.name}
           </span>
           <span
-            className='shrink-0 text-xs text-slate-500'
+            className='shrink-0 text-xs text-slate-400'
             title={
               pick.others.count > 0
                 ? `${plural(
@@ -1335,16 +1331,19 @@ function LineupDetail({ week }: { week: DfsWeek }) {
               ? `others ${pts(pick.others.average, 1)} (${pick.others.count})`
               : 'only them'}
           </span>
+          <span className='w-12 shrink-0 text-right font-semibold tabular-nums text-slate-100'>
+            {pick.points.toFixed(2)}
+          </span>
           <span
             className={clsx(
-              'w-12 shrink-0 text-right font-semibold tabular-nums',
+              'w-12 shrink-0 text-right text-xs tabular-nums',
               signedTone(pick.vsSlotField),
             )}
-            title={`${signed(pick.vsSlotField)} vs the field's ${
+            title={`${signed(pick.vsSlotField)} against the field's ${
               GROUP_LABEL[pick.group]
             } pick that week`}
           >
-            {pick.points.toFixed(2)}
+            {signed(pick.vsSlotField, 1)}
           </span>
         </li>
       ))}

@@ -13,8 +13,14 @@ import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
+import {
+  LegendItem,
+  Swatch,
+  WeekLegend,
+} from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { leagueKind } from '~/libs/guillotine/display';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getGuillotineProfile } from '~/models/profile/guillotine.server';
@@ -234,19 +240,38 @@ function Career({
   );
 }
 
-const survivalTone = (week: SurvivalWeek) => {
+/**
+ * What each square means. They differ by lightness and by shape as well as by
+ * hue - bright for a top-three week, mid grey for a safe one, an amber outline
+ * for a narrow escape and a dark square marked ✕ for the chop - so they read
+ * apart with red-green colour blindness too.
+ */
+const SURVIVAL = {
+  top: { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 3 that week' },
+  survived: { tone: 'bg-slate-500 text-white', label: 'Survived' },
+  close: {
+    tone: 'bg-slate-500 text-white ring-2 ring-inset ring-amber-300',
+    label: 'Survived by under 5',
+  },
+  chopped: { tone: 'bg-rose-800 text-rose-50', label: 'Chopped' },
+  gone: { tone: 'bg-slate-800', label: 'Already out' },
+  future: {
+    tone: 'border border-dashed border-slate-500',
+    label: 'Still to play',
+  },
+} as const;
+
+const survivalKind = (week: SurvivalWeek): keyof typeof SURVIVAL => {
   switch (week.state) {
     case 'chopped':
-      return 'bg-rose-600 text-white';
+      return 'chopped';
     case 'survived':
-      if (week.margin !== null && week.margin < 5)
-        return 'bg-amber-500 text-slate-950';
-      if (week.rank <= 3) return 'bg-emerald-500 text-slate-950';
-      return 'bg-slate-400 text-slate-950';
+      if (week.margin !== null && week.margin < 5) return 'close';
+      return week.rank <= 3 ? 'top' : 'survived';
     case 'gone':
-      return 'bg-slate-800';
+      return 'gone';
     default:
-      return 'border border-dashed border-slate-600';
+      return 'future';
   }
 };
 
@@ -260,7 +285,7 @@ const survivalTitle = (week: SurvivalWeek) => {
     week.rank,
   )} of the week`;
   return week.state === 'chopped'
-    ? `${base} - chopped`
+    ? `${base}, chopped`
     : week.margin !== null
     ? `${base}, ${pts(week.margin)} above the chop`
     : base;
@@ -293,9 +318,9 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
               className={clsx(
                 'text-right text-sm font-semibold md:order-last',
                 season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : season.alive
-                  ? 'text-emerald-300'
+                  ? TEXT.good
                   : 'text-slate-300',
               )}
             >
@@ -309,33 +334,56 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                 gridTemplateColumns: `repeat(${season.weeks.length}, minmax(0, 1fr))`,
               }}
             >
-              {season.weeks.map(week => (
-                <div
-                  key={week.week}
-                  title={survivalTitle(week)}
-                  className={clsx(
-                    'flex h-4 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
-                    survivalTone(week),
-                  )}
-                >
-                  {/* Too narrow to read on a phone, and for decimals until the
-                      squares are wide; the hover text always has it. */}
-                  {'points' in week && (
-                    <>
-                      <span className='hidden md:inline xl:hidden'>
-                        {Math.round(week.points)}
-                      </span>
-                      <span className='hidden xl:inline'>
-                        {pts(week.points)}
-                      </span>
-                    </>
-                  )}
-                </div>
-              ))}
+              {season.weeks.map(week => {
+                const kind = survivalKind(week);
+                return (
+                  <div
+                    key={week.week}
+                    title={survivalTitle(week)}
+                    className={clsx(
+                      'relative flex h-5 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
+                      SURVIVAL[kind].tone,
+                    )}
+                  >
+                    {/* The chop is marked at every size. Scores are too narrow
+                        to read on a phone, and decimals wait until the squares
+                        are wide; the hover text always has them. */}
+                    {kind === 'chopped' ? (
+                      <span aria-hidden='true'>✕</span>
+                    ) : (
+                      'points' in week && (
+                        <span aria-hidden='true'>
+                          <span className='hidden md:inline xl:hidden'>
+                            {Math.round(week.points)}
+                          </span>
+                          <span className='hidden xl:inline'>
+                            {pts(week.points)}
+                          </span>
+                        </span>
+                      )
+                    )}
+                    <span className='sr-only'>{survivalTitle(week)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
+      <WeekLegend>
+        {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
+          <LegendItem
+            key={kind}
+            swatch={
+              <Swatch tone={clsx(SURVIVAL[kind].tone, 'text-[0.6rem]')}>
+                {kind === 'chopped' && '✕'}
+              </Swatch>
+            }
+          >
+            {SURVIVAL[kind].label}
+          </LegendItem>
+        ))}
+      </WeekLegend>
     </ProfileSection>
   );
 }
@@ -355,7 +403,7 @@ function WeekMark({
       ) : (
         <>
           {value}
-          <span className='ml-1.5 text-xs text-slate-500'>Week {week}</span>
+          <span className='ml-1.5 text-xs text-slate-400'>Week {week}</span>
         </>
       )}
     </td>
@@ -401,9 +449,9 @@ function BySeason({
               className={clsx(
                 'px-2 py-2 font-semibold',
                 season.place === 1
-                  ? 'text-amber-300'
+                  ? TEXT.champion
                   : season.alive
-                  ? 'text-emerald-300'
+                  ? TEXT.good
                   : 'text-slate-200',
               )}
             >
@@ -425,7 +473,7 @@ function BySeason({
             />
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.claimsWon}
-              <span className='ml-1 text-slate-500'>
+              <span className='ml-1 text-slate-400'>
                 / {season.claimsWon + season.bidsLost}
               </span>
             </td>
@@ -473,7 +521,7 @@ function PlayerCell({
       <span className='font-medium text-slate-100'>
         {player?.name ?? sleeperId}
       </span>
-      <span className='text-xs text-slate-500'>{player?.nflTeam ?? 'FA'}</span>
+      <span className='text-xs text-slate-400'>{player?.nflTeam ?? 'FA'}</span>
     </span>
   );
 }
@@ -642,7 +690,7 @@ function DraftPicks({
               title={`On ${plural(pick.teams, 'team')} over the season`}
               className={clsx(
                 'w-16 px-2 py-1.5 text-right tabular-nums',
-                pick.teams > 1 ? 'text-white' : 'text-slate-500',
+                pick.teams > 1 ? 'text-white' : 'text-slate-400',
               )}
             >
               {pick.teams}

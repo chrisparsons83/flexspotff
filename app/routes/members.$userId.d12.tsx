@@ -22,6 +22,7 @@ import {
   pts,
   weekLabel,
 } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
 import type {
@@ -207,7 +208,7 @@ function Career({ career }: { career: D12Career }) {
               <MiniStat
                 label='Titles'
                 value={career.titles}
-                tone={career.titles > 0 ? 'text-gold' : undefined}
+                tone={career.titles > 0 ? TEXT.champion : undefined}
               />
               <MiniStat label='Top 3' value={career.topThrees} />
               <MiniStat
@@ -230,17 +231,19 @@ const teamDetail = (team: TeamSeasonMark) =>
   `${team.year} · ${shortD12LeagueName(team.leagueName)}`;
 
 /**
- * The strip down the left of a board cell: starter points ranked against
- * the rest of the board, dim to bright green, or red for a pick that has
- * never scored. The cell itself is coloured by position.
+ * The strip down the left of a board cell: starter points ranked against the
+ * rest of the board, from dim to bright in one colour, or red stripes for a
+ * pick that has never scored. One hue and a pattern rather than green against
+ * red, so it reads the same with red-green colour blindness. The cell itself
+ * is coloured by position.
  */
 const HEAT_BAR: Record<D12Heat, string | undefined> = {
-  5: 'bg-green-300',
-  4: 'bg-green-400',
-  3: 'bg-green-500',
-  2: 'bg-green-700',
-  1: 'bg-green-900',
-  bust: 'bg-red-500',
+  5: 'bg-sky-200',
+  4: 'bg-sky-300',
+  3: 'bg-sky-500',
+  2: 'bg-sky-700',
+  1: 'bg-sky-900',
+  bust: 'bg-[repeating-linear-gradient(180deg,theme(colors.rose.400)_0_3px,transparent_3px_6px)]',
   none: undefined,
 };
 
@@ -261,6 +264,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
   return (
     <ProfileSection
       title='Draft Board'
+      footnote={<HeatKey />}
       action={
         boards.length > 1 && (
           <YearFilter
@@ -295,10 +299,10 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
             {column.league ? (
               <div className='tabular-nums text-slate-200'>
                 {pts(column.teamPoints, 1)}
-                <span className='ml-1 text-slate-500'>points</span>
+                <span className='ml-1 text-slate-400'>points</span>
               </div>
             ) : (
-              <div className='text-slate-500'>No picks</div>
+              <div className='text-slate-400'>No picks</div>
             )}
           </div>
         )}
@@ -345,6 +349,26 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
   );
 }
 
+/** What the strip down each pick's left edge means. */
+function HeatKey() {
+  return (
+    <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
+      <span className='inline-flex items-center gap-1.5'>
+        <span aria-hidden='true' className='flex h-3 gap-px'>
+          {([1, 2, 3, 4, 5] as const).map(level => (
+            <span key={level} className={clsx('w-1', HEAT_BAR[level])} />
+          ))}
+        </span>
+        Starter points, fewest to most on the board
+      </span>
+      <span className='inline-flex items-center gap-1.5'>
+        <span aria-hidden='true' className={clsx('h-3 w-1', HEAT_BAR.bust)} />
+        Never scored
+      </span>
+    </span>
+  );
+}
+
 const EXPOSURE_PREVIEW = 20;
 
 /** Who they kept drafting, across all of a season's teams. */
@@ -385,7 +409,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
                 <span className='font-medium text-slate-100'>
                   {player.firstName} {player.lastName}
                 </span>
-                <span className='text-xs text-slate-500'>
+                <span className='text-xs text-slate-400'>
                   {player.nflTeam ?? 'FA'}
                 </span>
               </span>
@@ -394,7 +418,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
               <div className='flex items-center gap-2'>
                 <span className='w-12 tabular-nums'>
                   {player.leagues}
-                  <span className='text-slate-500'>/{teams}</span>
+                  <span className='text-slate-400'>/{teams}</span>
                 </span>
                 <div
                   aria-hidden='true'
@@ -463,7 +487,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
                   className={clsx(
                     'font-medium',
                     season.finish.rank === 1 && !season.inProgress
-                      ? 'text-gold'
+                      ? TEXT.champion
                       : 'text-slate-100',
                   )}
                 >
@@ -507,7 +531,7 @@ function WeekCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(2)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>
+          <span className='ml-1.5 text-xs text-slate-400'>
             Week {mark.week}
           </span>
         </>
@@ -530,7 +554,7 @@ function TeamCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(1)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>
+          <span className='ml-1.5 text-xs text-slate-400'>
             {shortD12LeagueName(mark.leagueName)}
           </span>
         </>

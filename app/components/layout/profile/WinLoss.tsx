@@ -17,7 +17,7 @@ export default function WinLoss({
       {parts.map((part, index) => (
         <span key={index}>
           {index > 0 && (
-            <span className='mx-0.5 font-normal text-slate-500'>–</span>
+            <span className='mx-0.5 font-normal text-slate-400'>–</span>
           )}
           {part}
         </span>

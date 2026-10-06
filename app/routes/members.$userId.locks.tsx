@@ -42,7 +42,7 @@ import {
   signed,
   weekLabel,
 } from '~/components/layout/profile/format';
-import { BAR } from '~/components/layout/profile/tones';
+import { BAR, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/locks.server';
@@ -193,7 +193,7 @@ function Career({
             label='Weeks Won'
             value={career.weeksWon}
             hint='Weeks with the most points of everyone who entered'
-            tone={career.weeksWon > 0 ? 'text-gold' : undefined}
+            tone={career.weeksWon > 0 ? TEXT.champion : undefined}
           />
           <MiniStat
             label='Correct'
@@ -209,7 +209,7 @@ function Career({
             label='Incorrect'
             value={career.record.losses}
             hint='Picks that lost'
-            tone={career.record.losses > 0 ? 'text-rose-300' : undefined}
+            tone={career.record.losses > 0 ? TEXT.bad : undefined}
           />
         </CareerCard>
 
@@ -386,13 +386,13 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.cleanWeeks}
-              <span className='text-slate-500'> of {season.weeks.length}</span>
+              <span className='text-slate-400'> of {season.weeks.length}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.bestWeek ? (
                 <>
                   {season.bestWeek.points}
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     Week {season.bestWeek.week}
                   </span>
                 </>
@@ -403,7 +403,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             <td
               className={clsx(
                 'px-2 py-2 text-right tabular-nums',
-                season.forfeited > 0 ? 'text-rose-300' : 'text-slate-500',
+                season.forfeited > 0 ? TEXT.bad : 'text-slate-400',
               )}
             >
               {season.forfeited}
@@ -789,7 +789,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {bucket.member.weeks}
-              <span className='ml-1.5 text-xs text-slate-500'>
+              <span className='ml-1.5 text-xs text-slate-400'>
                 {memberWeeks > 0
                   ? `${Math.round((bucket.member.weeks / memberWeeks) * 100)}%`
                   : ''}
@@ -805,7 +805,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <div className='flex items-center gap-3'>
                 <span className='w-24 shrink-0 whitespace-nowrap'>
                   {pct(bucket.member.cleanRate, 0)}
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {pct(bucket.field.cleanRate, 0)}
                   </span>
                 </span>
@@ -819,7 +819,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <span
                 className={clsx(
                   'font-medium',
-                  bucket === bestBucket ? 'text-emerald-300' : 'text-slate-100',
+                  bucket === bestBucket ? TEXT.good : 'text-slate-100',
                 )}
               >
                 {bucket.member.pointsPerWeek?.toFixed(2) ?? '—'}
@@ -857,7 +857,7 @@ function SplitTable({
           </td>
           <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
             {bucket.member.picks}
-            <span className='ml-1.5 text-xs text-slate-500'>
+            <span className='ml-1.5 text-xs text-slate-400'>
               {memberPicks > 0
                 ? `${Math.round((bucket.member.picks / memberPicks) * 100)}%`
                 : ''}
@@ -876,7 +876,7 @@ function SplitTable({
             <div className='flex items-center gap-3'>
               <span className='w-24 shrink-0 whitespace-nowrap'>
                 {pct(bucket.member.winRate)}
-                <span className='ml-1.5 text-xs text-slate-500'>
+                <span className='ml-1.5 text-xs text-slate-400'>
                   {pct(bucket.field.winRate)}
                 </span>
               </span>
@@ -1145,7 +1145,7 @@ function Teams({
               {row.backing.picks > 0 ? (
                 record(row.backing)
               ) : (
-                <span className='text-slate-600'>—</span>
+                <span className='text-slate-400'>—</span>
               )}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
@@ -1155,7 +1155,7 @@ function Teams({
               {row.fading.picks > 0 ? (
                 record(row.fading)
               ) : (
-                <span className='text-slate-600'>—</span>
+                <span className='text-slate-400'>—</span>
               )}
             </td>
             <td
@@ -1173,13 +1173,13 @@ function Teams({
                 <>
                   <span className='text-rose-300'>{row.busts}</span>
                   {row.pointsCost > 0 && (
-                    <span className='ml-1.5 text-xs text-slate-500'>
+                    <span className='ml-1.5 text-xs text-slate-400'>
                       −{row.pointsCost}
                     </span>
                   )}
                 </>
               ) : (
-                <span className='text-slate-600'>0</span>
+                <span className='text-slate-400'>0</span>
               )}
             </td>
           </tr>
@@ -1209,7 +1209,7 @@ const RESULT_TAG: Record<
 /** How many of the others on the game took the same side, and what that makes it. */
 function FieldCell({ pick }: { pick: LocksPick }) {
   if (pick.fieldShare === null) {
-    return <span className='text-slate-500'>Only pick</span>;
+    return <span className='text-slate-400'>Only pick</span>;
   }
   return (
     <span className='inline-flex items-center gap-1.5'>
@@ -1301,7 +1301,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                   title={`${ordinal(week.rank)} of ${week.fieldSize} that week`}
                 >
                   <WeekResult week={week} />
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {ordinal(week.rank)} of {week.fieldSize}
                   </span>
                 </td>

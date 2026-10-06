@@ -1,4 +1,10 @@
-/** Wins against losses (and ties) as one bar, in proportion. */
+import { BAR } from './tones';
+
+/**
+ * Wins against losses (and ties) as one bar, in proportion. Wins always come
+ * first and losses last, so the order says which is which as well as the
+ * colour does.
+ */
 export default function SplitBar({
   wins,
   losses,
@@ -10,9 +16,9 @@ export default function SplitBar({
 }) {
   const total = wins + losses + ties;
   const segments = [
-    { value: wins, className: 'bg-emerald-400' },
-    { value: ties, className: 'bg-slate-400' },
-    { value: losses, className: 'bg-rose-400' },
+    { value: wins, className: BAR.win },
+    { value: ties, className: BAR.tie },
+    { value: losses, className: BAR.loss },
   ];
 
   return (

@@ -14,6 +14,7 @@ import Tag from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
+import { TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type { CurrentCup } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
@@ -197,7 +198,7 @@ function Career({ career }: { career: CupCareer }) {
           <MiniStat
             label='Titles'
             value={career.titles}
-            tone={career.titles > 0 ? 'text-gold' : undefined}
+            tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat label='Finals' value={career.finals} />
           <MiniStat label='Final Fours' value={career.finalFours} />
@@ -241,7 +242,7 @@ function DepthMeter({ depth }: { depth: number }) {
             'flex-1 first:rounded-l-full last:rounded-r-full',
             index < depth
               ? depth >= ROUNDS_TO_WIN
-                ? 'bg-amber-300'
+                ? 'bg-gold'
                 : 'bg-emerald-400'
               : 'bg-slate-700',
           )}
@@ -266,11 +267,17 @@ function SeedChip({ seed, leagueName }: { seed: number; leagueName: string }) {
   );
 }
 
+/**
+ * A pill names its round, so how it went is in its look alone - and that has
+ * to survive red-green colour blindness. A win is bright and solid, a loss
+ * dark with a dashed edge, a bye an empty outline and a game still being
+ * played a dotted one.
+ */
 const PILL_TONE: Record<RoundResult['status'], string> = {
-  W: 'bg-emerald-400/90 text-emerald-950',
-  L: 'bg-rose-400/90 text-rose-950',
+  W: 'bg-emerald-300 text-emerald-950',
+  L: 'border border-dashed border-rose-400 bg-rose-950 text-rose-200',
   BYE: 'border border-slate-400 text-slate-300',
-  PENDING: 'border border-amber-300 text-amber-200',
+  PENDING: 'border border-dotted border-amber-300 text-amber-200',
 };
 
 function describeRound(result: RoundResult): string {
@@ -380,7 +387,7 @@ function Finish({ run }: { run: CupRun }) {
       className={clsx(
         'font-medium',
         run.status === 'champion'
-          ? 'text-gold'
+          ? TEXT.champion
           : run.status === 'alive'
           ? 'text-amber-200'
           : 'text-slate-100',
@@ -459,10 +466,10 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
 }
 
 const RESULT_TONE: Record<RoundResult['status'], string> = {
-  W: 'text-green-400',
-  L: 'text-red-400',
+  W: TEXT.good,
+  L: TEXT.bad,
   BYE: 'text-slate-400',
-  PENDING: 'text-amber-300',
+  PENDING: TEXT.live,
 };
 
 function MatchLog({ games }: { games: MatchLogRow[] }) {
@@ -495,7 +502,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
               <td className='whitespace-nowrap px-2 py-2'>
                 {ROUND_LABEL[game.round]}
                 {game.weeks > 1 && game.status !== 'BYE' && (
-                  <span className='ml-1.5 text-xs text-slate-500'>
+                  <span className='ml-1.5 text-xs text-slate-400'>
                     {game.weeks} weeks
                   </span>
                 )}
@@ -518,11 +525,11 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
                   margin === null
-                    ? 'text-slate-500'
+                    ? 'text-slate-400'
                     : margin > 0
-                    ? 'text-emerald-300'
+                    ? TEXT.good
                     : margin < 0
-                    ? 'text-rose-300'
+                    ? TEXT.bad
                     : 'text-slate-300',
                 )}
               >

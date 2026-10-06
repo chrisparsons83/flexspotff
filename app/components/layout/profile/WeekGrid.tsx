@@ -167,7 +167,7 @@ function Square({
       <div
         aria-hidden='true'
         className={clsx(
-          'flex items-center justify-center rounded bg-slate-900/40 text-slate-500',
+          'flex items-center justify-center rounded bg-slate-900/40 text-slate-400',
           labelled ? 'h-11 flex-col' : 'h-8',
         )}
       >

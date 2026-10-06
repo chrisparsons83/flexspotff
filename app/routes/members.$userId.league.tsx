@@ -15,6 +15,7 @@ import Tag from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { pct, plural, weekLabel } from '~/components/layout/profile/format';
+import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type {
@@ -191,7 +192,7 @@ function Highlights({
                   losses={playoffs.sackoLosses}
                 />
               }
-              tone={playoffs.sackos > 0 ? 'text-brown' : undefined}
+              tone={playoffs.sackos > 0 ? TEXT.sacko : undefined}
               detail={
                 playoffs.sackos > 0
                   ? `💩 ${plural(playoffs.sackos, 'sacko')}`
@@ -386,15 +387,18 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
                 </td>
               </>
             )}
-            <td className='px-2 py-2 text-right'>
+            <td className='whitespace-nowrap px-2 py-2 text-right'>
               {season.playoffBracket ? (
                 <span
                   className={
-                    season.playoffBracket === 'LOSERS'
-                      ? 'text-rose-300'
-                      : undefined
+                    season.playoffBracket === 'LOSERS' ? TEXT.bad : undefined
                   }
                 >
+                  {/* Named as well as coloured: the sacko bracket's record
+                      is not a playoff run. */}
+                  {season.playoffBracket === 'LOSERS' && (
+                    <span className='mr-1.5 text-xs text-slate-400'>Sacko</span>
+                  )}
                   {season.playoffWins}-{season.playoffLosses}
                 </span>
               ) : (
@@ -425,16 +429,16 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
  * regular-season table - a champion who was the four seed finished first.
  */
 function Finish({ season }: { season: SeasonRow }) {
-  if (!season.finish) return <span className='text-slate-500'>—</span>;
+  if (!season.finish) return <span className='text-slate-400'>—</span>;
 
   // The two ends of the table are the ones worth spotting from across the page.
   const { tone, emoji } =
     season.finish === 'Champion'
       ? { tone: 'text-gold font-medium', emoji: '🏆' }
       : season.finish === 'Sacko'
-      ? { tone: 'text-brown font-medium', emoji: '💩' }
+      ? { tone: 'text-brown-light font-medium', emoji: '💩' }
       : season.finish === 'Sacko Finalist'
-      ? { tone: 'text-brown', emoji: null }
+      ? { tone: TEXT.sacko, emoji: null }
       : season.place !== null && season.place <= 6
       ? { tone: 'text-slate-100', emoji: null }
       : { tone: 'text-slate-400', emoji: null };
@@ -447,18 +451,9 @@ function Finish({ season }: { season: SeasonRow }) {
   );
 }
 
-const MEETING_TONE: Record<
-  HeadToHeadRow['meetings'][number]['result'],
-  string
-> = {
-  W: 'text-green-400',
-  L: 'text-red-400',
-  T: 'text-slate-400',
-};
-
 /**
- * "2020: weeks 2, 13 \u00b7 2021: week 7" - weeks collected under their season,
- * each coloured by how that meeting went.
+ * "2020: week 2 W, week 13 L \u00b7 2021: week 7 W" - each meeting under its
+ * season, with how it went as a letter as well as a colour.
  */
 function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
   const byYear = new Map<number, HeadToHeadRow['meetings']>();
@@ -473,21 +468,18 @@ function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
       {Array.from(byYear.entries()).map(([year, games], i) => (
         <Fragment key={year}>
           {i > 0 && ' \u00b7 '}
-          {year}: {games.length > 1 ? 'weeks' : 'week'}{' '}
+          {year}:{' '}
           {games.map((game, j) => (
             <Fragment key={game.week}>
               {j > 0 && ', '}
-              <span
-                className={MEETING_TONE[game.result]}
-                title={
-                  game.result === 'W'
-                    ? 'Win'
-                    : game.result === 'L'
-                    ? 'Loss'
-                    : 'Tie'
-                }
-              >
-                {game.week}
+              <span className='whitespace-nowrap'>
+                week {game.week}{' '}
+                <span
+                  className={clsx('font-semibold', RESULT_TEXT[game.result])}
+                  title={RESULT_WORD[game.result]}
+                >
+                  {game.result}
+                </span>
               </span>
             </Fragment>
           ))}
@@ -496,6 +488,8 @@ function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
     </>
   );
 }
+
+const RESULT_WORD = { W: 'Win', L: 'Loss', T: 'Tie' } as const;
 
 function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
   const [showAll, setShowAll] = useState(false);
@@ -605,14 +599,8 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             </td>
             <td className='px-2 py-2'>
               <span
-                className={clsx(
-                  'font-bold',
-                  game.result === 'W'
-                    ? 'text-green-400'
-                    : game.result === 'L'
-                    ? 'text-red-400'
-                    : 'text-slate-400',
-                )}
+                className={clsx('font-bold', RESULT_TEXT[game.result])}
+                title={RESULT_WORD[game.result]}
               >
                 {game.result}
               </span>

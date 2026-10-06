@@ -32,7 +32,7 @@ import {
   signed as signedBy,
   weekLabel,
 } from '~/components/layout/profile/format';
-import { signedTone } from '~/components/layout/profile/tones';
+import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
@@ -156,7 +156,7 @@ function Career({
             count={career.weeklyWins}
             of={career.weeks}
             hint='Weeks with the top total of everyone who played'
-            tone={career.weeklyWins > 0 ? 'text-gold' : undefined}
+            tone={career.weeklyWins > 0 ? TEXT.champion : undefined}
           />
           <RateStat
             label='Doubled Up'
@@ -248,7 +248,7 @@ function FinishesCard({
       <MiniStat
         label='Titles'
         value={career.titles}
-        tone={career.titles > 0 ? 'text-gold' : undefined}
+        tone={career.titles > 0 ? TEXT.champion : undefined}
       />
       <MiniStat label='Top 3' value={career.topThrees} />
       <MiniStat label='Top 5' value={career.topFives} />
@@ -395,7 +395,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                     <span className='text-emerald-300'>
                       {season.bestWeek.total.toFixed(2)}
                     </span>
-                    <span className='ml-1.5 text-xs text-slate-500'>
+                    <span className='ml-1.5 text-xs text-slate-400'>
                       Week {season.bestWeek.week}
                     </span>
                   </>
@@ -406,7 +406,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
-                  season.weeklyWins > 0 ? 'text-gold' : 'text-slate-400',
+                  season.weeklyWins > 0 ? TEXT.champion : 'text-slate-400',
                 )}
               >
                 {season.weeklyWins}
@@ -681,11 +681,15 @@ function PickCell({ pick }: { pick: QbPick }) {
   return (
     <td className='whitespace-nowrap px-2 py-2'>
       <span className='text-slate-100'>{pick.name}</span>
+      <span className='ml-2 tabular-nums'>{pick.points.toFixed(2)}</span>
       <span
-        className={clsx('ml-2 tabular-nums', signedTone(pick.vsField))}
-        title={`${signed(pick.vsField)} vs the field's average pick`}
+        className={clsx(
+          'ml-1.5 text-xs tabular-nums',
+          signedTone(pick.vsField),
+        )}
+        title={`${signed(pick.vsField)} against the field's average pick`}
       >
-        {pick.points.toFixed(2)}
+        {signed(pick.vsField)}
       </span>
     </td>
   );
@@ -725,7 +729,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {ordinal(week.rank)}
-              <span className='text-slate-500'> / {week.fieldSize}</span>
+              <span className='text-slate-400'> / {week.fieldSize}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
