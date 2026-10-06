@@ -8,9 +8,13 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import SplitBar from '~/components/layout/profile/SplitBar';
 import Tag from '~/components/layout/profile/Tag';
+import Truncate from '~/components/layout/profile/Truncate';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
@@ -73,11 +77,13 @@ export default function MemberCup() {
 function OpponentLink({ opponent }: { opponent: CupOpponent }) {
   return (
     <>
-      {opponent.userId ? (
-        <Link to={`/members/${opponent.userId}/cup`}>{opponent.name}</Link>
-      ) : (
-        opponent.name
-      )}{' '}
+      <Truncate title={opponent.name}>
+        {opponent.userId ? (
+          <Link to={`/members/${opponent.userId}/cup`}>{opponent.name}</Link>
+        ) : (
+          opponent.name
+        )}
+      </Truncate>{' '}
       <span className='text-slate-400'>(#{opponent.seed})</span>
     </>
   );
@@ -364,7 +370,9 @@ function RunRow({ run }: { run: CupRun }) {
         </li>
       </ol>
 
-      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
+      {/* Its own line on a phone, where squeezing it beside the rounds
+          left a column a word wide. */}
+      <div className='flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:basis-0'>
         <Finish run={run} />
         {run.eliminatedBy && (
           <span className='text-slate-400'>
@@ -433,6 +441,7 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
           'Finish',
           'Field',
         ]}
+        primaryColumns={[2, 4]}
         numericColumns={[2, 3, 5]}
       >
         {runs.map(run => (
@@ -472,6 +481,24 @@ const RESULT_TONE: Record<RoundResult['status'], string> = {
   PENDING: TEXT.live,
 };
 
+/** How a Cup game went: the result, and whether it was an upset. */
+function MatchResult({ game }: { game: MatchLogRow }) {
+  return (
+    <>
+      <span className={clsx('font-bold', RESULT_TONE[game.status])}>
+        {game.status === 'PENDING' ? 'Live' : game.status}
+      </span>
+      {game.upset && game.status === 'W' && (
+        <Tag tone='win'>Beat higher seed</Tag>
+      )}
+      {game.upset && game.status === 'L' && (
+        <Tag tone='loss'>Lost to lower seed</Tag>
+      )}
+      {game.decidedBySeed && <Tag tone='neutral'>Tie, higher seed</Tag>}
+    </>
+  );
+}
+
 function MatchLog({ games }: { games: MatchLogRow[] }) {
   const years = Array.from(new Set(games.map(game => game.year))).sort(
     (a, b) => b - a,
@@ -487,6 +514,39 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
       <ProfileTable
         headers={['Year', 'Round', 'Opponent', 'Score', 'Margin', 'Result']}
         numericColumns={[3, 4]}
+        mobileCards={
+          <MobileCards>
+            {visible.map(game => (
+              <MobileCard
+                key={`${game.year}-${game.round}`}
+                title={
+                  game.status === 'BYE' ? (
+                    <span className='text-slate-400'>Bye</span>
+                  ) : game.opponent ? (
+                    <>
+                      vs <OpponentLink opponent={game.opponent} />
+                    </>
+                  ) : (
+                    <span className='text-slate-400'>To be decided</span>
+                  )
+                }
+                subtitle={`${year === 'all' ? `${game.year} · ` : ''}${
+                  ROUND_LABEL[game.round]
+                }${
+                  game.weeks > 1 && game.status !== 'BYE'
+                    ? `, ${game.weeks} weeks`
+                    : ''
+                }`}
+                value={
+                  game.status === 'BYE'
+                    ? undefined
+                    : `${pts(game.points)} – ${pts(game.opponentPoints)}`
+                }
+                status={<MatchResult game={game} />}
+              />
+            ))}
+          </MobileCards>
+        }
       >
         {visible.map(game => {
           const margin =
@@ -538,20 +598,9 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                   : signed(margin, 2)}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
-                <span
-                  className={clsx('mr-2 font-bold', RESULT_TONE[game.status])}
-                >
-                  {game.status === 'PENDING' ? 'Live' : game.status}
+                <span className='inline-flex items-center gap-2'>
+                  <MatchResult game={game} />
                 </span>
-                {game.upset && game.status === 'W' && (
-                  <Tag tone='win'>Beat higher seed</Tag>
-                )}
-                {game.upset && game.status === 'L' && (
-                  <Tag tone='loss'>Lost to lower seed</Tag>
-                )}
-                {game.decidedBySeed && (
-                  <Tag tone='neutral'>Tie, higher seed</Tag>
-                )}
               </td>
             </tr>
           );

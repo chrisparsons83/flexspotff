@@ -16,13 +16,15 @@ type Props = {
   /** A totals row, set apart from the body and pinned to the bottom. */
   footer?: ReactNode;
   /**
-   * The columns, by index, that stay in the row on a phone. The rest fold
-   * into a panel each row opens with its own button, so a wide table fits the
-   * screen instead of scrolling sideways. Leave it out to show every column.
+   * The columns, by index, that stay in the row below desktop width. The
+   * rest fold into a panel each row opens with its own button, so a wide
+   * table fits the screen instead of scrolling sideways. Leave it out to show
+   * every column.
    */
   primaryColumns?: number[];
   /**
-   * What to show on a phone in place of the table - a list of MobileCards,
+   * What to show below desktop width in place of the table - a list of
+   * MobileCards,
    * for a log whose rows read better as two short lines than as a row of
    * cells.
    */
@@ -31,37 +33,44 @@ type Props = {
 };
 
 /**
- * Hides a column's cells on a phone. Written out in full, one per column,
+ * Hides a column's cells below desktop width, where the wide tables stop
+ * fitting - on a tablet as well as a phone. Written out in full, one per column,
  * because Tailwind only builds the classes it finds whole in the source.
  *
  * The selector walks down from the table by child steps, so it never reaches
  * the folded-away cells shown again inside a row's own panel.
  */
 const HIDE_ON_PHONE: Record<number, string> = {
-  2: 'max-sm:[&>table>*>tr>*:nth-child(2)]:hidden',
-  3: 'max-sm:[&>table>*>tr>*:nth-child(3)]:hidden',
-  4: 'max-sm:[&>table>*>tr>*:nth-child(4)]:hidden',
-  5: 'max-sm:[&>table>*>tr>*:nth-child(5)]:hidden',
-  6: 'max-sm:[&>table>*>tr>*:nth-child(6)]:hidden',
-  7: 'max-sm:[&>table>*>tr>*:nth-child(7)]:hidden',
-  8: 'max-sm:[&>table>*>tr>*:nth-child(8)]:hidden',
-  9: 'max-sm:[&>table>*>tr>*:nth-child(9)]:hidden',
-  10: 'max-sm:[&>table>*>tr>*:nth-child(10)]:hidden',
-  11: 'max-sm:[&>table>*>tr>*:nth-child(11)]:hidden',
-  12: 'max-sm:[&>table>*>tr>*:nth-child(12)]:hidden',
-  13: 'max-sm:[&>table>*>tr>*:nth-child(13)]:hidden',
-  14: 'max-sm:[&>table>*>tr>*:nth-child(14)]:hidden',
-  15: 'max-sm:[&>table>*>tr>*:nth-child(15)]:hidden',
-  16: 'max-sm:[&>table>*>tr>*:nth-child(16)]:hidden',
+  2: 'max-lg:[&>table>*>tr>*:nth-child(2)]:hidden',
+  3: 'max-lg:[&>table>*>tr>*:nth-child(3)]:hidden',
+  4: 'max-lg:[&>table>*>tr>*:nth-child(4)]:hidden',
+  5: 'max-lg:[&>table>*>tr>*:nth-child(5)]:hidden',
+  6: 'max-lg:[&>table>*>tr>*:nth-child(6)]:hidden',
+  7: 'max-lg:[&>table>*>tr>*:nth-child(7)]:hidden',
+  8: 'max-lg:[&>table>*>tr>*:nth-child(8)]:hidden',
+  9: 'max-lg:[&>table>*>tr>*:nth-child(9)]:hidden',
+  10: 'max-lg:[&>table>*>tr>*:nth-child(10)]:hidden',
+  11: 'max-lg:[&>table>*>tr>*:nth-child(11)]:hidden',
+  12: 'max-lg:[&>table>*>tr>*:nth-child(12)]:hidden',
+  13: 'max-lg:[&>table>*>tr>*:nth-child(13)]:hidden',
+  14: 'max-lg:[&>table>*>tr>*:nth-child(14)]:hidden',
+  15: 'max-lg:[&>table>*>tr>*:nth-child(15)]:hidden',
+  16: 'max-lg:[&>table>*>tr>*:nth-child(16)]:hidden',
 };
 
-/** Children with any fragments opened up, so each row and cell is its own item. */
-function flatten(children: ReactNode): ReactNode[] {
-  return Children.toArray(children).flatMap(child =>
-    isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment
-      ? flatten(child.props.children)
-      : [child],
-  );
+/**
+ * Children with any fragments opened up, so each row and cell is its own
+ * item. Each keeps a key prefixed with the fragments it came out of, since
+ * two fragments' children can share keys that are only unique within them.
+ */
+function flatten(children: ReactNode, prefix = ''): ReactNode[] {
+  return Children.toArray(children).flatMap(child => {
+    if (!isValidElement<{ children?: ReactNode }>(child)) return [child];
+    if (child.type === Fragment) {
+      return flatten(child.props.children, `${prefix}${child.key ?? ''}/`);
+    }
+    return [cloneElement(child, { key: `${prefix}${child.key ?? ''}` })];
+  });
 }
 
 /**
@@ -91,9 +100,11 @@ export default function ProfileTable({
     <>
       <div
         className={clsx(
-          'not-prose overflow-x-auto',
+          // Relative, so screen-reader-only text inside is placed within
+          // the scroller rather than stretching the page on a phone.
+          'not-prose relative overflow-x-auto',
           folded.map(index => HIDE_ON_PHONE[index + 1]),
-          mobileCards && 'max-sm:hidden',
+          mobileCards && 'max-lg:hidden',
         )}
       >
         <table className='w-full text-sm'>
@@ -112,7 +123,7 @@ export default function ProfileTable({
                 </th>
               ))}
               {folds && (
-                <th scope='col' className='w-8 px-1 sm:hidden'>
+                <th scope='col' className='w-8 px-1 lg:hidden'>
                   <span className='sr-only'>More</span>
                 </th>
               )}
@@ -142,7 +153,7 @@ export default function ProfileTable({
           )}
         </table>
       </div>
-      {mobileCards && <div className='not-prose sm:hidden'>{mobileCards}</div>}
+      {mobileCards && <div className='not-prose lg:hidden'>{mobileCards}</div>}
     </>
   );
 }
@@ -176,7 +187,7 @@ function FoldingRow({
         row,
         {},
         ...cells,
-        <td key='fold' className='w-8 px-1 py-1 text-right sm:hidden'>
+        <td key='fold' className='w-8 px-1 py-1 text-right lg:hidden'>
           <button
             type='button'
             aria-expanded={open}
@@ -195,7 +206,7 @@ function FoldingRow({
         </td>,
       )}
       {open && (
-        <tr className='border-b border-slate-700/70 bg-slate-900/40 sm:hidden'>
+        <tr className='border-b border-slate-700/70 bg-slate-900/40 lg:hidden'>
           <td colSpan={span} className='px-2 py-1'>
             <table className='w-full text-sm'>
               <tbody>

@@ -7,7 +7,10 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
@@ -228,6 +231,7 @@ function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
           'PF/Season',
           'PA/Season',
         ]}
+        primaryColumns={[2, 3]}
         numericColumns={[1, 2, 3, 4, 5, 6, 7]}
       >
         {tiers.map(tier => (
@@ -322,11 +326,17 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
         numericColumns={columns
           .map((_, index) => index)
           .filter(index => index >= firstNumeric)}
+        // Finish and the total record; the rest open from each row.
+        primaryColumns={[2, 3]}
         footer={
+          // A cell per column rather than one spanning three, so a phone
+          // hiding the League column hides the right cell in this row too.
           <tr>
-            <td className='px-2 py-2' colSpan={3}>
-              {seasons.length} seasons
+            <td className='whitespace-nowrap px-2 py-2'>
+              {plural(seasons.length, 'season')}
             </td>
+            <td />
+            <td />
             <td className='px-2 py-2 text-right'>
               {record(totals.totalWins, totals.totalLosses, totals.totalTies)}
             </td>
@@ -502,6 +512,26 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
       <ProfileTable
         headers={['Opponent', 'Record', 'Meetings', 'When']}
         numericColumns={[1, 2]}
+        mobileCards={
+          <MobileCards>
+            {visible.map(row => (
+              <MobileCard
+                key={row.opponentUserId}
+                title={
+                  <Link to={`/members/${row.opponentUserId}/league`}>
+                    {row.opponentName}
+                  </Link>
+                }
+                subtitle={plural(row.meetingCount, 'meeting')}
+                value={record(row.wins, row.losses, row.ties)}
+              >
+                <div className='text-xs leading-relaxed text-slate-400'>
+                  <MeetingsByYear meetings={row.meetings} />
+                </div>
+              </MobileCard>
+            ))}
+          </MobileCards>
+        }
       >
         {visible.map(row => (
           <tr key={row.opponentUserId} className='border-b border-slate-700/70'>
@@ -568,6 +598,50 @@ function GameLog({ games }: { games: GameLogRow[] }) {
       <ProfileTable
         headers={['Year', 'Week', '', 'League', 'Opponent', 'Score', 'Result']}
         numericColumns={[1, 5]}
+        mobileCards={
+          <MobileCards>
+            {visible.map(game => (
+              <MobileCard
+                key={`${game.year}-${game.week}-${
+                  game.opponentUserId ?? game.opponentName
+                }`}
+                title={
+                  <>
+                    vs{' '}
+                    {game.opponentUserId ? (
+                      <Link to={`/members/${game.opponentUserId}/league`}>
+                        {game.opponentName}
+                      </Link>
+                    ) : (
+                      game.opponentName
+                    )}
+                  </>
+                }
+                subtitle={
+                  <span className='inline-flex flex-wrap items-center gap-1.5'>
+                    {weekLabel(game)}
+                    <LeagueChip name={game.leagueName} />
+                    <PostseasonTag game={game} />
+                  </span>
+                }
+                value={
+                  <>
+                    {game.pointsScored.toFixed(2)} &ndash;{' '}
+                    {game.opponentPoints.toFixed(2)}
+                  </>
+                }
+                status={
+                  <span
+                    className={clsx('font-bold', RESULT_TEXT[game.result])}
+                    title={RESULT_WORD[game.result]}
+                  >
+                    {game.result}
+                  </span>
+                }
+              />
+            ))}
+          </MobileCards>
+        }
       >
         {visible.map(game => (
           <tr

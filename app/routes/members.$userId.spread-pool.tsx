@@ -11,7 +11,10 @@ import FinishMeter from '~/components/layout/profile/FinishMeter';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
@@ -378,6 +381,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
           'Missed',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7, 8]}
+        primaryColumns={[1, 2]}
       >
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
@@ -764,7 +768,7 @@ function WinRateBar({
   return (
     <div
       aria-hidden='true'
-      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700'
+      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700 max-sm:hidden'
     >
       <div className={clsx('left-1/2', BREAK_EVEN_LINE)} />
       {member !== null && (
@@ -814,6 +818,7 @@ function SplitTable({
         'Net',
       ]}
       numericColumns={[1, 2, 4]}
+      primaryColumns={[3, 4]}
     >
       {buckets.map(bucket => (
         <tr key={bucket.key} className='border-b border-slate-700/70'>
@@ -843,7 +848,7 @@ function SplitTable({
             }
           >
             <div className='flex items-center gap-3'>
-              <span className='w-24 shrink-0 whitespace-nowrap'>
+              <span className='shrink-0 whitespace-nowrap sm:w-24'>
                 {pct(bucket.member.winRate)}
                 {showField && (
                   <span className='ml-1.5 text-xs text-slate-400'>
@@ -1259,6 +1264,7 @@ function Teams({
       <ProfileTable
         headers={['Team', 'Backing', 'Fading', 'Total']}
         numericColumns={[3]}
+        primaryColumns={[1, 3]}
       >
         {visible.map(row => (
           <tr key={row.team} className='border-b border-slate-700/70'>
@@ -1327,6 +1333,27 @@ const RESULT_TAG: Record<PoolBet['result'], { tone: TagTone; label: string }> =
     push: { tone: 'neutral', label: 'Push' },
   };
 
+/** How a bet went, and whether it went against the crowd. */
+function BetTags({ bet }: { bet: PoolBet }) {
+  return (
+    <>
+      <Tag tone={RESULT_TAG[bet.result].tone}>
+        {RESULT_TAG[bet.result].label}
+      </Tag>
+      {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
+        <Tag
+          tone='accent'
+          title={`${Math.round(
+            bet.fieldShare * 100,
+          )}% of the others who bet this game took the same side`}
+        >
+          Contrarian
+        </Tag>
+      )}
+    </>
+  );
+}
+
 function BetLog({ seasons }: { seasons: PoolSeason[] }) {
   const years = seasons.map(season => season.year);
   const [year, setYear] = useState<number | 'all'>(years[0]);
@@ -1361,6 +1388,34 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
           'Result',
         ]}
         numericColumns={[3, 5, 6]}
+        mobileCards={
+          <MobileCards>
+            {bets.map((bet, index) => (
+              <MobileCard
+                key={`${bet.year}-${bet.week}-${bet.team}-${index}`}
+                title={
+                  <>
+                    <span className='font-medium'>
+                      {bet.team} {line(bet.spread)}
+                    </span>
+                    <span className='ml-1.5 text-slate-400'>
+                      {bet.isHome ? 'vs' : '@'} {bet.opponent}
+                    </span>
+                  </>
+                }
+                subtitle={`${
+                  year === 'all' ? weekLabel(bet) : `Week ${bet.week}`
+                } · ${bet.amount} bet · final ${bet.teamScore}–${
+                  bet.opponentScore
+                }`}
+                value={
+                  <span className={signedTone(bet.net)}>{signed(bet.net)}</span>
+                }
+                status={<BetTags bet={bet} />}
+              />
+            ))}
+          </MobileCards>
+        }
       >
         {bets.map((bet, index) => (
           <tr
@@ -1405,20 +1460,9 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
               {signed(bet.net)}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              <Tag tone={RESULT_TAG[bet.result].tone}>
-                {RESULT_TAG[bet.result].label}
-              </Tag>
-              {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
-                <Tag
-                  tone='accent'
-                  className='ml-1'
-                  title={`${Math.round(
-                    bet.fieldShare * 100,
-                  )}% of the others who bet this game took the same side`}
-                >
-                  Contrarian
-                </Tag>
-              )}
+              <span className='inline-flex gap-1'>
+                <BetTags bet={bet} />
+              </span>
             </td>
           </tr>
         ))}

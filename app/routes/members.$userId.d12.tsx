@@ -399,12 +399,13 @@ function Exposure({ boards }: { boards: D12Board[] }) {
     >
       <ProfileTable
         headers={['Player', 'Teams', 'Average Pick', 'Range', 'Starter Points']}
+        primaryColumns={[1, 4]}
         numericColumns={[2, 3, 4]}
       >
         {visible.map(player => (
           <tr key={player.sleeperId} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2'>
-              <span className='inline-flex items-center gap-2'>
+            <td className='px-2 py-2 sm:whitespace-nowrap'>
+              <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
                 <PositionChip position={player.position} />
                 <span className='font-medium text-slate-100'>
                   {player.firstName} {player.lastName}
@@ -473,6 +474,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
           'Worst Team',
           'Average Team',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
       >
         {seasons.map(season => (

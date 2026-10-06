@@ -11,7 +11,10 @@ import FinishMeter from '~/components/layout/profile/FinishMeter';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
@@ -363,6 +366,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
           'Lost to Busts',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
+        primaryColumns={[1, 2]}
       >
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
@@ -724,7 +728,7 @@ function RateBar({
   return (
     <div
       aria-hidden='true'
-      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700'
+      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700 max-sm:hidden'
     >
       {member !== null && (
         <div
@@ -781,6 +785,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
       <ProfileTable
         headers={['Picks', 'Weeks', 'Scoring % vs field', 'Average Score']}
         numericColumns={[1, 3]}
+        primaryColumns={[2, 3]}
       >
         {buckets.map(bucket => (
           <tr key={bucket.key} className='border-b border-slate-700/70'>
@@ -803,7 +808,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               )}`}
             >
               <div className='flex items-center gap-3'>
-                <span className='w-24 shrink-0 whitespace-nowrap'>
+                <span className='shrink-0 whitespace-nowrap sm:w-24'>
                   {pct(bucket.member.cleanRate, 0)}
                   <span className='ml-1.5 text-xs text-slate-400'>
                     {pct(bucket.field.cleanRate, 0)}
@@ -849,6 +854,7 @@ function SplitTable({
     <ProfileTable
       headers={[heading, 'Picks', 'Record', 'Win % vs field']}
       numericColumns={[1, 2]}
+      primaryColumns={[3]}
     >
       {buckets.map(bucket => (
         <tr key={bucket.key} className='border-b border-slate-700/70'>
@@ -874,7 +880,7 @@ function SplitTable({
             )}`}
           >
             <div className='flex items-center gap-3'>
-              <span className='w-24 shrink-0 whitespace-nowrap'>
+              <span className='shrink-0 whitespace-nowrap sm:w-24'>
                 {pct(bucket.member.winRate)}
                 <span className='ml-1.5 text-xs text-slate-400'>
                   {pct(bucket.field.winRate)}
@@ -1132,6 +1138,7 @@ function Teams({
       <ProfileTable
         headers={['Team', 'Picked', 'Win %', 'Picked Against', 'Busts']}
         numericColumns={[1, 2, 3, 4]}
+        primaryColumns={[1, 2]}
       >
         {visible.map(row => (
           <tr key={row.team} className='border-b border-slate-700/70'>
@@ -1252,6 +1259,48 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
     >
       <ProfileTable
         headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week Result']}
+        mobileCards={
+          <MobileCards>
+            {weeks.map(week => (
+              <MobileCard
+                key={`${week.year}-${week.week}`}
+                title={year === 'all' ? weekLabel(week) : `Week ${week.week}`}
+                subtitle={`${ordinal(week.rank)} of ${
+                  week.fieldSize
+                } that week`}
+                value={<WeekResult week={week} />}
+              >
+                <ul className='m-0 list-none space-y-1.5 p-0 text-sm'>
+                  {week.picks.map(pick => (
+                    <li
+                      key={pick.team}
+                      className='flex flex-wrap items-center gap-x-2 gap-y-1'
+                    >
+                      <span className='font-medium text-slate-100'>
+                        {pick.team}
+                        {pick.spread !== null && ` ${line(pick.spread)}`}
+                      </span>
+                      <span className='text-slate-400'>
+                        {pick.isHome ? 'vs' : '@'} {pick.opponent},{' '}
+                        <span className='tabular-nums'>
+                          {pick.teamScore}–{pick.opponentScore}
+                        </span>
+                      </span>
+                      <span className='text-xs'>
+                        <FieldCell pick={pick} />
+                      </span>
+                      <span className='ml-auto inline-flex gap-1'>
+                        <Tag tone={RESULT_TAG[pick.result].tone}>
+                          {RESULT_TAG[pick.result].label}
+                        </Tag>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </MobileCard>
+            ))}
+          </MobileCards>
+        }
       >
         {weeks.map(week =>
           week.picks.map((pick, index) => (

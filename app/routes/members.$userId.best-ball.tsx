@@ -129,6 +129,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
           'Top Weeks',
           'Draft Slot',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6]}
       >
         {seasons.map(season => (

@@ -14,6 +14,7 @@ import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import { CurrentTag } from '~/components/layout/profile/Tag';
+import Truncate from '~/components/layout/profile/Truncate';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
@@ -299,11 +300,12 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
           'Worst Pick',
           'Picked By',
         ]}
+        primaryColumns={[1, 3]}
         numericColumns={[2, 3, 4, 7]}
       >
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2'>
+            <td className='px-2 py-2 sm:whitespace-nowrap'>
               <Link to={`/games/f-squared/standings/${season.year}`}>
                 {season.year}
               </Link>
@@ -330,10 +332,10 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               {season.beatAverage}
               <span className='text-slate-400'>/{season.picks.length}</span>
             </td>
-            <td className='whitespace-nowrap px-2 py-2'>
+            <td className='px-2 py-2 xl:whitespace-nowrap'>
               <PickCell pick={season.bestPick} />
             </td>
-            <td className='whitespace-nowrap px-2 py-2'>
+            <td className='px-2 py-2 xl:whitespace-nowrap'>
               <PickCell pick={season.worstPick} />
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
@@ -440,12 +442,18 @@ function MostPickedManagers({
     <ProfileSection title='Most Picked Managers'>
       <ProfileTable
         headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
+        primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
       >
         {managers.slice(0, MANAGERS_SHOWN).map(row => (
           <tr key={row.manager.id} className='border-b border-slate-700/70'>
             <td className='whitespace-nowrap px-2 py-2'>
-              <Member member={row.manager} />
+              <Truncate
+                title={row.manager.discordName}
+                className='max-w-[8rem] sm:max-w-[11rem]'
+              >
+                <Member member={row.manager} />
+              </Truncate>
               {row.isSelf && (
                 <span className='ml-1 text-gold' title='Themselves'>
                   ★

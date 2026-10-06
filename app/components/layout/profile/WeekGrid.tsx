@@ -81,7 +81,7 @@ export default function WeekGrid({
     <>
       <div className='hidden overflow-x-auto lg:block'>
         <div
-          className='grid gap-1.5 p-0.5 text-xs'
+          className='grid gap-1 p-0.5 text-xs xl:gap-1.5'
           style={{
             gridTemplateColumns: `3rem repeat(${lastWeek}, minmax(${minColumn}, 1fr))`,
           }}

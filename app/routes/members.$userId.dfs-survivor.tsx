@@ -13,7 +13,10 @@ import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
 import SeasonFinish, {
   Trophies,
@@ -415,6 +418,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
           'Players Used',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7, 8]}
+        primaryColumns={[1, 2]}
       >
         {seasons.map(season => {
           const { vsField } = season;
@@ -510,7 +514,6 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
     >
       <WeekGrid
         lastWeek={DFS_SURVIVOR_LAST_WEEK}
-        minColumn='3.25rem'
         rows={seasons.map(season => {
           const weeks = new Map<number, WeekGridCell>();
           // Scored without them is a week skipped; not scored yet is simply
@@ -891,11 +894,31 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
           </p>
         )}
       </div>
-      <div className='overflow-x-auto'>
+      {/* On a phone, only the weeks that had one of them, as a list. */}
+      <ol className='m-0 list-none space-y-1.5 p-0 text-sm lg:hidden'>
+        {weekNumbers
+          .filter(week => byWeek.has(week))
+          .map(week => (
+            <li key={week} className='flex gap-3'>
+              <span className='w-16 shrink-0 text-slate-400'>Week {week}</span>
+              <span className='flex flex-wrap gap-x-3 gap-y-0.5'>
+                {byWeek.get(week)!.map(pick => (
+                  <span key={pick.playerId}>
+                    <span className='text-slate-100'>{pick.shortName}</span>{' '}
+                    <span className='font-semibold tabular-nums text-emerald-300'>
+                      {pick.points.toFixed(1)}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </li>
+          ))}
+      </ol>
+      <div className='hidden overflow-x-auto lg:block'>
         <div
           className='grid gap-1 text-xs'
           style={{
-            gridTemplateColumns: `repeat(${DFS_SURVIVOR_LAST_WEEK}, minmax(4.5rem, 1fr))`,
+            gridTemplateColumns: `repeat(${DFS_SURVIVOR_LAST_WEEK}, minmax(3.25rem, 1fr))`,
           }}
         >
           {weekNumbers.map(week => (
@@ -990,13 +1013,14 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
             'Range',
           ]}
           numericColumns={[2, 3, 4, 5]}
+          primaryColumns={[2, 5]}
         >
           {visible.map(pick => (
             <tr
               key={`${pick.year}-${pick.playerId}`}
               className='border-b border-slate-700/70'
             >
-              <td className='whitespace-nowrap px-2 py-2'>
+              <td className='px-2 py-2 sm:whitespace-nowrap'>
                 <PositionChip position={pick.position} />
                 <span className='ml-2 font-medium text-slate-100'>
                   {pick.name}
@@ -1207,6 +1231,18 @@ function LowestStat({ row }: { row: DfsPositionRow }) {
   );
 }
 
+/** What set a lineup's week apart: won, or left with empty slots. */
+function LineupTags({ week }: { week: DfsWeek }) {
+  return (
+    <>
+      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
+      {week.emptySlots > 0 && (
+        <Tag tone='highlight'>{plural(week.emptySlots, 'empty slot')}</Tag>
+      )}
+    </>
+  );
+}
+
 function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
   const years = seasons.map(season => season.year);
   const [year, setYear] = useState<number | 'all'>(years[0]);
@@ -1223,6 +1259,36 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
       <ProfileTable
         headers={['Year', 'Week', 'Total', 'vs Field', 'Rank', '']}
         numericColumns={[2, 3, 4]}
+        mobileCards={
+          <MobileCards>
+            {weeks.map(week => (
+              <MobileCard
+                key={`${week.year}-${week.week}`}
+                title={year === 'all' ? weekLabel(week) : `Week ${week.week}`}
+                subtitle={
+                  <>
+                    {ordinal(week.rank)} of {week.fieldSize},{' '}
+                    <span className={signedTone(week.vsField)}>
+                      {signed(week.vsField)}
+                    </span>{' '}
+                    against the field
+                  </>
+                }
+                value={week.total.toFixed(2)}
+                status={<LineupTags week={week} />}
+              >
+                <details>
+                  <summary className='cursor-pointer text-xs text-slate-400'>
+                    Lineup
+                  </summary>
+                  <div className='mt-2'>
+                    <LineupDetail week={week} />
+                  </div>
+                </details>
+              </MobileCard>
+            ))}
+          </MobileCards>
+        }
       >
         {weeks.map(week => {
           const key = `${week.year}-${week.week}`;
@@ -1274,16 +1340,9 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                   <span className='text-slate-400'> / {week.fieldSize}</span>
                 </td>
                 <td className='whitespace-nowrap px-2 py-2'>
-                  {week.rank === 1 && (
-                    <Tag tone='win' className='mr-1 last:mr-0'>
-                      Won week
-                    </Tag>
-                  )}
-                  {week.emptySlots > 0 && (
-                    <Tag tone='highlight'>
-                      {plural(week.emptySlots, 'empty slot')}
-                    </Tag>
-                  )}
+                  <span className='inline-flex gap-1'>
+                    <LineupTags week={week} />
+                  </span>
                 </td>
               </tr>
               {isOpen && (
@@ -1316,8 +1375,10 @@ function LineupDetail({ week }: { week: DfsWeek }) {
           <span className='min-w-0 flex-1 truncate text-slate-100'>
             {pick.name}
           </span>
+          {/* Left out on a phone, where it would squeeze the name to nothing;
+              the timing table has it. */}
           <span
-            className='shrink-0 text-xs text-slate-400'
+            className='shrink-0 text-xs text-slate-400 max-sm:hidden'
             title={
               pick.others.count > 0
                 ? `${plural(

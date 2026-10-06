@@ -432,6 +432,7 @@ function BySeason({
           'FAAB Left',
           'Biggest Claim',
         ]}
+        primaryColumns={[1, 2]}
         numericColumns={[3, 4, 5, 6, 7, 8]}
       >
         {seasons.map(season => (
@@ -516,7 +517,7 @@ function PlayerCell({
 }) {
   const player = players[sleeperId];
   return (
-    <span className='inline-flex items-center gap-2'>
+    <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
       <PositionChip position={player?.position ?? null} />
       <span className='font-medium text-slate-100'>
         {player?.name ?? sleeperId}
@@ -591,6 +592,7 @@ function WaiverClaims({
     >
       <ProfileTable
         headers={['Player', 'Bid', 'Season', 'Week']}
+        primaryColumns={[1]}
         numericColumns={[1, 3]}
       >
         {visible.map(claim => (
@@ -598,7 +600,7 @@ function WaiverClaims({
             key={`${claim.year}-${claim.leagueName}-${claim.sleeperId}-${claim.week}`}
             className='border-b border-slate-700/60'
           >
-            <td className='whitespace-nowrap px-2 py-2'>
+            <td className='px-2 py-2 sm:whitespace-nowrap'>
               <PlayerCell sleeperId={claim.sleeperId} players={players} />
             </td>
             <td className='px-2 py-2 text-right font-semibold tabular-nums text-white'>
@@ -673,6 +675,7 @@ function DraftPicks({
     >
       <ProfileTable
         headers={['Round', 'Pick', 'Player', 'Teams']}
+        primaryColumns={[2, 3]}
         numericColumns={[0, 1, 3]}
       >
         {season.picks.map(pick => (
@@ -683,7 +686,7 @@ function DraftPicks({
             <td className='w-12 px-2 py-1.5 text-right tabular-nums text-slate-400'>
               {pick.pickNo}
             </td>
-            <td className='whitespace-nowrap px-2 py-1.5'>
+            <td className='px-2 py-1.5 sm:whitespace-nowrap'>
               <PlayerCell sleeperId={pick.sleeperId} players={players} />
             </td>
             <td

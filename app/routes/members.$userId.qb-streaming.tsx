@@ -8,7 +8,10 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
+import ProfileTable, {
+  MobileCard,
+  MobileCards,
+} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
@@ -354,6 +357,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
           'Weeks Won',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
+        primaryColumns={[1, 2]}
       >
         {seasons.map((season, index) => (
           <Fragment key={season.year}>
@@ -476,7 +480,6 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
     >
       <WeekGrid
         lastWeek={lastWeek}
-        minColumn='3.25rem'
         rows={seasons.map(season => ({
           year: season.year,
           weeks: new Map(
@@ -611,6 +614,8 @@ function MostStreamed({
           'Worst',
         ]}
         numericColumns={[firstNumeric + 1, firstNumeric + 2, firstNumeric + 3]}
+        // The QB, how often and how well; the years open from each row.
+        primaryColumns={[firstNumeric, firstNumeric + 1]}
       >
         {visible.map(row => (
           <tr key={row.playerId} className='border-b border-slate-700/70'>
@@ -677,9 +682,10 @@ function MostStreamed({
   );
 }
 
-function PickCell({ pick }: { pick: QbPick }) {
+/** A pick's QB and points, with its margin over the field's average pick. */
+function PickSummary({ pick }: { pick: QbPick }) {
   return (
-    <td className='whitespace-nowrap px-2 py-2'>
+    <>
       <span className='text-slate-100'>{pick.name}</span>
       <span className='ml-2 tabular-nums'>{pick.points.toFixed(2)}</span>
       <span
@@ -691,7 +697,26 @@ function PickCell({ pick }: { pick: QbPick }) {
       >
         {signed(pick.vsField)}
       </span>
+    </>
+  );
+}
+
+function PickCell({ pick }: { pick: QbPick }) {
+  return (
+    <td className='whitespace-nowrap px-2 py-2'>
+      <PickSummary pick={pick} />
     </td>
+  );
+}
+
+/** What set a week apart: won, doubled up, or left out of the best twelve. */
+function WeekTags({ week }: { week: QbWeek }) {
+  return (
+    <>
+      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
+      {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
+      {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
+    </>
   );
 }
 
@@ -711,6 +736,36 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
       <ProfileTable
         headers={['Year', 'Week', 'Standard', 'Deep', 'Total', 'Rank', '']}
         numericColumns={[4, 5]}
+        mobileCards={
+          <MobileCards>
+            {weeks.map(week => (
+              <MobileCard
+                key={`${week.year}-${week.week}`}
+                title={
+                  <span className={clsx(!week.counts && 'text-slate-400')}>
+                    {year === 'all' ? weekLabel(week) : `Week ${week.week}`}
+                  </span>
+                }
+                subtitle={`${ordinal(week.rank)} of ${week.fieldSize}`}
+                value={week.total.toFixed(2)}
+                status={<WeekTags week={week} />}
+              >
+                <ul className='m-0 list-none space-y-0.5 p-0 text-sm'>
+                  <li>
+                    <span className='mr-1.5 text-xs text-slate-400'>
+                      Standard
+                    </span>
+                    <PickSummary pick={week.standard} />
+                  </li>
+                  <li>
+                    <span className='mr-1.5 text-xs text-slate-400'>Deep</span>
+                    <PickSummary pick={week.deep} />
+                  </li>
+                </ul>
+              </MobileCard>
+            ))}
+          </MobileCards>
+        }
       >
         {weeks.map(week => (
           <tr
@@ -732,9 +787,9 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               <span className='text-slate-400'> / {week.fieldSize}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
-              {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
-              {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
+              <span className='inline-flex gap-1'>
+                <WeekTags week={week} />
+              </span>
             </td>
           </tr>
         ))}
