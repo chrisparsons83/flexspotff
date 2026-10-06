@@ -40,6 +40,7 @@ import {
   pct as pctBy,
   plural,
   signed,
+  weekLabel,
 } from '~/components/layout/profile/format';
 import { BAR } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
@@ -81,9 +82,6 @@ const place = (finish: Pick<LocksFinish, 'rank' | 'tied'>) =>
 const record = ({ wins, losses, ties }: LocksRecord) =>
   `${wins}-${losses}${ties ? `-${ties}` : ''}`;
 
-const weekLabel = (week: { year: number; week: number }) =>
-  `${week.year} Week ${week.week}`;
-
 export default function MemberLocks() {
   const { profile } = useTypedLoaderData<typeof loader>();
   const summary = useOutletContext<ProfileSummary>();
@@ -112,10 +110,6 @@ export default function MemberLocks() {
   );
 }
 
-/** "W16 ’24" - a week short enough to trail a small stat. */
-const shortWeek = (week: { year: number; week: number }) =>
-  `W${week.week} ’${String(week.year).slice(-2)}`;
-
 /** A week's record as a small stat, with when it happened trailing it. */
 function WeekStat({
   label,
@@ -134,7 +128,7 @@ function WeekStat({
     <MiniStat
       label={label}
       value={week ? value(week) : '—'}
-      detail={week ? shortWeek(week) : null}
+      detail={week ? weekLabel(week) : null}
       hint={week ? `${hint}: ${weekLabel(week)}, ${record(week.record)}` : hint}
       tone={week ? tone : undefined}
     />
@@ -321,7 +315,7 @@ function FinishesCard({
 
   return (
     <CareerCard
-      title='Best Season Results'
+      title='Finishes'
       lead={
         career.titles > 0 ? (
           <>
@@ -338,7 +332,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Avg Finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -966,7 +960,7 @@ function FavoritesAndUnderdogs({ splits }: { splits: LocksSplits }) {
   return (
     <ProfileSection
       title='Favorites & Underdogs'
-      description='By the Spread Pool’s line on the same game'
+      description='By the Spread Pool’s line on the same game.'
       footnote={WIN_RATE_KEY}
     >
       <ShareBar
@@ -1235,7 +1229,7 @@ function FieldCell({ pick }: { pick: LocksPick }) {
 function WeekResult({ week }: { week: LocksWeek }) {
   return week.clean ? (
     <span className='font-semibold tabular-nums text-emerald-300'>
-      {plural(week.points, 'pt')}
+      {plural(week.points, 'point')}
     </span>
   ) : (
     <span className='text-rose-300'>Busted</span>

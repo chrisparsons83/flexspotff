@@ -13,7 +13,7 @@ import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag from '~/components/layout/profile/Tag';
+import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
 import WeekGrid, {
   LegendItem,
   ScaleKey,
@@ -30,6 +30,7 @@ import {
   plural,
   pts,
   signed as signedBy,
+  weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
@@ -143,8 +144,8 @@ function Career({
                 low={worstWeek.total}
                 high={bestWeek.total}
                 mark={career.averageWeek}
-                lowLabel={`${worstWeek.year} Wk ${worstWeek.week}`}
-                highLabel={`${bestWeek.year} Wk ${bestWeek.week}`}
+                lowLabel={weekLabel(worstWeek)}
+                highLabel={weekLabel(bestWeek)}
                 format={value => value.toFixed(2)}
               />
             )
@@ -189,7 +190,7 @@ function RateStat({
     <MiniStat
       label={label}
       value={of > 0 ? `${Math.round((count / of) * 100)}%` : '—'}
-      detail={plural(count, 'wk')}
+      detail={plural(count, 'week')}
       hint={hint}
       tone={tone}
     />
@@ -236,7 +237,7 @@ function FinishesCard({
         career.titles > 0
           ? plural(career.titles, 'title')
           : `best finish, ${career.bestFinish!.year}`,
-        `avg ${career.averageFinish!.toFixed(1)}`,
+        `average ${career.averageFinish!.toFixed(1)}`,
         career.current &&
           `${ordinal(career.current.rank)} in ${career.current.year}`,
       ]
@@ -245,7 +246,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Wins'
+        label='Titles'
         value={career.titles}
         tone={career.titles > 0 ? 'text-gold' : undefined}
       />
@@ -346,10 +347,10 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
           'Year',
           'Finish',
           'Total',
-          'Avg Week',
-          'Avg Standard',
-          'Avg Deep',
-          'Best Wk',
+          'Average Week',
+          'Average Standard',
+          'Average Deep',
+          'Best Week',
           'Weeks Won',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
@@ -366,6 +367,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                 <Link to={`/games/qb-streaming/standings/${season.year}`}>
                   {season.year}
                 </Link>
+                {season.inProgress && <CurrentTag />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -394,7 +396,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                       {season.bestWeek.total.toFixed(2)}
                     </span>
                     <span className='ml-1.5 text-xs text-slate-500'>
-                      Wk {season.bestWeek.week}
+                      Week {season.bestWeek.week}
                     </span>
                   </>
                 ) : (
@@ -450,7 +452,7 @@ const describePicks = (week: QbWeek) =>
       )}, deep ${week.deep.name} ${week.deep.points.toFixed(2)}`;
 
 const describeWeek = (week: QbWeek) =>
-  `${week.year} Wk ${week.week}: ${week.total.toFixed(2)} pts, ${ordinal(
+  `${weekLabel(week)}: ${week.total.toFixed(2)} points, ${ordinal(
     week.rank,
   )} of ${week.fieldSize}${week.rank === 1 ? ', won the week' : ''}. ${
     describePicks(week).charAt(0).toUpperCase() + describePicks(week).slice(1)
@@ -470,7 +472,7 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection
       title='Week by Week'
-      description='Each week shaded by where it ranked among everyone who played it'
+      description='Each week shaded by where it ranked among everyone who played it.'
     >
       <WeekGrid
         lastWeek={lastWeek}
@@ -600,7 +602,14 @@ function MostStreamed({
       }
     >
       <ProfileTable
-        headers={['QB', ...years.map(String), 'Picks', 'Avg', 'Best', 'Worst']}
+        headers={[
+          'QB',
+          ...years.map(String),
+          'Picks',
+          'Average',
+          'Best',
+          'Worst',
+        ]}
         numericColumns={[firstNumeric + 1, firstNumeric + 2, firstNumeric + 3]}
       >
         {visible.map(row => (
@@ -692,11 +701,11 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection
       title='Pick Log'
-      description='Pick points are green when they beat the average pick that week'
+      description='Each pick’s points, with how far they sat above or below the average pick that week.'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <ProfileTable
-        headers={['Year', 'Wk', 'Standard', 'Deep', 'Total', 'Rank', '']}
+        headers={['Year', 'Week', 'Standard', 'Deep', 'Total', 'Rank', '']}
         numericColumns={[4, 5]}
       >
         {weeks.map(week => (

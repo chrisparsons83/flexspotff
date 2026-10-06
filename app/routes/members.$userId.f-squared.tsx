@@ -184,7 +184,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
 
   return (
     <CareerCard
-      title='Best Finish'
+      title='Finishes'
       lead={
         career.titles > 0 ? (
           <Trophies titles={career.titles} />
@@ -197,7 +197,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       }
     >
       <MiniStat
-        label='Wins'
+        label='Titles'
         value={career.titles}
         tone={career.titles > 0 ? 'text-gold' : undefined}
       />
@@ -372,7 +372,7 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
     <ProfileSection
       title='Picks'
-      description='Each pick with where it finished in its league on points'
+      description='Each pick, with where it finished in its league on points.'
       action={
         <YearFilter
           years={years}

@@ -20,7 +20,7 @@ import SeasonFinish, {
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag from '~/components/layout/profile/Tag';
+import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
 import WeekGrid, {
   LegendItem,
   ScaleKey,
@@ -45,6 +45,7 @@ import {
   plural,
   pts,
   signed as signedBy,
+  weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone } from '~/components/layout/profile/tones';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
@@ -156,8 +157,8 @@ function Career({
                 low={worstWeek.total}
                 high={bestWeek.total}
                 mark={career.averageWeek}
-                lowLabel={`${worstWeek.year} Week ${worstWeek.week}`}
-                highLabel={`${bestWeek.year} Week ${bestWeek.week}`}
+                lowLabel={weekLabel(worstWeek)}
+                highLabel={weekLabel(bestWeek)}
                 format={value => value.toFixed(2)}
               />
             )
@@ -365,7 +366,7 @@ function FinishesCard({
 
   return (
     <CareerCard
-      title='Best Season Results'
+      title='Finishes'
       lead={
         career.titles > 0 ? (
           <>
@@ -382,7 +383,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Avg Finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -407,7 +408,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
           'Finish',
           'Total',
           'Weeks',
-          'Avg Week',
+          'Average Week',
           'vs Average',
           'Best Week',
           'Weeks Won',
@@ -423,6 +424,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
                 <Link to={`/games/dfs-survivor/standings/${season.year}`}>
                   {season.year}
                 </Link>
+                {season.inProgress && <CurrentTag />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -490,7 +492,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
 }
 
 const describeWeek = (week: DfsWeek) =>
-  `${week.year} Week ${week.week}: ${week.total.toFixed(2)} pts, ${ordinal(
+  `${weekLabel(week)}: ${week.total.toFixed(2)} points, ${ordinal(
     week.rank,
   )} of ${week.fieldSize}${week.rank === 1 ? ', won the week' : ''}${
     week.emptySlots > 0 ? `. ${plural(week.emptySlots, 'empty slot')}` : ''
@@ -504,7 +506,7 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection
       title='Week by Week'
-      description='Each week shaded by where it ranked among everyone who set a lineup'
+      description='Each week shaded by where it ranked among everyone who set a lineup.'
     >
       <WeekGrid
         lastWeek={DFS_SURVIVOR_LAST_WEEK}
@@ -516,7 +518,10 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
           for (const number of season.scoredWeeks) {
             weeks.set(number, {
               value: '–',
-              title: `${season.year} Week ${number}: no lineup`,
+              title: `${weekLabel({
+                year: season.year,
+                week: number,
+              })}: no lineup`,
               tone: NO_LINEUP_TONE,
             });
           }
@@ -807,7 +812,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
   return (
     <ProfileSection
       title='Pool Management'
-      description='Each player can be used once a season, so the pool thins as it goes on'
+      description='Each player can be used once a season, so the pool thins as it goes on.'
       action={
         years.length > 1 ? (
           <YearFilter
@@ -978,10 +983,10 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
           headers={[
             'Player',
             'Week',
-            'Pts',
+            'Points',
             'Others',
-            'Others Avg',
-            '+/−',
+            'Others’ Average',
+            'vs Others',
             'Range',
           ]}
           numericColumns={[2, 3, 4, 5]}
@@ -1078,7 +1083,7 @@ function ByPosition({ positions }: { positions: DfsPositionRow[] }) {
   return (
     <ProfileSection
       title='By Position'
-      description='Their average pick in each slot, against the field’s in the weeks they played'
+      description='Their average pick in each slot, against the field’s in the weeks they played.'
     >
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
         {positions
@@ -1124,11 +1129,7 @@ function PositionCard({ row }: { row: DfsPositionRow }) {
         label='Best'
         value={row.best ? row.best.points.toFixed(1) : '—'}
         detail={row.best?.shortName}
-        hint={
-          row.best
-            ? `${row.best.name}, ${row.best.year} Week ${row.best.week}`
-            : undefined
-        }
+        hint={row.best ? `${row.best.name}, ${weekLabel(row.best)}` : undefined}
         tone={
           row.best && row.best.points >= BIG_PICK
             ? 'text-emerald-300'
@@ -1205,9 +1206,7 @@ function LowestStat({ row }: { row: DfsPositionRow }) {
       label='Lowest'
       value={worst ? worst.points.toFixed(1) : '—'}
       detail={worst?.shortName}
-      hint={
-        worst ? `${worst.name}, ${worst.year} Week ${worst.week}` : undefined
-      }
+      hint={worst ? `${worst.name}, ${weekLabel(worst)}` : undefined}
     />
   );
 }

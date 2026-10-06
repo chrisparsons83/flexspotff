@@ -51,7 +51,7 @@ export default function MemberCup() {
       <div className='space-y-8'>
         {profile.current && <CurrentCupBanner current={profile.current} />}
         <ContestEmptyState
-          contest='in the Cup'
+          contest='the Cup'
           memberName={summary.user.discordName}
         />
       </div>
@@ -62,8 +62,8 @@ export default function MemberCup() {
     <div className='space-y-8'>
       {profile.current && <CurrentCupBanner current={profile.current} />}
       <Career career={profile.career} />
-      <BracketRuns runs={profile.runs} />
       <SeedingHistory runs={profile.runs} />
+      <BracketRuns runs={profile.runs} />
       <MatchLog games={profile.matchLog} />
     </div>
   );
@@ -98,11 +98,12 @@ function CurrentCupBanner({ current }: { current: CurrentCup }) {
           </span>{' '}
           of {current.fieldSize} after {current.weeksPlayed} of{' '}
           {plural(current.seedingWeeks, 'seeding week')} ·{' '}
-          <span className='tabular-nums'>{current.points.toFixed(2)}</span> pts
+          <span className='tabular-nums'>{current.points.toFixed(2)}</span>{' '}
+          points
         </p>
         <p className='m-0 mt-1 text-sm text-slate-400'>
           {onByePace
-            ? 'On pace for a first-round bye - the top 4 seeds skip the Round of 64.'
+            ? 'On pace for a first-round bye: the top 4 seeds skip the Round of 64.'
             : 'Seeds are set by total points across the seeding weeks; the top 4 get a bye.'}
         </p>
       </Banner>
@@ -280,7 +281,7 @@ function describeRound(result: RoundResult): string {
     result.status === 'W' ? 'won' : result.status === 'L' ? 'lost' : 'playing';
   const against = result.opponent
     ? ` vs ${result.opponent.name} (#${result.opponent.seed})`
-    : ' - opponent to be decided';
+    : ', opponent to be decided';
   const score =
     result.points !== null && result.opponentPoints !== null
       ? `, ${result.points.toFixed(2)}–${result.opponentPoints.toFixed(2)}`
@@ -296,7 +297,10 @@ function describeRound(result: RoundResult): string {
  */
 function BracketRuns({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection title='Bracket Runs'>
+    <ProfileSection
+      title='Bracket Runs'
+      description='Every Cup as a row of rounds, filled as far as the run went.'
+    >
       <ul className='m-0 list-none space-y-2 p-0'>
         {runs.map(run => (
           <RunRow key={run.year} run={run} />
@@ -409,9 +413,19 @@ function RunLegend() {
 /** Seed and seeding points by year, with the byes they earned. */
 function SeedingHistory({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection title='Seeding'>
+    <ProfileSection
+      title='By Season'
+      description='Seeds come from total points across the seeding weeks; the top 4 get a bye.'
+    >
       <ProfileTable
-        headers={['Year', 'League', 'Seed', 'Seeding Pts', 'Finish', 'Field']}
+        headers={[
+          'Year',
+          'League',
+          'Seed',
+          'Seeding Points',
+          'Finish',
+          'Field',
+        ]}
         numericColumns={[2, 3, 5]}
       >
         {runs.map(run => (
@@ -455,7 +469,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
   const years = Array.from(new Set(games.map(game => game.year))).sort(
     (a, b) => b - a,
   );
-  const [year, setYear] = useState<number | 'all'>('all');
+  const [year, setYear] = useState<number | 'all'>(years[0] ?? 'all');
   const visible = year === 'all' ? games : games.filter(g => g.year === year);
 
   return (

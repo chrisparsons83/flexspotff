@@ -43,6 +43,7 @@ import {
   pct as pctBy,
   plural,
   signed,
+  weekLabel,
 } from '~/components/layout/profile/format';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { BAR, signedTone } from '~/components/layout/profile/tones';
@@ -78,9 +79,6 @@ const pct = (value: number | null) => pctBy(value, 1);
 
 const record = ({ wins, losses, pushes }: Record3) =>
   `${wins}-${losses}${pushes ? `-${pushes}` : ''}`;
-
-const weekLabel = (week: { year: number; week: number }) =>
-  `${week.year} Week ${week.week}`;
 
 export default function MemberSpreadPool() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -182,7 +180,7 @@ function Career({
             hint='Every point bet, won or lost'
           />
           <MiniStat
-            label='Avg Bet'
+            label='Average Bet'
             value={
               career.averageBet === null ? '—' : career.averageBet.toFixed(1)
             }
@@ -270,13 +268,13 @@ function WeeksCard({ career }: { career: PoolCareer }) {
       <MiniStat
         label='Best'
         value={bestWeek ? signed(bestWeek.net) : '—'}
-        hint={bestWeek ? `Best week: ${weekLabel(bestWeek)}` : undefined}
+        detail={bestWeek && weekLabel(bestWeek)}
         tone={bestWeek ? signedTone(bestWeek.net) : undefined}
       />
       <MiniStat
         label='Worst'
         value={worstWeek ? signed(worstWeek.net) : '—'}
-        hint={worstWeek ? `Worst week: ${weekLabel(worstWeek)}` : undefined}
+        detail={worstWeek && weekLabel(worstWeek)}
         tone={worstWeek ? signedTone(worstWeek.net) : undefined}
       />
       <MiniStat
@@ -328,7 +326,7 @@ function FinishesCard({
 
   return (
     <CareerCard
-      title='Best Season Results'
+      title='Finishes'
       lead={
         career.titles > 0 ? (
           <>
@@ -345,7 +343,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Avg Finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -363,7 +361,10 @@ function FinishesCard({
 
 function BySeason({ seasons }: { seasons: PoolSeason[] }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection
+      title='By Season'
+      footnote='ROE is return on everything bet: the net as a share of the total bet.'
+    >
       <ProfileTable
         headers={[
           'Year',
@@ -701,7 +702,7 @@ function WeekByWeek({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
       title='Week by Week'
-      description='Each week’s net, shaded by where it ranked among everyone who played it'
+      description='Each week’s net, shaded by where it ranked among everyone who played it.'
     >
       <WeekGrid
         lastWeek={lastWeek}
@@ -938,7 +939,7 @@ function SideCard({
         hint='Share of their bets'
       />
       <MiniStat
-        label='Avg Bet'
+        label='Average Bet'
         value={averageBet === null ? '—' : averageBet.toFixed(1)}
       />
     </CareerCard>

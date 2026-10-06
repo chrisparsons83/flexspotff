@@ -249,7 +249,7 @@ export async function getProfileSummary(
         label: 'Career Record',
         value: `${career.wins}-${career.losses}-${career.ties}`,
       },
-      { label: 'Win %', value: winPct(career).toFixed(3).replace(/^0/, '') },
+      { label: 'Win %', value: `${(winPct(career) * 100).toFixed(1)}%` },
       { label: 'Points For', value: Math.round(career.pointsFor).toString() },
       {
         label: 'Points Against',

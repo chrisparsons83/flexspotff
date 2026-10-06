@@ -14,8 +14,14 @@ import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
+import { CurrentTag } from '~/components/layout/profile/Tag';
 import YearFilter from '~/components/layout/profile/YearFilter';
-import { ordinal, plural, pts } from '~/components/layout/profile/format';
+import {
+  ordinal,
+  plural,
+  pts,
+  weekLabel,
+} from '~/components/layout/profile/format';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
 import type {
@@ -93,13 +99,13 @@ function Career({ career }: { career: D12Career }) {
             label='Worst Week'
             value={pts(worstWeek?.points)}
             tone='text-rose-300'
-            detail={worstWeek && `${worstWeek.year}, Wk ${worstWeek.week}`}
+            detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
             value={pts(bestWeek?.points)}
             tone='text-emerald-300'
-            detail={bestWeek && `${bestWeek.year}, Wk ${bestWeek.week}`}
+            detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
 
@@ -125,9 +131,9 @@ function Career({ career }: { career: D12Career }) {
             tone='text-rose-300'
             detail={
               worstTeamWeek &&
-              `${shortD12LeagueName(worstTeamWeek.leagueName)}, ${
-                worstTeamWeek.year
-              } Wk ${worstTeamWeek.week}`
+              `${shortD12LeagueName(worstTeamWeek.leagueName)}, ${weekLabel(
+                worstTeamWeek,
+              )}`
             }
           />
           <MiniStat
@@ -136,9 +142,9 @@ function Career({ career }: { career: D12Career }) {
             tone='text-emerald-300'
             detail={
               bestTeamWeek &&
-              `${shortD12LeagueName(bestTeamWeek.leagueName)}, ${
-                bestTeamWeek.year
-              } Wk ${bestTeamWeek.week}`
+              `${shortD12LeagueName(bestTeamWeek.leagueName)}, ${weekLabel(
+                bestTeamWeek,
+              )}`
             }
           />
         </CareerCard>
@@ -205,7 +211,7 @@ function Career({ career }: { career: D12Career }) {
               />
               <MiniStat label='Top 3' value={career.topThrees} />
               <MiniStat
-                label='Avg Finish'
+                label='Average Finish'
                 value={
                   career.averageFinish === null
                     ? '—'
@@ -289,7 +295,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
             {column.league ? (
               <div className='tabular-nums text-slate-200'>
                 {pts(column.teamPoints, 1)}
-                <span className='ml-1 text-slate-500'>pts</span>
+                <span className='ml-1 text-slate-500'>points</span>
               </div>
             ) : (
               <div className='text-slate-500'>No picks</div>
@@ -325,7 +331,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
               } (#${pick.pickNo}) in ${column.league?.name ?? ''} · ${
                 pick.points === null
                   ? 'no lineups yet'
-                  : `${pick.points.toFixed(2)} starter pts`
+                  : `${pick.points.toFixed(2)} starter points`
               }`}
               highlighted={hovered === pick.sleeperId}
               dimmed={hovered !== null && hovered !== pick.sleeperId}
@@ -355,7 +361,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
       description={`${plural(players.length, 'player')} across ${plural(
         teams,
         'team',
-      )}`}
+      )}.`}
       action={
         boards.length > 1 && (
           <YearFilter
@@ -368,7 +374,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
       }
     >
       <ProfileTable
-        headers={['Player', 'Teams', 'Avg Pick', 'Range', 'Starter Pts']}
+        headers={['Player', 'Teams', 'Average Pick', 'Range', 'Starter Points']}
         numericColumns={[2, 3, 4]}
       >
         {visible.map(player => (
@@ -437,11 +443,11 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
           'Year',
           'Finish',
           'Total',
-          'Best Wk',
-          'Worst Wk',
+          'Best Week',
+          'Worst Week',
           'Best Team',
           'Worst Team',
-          'Avg Team',
+          'Average Team',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
       >
@@ -449,6 +455,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
           <tr key={season.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>
               <Link to={`/games/d12/${season.year}`}>{season.year}</Link>
+              {season.inProgress && <CurrentTag />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               {season.finish ? (
@@ -469,11 +476,6 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
                 </span>
               ) : (
                 '—'
-              )}
-              {season.inProgress && (
-                <span className='ml-2 rounded bg-amber-400/15 px-1.5 py-0.5 text-xs text-amber-200'>
-                  In progress
-                </span>
               )}
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
@@ -505,7 +507,9 @@ function WeekCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(2)}</span>
-          <span className='ml-1.5 text-xs text-slate-500'>Wk {mark.week}</span>
+          <span className='ml-1.5 text-xs text-slate-500'>
+            Week {mark.week}
+          </span>
         </>
       ) : (
         '—'

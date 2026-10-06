@@ -9,6 +9,7 @@ import PercentileStrip from '~/components/layout/profile/PercentileStrip';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
@@ -50,7 +51,7 @@ const seasonLabel = (season: { year: number; leagueName: string }) =>
   `${season.year} ${leagueKind(season.leagueName)}`;
 
 const finishLabel = (season: GuillotineSeason) => {
-  if (season.place === 1) return 'Champion';
+  if (season.place === 1) return '🏆 1st';
   if (season.alive) return 'Alive';
   return season.place ? ordinal(season.place) : '—';
 };
@@ -71,8 +72,8 @@ export default function MemberGuillotine() {
   return (
     <div className='space-y-8'>
       <Career career={profile.career} seasons={profile.seasons} />
-      <Survival seasons={profile.seasons} />
       <BySeason seasons={profile.seasons} players={profile.players} />
+      <Survival seasons={profile.seasons} />
       {profile.claims.length > 0 && (
         <WaiverClaims claims={profile.claims} players={profile.players} />
       )}
@@ -104,12 +105,12 @@ function Career({
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-3'>
         <CareerCard
-          title='Best Finish'
+          title='Finishes'
           lead={
-            best ? (
-              <span className={best.place === 1 ? 'text-amber-300' : undefined}>
-                {best.place === 1 ? '🏆 Champion' : ordinal(best.place)}
-              </span>
+            career.titles > 0 ? (
+              <Trophies titles={career.titles} />
+            ) : best ? (
+              ordinal(best.place)
             ) : (
               '—'
             )
@@ -119,7 +120,7 @@ function Career({
               ? 'no finishes yet'
               : best.place === 1
               ? `${plural(career.titles, 'title')}, latest ${seasonLabel(best)}`
-              : seasonLabel(best)
+              : `best finish, ${seasonLabel(best)}`
           }
           meter={
             <PercentileStrip
@@ -175,7 +176,7 @@ function Career({
             tone='text-emerald-300'
             detail={
               career.bestWeek &&
-              `${seasonLabel(career.bestWeek)}, Wk ${career.bestWeek.week}`
+              `${seasonLabel(career.bestWeek)}, week ${career.bestWeek.week}`
             }
           />
           <MiniStat
@@ -189,7 +190,7 @@ function Career({
             hint='The fewest points they ever survived the chop by'
             detail={
               career.closestEscape &&
-              `${seasonLabel(career.closestEscape)}, Wk ${
+              `${seasonLabel(career.closestEscape)}, week ${
                 career.closestEscape.week
               }`
             }
@@ -255,7 +256,7 @@ const survivalTitle = (week: SurvivalWeek) => {
       ? `Week ${week.week}: already chopped`
       : `Week ${week.week}: not played yet`;
   }
-  const base = `Week ${week.week}: ${pts(week.points)} pts, ${ordinal(
+  const base = `Week ${week.week}: ${pts(week.points)} points, ${ordinal(
     week.rank,
   )} of the week`;
   return week.state === 'chopped'
@@ -271,7 +272,10 @@ const survivalTitle = (week: SurvivalWeek) => {
  */
 function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
   return (
-    <ProfileSection title='Survival by Week'>
+    <ProfileSection
+      title='Week by Week'
+      description='A square for each week of each season: how long they lasted, and how close each week was.'
+    >
       <div className='space-y-2'>
         {seasons.map(season => (
           <div
@@ -351,7 +355,7 @@ function WeekMark({
       ) : (
         <>
           {value}
-          <span className='ml-1.5 text-xs text-slate-500'>Wk {week}</span>
+          <span className='ml-1.5 text-xs text-slate-500'>Week {week}</span>
         </>
       )}
     </td>
@@ -372,7 +376,7 @@ function BySeason({
           'Season',
           'Finish',
           'Chopped',
-          'Avg',
+          'Average',
           'Best Week',
           'Closest Escape',
           'Claims',
@@ -506,7 +510,7 @@ function WaiverClaims({
   const years = [...new Set(claims.map(claim => claim.year))].sort(
     (a, b) => b - a,
   );
-  const [year, setYear] = useState<number | 'all'>('all');
+  const [year, setYear] = useState<number | 'all'>(years[0] ?? 'all');
   const [sort, setSort] = useState<ClaimSort>('bid');
   const [showAll, setShowAll] = useState(false);
 
@@ -620,7 +624,7 @@ function DraftPicks({
       }
     >
       <ProfileTable
-        headers={['Rd', 'Pick', 'Player', 'Teams']}
+        headers={['Round', 'Pick', 'Player', 'Teams']}
         numericColumns={[0, 1, 3]}
       >
         {season.picks.map(pick => (

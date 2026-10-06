@@ -10,7 +10,13 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
-import { ordinal, plural, pts } from '~/components/layout/profile/format';
+import { CurrentTag } from '~/components/layout/profile/Tag';
+import {
+  ordinal,
+  plural,
+  pts,
+  weekLabel,
+} from '~/components/layout/profile/format';
 import { POSITION_GROUPS } from '~/libs/best-ball/views';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
@@ -31,9 +37,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 const finishLabel = (season: BestBallSeason) =>
-  season.isComplete && season.place === 1
-    ? 'Champion'
-    : `${ordinal(season.place)}${season.isComplete ? '' : ' (live)'}`;
+  season.isComplete && season.place === 1 ? '🏆 1st' : ordinal(season.place);
 
 export default function MemberBestBall() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -42,7 +46,7 @@ export default function MemberBestBall() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Autodraft Best Ball Mania'
+        contest='Best Ball'
         memberName={summary.user.discordName}
       />
     );
@@ -79,7 +83,7 @@ function Career({ career }: { career: BestBallCareer }) {
             detail={career.bestFinish && `${career.bestFinish.year}`}
           />
           <MiniStat
-            label='Avg Finish'
+            label='Average Finish'
             value={pts(career.averageFinish, 1)}
             hint='Across finished seasons'
           />
@@ -100,10 +104,7 @@ function Career({ career }: { career: BestBallCareer }) {
             label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-emerald-300'
-            detail={
-              career.bestWeek &&
-              `${career.bestWeek.year}, Wk ${career.bestWeek.week}`
-            }
+            detail={career.bestWeek && weekLabel(career.bestWeek)}
           />
         </CareerCard>
       </div>
@@ -119,12 +120,12 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
     >
       <ProfileTable
         headers={[
-          'Season',
+          'Year',
           'Finish',
           'Points For',
-          'Back',
+          'Behind 1st',
           'Best Week',
-          'Top Wks',
+          'Top Weeks',
           'Draft Slot',
         ]}
         numericColumns={[2, 3, 4, 5, 6]}
@@ -138,6 +139,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               >
                 {season.year}
               </Link>
+              {!season.isComplete && <CurrentTag />}
             </td>
             <td
               className={clsx(
@@ -163,7 +165,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
                 <>
                   {pts(season.bestWeek.points)}
                   <span className='ml-1.5 text-xs text-slate-500'>
-                    Wk {season.bestWeek.week}
+                    Week {season.bestWeek.week}
                   </span>
                 </>
               ) : (
@@ -304,7 +306,7 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
                       </span>
                       {pick.nflTeam ?? 'FA'}
                       <span className='ml-auto tabular-nums text-white/50'>
-                        R{pick.round}
+                        Round {pick.round}
                       </span>
                     </div>
                   </li>

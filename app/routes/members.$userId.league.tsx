@@ -14,7 +14,7 @@ import SplitBar from '~/components/layout/profile/SplitBar';
 import Tag from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
-import { plural } from '~/components/layout/profile/format';
+import { pct, plural, weekLabel } from '~/components/layout/profile/format';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type {
@@ -38,8 +38,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 const record = (wins: number, losses: number, ties: number) =>
   `${wins}-${losses}-${ties}`;
 
-const pct = (value: number) => value.toFixed(3).replace(/^0/, '');
-
 export default function MemberLeague() {
   const { profile } = useTypedLoaderData<typeof loader>();
   const summary = useOutletContext<ProfileSummary>();
@@ -47,7 +45,7 @@ export default function MemberLeague() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='in the redraft league'
+        contest='the redraft league'
         memberName={summary.user.discordName}
       />
     );
@@ -56,8 +54,8 @@ export default function MemberLeague() {
   return (
     <div className='space-y-8'>
       <Highlights profile={profile} />
-      <CareerByTier tiers={profile.byTier} />
       <SeasonHistory seasons={profile.seasons} />
+      <CareerByTier tiers={profile.byTier} />
       <HeadToHead rows={profile.headToHead} />
       <GameLog games={profile.gameLog} />
     </div>
@@ -91,7 +89,7 @@ function Highlights({
               ties={career.ties}
             />
           }
-          leadNote={`${pct(career.winPct)} win pct`}
+          leadNote={`${pct(career.winPct, 1)} of games won`}
           meter={
             <SplitBar
               wins={career.wins}
@@ -105,6 +103,7 @@ function Highlights({
           {career.hasAnyMedianSeason && (
             <MiniStat
               label='H2H'
+              info='Head to head: their record against the team they played each week.'
               value={
                 <WinLoss
                   wins={career.h2hWins}
@@ -116,6 +115,7 @@ function Highlights({
           )}
           <MiniStat
             label='Median'
+            info='Their record against the league median score each week, in the seasons that counted it as a second game.'
             value={
               career.hasAnyMedianSeason ? (
                 <WinLoss
@@ -161,13 +161,13 @@ function Highlights({
             label='Worst Week'
             value={worstWeek ? worstWeek.points.toFixed(2) : '—'}
             tone='text-rose-300'
-            detail={worstWeek && `${worstWeek.year}, Wk ${worstWeek.week}`}
+            detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
             value={bestWeek ? bestWeek.points.toFixed(2) : '—'}
             tone='text-emerald-300'
-            detail={bestWeek && `${bestWeek.year}, Wk ${bestWeek.week}`}
+            detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
 
@@ -205,9 +205,17 @@ function Highlights({
   );
 }
 
+/** What the two short headers stand for, under the tables that use them. */
+const PF_PA_NOTE =
+  'PF is points for, scored by their team; PA is points against, scored by their opponents.';
+
 function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
   return (
-    <ProfileSection title='Career by Tier'>
+    <ProfileSection
+      title='Career by Tier'
+      description='Their record and points in each tier of league they have played in.'
+      footnote={PF_PA_NOTE}
+    >
       <ProfileTable
         headers={[
           'Tier',
@@ -228,7 +236,7 @@ function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
             <td className='px-2 py-2 text-right'>
               {record(tier.wins, tier.losses, tier.ties)}
             </td>
-            <td className='px-2 py-2 text-right'>{pct(tier.winPct)}</td>
+            <td className='px-2 py-2 text-right'>{pct(tier.winPct, 1)}</td>
             <td className='px-2 py-2 text-right'>
               {tier.pointsFor.toFixed(1)}
             </td>
@@ -307,7 +315,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
   );
 
   return (
-    <ProfileSection title='Season History'>
+    <ProfileSection title='By Season' footnote={PF_PA_NOTE}>
       <ProfileTable
         headers={columns}
         numericColumns={columns
@@ -449,7 +457,7 @@ const MEETING_TONE: Record<
 };
 
 /**
- * "2020 (W2, W13) \u00b7 2021 (W7, W16)" - weeks collected under their season,
+ * "2020: weeks 2, 13 \u00b7 2021: week 7" - weeks collected under their season,
  * each coloured by how that meeting went.
  */
 function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
@@ -465,7 +473,7 @@ function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
       {Array.from(byYear.entries()).map(([year, games], i) => (
         <Fragment key={year}>
           {i > 0 && ' \u00b7 '}
-          {year} (
+          {year}: {games.length > 1 ? 'weeks' : 'week'}{' '}
           {games.map((game, j) => (
             <Fragment key={game.week}>
               {j > 0 && ', '}
@@ -479,11 +487,10 @@ function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
                     : 'Tie'
                 }
               >
-                W{game.week}
+                {game.week}
               </span>
             </Fragment>
           ))}
-          )
         </Fragment>
       ))}
     </>
@@ -565,7 +572,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <ProfileTable
-        headers={['Year', 'Wk', '', 'League', 'Opponent', 'Score', 'Result']}
+        headers={['Year', 'Week', '', 'League', 'Opponent', 'Score', 'Result']}
         numericColumns={[1, 5]}
       >
         {visible.map(game => (
