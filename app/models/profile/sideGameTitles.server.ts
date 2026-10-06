@@ -1,4 +1,5 @@
 import type { SideGameKey } from './badges';
+import { buildDfsSeasonTotals } from './dfsSurvivorProfile';
 import { getLocksYears } from './locks.server';
 import { buildSeasonTotals as buildLocksSeasonTotals } from './locksProfile';
 import {
@@ -265,35 +266,29 @@ async function countLocksTitles(
   return countWins(totals, userId, inProgress);
 }
 
-/** DFS Survivor: points from scored weeks. */
+/**
+ * DFS Survivor: points from entries in scored weeks, totalled by the same
+ * function as the profile tab's finishes so the two cannot disagree.
+ */
 async function countDfsSurvivorTitles(
   userId: string,
   inProgress: number | null,
 ): Promise<number> {
-  const entered = await prisma.dFSSurvivorUserYear.findMany({
-    where: { userId },
+  const scored = { userWeek: { isScored: true } } as const;
+  const entered = await prisma.dFSSurvivorUserEntry.findMany({
+    where: { userId, ...scored },
     select: { year: true },
+    distinct: ['year'],
   });
-  const years = distinct(entered.map(row => row.year));
+  const years = entered.map(row => row.year);
   if (years.length === 0) return 0;
 
-  const weeks = await prisma.dFSSurvivorUserWeek.findMany({
-    where: { year: { in: years }, isScored: true },
-    select: {
-      userId: true,
-      year: true,
-      entries: { select: { points: true } },
-    },
+  const entries = await prisma.dFSSurvivorUserEntry.findMany({
+    where: { year: { in: years }, ...scored },
+    select: { userId: true, year: true, points: true },
   });
 
-  const byYear = new Map<number, Map<string, number>>();
-  for (const week of weeks) {
-    if (!byYear.has(week.year)) byYear.set(week.year, new Map());
-    const points = week.entries.reduce((sum, entry) => sum + entry.points, 0);
-    addTo(byYear.get(week.year)!, week.userId, points);
-  }
-
-  return countWins(byYear, userId, inProgress);
+  return countWins(buildDfsSeasonTotals(entries), userId, inProgress);
 }
 
 /** F²: the combined points-for of the teams a member picked. */
