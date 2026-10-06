@@ -5,11 +5,24 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import SeasonFinish, {
+  Trophies,
+} from '~/components/layout/profile/SeasonFinish';
+import { CurrentTag } from '~/components/layout/profile/Tag';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import {
+  ordinal,
+  pct,
+  plural,
+  pts,
+  signed,
+} from '~/components/layout/profile/format';
+import { signedTone } from '~/components/layout/profile/tones';
 import MemberName from '~/components/ui/MemberName';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
@@ -30,36 +43,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!userId) throw new Response('Not Found', { status: 404 });
 
   return typedjson({ profile: await getFSquaredProfile(userId) });
-};
-
-const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
-
-/** "+2.10", "−1.35" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 2) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
-
-const signedTone = (value: number | null) =>
-  value === null || value === 0
-    ? 'text-slate-400'
-    : value > 0
-    ? 'text-emerald-300'
-    : 'text-rose-300';
-
-const pct = (value: number | null) =>
-  value === null ? '—' : `${Math.round(value * 100)}%`;
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
 };
 
 /** A member's name, linked to their profile for anyone who can open it. */
@@ -126,15 +109,6 @@ function Career({
         {pickedBy.seasons.length > 0 && <PickedByCard pickedBy={pickedBy} />}
       </div>
     </ProfileSection>
-  );
-}
-
-/** Small print beside a headline, saying what the number counts. */
-function LeadContext({ children }: { children: string }) {
-  return (
-    <span className='ml-1.5 text-sm font-normal text-slate-400'>
-      {children}
-    </span>
   );
 }
 
@@ -213,9 +187,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       title='Best Finish'
       lead={
         career.titles > 0 ? (
-          <span className='text-gold'>
-            🏆{career.titles > 1 && ` × ${career.titles}`}
-          </span>
+          <Trophies titles={career.titles} />
         ) : (
           <>
             {ordinal(bestFinish.rank)}
@@ -293,32 +265,6 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
   );
 }
 
-function CurrentTag() {
-  return (
-    <span className='ml-2 rounded bg-sky-400/15 px-1.5 py-0.5 text-xs font-medium text-sky-200'>
-      Current
-    </span>
-  );
-}
-
-function SeasonFinish({ season }: { season: FSquaredSeason }) {
-  return (
-    <span
-      className={clsx(
-        'font-medium',
-        season.champion ? 'text-gold' : 'text-slate-100',
-      )}
-    >
-      {season.champion && '🏆 '}
-      {ordinal(season.finish.rank)}
-      <span className='font-normal text-slate-400'>
-        {' '}
-        of {season.finish.fieldSize}
-      </span>
-    </span>
-  );
-}
-
 function PickCell({ pick }: { pick: FSquaredPick | null }) {
   if (!pick) return <>—</>;
   return (
@@ -358,7 +304,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               {season.inProgress && <CurrentTag />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              <SeasonFinish season={season} />
+              <SeasonFinish finish={season.finish} champion={season.champion} />
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {pts(season.total)}
@@ -369,7 +315,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
                 signedTone(season.vsField),
               )}
             >
-              {signed(season.vsField)}
+              {signed(season.vsField, 2)}
             </td>
             <td
               className='px-2 py-2 text-right tabular-nums'

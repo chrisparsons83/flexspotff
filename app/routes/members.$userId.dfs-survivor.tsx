@@ -3,16 +3,50 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import FinishMeter from '~/components/layout/profile/FinishMeter';
 import InfoTip from '~/components/layout/profile/InfoTip';
+import LabelledRange from '~/components/layout/profile/LabelledRange';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
+import SeasonFinish, {
+  Trophies,
+} from '~/components/layout/profile/SeasonFinish';
+import SegmentedControl from '~/components/layout/profile/SegmentedControl';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
+import Tag from '~/components/layout/profile/Tag';
+import WeekGrid, {
+  LegendItem,
+  ScaleKey,
+  Swatch,
+  WEEK_SCALE,
+  WeekLegend,
+  WonKey,
+  rankTone,
+} from '~/components/layout/profile/WeekGrid';
+import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  FieldBandKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/layout/profile/chart';
+import {
+  ordinal,
+  plural,
+  pts,
+  signed as signedBy,
+} from '~/components/layout/profile/format';
+import { signedTone } from '~/components/layout/profile/tones';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
   DFS_SURVIVOR_LAST_WEEK,
@@ -47,32 +81,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return typedjson({ profile: await getDfsSurvivorProfile(userId) });
 };
 
-const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
-
-/** "+2.10", "−1.35" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 2) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
-
-const signedTone = (value: number | null) =>
-  value === null || value === 0
-    ? 'text-slate-400'
-    : value > 0
-    ? 'text-emerald-300'
-    : 'text-rose-300';
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
-};
+/** Points to two places unless asked otherwise, signed. */
+const signed = (value: number, digits = 2) => signedBy(value, digits);
 
 const GROUP_LABEL: Record<SlotGroup, string> = {
   QB: 'QB',
@@ -148,6 +158,7 @@ function Career({
                 mark={career.averageWeek}
                 lowLabel={`${worstWeek.year} Week ${worstWeek.week}`}
                 highLabel={`${bestWeek.year} Week ${bestWeek.week}`}
+                format={value => value.toFixed(2)}
               />
             )
           }
@@ -180,15 +191,6 @@ function Career({
         <FinishesCard career={career} seasons={seasons} />
       </div>
     </ProfileSection>
-  );
-}
-
-/** Context set beside a card's headline, in place of a line under it. */
-function LeadContext({ children }: { children: ReactNode }) {
-  return (
-    <span className='ml-2 text-sm font-normal leading-none text-slate-400'>
-      {children}
-    </span>
   );
 }
 
@@ -329,18 +331,6 @@ function RateStat({
   );
 }
 
-/**
- * Finished seasons grouped by how they ended, lightest for the best, so the
- * bar reads the same without the gold. Each season sits in its best band
- * only, so a title is gold alone rather than also filling Top 3 and Top 5.
- */
-const FINISH_BANDS = [
-  { label: 'Won', max: 1, tone: 'bg-gold' },
-  { label: 'Top 3', max: 3, tone: 'bg-slate-200' },
-  { label: 'Top 5', max: 5, tone: 'bg-slate-400' },
-  { label: '6th+', max: Infinity, tone: 'bg-slate-600' },
-];
-
 /** How their seasons have ended, as counts rather than a list of years. */
 function FinishesCard({
   career,
@@ -373,22 +363,15 @@ function FinishesCard({
     ) : null;
   }
 
-  const bandCounts = FINISH_BANDS.map((band, index) => ({
-    ...band,
-    count: finished.filter(
-      rank => rank <= band.max && rank > (FINISH_BANDS[index - 1]?.max ?? 0),
-    ).length,
-  }));
-
   return (
     <CareerCard
       title='Best Season Results'
       lead={
         career.titles > 0 ? (
-          <span className='text-gold'>
-            🏆{career.titles > 1 && ` × ${career.titles}`}
+          <>
+            <Trophies titles={career.titles} />
             <LeadContext>{plural(career.titles, 'title')}</LeadContext>
-          </span>
+          </>
         ) : (
           <>
             {ordinal(career.bestFinish!.rank)}
@@ -396,38 +379,7 @@ function FinishesCard({
           </>
         )
       }
-      meter={
-        <>
-          <div
-            aria-hidden='true'
-            className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
-          >
-            {bandCounts
-              .filter(band => band.count > 0)
-              .map(band => (
-                <div
-                  key={band.label}
-                  className={band.tone}
-                  style={{ width: `${(band.count / finished.length) * 100}%` }}
-                />
-              ))}
-          </div>
-          <div className='mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[0.65rem] leading-4 text-slate-400'>
-            {bandCounts.map(({ count, label, tone }) => (
-              <span key={label} className='inline-flex items-center gap-1'>
-                <span
-                  aria-hidden='true'
-                  className={clsx('inline-block h-1.5 w-3 rounded-full', tone)}
-                />
-                <span className='font-semibold tabular-nums text-slate-200'>
-                  {count}
-                </span>
-                {label}
-              </span>
-            ))}
-          </div>
-        </>
-      }
+      meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
         label='Avg Finish'
@@ -443,41 +395,6 @@ function FinishesCard({
         hint='Finished seasons in the top three'
       />
     </CareerCard>
-  );
-}
-
-/** A RangeBar with its two ends named underneath. */
-function LabelledRange({
-  low,
-  high,
-  mark,
-  lowLabel,
-  highLabel,
-}: {
-  low: number;
-  high: number;
-  mark: number;
-  lowLabel: string;
-  highLabel: string;
-}) {
-  return (
-    <>
-      <RangeBar low={low} high={high} mark={mark} />
-      <div className='mt-2 flex justify-between gap-2 text-xs'>
-        <span className='min-w-0 truncate'>
-          <span className='font-semibold tabular-nums text-rose-300'>
-            {low.toFixed(2)}
-          </span>{' '}
-          <span className='text-slate-500'>{lowLabel}</span>
-        </span>
-        <span className='min-w-0 truncate text-right'>
-          <span className='text-slate-500'>{highLabel}</span>{' '}
-          <span className='font-semibold tabular-nums text-emerald-300'>
-            {high.toFixed(2)}
-          </span>
-        </span>
-      </div>
-    </>
   );
 }
 
@@ -508,7 +425,10 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
                 </Link>
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
-                <SeasonFinish season={season} />
+                <SeasonFinish
+                  finish={season.finish}
+                  champion={season.finish?.rank === 1 && !season.inProgress}
+                />
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right font-medium tabular-nums'>
                 {pts(season.total)}
@@ -569,60 +489,6 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
   );
 }
 
-function SeasonFinish({ season }: { season: DfsSeason }) {
-  if (!season.finish) return <>—</>;
-  const champion = season.finish.rank === 1 && !season.inProgress;
-
-  return (
-    <span
-      className={clsx('font-medium', champion ? 'text-gold' : 'text-slate-100')}
-    >
-      {champion && '🏆 '}
-      {ordinal(season.finish.rank)}
-      <span className='font-normal text-slate-400'>
-        {' '}
-        of {season.finish.fieldSize}
-        {season.inProgress && ' so far'}
-      </span>
-    </span>
-  );
-}
-
-/**
- * Where a week's total ranked in the field, bottom to top as dark red to
- * bright green. Ranking rather than raw points, so the late weeks - when
- * everyone's pool has thinned - do not paint the whole row red.
- *
- * Lightness climbs with the rank as well as hue, so the scale still reads for
- * red-green colour blindness: bright is good, dark is bad.
- */
-const WEEK_SCALE = [
-  { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 20%' },
-  { tone: 'bg-emerald-500 text-emerald-950', label: '60-80%' },
-  { tone: 'bg-slate-600 text-slate-100', label: '40-60%' },
-  { tone: 'bg-rose-800 text-rose-50', label: '20-40%' },
-  { tone: 'bg-rose-950 text-rose-200', label: 'Bottom 20%' },
-];
-
-/**
- * A week won is set in heavy, underlined type, so it stands out by shape and
- * never relies on its colour, which it shares with the rest of the top band.
- */
-const WEEK_WON_TEXT = 'underline decoration-2 underline-offset-2';
-
-function weekTone(week: DfsWeek): string {
-  const percentile =
-    week.fieldSize > 1
-      ? (week.fieldSize - week.rank) / (week.fieldSize - 1)
-      : 1;
-  // Walks down from the top band; a week won is always in it.
-  const band =
-    week.rank === 1
-      ? 0
-      : [0.8, 0.6, 0.4, 0.2].findIndex(floor => percentile >= floor);
-  return WEEK_SCALE[band === -1 ? WEEK_SCALE.length - 1 : band].tone;
-}
-
 const describeWeek = (week: DfsWeek) =>
   `${week.year} Week ${week.week}: ${week.total.toFixed(2)} pts, ${ordinal(
     week.rank,
@@ -630,88 +496,58 @@ const describeWeek = (week: DfsWeek) =>
     week.emptySlots > 0 ? `. ${plural(week.emptySlots, 'empty slot')}` : ''
   }`;
 
+/** A dashed square for a week they could have played and did not. */
+const NO_LINEUP_TONE = 'border border-dashed border-slate-500 text-slate-400';
+
 /** Every season as a strip of weeks, so a career's hot and cold runs show. */
 function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
-  const weekNumbers = Array.from(
-    { length: DFS_SURVIVOR_LAST_WEEK },
-    (_, i) => i + 1,
-  );
-
   return (
     <ProfileSection
       title='Week by Week'
       description='Each week shaded by where it ranked among everyone who set a lineup'
     >
-      <div className='overflow-x-auto'>
-        <div
-          className='grid gap-1.5 p-0.5 text-xs'
-          style={{
-            gridTemplateColumns: `3rem repeat(${DFS_SURVIVOR_LAST_WEEK}, minmax(3.25rem, 1fr))`,
-          }}
+      <WeekGrid
+        lastWeek={DFS_SURVIVOR_LAST_WEEK}
+        minColumn='3.25rem'
+        rows={seasons.map(season => {
+          const weeks = new Map<number, WeekGridCell>();
+          // Scored without them is a week skipped; not scored yet is simply
+          // still to come, and left blank.
+          for (const number of season.scoredWeeks) {
+            weeks.set(number, {
+              value: '–',
+              title: `${season.year} Week ${number}: no lineup`,
+              tone: NO_LINEUP_TONE,
+            });
+          }
+          for (const week of season.weeks) {
+            weeks.set(week.week, {
+              value: week.total.toFixed(1),
+              title: describeWeek(week),
+              tone: rankTone(week.rank, week.fieldSize),
+              won: week.rank === 1,
+              marker: week.emptySlots > 0 && <PartialMark />,
+            });
+          }
+          return { year: season.year, weeks };
+        })}
+      />
+      <WeekLegend>
+        <WonKey sample='140' />
+        <ScaleKey />
+        <LegendItem
+          swatch={
+            <Swatch tone={WEEK_SCALE[2].tone}>
+              <PartialMark />
+            </Swatch>
+          }
         >
-          <div />
-          {weekNumbers.map(week => (
-            <div key={week} className='text-center text-slate-500'>
-              {week}
-            </div>
-          ))}
-
-          {seasons.map(season => {
-            const byWeek = new Map(season.weeks.map(week => [week.week, week]));
-            const scored = new Set(season.scoredWeeks);
-            return (
-              <Fragment key={season.year}>
-                <div className='flex h-8 items-center font-medium tabular-nums text-slate-300'>
-                  {season.year}
-                </div>
-                {weekNumbers.map(number => {
-                  const week = byWeek.get(number);
-                  if (week) {
-                    return (
-                      <div
-                        key={number}
-                        title={describeWeek(week)}
-                        className={clsx(
-                          'relative flex h-8 items-center justify-center rounded font-semibold tabular-nums',
-                          weekTone(week),
-                          week.rank === 1 && WEEK_WON_TEXT,
-                        )}
-                      >
-                        {week.total.toFixed(1)}
-                        {week.emptySlots > 0 && <PartialMark />}
-                        <span className='sr-only'>. {describeWeek(week)}</span>
-                      </div>
-                    );
-                  }
-                  // Scored without them is a week skipped; not scored yet is
-                  // simply still to come.
-                  return scored.has(number) ? (
-                    <div
-                      key={number}
-                      title={`${season.year} Week ${number}: no lineup`}
-                      className='flex h-8 items-center justify-center rounded border border-dashed border-slate-600 text-slate-500'
-                    >
-                      –
-                      <span className='sr-only'>
-                        {season.year} week {number}: no lineup
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      key={number}
-                      aria-hidden='true'
-                      className='flex h-8 items-center justify-center rounded bg-slate-900/40 text-slate-600'
-                    >
-                      ·
-                    </div>
-                  );
-                })}
-              </Fragment>
-            );
-          })}
-        </div>
-      </div>
-      <WeekLegend />
+          Empty slots
+        </LegendItem>
+        <LegendItem swatch={<Swatch tone={NO_LINEUP_TONE} />}>
+          No lineup
+        </LegendItem>
+      </WeekLegend>
     </ProfileSection>
   );
 }
@@ -726,74 +562,7 @@ function PartialMark() {
   );
 }
 
-function Swatch({ tone, children }: { tone: string; children?: ReactNode }) {
-  return (
-    <span
-      className={clsx(
-        'relative inline-flex h-4 w-5 items-center justify-center rounded-sm',
-        tone,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function WeekLegend() {
-  return (
-    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400'>
-      <span className='inline-flex items-center gap-1.5'>
-        <Swatch tone={clsx(WEEK_SCALE[0].tone, 'w-7 text-[0.65rem]')}>
-          <span className={clsx('font-semibold', WEEK_WON_TEXT)}>140</span>
-        </Swatch>
-        Week won
-      </span>
-      <span className='inline-flex items-center gap-1'>
-        {WEEK_SCALE[0].label}
-        {WEEK_SCALE.map(({ tone, label }) => (
-          <span key={tone} title={label}>
-            <Swatch tone={tone} />
-          </span>
-        ))}
-        {WEEK_SCALE[WEEK_SCALE.length - 1].label}
-      </span>
-      <span className='inline-flex items-center gap-1.5'>
-        <Swatch tone={WEEK_SCALE[2].tone}>
-          <PartialMark />
-        </Swatch>
-        Empty slots
-      </span>
-      <span className='inline-flex items-center gap-1.5'>
-        <Swatch tone='border border-dashed border-slate-600' />
-        No lineup
-      </span>
-    </div>
-  );
-}
-
-const CHART = { height: 260, left: 40, right: 12, top: 12, bottom: 28 };
-
-/**
- * The element's width in pixels, so a chart can be drawn at its real size and
- * keep its labels at 11px on a phone and a desktop alike, rather than scaling
- * them with a viewBox. Starts from a guess for the server render.
- */
-function useWidth<T extends HTMLElement>(initial: number) {
-  const ref = useRef<T>(null);
-  const [width, setWidth] = useState(initial);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(Math.round(entry.contentRect.width)),
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, width] as const;
-}
+const CHART_LEFT = 40;
 
 /** The smallest round step that keeps the gridlines to six or fewer. */
 function gridStep(ceiling: number) {
@@ -810,7 +579,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
   const years = seasons.map(season => season.year);
   const [year, setYear] = useState<number | 'all'>(years[0]);
   const season = seasons.find(entry => entry.year === year) ?? seasons[0];
-  const [chartRef, width] = useWidth<HTMLDivElement>(720);
+  const [chartRef, width] = useChartWidth<HTMLDivElement>();
 
   const lastWeek = DFS_SURVIVOR_LAST_WEEK;
   const { field, weeks } = season;
@@ -830,10 +599,10 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
   const ceiling = Math.ceil(highest / step) * step;
   const floor = Math.floor(lowest / step) * step;
 
-  const plotWidth = width - CHART.left - CHART.right;
+  const plotWidth = width - CHART_LEFT - CHART.right;
   const plotHeight = CHART.height - CHART.top - CHART.bottom;
   const x = (week: number) =>
-    CHART.left + ((week - 1) / (lastWeek - 1)) * plotWidth;
+    CHART_LEFT + ((week - 1) / (lastWeek - 1)) * plotWidth;
   const y = (value: number) =>
     CHART.top + (1 - (value - floor) / (ceiling - floor)) * plotHeight;
 
@@ -860,8 +629,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
     { length: (ceiling - floor) / step + 1 },
     (_, index) => floor + index * step,
   );
-  // Every other week once they get too close to label, as on a phone.
-  const weekStep = plotWidth / lastWeek < 24 ? 2 : 1;
+  const weekStep = weekLabelStep(plotWidth, lastWeek);
 
   return (
     <ProfileSection
@@ -877,7 +645,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
         ) : undefined
       }
       footnote={
-        <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
+        <ChartKeys>
           <ChartKey>
             <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
             Their lineup
@@ -886,19 +654,8 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
             <span className='inline-block h-2 w-2 rounded-full bg-gold' />
             Week won
           </ChartKey>
-          <ChartKey>
-            <span className='inline-block w-4 border-t border-dashed border-slate-300' />
-            Median
-          </ChartKey>
-          <ChartKey>
-            <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/30' />
-            Middle half of the field
-          </ChartKey>
-          <ChartKey>
-            <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/10' />
-            Lowest to highest
-          </ChartKey>
-        </span>
+          <FieldBandKeys rangeLabel='Lowest to highest' />
+        </ChartKeys>
       }
     >
       <div ref={chartRef}>
@@ -913,7 +670,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
           {gridlines.map(value => (
             <g key={value}>
               <line
-                x1={CHART.left}
+                x1={CHART_LEFT}
                 x2={width - CHART.right}
                 y1={y(value)}
                 y2={y(value)}
@@ -923,7 +680,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 strokeWidth={1}
               />
               <text
-                x={CHART.left - 6}
+                x={CHART_LEFT - 6}
                 y={y(value)}
                 textAnchor='end'
                 dominantBaseline='middle'
@@ -1002,10 +759,6 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
       </div>
     </ProfileSection>
   );
-}
-
-function ChartKey({ children }: { children: ReactNode }) {
-  return <span className='inline-flex items-center gap-1.5'>{children}</span>;
 }
 
 /** A stage's average with how far it sat from the field's, field on hover. */
@@ -1203,23 +956,15 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
       title='Timing by Player'
       action={
         <div className='flex flex-wrap gap-3'>
-          <div className='flex gap-1'>
-            {(['best', 'worst'] as const).map(option => (
-              <button
-                key={option}
-                type='button'
-                onClick={() => setOrder(option)}
-                className={clsx(
-                  'rounded px-2.5 py-1 text-sm',
-                  order === option
-                    ? 'bg-white font-medium text-slate-900'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-                )}
-              >
-                {option === 'best' ? 'Best calls' : 'Worst calls'}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            label='Order'
+            value={order}
+            onChange={setOrder}
+            options={[
+              { value: 'best', label: 'Best calls' },
+              { value: 'worst', label: 'Worst calls' },
+            ]}
+          />
           <YearFilter years={years} value={year} onChange={setYear} />
         </div>
       }
@@ -1311,13 +1056,12 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
         </ProfileTable>
       )}
       {compared.length > TIMING_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${compared.length} picks`}
-        </button>
+        <ShowAllButton
+          total={compared.length}
+          noun='picks'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -1468,16 +1212,6 @@ function LowestStat({ row }: { row: DfsPositionRow }) {
   );
 }
 
-function Tag({ tone, children }: { tone: string; children: ReactNode }) {
-  return (
-    <span
-      className={clsx('mr-1 rounded px-1.5 py-0.5 text-xs last:mr-0', tone)}
-    >
-      {children}
-    </span>
-  );
-}
-
 function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
   const years = seasons.map(season => season.year);
   const [year, setYear] = useState<number | 'all'>(years[0]);
@@ -1546,12 +1280,12 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                 </td>
                 <td className='whitespace-nowrap px-2 py-2'>
                   {week.rank === 1 && (
-                    <Tag tone='bg-emerald-400/15 text-emerald-200'>
+                    <Tag tone='win' className='mr-1 last:mr-0'>
                       Won week
                     </Tag>
                   )}
                   {week.emptySlots > 0 && (
-                    <Tag tone='bg-amber-400/15 text-amber-200'>
+                    <Tag tone='highlight'>
                       {plural(week.emptySlots, 'empty slot')}
                     </Tag>
                   )}

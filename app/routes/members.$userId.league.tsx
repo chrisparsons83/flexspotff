@@ -9,9 +9,13 @@ import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
+import Tag from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import { plural } from '~/components/layout/profile/format';
+import type { TagTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type {
   GameLogRow,
@@ -200,9 +204,6 @@ function Highlights({
     </ProfileSection>
   );
 }
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
   return (
@@ -519,13 +520,12 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
         ))}
       </ProfileTable>
       {rows.length > 15 && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 text-sm text-slate-300 underline'
-        >
-          {showAll ? 'Show fewer' : `Show all ${rows.length} opponents`}
-        </button>
+        <ShowAllButton
+          total={rows.length}
+          noun='opponents'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -541,16 +541,14 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
 function PostseasonTag({ game }: { game: GameLogRow }) {
   if (game.isRegularSeason) return null;
 
-  const [label, tone] =
+  const [label, tone]: [string, TagTone] =
     game.postseasonBracket === 'WINNERS'
-      ? ['Playoff', 'bg-amber-400/15 text-amber-300']
+      ? ['Playoff', 'highlight']
       : game.postseasonBracket === 'LOSERS'
-      ? ['Sacko', 'bg-rose-400/15 text-rose-300']
-      : ['Post', 'bg-slate-600/40 text-slate-300'];
+      ? ['Sacko', 'loss']
+      : ['Post', 'neutral'];
 
-  return (
-    <span className={clsx('rounded px-1.5 py-0.5 text-xs', tone)}>{label}</span>
-  );
+  return <Tag tone={tone}>{label}</Tag>;
 }
 
 function GameLog({ games }: { games: GameLogRow[] }) {

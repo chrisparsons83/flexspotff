@@ -9,9 +9,12 @@ import PercentileStrip from '~/components/layout/profile/PercentileStrip';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import SegmentedControl from '~/components/layout/profile/SegmentedControl';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
 import YearFilter from '~/components/layout/profile/YearFilter';
-import { leagueKind, ordinal, pts } from '~/libs/guillotine/display';
+import { ordinal, plural, pts } from '~/components/layout/profile/format';
+import { leagueKind } from '~/libs/guillotine/display';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getGuillotineProfile } from '~/models/profile/guillotine.server';
 import type {
@@ -41,9 +44,6 @@ type Players = Record<
     nflTeam: string | null;
   }
 >;
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /** "2025 Free" - the full names are long, and only the year and kind differ. */
 const seasonLabel = (season: { year: number; leagueName: string }) =>
@@ -520,23 +520,16 @@ function WaiverClaims({
       title='Waiver Claims'
       action={
         <div className='flex flex-wrap items-center gap-3'>
-          <div className='flex items-center gap-1'>
-            <span className='mr-1 text-sm text-slate-400'>Sort by</span>
-            {(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(option => (
-              <button
-                key={option}
-                type='button'
-                onClick={() => setSort(option)}
-                className={clsx(
-                  'rounded px-2.5 py-1 text-sm',
-                  sort === option
-                    ? 'bg-white font-medium text-slate-900'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-                )}
-              >
-                {CLAIM_SORTS[option].label}
-              </button>
-            ))}
+          <div className='flex items-center gap-2'>
+            <span className='text-sm text-slate-400'>Sort by</span>
+            <SegmentedControl
+              label='Sort by'
+              value={sort}
+              onChange={setSort}
+              options={(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(
+                option => ({ value: option, label: CLAIM_SORTS[option].label }),
+              )}
+            />
           </div>
           {years.length > 1 && (
             <YearFilter years={years} value={year} onChange={setYear} />
@@ -569,13 +562,12 @@ function WaiverClaims({
         ))}
       </ProfileTable>
       {filtered.length > CLAIMS_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${filtered.length} claims`}
-        </button>
+        <ShowAllButton
+          total={filtered.length}
+          noun='claims'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -614,23 +606,15 @@ function DraftPicks({
           )}
           {/* Only when they played both leagues that year. */}
           {inYear.length > 1 && (
-            <div className='flex gap-1'>
-              {inYear.map(candidate => (
-                <button
-                  key={candidate.leagueId}
-                  type='button'
-                  onClick={() => setKind(leagueKind(candidate.leagueName))}
-                  className={clsx(
-                    'rounded px-2.5 py-1 text-sm',
-                    candidate.leagueId === season.leagueId
-                      ? 'bg-white font-medium text-slate-900'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-                  )}
-                >
-                  {leagueKind(candidate.leagueName)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              label='League'
+              value={leagueKind(season.leagueName)}
+              onChange={setKind}
+              options={inYear.map(candidate => ({
+                value: leagueKind(candidate.leagueName),
+                label: leagueKind(candidate.leagueName),
+              }))}
+            />
           )}
         </div>
       }

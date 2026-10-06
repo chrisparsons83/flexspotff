@@ -12,7 +12,10 @@ import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import RangeBar from '~/components/layout/profile/RangeBar';
+import { Trophies } from '~/components/layout/profile/SeasonFinish';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
 import type {
@@ -37,18 +40,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!userId) throw new Response('Not Found', { status: 404 });
 
   return typedjson({ profile: await getD12Profile(userId) });
-};
-
-const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
 };
 
 export default function MemberD12() {
@@ -190,9 +181,7 @@ function Career({ career }: { career: D12Career }) {
               title='Finishes'
               lead={
                 career.titles > 0 ? (
-                  <span className='text-gold'>
-                    🏆{career.titles > 1 && ` × ${career.titles}`}
-                  </span>
+                  <Trophies titles={career.titles} />
                 ) : career.bestFinish ? (
                   ordinal(career.bestFinish.rank)
                 ) : (
@@ -429,13 +418,12 @@ function Exposure({ boards }: { boards: D12Board[] }) {
         ))}
       </ProfileTable>
       {players.length > EXPOSURE_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${players.length} players`}
-        </button>
+        <ShowAllButton
+          total={players.length}
+          noun='players'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );

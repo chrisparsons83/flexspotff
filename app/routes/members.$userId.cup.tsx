@@ -10,8 +10,10 @@ import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
 import SplitBar from '~/components/layout/profile/SplitBar';
+import Tag from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import { plural, pts, signed } from '~/components/layout/profile/format';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import type { CurrentCup } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
@@ -39,20 +41,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return typedjson({ profile: await getCupProfile(userId) });
 };
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const points = (value: number | null) =>
-  value === null ? '—' : value.toFixed(2);
-
-/** "+2", "−1", "0" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 0) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
 
 export default function MemberCup() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -441,7 +429,7 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
               #{run.seed}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
-              {points(run.seedingPoints)}
+              {pts(run.seedingPoints)}
             </td>
             <td className='px-2 py-2'>
               <Finish run={run} />
@@ -462,14 +450,6 @@ const RESULT_TONE: Record<RoundResult['status'], string> = {
   BYE: 'text-slate-400',
   PENDING: 'text-amber-300',
 };
-
-function Tag({ tone, children }: { tone: string; children: string }) {
-  return (
-    <span className={clsx('rounded px-1.5 py-0.5 text-xs', tone)}>
-      {children}
-    </span>
-  );
-}
 
 function MatchLog({ games }: { games: MatchLogRow[] }) {
   const years = Array.from(new Set(games.map(game => game.year))).sort(
@@ -518,7 +498,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {game.status === 'BYE'
                   ? '—'
-                  : `${points(game.points)} – ${points(game.opponentPoints)}`}
+                  : `${pts(game.points)} – ${pts(game.opponentPoints)}`}
               </td>
               <td
                 className={clsx(
@@ -543,19 +523,13 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                   {game.status === 'PENDING' ? 'Live' : game.status}
                 </span>
                 {game.upset && game.status === 'W' && (
-                  <Tag tone='bg-emerald-400/15 text-emerald-300'>
-                    Beat higher seed
-                  </Tag>
+                  <Tag tone='win'>Beat higher seed</Tag>
                 )}
                 {game.upset && game.status === 'L' && (
-                  <Tag tone='bg-rose-400/15 text-rose-300'>
-                    Lost to lower seed
-                  </Tag>
+                  <Tag tone='loss'>Lost to lower seed</Tag>
                 )}
                 {game.decidedBySeed && (
-                  <Tag tone='bg-slate-600/40 text-slate-300'>
-                    Tie, higher seed
-                  </Tag>
+                  <Tag tone='neutral'>Tie, higher seed</Tag>
                 )}
               </td>
             </tr>

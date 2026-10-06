@@ -1,15 +1,37 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import FinishMeter from '~/components/layout/profile/FinishMeter';
+import LabelledRange from '~/components/layout/profile/LabelledRange';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
+import SeasonFinish, {
+  Trophies,
+} from '~/components/layout/profile/SeasonFinish';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
+import Tag from '~/components/layout/profile/Tag';
+import WeekGrid, {
+  LegendItem,
+  ScaleKey,
+  Swatch,
+  WEEK_SCALE,
+  WeekLegend,
+  WonKey,
+  rankTone,
+} from '~/components/layout/profile/WeekGrid';
+import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
+import {
+  ordinal,
+  plural,
+  pts,
+  signed as signedBy,
+} from '~/components/layout/profile/format';
+import { signedTone } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
@@ -35,32 +57,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return typedjson({ profile: await getQbStreamingProfile(userId) });
 };
 
-const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
-
-/** "+2.10", "−1.35" - a proper minus, so the column lines up. */
-const signed = (value: number, digits = 2) =>
-  value > 0
-    ? `+${value.toFixed(digits)}`
-    : value < 0
-    ? `−${(-value).toFixed(digits)}`
-    : (0).toFixed(digits);
-
-const signedTone = (value: number | null) =>
-  value === null || value === 0
-    ? 'text-slate-400'
-    : value > 0
-    ? 'text-emerald-300'
-    : 'text-rose-300';
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-const ordinal = (rank: number) => {
-  const tens = rank % 100;
-  if (tens >= 11 && tens <= 13) return `${rank}th`;
-  return `${rank}${['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th'}`;
-};
+/** Points to two places, signed - QB scores are never whole. */
+const signed = (value: number) => signedBy(value, 2);
 
 /**
  * Standard and deep picks keep one colour each everywhere on the tab, so the
@@ -147,6 +145,7 @@ function Career({
                 mark={career.averageWeek}
                 lowLabel={`${worstWeek.year} Wk ${worstWeek.week}`}
                 highLabel={`${bestWeek.year} Wk ${bestWeek.week}`}
+                format={value => value.toFixed(2)}
               />
             )
           }
@@ -197,18 +196,6 @@ function RateStat({
   );
 }
 
-/**
- * Finished seasons grouped by how they ended, lightest for the best, so the
- * bar reads the same without the gold. Each season sits in its best band
- * only, so a title is gold alone rather than also filling Top 3 and Top 5.
- */
-const FINISH_BANDS = [
-  { label: 'Won', max: 1, tone: 'bg-gold' },
-  { label: 'Top 3', max: 3, tone: 'bg-slate-200' },
-  { label: 'Top 5', max: 5, tone: 'bg-slate-400' },
-  { label: 'Outside Top 5', max: Infinity, tone: 'bg-slate-600' },
-];
-
 /** How their seasons have ended, as counts rather than a list of years. */
 function FinishesCard({
   career,
@@ -235,21 +222,12 @@ function FinishesCard({
     ) : null;
   }
 
-  const bandCounts = FINISH_BANDS.map((band, index) => ({
-    ...band,
-    count: finished.filter(
-      rank => rank <= band.max && rank > (FINISH_BANDS[index - 1]?.max ?? 0),
-    ).length,
-  }));
-
   return (
     <CareerCard
       title='Finishes'
       lead={
         career.titles > 0 ? (
-          <span className='text-gold'>
-            🏆{career.titles > 1 && ` × ${career.titles}`}
-          </span>
+          <Trophies titles={career.titles} />
         ) : (
           ordinal(career.bestFinish!.rank)
         )
@@ -264,42 +242,7 @@ function FinishesCard({
       ]
         .filter(Boolean)
         .join(' · ')}
-      meter={
-        <>
-          <div
-            aria-hidden='true'
-            className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
-          >
-            {bandCounts
-              .filter(band => band.count > 0)
-              .map(band => (
-                <div
-                  key={band.label}
-                  className={band.tone}
-                  style={{ width: `${(band.count / finished.length) * 100}%` }}
-                />
-              ))}
-          </div>
-          <div className='mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-[0.65rem] text-slate-400'>
-            {bandCounts.map(band => (
-              <span
-                key={band.label}
-                className='inline-flex items-center gap-1'
-                title={`${plural(band.count, 'season')}`}
-              >
-                <span
-                  aria-hidden='true'
-                  className={clsx(
-                    'inline-block h-1.5 w-3 rounded-full',
-                    band.tone,
-                  )}
-                />
-                {band.label}
-              </span>
-            ))}
-          </div>
-        </>
-      }
+      meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
         label='Wins'
@@ -320,41 +263,6 @@ function VsFieldNote({ value }: { value: number | null }) {
         {signed(value)}
       </span>{' '}
       a week vs the field
-    </>
-  );
-}
-
-/** A RangeBar with its two ends named underneath. */
-function LabelledRange({
-  low,
-  high,
-  mark,
-  lowLabel,
-  highLabel,
-}: {
-  low: number;
-  high: number;
-  mark: number;
-  lowLabel: string;
-  highLabel: string;
-}) {
-  return (
-    <>
-      <RangeBar low={low} high={high} mark={mark} />
-      <div className='mt-2 flex justify-between gap-2 text-xs'>
-        <span className='min-w-0 truncate'>
-          <span className='font-semibold tabular-nums text-rose-300'>
-            {low.toFixed(2)}
-          </span>{' '}
-          <span className='text-slate-500'>{lowLabel}</span>
-        </span>
-        <span className='min-w-0 truncate text-right'>
-          <span className='text-slate-500'>{highLabel}</span>{' '}
-          <span className='font-semibold tabular-nums text-emerald-300'>
-            {high.toFixed(2)}
-          </span>
-        </span>
-      </div>
     </>
   );
 }
@@ -391,6 +299,7 @@ function SideCard({
             mark={career.average}
             lowLabel={worst.name}
             highLabel={best.name}
+            format={value => value.toFixed(2)}
           />
         )
       }
@@ -459,7 +368,10 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                 </Link>
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
-                <SeasonFinish season={season} />
+                <SeasonFinish
+                  finish={season.finish}
+                  champion={season.finish?.rank === 1 && !season.inProgress}
+                />
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right font-medium tabular-nums'>
                 {pts(season.total)}
@@ -520,72 +432,13 @@ function ScoringRuleDivider() {
   );
 }
 
-function SeasonFinish({ season }: { season: QbSeason }) {
-  if (!season.finish) return <>—</>;
-  const champion = season.finish.rank === 1 && !season.inProgress;
-
-  return (
-    <>
-      <span
-        className={clsx(
-          'font-medium',
-          champion ? 'text-gold' : 'text-slate-100',
-        )}
-      >
-        {champion && '🏆 '}
-        {ordinal(season.finish.rank)}
-        <span className='font-normal text-slate-400'>
-          {' '}
-          of {season.finish.fieldSize}
-          {season.inProgress && ' so far'}
-        </span>
-      </span>
-    </>
-  );
-}
-
-/**
- * Where a week's total ranked in the field, bottom to top as dark red to
- * bright green. Ranking rather than raw points, so a low-scoring week across
- * the league does not paint the whole column red.
- *
- * Lightness climbs with the rank as well as hue, so the scale still reads for
- * red-green colour blindness: bright is good, dark is bad.
- */
-const WEEK_SCALE = [
-  { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 20%' },
-  { tone: 'bg-emerald-500 text-emerald-950', label: '60-80%' },
-  { tone: 'bg-slate-600 text-slate-100', label: '40-60%' },
-  { tone: 'bg-rose-800 text-rose-50', label: '20-40%' },
-  { tone: 'bg-rose-950 text-rose-200', label: 'Bottom 20%' },
-];
-
 /**
  * Outlines a week that counted in a best-twelve season. The weeks that did not
  * count keep their colour, so a dropped week can still show it was a decent
  * score in a week when everyone scored well. Seasons that counted every week
  * get no outlines at all, since there is nothing to tell apart.
  */
-/**
- * A week won is set in heavy, underlined type, so it stands out by shape and
- * never relies on its colour, which it shares with the rest of the top band.
- */
-const WEEK_WON_TEXT = 'underline decoration-2 underline-offset-2';
-
 const COUNTED_RING = 'ring-1 ring-white/90 ring-offset-1 ring-offset-slate-900';
-
-function weekTone(week: QbWeek): string {
-  const percentile =
-    week.fieldSize > 1
-      ? (week.fieldSize - week.rank) / (week.fieldSize - 1)
-      : 1;
-  // Walks down from the top band; a week won is always in it.
-  const band =
-    week.rank === 1
-      ? 0
-      : [0.8, 0.6, 0.4, 0.2].findIndex(floor => percentile >= floor);
-  return WEEK_SCALE[band === -1 ? WEEK_SCALE.length - 1 : band].tone;
-}
 
 const describePicks = (week: QbWeek) =>
   week.doubled
@@ -612,7 +465,6 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
   const lastWeek = Math.max(
     ...seasons.flatMap(season => season.weeks.map(week => week.week)),
   );
-  const weekNumbers = Array.from({ length: lastWeek }, (_, i) => i + 1);
   const anyTopWeeks = seasons.some(season => season.usesTopWeeks);
 
   return (
@@ -620,116 +472,40 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
       title='Week by Week'
       description='Each week shaded by where it ranked among everyone who played it'
     >
-      <div className='overflow-x-auto'>
-        <div
-          className='grid gap-1.5 p-0.5 text-xs'
-          style={{
-            gridTemplateColumns: `3rem repeat(${lastWeek}, minmax(3.25rem, 1fr))`,
-          }}
-        >
-          <div />
-          {weekNumbers.map(week => (
-            <div key={week} className='text-center text-slate-500'>
-              {week}
-            </div>
-          ))}
-
-          {seasons.map(season => {
-            const byWeek = new Map(season.weeks.map(week => [week.week, week]));
-            return (
-              <SeasonStrip key={season.year} year={season.year}>
-                {weekNumbers.map(number => {
-                  const week = byWeek.get(number);
-                  return week ? (
-                    <div
-                      key={number}
-                      title={describeWeek(week)}
-                      className={clsx(
-                        'flex h-8 items-center justify-center rounded font-semibold tabular-nums',
-                        weekTone(week),
-                        week.rank === 1 && WEEK_WON_TEXT,
-                        season.usesTopWeeks && week.counts && COUNTED_RING,
-                      )}
-                    >
-                      {week.total.toFixed(2)}
-                      <span className='sr-only'>. {describeWeek(week)}</span>
-                    </div>
-                  ) : (
-                    <div
-                      key={number}
-                      aria-hidden='true'
-                      className='flex h-8 items-center justify-center rounded bg-slate-900/40 text-slate-600'
-                    >
-                      ·
-                    </div>
-                  );
-                })}
-              </SeasonStrip>
-            );
-          })}
-        </div>
-      </div>
-      <WeekLegend showCounted={anyTopWeeks} />
+      <WeekGrid
+        lastWeek={lastWeek}
+        minColumn='3.25rem'
+        rows={seasons.map(season => ({
+          year: season.year,
+          weeks: new Map(
+            season.weeks.map((week): [number, WeekGridCell] => [
+              week.week,
+              {
+                value: week.total.toFixed(2),
+                title: describeWeek(week),
+                tone: rankTone(week.rank, week.fieldSize),
+                won: week.rank === 1,
+                className: clsx(
+                  season.usesTopWeeks && week.counts && COUNTED_RING,
+                ),
+              },
+            ]),
+          ),
+        }))}
+      />
+      <WeekLegend>
+        <WonKey sample='40' />
+        <ScaleKey />
+        {anyTopWeeks && (
+          <LegendItem
+            swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
+          >
+            Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
+            {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
+          </LegendItem>
+        )}
+      </WeekLegend>
     </ProfileSection>
-  );
-}
-
-function SeasonStrip({
-  year,
-  children,
-}: {
-  year: number;
-  children: ReactNode;
-}) {
-  return (
-    <>
-      <div className='flex h-8 items-center font-medium tabular-nums text-slate-300'>
-        {year}
-      </div>
-      {children}
-    </>
-  );
-}
-
-function Swatch({ tone, children }: { tone: string; children?: ReactNode }) {
-  return (
-    <span
-      className={clsx(
-        'relative inline-flex h-4 w-5 items-center justify-center rounded-sm',
-        tone,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function WeekLegend({ showCounted }: { showCounted: boolean }) {
-  return (
-    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400'>
-      <span className='inline-flex items-center gap-1.5'>
-        <Swatch tone={clsx(WEEK_SCALE[0].tone, 'w-7 text-[0.65rem]')}>
-          <span className={clsx('font-semibold', WEEK_WON_TEXT)}>40</span>
-        </Swatch>
-        Week won
-      </span>
-      <span className='inline-flex items-center gap-1'>
-        {WEEK_SCALE[0].label}
-        {WEEK_SCALE.map(({ tone, label }) => (
-          <span key={tone} title={label}>
-            <Swatch tone={tone} />
-          </span>
-        ))}
-        {WEEK_SCALE[WEEK_SCALE.length - 1].label}
-      </span>
-      {showCounted && (
-        <span className='inline-flex items-center gap-1.5'>
-          <Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />
-          Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
-          {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
-        </span>
-      )}
-    </div>
   );
 }
 
@@ -881,13 +657,12 @@ function MostStreamed({
         ))}
       </ProfileTable>
       {rows.length > MOST_STREAMED_PREVIEW && (
-        <button
-          type='button'
-          onClick={() => setShowAll(value => !value)}
-          className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
-        >
-          {showAll ? 'Show fewer' : `Show all ${rows.length} QBs`}
-        </button>
+        <ShowAllButton
+          total={rows.length}
+          noun='QBs'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );
@@ -904,14 +679,6 @@ function PickCell({ pick }: { pick: QbPick }) {
         {pick.points.toFixed(2)}
       </span>
     </td>
-  );
-}
-
-function Tag({ tone, children }: { tone: string; children: string }) {
-  return (
-    <span className={clsx('rounded px-1.5 py-0.5 text-xs', tone)}>
-      {children}
-    </span>
   );
 }
 
@@ -952,17 +719,9 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               <span className='text-slate-500'> / {week.fieldSize}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
-              {week.rank === 1 && (
-                <Tag tone='bg-emerald-400/15 text-emerald-200'>Won week</Tag>
-              )}
-              {week.doubled && (
-                <Tag tone='bg-violet-400/15 text-violet-200'>Doubled up</Tag>
-              )}
-              {!week.counts && (
-                <Tag tone='bg-slate-600/40 text-slate-300'>
-                  Didn&rsquo;t count
-                </Tag>
-              )}
+              {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
+              {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
+              {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
             </td>
           </tr>
         ))}

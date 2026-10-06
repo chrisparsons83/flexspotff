@@ -10,8 +10,8 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { POSITION_GROUPS } from '~/libs/best-ball/views';
-import { ordinal, pts } from '~/libs/guillotine/display';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
 import type {
@@ -67,9 +67,10 @@ function Career({ career }: { career: BestBallCareer }) {
         <CareerCard
           title='Finishes'
           lead={career.titles}
-          leadNote={`title${career.titles === 1 ? '' : 's'} in ${
-            career.seasons
-          } season${career.seasons === 1 ? '' : 's'}`}
+          leadNote={`${career.titles === 1 ? 'title' : 'titles'} in ${plural(
+            career.seasons,
+            'season',
+          )}`}
         >
           <MiniStat
             label='Best Finish'
