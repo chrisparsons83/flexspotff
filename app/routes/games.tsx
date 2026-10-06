@@ -2,6 +2,7 @@ import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { NavigationSection } from '~/components/layout/NavigationSection';
 import { prisma } from '~/db.server';
+import { poolTitle } from '~/libs/survivor/views';
 import { getLatestBestBallLeague } from '~/models/bestball.server';
 import { getLatestD12Season } from '~/models/d12season.server';
 import { getNewestD12WeekByYear } from '~/models/d12weekscore.server';
@@ -10,10 +11,10 @@ import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { getLatestSurvivorPools } from '~/models/survivor.server';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
-  { name: 'Survivor', href: '/games/survivor', current: false },
 ];
 
 export const loader = async () => {
@@ -53,8 +54,11 @@ export const loader = async () => {
     ? await getNewestD12WeekByYear(latestD12Season.year)
     : 1;
 
-  const guillotine = await getLatestGuillotineLeagues();
-  const bestBall = await getLatestBestBallLeague();
+  const [guillotine, bestBall, survivorPools] = await Promise.all([
+    getLatestGuillotineLeagues(),
+    getLatestBestBallLeague(),
+    getLatestSurvivorPools(),
+  ]);
 
   return typedjson(
     {
@@ -62,6 +66,10 @@ export const loader = async () => {
         ? { year: bestBall.season.year, name: bestBall.name }
         : null,
       guillotine,
+      survivor: survivorPools.map(pool => ({
+        id: pool.id,
+        name: poolTitle(pool),
+      })),
       qbStreamingCurrentWeek,
       spreadPoolCurrentWeek,
       locksChallengeCurrentWeek,
@@ -78,6 +86,7 @@ export default function GamesIndex() {
   const {
     bestBall,
     guillotine,
+    survivor,
     qbStreamingCurrentWeek,
     spreadPoolCurrentWeek,
     locksChallengeCurrentWeek,
@@ -248,6 +257,18 @@ export default function GamesIndex() {
               headingId='games-best-ball-heading'
             />
           )}
+          <NavigationSection
+            title='Survivor'
+            links={[
+              ...survivor.map(pool => ({
+                name: pool.name,
+                href: `/games/survivor/${pool.id}`,
+                current: false,
+              })),
+              { name: 'All Pools', href: '/games/survivor', current: false },
+            ]}
+            headingId='games-survivor-heading'
+          />
         </div>
         <div className='min-w-0 md:col-span-10'>
           <Outlet />

@@ -1,0 +1,2283 @@
+{
+  "about": "Yahoo Survival Football groups the Flex Spot ran in 2022 and 2023, read from Yahoo on 2026-10-06. Yahoo team IDs are mapped to NFLTeam.sleeperId abbreviations, and every pick result was checked against the stored NFL scores. See docs/survivor/plan.md.",
+  "pools": [
+    {
+      "groupKey": "416.g.6184",
+      "year": 2022,
+      "name": "Flex Spot FF",
+      "entries": [
+        {
+          "teamKey": "416.g.6184.t.1",
+          "entryName": "christhrowsrocks's Pick Set",
+          "nickname": "christhrowsrocks",
+          "guid": "3NQRLAQPVJI7UOWAPSDONSDB5A",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "LAR",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "KC",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.2",
+          "entryName": "Survivor Sacko Island",
+          "nickname": "Noro",
+          "guid": "IFVYCGVH2J2K4VSB45YB36M3AM",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.3",
+          "entryName": "Templare",
+          "nickname": "Jack",
+          "guid": "4XGJWU6GHQJDJOZYEDL2OPR5F4",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.4",
+          "entryName": "Bakron's Good ideas",
+          "nickname": "Thomas",
+          "guid": "PSKYP5BXUR4ACYYBI6GMVDVG5M",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.5",
+          "entryName": "ikyn",
+          "nickname": "Ikyn",
+          "guid": "X3OUWD6IPPFVTVRW3RBAV2IV7E",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "SF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.6",
+          "entryName": "Mike does it for the MILFs",
+          "nickname": "Mike",
+          "guid": "BVPM6VLAC7QVDQJOIBXU5ILSOQ",
+          "eliminatedWeek": null,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "DEN",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "CIN",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.7",
+          "entryName": "BustyChuckBass",
+          "nickname": "Buc",
+          "guid": "O35X6A72XCKEK3JLXJL7YHEF2X",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "CAR",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.8",
+          "entryName": "Snarky's Super Survivor Series",
+          "nickname": "Nicholas",
+          "guid": "SD5N3OFDV74MJ26GQNBXKGXXZI",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "DEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.9",
+          "entryName": "Wolfffffff's Boss Pick Set",
+          "nickname": "Wolfffffff",
+          "guid": "LCXRUXDPKHYGOKRMZIATIV4XBI",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "KC",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.10",
+          "entryName": "Pick Kicks",
+          "nickname": null,
+          "guid": null,
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.11",
+          "entryName": "Moose's Not Locks",
+          "nickname": "Anthony",
+          "guid": "6U2VFRFZALN625HO2FQDUULQ3E",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "TEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.12",
+          "entryName": "Herbal's Shot in the Dark",
+          "nickname": "jeffrorr",
+          "guid": "YCZSOB22RGKNHKB2ATLHGWLUGM",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "IND",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.13",
+          "entryName": "My Nice Pick Set",
+          "nickname": "Arsh",
+          "guid": "NHMZE7WX73V3B3HCONKIRFXQUE",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "SF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.14",
+          "entryName": "CodeMonkey",
+          "nickname": "Kevin",
+          "guid": "FHW47RGRWHM7YIEXAEDMQGP65A",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.15",
+          "entryName": "Elementsoul",
+          "nickname": "james",
+          "guid": "7PQIF3WOFP57JT6B5YUI62I2R4",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.16",
+          "entryName": "DKLocksCoInc\u2122",
+          "nickname": "Howe Dude",
+          "guid": "N5YBRE7WOHS7GA5WUC4IHYBL4M",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CLE",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.17",
+          "entryName": "George Pickens",
+          "nickname": "Daniel Hoerauf",
+          "guid": "XLCSJV7G332LSEPQ7M6R5DJP4Q",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "DEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.18",
+          "entryName": "Survival of the FooLish",
+          "nickname": "FooL",
+          "guid": "5JC2J5INOYXELZNL7EFEZDIUCI",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "SF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.19",
+          "entryName": "VERTICLE",
+          "nickname": "Parker",
+          "guid": "AZ3LLVGXRHTPBAVLZXE54K6KXQ",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "TEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.20",
+          "entryName": "Brandon\u2019s Correct Boys",
+          "nickname": "Brandon",
+          "guid": "IHVMOD5OT4PCDWCZ5XELUAY6ZE",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "TEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.21",
+          "entryName": "My Majestic Pick Set",
+          "nickname": "Tanay",
+          "guid": "7ZEZZTEYDGLFLVRBYQFW5VM2FA",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.22",
+          "entryName": "Presidential Picks",
+          "nickname": null,
+          "guid": "4K3DYLTPHKVI4MXPBYK764MZHY",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "DEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.23",
+          "entryName": "Matt T",
+          "nickname": "Matthew",
+          "guid": "CINGEUZQJGSJSII7V4N5CFQF2M",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "KC",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.24",
+          "entryName": "Ranchdippy",
+          "nickname": "Marcus",
+          "guid": "VJJHICN6FIL24VKONUGW3FJHOI",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "TEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.6184.t.25",
+          "entryName": "ListEm's Locks",
+          "nickname": "Mitch",
+          "guid": "AO3WIXGIIC6OCHB7OK33ULMMTY",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "DEN",
+              "result": "LOSS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupKey": "416.g.35078",
+      "year": 2022,
+      "name": "FlexSpotFF Redemption",
+      "entries": [
+        {
+          "teamKey": "416.g.35078.t.1",
+          "entryName": "christhrowsrocks's Pick Set",
+          "nickname": "christhrowsrocks",
+          "guid": "3NQRLAQPVJI7UOWAPSDONSDB5A",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "LAC",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.2",
+          "entryName": "Mike does it for MILFS (again)",
+          "nickname": "Mike",
+          "guid": "BVPM6VLAC7QVDQJOIBXU5ILSOQ",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "IND",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.3",
+          "entryName": "Lose in one week repeat",
+          "nickname": "jeffrorr",
+          "guid": "YCZSOB22RGKNHKB2ATLHGWLUGM",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "SF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.4",
+          "entryName": "My Notable Pick Set",
+          "nickname": "myles",
+          "guid": "N5FELQQH5FEAHT42B22LKQLUXU",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "PIT",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.5",
+          "entryName": "Ikyn's Incredible Pick Set",
+          "nickname": "Ikyn",
+          "guid": "X3OUWD6IPPFVTVRW3RBAV2IV7E",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "DET",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.6",
+          "entryName": "Bakrons Redemption",
+          "nickname": "Thomas",
+          "guid": "PSKYP5BXUR4ACYYBI6GMVDVG5M",
+          "eliminatedWeek": 5,
+          "picks": [
+            {
+              "week": 4,
+              "team": "MIN",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.7",
+          "entryName": "Buc's Boss Pick Set",
+          "nickname": "Buc",
+          "guid": "O35X6A72XCKEK3JLXJL7YHEF2X",
+          "eliminatedWeek": 5,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.8",
+          "entryName": "Matthew's Unrivaled Pick Set",
+          "nickname": "Matthew",
+          "guid": "CINGEUZQJGSJSII7V4N5CFQF2M",
+          "eliminatedWeek": 7,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "LAC",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.9",
+          "entryName": "Wolfffffff's Boss Pick Set",
+          "nickname": "Wolfffffff",
+          "guid": "LCXRUXDPKHYGOKRMZIATIV4XBI",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "BAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.10",
+          "entryName": "Arsh's Awe-Inspiring Pick Set",
+          "nickname": "Arsh",
+          "guid": "NHMZE7WX73V3B3HCONKIRFXQUE",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.11",
+          "entryName": "PresidentialPicks",
+          "nickname": null,
+          "guid": "4K3DYLTPHKVI4MXPBYK764MZHY",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "DET",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.12",
+          "entryName": "CodeMonkey's Redemption",
+          "nickname": "Kevin",
+          "guid": "FHW47RGRWHM7YIEXAEDMQGP65A",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.13",
+          "entryName": "The Comeback",
+          "nickname": null,
+          "guid": null,
+          "eliminatedWeek": 8,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "LAR",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "LV",
+              "result": "WIN"
+            },
+            {
+              "week": 8,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.14",
+          "entryName": "Nicholas's Nice(r) Pick Set",
+          "nickname": "Nicholas",
+          "guid": "SD5N3OFDV74MJ26GQNBXKGXXZI",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "GB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.15",
+          "entryName": "FooLish Redemption",
+          "nickname": "FooL",
+          "guid": "5JC2J5INOYXELZNL7EFEZDIUCI",
+          "eliminatedWeek": 7,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "LAR",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.16",
+          "entryName": "Moose's Surefire Picks",
+          "nickname": "Anthony",
+          "guid": "6U2VFRFZALN625HO2FQDUULQ3E",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "CLE",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.17",
+          "entryName": "Templare",
+          "nickname": "Jack",
+          "guid": "4XGJWU6GHQJDJOZYEDL2OPR5F4",
+          "eliminatedWeek": 6,
+          "picks": [
+            {
+              "week": 4,
+              "team": "GB",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.18",
+          "entryName": "DKLocksCoInc\u2122",
+          "nickname": "Howe Dude",
+          "guid": "N5YBRE7WOHS7GA5WUC4IHYBL4M",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 4,
+              "team": "PIT",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.35078.t.19",
+          "entryName": "Revenge of the Sacko",
+          "nickname": "Noro",
+          "guid": "IFVYCGVH2J2K4VSB45YB36M3AM",
+          "eliminatedWeek": null,
+          "picks": [
+            {
+              "week": 4,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "LAR",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 8,
+              "team": "MIA",
+              "result": "WIN"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupKey": "416.g.37779",
+      "year": 2022,
+      "name": "FlexSpot FF Survivor III",
+      "entries": [
+        {
+          "teamKey": "416.g.37779.t.1",
+          "entryName": "Noro's Reigning Pick Set",
+          "nickname": "Noro",
+          "guid": "IFVYCGVH2J2K4VSB45YB36M3AM",
+          "eliminatedWeek": 9,
+          "picks": [
+            {
+              "week": 9,
+              "team": "BUF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.2",
+          "entryName": "Mike loves MILFs",
+          "nickname": "Mike",
+          "guid": "BVPM6VLAC7QVDQJOIBXU5ILSOQ",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYG",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.3",
+          "entryName": "Moose\u2019s Super Serious Picks",
+          "nickname": "Anthony",
+          "guid": "6U2VFRFZALN625HO2FQDUULQ3E",
+          "eliminatedWeek": 14,
+          "picks": [
+            {
+              "week": 9,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 14,
+              "team": "MIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.4",
+          "entryName": "Buc's Best Pick Set",
+          "nickname": "Buc",
+          "guid": "O35X6A72XCKEK3JLXJL7YHEF2X",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "GB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.5",
+          "entryName": "Wolff Sole Survivor",
+          "nickname": "Wolfffffff",
+          "guid": "LCXRUXDPKHYGOKRMZIATIV4XBI",
+          "eliminatedWeek": 9,
+          "picks": []
+        },
+        {
+          "teamKey": "416.g.37779.t.6",
+          "entryName": "Back again",
+          "nickname": null,
+          "guid": null,
+          "eliminatedWeek": 16,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CIN",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "SEA",
+              "result": "WIN"
+            },
+            {
+              "week": 14,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 15,
+              "team": "PHI",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.7",
+          "entryName": "suckfest",
+          "nickname": "jeffrorr",
+          "guid": "YCZSOB22RGKNHKB2ATLHGWLUGM",
+          "eliminatedWeek": 9,
+          "picks": [
+            {
+              "week": 9,
+              "team": "BUF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.8",
+          "entryName": "Apatel78",
+          "nickname": "Arsh",
+          "guid": "NHMZE7WX73V3B3HCONKIRFXQUE",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "SF",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.9",
+          "entryName": "Nicholas' Shitass Picks",
+          "nickname": "Nicholas",
+          "guid": "SD5N3OFDV74MJ26GQNBXKGXXZI",
+          "eliminatedWeek": null,
+          "picks": [
+            {
+              "week": 9,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 14,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 15,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 16,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 17,
+              "team": "KC",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.10",
+          "entryName": "FooLish Desperation",
+          "nickname": "FooL",
+          "guid": "5JC2J5INOYXELZNL7EFEZDIUCI",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYG",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.11",
+          "entryName": "Chris Throws Darts picks",
+          "nickname": "christhrowsrocks",
+          "guid": "3NQRLAQPVJI7UOWAPSDONSDB5A",
+          "eliminatedWeek": 10,
+          "picks": [
+            {
+              "week": 9,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "PHI",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.12",
+          "entryName": "heap of trash",
+          "nickname": "Ikyn",
+          "guid": "X3OUWD6IPPFVTVRW3RBAV2IV7E",
+          "eliminatedWeek": 10,
+          "picks": [
+            {
+              "week": 9,
+              "team": "KC",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.13",
+          "entryName": "Matthew's Amazing Pick Set",
+          "nickname": "Matthew",
+          "guid": "CINGEUZQJGSJSII7V4N5CFQF2M",
+          "eliminatedWeek": 12,
+          "picks": [
+            {
+              "week": 9,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "TB",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.14",
+          "entryName": "Bakrons best",
+          "nickname": "Thomas",
+          "guid": "PSKYP5BXUR4ACYYBI6GMVDVG5M",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "SF",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "416.g.37779.t.15",
+          "entryName": "CodeMonkey's Third Chance",
+          "nickname": "Kevin",
+          "guid": "FHW47RGRWHM7YIEXAEDMQGP65A",
+          "eliminatedWeek": 9,
+          "picks": [
+            {
+              "week": 9,
+              "team": "BUF",
+              "result": "LOSS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupKey": "426.g.24316",
+      "year": 2023,
+      "name": "Flex Spot FF",
+      "entries": [
+        {
+          "teamKey": "426.g.24316.t.1",
+          "entryName": "christhrowsrocks's Pick Set",
+          "nickname": "christhrowsrocks",
+          "guid": "3NQRLAQPVJI7UOWAPSDONSDB5A",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "BAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.2",
+          "entryName": "Wolff's Not Dead",
+          "nickname": "Wolfffffff",
+          "guid": "LCXRUXDPKHYGOKRMZIATIV4XBI",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "DAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.3",
+          "entryName": "Chuck's Dazzling Pick Set",
+          "nickname": "Chuck",
+          "guid": "OCW2O7A2LOEDFMLGOAKURZMPLI",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.4",
+          "entryName": "DUME & GLUME",
+          "nickname": "Dominic",
+          "guid": "7SARG2JFOJOZNKKPH73EVOURV4",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "ATL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "BAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.5",
+          "entryName": "Mike Loves MILFs Pt.1",
+          "nickname": "Mike",
+          "guid": "BVPM6VLAC7QVDQJOIBXU5ILSOQ",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "MIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.6",
+          "entryName": "Chandy",
+          "nickname": "derosachandler",
+          "guid": "55EZ5B4EGGNRZRW5M27I5HBGYM",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 1,
+              "team": "ATL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "IND",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "NE",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.7",
+          "entryName": "Foolishness",
+          "nickname": "FooL",
+          "guid": "5JC2J5INOYXELZNL7EFEZDIUCI",
+          "eliminatedWeek": 7,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "SEA",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "LAR",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "BUF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.8",
+          "entryName": "NoroNoseNothing",
+          "nickname": "Noro",
+          "guid": "IFVYCGVH2J2K4VSB45YB36M3AM",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "MIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.9",
+          "entryName": "DKLocksCoInc",
+          "nickname": "Howe Dude",
+          "guid": "N5YBRE7WOHS7GA5WUC4IHYBL4M",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "MIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.10",
+          "entryName": "Verticle",
+          "nickname": "Parker",
+          "guid": "AZ3LLVGXRHTPBAVLZXE54K6KXQ",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "MIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.11",
+          "entryName": "Ender",
+          "nickname": "Ender",
+          "guid": "2MZFTSTVYRYY3FLUST6ZI4WMNI",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "MIA",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.12",
+          "entryName": "Templare's Incredible Pick Set",
+          "nickname": "Jack",
+          "guid": "4XGJWU6GHQJDJOZYEDL2OPR5F4",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "DAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.13",
+          "entryName": "Herbal",
+          "nickname": "jeffrorr",
+          "guid": "YCZSOB22RGKNHKB2ATLHGWLUGM",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "DAL",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.14",
+          "entryName": "Moose pack",
+          "nickname": null,
+          "guid": null,
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "SEA",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.15",
+          "entryName": "Snarky's Sharpy Picks",
+          "nickname": "Nicholas",
+          "guid": "SD5N3OFDV74MJ26GQNBXKGXXZI",
+          "eliminatedWeek": 7,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "LAR",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.16",
+          "entryName": "Eenie Meanie Miney Moe",
+          "nickname": null,
+          "guid": "4K3DYLTPHKVI4MXPBYK764MZHY",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.17",
+          "entryName": "Elementsoul's eliminations",
+          "nickname": "james",
+          "guid": "7PQIF3WOFP57JT6B5YUI62I2R4",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "LAC",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.18",
+          "entryName": "Jeremy's Outstanding Pick Set",
+          "nickname": "Jeremy",
+          "guid": "NOZGFUCDKDI2WR7CIGLBC4RFS4",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NO",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.19",
+          "entryName": "Selyk",
+          "nickname": "Kyle",
+          "guid": "YFBZNGXRMJDKR3VC4RCZJFUCSQ",
+          "eliminatedWeek": 7,
+          "picks": [
+            {
+              "week": 1,
+              "team": "JAX",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "SEA",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "LAC",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "BUF",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.20",
+          "entryName": "Eli",
+          "nickname": "Eliazar",
+          "guid": "Z74HVTRZY2OV7GLRFKSMZSNCNK",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "NYG",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.21",
+          "entryName": "matt's Fascinating Pick Set",
+          "nickname": "matt",
+          "guid": "B34GF5SQRQ55BP6M4JHNFZUYTI",
+          "eliminatedWeek": 4,
+          "picks": [
+            {
+              "week": 1,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "CIN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.22",
+          "entryName": "Peppertoni\u2019s Picks",
+          "nickname": "Tony",
+          "guid": "RSLGZGSIJQI6L6ETI7PS4AYUFE",
+          "eliminatedWeek": 5,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "PHI",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "LAC",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.23",
+          "entryName": "Bakron's Best Boys",
+          "nickname": "Thomas",
+          "guid": "PSKYP5BXUR4ACYYBI6GMVDVG5M",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "DET",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.24",
+          "entryName": "CodeMonkey's Survival",
+          "nickname": "Kevin",
+          "guid": "FHW47RGRWHM7YIEXAEDMQGP65A",
+          "eliminatedWeek": 2,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "DET",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.25",
+          "entryName": "My Majestic Pick Set",
+          "nickname": "Arsh",
+          "guid": "NHMZE7WX73V3B3HCONKIRFXQUE",
+          "eliminatedWeek": null,
+          "picks": [
+            {
+              "week": 1,
+              "team": "BAL",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "NE",
+              "result": "WIN"
+            },
+            {
+              "week": 4,
+              "team": "MIN",
+              "result": "WIN"
+            },
+            {
+              "week": 5,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 6,
+              "team": "BUF",
+              "result": "WIN"
+            },
+            {
+              "week": 7,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 8,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "NYJ",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.26",
+          "entryName": "My Best Pick Set",
+          "nickname": "Tyler",
+          "guid": "RV37PHWTN65MBFFNKXGGJHPVOA",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "TEN",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.27",
+          "entryName": "Tanay's Top-Notch Pick Set",
+          "nickname": "Tanay",
+          "guid": "7ZEZZTEYDGLFLVRBYQFW5VM2FA",
+          "eliminatedWeek": 3,
+          "picks": [
+            {
+              "week": 1,
+              "team": "WAS",
+              "result": "WIN"
+            },
+            {
+              "week": 2,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 3,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.24316.t.28",
+          "entryName": "Joms surviving the league",
+          "nickname": "Jim",
+          "guid": "QV5BBHSPSZYOZHR4MOF6YT6HMQ",
+          "eliminatedWeek": 1,
+          "picks": [
+            {
+              "week": 1,
+              "team": "SEA",
+              "result": "LOSS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupKey": "426.g.35907",
+      "year": 2023,
+      "name": "FlexSpotFF Redemption",
+      "entries": [
+        {
+          "teamKey": "426.g.35907.t.1",
+          "entryName": "christhrowsrocks's Pick Set",
+          "nickname": "christhrowsrocks",
+          "guid": "3NQRLAQPVJI7UOWAPSDONSDB5A",
+          "eliminatedWeek": null,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "PIT",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 14,
+              "team": "SF",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.2",
+          "entryName": "Nicholas's Matchless Pick Set",
+          "nickname": "Nicholas",
+          "guid": "SD5N3OFDV74MJ26GQNBXKGXXZI",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "KC",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.3",
+          "entryName": "Herbal",
+          "nickname": "jeffrorr",
+          "guid": "YCZSOB22RGKNHKB2ATLHGWLUGM",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.4",
+          "entryName": "FooL me again",
+          "nickname": "FooL",
+          "guid": "5JC2J5INOYXELZNL7EFEZDIUCI",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "WAS",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.5",
+          "entryName": "Mike loves MILFs Pt2",
+          "nickname": "Mike",
+          "guid": "BVPM6VLAC7QVDQJOIBXU5ILSOQ",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.6",
+          "entryName": "Wolff\u2019s Not Dead",
+          "nickname": "Wolfffffff",
+          "guid": "LCXRUXDPKHYGOKRMZIATIV4XBI",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.7",
+          "entryName": "Moose Any% Survivor Speed Run",
+          "nickname": null,
+          "guid": null,
+          "eliminatedWeek": 12,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "DET",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.8",
+          "entryName": "Templare1",
+          "nickname": "Jack",
+          "guid": "4XGJWU6GHQJDJOZYEDL2OPR5F4",
+          "eliminatedWeek": 11,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "WAS",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.9",
+          "entryName": "Noro's Neat Pick Set",
+          "nickname": "Noro",
+          "guid": "IFVYCGVH2J2K4VSB45YB36M3AM",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.10",
+          "entryName": "Brando",
+          "nickname": "Brandon",
+          "guid": "IHVMOD5OT4PCDWCZ5XELUAY6ZE",
+          "eliminatedWeek": 10,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.11",
+          "entryName": "Dragomir's Dazzling Pick Set",
+          "nickname": "Dragomir",
+          "guid": "YGB5VEWUDNWJF4GWVL7HZ4IGJU",
+          "eliminatedWeek": 10,
+          "picks": [
+            {
+              "week": 9,
+              "team": "BAL",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.12",
+          "entryName": "Mart121",
+          "nickname": "matt",
+          "guid": "B34GF5SQRQ55BP6M4JHNFZUYTI",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "LAC",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "SF",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "JAX",
+              "result": "LOSS"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.13",
+          "entryName": "Bakron's B Team",
+          "nickname": "Thomas",
+          "guid": "PSKYP5BXUR4ACYYBI6GMVDVG5M",
+          "eliminatedWeek": 13,
+          "picks": [
+            {
+              "week": 9,
+              "team": "NO",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "DET",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "MIA",
+              "result": "WIN"
+            }
+          ]
+        },
+        {
+          "teamKey": "426.g.35907.t.14",
+          "entryName": "CodeMonkey",
+          "nickname": "Kevin",
+          "guid": "FHW47RGRWHM7YIEXAEDMQGP65A",
+          "eliminatedWeek": 14,
+          "picks": [
+            {
+              "week": 9,
+              "team": "CLE",
+              "result": "WIN"
+            },
+            {
+              "week": 10,
+              "team": "DAL",
+              "result": "WIN"
+            },
+            {
+              "week": 11,
+              "team": "HOU",
+              "result": "WIN"
+            },
+            {
+              "week": 12,
+              "team": "KC",
+              "result": "WIN"
+            },
+            {
+              "week": 13,
+              "team": "TB",
+              "result": "WIN"
+            },
+            {
+              "week": 14,
+              "team": "MIA",
+              "result": "LOSS"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

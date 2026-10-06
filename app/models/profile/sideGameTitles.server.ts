@@ -44,6 +44,7 @@ export async function getSideGameTitles(
     dfsSurvivor,
     guillotine,
     bestBall,
+    survivor,
     fSquared,
   ] = await Promise.all([
     countD12Titles(userId, inProgress),
@@ -53,6 +54,7 @@ export async function getSideGameTitles(
     countDfsSurvivorTitles(userId, inProgress),
     countGuillotineTitles(userId),
     countBestBallTitles(userId),
+    countSurvivorTitles(userId),
     countFSquaredTitles(userId, inProgress),
   ]);
 
@@ -64,6 +66,7 @@ export async function getSideGameTitles(
     dfsSurvivor,
     guillotine,
     bestBall,
+    survivor,
     fSquared,
   };
 }
@@ -360,4 +363,12 @@ async function countGuillotineTitles(userId: string): Promise<number> {
  */
 async function countBestBallTitles(userId: string): Promise<number> {
   return prisma.bestBallTeam.count({ where: { userId, finish: 1 } });
+}
+
+/**
+ * Survivor: a finish is only written once a pool is decided, so a stored
+ * first place is a pool won. Co-winners each count it.
+ */
+async function countSurvivorTitles(userId: string): Promise<number> {
+  return prisma.survivorEntry.count({ where: { userId, finish: 1 } });
 }

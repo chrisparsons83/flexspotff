@@ -75,6 +75,7 @@ export async function matchSleeperOwnerToUser({
     { count },
     { count: guillotineTeamsUpdated },
     { count: bestBallTeamsUpdated },
+    { count: survivorEntriesUpdated },
   ] = await prisma.$transaction([
     prisma.sleeperUser.upsert({
       where: {
@@ -104,6 +105,10 @@ export async function matchSleeperOwnerToUser({
       where: { sleeperOwnerId: sleeperOwnerID },
       data: { userId },
     }),
+    prisma.survivorEntry.updateMany({
+      where: { sleeperOwnerId: sleeperOwnerID },
+      data: { userId },
+    }),
   ]);
 
   return {
@@ -111,5 +116,6 @@ export async function matchSleeperOwnerToUser({
     teamsUpdated: count,
     guillotineTeamsUpdated,
     bestBallTeamsUpdated,
+    survivorEntriesUpdated,
   };
 }

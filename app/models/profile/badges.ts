@@ -251,6 +251,17 @@ export const SIDE_GAME_BADGES = {
       bg: 'bg-teal-950/60',
     },
   },
+  survivor: {
+    label: 'Survivor Champion',
+    emoji: '🏝️',
+    // Cyan, teal and the greens are all taken; yellow sits clear of the
+    // ambers once it is on a dark wash.
+    accent: {
+      border: 'border-yellow-300',
+      text: 'text-yellow-200',
+      bg: 'bg-yellow-950/60',
+    },
+  },
   fSquared: {
     label: 'F² Champion',
     emoji: '🧮',

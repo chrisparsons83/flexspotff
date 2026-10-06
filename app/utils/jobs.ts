@@ -62,6 +62,12 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       "Syncs this season's Autodraft Best Ball Mania league - weekly best-ball scores and points for - picking up Sleeper's stat corrections between games. Hourly at :25.",
   },
   {
+    name: 'sync-survivor',
+    cron: '50 * * * *',
+    description:
+      "Syncs this season's Sleeper survivor pools - every pick, who is out and who is still alive. Picks lock at kickoff and results land as games end, so hourly is soon enough. Hourly at :50.",
+  },
+  {
     name: 'sync-player-scores',
     cron: '0 * * * *',
     description:

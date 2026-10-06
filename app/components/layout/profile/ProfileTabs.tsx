@@ -19,6 +19,7 @@ export const PROFILE_TABS = [
   { key: 'd12', label: 'D12' },
   { key: 'guillotine', label: 'Guillotine' },
   { key: 'best-ball', label: 'Autodraft BBM' },
+  { key: 'survivor', label: 'Survivor' },
   { key: 'qb-streaming', label: 'QB Streaming' },
   { key: 'spread-pool', label: 'Spread Pool' },
   { key: 'locks', label: 'Locks' },

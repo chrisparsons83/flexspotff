@@ -61,6 +61,10 @@ export default function Admin() {
     { name: 'Best Ball Leagues', href: '/admin/best-ball', current: false },
   ];
 
+  const survivorLinks = [
+    { name: 'Survivor Pools', href: '/admin/survivor', current: false },
+  ];
+
   const omniLinks = [
     { name: 'Score Update', href: '/admin/omni/scoring', current: false },
     {
@@ -126,6 +130,11 @@ export default function Admin() {
                 title='Autodraft BBM'
                 links={bestBallLinks}
                 headingId='admin-best-ball-heading'
+              />
+              <NavigationSection
+                title='Survivor'
+                links={survivorLinks}
+                headingId='admin-survivor-heading'
               />
               <NavigationSection
                 title='Omni'

@@ -1,9 +1,12 @@
-export default function Streaming() {
-  return (
-    <div>
-      <a href='http://sleeper.com/i/0NLXm3e7a1Pk5'>
-        Join 2025 Survivor Group on Sleeper
-      </a>
-    </div>
-  );
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { Outlet } from '@remix-run/react';
+import { requireSurvivorAccess } from '~/libs/survivor/access.server';
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  await requireSurvivorAccess(request);
+  return {};
+};
+
+export default function GamesSurvivor() {
+  return <Outlet />;
 }
