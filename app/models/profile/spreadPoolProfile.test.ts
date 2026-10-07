@@ -289,8 +289,6 @@ describe('buildPoolCareer', () => {
 
     expect(career.worstWeek?.week).toBe(1);
     expect(career.weeks).toEqual({ wins: 2, losses: 0, pushes: 0 });
-    expect(career.missedWeeks).toBe(1);
-    expect(career.missedCost).toBe(-20);
     expect(career.weeksPlayed).toBe(2);
   });
 

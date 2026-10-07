@@ -13,8 +13,8 @@ type Props = {
 
 export default function ProfileHero({ summary, tabs }: Props) {
   const { user, headline, badges } = summary;
-  // A long run of nicknames would swamp the header; the latest few say enough.
-  const pastNames = user.pastNames.slice(0, 5);
+  const showUsername =
+    user.discordUsername && user.discordUsername !== user.discordName;
 
   return (
     <section className='not-prose overflow-hidden rounded-lg border border-slate-600/40 bg-slate-800/40'>
@@ -25,17 +25,16 @@ export default function ProfileHero({ summary, tabs }: Props) {
             <h2 className='m-0 text-2xl font-bold text-white'>
               {user.discordName}
             </h2>
-            <p className='m-0 mt-1 text-sm text-slate-400'>
-              {user.discordUsername && user.discordUsername !== user.discordName
-                ? `@${user.discordUsername} · `
-                : ''}
-              Member since {user.memberSince}
+            {/* A rule between the two rather than a dot, which read as
+                punctuation. */}
+            <p className='m-0 mt-1 flex flex-wrap items-center gap-x-3 text-sm text-slate-400'>
+              {showUsername && (
+                <span className='border-r border-slate-600 pr-3'>
+                  @{user.discordUsername}
+                </span>
+              )}
+              <span>Member since {user.memberSince}</span>
             </p>
-            {pastNames.length > 0 && (
-              <p className='m-0 mt-1 text-xs text-slate-400'>
-                Also known as {pastNames.join(', ')}
-              </p>
-            )}
           </div>
         </div>
 

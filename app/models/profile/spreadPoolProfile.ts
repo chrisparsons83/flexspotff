@@ -132,8 +132,6 @@ export type PoolCareer = {
   bestFinish: (PoolFinish & { year: number }) | null;
   averageFinish: number | null;
   standing: (PoolFinish & { year: number }) | null;
-  missedWeeks: number;
-  missedCost: number;
   weeksPlayed: number;
   averageBet: number | null;
   /** Bets of the full amount a game allows. */
@@ -143,8 +141,6 @@ export type PoolCareer = {
    * own, so up, down and even add up to `weeksPlayed`.
    */
   weeks: Record3;
-  /** Weeks with the top net of everyone who played. */
-  weeksWon: number;
   bestWeek: PoolWeek | null;
   worstWeek: PoolWeek | null;
 };
@@ -583,8 +579,6 @@ export function buildPoolCareer(seasons: PoolSeason[]): PoolCareer {
       running?.finish != null
         ? { ...running.finish, year: running.year }
         : null,
-    missedWeeks: missedWeeks.length,
-    missedCost: sum(missedWeeks.map(week => week.net)),
     weeksPlayed: weeks.length - missedWeeks.length,
     averageBet: average(bets.map(bet => bet.amount)),
     maxBets: bets.filter(bet => bet.amount >= MAX_BET).length,
@@ -593,7 +587,6 @@ export function buildPoolCareer(seasons: PoolSeason[]): PoolCareer {
       losses: played.filter(week => week.net < 0).length,
       pushes: played.filter(week => week.net === 0).length,
     },
-    weeksWon: played.filter(week => week.rank === 1).length,
     bestWeek: best,
     worstWeek: worst,
   };

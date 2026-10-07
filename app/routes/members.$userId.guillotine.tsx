@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import PercentileStrip from '~/components/layout/profile/PercentileStrip';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
@@ -14,9 +15,9 @@ import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
 import {
+  KeyList,
   LegendItem,
   Swatch,
-  WeekLegend,
 } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
@@ -98,14 +99,9 @@ function Career({
   seasons: GuillotineSeason[];
 }) {
   const best = career.bestFinish;
-  // Every finished season on the same bottom-to-top scale as the weeks.
   const finishes = seasons.filter(
     (s): s is GuillotineSeason & { place: number } => s.place !== null,
   );
-  const finishPercentile = (season: { place: number; teamCount: number }) =>
-    season.teamCount > 1
-      ? (season.teamCount - season.place) / (season.teamCount - 1)
-      : 1;
 
   return (
     <ProfileSection title='Career'>
@@ -114,31 +110,20 @@ function Career({
           title='Finishes'
           lead={
             career.titles > 0 ? (
-              <Trophies titles={career.titles} />
+              <>
+                <Trophies titles={career.titles} />
+                <LeadContext>{plural(career.titles, 'title')}</LeadContext>
+              </>
             ) : best ? (
-              ordinal(best.place)
+              <>
+                {ordinal(best.place)}
+                <LeadContext>{seasonLabel(best)}</LeadContext>
+              </>
             ) : (
               '—'
             )
           }
-          leadNote={
-            !best
-              ? 'no finishes yet'
-              : best.place === 1
-              ? `${plural(career.titles, 'title')}, latest ${seasonLabel(best)}`
-              : `best finish, ${seasonLabel(best)}`
-          }
-          meter={
-            <PercentileStrip
-              values={finishes.map(finishPercentile)}
-              average={null}
-              label={(_, index) =>
-                `${seasonLabel(finishes[index])}: ${ordinal(
-                  finishes[index].place,
-                )}`
-              }
-            />
-          }
+          meter={<PlaceBar finishes={finishes} />}
         >
           <MiniStat
             label='Longest Run'
@@ -164,11 +149,15 @@ function Career({
         <CareerCard
           title='Weekly Finish'
           lead={
-            career.averagePercentile === null
-              ? '—'
-              : ordinal(Math.round(career.averagePercentile * 100))
+            career.averagePercentile === null ? (
+              '—'
+            ) : (
+              <>
+                {ordinal(Math.round(career.averagePercentile * 100))}
+                <LeadContext>percentile</LeadContext>
+              </>
+            )
           }
-          leadNote='percentile in an average week, among the teams left'
           meter={
             <PercentileStrip
               values={career.weeklyPercentiles}
@@ -180,10 +169,6 @@ function Career({
             label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-emerald-300'
-            detail={
-              career.bestWeek &&
-              `${seasonLabel(career.bestWeek)}, week ${career.bestWeek.week}`
-            }
           />
           <MiniStat
             label='Closest Escape'
@@ -194,12 +179,6 @@ function Career({
             }
             tone='text-amber-300'
             hint='The fewest points they ever survived the chop by'
-            detail={
-              career.closestEscape &&
-              `${seasonLabel(career.closestEscape)}, week ${
-                career.closestEscape.week
-              }`
-            }
           />
           <MiniStat
             label='Top Score'
@@ -211,13 +190,15 @@ function Career({
 
         <CareerCard
           title='Waiver Bids Won'
-          lead={career.claimsWon}
-          leadNote={
-            career.bidWinRate === null
-              ? 'no bids placed'
-              : `of ${career.claimsWon + career.bidsLost} placed, ${Math.round(
+          lead={
+            <>
+              {career.claimsWon}
+              {career.bidWinRate !== null && (
+                <LeadContext>{`${Math.round(
                   career.bidWinRate * 100,
-                )}% of them`
+                )}%`}</LeadContext>
+              )}
+            </>
           }
           meter={<SplitBar wins={career.claimsWon} losses={career.bidsLost} />}
         >
@@ -241,25 +222,73 @@ function Career({
 }
 
 /**
+ * A segment per place, last on the left and first on the right like the
+ * weekly strip beside it, lit for each place they have finished in. A place
+ * they have finished in more than once is brighter, and a title is gold.
+ */
+function PlaceBar({
+  finishes,
+}: {
+  finishes: (GuillotineSeason & { place: number })[];
+}) {
+  const places =
+    finishes.length > 0
+      ? Math.max(...finishes.map(season => season.teamCount))
+      : 18;
+
+  return (
+    <div aria-hidden='true' className='flex h-2 gap-0.5'>
+      {Array.from({ length: places }, (_, index) => {
+        const place = places - index;
+        const here = finishes.filter(season => season.place === place);
+        return (
+          <div
+            key={place}
+            title={
+              here.length > 0
+                ? `${ordinal(place)}: ${here.map(seasonLabel).join(', ')}`
+                : undefined
+            }
+            className={clsx(
+              'flex-1 first:rounded-l-full last:rounded-r-full',
+              here.length === 0
+                ? 'bg-slate-700'
+                : place === 1
+                ? 'bg-gold'
+                : here.length > 1
+                ? 'bg-sky-200'
+                : 'bg-sky-400/70',
+            )}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * What each square means. They differ by lightness and by shape as well as by
  * hue - bright for a top-three week, mid grey for a safe one, an amber outline
  * for a narrow escape and a dark square marked ✕ for the chop - so they read
  * apart with red-green colour blindness too.
  */
 const SURVIVAL = {
-  top: { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 3 that week' },
-  survived: { tone: 'bg-slate-500 text-white', label: 'Survived' },
-  close: {
-    tone: 'bg-slate-500 text-white ring-2 ring-inset ring-amber-300',
-    label: 'Survived by under 5',
-  },
-  chopped: { tone: 'bg-rose-800 text-rose-50', label: 'Chopped' },
-  gone: { tone: 'bg-slate-800', label: 'Already out' },
-  future: {
-    tone: 'border border-dashed border-slate-500',
-    label: 'Still to play',
-  },
+  top: 'bg-emerald-300 text-emerald-950',
+  survived: 'bg-slate-500 text-white',
+  close: 'bg-slate-500 text-white ring-2 ring-inset ring-amber-300',
+  chopped: 'bg-rose-800 text-rose-50',
+  gone: 'bg-slate-800',
+  future: 'border border-dashed border-slate-500',
 } as const;
+
+const SURVIVAL_LABEL: Record<keyof typeof SURVIVAL, string> = {
+  top: 'Top 3 that week',
+  survived: 'Survived',
+  close: 'Survived by under 5',
+  chopped: 'Chopped',
+  gone: 'Already out',
+  future: 'Still to play',
+};
 
 const survivalKind = (week: SurvivalWeek): keyof typeof SURVIVAL => {
   switch (week.state) {
@@ -299,7 +328,22 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
   return (
     <ProfileSection
       title='Week by Week'
-      description='A square for each week of each season: how long they lasted, and how close each week was.'
+      info={
+        <KeyList>
+          {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
+            <LegendItem
+              key={kind}
+              swatch={
+                <Swatch tone={clsx(SURVIVAL[kind], 'text-[0.6rem]')}>
+                  {kind === 'chopped' && '✕'}
+                </Swatch>
+              }
+            >
+              {SURVIVAL_LABEL[kind]}
+            </LegendItem>
+          ))}
+        </KeyList>
+      }
     >
       <div className='space-y-2'>
         {seasons.map(season => (
@@ -342,7 +386,7 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                     title={survivalTitle(week)}
                     className={clsx(
                       'relative flex h-5 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
-                      SURVIVAL[kind].tone,
+                      SURVIVAL[kind],
                     )}
                   >
                     {/* The chop is marked at every size. Scores are too narrow
@@ -370,20 +414,6 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
           </div>
         ))}
       </div>
-      <WeekLegend>
-        {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
-          <LegendItem
-            key={kind}
-            swatch={
-              <Swatch tone={clsx(SURVIVAL[kind].tone, 'text-[0.6rem]')}>
-                {kind === 'chopped' && '✕'}
-              </Swatch>
-            }
-          >
-            {SURVIVAL[kind].label}
-          </LegendItem>
-        ))}
-      </WeekLegend>
     </ProfileSection>
   );
 }

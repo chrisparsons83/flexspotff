@@ -6,7 +6,9 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
+import { InfoText } from '~/components/layout/profile/InfoTip';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable, {
   MobileCard,
@@ -18,11 +20,11 @@ import SeasonFinish, {
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
 import WeekGrid, {
+  KeyList,
   LegendItem,
   ScaleKey,
   Swatch,
   WEEK_SCALE,
-  WeekLegend,
   WonKey,
   rankTone,
 } from '~/components/layout/profile/WeekGrid';
@@ -137,8 +139,9 @@ function Career({
 
         <CareerCard
           title='Weekly Total'
-          lead={pts(career.averageWeek)}
-          leadNote={<VsFieldNote value={career.vsField} />}
+          lead={
+            <VsFieldLead value={career.averageWeek} vsField={career.vsField} />
+          }
           meter={
             bestWeek &&
             worstWeek &&
@@ -175,7 +178,7 @@ function Career({
   );
 }
 
-/** A share of weeks as the headline, with the count of weeks beside it. */
+/** A share of weeks, with the count of weeks in the hover text. */
 function RateStat({
   label,
   count,
@@ -193,8 +196,7 @@ function RateStat({
     <MiniStat
       label={label}
       value={of > 0 ? `${Math.round((count / of) * 100)}%` : '—'}
-      detail={plural(count, 'week')}
-      hint={hint}
+      hint={`${hint}: ${plural(count, 'week')}`}
       tone={tone}
     />
   );
@@ -218,8 +220,12 @@ function FinishesCard({
     return career.current ? (
       <CareerCard
         title='Standing'
-        lead={ordinal(career.current.rank)}
-        leadNote={`of ${career.current.fieldSize} so far in ${career.current.year}`}
+        lead={
+          <>
+            {ordinal(career.current.rank)}
+            <LeadContext>of {career.current.fieldSize}</LeadContext>
+          </>
+        }
       >
         <MiniStat label='Weeks Played' value={career.weeks} />
       </CareerCard>
@@ -236,17 +242,8 @@ function FinishesCard({
           ordinal(career.bestFinish!.rank)
         )
       }
-      leadNote={[
-        career.titles > 0
-          ? plural(career.titles, 'title')
-          : `best finish, ${career.bestFinish!.year}`,
-        `average ${career.averageFinish!.toFixed(1)}`,
-        career.current &&
-          `${ordinal(career.current.rank)} in ${career.current.year}`,
-      ]
-        .filter(Boolean)
-        .join(' · ')}
       meter={<FinishMeter ranks={finished} />}
+      compactStats
     >
       <MiniStat
         label='Titles'
@@ -259,14 +256,28 @@ function FinishesCard({
   );
 }
 
-function VsFieldNote({ value }: { value: number | null }) {
-  if (value === null) return null;
+/** A headline average with how far it sits from the field's, beside it. */
+function VsFieldLead({
+  value,
+  vsField,
+}: {
+  value: number | null;
+  vsField: number | null;
+}) {
   return (
     <>
-      <span className={clsx('tabular-nums', signedTone(value))}>
-        {signed(value)}
-      </span>{' '}
-      a week vs the field
+      {pts(value)}
+      {vsField !== null && (
+        <LeadContext>
+          <InfoText
+            label={signed(vsField)}
+            className={clsx('tabular-nums', signedTone(vsField))}
+            tip={`${signed(vsField)} a week against the field`}
+          >
+            {signed(vsField)}
+          </InfoText>
+        </LeadContext>
+      )}
     </>
   );
 }
@@ -291,8 +302,7 @@ function SideCard({
           {SIDE[side].label} Pick
         </span>
       }
-      lead={pts(career.average)}
-      leadNote={<VsFieldNote value={career.vsField} />}
+      lead={<VsFieldLead value={career.average} vsField={career.vsField} />}
       meter={
         best &&
         worst &&
@@ -432,7 +442,7 @@ function ScoringRuleDivider() {
         className='bg-slate-900/40 px-2 py-1 text-center text-xs text-slate-400'
       >
         ↑ Best {QB_STREAMING_COUNTING_WEEKS} weeks count from{' '}
-        {QB_STREAMING_TOP_WEEKS_FROM_YEAR} · every week counted before ↓
+        {QB_STREAMING_TOP_WEEKS_FROM_YEAR}; every week counted before ↓
       </td>
     </tr>
   );
@@ -471,11 +481,24 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
   const lastWeek = Math.max(
     ...seasons.flatMap(season => season.weeks.map(week => week.week)),
   );
-  const anyTopWeeks = seasons.some(season => season.usesTopWeeks);
 
   return (
     <ProfileSection
       title='Week by Week'
+      info={
+        <KeyList>
+          <WonKey sample='40' />
+          <ScaleKey />
+          {seasons.some(season => season.usesTopWeeks) && (
+            <LegendItem
+              swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
+            >
+              Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
+              {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
+            </LegendItem>
+          )}
+        </KeyList>
+      }
       description='Each week shaded by where it ranked among everyone who played it.'
     >
       <WeekGrid
@@ -498,18 +521,6 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
           ),
         }))}
       />
-      <WeekLegend>
-        <WonKey sample='40' />
-        <ScaleKey />
-        {anyTopWeeks && (
-          <LegendItem
-            swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
-          >
-            Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
-            {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
-          </LegendItem>
-        )}
-      </WeekLegend>
     </ProfileSection>
   );
 }
@@ -596,12 +607,12 @@ function MostStreamed({
   return (
     <ProfileSection
       title='Most Streamed'
-      footnote={
-        <span className='inline-flex flex-wrap items-center gap-x-4 gap-y-1'>
+      info={
+        <KeyList>
           <BarKey tone={SIDE.standard.dot}>Standard pick</BarKey>
           <BarKey tone={SIDE.deep.dot}>Deep pick</BarKey>
           <BarKey tone={DOUBLED_TONE}>Doubled up (both picks)</BarKey>
-        </span>
+        </KeyList>
       }
     >
       <ProfileTable
@@ -730,7 +741,6 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection
       title='Pick Log'
-      description='Each pick’s points, with how far they sat above or below the average pick that week.'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <ProfileTable

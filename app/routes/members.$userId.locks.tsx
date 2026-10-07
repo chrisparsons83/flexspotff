@@ -8,6 +8,7 @@ import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
+import { InfoText } from '~/components/layout/profile/InfoTip';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
@@ -131,7 +132,6 @@ function WeekStat({
     <MiniStat
       label={label}
       value={week ? value(week) : '—'}
-      detail={week ? weekLabel(week) : null}
       hint={week ? `${hint}: ${weekLabel(week)}, ${record(week.record)}` : hint}
       tone={week ? tone : undefined}
     />
@@ -173,6 +173,7 @@ function Career({
         <CareerCard
           title='Points Scored'
           lead={career.points}
+          compactStats
           meter={
             // One finished season would put the same total at both ends, so
             // it keeps the bar's space instead, to stay level with the rest.
@@ -219,6 +220,7 @@ function Career({
         <CareerCard
           title='Scoring Weeks'
           lead={career.cleanWeeks}
+          compactStats
           meter={
             <KeyedBar
               entries={[
@@ -1056,13 +1058,17 @@ function TeamCallout({
   return (
     <div className='rounded-md bg-slate-900/50 p-4'>
       <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
-      <div className='mt-2 text-2xl font-bold leading-none text-white'>
-        {row.team}
-        <span className='ml-2 text-sm font-normal text-slate-400'>
-          {names[row.team] ?? ''}
+      {/* The team, then its number pushed to the far end of the same line;
+          a narrow card wraps the number under the name instead. */}
+      <div className='mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
+        <span className='text-2xl font-bold leading-none text-white'>
+          {row.team}
+        </span>
+        <span className='text-sm text-slate-400'>{names[row.team] ?? ''}</span>
+        <span className='ml-auto text-sm tabular-nums text-slate-300'>
+          {children}
         </span>
       </div>
-      <div className='mt-1.5 text-sm text-slate-400'>{children}</div>
     </div>
   );
 }
@@ -1125,11 +1131,16 @@ function Teams({
         <TeamCallout title='Costliest Loss' row={costliest} names={names}>
           {costliest && (
             <>
-              <span className='font-semibold text-rose-300'>
+              <InfoText
+                label={plural(costliest.pointsCost, 'point')}
+                className='font-semibold text-rose-300'
+                tip={`Lost as a week's only loss, with ${plural(
+                  costliest.busts,
+                  'bust',
+                )} in all`}
+              >
                 {plural(costliest.pointsCost, 'point')}
-              </span>{' '}
-              lost as a week&rsquo;s only loss,{' '}
-              {plural(costliest.busts, 'bust')} in all
+              </InfoText>
             </>
           )}
         </TeamCallout>

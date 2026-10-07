@@ -35,7 +35,6 @@ import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
   ChartKey,
-  ChartKeys,
   FieldBandKeys,
   useChartWidth,
   weekLabelStep,
@@ -263,12 +262,6 @@ function WeeksCard({ career }: { career: PoolCareer }) {
       meter={<SplitKey record={weeks} labels={['up', 'even', 'down']} />}
     >
       <MiniStat
-        label='Won'
-        value={career.weeksWon}
-        hint='Weeks with the top net of everyone who played'
-        tone={career.weeksWon > 0 ? TEXT.champion : undefined}
-      />
-      <MiniStat
         label='Best'
         value={bestWeek ? signed(bestWeek.net) : '—'}
         detail={bestWeek && weekLabel(bestWeek)}
@@ -279,16 +272,6 @@ function WeeksCard({ career }: { career: PoolCareer }) {
         value={worstWeek ? signed(worstWeek.net) : '—'}
         detail={worstWeek && weekLabel(worstWeek)}
         tone={worstWeek ? signedTone(worstWeek.net) : undefined}
-      />
-      <MiniStat
-        label='Missed'
-        value={career.missedWeeks}
-        hint={
-          career.missedWeeks > 0
-            ? `Weeks with no bets, which cost ${signed(career.missedCost)}`
-            : 'Weeks with no bets'
-        }
-        tone={career.missedWeeks > 0 ? TEXT.bad : undefined}
       />
     </CareerCard>
   );
@@ -366,7 +349,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
       title='By Season'
-      footnote='ROE is return on everything bet: the net as a share of the total bet.'
+      info='ROE is return on everything bet: the net as a share of the total bet.'
     >
       <ProfileTable
         headers={[
@@ -527,6 +510,19 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
       title='Bankroll'
+      info={
+        <span className='flex flex-col items-start gap-1.5'>
+          <ChartKey>
+            <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
+            Bank
+          </ChartKey>
+          <FieldBandKeys rangeLabel='Lowest to highest' />
+          <ChartKey>
+            <span className='inline-block h-2 w-2 rounded-full border-2 border-rose-400' />
+            Missed week
+          </ChartKey>
+        </span>
+      }
       description={
         season.inProgress
           ? `${season.year}: ${final.bank}${
@@ -551,19 +547,6 @@ function Bankroll({ seasons }: { seasons: PoolSeason[] }) {
           onChange={setYear}
           showAll={false}
         />
-      }
-      footnote={
-        <ChartKeys>
-          <ChartKey>
-            <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
-            Bank
-          </ChartKey>
-          <FieldBandKeys rangeLabel='Lowest to highest' />
-          <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full border-2 border-rose-400' />
-            Missed week
-          </ChartKey>
-        </ChartKeys>
       }
     >
       <div ref={chartRef}>
@@ -1405,7 +1388,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
                 }
                 subtitle={`${
                   year === 'all' ? weekLabel(bet) : `Week ${bet.week}`
-                } · ${bet.amount} bet · final ${bet.teamScore}–${
+                }, ${bet.amount} bet, final ${bet.teamScore}–${
                   bet.opponentScore
                 }`}
                 value={

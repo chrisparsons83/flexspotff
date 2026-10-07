@@ -57,8 +57,6 @@ export type BestBallSeason = {
   topScores: number;
   counts: PositionCounts;
   leagueAverage: PositionCounts;
-  /** How far this draft strayed from the league's average mix. */
-  oddity: number;
   picks: BestBallPickInput[];
 };
 
@@ -74,8 +72,6 @@ export type BestBallCareer = {
   bestWeek: { points: number; week: number; year: number } | null;
   /** Every pick the CPU ever made for them, by position. */
   positions: PositionCounts;
-  /** The season their draft was furthest from the league's average mix. */
-  oddestDraft: { year: number; counts: PositionCounts; oddity: number } | null;
 };
 
 export function buildBestBallSeason(
@@ -94,13 +90,6 @@ export function buildBestBallSeason(
   const leagueAverage =
     averagePositionCounts([...countsByRoster.values()]) ??
     emptyPositionCounts();
-  const oddity =
-    Math.round(
-      POSITION_GROUPS.reduce(
-        (sum, group) => sum + Math.abs(counts[group] - leagueAverage[group]),
-        0,
-      ) * 10,
-    ) / 10;
 
   return {
     year: input.year,
@@ -115,7 +104,6 @@ export function buildBestBallSeason(
     topScores: mine?.topScores ?? 0,
     counts,
     leagueAverage,
-    oddity,
     picks: input.picks
       .filter(p => p.rosterId === input.rosterId)
       .sort((a, b) => a.pickNo - b.pickNo),
@@ -155,18 +143,6 @@ export function buildBestBallCareer(
     }
   }
 
-  let oddestDraft: BestBallCareer['oddestDraft'] = null;
-  for (const season of seasons) {
-    if (season.picks.length === 0) continue;
-    if (!oddestDraft || season.oddity > oddestDraft.oddity) {
-      oddestDraft = {
-        year: season.year,
-        counts: season.counts,
-        oddity: season.oddity,
-      };
-    }
-  }
-
   return {
     seasons: seasons.length,
     titles: finished.filter(s => s.place === 1).length,
@@ -184,6 +160,5 @@ export function buildBestBallCareer(
       weeksPlayed > 0 ? roundPoints(totalPoints / weeksPlayed) : null,
     bestWeek,
     positions,
-    oddestDraft,
   };
 }

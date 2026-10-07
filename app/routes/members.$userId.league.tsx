@@ -5,6 +5,7 @@ import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable, {
@@ -87,13 +88,15 @@ function Highlights({
         <CareerCard
           title='Regular Season'
           lead={
-            <WinLoss
-              wins={career.wins}
-              losses={career.losses}
-              ties={career.ties}
-            />
+            <>
+              <WinLoss
+                wins={career.wins}
+                losses={career.losses}
+                ties={career.ties}
+              />
+              <LeadContext>{pct(career.winPct, 1)}</LeadContext>
+            </>
           }
-          leadNote={`${pct(career.winPct, 1)} of games won`}
           meter={
             <SplitBar
               wins={career.wins}
@@ -148,8 +151,12 @@ function Highlights({
 
         <CareerCard
           title='Scoring'
-          lead={highlights.averagePointsPerGame.toFixed(1)}
-          leadNote='points per game'
+          lead={
+            <>
+              {highlights.averagePointsPerGame.toFixed(1)}
+              <LeadContext>weekly average</LeadContext>
+            </>
+          }
           meter={
             bestWeek &&
             worstWeek && (
@@ -177,11 +184,15 @@ function Highlights({
 
         <CareerCard
           title='Postseason'
-          lead={<WinLoss wins={playoffs.wins} losses={playoffs.losses} />}
-          leadNote={
-            playoffs.championships > 0
-              ? `🏆 ${plural(playoffs.championships, 'title')}`
-              : 'playoff record'
+          lead={
+            <>
+              <WinLoss wins={playoffs.wins} losses={playoffs.losses} />
+              {playoffs.championships > 0 && (
+                <LeadContext>
+                  🏆 {plural(playoffs.championships, 'league championship')}
+                </LeadContext>
+              )}
+            </>
           }
           meter={<SplitBar wins={playoffs.wins} losses={playoffs.losses} />}
         >
@@ -209,17 +220,9 @@ function Highlights({
   );
 }
 
-/** What the two short headers stand for, under the tables that use them. */
-const PF_PA_NOTE =
-  'PF is points for, scored by their team; PA is points against, scored by their opponents.';
-
 function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
   return (
-    <ProfileSection
-      title='Career by Tier'
-      description='Their record and points in each tier of league they have played in.'
-      footnote={PF_PA_NOTE}
-    >
+    <ProfileSection title='Career by Tier'>
       <ProfileTable
         headers={[
           'Tier',
@@ -227,8 +230,8 @@ function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
           'Record',
           'Win %',
           'PF',
-          'PA',
           'PF/Season',
+          'PA',
           'PA/Season',
         ]}
         primaryColumns={[2, 3]}
@@ -246,10 +249,10 @@ function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
               {tier.pointsFor.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsAgainst.toFixed(1)}
+              {tier.pointsForPerSeason.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsForPerSeason.toFixed(1)}
+              {tier.pointsAgainst.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
               {tier.pointsAgainstPerSeason.toFixed(1)}
@@ -320,7 +323,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
   );
 
   return (
-    <ProfileSection title='By Season' footnote={PF_PA_NOTE}>
+    <ProfileSection title='By Season'>
       <ProfileTable
         headers={columns}
         numericColumns={columns
@@ -462,7 +465,7 @@ function Finish({ season }: { season: SeasonRow }) {
 }
 
 /**
- * "2020: week 2 W, week 13 L \u00b7 2021: week 7 W" - each meeting under its
+ * "2020: week 2 W, week 13 L; 2021: week 7 W" - each meeting under its
  * season, with how it went as a letter as well as a colour.
  */
 function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
@@ -477,7 +480,7 @@ function MeetingsByYear({ meetings }: { meetings: HeadToHeadRow['meetings'] }) {
     <>
       {Array.from(byYear.entries()).map(([year, games], i) => (
         <Fragment key={year}>
-          {i > 0 && ' \u00b7 '}
+          {i > 0 && '; '}
           {year}:{' '}
           {games.map((game, j) => (
             <Fragment key={game.week}>

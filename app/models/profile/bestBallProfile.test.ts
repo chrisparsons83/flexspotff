@@ -73,8 +73,6 @@ describe('buildBestBallSeason', () => {
       counts: { QB: 3, RB: 0, WR: 1, TE: 0, Other: 0 },
       leagueAverage: { QB: 2, RB: 0.5, WR: 1, TE: 0.5, Other: 0 },
     });
-    // |3-2| + |0-0.5| + |1-1| + |0-0.5|
-    expect(season.oddity).toBe(2);
     expect(season.picks.map(p => p.pickNo)).toEqual([1, 3, 5, 7]);
   });
 });
@@ -97,7 +95,6 @@ describe('buildBestBallCareer', () => {
       bestWeek: { points: 150, week: 1, year: 2026 },
       positions: { QB: 3, RB: 1, WR: 1, TE: 0, Other: 0 },
     });
-    expect(career.oddestDraft?.year).toBe(2025);
   });
 
   it('has no finish to report before a season is over', () => {

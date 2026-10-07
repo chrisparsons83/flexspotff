@@ -261,19 +261,6 @@ export async function applyDiscordProfile(
 }
 
 /**
- * The names a member went by before their current one, most recent first. Used
- * to say who someone was, since nicknames on the server change often.
- */
-export async function getPastNames(userId: User['id'], currentName: string) {
-  const rows = await prisma.userNameHistory.findMany({
-    where: { userId, name: { not: currentName } },
-    orderBy: { lastSeenAt: 'desc' },
-    select: { name: true, lastSeenAt: true },
-  });
-  return rows;
-}
-
-/**
  * Finds the member this Discord login belongs to, creating them on first sight,
  * and refreshes their stored profile.
  *
