@@ -10,7 +10,7 @@ interface SocialButtonProps {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
-    successRedirect: '/dashboard',
+    successRedirect: '/me',
   });
 
   return {};
