@@ -38,7 +38,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
   QbCareer,
@@ -55,10 +55,7 @@ import {
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getQbStreamingProfile(userId) });
 };

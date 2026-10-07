@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link, useOutletContext } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
@@ -7,6 +7,7 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import { InfoText } from '~/components/layout/profile/InfoTip';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable, {
   MobileCard,
@@ -19,7 +20,7 @@ import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import type { CupSeeding } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
 import type {
@@ -39,10 +40,7 @@ import type { ProfileSummary } from '~/models/profile/summary.server';
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getCupProfile(userId) });
 };
@@ -78,7 +76,9 @@ function OpponentLink({ opponent }: { opponent: CupOpponent }) {
     <>
       <Truncate title={opponent.name}>
         {opponent.userId ? (
-          <Link to={`/members/${opponent.userId}/cup`}>{opponent.name}</Link>
+          <ProfileLink userId={opponent.userId} tab='cup'>
+            {opponent.name}
+          </ProfileLink>
         ) : (
           opponent.name
         )}

@@ -35,6 +35,7 @@ const mockUser: User = {
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
   discordId: 'discord-admin',
+  handle: 'discord-admin',
   discordName: 'Admin',
   discordAvatar: '',
   discordRoles: [],

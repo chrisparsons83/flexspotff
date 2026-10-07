@@ -29,6 +29,7 @@ export type { Badge } from './badges';
 export type ProfileSummary = {
   user: {
     id: string;
+    handle: string;
     discordId: string;
     discordName: string;
     discordAvatar: string;
@@ -50,6 +51,7 @@ export async function getProfileSummary(
     where: { id: userId },
     select: {
       id: true,
+      handle: true,
       discordId: true,
       discordName: true,
       discordAvatar: true,
@@ -239,6 +241,7 @@ export async function getProfileSummary(
   return {
     user: {
       id: user.id,
+      handle: user.handle,
       discordId: user.discordId,
       discordName: user.discordName,
       discordAvatar: user.discordAvatar,

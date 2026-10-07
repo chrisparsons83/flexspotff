@@ -31,11 +31,11 @@ export const PROFILE_TABS = [
 const ALWAYS_SHOWN = 'league';
 
 type Props = {
-  userId: string;
+  handle: string;
   contestsPlayed: string[];
 };
 
-export default function ProfileTabs({ userId, contestsPlayed }: Props) {
+export default function ProfileTabs({ handle, contestsPlayed }: Props) {
   const { pathname } = useLocation();
   const played = new Set(contestsPlayed);
   const visible = PROFILE_TABS.filter(
@@ -53,7 +53,7 @@ export default function ProfileTabs({ userId, contestsPlayed }: Props) {
     >
       <ul className='m-0 flex min-w-max gap-1 p-0'>
         {visible.map(tab => {
-          const to = `/members/${userId}/${tab.key}`;
+          const to = `/u/${handle}/${tab.key}`;
           const isActive = pathname === to;
 
           return (

@@ -120,7 +120,7 @@ export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
                             <Menu.Item>
                               {({ active }) => (
                                 <a
-                                  href={`/members/${user.id}`}
+                                  href='/me'
                                   className={clsx(
                                     active ? 'bg-gray-100' : '',
                                     'block px-4 py-2 text-sm text-gray-700',
@@ -140,7 +140,7 @@ export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
                                   'block px-4 py-2 text-sm text-gray-700',
                                 )}
                               >
-                                User Dashboard
+                                League Registration
                               </a>
                             )}
                           </Menu.Item>

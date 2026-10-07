@@ -11,7 +11,10 @@ import {
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import NavBar from '~/components/layout/NavBar';
-import { canViewProfiles } from '~/models/profile/access.server';
+import {
+  canViewProfiles,
+  getProfileHandles,
+} from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 
 export const links: LinksFunction = () => [
@@ -26,13 +29,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
   const currentPath = new URL(request.url).pathname;
+  const profilesVisible = await canViewProfiles(user);
 
   return typedjson({
     user,
     userIsEditor,
-    // Read by every link into /members, so they drop to plain text while
+    // Read by every link into a profile, so they drop to plain text while
     // profiles are admin-only. See useCanViewProfiles.
-    canViewProfiles: await canViewProfiles(user),
+    canViewProfiles: profilesVisible,
+    // What those links point at: /u/:handle, looked up by user id. See
+    // useProfileHref.
+    profileHandles: profilesVisible ? await getProfileHandles() : {},
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },

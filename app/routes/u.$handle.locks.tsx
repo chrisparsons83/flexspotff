@@ -48,7 +48,7 @@ import {
 } from '~/components/layout/profile/format';
 import { BAR, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/locks.server';
 import {
   CHALK_SHARE,
@@ -68,10 +68,7 @@ import { settledRank } from '~/models/profile/spreadPoolProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getLocksProfile(userId) });
 };

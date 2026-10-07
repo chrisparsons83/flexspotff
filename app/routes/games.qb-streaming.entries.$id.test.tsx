@@ -29,6 +29,7 @@ describe('QB Streaming Entries Action', () => {
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     discordId: 'discord-123',
+    handle: 'discord-123',
     discordName: 'TestUser',
     discordAvatar: 'avatar-url',
     discordRoles: [],

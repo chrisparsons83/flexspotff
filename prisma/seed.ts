@@ -5,9 +5,24 @@ const prisma = new PrismaClient();
 async function seed() {
   // Create an array of user data
   const users = [
-    { discordId: '1111', discordName: 'UserOne', discordAvatar: '' },
-    { discordId: '2222', discordName: 'UserTwo', discordAvatar: '' },
-    { discordId: '3333', discordName: 'UserThree', discordAvatar: '' },
+    {
+      discordId: '1111',
+      discordName: 'UserOne',
+      handle: 'userone',
+      discordAvatar: '',
+    },
+    {
+      discordId: '2222',
+      discordName: 'UserTwo',
+      handle: 'usertwo',
+      discordAvatar: '',
+    },
+    {
+      discordId: '3333',
+      discordName: 'UserThree',
+      handle: 'userthree',
+      discordAvatar: '',
+    },
   ];
 
   // Cleanup the existing users

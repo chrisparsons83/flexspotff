@@ -23,7 +23,7 @@ import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { leagueKind } from '~/libs/guillotine/display';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import { getGuillotineProfile } from '~/models/profile/guillotine.server';
 import type {
   GuillotineCareer,
@@ -34,10 +34,7 @@ import type {
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getGuillotineProfile(userId) });
 };

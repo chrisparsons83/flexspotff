@@ -11,7 +11,7 @@ import { ordinal, pct, plural } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import PickChip from '~/components/layout/survivor/PickChip';
 import { poolTitle } from '~/libs/survivor/views';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
 import { getSurvivorProfile } from '~/models/profile/survivor.server';
 import type {
@@ -21,10 +21,7 @@ import type {
 } from '~/models/profile/survivorProfile';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getSurvivorProfile(userId) });
 };
