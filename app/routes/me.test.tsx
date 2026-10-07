@@ -24,7 +24,9 @@ const runLoader = () =>
 describe('me loader', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(auth.authenticator.isAuthenticated).mockResolvedValue(member as never);
+    vi.mocked(auth.authenticator.isAuthenticated).mockResolvedValue(
+      member as never,
+    );
   });
 
   it('sends the member to their own profile', async () => {
