@@ -12,7 +12,7 @@ vi.mock('~/services/auth.server', () => ({
 }));
 vi.mock('~/models/profile/access.server');
 
-const member = { id: 'member-1' } as User;
+const member = { id: 'member-1', handle: 'panda' } as User;
 
 const runLoader = () =>
   loader({
@@ -33,7 +33,7 @@ describe('me loader', () => {
     const response = await runLoader();
 
     expect(response.status).toBe(302);
-    expect(response.headers.get('Location')).toBe('/members/member-1/league');
+    expect(response.headers.get('Location')).toBe('/u/panda/league');
   });
 
   it('sends the member to registration while profiles are hidden from them', async () => {

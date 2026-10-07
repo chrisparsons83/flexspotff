@@ -49,7 +49,7 @@ import {
 } from '~/components/layout/profile/format';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import { getSpreadPoolProfile } from '~/models/profile/spreadPool.server';
 import {
   MAX_BET,
@@ -68,10 +68,7 @@ import {
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getSpreadPoolProfile(userId) });
 };

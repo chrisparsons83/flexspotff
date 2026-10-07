@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import PickChip from '~/components/layout/survivor/PickChip';
 import GoBox from '~/components/ui/GoBox';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
@@ -178,12 +179,13 @@ export default function SurvivorPool() {
                   >
                     <div className='truncate text-white'>
                       {row.userId ? (
-                        <Link
-                          to={`/members/${row.userId}/survivor`}
+                        <ProfileLink
+                          userId={row.userId}
+                          tab='survivor'
                           className='text-white no-underline hover:underline'
                         >
                           {row.name}
-                        </Link>
+                        </ProfileLink>
                       ) : (
                         row.name
                       )}

@@ -42,6 +42,7 @@ const makeUser = (name: string) =>
   prisma.user.create({
     data: {
       discordId: `discord-${name}`,
+      handle: `discord-${name}`,
       discordName: name,
       discordAvatar: '',
     },

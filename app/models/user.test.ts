@@ -15,6 +15,7 @@ const makeUser = (name: string) =>
   prisma.user.create({
     data: {
       discordId: `discord-${name}`,
+      handle: `discord-${name}`,
       discordName: name,
       discordAvatar: '',
     },
@@ -117,6 +118,7 @@ describe('resolveMemberForLogin', () => {
     await prisma.user.create({
       data: {
         discordId: 'discord-a',
+        handle: 'discord-a',
         discordName: 'Old Nick',
         discordAvatar: 'old-avatar',
         discordRoles: ['role-admin'],
@@ -141,6 +143,7 @@ describe('resolveMemberForLogin', () => {
       prisma.user.create({
         data: {
           discordId: 'discord-alt',
+          handle: 'discord-alt',
           discordName: 'Panda',
           discordAvatar: '',
           discordRoles: [],
@@ -149,6 +152,7 @@ describe('resolveMemberForLogin', () => {
       prisma.user.create({
         data: {
           discordId: 'discord-main',
+          handle: 'discord-main',
           discordName: 'pandabair',
           discordAvatar: 'main-avatar',
           discordRoles: ['role-admin'],
@@ -157,6 +161,7 @@ describe('resolveMemberForLogin', () => {
       prisma.user.create({
         data: {
           discordId: 'discord-admin',
+          handle: 'discord-admin',
           discordName: 'A',
           discordAvatar: '',
         },
@@ -203,6 +208,7 @@ describe('applyDiscordProfile', () => {
     prisma.user.create({
       data: {
         discordId: 'discord-a',
+        handle: 'discord-a',
         discordName: 'pandabair',
         discordAvatar: '',
         createdAt: new Date('2020-01-01'),

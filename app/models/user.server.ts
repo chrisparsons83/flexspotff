@@ -1,5 +1,6 @@
 import type { User } from '@prisma/client';
 import { prisma } from '~/db.server';
+import { claimHandle, withHandleRetry } from '~/models/handle.server';
 import { resolveAvatarPath, resolveDisplayName } from '~/utils/discord';
 
 export type { User } from '@prisma/client';
@@ -33,15 +34,22 @@ export async function createUser(
   discordId: User['discordId'],
   discordName: User['discordName'],
   discordAvatar: User['discordAvatar'],
+  discordUsername?: string | null,
 ) {
-  return prisma.user.create({
-    data: {
-      discordId,
-      discordName,
-      discordAvatar,
-      nameHistory: { create: { name: discordName } },
-    },
-  });
+  return withHandleRetry(async () =>
+    prisma.user.create({
+      data: {
+        discordId,
+        discordName,
+        discordAvatar,
+        handle: await claimHandle({
+          username: discordUsername,
+          displayName: discordName,
+        }),
+        nameHistory: { create: { name: discordName } },
+      },
+    }),
+  );
 }
 
 export async function deleteUserByDiscordId(discordId: User['discordId']) {
@@ -222,42 +230,57 @@ export async function applyDiscordProfile(
     return user;
   }
 
-  const [updated] = await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { ...fields, discordSyncedAt: now },
-    }),
-    ...(fields.discordName !== user.discordName
-      ? [
-          // The old name was last seen now. It may predate name history, so
-          // backfill it from when the member joined.
-          prisma.userNameHistory.upsert({
-            where: { userId_name: { userId: user.id, name: user.discordName } },
-            create: {
-              userId: user.id,
-              name: user.discordName,
-              firstSeenAt: user.createdAt,
-              lastSeenAt: now,
-            },
-            update: { lastSeenAt: now },
-          }),
-          prisma.userNameHistory.upsert({
-            where: {
-              userId_name: { userId: user.id, name: fields.discordName },
-            },
-            create: {
-              userId: user.id,
-              name: fields.discordName,
-              firstSeenAt: now,
-              lastSeenAt: now,
-            },
-            update: { lastSeenAt: now },
-          }),
-        ]
-      : []),
-  ]);
+  return withHandleRetry(async () => {
+    // The first @username Discord reports for a member replaces the
+    // provisional handle made from their server name. See claimHandle.
+    const handle =
+      !user.discordUsername && profile.username
+        ? await claimHandle({
+            username: profile.username,
+            displayName: fields.discordName,
+            userId: user.id,
+          })
+        : user.handle;
 
-  return updated;
+    const [updated] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { ...fields, handle, discordSyncedAt: now },
+      }),
+      ...(fields.discordName !== user.discordName
+        ? [
+            // The old name was last seen now. It may predate name history, so
+            // backfill it from when the member joined.
+            prisma.userNameHistory.upsert({
+              where: {
+                userId_name: { userId: user.id, name: user.discordName },
+              },
+              create: {
+                userId: user.id,
+                name: user.discordName,
+                firstSeenAt: user.createdAt,
+                lastSeenAt: now,
+              },
+              update: { lastSeenAt: now },
+            }),
+            prisma.userNameHistory.upsert({
+              where: {
+                userId_name: { userId: user.id, name: fields.discordName },
+              },
+              create: {
+                userId: user.id,
+                name: fields.discordName,
+                firstSeenAt: now,
+                lastSeenAt: now,
+              },
+              update: { lastSeenAt: now },
+            }),
+          ]
+        : []),
+    ]);
+
+    return updated;
+  });
 }
 
 /**
@@ -279,7 +302,7 @@ export async function resolveMemberForLogin(profile: DiscordProfile) {
 
   const user =
     (await getUserByDiscordId(profile.discordId)) ??
-    (await createUser(profile.discordId, initialName, ''));
+    (await createUser(profile.discordId, initialName, '', profile.username));
 
   // A merged-away account resolves to the member who absorbed it, whose Discord
   // profile this is not. Writing it back would rename that member and replace

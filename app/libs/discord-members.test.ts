@@ -69,7 +69,13 @@ function fakeDiscord({
 
 const makeUser = (discordId: string, discordName: string, extra = {}) =>
   prisma.user.create({
-    data: { discordId, discordName, discordAvatar: '', ...extra },
+    data: {
+      discordId,
+      handle: discordId,
+      discordName,
+      discordAvatar: '',
+      ...extra,
+    },
   });
 
 describe('syncMemberProfiles', () => {

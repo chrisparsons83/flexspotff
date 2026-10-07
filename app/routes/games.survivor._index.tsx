@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
 import { buildAllTime, entryLabel, poolTitle } from '~/libs/survivor/views';
 import { getSurvivorHistory } from '~/models/survivor.server';
@@ -158,12 +159,13 @@ export default function SurvivorHistory() {
                 {allTime.map(row => (
                   <tr key={row.userId} className='border-b border-slate-700/60'>
                     <td className='px-2 py-1.5'>
-                      <Link
-                        to={`/members/${row.userId}/survivor`}
+                      <ProfileLink
+                        userId={row.userId}
+                        tab='survivor'
                         className='text-white no-underline hover:underline'
                       >
                         {row.name}
-                      </Link>
+                      </ProfileLink>
                     </td>
                     <td className='px-2 py-1.5 text-right tabular-nums'>
                       {row.pools}

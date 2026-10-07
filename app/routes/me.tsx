@@ -15,5 +15,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (!(await canViewProfiles(user))) return redirect('/dashboard');
 
-  return redirect(`/members/${user.id}/league`);
+  return redirect(`/u/${user.handle}/league`);
 };

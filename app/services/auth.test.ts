@@ -47,7 +47,7 @@ describe('loadSessionMember', () => {
 
   const makeUser = (discordId: string, discordName: string) =>
     prisma.user.create({
-      data: { discordId, discordName, discordAvatar: '' },
+      data: { discordId, handle: discordId, discordName, discordAvatar: '' },
     });
 
   it('returns the member as they are now, not as the cookie remembers', async () => {

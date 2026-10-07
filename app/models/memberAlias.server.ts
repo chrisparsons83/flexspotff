@@ -1,5 +1,6 @@
 import type { User } from '@prisma/client';
 import { prisma } from '~/db.server';
+import { claimHandle, withHandleRetry } from '~/models/handle.server';
 import { normalizeName } from '~/utils/names';
 
 export type { MemberAlias } from '@prisma/client';
@@ -56,11 +57,19 @@ export async function createStubMemberForAlias(name: string) {
   // Unmatching a stub and creating it again should find the same stub rather
   // than trip over its Discord ID.
   const discordId = `legacy:${alias}`;
-  const user = await prisma.user.upsert({
-    where: { discordId },
-    update: {},
-    create: { discordId, discordName: name.trim(), discordAvatar: '' },
-  });
+  const displayName = name.trim();
+  const user =
+    (await prisma.user.findUnique({ where: { discordId } })) ??
+    (await withHandleRetry(async () =>
+      prisma.user.create({
+        data: {
+          discordId,
+          discordName: displayName,
+          discordAvatar: '',
+          handle: await claimHandle({ displayName }),
+        },
+      }),
+    ));
 
   // A stub that was since merged into a real account is that account now.
   const memberId = user.mergedIntoId ?? user.id;

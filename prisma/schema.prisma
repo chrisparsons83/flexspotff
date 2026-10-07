@@ -1255,6 +1255,12 @@ model User {
   updatedAt DateTime @updatedAt
 
   discordId     String   @unique
+  // The member's address on the site, /u/:handle: their Discord @username,
+  // else their server name. One made from a server name is provisional and
+  // gives way to the @username the first time Discord reports one; after that
+  // it is never rewritten, so links keep working through every rename. See
+  // claimHandle().
+  handle        String   @unique
   // What the Discord server shows for this member: server nickname, else
   // Discord display name, else @username. Derived from the fields below by
   // resolveDisplayName(); written on login and by the member sync, never by hand.

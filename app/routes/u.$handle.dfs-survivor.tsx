@@ -56,7 +56,7 @@ import {
   DFS_SURVIVOR_LAST_WEEK,
   formatSlotName,
 } from '~/libs/dfs-survivor/slots';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import { getDfsSurvivorProfile } from '~/models/profile/dfsSurvivor.server';
 import type {
   DfsCareer,
@@ -77,10 +77,7 @@ import {
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getDfsSurvivorProfile(userId) });
 };

@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link, useOutletContext } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
@@ -7,6 +7,7 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
+import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable, {
   MobileCard,
@@ -21,7 +22,7 @@ import YearFilter from '~/components/layout/profile/YearFilter';
 import { pct, plural, weekLabel } from '~/components/layout/profile/format';
 import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
-import { requireProfileAccess } from '~/models/profile/access.server';
+import { requireProfileMember } from '~/models/profile/access.server';
 import type {
   GameLogRow,
   HeadToHeadRow,
@@ -32,10 +33,7 @@ import { getLeagueProfile } from '~/models/profile/league.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  await requireProfileAccess(request);
-
-  const { userId } = params;
-  if (!userId) throw new Response('Not Found', { status: 404 });
+  const userId = await requireProfileMember(request, params.handle);
 
   return typedjson({ profile: await getLeagueProfile(userId) });
 };
@@ -521,9 +519,9 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
               <MobileCard
                 key={row.opponentUserId}
                 title={
-                  <Link to={`/members/${row.opponentUserId}/league`}>
+                  <ProfileLink userId={row.opponentUserId}>
                     {row.opponentName}
-                  </Link>
+                  </ProfileLink>
                 }
                 subtitle={plural(row.meetingCount, 'meeting')}
                 value={record(row.wins, row.losses, row.ties)}
@@ -539,9 +537,9 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
         {visible.map(row => (
           <tr key={row.opponentUserId} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>
-              <Link to={`/members/${row.opponentUserId}/league`}>
+              <ProfileLink userId={row.opponentUserId}>
                 {row.opponentName}
-              </Link>
+              </ProfileLink>
             </td>
             <td className='px-2 py-2 text-right'>
               {record(row.wins, row.losses, row.ties)}
@@ -612,9 +610,9 @@ function GameLog({ games }: { games: GameLogRow[] }) {
                   <>
                     vs{' '}
                     {game.opponentUserId ? (
-                      <Link to={`/members/${game.opponentUserId}/league`}>
+                      <ProfileLink userId={game.opponentUserId}>
                         {game.opponentName}
-                      </Link>
+                      </ProfileLink>
                     ) : (
                       game.opponentName
                     )}
@@ -663,9 +661,9 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             </td>
             <td className='px-2 py-2'>
               {game.opponentUserId ? (
-                <Link to={`/members/${game.opponentUserId}/league`}>
+                <ProfileLink userId={game.opponentUserId}>
                   {game.opponentName}
-                </Link>
+                </ProfileLink>
               ) : (
                 game.opponentName
               )}
