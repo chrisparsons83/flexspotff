@@ -14,7 +14,6 @@ import {
 } from './shared.server';
 import { getSideGameTitles } from './sideGameTitles.server';
 import { prisma } from '~/db.server';
-import { getPastNames } from '~/models/user.server';
 
 export type { Badge } from './badges';
 
@@ -35,8 +34,6 @@ export type ProfileSummary = {
     discordAvatar: string;
     discordUsername: string | null;
     discordUserAvatar: string | null;
-    /** Other names they went by on the server, most recent first. */
-    pastNames: string[];
     /** First year this member shows up anywhere, not when their account was made. */
     memberSince: number;
   };
@@ -219,10 +216,9 @@ export async function getProfileSummary(
     (fSquared._count._all > 0 || fSquaredPicked > 0) && 'f-squared',
   ].filter((value): value is string => typeof value === 'string');
 
-  const [longestStreak, titles, pastNames] = await Promise.all([
+  const [longestStreak, titles] = await Promise.all([
     getLongestWinStreak(userId),
     getSideGameTitles(userId),
-    getPastNames(userId, user.discordName),
   ]);
 
   const badges = [
@@ -248,11 +244,11 @@ export async function getProfileSummary(
       discordAvatar: user.discordAvatar,
       discordUsername: user.discordUsername,
       discordUserAvatar: user.discordUserAvatar,
-      pastNames: pastNames.map(past => past.name),
       memberSince,
     },
     headline: [
       { label: 'Seasons', value: teams.length.toString() },
+      { label: 'League Championships', value: championships.toString() },
       {
         label: 'Career Record',
         value: `${career.wins}-${career.losses}-${career.ties}`,
@@ -263,7 +259,6 @@ export async function getProfileSummary(
         label: 'Points Against',
         value: Math.round(career.pointsAgainst).toString(),
       },
-      { label: 'Titles', value: championships.toString() },
     ],
     badges,
     contestsPlayed,

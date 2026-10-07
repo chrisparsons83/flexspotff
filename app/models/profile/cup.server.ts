@@ -11,31 +11,32 @@ import {
   type CupSide,
   type MatchLogRow,
 } from './cupProfile';
-import { CUP_FINAL_ROUND } from './shared.server';
 import { prisma } from '~/db.server';
 import { getCurrentSeason } from '~/models/season.server';
 
 /**
  * The Cup half of a member's profile: every bracket run, their record and
- * seeding across them, and where they stand in this year's Cup if it is still
- * going.
+ * seeding across them, and where they stand in this year's seeding before
+ * the bracket is set.
  *
  * Cup scores are not stored. Each round is whatever the teams scored in their
  * league games during the weeks mapped to it, so they are read back from
  * `TeamGame` the same way the bracket page does it.
  */
 
-export type CurrentCup =
-  | {
-      phase: 'seeding';
-      year: number;
-      rank: number;
-      fieldSize: number;
-      points: number;
-      weeksPlayed: number;
-      seedingWeeks: number;
-    }
-  | { phase: 'bracket'; run: CupRun };
+/**
+ * This year's seeding while it is still being played. Once the bracket is set
+ * the year is an ordinary run, so this is null.
+ */
+export type CupSeeding = {
+  year: number;
+  leagueName: string;
+  rank: number;
+  fieldSize: number;
+  points: number;
+  weeksPlayed: number;
+  seedingWeeks: number;
+};
 
 export type CupProfile = {
   hasPlayed: boolean;
@@ -43,7 +44,7 @@ export type CupProfile = {
   /** Newest first. */
   runs: CupRun[];
   matchLog: MatchLogRow[];
-  current: CurrentCup | null;
+  seeding: CupSeeding | null;
 };
 
 const sideSelect = {
@@ -186,20 +187,17 @@ export async function getCupProfile(userId: string): Promise<CupProfile> {
 
   // This year's Cup gets a banner until its final is decided: the live
   // seeding table before the bracket exists, and their run once it does.
-  let current: CurrentCup | null = null;
-  if (currentCup?.hasBracket) {
-    const run = runs.find(r => r.year === currentCup.year);
-    if (run && !currentCup.finalDecided) current = { phase: 'bracket', run };
-  } else if (currentCup) {
-    current = await getSeedingStanding(userId, currentCup);
-  }
+  const seeding =
+    currentCup && !currentCup.hasBracket
+      ? await getSeedingStanding(userId, currentCup)
+      : null;
 
   return {
     hasPlayed: runs.length > 0,
     career: buildCareer(runs),
     runs,
     matchLog: buildMatchLog(runs),
-    current,
+    seeding,
   };
 }
 
@@ -207,7 +205,6 @@ type CurrentCupState = {
   year: number;
   seedingWeeks: number[];
   hasBracket: boolean;
-  finalDecided: boolean;
 };
 
 async function getCurrentCup(): Promise<CurrentCupState | null> {
@@ -218,10 +215,6 @@ async function getCurrentCup(): Promise<CurrentCupState | null> {
     where: { year: season.year },
     select: {
       cupWeeks: { select: { week: true, mapping: true } },
-      cupGames: {
-        where: { round: CUP_FINAL_ROUND },
-        select: { winningTeamId: true },
-      },
       _count: { select: { cupTeams: true } },
     },
   });
@@ -233,7 +226,6 @@ async function getCurrentCup(): Promise<CurrentCupState | null> {
       .filter(w => w.mapping === 'SEEDING')
       .map(w => w.week),
     hasBracket: cup._count.cupTeams > 0,
-    finalDecided: cup.cupGames.some(game => game.winningTeamId !== null),
   };
 }
 
@@ -245,12 +237,12 @@ async function getCurrentCup(): Promise<CurrentCupState | null> {
 async function getSeedingStanding(
   userId: string,
   cup: CurrentCupState,
-): Promise<CurrentCup | null> {
+): Promise<CupSeeding | null> {
   if (cup.seedingWeeks.length === 0) return null;
 
   const myTeam = await prisma.team.findFirst({
     where: { userId, league: { year: cup.year } },
-    select: { id: true },
+    select: { id: true, league: { select: { name: true } } },
   });
   if (!myTeam) return null;
 
@@ -281,8 +273,8 @@ async function getSeedingStanding(
   if (!standing) return null;
 
   return {
-    phase: 'seeding',
     year: cup.year,
+    leagueName: myTeam.league.name,
     ...standing,
     weeksPlayed: weeksPlayed.size,
     seedingWeeks: cup.seedingWeeks.length,

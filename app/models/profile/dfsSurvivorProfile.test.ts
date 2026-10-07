@@ -273,13 +273,10 @@ describe('buildDfsPool', () => {
     });
   });
 
-  it('times their best picks against everyone else’s', () => {
+  it('picks out their best picks', () => {
     const [pool] = buildDfsPool(seasonsFor(), rows, 'me');
 
     expect(pool.stars[0].playerId).toBe('gibbs');
-    expect(pool.starAverageWeek).toBeCloseTo((1 + 1 + 2 + 2 + 2) / 5);
-    // them: weeks 1, 1, 2, 2 · solo: week 1.
-    expect(pool.fieldStarAverageWeek).toBeCloseTo((1.5 + 1) / 2);
   });
 });
 

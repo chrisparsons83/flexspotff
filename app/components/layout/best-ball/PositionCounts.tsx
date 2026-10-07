@@ -29,18 +29,26 @@ export function PositionChips({ counts }: { counts: PositionCounts }) {
   );
 }
 
-/** A full-width bar split by how many of each position were taken. */
+/**
+ * A full-width bar split by how many of each position were taken. The small
+ * one is fainter, for a comparison set right under a full-size bar.
+ */
 export function PositionBar({
   counts,
   label,
+  size = 'normal',
 }: {
   counts: PositionCounts;
   label?: string;
+  size?: 'normal' | 'small';
 }) {
   const total = POSITION_GROUPS.reduce((sum, g) => sum + counts[g], 0);
   return (
     <div
-      className='flex h-6 w-full overflow-hidden rounded bg-slate-700'
+      className={clsx(
+        'flex w-full overflow-hidden rounded bg-slate-700',
+        size === 'small' ? 'h-4 opacity-60' : 'h-6',
+      )}
       role='img'
       aria-label={
         label ??
@@ -55,7 +63,8 @@ export function PositionBar({
             key={group}
             title={`${group}: ${counts[group]}`}
             className={clsx(
-              'flex items-center justify-center overflow-hidden whitespace-nowrap text-[0.7rem] font-semibold text-white',
+              'flex items-center justify-center overflow-hidden whitespace-nowrap font-semibold text-white',
+              size === 'small' ? 'text-[0.6rem]' : 'text-[0.7rem]',
               positionColor(group),
             )}
             style={{ width: `${(counts[group] / total) * 100}%` }}

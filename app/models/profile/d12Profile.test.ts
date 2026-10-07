@@ -53,7 +53,7 @@ describe('buildD12Seasons', () => {
     row({ week: 2, points: 130, leagueId: 'v2', leagueName: 'The D12 v2' }),
   ];
 
-  it('keeps combined weeks and single-team weeks apart', () => {
+  it('adds up combined weeks and each team’s season', () => {
     const [season] = buildD12Seasons({
       rows,
       finishes: new Map([[2025, { rank: 2, fieldSize: 12 }]]),
@@ -67,12 +67,6 @@ describe('buildD12Seasons', () => {
     expect(season.bestWeek).toEqual({ points: 200, year: 2025, week: 2 });
     expect(season.worstWeek).toEqual({ points: 150, year: 2025, week: 1 });
     expect(season.averageWeek).toBe(175);
-    // Single team: v2 week 2 is best, v2 week 1 worst.
-    expect(season.bestTeamWeek).toMatchObject({ points: 130, week: 2 });
-    expect(season.worstTeamWeek).toMatchObject({
-      points: 50,
-      leagueName: 'The D12 v2',
-    });
     expect(season.bestTeam).toMatchObject({
       points: 180,
       leagueName: 'The D12 v2',
@@ -95,7 +89,6 @@ describe('buildD12Seasons', () => {
     expect(season.inProgress).toBe(true);
     expect(season.total).toBe(352);
     expect(season.worstWeek?.week).toBe(1);
-    expect(season.worstTeamWeek?.points).toBe(50);
   });
 
   it('skips unscored rows', () => {
@@ -145,6 +138,37 @@ describe('buildD12Career', () => {
     expect(career.averageFinish).toBe(2.5);
     expect(career.bestFinish).toEqual({ rank: 1, fieldSize: 12, year: 2024 });
     expect(career.current).toEqual({ rank: 1, fieldSize: 12, year: 2026 });
+    expect(career.teamsInProgress).toBe(false);
+  });
+
+  it('falls back to the running season for teams in a first season', () => {
+    const first = buildD12Career(
+      buildD12Seasons({
+        rows: [
+          row({
+            year: 2026,
+            week: 1,
+            points: 120,
+            leagueId: 'a',
+            leagueName: 'The D12 v1',
+          }),
+          row({
+            year: 2026,
+            week: 1,
+            points: 80,
+            leagueId: 'b',
+            leagueName: 'The D12 v2',
+          }),
+        ],
+        finishes: new Map(),
+        inProgressYear: 2026,
+        newestWeekInProgress: 2,
+      }),
+    );
+    expect(first.bestTeam).toMatchObject({ points: 120, year: 2026 });
+    expect(first.worstTeam).toMatchObject({ points: 80, year: 2026 });
+    expect(first.averageTeam).toBe(100);
+    expect(first.teamsInProgress).toBe(true);
   });
 });
 

@@ -208,9 +208,6 @@ export type DfsPoolSeason = {
   groups: { group: SlotGroup; stages: StageSplit[] }[];
   /** Their best picks of the season, highest first. */
   stars: DfsPick[];
-  starAverageWeek: number | null;
-  /** The same, averaged over every other member's own best picks. */
-  fieldStarAverageWeek: number | null;
 };
 
 export type DfsPositionRow = {
@@ -586,15 +583,6 @@ export function buildDfsCareer(seasons: DfsSeason[]): DfsCareer {
   };
 }
 
-/** Average week of an entrant's best picks, by points. */
-const starWeek = (entries: { week: number; points: number }[]) =>
-  average(
-    [...entries]
-      .sort((a, b) => b.points - a.points || a.week - b.week)
-      .slice(0, STAR_PICKS)
-      .map(entry => entry.week),
-  );
-
 /**
  * How each season's pool held up: their points in each third of the season
  * against the field's, and when they spent their best picks. The field here is
@@ -661,18 +649,11 @@ export function buildDfsPool(
       .sort((a, b) => b.points - a.points || a.week - b.week)
       .slice(0, STAR_PICKS);
 
-    const fieldStarWeeks = Array.from(groupBy(yearRows, row => row.userId))
-      .filter(([entrant]) => entrant !== userId)
-      .map(([, entries]) => starWeek(entries))
-      .filter((week): week is number => week !== null);
-
     return {
       year: season.year,
       lineup,
       groups,
       stars,
-      starAverageWeek: average(stars.map(pick => pick.week)),
-      fieldStarAverageWeek: average(fieldStarWeeks),
     };
   });
 }

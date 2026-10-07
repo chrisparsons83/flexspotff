@@ -21,7 +21,6 @@ export type D12ScoreRow = {
 export type D12Finish = { rank: number; fieldSize: number };
 
 export type WeekMark = { points: number; year: number; week: number };
-export type TeamWeekMark = WeekMark & { leagueName: string };
 export type TeamSeasonMark = {
   points: number;
   year: number;
@@ -38,10 +37,6 @@ export type D12Season = {
   averageWeek: number | null;
   bestWeek: WeekMark | null;
   worstWeek: WeekMark | null;
-  teamWeeksCounted: number;
-  averageTeamWeek: number | null;
-  bestTeamWeek: TeamWeekMark | null;
-  worstTeamWeek: TeamWeekMark | null;
   teams: number;
   averageTeam: number | null;
   bestTeam: TeamSeasonMark | null;
@@ -120,13 +115,6 @@ export function buildD12Seasons({
         .sort(([a], [b]) => a - b)
         .map(([week, points]) => ({ points, year, week }));
 
-      const teamWeekMarks = counted.map(row => ({
-        points: row.points!,
-        year,
-        week: row.week,
-        leagueName: row.leagueName,
-      }));
-
       const teamTotals = new Map<string, TeamSeasonMark>();
       for (const row of sorted) {
         const existing = teamTotals.get(row.leagueId) ?? {
@@ -142,7 +130,6 @@ export function buildD12Seasons({
       );
 
       const weeks = extremes(weekMarks);
-      const teamWeeks = extremes(teamWeekMarks);
       const teams = extremes(teamMarks);
 
       return {
@@ -154,10 +141,6 @@ export function buildD12Seasons({
         averageWeek: average(weekMarks.map(mark => mark.points)),
         bestWeek: weeks.best,
         worstWeek: weeks.worst,
-        teamWeeksCounted: teamWeekMarks.length,
-        averageTeamWeek: average(teamWeekMarks.map(mark => mark.points)),
-        bestTeamWeek: teamWeeks.best,
-        worstTeamWeek: teamWeeks.worst,
         teams: teamMarks.length,
         averageTeam: average(teamMarks.map(mark => mark.points)),
         bestTeam: teams.best,
@@ -172,13 +155,15 @@ export type D12Career = {
   averageWeek: number | null;
   bestWeek: WeekMark | null;
   worstWeek: WeekMark | null;
-  averageTeamWeek: number | null;
-  bestTeamWeek: TeamWeekMark | null;
-  worstTeamWeek: TeamWeekMark | null;
-  /** Finished seasons only - a team's total in October says little. */
+  /**
+   * Each drafted team's season total. Finished seasons only - a team's total
+   * in October says little - unless the running season is all they have.
+   */
   averageTeam: number | null;
   bestTeam: TeamSeasonMark | null;
   worstTeam: TeamSeasonMark | null;
+  /** The team numbers are from the running season, so still climbing. */
+  teamsInProgress: boolean;
   completedSeasons: number;
   bestFinish: (D12Finish & { year: number }) | null;
   titles: number;
@@ -190,9 +175,9 @@ export type D12Career = {
 
 /**
  * Career numbers from the season list. Weeks from the running season count,
- * since `buildD12Seasons` already dropped the live one. Team seasons and
- * finishes only count once the season is over, the same rule the D12 Champion
- * badge follows.
+ * since `buildD12Seasons` already dropped the live one. Finishes only count
+ * once the season is over, the same rule the D12 Champion badge follows, and
+ * team seasons do too unless the running season is their first.
  */
 export function buildD12Career(seasons: D12Season[]): D12Career {
   const oldestFirst = [...seasons].sort((a, b) => a.year - b.year);
@@ -215,16 +200,14 @@ export function buildD12Career(seasons: D12Season[]): D12Career {
   const weeks = extremes(
     oldestFirst.flatMap(season => [season.bestWeek, season.worstWeek]),
   );
-  const teamWeeks = extremes(
-    oldestFirst.flatMap(season => [season.bestTeamWeek, season.worstTeamWeek]),
-  );
+  const teamSeasons = completed.length > 0 ? completed : oldestFirst;
   const teams = extremes(
-    completed.flatMap(season => [season.bestTeam, season.worstTeam]),
+    teamSeasons.flatMap(season => [season.bestTeam, season.worstTeam]),
   );
 
   let teamSum = 0;
   let teamCount = 0;
-  for (const season of completed) {
+  for (const season of teamSeasons) {
     if (season.averageTeam === null) continue;
     teamSum += season.averageTeam * season.teams;
     teamCount += season.teams;
@@ -246,15 +229,10 @@ export function buildD12Career(seasons: D12Season[]): D12Career {
     averageWeek: weightedAverage(s => [s.averageWeek, s.weeksCounted]),
     bestWeek: weeks.best,
     worstWeek: weeks.worst,
-    averageTeamWeek: weightedAverage(s => [
-      s.averageTeamWeek,
-      s.teamWeeksCounted,
-    ]),
-    bestTeamWeek: teamWeeks.best,
-    worstTeamWeek: teamWeeks.worst,
     averageTeam: teamCount > 0 ? teamSum / teamCount : null,
     bestTeam: teams.best,
     worstTeam: teams.worst,
+    teamsInProgress: completed.length === 0 && teamCount > 0,
     completedSeasons: completed.length,
     bestFinish,
     titles: finishes.filter(finish => finish.rank === 1).length,

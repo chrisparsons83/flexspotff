@@ -1,11 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { InfoText } from '~/components/layout/profile/InfoTip';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable, {
@@ -20,7 +20,7 @@ import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { requireProfileAccess } from '~/models/profile/access.server';
-import type { CurrentCup } from '~/models/profile/cup.server';
+import type { CupSeeding } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
 import type {
   CupCareer,
@@ -52,22 +52,21 @@ export default function MemberCup() {
   const summary = useOutletContext<ProfileSummary>();
 
   if (!profile.hasPlayed) {
-    return (
-      <div className='space-y-8'>
-        {profile.current && <CurrentCupBanner current={profile.current} />}
-        <ContestEmptyState
-          contest='the Cup'
-          memberName={summary.user.discordName}
-        />
-      </div>
+    // A first Cup still in its seeding weeks has nothing else to show yet.
+    return profile.seeding ? (
+      <SeedingHistory runs={[]} seeding={profile.seeding} />
+    ) : (
+      <ContestEmptyState
+        contest='the Cup'
+        memberName={summary.user.discordName}
+      />
     );
   }
 
   return (
     <div className='space-y-8'>
-      {profile.current && <CurrentCupBanner current={profile.current} />}
       <Career career={profile.career} />
-      <SeedingHistory runs={profile.runs} />
+      <SeedingHistory runs={profile.runs} seeding={profile.seeding} />
       <BracketRuns runs={profile.runs} />
       <MatchLog games={profile.matchLog} />
     </div>
@@ -86,92 +85,6 @@ function OpponentLink({ opponent }: { opponent: CupOpponent }) {
       </Truncate>{' '}
       <span className='text-slate-400'>(#{opponent.seed})</span>
     </>
-  );
-}
-
-/**
- * This year's Cup while it is still being played: the live seeding table
- * before the bracket exists, and where their run stands once it does.
- */
-function CurrentCupBanner({ current }: { current: CurrentCup }) {
-  if (current.phase === 'seeding') {
-    const onByePace = current.rank <= 4;
-    return (
-      <Banner title={`${current.year} Cup · Seeding`}>
-        <p className='m-0 text-slate-200'>
-          Currently{' '}
-          <span className='text-xl font-bold text-white tabular-nums'>
-            #{current.rank}
-          </span>{' '}
-          of {current.fieldSize} after {current.weeksPlayed} of{' '}
-          {plural(current.seedingWeeks, 'seeding week')} ·{' '}
-          <span className='tabular-nums'>{current.points.toFixed(2)}</span>{' '}
-          points
-        </p>
-        <p className='m-0 mt-1 text-sm text-slate-400'>
-          {onByePace
-            ? 'On pace for a first-round bye: the top 4 seeds skip the Round of 64.'
-            : 'Seeds are set by total points across the seeding weeks; the top 4 get a bye.'}
-        </p>
-      </Banner>
-    );
-  }
-
-  const { run } = current;
-  const live = run.rounds.find(round => round.status === 'PENDING');
-
-  return (
-    <Banner title={`${run.year} Cup · Seed #${run.seed}`}>
-      {run.status === 'alive' ? (
-        <p className='m-0 text-slate-200'>
-          <span className='font-semibold text-emerald-300'>Still alive</span> in
-          the {ROUND_LABEL[CUP_ROUNDS[run.depth]]}
-          {live?.opponent && (
-            <>
-              {' '}
-              against <OpponentLink opponent={live.opponent} />
-            </>
-          )}
-          {live?.points !== null &&
-            live?.points !== undefined &&
-            live.opponentPoints !== null && (
-              <span className='ml-2 tabular-nums text-slate-400'>
-                {live.points.toFixed(2)} – {live.opponentPoints.toFixed(2)}
-              </span>
-            )}
-        </p>
-      ) : (
-        <p className='m-0 text-slate-200'>
-          {run.status === 'champion' ? (
-            <span className='font-semibold text-gold'>🏆 Won the Cup</span>
-          ) : (
-            <>
-              <span className='font-semibold text-rose-300'>Knocked out</span>{' '}
-              {run.depth >= ROUNDS_TO_WIN - 1
-                ? 'in the Final'
-                : `in the ${ROUND_LABEL[CUP_ROUNDS[run.depth]]}`}
-              {run.eliminatedBy && (
-                <>
-                  {' '}
-                  by <OpponentLink opponent={run.eliminatedBy} />
-                </>
-              )}
-            </>
-          )}
-        </p>
-      )}
-    </Banner>
-  );
-}
-
-function Banner({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className='not-prose rounded-lg border border-amber-400/40 bg-amber-400/5 p-4 md:p-5'>
-      <h3 className='m-0 mb-2 text-sm font-semibold uppercase tracking-wide text-amber-300'>
-        {title}
-      </h3>
-      {children}
-    </section>
   );
 }
 
@@ -286,6 +199,13 @@ const PILL_TONE: Record<RoundResult['status'], string> = {
   PENDING: 'border border-dotted border-amber-300 text-amber-200',
 };
 
+const RUN_KEY: [string, string][] = [
+  ['Won', PILL_TONE.W],
+  ['Lost', PILL_TONE.L],
+  ['Bye', PILL_TONE.BYE],
+  ['In progress', PILL_TONE.PENDING],
+];
+
 function describeRound(result: RoundResult): string {
   const round = ROUND_LABEL[result.round];
   if (result.status === 'BYE') return `${round}: bye`;
@@ -312,14 +232,22 @@ function BracketRuns({ runs }: { runs: CupRun[] }) {
   return (
     <ProfileSection
       title='Bracket Runs'
-      description='Every Cup as a row of rounds, filled as far as the run went.'
+      info={
+        <span className='flex flex-col items-start gap-1.5'>
+          {RUN_KEY.map(([label, tone]) => (
+            <span key={label} className='inline-flex items-center gap-1.5'>
+              <span className={clsx('inline-block h-3 w-4 rounded-sm', tone)} />
+              {label}
+            </span>
+          ))}
+        </span>
+      }
     >
       <ul className='m-0 list-none space-y-2 p-0'>
         {runs.map(run => (
           <RunRow key={run.year} run={run} />
         ))}
       </ul>
-      <RunLegend />
     </ProfileSection>
   );
 }
@@ -376,7 +304,7 @@ function RunRow({ run }: { run: CupRun }) {
         <Finish run={run} />
         {run.eliminatedBy && (
           <span className='text-slate-400'>
-            out to <OpponentLink opponent={run.eliminatedBy} />
+            lost to <OpponentLink opponent={run.eliminatedBy} />
             {exit && exit.points !== null && exit.opponentPoints !== null && (
               <span className='ml-2 tabular-nums'>
                 {exit.points.toFixed(2)} – {exit.opponentPoints.toFixed(2)}
@@ -406,32 +334,20 @@ function Finish({ run }: { run: CupRun }) {
   );
 }
 
-function RunLegend() {
-  const items: [string, string][] = [
-    ['Won', PILL_TONE.W],
-    ['Lost', PILL_TONE.L],
-    ['Bye', PILL_TONE.BYE],
-    ['In progress', PILL_TONE.PENDING],
-  ];
+/**
+ * Seed and seeding points by year, with the byes they earned. This year's
+ * seeding goes on top while it is still being played, ranked the way the
+ * seeds will be.
+ */
+function SeedingHistory({
+  runs,
+  seeding,
+}: {
+  runs: CupRun[];
+  seeding: CupSeeding | null;
+}) {
   return (
-    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400'>
-      {items.map(([label, tone]) => (
-        <span key={label} className='inline-flex items-center gap-1.5'>
-          <span className={clsx('inline-block h-3 w-4 rounded-sm', tone)} />
-          {label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/** Seed and seeding points by year, with the byes they earned. */
-function SeedingHistory({ runs }: { runs: CupRun[] }) {
-  return (
-    <ProfileSection
-      title='By Season'
-      description='Seeds come from total points across the seeding weeks; the top 4 get a bye.'
-    >
+    <ProfileSection title='By Season'>
       <ProfileTable
         headers={[
           'Year',
@@ -444,6 +360,7 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
         primaryColumns={[2, 4]}
         numericColumns={[2, 3, 5]}
       >
+        {seeding && <SeedingRow seeding={seeding} />}
         {runs.map(run => (
           <tr key={run.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>{run.year}</td>
@@ -474,6 +391,34 @@ function SeedingHistory({ runs }: { runs: CupRun[] }) {
   );
 }
 
+function SeedingRow({ seeding }: { seeding: CupSeeding }) {
+  return (
+    <tr className='border-b border-slate-700/70'>
+      <td className='px-2 py-2'>{seeding.year}</td>
+      <td className='px-2 py-2'>
+        <LeagueChip name={seeding.leagueName} />
+      </td>
+      <td className='px-2 py-2 text-right font-medium tabular-nums'>
+        <InfoText
+          label={`#${seeding.rank}`}
+          tip='Where they rank in the seeding so far'
+        >
+          #{seeding.rank}
+        </InfoText>
+      </td>
+      <td className='px-2 py-2 text-right tabular-nums'>
+        {pts(seeding.points)}
+      </td>
+      <td className='whitespace-nowrap px-2 py-2 font-medium text-amber-200'>
+        Seeding, week {seeding.weeksPlayed} of {seeding.seedingWeeks}
+      </td>
+      <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+        {seeding.fieldSize}
+      </td>
+    </tr>
+  );
+}
+
 const RESULT_TONE: Record<RoundResult['status'], string> = {
   W: TEXT.good,
   L: TEXT.bad,
@@ -481,19 +426,13 @@ const RESULT_TONE: Record<RoundResult['status'], string> = {
   PENDING: TEXT.live,
 };
 
-/** How a Cup game went: the result, and whether it was an upset. */
+/** How a Cup game went, and when a tie was settled by seed. */
 function MatchResult({ game }: { game: MatchLogRow }) {
   return (
     <>
       <span className={clsx('font-bold', RESULT_TONE[game.status])}>
         {game.status === 'PENDING' ? 'Live' : game.status}
       </span>
-      {game.upset && game.status === 'W' && (
-        <Tag tone='win'>Beat higher seed</Tag>
-      )}
-      {game.upset && game.status === 'L' && (
-        <Tag tone='loss'>Lost to lower seed</Tag>
-      )}
       {game.decidedBySeed && <Tag tone='neutral'>Tie, higher seed</Tag>}
     </>
   );
@@ -530,7 +469,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                     <span className='text-slate-400'>To be decided</span>
                   )
                 }
-                subtitle={`${year === 'all' ? `${game.year} · ` : ''}${
+                subtitle={`${year === 'all' ? `${game.year} ` : ''}${
                   ROUND_LABEL[game.round]
                 }${
                   game.weeks > 1 && game.status !== 'BYE'

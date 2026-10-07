@@ -35,12 +35,21 @@ const titleOf = (pool: { year: number; poolName: string }) =>
 function finishLabel(pool: SurvivorPoolResult) {
   if (pool.place === 1) return pool.winners > 1 ? '🏆 Co-winner' : '🏆 Winner';
   if (pool.place) return ordinal(pool.place);
+  // Out, but someone left could still go out the same week and share it.
   return pool.isAlive ? 'Alive' : 'Out';
 }
 
+/** "of 40" once placed; while alive, how many are left with them. */
+const finishContext = (pool: SurvivorPoolResult) =>
+  pool.place ? `of ${pool.entryCount}` : `${pool.remaining} remaining`;
+
+/** Up to three teams by name; past that, just how many. */
+const teamList = (teams: string[]) =>
+  teams.length > 3 ? `${teams.length} teams` : teams.join(', ');
+
 function exitLabel(pool: SurvivorPoolResult) {
   if (pool.eliminatedWeek === null) return '—';
-  return `Week ${pool.eliminatedWeek} · ${
+  return `Week ${pool.eliminatedWeek}, ${
     pool.missedPick ? 'no pick' : pool.outBy
   }`;
 }
@@ -74,19 +83,11 @@ function Career({ career }: { career: SurvivorCareer }) {
   return (
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
-        <CareerCard
-          title='Pools'
-          lead={career.wins}
-          leadNote={`${career.wins === 1 ? 'win' : 'wins'} in ${plural(
-            career.pools,
-            'pool',
-          )}${career.sharedWins > 0 ? `, ${career.sharedWins} shared` : ''}`}
-        >
+        <CareerCard title='Pool Wins' lead={career.wins}>
           <MiniStat
             label='Best Finish'
             value={career.bestPlace ? ordinal(career.bestPlace.place) : '—'}
             tone={career.bestPlace?.place === 1 ? TEXT.champion : undefined}
-            detail={career.bestPlace && titleOf(career.bestPlace)}
           />
           <MiniStat
             label='Outlasted'
@@ -97,14 +98,12 @@ function Career({ career }: { career: SurvivorCareer }) {
             label='Longest Run'
             value={career.longestRun ? career.longestRun.weeks : '—'}
             unit={career.longestRun ? 'wk' : undefined}
-            detail={career.longestRun && titleOf(career.longestRun)}
           />
         </CareerCard>
 
         <CareerCard
-          title='Picks'
+          title='Pick Success'
           lead={settled > 0 ? pct(career.pickWins / settled) : '—'}
-          leadNote={`of picks won, ${career.pickWins}–${career.pickLosses}`}
         >
           <MiniStat
             label='With the Crowd'
@@ -119,10 +118,9 @@ function Career({ career }: { career: SurvivorCareer }) {
           />
           <MiniStat
             label='Nemesis'
-            value={career.nemesis?.team ?? '—'}
-            detail={
-              career.nemesis && `knocked them out ${career.nemesis.times}×`
-            }
+            value={career.nemesis ? teamList(career.nemesis.teams) : '—'}
+            hint='The team that knocked them out most often'
+            detail={career.nemesis && `×${career.nemesis.times}`}
           />
         </CareerCard>
       </div>
@@ -132,10 +130,7 @@ function Career({ career }: { career: SurvivorCareer }) {
 
 function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
-    <ProfileSection
-      title='By Pool'
-      description='Whoever lasts longest wins; entries that go out in the same week share a place.'
-    >
+    <ProfileSection title='By Pool'>
       <ProfileTable
         headers={['Pool', 'Finish', 'Weeks Won', 'Went Out', 'Outlasted']}
         primaryColumns={[1, 2]}
@@ -164,7 +159,7 @@ function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
             >
               {finishLabel(pool)}
               <span className='ml-1 text-xs font-normal text-slate-400'>
-                of {pool.entryCount}
+                {finishContext(pool)}
               </span>
             </td>
             <td className='px-2 py-2 text-right tabular-nums text-white'>
@@ -190,10 +185,7 @@ function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
 
 function PickLog({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
-    <ProfileSection
-      title='Pick Log'
-      description='Every pick, week by week. ✓ won, ✗ lost, … not played yet.'
-    >
+    <ProfileSection title='Pick Log' info='✓ won, ✗ lost, … not played yet.'>
       <div className='space-y-4'>
         {pools.map(pool => (
           <div key={pool.poolId}>
@@ -221,10 +213,7 @@ function PickLog({ pools }: { pools: SurvivorPoolResult[] }) {
 
 function Teams({ teams }: { teams: SurvivorTeamRow[] }) {
   return (
-    <ProfileSection
-      title='Teams Picked'
-      description='Every team they have trusted, most often first, with how it went.'
-    >
+    <ProfileSection title='Teams Picked'>
       <ul className='m-0 grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-4 lg:grid-cols-8'>
         {teams.map(team => (
           <li

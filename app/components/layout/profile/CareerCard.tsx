@@ -1,4 +1,4 @@
-import InfoTip from './InfoTip';
+import InfoTip, { InfoText } from './InfoTip';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -11,6 +11,7 @@ export default function CareerCard({
   lead,
   leadNote,
   meter,
+  compactStats = false,
   className,
   children,
 }: {
@@ -23,6 +24,11 @@ export default function CareerCard({
   leadNote?: ReactNode;
   /** A full-width bar under the headline, so a wide card is not mostly air. */
   meter?: ReactNode;
+  /**
+   * Narrower columns for small stats with short labels and values, so three
+   * fit in a row on a quarter-width card.
+   */
+  compactStats?: boolean;
   /** Placement in the parent grid, e.g. a card two rows tall. */
   className?: string;
   children: ReactNode;
@@ -44,7 +50,14 @@ export default function CareerCard({
         {meter}
         {/* As many equal columns as fit, so four small stats sit in a row on
             a desktop and wrap to two rows on a phone rather than squeeze. */}
-        <dl className='m-0 mt-4 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-4'>
+        <dl
+          className={clsx(
+            'm-0 mt-4 grid',
+            compactStats
+              ? 'grid-cols-[repeat(auto-fit,minmax(3.5rem,1fr))] gap-3'
+              : 'grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-4',
+          )}
+        >
           {children}
         </dl>
       </div>
@@ -67,7 +80,10 @@ export function MiniStat({
   unit?: string;
   /** Trails the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
-  /** Hover text for a stat whose label cannot say everything it counts. */
+  /**
+   * More about a stat whose label cannot say everything it counts, opened
+   * from the label itself on hover or a tap.
+   */
   hint?: string;
   /**
    * A fuller explanation behind an ⓘ beside the label, for a stat that needs
@@ -78,14 +94,14 @@ export function MiniStat({
 }) {
   return (
     <div className='flex flex-col'>
-      <dt
-        className={clsx(
-          'flex items-center gap-1 text-xs text-slate-400',
-          hint && 'cursor-help',
+      <dt className='flex items-center gap-1 text-xs text-slate-400'>
+        {hint ? (
+          <InfoText label={label} tip={hint}>
+            {label}
+          </InfoText>
+        ) : (
+          label
         )}
-        title={hint}
-      >
-        {label}
         {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
       </dt>
       <dd

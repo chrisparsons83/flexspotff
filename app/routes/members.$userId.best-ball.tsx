@@ -8,8 +8,10 @@ import {
 } from '~/components/layout/best-ball/PositionCounts';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
+import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import { CurrentTag } from '~/components/layout/profile/Tag';
 import {
   ordinal,
@@ -18,7 +20,6 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
-import { POSITION_GROUPS } from '~/libs/best-ball/views';
 import { requireProfileAccess } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
 import type {
@@ -66,22 +67,33 @@ export default function MemberBestBall() {
 }
 
 function Career({ career }: { career: BestBallCareer }) {
+  const best = career.bestFinish;
+
   return (
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
         <CareerCard
           title='Finishes'
-          lead={career.titles}
-          leadNote={`${career.titles === 1 ? 'title' : 'titles'} in ${plural(
-            career.seasons,
-            'season',
-          )}`}
+          lead={
+            career.titles > 0 ? (
+              <>
+                <Trophies titles={career.titles} />
+                <LeadContext>{plural(career.titles, 'title')}</LeadContext>
+              </>
+            ) : best ? (
+              <>
+                {ordinal(best.place)}
+                <LeadContext>{best.year}</LeadContext>
+              </>
+            ) : (
+              '—'
+            )
+          }
         >
           <MiniStat
-            label='Best Finish'
-            value={career.bestFinish ? ordinal(career.bestFinish.place) : '—'}
-            tone={career.bestFinish?.place === 1 ? TEXT.champion : undefined}
-            detail={career.bestFinish && `${career.bestFinish.year}`}
+            label='Titles'
+            value={career.titles}
+            tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat
             label='Average Finish'
@@ -96,9 +108,8 @@ function Career({ career }: { career: BestBallCareer }) {
         </CareerCard>
 
         <CareerCard
-          title='Scoring'
+          title='Average Week'
           lead={pts(career.averagePointsPerWeek, 1)}
-          leadNote='best-ball points a week'
         >
           <MiniStat label='Total Points' value={pts(career.totalPoints, 1)} />
           <MiniStat
@@ -201,52 +212,27 @@ function PositionsDrafted({
     <ProfileSection
       title='Positions Drafted'
       description="What the autodraft gave them each season, against the league's average roster."
-      footnote={
-        career.oddestDraft && withPicks.length > 1
-          ? `Their oddest draft was ${
-              career.oddestDraft.year
-            }: ${POSITION_GROUPS.filter(g => career.oddestDraft!.counts[g] > 0)
-              .map(g => `${career.oddestDraft!.counts[g]} ${g}`)
-              .join(', ')}.`
-          : undefined
-      }
     >
       <div className='space-y-4'>
         {withPicks.map(season => (
           <div key={season.year}>
-            <div className='mb-1 flex flex-wrap items-baseline justify-between gap-2 text-sm'>
-              <span className='font-semibold text-white'>{season.year}</span>
-              <span className='text-xs text-slate-400'>
-                League average: QB {season.leagueAverage.QB} · RB{' '}
-                {season.leagueAverage.RB} · WR {season.leagueAverage.WR} · TE{' '}
-                {season.leagueAverage.TE}
-              </span>
+            <div className='mb-1 text-sm font-semibold text-white'>
+              {season.year}
             </div>
-            <PositionBar counts={season.counts} />
-            <div className='mt-1 flex flex-wrap gap-3 text-xs'>
-              {(['QB', 'RB', 'WR', 'TE'] as const).map(group => {
-                const diff =
-                  Math.round(
-                    (season.counts[group] - season.leagueAverage[group]) * 10,
-                  ) / 10;
-                return (
-                  <span key={group} className='text-slate-400'>
-                    {group}{' '}
-                    <span
-                      className={clsx(
-                        'tabular-nums',
-                        season.counts[group] === 0
-                          ? 'font-semibold text-rose-300'
-                          : Math.abs(diff) >= 2
-                          ? 'font-semibold text-amber-300'
-                          : 'text-slate-300',
-                      )}
-                    >
-                      {diff > 0 ? `+${diff}` : diff}
-                    </span>
-                  </span>
-                );
-              })}
+            {/* The league's average roster as a fainter bar right under
+                theirs, on the same scale, so a position they took more or
+                less of shows as its boundary shifting. */}
+            <div className='grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 text-xs text-slate-400'>
+              <span>Drafted</span>
+              <PositionBar counts={season.counts} />
+              <span>League avg</span>
+              <PositionBar
+                counts={season.leagueAverage}
+                size='small'
+                label={`League average: ${(['QB', 'RB', 'WR', 'TE'] as const)
+                  .map(group => `${season.leagueAverage[group]} ${group}`)
+                  .join(', ')}`}
+              />
             </div>
           </div>
         ))}
@@ -264,12 +250,16 @@ function PositionsDrafted({
   );
 }
 
+/** "1.07" - the round, then the pick within it. */
+const pickLabel = (pick: BestBallSeason['picks'][number], teamCount: number) =>
+  `${pick.round}.${String(pick.pickNo - (pick.round - 1) * teamCount).padStart(
+    2,
+    '0',
+  )}`;
+
 function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection
-      title='Draft Picks'
-      description='Every pick the CPU made for them, in order.'
-    >
+    <ProfileSection title='Draft Picks'>
       <div className='space-y-4'>
         {seasons
           .filter(season => season.picks.length > 0)
@@ -277,17 +267,12 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
             <div key={season.year}>
               <div className='mb-1 text-sm font-semibold text-white'>
                 {season.year}
-                {season.draftSlot && (
-                  <span className='ml-2 text-xs font-normal text-slate-400'>
-                    from slot {season.draftSlot}
-                  </span>
-                )}
               </div>
               <ol className='m-0 grid list-none grid-cols-2 gap-1 p-0 text-xs sm:grid-cols-3 lg:grid-cols-6'>
                 {season.picks.map(pick => (
                   <li
                     key={pick.pickNo}
-                    title={`Round ${pick.round}, pick ${pick.pickNo}`}
+                    title={`Round ${pick.round}, pick ${pick.pickNo} overall`}
                     className={clsx(
                       'rounded px-1.5 py-1',
                       POSITION_TINT_COLORS[pick.position.toLowerCase()] ??
@@ -308,7 +293,7 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
                       </span>
                       {pick.nflTeam ?? 'FA'}
                       <span className='ml-auto tabular-nums text-white/50'>
-                        Round {pick.round}
+                        {pickLabel(pick, season.teamCount)}
                       </span>
                     </div>
                   </li>

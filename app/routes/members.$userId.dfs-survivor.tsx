@@ -8,7 +8,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import InfoTip from '~/components/layout/profile/InfoTip';
+import InfoTip, { InfoText } from '~/components/layout/profile/InfoTip';
 import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
@@ -25,11 +25,11 @@ import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
 import WeekGrid, {
+  KeyList,
   LegendItem,
   ScaleKey,
   Swatch,
   WEEK_SCALE,
-  WeekLegend,
   WonKey,
   rankTone,
 } from '~/components/layout/profile/WeekGrid';
@@ -206,6 +206,8 @@ function Career({
 function TimingCard({ career }: { career: DfsCareer }) {
   const { timing } = career;
   const { ahead, behind, compared } = timing;
+  // Picks that came out exactly level with the others count as neither.
+  const even = compared - ahead - behind;
 
   return (
     <CareerCard
@@ -240,27 +242,42 @@ function TimingCard({ career }: { career: DfsCareer }) {
               aria-hidden='true'
               className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
             >
-              <div
-                className='bg-emerald-400'
-                style={{ width: `${(ahead / compared) * 100}%` }}
-              />
+              {/* Behind to ahead, like a worst-to-best scale. */}
               <div
                 className='bg-rose-400'
                 style={{ width: `${(behind / compared) * 100}%` }}
               />
+              {even > 0 && (
+                <div
+                  className='bg-slate-400'
+                  style={{ width: `${(even / compared) * 100}%` }}
+                />
+              )}
+              <div
+                className='bg-emerald-400'
+                style={{ width: `${(ahead / compared) * 100}%` }}
+              />
             </div>
             <div className='mt-2 flex justify-between gap-2 text-xs text-slate-400'>
-              <span>
-                <span className='font-semibold tabular-nums text-emerald-300'>
-                  {ahead}
-                </span>{' '}
-                picks ahead
-              </span>
               <span>
                 <span className='font-semibold tabular-nums text-rose-300'>
                   {behind}
                 </span>{' '}
-                behind
+                picks behind
+              </span>
+              {even > 0 && (
+                <span>
+                  <span className='font-semibold tabular-nums text-slate-200'>
+                    {even}
+                  </span>{' '}
+                  even
+                </span>
+              )}
+              <span>
+                <span className='font-semibold tabular-nums text-emerald-300'>
+                  {ahead}
+                </span>{' '}
+                ahead
               </span>
             </div>
           </>
@@ -510,7 +527,24 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection
       title='Week by Week'
-      description='Each week shaded by where it ranked among everyone who set a lineup.'
+      info={
+        <KeyList>
+          <WonKey sample='140' />
+          <ScaleKey />
+          <LegendItem
+            swatch={
+              <Swatch tone={WEEK_SCALE[2].tone}>
+                <PartialMark />
+              </Swatch>
+            }
+          >
+            Empty slots
+          </LegendItem>
+          <LegendItem swatch={<Swatch tone={NO_LINEUP_TONE} />}>
+            No lineup
+          </LegendItem>
+        </KeyList>
+      }
     >
       <WeekGrid
         lastWeek={DFS_SURVIVOR_LAST_WEEK}
@@ -540,22 +574,6 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
           return { year: season.year, weeks };
         })}
       />
-      <WeekLegend>
-        <WonKey sample='140' />
-        <ScaleKey />
-        <LegendItem
-          swatch={
-            <Swatch tone={WEEK_SCALE[2].tone}>
-              <PartialMark />
-            </Swatch>
-          }
-        >
-          Empty slots
-        </LegendItem>
-        <LegendItem swatch={<Swatch tone={NO_LINEUP_TONE} />}>
-          No lineup
-        </LegendItem>
-      </WeekLegend>
     </ProfileSection>
   );
 }
@@ -783,19 +801,21 @@ function StageCell({
   const diff = split.field === null ? null : split.mine - split.field;
 
   return (
-    <td
-      className='whitespace-nowrap px-2 py-2 text-right tabular-nums'
-      title={
-        split.field === null
-          ? undefined
-          : `Field ${split.field.toFixed(digits)}`
-      }
-    >
-      {split.mine.toFixed(digits)}
-      {diff !== null && (
-        <span className={clsx('ml-1.5 text-xs', signedTone(diff))}>
-          {signed(diff, 1)}
-        </span>
+    <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
+      {split.field === null || diff === null ? (
+        split.mine.toFixed(digits)
+      ) : (
+        <InfoText
+          label={split.mine.toFixed(digits)}
+          tip={`Their average ${split.mine.toFixed(
+            digits,
+          )}, the field's ${split.field.toFixed(digits)}: ${signed(diff, 1)}`}
+        >
+          {split.mine.toFixed(digits)}
+          <span className={clsx('ml-1.5 text-xs', signedTone(diff))}>
+            {signed(diff, 1)}
+          </span>
+        </InfoText>
       )}
     </td>
   );
@@ -815,7 +835,15 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
   return (
     <ProfileSection
       title='Pool Management'
-      description='Each player can be used once a season, so the pool thins as it goes on.'
+      info={
+        <>
+          Each player can be used once a season, so the pool thins as it goes
+          on. Each cell is their average in that stretch of the season: their
+          weekly lineup score, or their points per pick at a position. The small
+          number beside it is how far above or below the field&rsquo;s average
+          they were in the same weeks.
+        </>
+      }
       action={
         years.length > 1 ? (
           <YearFilter
@@ -826,7 +854,6 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
           />
         ) : undefined
       }
-      footnote='Each figure is their average, with how far it sat from the field’s in the same weeks. Hover a cell for the field’s.'
     >
       <ProfileTable
         headers={['', ...STAGES.map(stage => stage.label)]}
@@ -868,32 +895,12 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
     { length: DFS_SURVIVOR_LAST_WEEK },
     (_, i) => i + 1,
   );
-  const { starAverageWeek: mine, fieldStarAverageWeek: field } = season;
 
   return (
     <div className='mt-6'>
-      <div className='mb-2 flex flex-wrap items-baseline justify-between gap-2'>
-        <h4 className='m-0 text-sm font-semibold text-white'>
-          When their best {STAR_PICKS} picks came
-        </h4>
-        {mine !== null && (
-          <p className='m-0 text-xs text-slate-400'>
-            Average week{' '}
-            <span className='font-semibold tabular-nums text-slate-100'>
-              {mine.toFixed(1)}
-            </span>
-            {field !== null && (
-              <>
-                {' '}
-                · the field&rsquo;s{' '}
-                <span className='font-semibold tabular-nums text-slate-100'>
-                  {field.toFixed(1)}
-                </span>
-              </>
-            )}
-          </p>
-        )}
-      </div>
+      <h4 className='m-0 mb-2 text-sm font-semibold text-white'>
+        When their best {STAR_PICKS} picks came
+      </h4>
       {/* On a phone, only the weeks that had one of them, as a list. */}
       <ol className='m-0 list-none space-y-1.5 p-0 text-sm lg:hidden'>
         {weekNumbers

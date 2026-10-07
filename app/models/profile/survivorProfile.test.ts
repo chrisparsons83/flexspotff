@@ -134,6 +134,39 @@ describe('buildSurvivorPool', () => {
     const result = buildSurvivorPool({ ...first, isComplete: false });
     expect(result.place).toBeNull();
     expect(result.outlasted).toBeNull();
+    expect(result.remaining).toBe(
+      first.entries.filter(e => e.eliminatedWeek === null).length,
+    );
+  });
+
+  it('places them in a running pool once the place is settled', () => {
+    // Out in week 5; the two left have both survived week 5 already.
+    const result = buildSurvivorPool({ ...second, isComplete: false });
+    expect(result.place).toBe(3);
+  });
+
+  it('waits while someone left could still go out the same week', () => {
+    const pending = buildSurvivorPool({
+      ...second,
+      isComplete: false,
+      entries: second.entries.map(entry =>
+        entry.id === 'c' ? { ...entry, survivedWeek: 4 } : entry,
+      ),
+    });
+    expect(pending.place).toBeNull();
+  });
+
+  it('leaves a shared exit with nobody left for the result to decide', () => {
+    const together = buildSurvivorPool({
+      ...second,
+      isComplete: false,
+      entries: second.entries.map(entry => ({
+        ...entry,
+        eliminatedWeek: 5,
+        survivedWeek: 4,
+      })),
+    });
+    expect(together.place).toBeNull();
   });
 });
 
@@ -144,7 +177,6 @@ describe('buildSurvivorCareer', () => {
   it('counts pools and wins', () => {
     expect(career.pools).toBe(2);
     expect(career.wins).toBe(1);
-    expect(career.sharedWins).toBe(0);
     expect(career.bestPlace).toEqual({
       place: 1,
       year: 2023,
@@ -178,7 +210,7 @@ describe('buildSurvivorCareer', () => {
       [second, second],
       [second, second].map(buildSurvivorPool),
     );
-    expect(twice.nemesis).toEqual({ team: 'NYJ', times: 2 });
+    expect(twice.nemesis).toEqual({ teams: ['NYJ'], times: 2 });
   });
 });
 

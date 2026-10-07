@@ -14,9 +14,13 @@ const useIsomorphicLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
- * An ⓘ that explains a stat whose name cannot. Shown on hover and on keyboard
- * focus or a tap, unlike a `title`, which never appears on focus or on a phone
- * and gives no hint that there is anything to read.
+ * An ⓘ that explains a stat whose name cannot. Shown on hover, on keyboard
+ * focus and on a tap, unlike a `title`, which never appears on focus or on a
+ * phone and gives no hint that there is anything to read.
+ *
+ * A tap opens it outright rather than toggling, since a phone may also send
+ * focus for the same tap, and a tap anywhere else closes it - Safari on iOS
+ * never moves focus to a tapped button, so blur alone would leave it open.
  *
  * The tip is placed against the viewport rather than its parent, so it is not
  * clipped by a table that scrolls sideways - which, in CSS, also clips
@@ -26,6 +30,7 @@ export default function InfoTip({
   label,
   icon,
   iconClassName = 'text-slate-400 hover:text-slate-300 focus-visible:text-slate-300',
+  className = 'inline-flex align-middle',
   children,
 }: {
   /** What the button is for, read by screen readers, e.g. "About Timing". */
@@ -33,9 +38,12 @@ export default function InfoTip({
   /** In place of the ⓘ, for a marker that explains itself on hover. */
   icon?: ReactNode;
   iconClassName?: string;
+  /** The wrapper's layout; text sits on the line rather than centred. */
+  className?: string;
   children: ReactNode;
 }) {
   const id = useId();
+  const wrapperRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const tipRef = useRef<HTMLSpanElement>(null);
   const [position, setPosition] = useState<CSSProperties | null>(null);
@@ -67,18 +75,29 @@ export default function InfoTip({
     setPosition({ left: position.left, top: anchor.bottom + GAP });
   }, [position]);
 
-  // A fixed tip would stay put while the page moved under it.
+  // A fixed tip would stay put while the page moved under it; and a tap
+  // elsewhere is how a phone puts it away.
+  const open = position !== null;
   useEffect(() => {
-    if (!position) return;
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) hide();
+    };
     window.addEventListener('scroll', hide, { capture: true, passive: true });
-    return () => window.removeEventListener('scroll', hide, { capture: true });
-  }, [position]);
+    document.addEventListener('pointerdown', away);
+    return () => {
+      window.removeEventListener('scroll', hide, { capture: true });
+      document.removeEventListener('pointerdown', away);
+    };
+  }, [open]);
 
   return (
     <span
-      className='inline-flex align-middle'
-      onMouseEnter={show}
-      onMouseLeave={hide}
+      ref={wrapperRef}
+      className={className}
+      // Mouse only: a phone sends these for a tap too, and the tap is handled.
+      onPointerEnter={event => event.pointerType === 'mouse' && show()}
+      onPointerLeave={event => event.pointerType === 'mouse' && hide()}
     >
       <button
         ref={buttonRef}
@@ -87,6 +106,7 @@ export default function InfoTip({
         aria-describedby={id}
         onFocus={show}
         onBlur={hide}
+        onClick={show}
         className={clsx(
           'cursor-help rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400',
           iconClassName,
@@ -111,5 +131,38 @@ export default function InfoTip({
         {children}
       </span>
     </span>
+  );
+}
+
+/**
+ * Text that opens an explanation on hover, focus or a tap - a stat label, or a
+ * number whose context does not fit beside it. Dotted underneath so there is
+ * a sign it has more to say, which a `title` never gives and a phone never
+ * shows.
+ */
+export function InfoText({
+  label,
+  tip,
+  className,
+  children,
+}: {
+  /** Read by screen readers in place of the text, e.g. "Weeks Won". */
+  label: string;
+  tip: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <InfoTip
+      label={label}
+      icon={children}
+      className='inline'
+      iconClassName={clsx(
+        'text-left underline decoration-dotted decoration-slate-500 underline-offset-2 hover:decoration-slate-300',
+        className,
+      )}
+    >
+      {tip}
+    </InfoTip>
   );
 }

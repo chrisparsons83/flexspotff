@@ -1,3 +1,4 @@
+import InfoTip from './InfoTip';
 import type { ReactNode } from 'react';
 
 type Props = {
@@ -7,6 +8,11 @@ type Props = {
    * sentence, ending in a full stop.
    */
   description?: string;
+  /**
+   * What the section's colours and marks mean, behind an ⓘ by the title, so
+   * the key is a tap away on a phone without sitting under every chart.
+   */
+  info?: ReactNode;
   /** Controls belonging to this section, e.g. the game log's year filter. */
   action?: ReactNode;
   /** Small print under the content, e.g. the median-games caveat. */
@@ -30,6 +36,7 @@ type Props = {
 export default function ProfileSection({
   title,
   description,
+  info,
   action,
   footnote,
   children,
@@ -38,7 +45,10 @@ export default function ProfileSection({
     <section className='not-prose rounded-lg border border-slate-600/50 bg-slate-800/60 p-3 sm:p-4 md:p-5'>
       <div className='mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2'>
         <div>
-          <h3 className='m-0 text-lg font-semibold text-white'>{title}</h3>
+          <h3 className='m-0 flex items-center gap-1.5 text-lg font-semibold text-white'>
+            {title}
+            {info && <InfoTip label={`About ${title}`}>{info}</InfoTip>}
+          </h3>
           {description && (
             <p className='m-0 mt-0.5 text-sm text-slate-400'>{description}</p>
           )}

@@ -13,6 +13,7 @@ import ProfileTable from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
+import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import { CurrentTag } from '~/components/layout/profile/Tag';
 import Truncate from '~/components/layout/profile/Truncate';
 import YearFilter from '~/components/layout/profile/YearFilter';
@@ -121,7 +122,7 @@ const whole = (value: number) => Math.round(value).toLocaleString('en-US');
  */
 function PointsCard({ career }: { career: FSquaredCareer }) {
   const { bestSeason, worstSeason, averageVsField, averageTotal } = career;
-  const title = 'Points vs Average Entry';
+  const title = 'Average Score';
 
   // Only a running season so far: nothing settled to measure yet.
   if (averageVsField === null || averageTotal === null) {
@@ -133,29 +134,31 @@ function PointsCard({ career }: { career: FSquaredCareer }) {
   }
 
   return (
-    <CareerCard
-      title={title}
-      lead={
-        <span className={signedTone(averageVsField)}>
-          {signed(averageVsField, 1)}
-        </span>
-      }
-    >
+    <CareerCard title={title} lead={whole(averageTotal)} compactStats>
       <MiniStat
-        label='Average Score'
-        value={whole(averageTotal)}
-        hint='Their average season score'
+        label='vs Field'
+        value={signed(averageVsField, 0)}
+        hint='Their average season against the average entry'
+        tone={signedTone(averageVsField)}
       />
       <MiniStat
         label='Best'
         value={bestSeason ? signed(bestSeason.vsField, 0) : '—'}
-        detail={bestSeason ? String(bestSeason.year) : null}
+        hint={
+          bestSeason
+            ? `Their best season against the average entry: ${bestSeason.year}`
+            : undefined
+        }
         tone={signedTone(bestSeason?.vsField ?? null)}
       />
       <MiniStat
         label='Worst'
         value={worstSeason ? signed(worstSeason.vsField, 0) : '—'}
-        detail={worstSeason ? String(worstSeason.year) : null}
+        hint={
+          worstSeason
+            ? `Their worst season against the average entry: ${worstSeason.year}`
+            : undefined
+        }
         tone={signedTone(worstSeason?.vsField ?? null)}
       />
     </CareerCard>
@@ -186,6 +189,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
   return (
     <CareerCard
       title='Finishes'
+      compactStats
       lead={
         career.titles > 0 ? (
           <Trophies titles={career.titles} />
@@ -224,6 +228,7 @@ function PickQualityCard({ career }: { career: FSquaredCareer }) {
     <CareerCard
       title='Picks That Beat League Average'
       lead={pct(career.beatAverageShare)}
+      compactStats
     >
       <MiniStat
         label='Top 3'
@@ -246,21 +251,33 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
   const { mostPicked } = pickedBy;
 
   return (
-    <CareerCard title='Picked By Others' lead={pct(pickedBy.averageShare)}>
+    <CareerCard
+      title='Picked By Others'
+      lead={pct(pickedBy.averageShare)}
+      compactStats
+    >
+      {/* Short labels so the three fit on one line; the hover text has the
+          full wording. */}
       <MiniStat
-        label='Times Picked'
+        label='Picked'
         value={pickedBy.timesPicked}
-        hint='Entries that picked a team they managed, over every season'
+        hint='Times picked: entries that picked a team they managed, over every season'
       />
       <MiniStat
-        label='Unique Pickers'
+        label='Pickers'
         value={pickedBy.frequentPickers.length}
         hint='Different members who have picked them'
       />
       <MiniStat
-        label='Most Picked'
+        label='Peak'
         value={mostPicked ? pct(mostPicked.share) : '—'}
-        detail={mostPicked ? String(mostPicked.year) : null}
+        hint={
+          mostPicked
+            ? `Their most-picked season: ${pct(
+                mostPicked.share,
+              )} of entries in ${mostPicked.year}`
+            : undefined
+        }
       />
     </CareerCard>
   );
@@ -380,7 +397,6 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
     <ProfileSection
       title='Picks'
-      description='Each pick, with where it finished in its league on points.'
       action={
         <YearFilter
           years={years}
@@ -431,13 +447,17 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
   );
 }
 
-const MANAGERS_SHOWN = 10;
+/** How many rows the two manager lists show before "Show all". */
+const LIST_PREVIEW = 10;
 
 function MostPickedManagers({
   managers,
 }: {
   managers: FSquaredPickedManager[];
 }) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? managers : managers.slice(0, LIST_PREVIEW);
+
   return (
     <ProfileSection title='Most Picked Managers'>
       <ProfileTable
@@ -445,7 +465,7 @@ function MostPickedManagers({
         primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
       >
-        {managers.slice(0, MANAGERS_SHOWN).map(row => (
+        {visible.map(row => (
           <tr key={row.manager.id} className='border-b border-slate-700/70'>
             <td className='whitespace-nowrap px-2 py-2'>
               <Truncate
@@ -478,6 +498,14 @@ function MostPickedManagers({
           </tr>
         ))}
       </ProfileTable>
+      {managers.length > LIST_PREVIEW && (
+        <ShowAllButton
+          total={managers.length}
+          noun='managers'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
+      )}
     </ProfileSection>
   );
 }
@@ -494,6 +522,8 @@ function WhoPickedThem({
   memberName: string;
 }) {
   const pickers = pickedBy.frequentPickers;
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? pickers : pickers.slice(0, LIST_PREVIEW);
 
   return (
     <ProfileSection title={`Who Picked ${memberName}`}>
@@ -501,7 +531,7 @@ function WhoPickedThem({
         <p className='m-0 text-sm text-slate-400'>Nobody yet.</p>
       ) : (
         <ol className='m-0 p-0'>
-          {pickers.map(row => (
+          {visible.map(row => (
             <li
               key={row.member.id}
               className='flex list-none items-baseline gap-4 border-b border-slate-700/70 py-2 text-sm last:border-b-0'
@@ -521,6 +551,14 @@ function WhoPickedThem({
             </li>
           ))}
         </ol>
+      )}
+      {pickers.length > LIST_PREVIEW && (
+        <ShowAllButton
+          total={pickers.length}
+          noun='managers'
+          showAll={showAll}
+          onToggle={() => setShowAll(value => !value)}
+        />
       )}
     </ProfileSection>
   );

@@ -32,8 +32,13 @@ export type SurvivorPoolResult = {
   year: number;
   isComplete: boolean;
   entryCount: number;
-  /** Their place once the pool is decided; ties share it. */
+  /**
+   * Their place, ties sharing it. In a pool still running, set once it can no
+   * longer change - see `runningPlace`.
+   */
   place: number | null;
+  /** Entries still alive, the member included. */
+  remaining: number;
   /** How many shared first, when they did. */
   winners: number;
   isAlive: boolean;
@@ -58,8 +63,6 @@ export type SurvivorTeamRow = {
 export type SurvivorCareer = {
   pools: number;
   wins: number;
-  /** Wins they shared with someone. */
-  sharedWins: number;
   bestPlace: { place: number; year: number; poolName: string } | null;
   /** Average share of the field outlasted, over decided pools. */
   averageOutlasted: number | null;
@@ -69,8 +72,11 @@ export type SurvivorCareer = {
   missedPicks: number;
   /** Share of their picks that were the week's most popular team. */
   withCrowd: number | null;
-  /** The team that knocked them out most often, when it did more than once. */
-  nemesis: { team: string; times: number } | null;
+  /**
+   * The teams that knocked them out most often, when that was more than once.
+   * Several when they are tied.
+   */
+  nemesis: { teams: string[]; times: number } | null;
 };
 
 /** The most-picked team among entries alive going into a week. */
@@ -87,6 +93,27 @@ function crowdPick(pool: SurvivorPoolInput, week: number): string | null {
   return best && best[1] > 1 ? best[0] : null;
 }
 
+/**
+ * Their place in a pool still running, once it can no longer change: they are
+ * out, and everyone still alive has already survived the week they went out
+ * in. Until then an entry with a game still to play that week could go out
+ * beside them and share the place. Null while it could still move, and when
+ * nobody outlasted them - a shared first is for the pool's result to decide.
+ */
+function runningPlace(
+  mine: SurvivorPoolInput['entries'][number],
+  others: SurvivorPoolInput['entries'],
+): number | null {
+  const out = mine.eliminatedWeek;
+  if (out === null) return null;
+  const alive = others.filter(other => other.eliminatedWeek === null);
+  if (alive.some(other => other.survivedWeek < out)) return null;
+  const outlastedBy = others.filter(
+    other => other.eliminatedWeek === null || other.eliminatedWeek > out,
+  ).length;
+  return outlastedBy > 0 ? 1 + outlastedBy : null;
+}
+
 export function buildSurvivorPool(pool: SurvivorPoolInput): SurvivorPoolResult {
   const mine = pool.entries.find(entry => entry.id === pool.entryId)!;
   const others = pool.entries.filter(entry => entry.id !== pool.entryId);
@@ -101,7 +128,9 @@ export function buildSurvivorPool(pool: SurvivorPoolInput): SurvivorPoolResult {
     year: pool.year,
     isComplete: pool.isComplete,
     entryCount: pool.entries.length,
-    place: pool.isComplete ? mine.finish : null,
+    place: pool.isComplete ? mine.finish : runningPlace(mine, others),
+    remaining: pool.entries.filter(entry => entry.eliminatedWeek === null)
+      .length,
     winners: pool.entries.filter(entry => entry.finish === 1).length,
     isAlive: mine.eliminatedWeek === null,
     eliminatedWeek: mine.eliminatedWeek,
@@ -159,14 +188,11 @@ export function buildSurvivorCareer(
     if (result.outBy)
       busts.set(result.outBy, (busts.get(result.outBy) ?? 0) + 1);
   }
-  const nemesis = [...busts].sort((a, b) => b[1] - a[1])[0];
+  const mostTimes = Math.max(0, ...busts.values());
 
   return {
     pools: results.length,
     wins: placed.filter(result => result.place === 1).length,
-    sharedWins: placed.filter(
-      result => result.place === 1 && result.winners > 1,
-    ).length,
     bestPlace: best
       ? { place: best.place, year: best.year, poolName: best.poolName }
       : null,
@@ -187,8 +213,14 @@ export function buildSurvivorCareer(
     missedPicks: results.filter(result => result.missedPick).length,
     withCrowd: settled.length > 0 ? crowd / settled.length : null,
     nemesis:
-      nemesis && nemesis[1] > 1
-        ? { team: nemesis[0], times: nemesis[1] }
+      mostTimes > 1
+        ? {
+            teams: [...busts]
+              .filter(([, times]) => times === mostTimes)
+              .map(([team]) => team)
+              .sort(),
+            times: mostTimes,
+          }
         : null,
   };
 }

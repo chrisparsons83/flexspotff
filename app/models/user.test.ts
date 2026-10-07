@@ -1,7 +1,6 @@
 import type { DiscordProfile } from './user.server';
 import {
   applyDiscordProfile,
-  getPastNames,
   getUserByDiscordId,
   getUsers,
   getUsersIncludingMerged,
@@ -260,7 +259,10 @@ describe('applyDiscordProfile', () => {
       new Date('2026-02-01'),
     );
 
-    const past = await getPastNames(user.id, 'Bamboo Eater');
+    const past = await prisma.userNameHistory.findMany({
+      where: { userId: user.id, name: { not: 'Bamboo Eater' } },
+      orderBy: { lastSeenAt: 'desc' },
+    });
     expect(past.map(p => p.name)).toEqual(['Panda', 'pandabair']);
 
     // The name they had before history began is backfilled from when they

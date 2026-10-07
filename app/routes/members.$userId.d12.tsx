@@ -8,6 +8,7 @@ import DraftBoard, {
 } from '~/components/layout/draftboard/DraftBoard';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import ProfileTable from '~/components/layout/profile/ProfileTable';
@@ -74,16 +75,15 @@ export default function MemberD12() {
 }
 
 function Career({ career }: { career: D12Career }) {
-  const { bestWeek, worstWeek, bestTeamWeek, worstTeamWeek } = career;
+  const { bestWeek, worstWeek } = career;
   const { bestTeam, worstTeam } = career;
 
   return (
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
         <CareerCard
-          title='Weekly Totals'
+          title='Average Week'
           lead={pts(career.averageWeek, 1)}
-          leadNote='points a week, every team combined'
           meter={
             bestWeek &&
             worstWeek &&
@@ -111,116 +111,78 @@ function Career({ career }: { career: D12Career }) {
         </CareerCard>
 
         <CareerCard
-          title='Single-Team Weeks'
-          lead={pts(career.averageTeamWeek, 1)}
-          leadNote='points a week, per team'
+          title='Average Team'
+          lead={
+            <>
+              {pts(career.averageTeam, 1)}
+              {career.teamsInProgress && <LeadContext>so far</LeadContext>}
+            </>
+          }
           meter={
-            bestTeamWeek &&
-            worstTeamWeek &&
-            career.averageTeamWeek !== null && (
+            bestTeam &&
+            worstTeam &&
+            career.averageTeam !== null && (
               <RangeBar
-                low={worstTeamWeek.points}
-                high={bestTeamWeek.points}
-                mark={career.averageTeamWeek}
+                low={worstTeam.points}
+                high={bestTeam.points}
+                mark={career.averageTeam}
               />
             )
           }
         >
           <MiniStat
-            label='Worst'
-            value={pts(worstTeamWeek?.points)}
+            label='Worst Team'
+            value={pts(worstTeam?.points, 1)}
             tone='text-rose-300'
-            detail={
-              worstTeamWeek &&
-              `${shortD12LeagueName(worstTeamWeek.leagueName)}, ${weekLabel(
-                worstTeamWeek,
-              )}`
-            }
+            detail={worstTeam && teamDetail(worstTeam)}
           />
           <MiniStat
-            label='Best'
-            value={pts(bestTeamWeek?.points)}
+            label='Best Team'
+            value={pts(bestTeam?.points, 1)}
             tone='text-emerald-300'
-            detail={
-              bestTeamWeek &&
-              `${shortD12LeagueName(bestTeamWeek.leagueName)}, ${weekLabel(
-                bestTeamWeek,
-              )}`
-            }
+            detail={bestTeam && teamDetail(bestTeam)}
           />
         </CareerCard>
 
-        {/* Both of these only mean something once a season is over, so a
-            member in their first season gets the two weekly cards alone. */}
+        {/* Finishes only mean something once a season is over, so a member
+            in their first season gets the two cards above alone. */}
         {career.completedSeasons > 0 && (
-          <>
-            <CareerCard
-              title='Team Seasons'
-              lead={pts(career.averageTeam, 1)}
-              leadNote='points per team, per finished season'
-              meter={
-                bestTeam &&
-                worstTeam &&
-                career.averageTeam !== null && (
-                  <RangeBar
-                    low={worstTeam.points}
-                    high={bestTeam.points}
-                    mark={career.averageTeam}
-                  />
-                )
+          <CareerCard
+            title='Finishes'
+            lead={
+              career.titles > 0 ? (
+                <Trophies titles={career.titles} />
+              ) : career.bestFinish ? (
+                ordinal(career.bestFinish.rank)
+              ) : (
+                '—'
+              )
+            }
+            leadNote={
+              career.current
+                ? `currently ${ordinal(career.current.rank)} of ${
+                    career.current.fieldSize
+                  } in ${career.current.year}`
+                : career.bestFinish
+                ? `best finish, ${career.bestFinish.year}`
+                : ''
+            }
+          >
+            <MiniStat
+              label='Titles'
+              value={career.titles}
+              tone={career.titles > 0 ? TEXT.champion : undefined}
+            />
+            <MiniStat label='Top 3' value={career.topThrees} />
+            <MiniStat
+              label='Average Finish'
+              value={
+                career.averageFinish === null
+                  ? '—'
+                  : career.averageFinish.toFixed(1)
               }
-            >
-              <MiniStat
-                label='Worst Team'
-                value={pts(worstTeam?.points, 1)}
-                tone='text-rose-300'
-                detail={worstTeam && teamDetail(worstTeam)}
-              />
-              <MiniStat
-                label='Best Team'
-                value={pts(bestTeam?.points, 1)}
-                tone='text-emerald-300'
-                detail={bestTeam && teamDetail(bestTeam)}
-              />
-            </CareerCard>
-
-            <CareerCard
-              title='Finishes'
-              lead={
-                career.titles > 0 ? (
-                  <Trophies titles={career.titles} />
-                ) : career.bestFinish ? (
-                  ordinal(career.bestFinish.rank)
-                ) : (
-                  '—'
-                )
-              }
-              leadNote={
-                career.current
-                  ? `currently ${ordinal(career.current.rank)} of ${
-                      career.current.fieldSize
-                    } in ${career.current.year}`
-                  : career.bestFinish
-                  ? `best finish, ${career.bestFinish.year}`
-                  : ''
-              }
-            >
-              <MiniStat
-                label='Titles'
-                value={career.titles}
-                tone={career.titles > 0 ? TEXT.champion : undefined}
-              />
-              <MiniStat label='Top 3' value={career.topThrees} />
-              <MiniStat
-                label='Average Finish'
-                value={
-                  career.averageFinish === null
-                    ? '—'
-                    : career.averageFinish.toFixed(1)
-                }
-              />
-            </CareerCard>
-          </>
+            />
+          </CareerCard>
         )}
       </div>
     </ProfileSection>
@@ -228,7 +190,7 @@ function Career({ career }: { career: D12Career }) {
 }
 
 const teamDetail = (team: TeamSeasonMark) =>
-  `${team.year} · ${shortD12LeagueName(team.leagueName)}`;
+  `${team.year} ${shortD12LeagueName(team.leagueName)}`;
 
 /**
  * The strip down the left of a board cell: starter points ranked against the
@@ -330,9 +292,9 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
                 'bg-slate-700/60'
               }
               indicator={HEAT_BAR[pick.heat]}
-              tooltip={`${pick.firstName ?? ''} ${pick.lastName ?? ''} · ${
+              tooltip={`${pick.firstName ?? ''} ${pick.lastName ?? ''}, ${
                 pick.pickLabel
-              } (#${pick.pickNo}) in ${column.league?.name ?? ''} · ${
+              } (#${pick.pickNo}) in ${column.league?.name ?? ''}: ${
                 pick.points === null
                   ? 'no lineups yet'
                   : `${pick.points.toFixed(2)} starter points`
