@@ -225,7 +225,7 @@ export async function getProfileSummary(
 
   const [highlights, titles] = await Promise.all([
     getLeagueHighlights(userId, state),
-    getSideGameTitles(userId),
+    getSideGameTitles(userId, state.inProgressYear),
   ]);
 
   const badges = [

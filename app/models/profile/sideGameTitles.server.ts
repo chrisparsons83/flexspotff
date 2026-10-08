@@ -11,7 +11,6 @@ import {
 import { getSpreadPoolYears } from './spreadPool.server';
 import { buildSeasonTotals } from './spreadPoolProfile';
 import { prisma } from '~/db.server';
-import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * How many seasons of each side game a member has won.
@@ -32,10 +31,9 @@ export type SideGameTitles = Partial<Record<SideGameKey, number>>;
 
 export async function getSideGameTitles(
   userId: string,
+  /** The season still being played - see `getSeasonState`. */
+  inProgress: number | null,
 ): Promise<SideGameTitles> {
-  // Read once and threaded through, rather than six times inside the counters.
-  const inProgress = await getInProgressYear();
-
   const [
     d12,
     qbStreaming,

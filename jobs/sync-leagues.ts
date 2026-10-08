@@ -29,11 +29,10 @@ runJob('sync-leagues', async () => {
   );
 
   // Brackets are synced after the rosters so roster ids resolve to teams that
-  // definitely exist. Until the regular season is over every league is
-  // skipped.
+  // definitely exist. Outside the postseason this is a cheap no-op.
   const brackets = await syncMultipleLeagueBrackets(leagues);
   console.log(
-    `Playoff brackets: ${brackets.gamesStored} games across ${brackets.syncedCount} leagues, ${brackets.skippedCount} skipped (regular season still running), ${brackets.errorCount} failed`,
+    `Playoff brackets: ${brackets.gamesStored} games across ${brackets.syncedCount} leagues, ${brackets.errorCount} failed`,
   );
 
   const message = `Leagues sync completed: ${syncedCount} successful, ${errorCount} failed`;

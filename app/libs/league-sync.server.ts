@@ -11,6 +11,7 @@ import {
 import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
 import { updateLeague, type League } from '~/models/league.server';
 import { createTeam, getTeams, updateTeam } from '~/models/team.server';
+import { reclassifyRegularSeasonGames } from '~/models/teamgame.server';
 import { SLEEPER_ADMIN_ID } from '~/utils/constants';
 import {
   isUsablePlayoffWeekStart,
@@ -194,6 +195,8 @@ export async function syncLeagueSeasonStructure(league: League): Promise<void> {
   }
 
   await updateLeague({ id: league.id, playoffWeekStart, hasMedianScoring });
+  // Games already stored were filed against the boundary as it stood then.
+  await reclassifyRegularSeasonGames({ ...league, playoffWeekStart });
 }
 
 /**

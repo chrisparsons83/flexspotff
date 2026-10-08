@@ -216,95 +216,84 @@ describe('isUsablePlayoffWeekStart', () => {
 });
 
 describe('seasonStateFromSchedule', () => {
-  // A Thursday-to-Monday week, kicking off 2026-09-10 for week 1.
-  const schedule = (weeks: number) =>
-    Array.from({ length: weeks }, (_, i) => ({
-      week: i + 1,
-      // Monday night, 00:15 UTC on the Tuesday.
-      lastKickoff: new Date(Date.UTC(2026, 8, 15 + i * 7, 0, 15)),
+  const DAY = 24 * 60 * 60 * 1000;
+  // Monday night of each week, 00:15 UTC on the Tuesday, from 2026-09-15.
+  const schedule = (weeks: number[]) =>
+    weeks.map(week => ({
+      week,
+      lastKickoff: new Date(Date.UTC(2026, 8, 15 + (week - 1) * 7, 0, 15)),
     }));
+  const allWeeks = Array.from({ length: 18 }, (_, i) => i + 1);
+  const state = (now: Date, weeks = allWeeks, scoringPending = false) =>
+    seasonStateFromSchedule({
+      year: 2026,
+      lastKickoffByWeek: schedule(weeks),
+      scoringPending,
+      now,
+    });
+  const finalKickoff = schedule([18])[0].lastKickoff.getTime();
 
   it('settles every week whose last game has finished', () => {
     // Saturday of week 5.
-    const state = seasonStateFromSchedule({
-      year: 2026,
-      lastKickoffByWeek: schedule(18),
-      now: new Date(Date.UTC(2026, 9, 10)),
+    expect(state(new Date(Date.UTC(2026, 9, 10)))).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 4,
     });
-
-    expect(state).toEqual({ inProgressYear: 2026, settledWeek: 4 });
   });
 
   it('holds a week open while Monday night is still being played', () => {
     // An hour after week 5's last kickoff.
-    const state = seasonStateFromSchedule({
-      year: 2026,
-      lastKickoffByWeek: schedule(18),
-      now: new Date(Date.UTC(2026, 9, 13, 1, 15)),
-    });
-
-    expect(state.settledWeek).toBe(4);
+    expect(state(new Date(Date.UTC(2026, 9, 13, 1, 15))).settledWeek).toBe(4);
   });
 
-  it('settles the week by the Tuesday morning league sync', () => {
-    const state = seasonStateFromSchedule({
-      year: 2026,
-      lastKickoffByWeek: schedule(18),
-      now: new Date(Date.UTC(2026, 9, 13, 7)),
-    });
-
-    expect(state.settledWeek).toBe(5);
+  it('settles the week once Monday night is over', () => {
+    expect(state(new Date(Date.UTC(2026, 9, 13, 7))).settledWeek).toBe(5);
   });
 
-  it('stops at a gap in the schedule rather than skipping it', () => {
-    const state = seasonStateFromSchedule({
-      year: 2026,
-      lastKickoffByWeek: schedule(18).filter(week => week.week !== 3),
-      now: new Date(Date.UTC(2026, 9, 10)),
-    });
+  // The score sync stores the schedule a week at a time, so a week it missed
+  // is simply absent. That must not freeze the season.
+  it('places a missing week from the weeks around it', () => {
+    const withoutWeek3 = allWeeks.filter(week => week !== 3);
 
-    expect(state.settledWeek).toBe(2);
+    expect(
+      state(new Date(Date.UTC(2026, 9, 10)), withoutWeek3).settledWeek,
+    ).toBe(4);
+    // Monday night of week 3 has not finished yet.
+    expect(
+      state(new Date(Date.UTC(2026, 8, 29, 1)), withoutWeek3).settledWeek,
+    ).toBe(2);
+  });
+
+  it('counts on from the last week stored', () => {
+    // Only weeks 1-5 stored; it is now Saturday of week 8.
+    expect(
+      state(new Date(Date.UTC(2026, 9, 31)), [1, 2, 3, 4, 5]).settledWeek,
+    ).toBe(7);
   });
 
   it('ends the season a week after the final NFL week', () => {
-    const lastKickoff = schedule(18)[17].lastKickoff.getTime();
-    const day = 24 * 60 * 60 * 1000;
-
-    expect(
-      seasonStateFromSchedule({
-        year: 2026,
-        lastKickoffByWeek: schedule(18),
-        now: new Date(lastKickoff + 2 * day),
-      }),
-    ).toEqual({ inProgressYear: 2026, settledWeek: 18 });
-
-    expect(
-      seasonStateFromSchedule({
-        year: 2026,
-        lastKickoffByWeek: schedule(18),
-        now: new Date(lastKickoff + 8 * day),
-      }),
-    ).toEqual({ inProgressYear: null, settledWeek: 0 });
+    expect(state(new Date(finalKickoff + 2 * DAY))).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 18,
+    });
+    expect(state(new Date(finalKickoff + 8 * DAY))).toEqual({
+      inProgressYear: null,
+      settledWeek: 0,
+    });
   });
 
-  it('never ends a season whose schedule stops short of the final week', () => {
-    const state = seasonStateFromSchedule({
-      year: 2026,
-      lastKickoffByWeek: schedule(10),
-      now: new Date(Date.UTC(2027, 5, 1)),
+  it('keeps the season open while side-game scoring is pending', () => {
+    expect(state(new Date(finalKickoff + 30 * DAY), allWeeks, true)).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 18,
     });
-
-    expect(state).toEqual({ inProgressYear: 2026, settledWeek: 10 });
   });
 
   it('is at week zero before any schedule is synced', () => {
-    expect(
-      seasonStateFromSchedule({
-        year: 2026,
-        lastKickoffByWeek: [],
-        now: new Date(Date.UTC(2026, 6, 1)),
-      }),
-    ).toEqual({ inProgressYear: 2026, settledWeek: 0 });
+    expect(state(new Date(Date.UTC(2026, 6, 1)), [])).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 0,
+    });
   });
 });
 

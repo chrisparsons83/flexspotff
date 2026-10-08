@@ -149,15 +149,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     case 'resyncPlayoffBrackets': {
       const leagues = await getLeagues();
-      const { syncedCount, skippedCount, gamesStored, errorCount } =
+      const { syncedCount, gamesStored, errorCount } =
         await syncMultipleLeagueBrackets(leagues);
 
       return json<ActionData>({
         message:
           `Playoff brackets synced: ${gamesStored} games across ${syncedCount} leagues` +
-          (skippedCount > 0
-            ? `, ${skippedCount} skipped while their regular season is running`
-            : '') +
           (errorCount > 0 ? `, ${errorCount} failed.` : '.'),
       });
     }

@@ -156,18 +156,18 @@ export function nflRegularSeasonWeeks(year: number): number {
 
 /**
  * How long after a week's last kickoff it counts as final. Monday night is over
- * in under four hours, and the score sync has followed it the whole way. Kept
- * short of the Tuesday-morning league sync, so the week before the playoffs
- * has settled by the time that sync goes looking for a bracket.
+ * in under four hours, and the score sync has followed it the whole way.
  */
 export const WEEK_SETTLES_AFTER_MS = 6 * 60 * 60 * 1000;
 
 /**
- * How long after the last game of the year a season counts as over. The side
- * games are scored by an admin after the final week, and a title should not
- * be handed out from a half-scored last week.
+ * The earliest a season can count as over after the last game of the year.
+ * The side games are scored by an admin after the final week; this is a floor
+ * on top of `scoringPending`, not a substitute for it.
  */
 export const SEASON_ENDS_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * The season state for one year, from the last kickoff of each week of its NFL
@@ -177,38 +177,66 @@ export const SEASON_ENDS_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
  * week being played, so a status that was never updated would hold a week open
  * forever, whereas a kickoff time is written once when the schedule is pulled.
  *
- * A schedule that stops short of the final NFL week has not been fully synced,
- * and is never taken to mean the season is over.
+ * The schedule is only stored a week at a time as the score sync reaches each
+ * week, so a sync that was down for a week leaves a hole in it. A missing week
+ * is placed by counting whole weeks from the nearest one we do have - NFL weeks
+ * run back to back - so one gap cannot freeze the season.
+ *
+ * The season is over once its final week has settled, a week has passed, and
+ * no side game is still waiting on scores (`scoringPending`). Until then it
+ * stays in progress, which is how every season used to behave all offseason.
  */
 export function seasonStateFromSchedule({
   year,
   lastKickoffByWeek,
+  scoringPending,
   now,
 }: {
   year: number;
   lastKickoffByWeek: { week: number; lastKickoff: Date }[];
+  /** Whether any side-game pick of the season's final weeks is unscored. */
+  scoringPending: boolean;
   now: Date;
 }): SeasonState {
-  const settled = (kickoff: Date, after: number) =>
-    kickoff.getTime() + after <= now.getTime();
-
-  const weeks = [...lastKickoffByWeek].sort((a, b) => a.week - b.week);
-
-  // Weeks settle in order: a week only counts once every week before it has.
-  let settledWeek = 0;
-  for (const { week, lastKickoff } of weeks) {
-    if (week !== settledWeek + 1) break;
-    if (!settled(lastKickoff, WEEK_SETTLES_AFTER_MS)) break;
-    settledWeek = week;
+  // Nothing to count from: the schedule has not been pulled at all.
+  if (lastKickoffByWeek.length === 0) {
+    return { inProgressYear: year, settledWeek: 0 };
   }
 
-  const finalWeek = weeks.find(
-    week => week.week === nflRegularSeasonWeeks(year),
+  const known = new Map(
+    lastKickoffByWeek.map(({ week, lastKickoff }) => [
+      week,
+      lastKickoff.getTime(),
+    ]),
   );
+  const kickoffOf = (week: number): number => {
+    const stored = known.get(week);
+    if (stored !== undefined) return stored;
+
+    let nearest = lastKickoffByWeek[0].week;
+    for (const knownWeek of known.keys()) {
+      if (Math.abs(knownWeek - week) < Math.abs(nearest - week)) {
+        nearest = knownWeek;
+      }
+    }
+    return known.get(nearest)! + (week - nearest) * WEEK_MS;
+  };
+  const settled = (week: number, after: number) =>
+    kickoffOf(week) + after <= now.getTime();
+
+  const finalWeek = nflRegularSeasonWeeks(year);
+  let settledWeek = 0;
+  while (
+    settledWeek < finalWeek &&
+    settled(settledWeek + 1, WEEK_SETTLES_AFTER_MS)
+  ) {
+    settledWeek++;
+  }
+
   const ended =
-    finalWeek !== undefined &&
-    settledWeek >= finalWeek.week &&
-    settled(finalWeek.lastKickoff, SEASON_ENDS_AFTER_MS);
+    settledWeek === finalWeek &&
+    settled(finalWeek, SEASON_ENDS_AFTER_MS) &&
+    !scoringPending;
 
   return ended ? NO_SEASON_IN_PROGRESS : { inProgressYear: year, settledWeek };
 }

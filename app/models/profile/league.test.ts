@@ -89,6 +89,16 @@ describe('rankStandings', () => {
     expect(standings.get('d')).toEqual({ place: 1, fieldSize: 1 });
   });
 
+  it('counts a tie as half a win, as Sleeper does', () => {
+    const standings = rankStandings([
+      { id: 'a', leagueId: 'l', wins: 5, losses: 0, ties: 1, pointsFor: 700 },
+      { id: 'b', leagueId: 'l', wins: 5, losses: 1, ties: 0, pointsFor: 750 },
+    ]);
+
+    expect(standings.get('a')?.place).toBe(1);
+    expect(standings.get('b')?.place).toBe(2);
+  });
+
   it('shares a place between teams level on record and points', () => {
     const standings = rankStandings([
       team('a', 2, 2, 400),
