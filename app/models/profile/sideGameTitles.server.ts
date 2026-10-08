@@ -11,7 +11,7 @@ import {
 import { getSpreadPoolYears } from './spreadPool.server';
 import { buildSeasonTotals } from './spreadPoolProfile';
 import { prisma } from '~/db.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * How many seasons of each side game a member has won.
@@ -34,7 +34,7 @@ export async function getSideGameTitles(
   userId: string,
 ): Promise<SideGameTitles> {
   // Read once and threaded through, rather than six times inside the counters.
-  const inProgress = (await getCurrentSeason())?.year ?? null;
+  const inProgress = await getInProgressYear();
 
   const [
     d12,

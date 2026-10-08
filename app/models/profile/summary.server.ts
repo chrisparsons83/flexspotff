@@ -7,13 +7,15 @@ import {
 } from './badges';
 import {
   aggregatePlayoffStats,
-  computeStreak,
+  buildLeagueHighlights,
   memberSinceYear,
-  pairTeamGames,
+  settledLeagueGames,
   winPct,
 } from './shared.server';
 import { getSideGameTitles } from './sideGameTitles.server';
 import { prisma } from '~/db.server';
+import { getSeasonState, type SeasonState } from '~/models/seasonState.server';
+import { regularSeasonIsOver } from '~/utils/seasonStructure';
 
 export type { Badge } from './badges';
 
@@ -64,11 +66,11 @@ export async function getProfileSummary(
   if (!user) return null;
 
   const [
+    state,
     teams,
-    playoffGames,
+    allPlayoffGames,
     cupFinalWins,
     cupSeasons,
-    bestWeek,
     d12Count,
     qbCount,
     poolCount,
@@ -80,6 +82,7 @@ export async function getProfileSummary(
     bestBallTeams,
     survivorEntries,
   ] = await Promise.all([
+    getSeasonState(),
     prisma.team.findMany({
       where: { userId },
       select: {
@@ -102,18 +105,15 @@ export async function getProfileSummary(
         winningTeam: { select: { userId: true } },
         losingTeam: { select: { userId: true } },
         advancingTeam: { select: { userId: true } },
-        // Only to tell a Champions League title from any other one.
-        league: { select: { tier: true } },
+        // The tier tells a Champions League title from any other one; the
+        // rest says whether the bracket is real yet.
+        league: { select: { tier: true, year: true, playoffWeekStart: true } },
       },
     }),
     prisma.cupGame.count({
       where: { round: 'ROUND_OF_2', winningTeam: { team: { userId } } },
     }),
     prisma.cupTeam.count({ where: { team: { userId } } }),
-    prisma.teamGame.aggregate({
-      where: { team: { userId } },
-      _max: { pointsScored: true },
-    }),
     prisma.d12WeekScore.count({ where: { userId } }),
     prisma.qBSelection.count({ where: { userId } }),
     prisma.poolGamePick.count({ where: { userId } }),
@@ -170,6 +170,11 @@ export async function getProfileSummary(
     { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 },
   );
 
+  // Same rule as the League tab: nothing from a bracket counts until the
+  // regular season it was seeded from is over.
+  const playoffGames = allPlayoffGames.filter(game =>
+    regularSeasonIsOver(game.league, state),
+  );
   const playoffs = aggregatePlayoffStats(playoffGames).get(userId);
   const championships = playoffs?.championships ?? 0;
   const sackos = playoffs?.sackos ?? 0;
@@ -218,8 +223,8 @@ export async function getProfileSummary(
     (fSquared._count._all > 0 || fSquaredPicked > 0) && 'f-squared',
   ].filter((value): value is string => typeof value === 'string');
 
-  const [longestStreak, titles] = await Promise.all([
-    getLongestWinStreak(userId),
+  const [highlights, titles] = await Promise.all([
+    getLeagueHighlights(userId, state),
     getSideGameTitles(userId),
   ]);
 
@@ -233,9 +238,9 @@ export async function getProfileSummary(
     makeBadge(BADGE_DEFINITIONS.seasonsPlayed, teams.length),
     makeBadge(
       BADGE_DEFINITIONS.highScoringWeek,
-      bestWeek._max.pointsScored ?? 0,
+      highlights.bestWeek?.points ?? 0,
     ),
-    makeBadge(BADGE_DEFINITIONS.winStreak, longestStreak),
+    makeBadge(BADGE_DEFINITIONS.winStreak, highlights.longestWinStreak),
   ].filter((badge): badge is Badge => badge !== null);
 
   return {
@@ -269,19 +274,18 @@ export async function getProfileSummary(
 }
 
 /**
- * The member's longest run of consecutive wins.
+ * The member's best week and longest win streak, for their badges.
  *
- * Postseason games count, so a playoff win extends a streak rather than ending
- * it. This used to read the regular season only, which put the badge one ahead
- * of the Longest Win Streak tile on the same page - a playoff loss between two
- * regular-season wins joined them into one run here and broke them into two
- * there.
+ * Read through the same `settledLeagueGames` and `buildLeagueHighlights` as the
+ * League tab, so a badge can never be ahead of the tile on the page beneath it
+ * - the streak badge used to count playoff games differently, and the best week
+ * badge used to count a week still being played.
  *
  * Every game in the leagues they played is fetched, not just their own, because
  * a result only exists once both sides of a matchup are known - that is what
  * pairTeamGames needs.
  */
-async function getLongestWinStreak(userId: string): Promise<number> {
+async function getLeagueHighlights(userId: string, state: SeasonState) {
   const leagueIds = (
     await prisma.team.findMany({
       where: { userId },
@@ -289,42 +293,36 @@ async function getLongestWinStreak(userId: string): Promise<number> {
     })
   ).map(team => team.leagueId);
 
-  if (leagueIds.length === 0) return 0;
+  const games =
+    leagueIds.length === 0
+      ? []
+      : await prisma.teamGame.findMany({
+          where: {
+            team: { leagueId: { in: leagueIds } },
+          },
+          select: {
+            week: true,
+            pointsScored: true,
+            sleeperMatchupId: true,
+            teamId: true,
+            team: {
+              select: {
+                leagueId: true,
+                userId: true,
+                league: { select: { year: true } },
+              },
+            },
+          },
+        });
 
-  const games = await prisma.teamGame.findMany({
-    where: {
-      team: { leagueId: { in: leagueIds } },
-    },
-    select: {
-      week: true,
-      pointsScored: true,
-      sleeperMatchupId: true,
-      teamId: true,
-      team: {
-        select: {
-          leagueId: true,
-          userId: true,
-          league: { select: { year: true } },
-        },
-      },
-    },
-  });
-
-  const mine = pairTeamGames(games)
-    .filter(
-      pair =>
-        pair.game.team.userId === userId &&
-        // A week that has opened but not been scored is not a loss. Checked on
-        // the pair rather than in the query, because dropping a scoreless row
-        // in SQL would take its opponent's real result down with it.
-        (pair.game.pointsScored > 0 || pair.opponent.pointsScored > 0) &&
-        pair.game.pointsScored > 0,
-    )
-    .sort(
-      (a, b) =>
-        a.game.team.league.year - b.game.team.league.year ||
-        a.game.week - b.game.week,
-    );
-
-  return computeStreak(mine, pair => pair.result === 'W')?.length ?? 0;
+  return buildLeagueHighlights(
+    settledLeagueGames(games, state)
+      .filter(pair => pair.game.team.userId === userId)
+      .map(pair => ({
+        year: pair.game.team.league.year,
+        week: pair.game.week,
+        pointsScored: pair.game.pointsScored,
+        result: pair.result,
+      })),
+  );
 }

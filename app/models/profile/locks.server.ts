@@ -12,7 +12,7 @@ import {
   type PickResult,
 } from './locksProfile';
 import { prisma } from '~/db.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * Only picks that count. Scoring deletes the inactive rows saved against the
@@ -132,9 +132,9 @@ export async function getLocksProfile(userId: string) {
   const years = await getLocksYears(userId);
   if (years.length === 0) return { hasPlayed: false as const };
 
-  const [{ rows, teamNames }, currentSeason] = await Promise.all([
+  const [{ rows, teamNames }, inProgressYear] = await Promise.all([
     loadLocksRows(years),
-    getCurrentSeason(),
+    getInProgressYear(),
   ]);
 
   const picks = buildLocksPicks(rows, userId);
@@ -150,7 +150,7 @@ export async function getLocksProfile(userId: string) {
     totals: buildSeasonTotals(rows),
     fieldRaces,
     userId,
-    inProgressYear: currentSeason?.year ?? null,
+    inProgressYear,
   });
 
   return {

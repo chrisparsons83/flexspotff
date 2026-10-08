@@ -10,7 +10,7 @@ import {
 import { prisma } from '~/db.server';
 import { getNewestD12WeekByYear } from '~/models/d12weekscore.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 import { assignCompetitionRanks } from '~/utils/rank';
 
 /**
@@ -46,7 +46,7 @@ export async function getD12Profile(userId: string) {
     (a, b) => b - a,
   );
 
-  const inProgressYear = (await getCurrentSeason())?.year ?? null;
+  const inProgressYear = await getInProgressYear();
   const [finishes, newestWeekInProgress, boards] = await Promise.all([
     getFinishes(userId, years),
     inProgressYear !== null && years.includes(inProgressYear)

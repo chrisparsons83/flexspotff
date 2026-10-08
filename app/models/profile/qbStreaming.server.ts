@@ -10,7 +10,7 @@ import {
 } from './qbStreamingProfile';
 import { prisma } from '~/db.server';
 import { NO_PICK_SLEEPER_ID } from '~/libs/qb-streaming/history-import.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * Everything the QB Streaming tab shows.
@@ -33,7 +33,7 @@ export async function getQbStreamingProfile(userId: string) {
   );
   if (years.length === 0) return { hasPlayed: false as const };
 
-  const [selections, options, currentSeason] = await Promise.all([
+  const [selections, options, inProgressYear] = await Promise.all([
     prisma.qBSelection.findMany({
       where: { qbStreamingWeek: { year: { in: years }, isScored: true } },
       select: {
@@ -56,7 +56,7 @@ export async function getQbStreamingProfile(userId: string) {
         qbStreamingWeek: { select: { year: true, week: true } },
       },
     }),
-    getCurrentSeason(),
+    getInProgressYear(),
   ]);
 
   const rows: QbSelectionRow[] = selections.map(selection => ({
@@ -114,7 +114,7 @@ export async function getQbStreamingProfile(userId: string) {
   const seasons = buildQbSeasons({
     weeks,
     finishes: buildQbFinishes(rows, userId),
-    inProgressYear: currentSeason?.year ?? null,
+    inProgressYear,
   });
 
   return {

@@ -1,7 +1,9 @@
 import { classifyBracket, sleeperBracketJson } from './bracket';
 import type { League } from '~/models/league.server';
 import { upsertPlayoffGame } from '~/models/playoffgame.server';
+import { getSeasonState } from '~/models/seasonState.server';
 import { getTeams } from '~/models/team.server';
+import { regularSeasonIsOver } from '~/utils/seasonStructure';
 
 /**
  * Pulls both postseason brackets for a league out of Sleeper and stores them.
@@ -76,19 +78,32 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
  *
  * Failures are collected rather than thrown so one league Sleeper no longer
  * serves cannot abort a backfill of every season since 2018.
+ *
+ * A league whose regular season is still being played is skipped: its bracket
+ * is not seeded yet, and anything stored from it would read as a playoff berth
+ * or a sacko run in week 5.
  */
 export async function syncMultipleLeagueBrackets(leagues: League[]): Promise<{
   syncedCount: number;
+  skippedCount: number;
   gamesStored: number;
   errorCount: number;
   errors: Array<{ leagueName: string; error: string }>;
 }> {
   let syncedCount = 0;
+  let skippedCount = 0;
   let gamesStored = 0;
   let errorCount = 0;
   const errors: Array<{ leagueName: string; error: string }> = [];
 
+  const state = await getSeasonState();
+
   for (const league of leagues) {
+    if (!regularSeasonIsOver(league, state)) {
+      skippedCount++;
+      continue;
+    }
+
     try {
       gamesStored += await syncLeagueBrackets(league);
       syncedCount++;
@@ -105,5 +120,5 @@ export async function syncMultipleLeagueBrackets(leagues: League[]): Promise<{
     }
   }
 
-  return { syncedCount, gamesStored, errorCount, errors };
+  return { syncedCount, skippedCount, gamesStored, errorCount, errors };
 }
