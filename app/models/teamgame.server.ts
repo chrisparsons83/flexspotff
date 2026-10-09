@@ -1,5 +1,6 @@
 import type { League, TeamGame } from '@prisma/client';
 import { prisma } from '~/db.server';
+import { regularSeasonWeeks } from '~/utils/seasonStructure';
 
 export type { TeamGame } from '@prisma/client';
 
@@ -167,4 +168,39 @@ export async function updateTeamGame(teamGame: Partial<TeamGame>) {
       },
     },
   });
+}
+
+/**
+ * Re-marks a league's games as regular season or postseason from its current
+ * playoff start week.
+ *
+ * `isRegularSeason` is written when a game is synced, from whatever boundary
+ * the league had then. A league whose `playoffWeekStart` is synced or changed
+ * afterwards would otherwise keep games filed on the wrong side of it, and
+ * every page reading the column would disagree with the ones that work the
+ * boundary out.
+ */
+export async function reclassifyRegularSeasonGames(
+  league: Pick<League, 'id' | 'year' | 'playoffWeekStart'>,
+) {
+  const firstPostseasonWeek = regularSeasonWeeks(league) + 1;
+
+  return prisma.$transaction([
+    prisma.teamGame.updateMany({
+      where: {
+        team: { leagueId: league.id },
+        week: { lt: firstPostseasonWeek },
+        isRegularSeason: false,
+      },
+      data: { isRegularSeason: true },
+    }),
+    prisma.teamGame.updateMany({
+      where: {
+        team: { leagueId: league.id },
+        week: { gte: firstPostseasonWeek },
+        isRegularSeason: true,
+      },
+      data: { isRegularSeason: false },
+    }),
+  ]);
 }

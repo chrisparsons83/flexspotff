@@ -2,16 +2,20 @@ import {
   aggregatePlayoffSeasons,
   averagePerSeason,
   aggregatePlayoffStats,
-  computeStreak,
+  buildLeagueHighlights,
   medianGames,
-  pairTeamGames,
+  settledLeagueGames,
   totalGames,
   winPct,
   type GameResult,
+  type LeagueHighlights,
   type SeasonPlayoffLine,
 } from './shared.server';
 import { prisma } from '~/db.server';
 import type { BracketKind } from '~/libs/bracket';
+import { getSeasonState, type SeasonState } from '~/models/seasonState.server';
+import { assignCompetitionRanks } from '~/utils/rank';
+import { regularSeasonIsOver } from '~/utils/seasonStructure';
 
 /**
  * The redraft league half of a member's profile: their career by tier, season
@@ -30,8 +34,15 @@ export type TierRecord = {
   winPct: number;
   pointsFor: number;
   pointsAgainst: number;
-  pointsForPerSeason: number;
-  pointsAgainstPerSeason: number;
+  /**
+   * Finished seasons only - a season a few weeks old would drag the average
+   * down to a fraction of a real one. Null until the tier has a finished
+   * season to average.
+   */
+  pointsForPerSeason: number | null;
+  pointsAgainstPerSeason: number | null;
+  /** Whether the season being played is one of `seasons`. */
+  includesCurrentSeason: boolean;
 };
 
 export type SeasonRow = {
@@ -39,6 +50,13 @@ export type SeasonRow = {
   leagueId: string;
   leagueName: string;
   tier: number;
+  /** The season still being played. */
+  inProgress: boolean;
+  /**
+   * Where they stand in their league's table right now, while the season is
+   * being played. Null once it is over - `finish` says where it ended.
+   */
+  standing: { place: number; fieldSize: number } | null;
   /**
    * Where they finished, from the postseason brackets - "Champion", "Sacko",
    * "9th". Null until that season's bracket has been played and synced.
@@ -135,30 +153,27 @@ export type LeagueProfile = {
     sackoWins: number;
     sackoLosses: number;
   };
-  highlights: {
-    bestWeek: { points: number; year: number; week: number } | null;
-    worstWeek: { points: number; year: number; week: number } | null;
-    longestWinStreak: number;
-    longestLossStreak: number;
-    averagePointsPerGame: number;
-  };
+  highlights: LeagueHighlights;
 };
 
 export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
-  const teams = await prisma.team.findMany({
-    where: { userId },
-    include: {
-      league: {
-        select: {
-          id: true,
-          year: true,
-          name: true,
-          tier: true,
-          hasMedianScoring: true,
+  const [teams, state] = await Promise.all([
+    prisma.team.findMany({
+      where: { userId },
+      include: {
+        league: {
+          select: {
+            id: true,
+            year: true,
+            name: true,
+            tier: true,
+            hasMedianScoring: true,
+          },
         },
       },
-    },
-  });
+    }),
+    getSeasonState(),
+  ]);
 
   if (teams.length === 0) {
     return emptyProfile();
@@ -169,64 +184,73 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
 
   // Every game in every league this member played, so opponents can be paired
   // up. Their own games alone would leave every matchup half-formed.
-  const [leagueGames, everyTeamThoseYears, playoffGames] = await Promise.all([
-    prisma.teamGame.findMany({
-      where: { team: { leagueId: { in: leagueIds } } },
-      include: {
-        team: {
-          select: {
-            id: true,
-            leagueId: true,
-            userId: true,
-            user: { select: { discordName: true } },
-            league: { select: { year: true, name: true, tier: true } },
+  const [leagueGames, everyTeamThoseYears, allPlayoffGames] = await Promise.all(
+    [
+      prisma.teamGame.findMany({
+        where: { team: { leagueId: { in: leagueIds } } },
+        include: {
+          team: {
+            select: {
+              id: true,
+              leagueId: true,
+              userId: true,
+              user: { select: { discordName: true } },
+              league: { select: { year: true, name: true, tier: true } },
+            },
           },
         },
-      },
-    }),
-    // Every team in every year this member played, which answers two things at
-    // once: how big each league was, for seating its brackets, and where their
-    // points-for placed against the whole site rather than just their own
-    // league. Sixty rows a year, so cheaper than it looks.
-    prisma.team.findMany({
-      where: { league: { year: { in: years } } },
-      select: {
-        id: true,
-        leagueId: true,
-        pointsFor: true,
-        league: { select: { year: true } },
-      },
-    }),
-    prisma.playoffGame.findMany({
-      where: { league: { teams: { some: { userId } } } },
-      include: {
-        topTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
+      }),
+      // Every team in every year this member played, which answers three things
+      // at once: how big each league was, for seating its brackets, where their
+      // points-for placed against the whole site rather than just their own
+      // league, and where they stand in a season still being played. Sixty rows
+      // a year, so cheaper than it looks.
+      prisma.team.findMany({
+        where: { league: { year: { in: years } } },
+        select: {
+          id: true,
+          leagueId: true,
+          wins: true,
+          losses: true,
+          ties: true,
+          pointsFor: true,
+          league: { select: { year: true } },
         },
-        bottomTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
+      }),
+      prisma.playoffGame.findMany({
+        where: { league: { teams: { some: { userId } } } },
+        include: {
+          topTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          bottomTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          winningTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          losingTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          advancingTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          league: { select: { year: true, playoffWeekStart: true } },
         },
-        winningTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-        losingTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-        advancingTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-      },
-    }),
-  ]);
+      }),
+    ],
+  );
+
+  // A bracket means nothing until the regular season it seeds from is over,
+  // so nothing in one is shown before then - no finish, no playoff or sacko
+  // label, no postseason record.
+  const playoffGames = allPlayoffGames.filter(game =>
+    regularSeasonIsOver(game.league, state),
+  );
 
   const teamIds = new Set(teams.map(team => team.id));
-  const mine = pairTeamGames(leagueGames).filter(
-    pair =>
-      teamIds.has(pair.game.teamId) &&
-      // Rows are created when a week opens and only score as games finish, so
-      // an untouched week would otherwise show up as a 0.00-0.00 tie in the
-      // game log and in the head-to-head record.
-      hasBeenPlayed(pair.game.pointsScored, pair.opponent.pointsScored),
+  const mine = settledLeagueGames(leagueGames, state).filter(pair =>
+    teamIds.has(pair.game.teamId),
   );
 
   const teamCountByLeague = new Map<string, number>();
@@ -266,18 +290,24 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
   return {
     hasPlayed: true,
     career: buildCareer(teams),
-    byTier: buildTierRecords(teams),
-    seasons: buildSeasons(teams, playoffSeasons, pointsForRank),
+    byTier: buildTierRecords(teams, state),
+    seasons: buildSeasons(teams, {
+      state,
+      playoffSeasons,
+      pointsForRank,
+      // Only the season being played shows a standing; every other season
+      // has a finish instead.
+      standings: rankStandings(
+        everyTeamThoseYears.filter(
+          row => row.league.year === state.inProgressYear,
+        ),
+      ),
+    }),
     gameLog,
     headToHead: buildHeadToHead(gameLog),
     playoffs: buildPlayoffs(userId, playoffGames),
-    highlights: buildHighlights(gameLog),
+    highlights: buildLeagueHighlights(gameLog),
   };
-}
-
-/** Both sides on zero means the week has not been scored yet. */
-function hasBeenPlayed(points: number, opponentPoints: number): boolean {
-  return points > 0 || opponentPoints > 0;
 }
 
 function emptyProfile(): LeagueProfile {
@@ -323,7 +353,7 @@ function emptyProfile(): LeagueProfile {
   };
 }
 
-type ProfileTeam = {
+export type ProfileTeam = {
   wins: number;
   losses: number;
   ties: number;
@@ -403,8 +433,18 @@ function buildCareer(teams: ProfileTeam[]): LeagueProfile['career'] {
   };
 }
 
-function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
-  const tiers = new Map<number, TierRecord>();
+export function buildTierRecords(
+  teams: ProfileTeam[],
+  state: SeasonState,
+): TierRecord[] {
+  const tiers = new Map<
+    number,
+    TierRecord & {
+      finishedSeasons: number;
+      finishedPointsFor: number;
+      finishedPointsAgainst: number;
+    }
+  >();
 
   for (const team of teams) {
     const existing = tiers.get(team.league.tier) ?? {
@@ -417,8 +457,12 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
       winPct: 0,
       pointsFor: 0,
       pointsAgainst: 0,
-      pointsForPerSeason: 0,
-      pointsAgainstPerSeason: 0,
+      pointsForPerSeason: null,
+      pointsAgainstPerSeason: null,
+      includesCurrentSeason: false,
+      finishedSeasons: 0,
+      finishedPointsFor: 0,
+      finishedPointsAgainst: 0,
     };
 
     // The record Sleeper reports, median games included - in a median season
@@ -430,19 +474,37 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
     existing.pointsFor += team.pointsFor;
     existing.pointsAgainst += team.pointsAgainst;
 
+    if (team.league.year === state.inProgressYear) {
+      existing.includesCurrentSeason = true;
+    } else {
+      existing.finishedSeasons++;
+      existing.finishedPointsFor += team.pointsFor;
+      existing.finishedPointsAgainst += team.pointsAgainst;
+    }
+
     tiers.set(team.league.tier, existing);
   }
 
   return Array.from(tiers.values())
-    .map(tier => ({
-      ...tier,
-      winPct: winPct(tier),
-      pointsForPerSeason: averagePerSeason(tier.pointsFor, tier.seasons),
-      pointsAgainstPerSeason: averagePerSeason(
-        tier.pointsAgainst,
-        tier.seasons,
-      ),
-    }))
+    .map(
+      ({
+        finishedSeasons,
+        finishedPointsFor,
+        finishedPointsAgainst,
+        ...tier
+      }) => ({
+        ...tier,
+        winPct: winPct(tier),
+        pointsForPerSeason:
+          finishedSeasons > 0
+            ? averagePerSeason(finishedPointsFor, finishedSeasons)
+            : null,
+        pointsAgainstPerSeason:
+          finishedSeasons > 0
+            ? averagePerSeason(finishedPointsAgainst, finishedSeasons)
+            : null,
+      }),
+    )
     .sort((a, b) => a.tier - b.tier);
 }
 
@@ -469,36 +531,85 @@ function tierLabel(tier: number): string {
 function rankPointsForByYear(
   rows: { id: string; pointsFor: number; league: { year: number } }[],
 ): Map<string, number> {
-  const byYear = new Map<number, typeof rows>();
-  for (const row of rows) {
-    const year = byYear.get(row.league.year);
-    if (year) year.push(row);
-    else byYear.set(row.league.year, [row]);
-  }
-
   const ranks = new Map<string, number>();
-  for (const year of byYear.values()) {
+  for (const year of groupBy(rows, row => row.league.year)) {
     const sorted = [...year].sort((a, b) => b.pointsFor - a.pointsFor);
-    let place = 0;
-    let previous: number | null = null;
-
-    sorted.forEach((row, index) => {
-      if (previous === null || row.pointsFor !== previous) place = index + 1;
-      previous = row.pointsFor;
-      ranks.set(row.id, place);
-    });
+    for (const row of assignCompetitionRanks(sorted, row => row.pointsFor)) {
+      ranks.set(row.id, row.rank);
+    }
   }
 
   return ranks;
 }
 
+/**
+ * Sleeper's win percentage, which counts a tie as half a win. `winPct` counts
+ * it as no win at all, which would put a 5-0-1 team behind a 5-1-0 one.
+ */
+const standingsPct = (row: { wins: number; losses: number; ties: number }) => {
+  const games = totalGames(row);
+  return games > 0 ? (row.wins + row.ties / 2) / games : 0;
+};
+
+/**
+ * Where each team stands in its own league's table: win percentage first, as
+ * Sleeper orders it, then points for. Ties on both share a place.
+ */
+export function rankStandings(
+  rows: {
+    id: string;
+    leagueId: string;
+    wins: number;
+    losses: number;
+    ties: number;
+    pointsFor: number;
+  }[],
+): Map<string, { place: number; fieldSize: number }> {
+  const standings = new Map<string, { place: number; fieldSize: number }>();
+  for (const league of groupBy(rows, row => row.leagueId)) {
+    const sorted = [...league].sort(
+      (a, b) => standingsPct(b) - standingsPct(a) || b.pointsFor - a.pointsFor,
+    );
+    const ranked = assignCompetitionRanks(sorted, row => [
+      standingsPct(row),
+      row.pointsFor,
+    ]);
+    for (const row of ranked) {
+      standings.set(row.id, { place: row.rank, fieldSize: league.length });
+    }
+  }
+
+  return standings;
+}
+
+function groupBy<T, K>(rows: T[], keyOf: (row: T) => K): T[][] {
+  const groups = new Map<K, T[]>();
+  for (const row of rows) {
+    const key = keyOf(row);
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+  return [...groups.values()];
+}
+
 function buildSeasons(
   teams: ProfileTeam[],
-  playoffSeasons: Map<string, SeasonPlayoffLine>,
-  pointsForRank: Map<string, number>,
+  {
+    state,
+    playoffSeasons,
+    pointsForRank,
+    standings,
+  }: {
+    state: SeasonState;
+    playoffSeasons: Map<string, SeasonPlayoffLine>;
+    pointsForRank: Map<string, number>;
+    standings: Map<string, { place: number; fieldSize: number }>;
+  },
 ): SeasonRow[] {
   return teams
     .map(team => {
+      const inProgress = team.league.year === state.inProgressYear;
       const playoffs = playoffSeasons.get(team.league.id) ?? null;
       const hasMedianScoring =
         team.league.hasMedianScoring || medianGames(team) > 0;
@@ -509,6 +620,12 @@ function buildSeasons(
         leagueId: team.league.id,
         leagueName: team.league.name,
         tier: team.league.tier,
+        inProgress,
+        // A table with nobody having played yet ranks nothing.
+        standing:
+          inProgress && totalGames(team) > 0
+            ? standings.get(team.id) ?? null
+            : null,
         finish: playoffs?.finish ?? null,
         place: playoffs?.place ?? null,
         playoffBracket: playoffs?.bracket ?? null,
@@ -592,52 +709,6 @@ function buildPlayoffs(
     sackoAppearances: stats?.sackoAppearances ?? 0,
     sackoWins: stats?.sackoWins ?? 0,
     sackoLosses: stats?.sackoLosses ?? 0,
-  };
-}
-
-function buildHighlights(gameLog: GameLogRow[]): LeagueProfile['highlights'] {
-  // A zero is an unplayed week rather than a historically bad one.
-  const played = gameLog.filter(game => game.pointsScored > 0);
-
-  if (played.length === 0) {
-    return {
-      bestWeek: null,
-      worstWeek: null,
-      longestWinStreak: 0,
-      longestLossStreak: 0,
-      averagePointsPerGame: 0,
-    };
-  }
-
-  const best = played.reduce((a, b) =>
-    b.pointsScored > a.pointsScored ? b : a,
-  );
-  const worst = played.reduce((a, b) =>
-    b.pointsScored < a.pointsScored ? b : a,
-  );
-
-  // Streaks run forward through time; the game log is newest first.
-  const chronological = [...played].sort(
-    (a, b) => a.year - b.year || a.week - b.week,
-  );
-
-  return {
-    bestWeek: {
-      points: best.pointsScored,
-      year: best.year,
-      week: best.week,
-    },
-    worstWeek: {
-      points: worst.pointsScored,
-      year: worst.year,
-      week: worst.week,
-    },
-    longestWinStreak:
-      computeStreak(chronological, game => game.result === 'W')?.length ?? 0,
-    longestLossStreak:
-      computeStreak(chronological, game => game.result === 'L')?.length ?? 0,
-    averagePointsPerGame:
-      played.reduce((sum, game) => sum + game.pointsScored, 0) / played.length,
   };
 }
 

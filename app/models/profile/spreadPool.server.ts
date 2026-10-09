@@ -12,7 +12,7 @@ import {
   type PoolMissedRow,
 } from './spreadPoolProfile';
 import { prisma } from '~/db.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * Only bets with something riding on them. Every entry also saves a 0 against
@@ -150,9 +150,9 @@ export async function getSpreadPoolProfile(userId: string) {
   const years = await getSpreadPoolYears(userId);
   if (years.length === 0) return { hasPlayed: false as const };
 
-  const [{ rows, missed, teamNames }, currentSeason] = await Promise.all([
+  const [{ rows, missed, teamNames }, inProgressYear] = await Promise.all([
     loadSpreadPoolRows(years),
-    getCurrentSeason(),
+    getInProgressYear(),
   ]);
 
   const bets = buildPoolBets(rows, userId);
@@ -171,7 +171,7 @@ export async function getSpreadPoolProfile(userId: string) {
     totals: buildSeasonTotals(rows, missed),
     fieldBanks,
     userId,
-    inProgressYear: currentSeason?.year ?? null,
+    inProgressYear,
   });
 
   return {

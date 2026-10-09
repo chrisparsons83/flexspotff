@@ -3,7 +3,10 @@ import {
   isRegularSeasonWeek,
   isUsablePlayoffWeekStart,
   leaguePlayedMedianGames,
+  isSettledWeek,
+  regularSeasonIsOver,
   regularSeasonWeeks,
+  seasonStateFromSchedule,
   teamsHaveMedianResults,
 } from './seasonStructure';
 import { describe, expect, it } from 'vitest';
@@ -209,5 +212,134 @@ describe('isUsablePlayoffWeekStart', () => {
     expect(isUsablePlayoffWeekStart(null)).toBe(false);
     expect(isUsablePlayoffWeekStart(undefined)).toBe(false);
     expect(isUsablePlayoffWeekStart(14.5)).toBe(false);
+  });
+});
+
+describe('seasonStateFromSchedule', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  // Monday night of each week, 00:15 UTC on the Tuesday, from 2026-09-15.
+  const schedule = (weeks: number[]) =>
+    weeks.map(week => ({
+      week,
+      lastKickoff: new Date(Date.UTC(2026, 8, 15 + (week - 1) * 7, 0, 15)),
+    }));
+  const allWeeks = Array.from({ length: 18 }, (_, i) => i + 1);
+  const state = (now: Date, weeks = allWeeks, scoringPending = false) =>
+    seasonStateFromSchedule({
+      year: 2026,
+      lastKickoffByWeek: schedule(weeks),
+      scoringPending,
+      now,
+    });
+  const finalKickoff = schedule([18])[0].lastKickoff.getTime();
+
+  it('settles every week whose last game has finished', () => {
+    // Saturday of week 5.
+    expect(state(new Date(Date.UTC(2026, 9, 10)))).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 4,
+    });
+  });
+
+  it('holds a week open while Monday night is still being played', () => {
+    // An hour after week 5's last kickoff.
+    expect(state(new Date(Date.UTC(2026, 9, 13, 1, 15))).settledWeek).toBe(4);
+  });
+
+  it('settles the week once Monday night is over', () => {
+    expect(state(new Date(Date.UTC(2026, 9, 13, 7))).settledWeek).toBe(5);
+  });
+
+  // The score sync stores the schedule a week at a time, so a week it missed
+  // is simply absent. That must not freeze the season.
+  it('places a missing week from the weeks around it', () => {
+    const withoutWeek3 = allWeeks.filter(week => week !== 3);
+
+    expect(
+      state(new Date(Date.UTC(2026, 9, 10)), withoutWeek3).settledWeek,
+    ).toBe(4);
+    // Monday night of week 3 has not finished yet.
+    expect(
+      state(new Date(Date.UTC(2026, 8, 29, 1)), withoutWeek3).settledWeek,
+    ).toBe(2);
+  });
+
+  it('counts on from the last week stored', () => {
+    // Only weeks 1-5 stored; it is now Saturday of week 8.
+    expect(
+      state(new Date(Date.UTC(2026, 9, 31)), [1, 2, 3, 4, 5]).settledWeek,
+    ).toBe(7);
+  });
+
+  it('ends the season a week after the final NFL week', () => {
+    expect(state(new Date(finalKickoff + 2 * DAY))).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 18,
+    });
+    expect(state(new Date(finalKickoff + 8 * DAY))).toEqual({
+      inProgressYear: null,
+      settledWeek: 0,
+    });
+  });
+
+  it('keeps the season open while side-game scoring is pending', () => {
+    expect(state(new Date(finalKickoff + 30 * DAY), allWeeks, true)).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 18,
+    });
+  });
+
+  it('is at week zero before any schedule is synced', () => {
+    expect(state(new Date(Date.UTC(2026, 6, 1)), [])).toEqual({
+      inProgressYear: 2026,
+      settledWeek: 0,
+    });
+  });
+});
+
+describe('isSettledWeek', () => {
+  const state = { inProgressYear: 2026, settledWeek: 4 };
+
+  it('treats past seasons as final', () => {
+    expect(isSettledWeek({ year: 2025, week: 17 }, state)).toBe(true);
+  });
+
+  it('splits the running season at the settled week', () => {
+    expect(isSettledWeek({ year: 2026, week: 4 }, state)).toBe(true);
+    expect(isSettledWeek({ year: 2026, week: 5 }, state)).toBe(false);
+  });
+});
+
+describe('regularSeasonIsOver', () => {
+  const league = { year: 2026, playoffWeekStart: 15 };
+
+  it('is not over in week 5', () => {
+    expect(
+      regularSeasonIsOver(league, { inProgressYear: 2026, settledWeek: 4 }),
+    ).toBe(false);
+  });
+
+  it('is over once the last regular-season week settles', () => {
+    expect(
+      regularSeasonIsOver(league, { inProgressYear: 2026, settledWeek: 14 }),
+    ).toBe(true);
+  });
+
+  it('is always over for a past season', () => {
+    expect(
+      regularSeasonIsOver(
+        { year: 2025, playoffWeekStart: 15 },
+        { inProgressYear: 2026, settledWeek: 0 },
+      ),
+    ).toBe(true);
+  });
+
+  it('falls back to the historical boundary for an unsynced league', () => {
+    expect(
+      regularSeasonIsOver(
+        { year: 2026, playoffWeekStart: null },
+        { inProgressYear: 2026, settledWeek: 13 },
+      ),
+    ).toBe(false);
   });
 });

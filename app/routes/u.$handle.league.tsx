@@ -16,10 +16,15 @@ import ProfileTable, {
 import RangeBar from '~/components/layout/profile/RangeBar';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import SplitBar from '~/components/layout/profile/SplitBar';
-import Tag from '~/components/layout/profile/Tag';
+import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
 import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
-import { pct, plural, weekLabel } from '~/components/layout/profile/format';
+import {
+  ordinal,
+  pct,
+  plural,
+  weekLabel,
+} from '~/components/layout/profile/format';
 import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { requireProfileMember } from '~/models/profile/access.server';
@@ -247,18 +252,30 @@ function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
               {tier.pointsFor.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsForPerSeason.toFixed(1)}
+              <PerSeason value={tier.pointsForPerSeason} />
             </td>
             <td className='px-2 py-2 text-right'>
               {tier.pointsAgainst.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsAgainstPerSeason.toFixed(1)}
+              <PerSeason value={tier.pointsAgainstPerSeason} />
             </td>
           </tr>
         ))}
       </ProfileTable>
     </ProfileSection>
+  );
+}
+
+/**
+ * A per-season average, which only counts finished seasons - one a few weeks
+ * old would drag it down to a fraction of a real one.
+ */
+function PerSeason({ value }: { value: number | null }) {
+  return value === null ? (
+    <span className='text-slate-400'>—</span>
+  ) : (
+    <>{value.toFixed(1)}</>
   );
 }
 
@@ -372,7 +389,10 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
       >
         {seasons.map(season => (
           <tr key={season.leagueId} className='border-b border-slate-700/70'>
-            <td className='px-2 py-2'>{season.year}</td>
+            <td className='whitespace-nowrap px-2 py-2'>
+              {season.year}
+              {season.inProgress && <CurrentTag />}
+            </td>
             <td className='px-2 py-2'>
               <LeagueChip name={season.leagueName} />
             </td>
@@ -438,8 +458,19 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
 /**
  * Where a season actually ended, from the postseason brackets rather than the
  * regular-season table - a champion who was the four seed finished first.
+ * While a season is being played, where they stand in the table instead.
  */
 function Finish({ season }: { season: SeasonRow }) {
+  // A season still being played has no finish yet, only a place in the table.
+  if (season.standing && !season.finish) {
+    return (
+      <span className={clsx('whitespace-nowrap', TEXT.live)}>
+        {ordinal(season.standing.place)}
+        <span className='text-slate-400'> of {season.standing.fieldSize}</span>
+      </span>
+    );
+  }
+
   if (!season.finish) return <span className='text-slate-400'>—</span>;
 
   // The two ends of the table are the ones worth spotting from across the page.
