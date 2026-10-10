@@ -34,3 +34,8 @@ export async function upsertPlayoffGame(game: PlayoffGameUpsert) {
     create: game,
   });
 }
+
+/** Clears a league's stored brackets, for when they turn out to be provisional. */
+export function deletePlayoffGamesForLeague(leagueId: string) {
+  return prisma.playoffGame.deleteMany({ where: { leagueId } });
+}

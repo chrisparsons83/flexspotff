@@ -6,6 +6,7 @@ import {
   computeStreak,
   medianGames,
   memberSinceYear,
+  seasonShare,
   pairTeamGames,
   totalGames,
   winPct,
@@ -38,6 +39,7 @@ const team = (
   medianWins: overrides.medianWins ?? 0,
   medianLosses: overrides.medianLosses ?? 0,
   medianTies: overrides.medianTies ?? 0,
+  league: { year: 2024, playoffWeekStart: 15 },
 });
 
 describe('record helpers', () => {
@@ -57,6 +59,31 @@ describe('record helpers', () => {
     expect(medianGames({ medianWins: 7, medianLosses: 6, medianTies: 0 })).toBe(
       13,
     );
+  });
+});
+
+describe('seasonShare', () => {
+  const league = { year: 2026, playoffWeekStart: 15 };
+
+  it('is one for a finished season', () => {
+    expect(seasonShare(team('u1', { wins: 9, losses: 5 }), league)).toBe(1);
+  });
+
+  it('never exceeds one, whatever the record says', () => {
+    expect(seasonShare(team('u1', { wins: 20, losses: 8 }), league)).toBe(1);
+  });
+
+  it('falls back to the historical season length before settings sync', () => {
+    expect(
+      seasonShare(team('u1', { wins: 7, losses: 6 }), {
+        year: 2018,
+        playoffWeekStart: null,
+      }),
+    ).toBe(1);
+  });
+
+  it('is zero before a ball is kicked', () => {
+    expect(seasonShare(team('u1'), league)).toBe(0);
   });
 });
 
@@ -95,6 +122,20 @@ describe('aggregateCareerStats', () => {
 
     expect(careers.get('u1')!.name).toBe('Alex');
     expect(careers.get('u2')!.name).toBe('Sam');
+  });
+
+  it('counts a season in progress as the share of it played', () => {
+    const careers = aggregateCareerStats([
+      team('u1', { wins: 9, losses: 5, pointsFor: 1400 }),
+      // Four weeks in, plus four median games Sleeper folds into the record.
+      {
+        ...team('u1', { wins: 5, losses: 3, medianWins: 3, medianLosses: 1 }),
+        league: { year: 2026, playoffWeekStart: 15 },
+      },
+    ]);
+
+    expect(careers.get('u1')).toMatchObject({ seasons: 2 });
+    expect(careers.get('u1')!.seasonsPlayed).toBeCloseTo(1 + 4 / 14);
   });
 
   it('falls back to Unknown when a member has no display name', () => {

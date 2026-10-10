@@ -4,6 +4,7 @@ import {
   aggregatePlayoffStats,
   computeStreak,
   medianGames,
+  seasonShare,
   pairTeamGames,
   totalGames,
   winPct,
@@ -30,6 +31,7 @@ export type TierRecord = {
   winPct: number;
   pointsFor: number;
   pointsAgainst: number;
+  /** Over seasons weighted by how much of each was played - see seasonShare. */
   pointsForPerSeason: number;
   pointsAgainstPerSeason: number;
 };
@@ -155,6 +157,7 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
           name: true,
           tier: true,
           hasMedianScoring: true,
+          playoffWeekStart: true,
         },
       },
     },
@@ -340,6 +343,7 @@ type ProfileTeam = {
     name: string;
     tier: number;
     hasMedianScoring: boolean;
+    playoffWeekStart: number | null;
   };
 };
 
@@ -404,13 +408,14 @@ function buildCareer(teams: ProfileTeam[]): LeagueProfile['career'] {
 }
 
 function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
-  const tiers = new Map<number, TierRecord>();
+  const tiers = new Map<number, TierRecord & { seasonsPlayed: number }>();
 
   for (const team of teams) {
     const existing = tiers.get(team.league.tier) ?? {
       tier: team.league.tier,
       label: tierLabel(team.league.tier),
       seasons: 0,
+      seasonsPlayed: 0,
       wins: 0,
       losses: 0,
       ties: 0,
@@ -424,6 +429,7 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
     // The record Sleeper reports, median games included - in a median season
     // those count in the standings exactly like the head-to-head game does.
     existing.seasons++;
+    existing.seasonsPlayed += seasonShare(team, team.league);
     existing.wins += team.wins;
     existing.losses += team.losses;
     existing.ties += team.ties;
@@ -434,13 +440,13 @@ function buildTierRecords(teams: ProfileTeam[]): TierRecord[] {
   }
 
   return Array.from(tiers.values())
-    .map(tier => ({
+    .map(({ seasonsPlayed, ...tier }) => ({
       ...tier,
       winPct: winPct(tier),
-      pointsForPerSeason: averagePerSeason(tier.pointsFor, tier.seasons),
+      pointsForPerSeason: averagePerSeason(tier.pointsFor, seasonsPlayed),
       pointsAgainstPerSeason: averagePerSeason(
         tier.pointsAgainst,
-        tier.seasons,
+        seasonsPlayed,
       ),
     }))
     .sort((a, b) => a.tier - b.tier);
