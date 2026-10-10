@@ -12,6 +12,7 @@ import {
   placesForPlacementGame,
   type BracketKind,
 } from '~/libs/bracket';
+import { regularSeasonWeeks } from '~/utils/seasonStructure';
 
 export type MedianRecord = {
   medianWins: number;
@@ -31,6 +32,11 @@ export type CareerStats = TeamRecord & {
   userId: string;
   name: string;
   seasons: number;
+  /**
+   * Seasons weighted by how much of each was played, so the season in progress
+   * counts as a fraction. The divisor for any per-season average.
+   */
+  seasonsPlayed: number;
 };
 
 /** Head-to-head games only; median games are counted separately. */
@@ -59,9 +65,29 @@ export function averagePerSeason(total: number, seasons: number): number {
   return seasons > 0 ? total / seasons : 0;
 }
 
+/**
+ * How much of its regular season a team's record covers, from 0 to 1.
+ *
+ * Read from the record alone, so a finished season is 1 because its record
+ * covers every regular season week. The season in progress is the share of its
+ * head-to-head weeks played so far, so dividing career points by these shares
+ * rather than by a count of seasons keeps four weeks of points from being
+ * averaged as if they were a whole year. Sleeper folds median games into the
+ * record, so they come back out before counting weeks.
+ */
+export function seasonShare(
+  team: TeamRecord,
+  league: { year: number; playoffWeekStart: number | null },
+): number {
+  const weeks = regularSeasonWeeks(league);
+  const played = totalGames(team) - medianGames(team);
+  return weeks > 0 ? Math.min(1, Math.max(0, played / weeks)) : 1;
+}
+
 type AggregatableTeam = TeamRecord & {
   userId: string | null;
   user?: { discordName?: string | null } | null;
+  league: { year: number; playoffWeekStart: number | null };
 };
 
 /**
@@ -84,6 +110,7 @@ export function aggregateCareerStats(
       userId: team.userId,
       name: team.user?.discordName || 'Unknown',
       seasons: 0,
+      seasonsPlayed: 0,
       wins: 0,
       losses: 0,
       ties: 0,
@@ -95,6 +122,7 @@ export function aggregateCareerStats(
     };
 
     existing.seasons++;
+    existing.seasonsPlayed += seasonShare(team, team.league);
     existing.wins += team.wins;
     existing.losses += team.losses;
     existing.ties += team.ties;

@@ -32,12 +32,14 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
     where: { userId: { not: null } },
     include: {
       user: { select: { discordName: true, id: true } },
+      league: { select: { year: true, playoffWeekStart: true } },
     },
   });
 
   const careers = Array.from(aggregateCareerStats(teams).values());
 
-  const avgPF = (c: CareerStats) => averagePerSeason(c.pointsFor, c.seasons);
+  const avgPF = (c: CareerStats) =>
+    averagePerSeason(c.pointsFor, c.seasonsPlayed);
 
   return [
     {

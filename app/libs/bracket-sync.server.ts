@@ -1,7 +1,12 @@
 import { classifyBracket, sleeperBracketJson } from './bracket';
+import { getLeagueInfo } from '~/libs/sleeper/api.server';
 import type { League } from '~/models/league.server';
-import { upsertPlayoffGame } from '~/models/playoffgame.server';
+import {
+  deletePlayoffGamesForLeague,
+  upsertPlayoffGame,
+} from '~/models/playoffgame.server';
 import { getTeams } from '~/models/team.server';
+import { isUsablePlayoffWeekStart } from '~/utils/seasonStructure';
 
 /**
  * Pulls both postseason brackets for a league out of Sleeper and stores them.
@@ -17,7 +22,48 @@ const BRACKETS = [
   { bracket: 'LOSERS', path: 'losers_bracket' },
 ] as const;
 
+/**
+ * Whether Sleeper's brackets for a league are still provisional.
+ *
+ * During the regular season Sleeper still serves both brackets, seeded from the
+ * current standings, so a team in last place at week 5 would be stored as a
+ * sacko bracket team. Sleeper may keep reporting `in_season` into the playoffs,
+ * so for that status the last scored week decides: once the regular season has
+ * been scored, the seeding is final.
+ */
+async function bracketsAreProvisional(sleeperLeagueId: string) {
+  let info;
+  try {
+    info = await getLeagueInfo(sleeperLeagueId);
+  } catch (error) {
+    // Old leagues may no longer be served at all; their brackets are final, and
+    // the bracket fetches below already treat a missing league as no bracket.
+    console.warn(`Could not read league status for ${sleeperLeagueId}:`, error);
+    return false;
+  }
+
+  const { status, settings } = info;
+  if (status === 'pre_draft' || status === 'drafting') return true;
+  if (status !== 'in_season') return false;
+
+  const lastScored = settings?.last_scored_leg;
+  const playoffStart = settings?.playoff_week_start;
+  if (
+    typeof lastScored === 'number' &&
+    isUsablePlayoffWeekStart(playoffStart)
+  ) {
+    return lastScored < playoffStart - 1;
+  }
+  return true;
+}
+
 export async function syncLeagueBrackets(league: League): Promise<number> {
+  if (await bracketsAreProvisional(league.sleeperLeagueId)) {
+    // Anything already stored was a provisional bracket from an earlier sync.
+    await deletePlayoffGamesForLeague(league.id);
+    return 0;
+  }
+
   // Sleeper identifies bracket sides by roster id, which is only unique within
   // a league, so the lookup has to be built per league.
   const teams = await getTeams(league.id);
