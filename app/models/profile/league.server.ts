@@ -12,6 +12,7 @@ import {
 } from './shared.server';
 import { prisma } from '~/db.server';
 import type { BracketKind } from '~/libs/bracket';
+import { getUnfinishedLeagueIds } from '~/models/season.server';
 
 /**
  * The redraft league half of a member's profile: their career by tier, season
@@ -19,6 +20,7 @@ import type { BracketKind } from '~/libs/bracket';
  * each opponent.
  */
 
+/** Finished seasons only - see `getUnfinishedLeagueIds`. */
 export type TierRecord = {
   tier: number;
   /** "Champions" or "Non-Champions" - a tier spans several league names. */
@@ -122,6 +124,11 @@ export type LeagueProfile = {
     hasAnyMedianSeason: boolean;
   };
   byTier: TierRecord[];
+  /**
+   * The year of a season they are still playing, which `byTier` leaves out.
+   * Null when every season they have played is finished.
+   */
+  inProgressYear: number | null;
   seasons: SeasonRow[];
   gameLog: GameLogRow[];
   headToHead: HeadToHeadRow[];
@@ -169,55 +176,57 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
 
   // Every game in every league this member played, so opponents can be paired
   // up. Their own games alone would leave every matchup half-formed.
-  const [leagueGames, everyTeamThoseYears, playoffGames] = await Promise.all([
-    prisma.teamGame.findMany({
-      where: { team: { leagueId: { in: leagueIds } } },
-      include: {
-        team: {
-          select: {
-            id: true,
-            leagueId: true,
-            userId: true,
-            user: { select: { discordName: true } },
-            league: { select: { year: true, name: true, tier: true } },
+  const [leagueGames, everyTeamThoseYears, playoffGames, unfinished] =
+    await Promise.all([
+      prisma.teamGame.findMany({
+        where: { team: { leagueId: { in: leagueIds } } },
+        include: {
+          team: {
+            select: {
+              id: true,
+              leagueId: true,
+              userId: true,
+              user: { select: { discordName: true } },
+              league: { select: { year: true, name: true, tier: true } },
+            },
           },
         },
-      },
-    }),
-    // Every team in every year this member played, which answers two things at
-    // once: how big each league was, for seating its brackets, and where their
-    // points-for placed against the whole site rather than just their own
-    // league. Sixty rows a year, so cheaper than it looks.
-    prisma.team.findMany({
-      where: { league: { year: { in: years } } },
-      select: {
-        id: true,
-        leagueId: true,
-        pointsFor: true,
-        league: { select: { year: true } },
-      },
-    }),
-    prisma.playoffGame.findMany({
-      where: { league: { teams: { some: { userId } } } },
-      include: {
-        topTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
+      }),
+      // Every team in every year this member played, which answers two things at
+      // once: how big each league was, for seating its brackets, and where their
+      // points-for placed against the whole site rather than just their own
+      // league. Sixty rows a year, so cheaper than it looks.
+      prisma.team.findMany({
+        where: { league: { year: { in: years } } },
+        select: {
+          id: true,
+          leagueId: true,
+          pointsFor: true,
+          league: { select: { year: true } },
         },
-        bottomTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
+      }),
+      prisma.playoffGame.findMany({
+        where: { league: { teams: { some: { userId } } } },
+        include: {
+          topTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          bottomTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          winningTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          losingTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
+          advancingTeam: {
+            select: { userId: true, user: { select: { discordName: true } } },
+          },
         },
-        winningTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-        losingTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-        advancingTeam: {
-          select: { userId: true, user: { select: { discordName: true } } },
-        },
-      },
-    }),
-  ]);
+      }),
+      getUnfinishedLeagueIds(),
+    ]);
 
   const teamIds = new Set(teams.map(team => team.id));
   const mine = pairTeamGames(leagueGames).filter(
@@ -266,7 +275,13 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
   return {
     hasPlayed: true,
     career: buildCareer(teams),
-    byTier: buildTierRecords(teams),
+    // A season still being played would count as a whole one in the tier's
+    // per-season averages, and drag them down.
+    byTier: buildTierRecords(
+      teams.filter(team => !unfinished.has(team.league.id)),
+    ),
+    inProgressYear:
+      teams.find(team => unfinished.has(team.league.id))?.league.year ?? null,
     seasons: buildSeasons(teams, playoffSeasons, pointsForRank),
     gameLog,
     headToHead: buildHeadToHead(gameLog),
@@ -300,6 +315,7 @@ function emptyProfile(): LeagueProfile {
       hasAnyMedianSeason: false,
     },
     byTier: [],
+    inProgressYear: null,
     seasons: [],
     gameLog: [],
     headToHead: [],

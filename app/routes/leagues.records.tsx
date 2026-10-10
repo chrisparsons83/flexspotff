@@ -11,6 +11,7 @@ import {
   getSingleSeasonRecords,
   getStreakRecords,
 } from '~/models/records.server';
+import { getUnfinishedLeagueIds } from '~/models/season.server';
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },
@@ -24,6 +25,8 @@ const CATEGORIES = [
 type CategoryKey = (typeof CATEGORIES)[number]['key'];
 
 export const loader = async () => {
+  const unfinished = await getUnfinishedLeagueIds();
+
   const [
     careerRecords,
     singleSeasonRecords,
@@ -32,8 +35,8 @@ export const loader = async () => {
     cupRecords,
     streakRecords,
   ] = await Promise.all([
-    getCareerRecords(),
-    getSingleSeasonRecords(),
+    getCareerRecords(unfinished),
+    getSingleSeasonRecords(unfinished),
     getSingleGameRecords(),
     getPlayoffRecords(),
     getCupRecords(),

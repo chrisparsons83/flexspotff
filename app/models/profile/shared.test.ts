@@ -407,10 +407,32 @@ describe('aggregatePlayoffStats', () => {
 
   it('ignores a game that has not been played yet', () => {
     const stats = aggregatePlayoffStats([
+      playoffGame({ topTeam: side('u3'), bottomTeam: side('u4') }),
       playoffGame({ winningTeam: null, advancingTeam: null }),
     ]);
 
     expect(stats.get('u1')).toMatchObject({ wins: 0, losses: 0 });
+  });
+
+  // Sleeper serves a bracket seeded from the standings all season. Until a game
+  // in it is decided, nobody is in the playoffs or the sacko bracket yet.
+  it('ignores a bracket that has not started', () => {
+    const projected = {
+      winningTeam: null,
+      losingTeam: null,
+      advancingTeam: null,
+    };
+    const stats = aggregatePlayoffStats([
+      playoffGame({ ...projected, bracket: 'WINNERS' }),
+      playoffGame({
+        ...projected,
+        bracket: 'LOSERS',
+        topTeam: side('u3'),
+        bottomTeam: side('u4'),
+      }),
+    ]);
+
+    expect(stats.size).toBe(0);
   });
 });
 
@@ -545,6 +567,28 @@ describe('aggregatePlayoffSeasons', () => {
       place: null,
       finish: null,
     });
+  });
+
+  it('gives no season line for a bracket that has not started', () => {
+    const seasons = aggregatePlayoffSeasons(
+      [
+        {
+          bracket: 'LOSERS',
+          leagueId: 'league-1',
+          isTitleGame: false,
+          countsTowardRecord: true,
+          placement: null,
+          topTeam: side('u1'),
+          bottomTeam: side('u2'),
+          winningTeam: null,
+          losingTeam: null,
+          advancingTeam: null,
+        },
+      ],
+      new Map([['league-1', 12]]),
+    );
+
+    expect(seasons.size).toBe(0);
   });
 
   // A league whose team count we do not know cannot be seated, but its record

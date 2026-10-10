@@ -27,7 +27,13 @@ export type RecordTable = {
   rows: RecordRow[];
 };
 
-export async function getCareerRecords(): Promise<RecordTable[]> {
+/**
+ * `unfinished` is `getUnfinishedLeagueIds()`, passed in so the records page
+ * asks once for every table that needs it.
+ */
+export async function getCareerRecords(
+  unfinished: Set<string>,
+): Promise<RecordTable[]> {
   const teams = await prisma.team.findMany({
     where: { userId: { not: null } },
     include: {
@@ -37,6 +43,15 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
 
   const careers = Array.from(aggregateCareerStats(teams).values());
 
+  // Totals count the season being played; anything that compares seasons does
+  // not. A season five weeks in would count as a whole one on a fraction of a
+  // season's points, and would qualify a member for a minimum-seasons table on
+  // the strength of a hot start.
+  const finishedCareers = aggregateCareerStats(
+    teams.filter(team => !unfinished.has(team.leagueId)),
+  );
+  const finishedSeasons = (c: CareerStats) =>
+    finishedCareers.get(c.userId)?.seasons ?? 0;
   const avgPF = (c: CareerStats) => averagePerSeason(c.pointsFor, c.seasons);
 
   return [
@@ -60,7 +75,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
       title: 'Highest Career Win Percentage',
       headers: ['Player', 'Win %', 'Record', 'Seasons'],
       rows: [...careers]
-        .filter(c => c.seasons >= MIN_SEASONS)
+        .filter(c => finishedSeasons(c) >= MIN_SEASONS)
         .sort((a, b) => winPct(b) - winPct(a))
         .slice(0, TOP_N)
         .map(c => ({
@@ -75,18 +90,16 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
     },
     {
       title: 'Most Career Points For',
-      headers: ['Player', 'Points For', 'Avg/Season', 'Seasons'],
+      // No average here: the total includes the season being played and the
+      // average cannot, so the two would not agree. Highest Average Points For
+      // per Season has it.
+      headers: ['Player', 'Points For', 'Seasons'],
       rows: [...careers]
         .sort((a, b) => b.pointsFor - a.pointsFor)
         .slice(0, TOP_N)
         .map(c => ({
           playerUserId: c.userId,
-          cells: [
-            c.name,
-            c.pointsFor.toFixed(2),
-            avgPF(c).toFixed(2),
-            c.seasons.toString(),
-          ],
+          cells: [c.name, c.pointsFor.toFixed(2), c.seasons.toString()],
         })),
     },
     {
@@ -103,7 +116,7 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
     {
       title: 'Highest Average Points For per Season',
       headers: ['Player', 'Avg PF/Season', 'Total PF', 'Seasons'],
-      rows: [...careers]
+      rows: [...finishedCareers.values()]
         .filter(c => c.seasons >= MIN_SEASONS)
         .sort((a, b) => avgPF(b) - avgPF(a))
         .slice(0, TOP_N)
@@ -151,14 +164,22 @@ export async function getCareerRecords(): Promise<RecordTable[]> {
   ];
 }
 
-export async function getSingleSeasonRecords(): Promise<RecordTable[]> {
-  const teams = await prisma.team.findMany({
-    where: { userId: { not: null } },
-    include: {
-      user: { select: { discordName: true } },
-      league: { select: { year: true, name: true } },
-    },
-  });
+/**
+ * Finished seasons only: a season still being played is not a season record
+ * yet, and a hot start would lead the win percentage table.
+ */
+export async function getSingleSeasonRecords(
+  unfinished: Set<string>,
+): Promise<RecordTable[]> {
+  const teams = (
+    await prisma.team.findMany({
+      where: { userId: { not: null } },
+      include: {
+        user: { select: { discordName: true } },
+        league: { select: { year: true, name: true } },
+      },
+    })
+  ).filter(team => !unfinished.has(team.leagueId));
 
   const totalGames = (t: (typeof teams)[number]) => t.wins + t.losses + t.ties;
   const winPct = (t: (typeof teams)[number]) =>
