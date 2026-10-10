@@ -58,7 +58,10 @@ export default function MemberLeague() {
     <div className='space-y-8'>
       <Highlights profile={profile} />
       <SeasonHistory seasons={profile.seasons} />
-      <CareerByTier tiers={profile.byTier} />
+      <CareerByTier
+        tiers={profile.byTier}
+        inProgressYear={profile.inProgressYear}
+      />
       <HeadToHead rows={profile.headToHead} />
       <GameLog games={profile.gameLog} />
     </div>
@@ -218,9 +221,27 @@ function Highlights({
   );
 }
 
-function CareerByTier({ tiers }: { tiers: TierRecord[] }) {
+function CareerByTier({
+  tiers,
+  inProgressYear,
+}: {
+  tiers: TierRecord[];
+  inProgressYear: number | null;
+}) {
+  // A member in their first season has nothing finished to break down yet.
+  if (tiers.length === 0) return null;
+
   return (
-    <ProfileSection title='Career by Tier'>
+    <ProfileSection
+      title='Career by Tier'
+      // Says why these lines do not add up to the career record above, which
+      // counts the season being played.
+      footnote={
+        inProgressYear !== null
+          ? `Finished seasons only. ${inProgressYear} is added once it ends.`
+          : undefined
+      }
+    >
       <ProfileTable
         headers={[
           'Tier',

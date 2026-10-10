@@ -349,6 +349,24 @@ type AggregatablePlayoffGame = {
 };
 
 /**
+ * Drops every league whose postseason has not started.
+ *
+ * Sleeper serves a bracket all season long, seeded from the current standings
+ * and with no results in it. Counting it would put a member in the playoffs or
+ * the sacko bracket in week five on the strength of a projection, so a league's
+ * bracket only counts once at least one of its games has been decided.
+ */
+export function startedBracketGames<
+  T extends { leagueId: string; winningTeam?: unknown },
+>(games: T[]): T[] {
+  const started = new Set(
+    games.filter(game => game.winningTeam).map(game => game.leagueId),
+  );
+
+  return games.filter(game => started.has(game.leagueId));
+}
+
+/**
  * Rolls up a member's postseason.
  *
  * The two brackets are kept apart throughout. The playoff record is the real
@@ -395,7 +413,7 @@ export function aggregatePlayoffStats(
     return created;
   };
 
-  for (const game of games) {
+  for (const game of startedBracketGames(games)) {
     const isPlayoffs = game.bracket === 'WINNERS';
     const winnerId = game.winningTeam?.userId ?? null;
 
@@ -522,7 +540,7 @@ export function aggregatePlayoffSeasons(
     return created;
   };
 
-  for (const game of games) {
+  for (const game of startedBracketGames(games)) {
     const winnerId = game.winningTeam?.userId ?? null;
 
     for (const side of [game.topTeam ?? null, game.bottomTeam ?? null]) {
