@@ -19,6 +19,14 @@ const THEMES = ['dark', 'light', 'system'] as const;
 const tinted = (share: number) =>
   `color-mix(in oklch, oklch(var(--primary)) ${share}%, oklch(var(--background)))`;
 
+/** A glow of the accent from the top centre, fading out by mid-page. */
+const RADIAL_GLOW = `radial-gradient(90% 640px at 50% 0, ${tinted(
+  30,
+)}, transparent)`;
+
+const DOT_GRID =
+  'radial-gradient(oklch(var(--border)) 1.2px, transparent 1.2px)';
+
 /**
  * Background options under review. Each is built from the theme tokens, so
  * it follows dark and light.
@@ -28,8 +36,7 @@ const BACKGROUNDS: Record<string, { label: string; style?: CSSProperties }> = {
   dots: {
     label: 'Dots',
     style: {
-      backgroundImage:
-        'radial-gradient(oklch(var(--border)) 1.2px, transparent 1.2px)',
+      backgroundImage: DOT_GRID,
       backgroundSize: '20px 20px',
     },
   },
@@ -40,6 +47,21 @@ const BACKGROUNDS: Record<string, { label: string; style?: CSSProperties }> = {
         .map((share, i) => `${tinted(share)} ${i * 72}px ${(i + 1) * 72}px`)
         .join(', ')}, transparent 288px)`,
       backgroundRepeat: 'no-repeat',
+    },
+  },
+  radial: {
+    label: 'Radial',
+    style: {
+      backgroundImage: RADIAL_GLOW,
+      backgroundRepeat: 'no-repeat',
+    },
+  },
+  'radial-dots': {
+    label: 'Radial + dots',
+    style: {
+      backgroundImage: `${RADIAL_GLOW}, ${DOT_GRID}`,
+      backgroundSize: 'auto, 20px 20px',
+      backgroundRepeat: 'no-repeat, repeat',
     },
   },
   smooth: {
