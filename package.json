@@ -22,6 +22,7 @@
     "docker": "docker-compose up -d",
     "format": "prettier --check . '!./postgres-data'",
     "generate:css": "tailwindcss -o ./app/styles/tailwind.css",
+    "generate:tokens": "tsx scripts/generate-tokens.ts",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "postinstall": "patch-package",
     "setup": "prisma migrate dev && prisma db seed",
