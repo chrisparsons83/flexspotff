@@ -42,7 +42,13 @@ const oklchToLinearRgb = ({ l: L, c, h }: Oklch): Rgb => {
 };
 
 export const hexToOklch = (hex: string): Oklch => {
-  const n = parseInt(hex.replace('#', ''), 16);
+  const digits = hex.replace('#', '');
+  if (!/^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(digits)) {
+    throw new Error(`Not a hex colour: ${hex}`);
+  }
+  const full =
+    digits.length === 3 ? [...digits].map(d => d + d).join('') : digits;
+  const n = parseInt(full, 16);
   const rgb = [n >> 16, (n >> 8) & 0xff, n & 0xff].map(v =>
     srgbToLinear(v / 255),
   ) as Rgb;

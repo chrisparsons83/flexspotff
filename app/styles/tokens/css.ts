@@ -18,9 +18,10 @@ const declarations = (tokens: Record<string, Oklch>) =>
   );
 
 /**
- * Dark is the default and lives on :root, so the page is dark before any
- * theme class is set. Neutral steps and fills are the same in both themes;
- * only the roles and fill edges change.
+ * One class drives both the tokens and Tailwind's `dark:` variants: the
+ * server always renders `dark` or nothing on <html>, dark by default. Neutral
+ * steps and fills are the same in both themes; only the roles and fill edges
+ * change.
  */
 export const renderTokensCss = () => {
   const fixed = {
@@ -39,15 +40,15 @@ export const renderTokensCss = () => {
     ':root {',
     ...declarations(fixed),
     '',
-    ...declarations(themeRoles('dark')),
-    '',
-    ...declarations(fillEdges('dark')),
-    '}',
-    '',
-    ':root.light {',
     ...declarations(themeRoles('light')),
     '',
     ...declarations(fillEdges('light')),
+    '}',
+    '',
+    ':root.dark {',
+    ...declarations(themeRoles('dark')),
+    '',
+    ...declarations(fillEdges('dark')),
     '}',
     '',
   ].join('\n');

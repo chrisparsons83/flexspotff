@@ -10,10 +10,14 @@
  * - Ordered data uses a value sequence: one hue stepping in lightness.
  * - Categorical colours are fills, never text. Text on a fill is pure black
  *   or pure white, whichever reads better.
- * - A category fill too faint to see on the ground gets a thin neutral edge.
+ * - Category fills sit on the ground or a card, never on the secondary
+ *   surface, which is for controls. A fill too faint to see on either gets a
+ *   thin neutral edge.
+ * - Every colour is rounded as it is made, so what the tests check is exactly
+ *   what tokens.css ships.
  */
 import { LEAGUE_EMBED_COLORS, Leagues } from '../../utils/constants';
-import { contrast, hexToOklch, type Oklch, toGamut } from './color';
+import { contrast, hexToOklch, type Oklch, round, toGamut } from './color';
 
 export type Theme = 'dark' | 'light';
 export const THEMES: Theme[] = ['dark', 'light'];
@@ -21,6 +25,9 @@ export const THEMES: Theme[] = ['dark', 'light'];
 /** WCAG AA for body text, and for graphics and UI component edges. */
 export const TEXT_CONTRAST = 4.5;
 export const FILL_CONTRAST = 3;
+
+/** In gamut, at the precision written to CSS. */
+const make = (color: Oklch) => round(toGamut(color));
 
 // Neutrals
 
@@ -30,13 +37,14 @@ const NEUTRAL_STEP_COUNT = 21;
 
 export const neutralSteps: Oklch[] = Array.from(
   { length: NEUTRAL_STEP_COUNT },
-  (_, i) => ({
-    l:
-      NEUTRAL_DARKEST +
-      (i * (NEUTRAL_LIGHTEST - NEUTRAL_DARKEST)) / (NEUTRAL_STEP_COUNT - 1),
-    c: 0,
-    h: 0,
-  }),
+  (_, i) =>
+    make({
+      l:
+        NEUTRAL_DARKEST +
+        (i * (NEUTRAL_LIGHTEST - NEUTRAL_DARKEST)) / (NEUTRAL_STEP_COUNT - 1),
+      c: 0,
+      h: 0,
+    }),
 );
 
 const BLACK: Oklch = { l: 0, c: 0, h: 0 };
@@ -53,7 +61,7 @@ const leagueNames = Object.values(Leagues);
 export const leagues = Object.fromEntries(
   leagueNames.map(name => [
     name,
-    hexToOklch(LEAGUE_EMBED_COLORS[name].toString(16).padStart(6, '0')),
+    round(hexToOklch(LEAGUE_EMBED_COLORS[name].toString(16).padStart(6, '0'))),
   ]),
 ) as Record<Leagues, Oklch>;
 
@@ -69,6 +77,7 @@ export const CATEGORY_CHROMA = mean(leagueColors.map(c => c.c));
  * hues already on the wheel. Returned in the order they were placed.
  */
 export const fillHueGaps = (taken: number[], count: number) => {
+  if (taken.length === 0) throw new Error('fillHueGaps needs a hue to start');
   const hues = [...taken].sort((a, b) => a - b);
   const placed: number[] = [];
   for (let n = 0; n < count; n++) {
@@ -89,19 +98,61 @@ export const fillHueGaps = (taken: number[], count: number) => {
   return placed;
 };
 
+/** Steps from the ground for each layer; light mode counts from the top. */
+const SURFACE_OFFSET = 2;
+const RAISED_OFFSET = 4;
+const BORDER_OFFSET = 6;
+
+const neutralStep = (theme: Theme, offset: number) =>
+  neutralSteps[theme === 'dark' ? offset : NEUTRAL_STEP_COUNT - 1 - offset];
+
+/** The surfaces a category fill may sit on, in both themes. */
+const fillGrounds = THEMES.flatMap(theme => [
+  neutralStep(theme, 0),
+  neutralStep(theme, SURFACE_OFFSET),
+]);
+
 /**
- * The lightest value at which every hue clears FILL_CONTRAST on the light
- * ground. Generated colours can meet that bar in both themes; the fixed
- * league colours cannot, which is why they are listed as exceptions.
+ * The lightest value at which every hue clears FILL_CONTRAST on the ground
+ * and on a card, in both themes. Generated colours can meet that bar; some
+ * fixed league colours cannot, which is what fill edges are for.
  */
 const categoryLightness = (hues: number[]) => {
-  const lightGround = neutralSteps[NEUTRAL_STEP_COUNT - 1];
   for (let l = mean(leagueColors.map(c => c.l)); l > 0; l -= 0.005) {
-    const colors = hues.map(h => toGamut({ l, c: CATEGORY_CHROMA, h }));
-    if (colors.every(c => contrast(c, lightGround) >= FILL_CONTRAST)) return l;
+    const colors = hues.map(h => make({ l, c: CATEGORY_CHROMA, h }));
+    const visible = colors.every(color =>
+      fillGrounds.every(ground => contrast(color, ground) >= FILL_CONTRAST),
+    );
+    if (visible) return l;
   }
-  throw new Error('No lightness clears the light ground');
+  throw new Error('No lightness clears every fill ground');
 };
+
+// Medals
+
+export type Medal = 'gold' | 'silver' | 'bronze' | 'sacko';
+
+/**
+ * A descending lightness sequence. Gold and bronze carry the category chroma,
+ * silver none, and the sacko half, so it reads as brown rather than bronze.
+ * The sequence starts high so bronze and the sacko sit above the positions'
+ * lightness, which keeps them apart from TE and DEF on the same hues.
+ */
+const MEDAL_TOP = 0.84;
+const MEDAL_STEP = 0.08;
+const MEDAL_SPEC: Record<Medal, { c: number; h: number }> = {
+  gold: { c: CATEGORY_CHROMA, h: 90 },
+  silver: { c: 0, h: 0 },
+  bronze: { c: CATEGORY_CHROMA, h: 50 },
+  sacko: { c: CATEGORY_CHROMA / 2, h: 50 },
+};
+
+export const medals = Object.fromEntries(
+  (Object.keys(MEDAL_SPEC) as Medal[]).map((name, i) => [
+    name,
+    make({ l: MEDAL_TOP - i * MEDAL_STEP, ...MEDAL_SPEC[name] }),
+  ]),
+) as Record<Medal, Oklch>;
 
 // Positions
 
@@ -123,33 +174,9 @@ const positionLightness = categoryLightness(positionHues);
 export const positions = Object.fromEntries(
   POSITION_ORDER.map((name, i) => [
     name,
-    toGamut({ l: positionLightness, c: CATEGORY_CHROMA, h: positionHues[i] }),
+    make({ l: positionLightness, c: CATEGORY_CHROMA, h: positionHues[i] }),
   ]),
 ) as Record<Position, Oklch>;
-
-// Medals
-
-export type Medal = 'gold' | 'silver' | 'bronze' | 'sacko';
-
-/**
- * A descending lightness sequence. Gold and bronze carry the category chroma,
- * silver none, and the sacko half, so it reads as brown rather than bronze.
- */
-const MEDAL_TOP = 0.8;
-const MEDAL_STEP = 0.08;
-const MEDAL_SPEC: Record<Medal, { c: number; h: number }> = {
-  gold: { c: CATEGORY_CHROMA, h: 90 },
-  silver: { c: 0, h: 0 },
-  bronze: { c: CATEGORY_CHROMA, h: 55 },
-  sacko: { c: CATEGORY_CHROMA / 2, h: 55 },
-};
-
-export const medals = Object.fromEntries(
-  (Object.keys(MEDAL_SPEC) as Medal[]).map((name, i) => [
-    name,
-    toGamut({ l: MEDAL_TOP - i * MEDAL_STEP, ...MEDAL_SPEC[name] }),
-  ]),
-) as Record<Medal, Oklch>;
 
 // Value sequence for ordered data (ranks, percentiles)
 
@@ -161,7 +188,7 @@ const SEQUENCE_STEP_COUNT = 7;
 export const sequence: Oklch[] = Array.from(
   { length: SEQUENCE_STEP_COUNT },
   (_, i) =>
-    toGamut({
+    make({
       l:
         SEQUENCE_DARKEST +
         (i * (SEQUENCE_LIGHTEST - SEQUENCE_DARKEST)) /
@@ -173,14 +200,11 @@ export const sequence: Oklch[] = Array.from(
 
 // Theme roles
 
-/** Steps from the ground for each layer; light mode counts from the top. */
-const SURFACE_OFFSET = 2;
-const RAISED_OFFSET = 4;
-const BORDER_OFFSET = 6;
-
 const SEMANTIC_HUES = {
   negative: 25,
-  warning: 85,
+  // Amber at 85 loses most of its chroma once it is dark enough to read on
+  // the light theme and turns olive; 55 stays a recognisable dark amber.
+  warning: 55,
   positive: 145,
   info: 250,
 } as const;
@@ -196,15 +220,14 @@ const semanticText = (h: number, theme: Theme, against: Oklch) => {
     l > 0 && l < 1;
     l += direction * 0.005
   ) {
-    const color = toGamut({ l, c: CATEGORY_CHROMA, h });
+    const color = make({ l, c: CATEGORY_CHROMA, h });
     if (contrast(color, against) >= TEXT_CONTRAST) return color;
   }
   throw new Error(`No ${theme} text colour at hue ${h}`);
 };
 
-export const themeRoles = (theme: Theme) => {
-  const step = (offset: number) =>
-    neutralSteps[theme === 'dark' ? offset : NEUTRAL_STEP_COUNT - 1 - offset];
+const buildRoles = (theme: Theme) => {
+  const step = (offset: number) => neutralStep(theme, offset);
 
   const background = step(0);
   const surface = step(SURFACE_OFFSET);
@@ -250,7 +273,14 @@ export const themeRoles = (theme: Theme) => {
   };
 };
 
-export type Role = keyof ReturnType<typeof themeRoles>;
+export type Role = keyof ReturnType<typeof buildRoles>;
+
+const roles: Record<Theme, Record<Role, Oklch>> = {
+  dark: buildRoles('dark'),
+  light: buildRoles('light'),
+};
+
+export const themeRoles = (theme: Theme) => roles[theme];
 
 /**
  * Pairs the contrast test checks in each theme. Text pairs need
@@ -307,18 +337,23 @@ export const fills: Record<string, Oklch> = {
   ...Object.fromEntries(sequence.map((c, i) => [`sequence-${i + 1}`, c])),
 };
 
+/** The surfaces a category fill may sit on. */
+export const FILL_GROUNDS: Role[] = ['background', 'card'];
+
 /**
  * The edge drawn around each category fill. Where the fill clears
- * FILL_CONTRAST on the ground the edge is the fill itself, so it disappears;
- * where it does not (the lightest fills on the light ground) the edge is the
- * input step. Every fill always has an edge, so nothing shifts between themes.
+ * FILL_CONTRAST on every fill ground the edge is the fill itself, so it
+ * disappears; where it does not, the edge is the input step. Every fill always
+ * has an edge, so nothing shifts between themes.
  */
 export const fillEdges = (theme: Theme) => {
-  const { background, input } = themeRoles(theme);
+  const themed = themeRoles(theme);
   return Object.fromEntries(
-    Object.entries(categoryFills).map(([name, fill]) => [
-      `${name}-edge`,
-      contrast(fill, background) >= FILL_CONTRAST ? fill : input,
-    ]),
+    Object.entries(categoryFills).map(([name, fill]) => {
+      const visible = FILL_GROUNDS.every(
+        ground => contrast(fill, themed[ground]) >= FILL_CONTRAST,
+      );
+      return [`${name}-edge`, visible ? fill : themed.input];
+    }),
   );
 };

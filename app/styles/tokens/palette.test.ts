@@ -1,14 +1,14 @@
-import { contrast, distance, oklchToHex, round } from './color';
+import { contrast, distance, hexToOklch, oklchToHex } from './color';
 import { renderTokensCss, TOKENS_CSS_PATH } from './css';
 import {
   categoryFills,
   EDGE_PAIRS,
   FILL_CONTRAST,
+  FILL_GROUNDS,
   fillEdges,
   fillHueGaps,
   fills,
   leagues,
-  positions,
   TEXT_CONTRAST,
   TEXT_PAIRS,
   textOn,
@@ -21,16 +21,21 @@ import { describe, expect, it } from 'vitest';
 import { LEAGUE_EMBED_COLORS } from '~/utils/constants';
 
 /**
- * The light category fills, and the light theme's ground, sit too close in
- * lightness for the fill to show. These are the ones that need an edge.
+ * Fills too close in lightness to a ground or card for the fill alone to
+ * show. These are the ones that get an edge.
  */
-const OUTLINED_ON_LIGHT = [
-  'league-admiral',
-  'league-champions',
-  'league-galaxy',
-  'medal-gold',
-  'medal-silver',
-];
+const OUTLINED: Record<(typeof THEMES)[number], string[]> = {
+  dark: [],
+  light: [
+    'league-admiral',
+    'league-champions',
+    'league-galaxy',
+    'medal-gold',
+    'medal-silver',
+    'medal-bronze',
+    'medal-sacko',
+  ],
+};
 
 describe('tokens.css', () => {
   it('matches the generator', () => {
@@ -44,7 +49,7 @@ describe('league colours', () => {
       const hex = LEAGUE_EMBED_COLORS[name as keyof typeof leagues]
         .toString(16)
         .padStart(6, '0');
-      expect(oklchToHex(round(color))).toBe(`#${hex}`);
+      expect(oklchToHex(color)).toBe(`#${hex}`);
     }
   });
 });
@@ -64,21 +69,24 @@ describe.each(THEMES)('%s theme', theme => {
     );
   });
 
-  it('shows every category fill, or its edge, against the ground', () => {
-    const edges = fillEdges(theme);
-    for (const name of Object.keys(categoryFills)) {
-      expect(
-        contrast(edges[`${name}-edge`], roles.background),
-      ).toBeGreaterThanOrEqual(FILL_CONTRAST);
-    }
-  });
+  it.each(FILL_GROUNDS)(
+    'shows every category fill, or its edge, on %s',
+    ground => {
+      const edges = fillEdges(theme);
+      for (const name of Object.keys(categoryFills)) {
+        expect(
+          contrast(edges[`${name}-edge`], roles[ground]),
+        ).toBeGreaterThanOrEqual(FILL_CONTRAST);
+      }
+    },
+  );
 
   it('outlines only the fills too faint for the ground', () => {
     const edges = fillEdges(theme);
     const outlined = Object.keys(categoryFills).filter(
       name => edges[`${name}-edge`] !== categoryFills[name],
     );
-    expect(outlined).toEqual(theme === 'dark' ? [] : OUTLINED_ON_LIGHT);
+    expect(outlined).toEqual(OUTLINED[theme]);
   });
 });
 
@@ -88,8 +96,8 @@ describe('fills', () => {
     expect(contrast(textOn(fill), fill)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
   });
 
-  it('keeps leagues and positions distinguishable', () => {
-    const colors = [...Object.values(leagues), ...Object.values(positions)];
+  it('keeps every category fill distinguishable from the others', () => {
+    const colors = Object.values(categoryFills);
     const closest = Math.min(
       ...colors.flatMap((a, i) => colors.slice(i + 1).map(b => distance(a, b))),
     );
@@ -109,5 +117,19 @@ describe('sequence', () => {
 describe('fillHueGaps', () => {
   it('places each hue in the widest remaining gap', () => {
     expect(fillHueGaps([0, 90], 3)).toEqual([225, 157.5, 292.5]);
+  });
+
+  it('needs a hue to start from', () => {
+    expect(() => fillHueGaps([], 3)).toThrow();
+  });
+});
+
+describe('hexToOklch', () => {
+  it('reads short hex', () => {
+    expect(hexToOklch('#fff')).toEqual(hexToOklch('#ffffff'));
+  });
+
+  it('rejects anything else', () => {
+    expect(() => hexToOklch('#ffff')).toThrow();
   });
 });
