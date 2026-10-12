@@ -106,25 +106,32 @@ export default function App() {
   const regex = /omni\/\d{4}\/board$/gm;
 
   // The /design mocks draw the new shell themselves.
-  if (currentPath.startsWith('/design')) return <Outlet />;
+  const isDesignMock =
+    currentPath === '/design' || currentPath.startsWith('/design/');
 
   return (
     <>
-      <NavBar
-        user={user}
-        userIsEditor={userIsEditor}
-        canViewProfiles={canViewProfiles}
-      />
-      <div
-        className={clsx(
-          !regex.test(currentPath) && 'container',
-          'relative mx-auto min-h-screen p-4',
-        )}
-      >
-        <main className='prose max-w-none'>
-          <Outlet />
-        </main>
-      </div>
+      {isDesignMock ? (
+        <Outlet />
+      ) : (
+        <>
+          <NavBar
+            user={user}
+            userIsEditor={userIsEditor}
+            canViewProfiles={canViewProfiles}
+          />
+          <div
+            className={clsx(
+              !regex.test(currentPath) && 'container',
+              'relative mx-auto min-h-screen p-4',
+            )}
+          >
+            <main className='prose max-w-none'>
+              <Outlet />
+            </main>
+          </div>
+        </>
+      )}
       <script
         dangerouslySetInnerHTML={{
           __html: `window.ENV = ${JSON.stringify(ENV)}`,

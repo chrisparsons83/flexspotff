@@ -22,7 +22,7 @@ function Honour({ medal, label, year }: (typeof PROFILE.honours)[number]) {
   return (
     <li>
       <span
-        className={`flex size-24 items-end rounded-lg border p-3 text-lg font-extrabold ${MEDAL_FILLS[medal]}`}
+        className={`flex size-24 items-end border p-3 text-lg font-extrabold ${MEDAL_FILLS[medal]}`}
       >
         {year}
       </span>

@@ -1,5 +1,5 @@
 import { LEAGUES } from './data';
-import { Square, useMockHref } from './parts';
+import { Square } from './parts';
 import { Link, useLocation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
@@ -70,7 +70,6 @@ export function MockShell({
   current: string;
   children: ReactNode;
 }) {
-  const href = useMockHref();
   return (
     <div className='min-h-full bg-background text-foreground'>
       <ReviewBar />
@@ -81,7 +80,7 @@ export function MockShell({
         <header className='relative bg-card'>
           <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
             <Link
-              to={href('/design')}
+              to={'/design'}
               className='col-span-12 flex items-center gap-3 md:col-span-3'
             >
               <Mark />
@@ -97,10 +96,10 @@ export function MockShell({
                 {NAV.map(item => (
                   <li key={item.label}>
                     <Link
-                      to={href(item.to)}
+                      to={item.to}
                       aria-current={item.label === current ? 'page' : undefined}
                       className={clsx(
-                        'block whitespace-nowrap rounded-md px-3 py-1.5 transition-colors duration-fast',
+                        'block whitespace-nowrap px-3 py-1.5 transition-colors duration-fast',
                         item.label === current
                           ? 'bg-secondary font-semibold text-foreground'
                           : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
@@ -113,7 +112,7 @@ export function MockShell({
               </ul>
             </nav>
             <Link
-              to={href('/design/profile')}
+              to={'/design/profile'}
               className='col-span-2 mt-3 text-right text-sm font-semibold md:col-span-1 md:mt-0'
             >
               Me

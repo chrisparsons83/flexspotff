@@ -311,6 +311,7 @@ const buildRoles = (theme: Theme) => {
     'card-foreground': foreground,
     popover: surface,
     'popover-foreground': foreground,
+    // A fill: it clears 3:1, not text contrast. Accent text uses `brand`.
     primary: primaryFill,
     'primary-foreground': textOn(primaryFill),
     brand: clearing(ACCENT_HUE, theme, raised, TEXT_CONTRAST, 0.5),

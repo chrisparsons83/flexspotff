@@ -1,4 +1,4 @@
-import { Link, useLocation } from '@remix-run/react';
+import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -11,12 +11,6 @@ export const PANEL = 'bg-card';
 /** Something you can click that is not a button: an accent edge on hover. */
 export const CLICKABLE =
   'ring-0 ring-primary transition-shadow duration-fast hover:ring-2';
-
-/** Keeps the review bar's choices (the query string) on mock links. */
-export function useMockHref() {
-  const { search } = useLocation();
-  return (to: string) => to + search;
-}
 
 /**
  * A square of a category colour. The edge class draws an outline only where
@@ -80,17 +74,16 @@ export function SubNav({
   items: { label: string; to: string }[];
   current: string;
 }) {
-  const href = useMockHref();
   return (
     <nav aria-label='Section'>
       <ul className='flex gap-1 overflow-x-auto'>
         {items.map(item => (
           <li key={item.label}>
             <Link
-              to={href(item.to)}
+              to={item.to}
               aria-current={item.label === current ? 'page' : undefined}
               className={clsx(
-                'block whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors duration-fast',
+                'block whitespace-nowrap px-3 py-1.5 text-sm transition-colors duration-fast',
                 item.label === current
                   ? 'bg-primary font-semibold text-primary-foreground'
                   : 'text-muted-foreground hover:bg-secondary hover:text-foreground',

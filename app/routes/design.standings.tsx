@@ -8,7 +8,7 @@ import {
   PLAYOFF_SPOTS,
   type Result,
 } from '~/components/mocks/data';
-import { Panel, Square, SubNav, useMockHref } from '~/components/mocks/parts';
+import { Panel, Square, SubNav } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -55,7 +55,8 @@ function PointsBar({
   min: number;
   max: number;
 }) {
-  const share = (value - min) / (max - min);
+  // Every team level (say, before week one) fills the bar to the same share.
+  const share = max > min ? (value - min) / (max - min) : 1;
   return (
     <span className='flex items-center gap-3'>
       <span className='w-16 shrink-0'>{value.toFixed(1)}</span>
@@ -73,7 +74,6 @@ export default function DesignStandings() {
   const points = CHAMPIONS_STANDINGS.map(row => row.pointsFor);
   const min = Math.min(...points);
   const max = Math.max(...points);
-  const href = useMockHref();
 
   return (
     <MockShell current='Leagues'>
@@ -89,10 +89,10 @@ export default function DesignStandings() {
             {LEAGUES.map(league => (
               <li key={league.key}>
                 <Link
-                  to={href('/design/standings')}
+                  to={'/design/standings'}
                   aria-current={league.key === 'champions' ? 'page' : undefined}
                   className={clsx(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-fast',
+                    'flex items-center gap-2 px-3 py-2 text-sm transition-colors duration-fast',
                     league.key === 'champions'
                       ? 'bg-league-champions font-bold text-league-champions-foreground'
                       : 'bg-background/60 hover:bg-secondary',

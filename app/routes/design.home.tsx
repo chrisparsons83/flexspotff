@@ -14,7 +14,6 @@ import {
   PANEL,
   PrimaryButton,
   Section,
-  useMockHref,
 } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
@@ -45,8 +44,6 @@ const LEAGUE_BLOCKS: Record<string, { head: string; body: string }> = {
 };
 
 export default function DesignHome() {
-  const href = useMockHref();
-
   return (
     <MockShell current='Home'>
       <div className='grid grid-cols-12 items-start gap-x-6 gap-y-10'>
@@ -99,7 +96,7 @@ export default function DesignHome() {
           {LEAGUES.map(league => (
             <Link
               key={league.key}
-              to={href('/design/standings')}
+              to={'/design/standings'}
               className={clsx(CLICKABLE, 'flex flex-col overflow-hidden')}
             >
               <h3

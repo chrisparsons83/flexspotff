@@ -26,7 +26,7 @@ export default function DesignIndex() {
       </h1>
       <p className='mt-4 max-w-prose text-muted-foreground'>
         Built only from the design tokens, with sample data. Development only.
-        Switch themes from the top right.
+        Switch themes from the bar at the top.
       </p>
       <table className='mt-12 w-full text-left'>
         <tbody>
