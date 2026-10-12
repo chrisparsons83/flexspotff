@@ -2,6 +2,7 @@ import {
   categoryFills,
   fills,
   neutralSteps,
+  themeRoles,
 } from './app/styles/tokens/palette';
 import type { Config } from 'tailwindcss';
 
@@ -24,6 +25,22 @@ const tokenFills = Object.fromEntries(
       ...(name in categoryFills ? { edge: token(`${name}-edge`) } : {}),
     },
   ]),
+);
+
+/**
+ * Every theme role, with `-foreground` roles folded in as `foreground` on
+ * their surface: `bg-card`, `text-card-foreground`, `text-muted-foreground`.
+ */
+const roleNames = Object.keys(themeRoles('dark'));
+const roleColors = Object.fromEntries(
+  roleNames
+    .filter(name => !name.endsWith('-foreground'))
+    .map(name => [
+      name,
+      roleNames.includes(`${name}-foreground`)
+        ? { DEFAULT: token(name), foreground: token(`${name}-foreground`) }
+        : token(name),
+    ]),
 );
 
 const config: Config = {
@@ -72,6 +89,13 @@ const config: Config = {
             '--tw-prose-pre-bg': color('card'),
             '--tw-prose-th-borders': color('border'),
             '--tw-prose-td-borders': color('border'),
+            // The kbd shadow variable takes RGB channels, which the tokens
+            // are not, so the shadow is set directly.
+            kbd: {
+              boxShadow: `0 0 0 1px ${color('border')}, 0 3px 0 ${color(
+                'border',
+              )}`,
+            },
             td: {
               verticalAlign: 'middle',
             },
@@ -94,39 +118,15 @@ const config: Config = {
         gold: token('medal-gold'),
         silver: token('medal-silver'),
         bronze: token('medal-bronze'),
-        brown: { DEFAULT: token('medal-sacko'), light: token('medal-sacko') },
+        // The sacko fill is too dark to read as text, so the text alias uses
+        // the text-safe colour nearest its hue.
+        brown: { DEFAULT: token('medal-sacko'), light: token('warning') },
         qb: token('position-qb'),
         rb: token('position-rb'),
         wr: token('position-wr'),
         te: token('position-te'),
         def: token('position-def'),
-        ...Object.fromEntries(
-          [
-            'background',
-            'foreground',
-            'border',
-            'input',
-            'ring',
-            'negative',
-            'warning',
-            'positive',
-            'info',
-          ].map(name => [name, token(name)]),
-        ),
-        ...Object.fromEntries(
-          [
-            'card',
-            'popover',
-            'primary',
-            'secondary',
-            'muted',
-            'accent',
-            'destructive',
-          ].map(name => [
-            name,
-            { DEFAULT: token(name), foreground: token(`${name}-foreground`) },
-          ]),
-        ),
+        ...roleColors,
       },
       borderRadius: {
         none: '0',

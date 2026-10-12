@@ -15,7 +15,7 @@ export const TEXT = {
   bad: 'text-rose-300',
   neutral: 'text-slate-400',
   champion: 'text-gold',
-  /** Lighter than the sacko's own brown, which is too dark to read as text. */
+  /** The sacko's fill is too dark for text; this is its text-safe stand-in. */
   sacko: 'text-brown-light',
   /** Something still being played. */
   live: 'text-amber-200',

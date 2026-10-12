@@ -126,7 +126,7 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
     scale: 'tally',
     accent: {
       border: 'border-brown',
-      text: 'text-brown',
+      text: 'text-brown-light',
       bg: 'bg-amber-950/60',
     },
     description: 'Finished last - scored lowest in the sacko final',

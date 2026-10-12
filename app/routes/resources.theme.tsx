@@ -4,13 +4,8 @@ import {
   isLightModeAvailable,
   serializeThemePreference,
 } from '~/services/theme.server';
+import { safeRedirect } from '~/utils/safeRedirect';
 import { isThemePreference } from '~/utils/theme';
-
-/** Only same-site paths, so this cannot be used to bounce visitors away. */
-const safeRedirect = (to: FormDataEntryValue | null) =>
-  typeof to === 'string' && to.startsWith('/') && !to.startsWith('//')
-    ? to
-    : '/';
 
 const setTheme = async (
   theme: FormDataEntryValue | null,
@@ -34,10 +29,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 /**
- * Development only, until the toggle exists (#194): visit
- * /resources/theme?theme=light to switch, with an optional `redirectTo`.
+ * A shortcut for development: visit /resources/theme?theme=light to switch,
+ * with an optional `redirectTo`. It stays development only even after light
+ * mode opens up (#197), because a GET that sets a cookie can be triggered by
+ * prefetching or by another site.
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Response('Not found', { status: 404 });
+  }
   const params = new URL(request.url).searchParams;
   return setTheme(params.get('theme'), params.get('redirectTo'));
 };

@@ -21,7 +21,7 @@ import {
 } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 import { getThemePreference } from '~/services/theme.server';
-import { SYSTEM_THEME_SCRIPT } from '~/utils/theme';
+import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
@@ -32,6 +32,7 @@ export const meta = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const themePreference = getThemePreference(request);
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
   const currentPath = new URL(request.url).pathname;
@@ -46,7 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // What those links point at: /u/:handle, looked up by user id. See
     // useProfileHref.
     profileHandles: profilesVisible ? await getProfileHandles() : {},
-    themePreference: await getThemePreference(request),
+    themePreference: await themePreference,
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
@@ -58,6 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Missing when the root loader itself failed; the error page is dark then.
   const themePreference =
     useTypedRouteLoaderData<typeof loader>('root')?.themePreference ?? 'dark';
+  useThemeClass(themePreference);
 
   return (
     // The system script may change the class before hydration.
