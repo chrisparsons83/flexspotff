@@ -57,7 +57,7 @@ const typeStep = (name: TypeStep): [string, string] => [
 ];
 
 /**
- * The six steps keep Tailwind's names. `text-xs` points at `sm` until #195
+ * The seven steps keep Tailwind's names. `text-xs` points at `sm` until #195
  * moves routes off it; nothing else off the scale exists.
  */
 const fontSize = {
@@ -175,9 +175,9 @@ const config: Config = {
       },
       borderRadius: {
         none: '0',
-        sm: 'var(--radius)',
-        DEFAULT: 'var(--radius)',
-        md: 'var(--radius)',
+        sm: 'calc(var(--radius) - 4px)',
+        DEFAULT: 'calc(var(--radius) - 2px)',
+        md: 'calc(var(--radius) - 2px)',
         lg: 'var(--radius)',
         xl: 'var(--radius)',
         '2xl': 'var(--radius)',

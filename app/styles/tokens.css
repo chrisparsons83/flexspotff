@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --radius: 2px;
+  --radius: 8px;
   --duration-fast: 100ms;
   --duration-base: 150ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -19,6 +19,8 @@
   --leading-2xl: 1.3021;
   --text-3xl: 2.0737rem;
   --leading-3xl: 1.2056;
+  --text-4xl: 2.4881rem;
+  --leading-4xl: 1.2056;
 
   --neutral-0: 0.22 0.016 285;
   --neutral-1: 0.2575 0.0154 285;

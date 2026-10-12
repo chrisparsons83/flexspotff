@@ -21,7 +21,9 @@ const MOCKS = [
 export default function DesignIndex() {
   return (
     <MockShell current=''>
-      <h1 className='text-3xl font-extrabold'>Reference mocks</h1>
+      <h1 className='text-4xl font-extrabold tracking-tight'>
+        Reference mocks
+      </h1>
       <p className='mt-4 max-w-prose text-muted-foreground'>
         Built only from the design tokens, with sample data. Development only.
         Switch themes from the top right.

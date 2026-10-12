@@ -22,7 +22,7 @@ function Honour({ medal, label, year }: (typeof PROFILE.honours)[number]) {
   return (
     <li>
       <span
-        className={`flex size-24 items-end border-2 !border-ink p-3 text-lg font-extrabold ${MEDAL_FILLS[medal]}`}
+        className={`flex size-24 items-end rounded-lg border p-3 text-lg font-extrabold ${MEDAL_FILLS[medal]}`}
       >
         {year}
       </span>
@@ -38,7 +38,9 @@ export default function DesignProfile() {
     <MockShell current=''>
       <Panel className='grid grid-cols-12 gap-x-6 p-8'>
         <div className='col-span-12 md:col-span-8'>
-          <h1 className='text-3xl font-extrabold'>{PROFILE.name}</h1>
+          <h1 className='text-4xl font-extrabold tracking-tight'>
+            {PROFILE.name}
+          </h1>
           <p className='mt-2 text-muted-foreground'>@{PROFILE.handle}</p>
         </div>
         <dl className='col-span-12 mt-6 grid grid-cols-2 gap-x-6 md:col-span-4 md:mt-0'>

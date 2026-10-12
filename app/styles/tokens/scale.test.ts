@@ -12,8 +12,8 @@ import { describe, expect, it } from 'vitest';
 describe('type scale', () => {
   const steps = TYPE_STEPS.map(name => typeScale[name]);
 
-  it('has six sizes, with body text at the base size', () => {
-    expect(steps).toHaveLength(6);
+  it('has seven sizes, with body text at the base size', () => {
+    expect(steps).toHaveLength(7);
     expect(typeScale.base.size).toBe(TYPE_BASE);
   });
 

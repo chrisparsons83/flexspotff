@@ -2,7 +2,7 @@ import { LEAGUES } from './data';
 import { Square, useMockHref } from './parts';
 import { Link, useLocation, useSearchParams } from '@remix-run/react';
 import clsx from 'clsx';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const NAV = [
   { label: 'Home', to: '/design/home' },
@@ -20,60 +20,16 @@ const tinted = (share: number) =>
   `color-mix(in oklch, oklch(var(--primary)) ${share}%, oklch(var(--background)))`;
 
 /** A glow of the accent from the top centre, fading out by mid-page. */
-const RADIAL_GLOW = `radial-gradient(90% 640px at 50% 0, ${tinted(
-  30,
-)}, transparent)`;
+const glow = (share: number) =>
+  `radial-gradient(90% 680px at 50% 0, ${tinted(share)}, transparent)`;
 
-const DOT_GRID =
-  'radial-gradient(oklch(var(--border)) 1.2px, transparent 1.2px)';
+const BACKGROUNDS = {
+  glow: 'Glow',
+  'glow-dots': 'Glow + dots',
+  plain: 'Plain',
+} as const;
 
-/**
- * Background options under review. Each is built from the theme tokens, so
- * it follows dark and light.
- */
-const BACKGROUNDS: Record<string, { label: string; style?: CSSProperties }> = {
-  plain: { label: 'Plain' },
-  dots: {
-    label: 'Dots',
-    style: {
-      backgroundImage: DOT_GRID,
-      backgroundSize: '20px 20px',
-    },
-  },
-  steps: {
-    label: 'Stepped',
-    style: {
-      backgroundImage: `linear-gradient(to bottom, ${[24, 18, 12, 6]
-        .map((share, i) => `${tinted(share)} ${i * 72}px ${(i + 1) * 72}px`)
-        .join(', ')}, transparent 288px)`,
-      backgroundRepeat: 'no-repeat',
-    },
-  },
-  radial: {
-    label: 'Radial',
-    style: {
-      backgroundImage: RADIAL_GLOW,
-      backgroundRepeat: 'no-repeat',
-    },
-  },
-  'radial-dots': {
-    label: 'Radial + dots',
-    style: {
-      backgroundImage: `${RADIAL_GLOW}, ${DOT_GRID}`,
-      backgroundSize: 'auto, 20px 20px',
-      backgroundRepeat: 'no-repeat, repeat',
-    },
-  },
-  smooth: {
-    label: 'Smooth',
-    style: {
-      backgroundImage: `linear-gradient(to bottom, ${tinted(
-        20,
-      )}, transparent 560px)`,
-      backgroundRepeat: 'no-repeat',
-    },
-  },
-};
+type Background = keyof typeof BACKGROUNDS;
 
 /**
  * Placeholder mark until the logo (#192): the five league colours as a row
@@ -89,11 +45,28 @@ function Mark() {
   );
 }
 
-/** Development-only controls for reviewing themes and backgrounds. */
-function ReviewBar() {
+/** Development-only controls for reviewing themes and options. */
+function ReviewBar({ background }: { background: Background }) {
   const { pathname, search } = useLocation();
   const [params] = useSearchParams();
-  const current = params.get('bg') ?? 'plain';
+  const shadow = params.get('shadow') === 'on' ? 'on' : 'off';
+
+  /** The current page with one review option changed. */
+  const withOption = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    next.set(key, value);
+    return `${pathname}?${next}`;
+  };
+
+  const option = (key: string, value: string, label: string, on: boolean) => (
+    <Link
+      key={value}
+      to={withOption(key, value)}
+      className={on ? 'font-bold underline' : 'hover:underline'}
+    >
+      {label}
+    </Link>
+  );
 
   return (
     <div className='bg-secondary text-sm'>
@@ -114,17 +87,14 @@ function ReviewBar() {
         </span>
         <span className='flex gap-3'>
           <span className='text-muted-foreground'>Background</span>
-          {Object.entries(BACKGROUNDS).map(([key, { label }]) => (
-            <Link
-              key={key}
-              to={`${pathname}?bg=${key}`}
-              className={clsx(
-                key === current ? 'font-bold underline' : 'hover:underline',
-              )}
-            >
-              {label}
-            </Link>
-          ))}
+          {Object.entries(BACKGROUNDS).map(([key, label]) =>
+            option('bg', key, label, key === background),
+          )}
+        </span>
+        <span className='flex gap-3'>
+          <span className='text-muted-foreground'>Button shadow</span>
+          {option('shadow', 'off', 'Off', shadow === 'off')}
+          {option('shadow', 'on', 'On', shadow === 'on')}
         </span>
       </div>
     </div>
@@ -141,54 +111,82 @@ export function MockShell({
 }) {
   const href = useMockHref();
   const [params] = useSearchParams();
-  const background =
-    BACKGROUNDS[params.get('bg') ?? 'plain'] ?? BACKGROUNDS.plain;
+  const requested = params.get('bg') ?? 'glow';
+  const background: Background =
+    requested in BACKGROUNDS ? (requested as Background) : 'glow';
 
   return (
     <div className='min-h-full bg-background text-foreground'>
-      <ReviewBar />
-      <header className='border-b-2 border-ink bg-card'>
-        <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
-          <Link
-            to={href('/design')}
-            className='col-span-12 flex items-center gap-3 md:col-span-3'
-          >
-            <Mark />
-            <span className='font-extrabold'>The Flex Spot</span>
-          </Link>
-          <nav
-            aria-label='Main'
-            className='col-span-10 mt-3 md:col-span-8 md:mt-0'
-          >
-            <ul className='flex gap-5 overflow-x-auto text-sm'>
-              {NAV.map(item => (
-                <li key={item.label}>
-                  <Link
-                    to={href(item.to)}
-                    aria-current={item.label === current ? 'page' : undefined}
-                    className={clsx(
-                      'whitespace-nowrap border-b-4 pb-1',
-                      item.label === current
-                        ? 'border-primary font-semibold text-foreground'
-                        : 'border-transparent text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <Link
-            to={href('/design/profile')}
-            className='col-span-2 mt-3 text-right text-sm font-semibold md:col-span-1 md:mt-0'
-          >
-            Me
-          </Link>
-        </div>
-      </header>
-      <div style={background.style}>
-        <main className='mx-auto max-w-6xl px-4 pb-24 pt-12'>{children}</main>
+      <ReviewBar background={background} />
+      <div
+        className='relative'
+        style={
+          background === 'plain'
+            ? undefined
+            : { backgroundImage: glow(32), backgroundRepeat: 'no-repeat' }
+        }
+      >
+        {background === 'glow-dots' && (
+          // The dot grid fades out with the glow instead of covering the page.
+          <div
+            aria-hidden
+            className='pointer-events-none absolute inset-x-0 top-0 h-[680px]'
+            style={{
+              backgroundImage:
+                'radial-gradient(oklch(var(--foreground) / 0.18) 1.2px, transparent 1.2px)',
+              backgroundSize: '22px 22px',
+              maskImage:
+                'radial-gradient(70% 100% at 50% 0, black, transparent)',
+              WebkitMaskImage:
+                'radial-gradient(70% 100% at 50% 0, black, transparent)',
+            }}
+          />
+        )}
+        <header className='relative border-b border-border/50 bg-card/60'>
+          <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
+            <Link
+              to={href('/design')}
+              className='col-span-12 flex items-center gap-3 md:col-span-3'
+            >
+              <Mark />
+              <span className='font-extrabold tracking-tight'>
+                The Flex Spot
+              </span>
+            </Link>
+            <nav
+              aria-label='Main'
+              className='col-span-10 mt-3 md:col-span-8 md:mt-0'
+            >
+              <ul className='flex gap-1 overflow-x-auto text-sm'>
+                {NAV.map(item => (
+                  <li key={item.label}>
+                    <Link
+                      to={href(item.to)}
+                      aria-current={item.label === current ? 'page' : undefined}
+                      className={clsx(
+                        'block whitespace-nowrap rounded-md px-3 py-1.5 transition-colors duration-fast',
+                        item.label === current
+                          ? 'bg-secondary font-semibold text-foreground'
+                          : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <Link
+              to={href('/design/profile')}
+              className='col-span-2 mt-3 text-right text-sm font-semibold md:col-span-1 md:mt-0'
+            >
+              Me
+            </Link>
+          </div>
+        </header>
+        <main className='relative mx-auto max-w-6xl px-4 pb-24 pt-14'>
+          {children}
+        </main>
       </div>
     </div>
   );

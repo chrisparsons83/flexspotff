@@ -9,10 +9,9 @@ import {
   YOUR_WEEK,
 } from '~/components/mocks/data';
 import {
-  OUTLINED,
+  CLICKABLE,
   Panel,
-  PRESSABLE,
-  PRESSABLE_SM,
+  PANEL,
   PrimaryButton,
   Section,
   useMockHref,
@@ -52,7 +51,9 @@ export default function DesignHome() {
     <MockShell current='Home'>
       <div className='grid grid-cols-12 items-start gap-x-6 gap-y-10'>
         <div className='col-span-12 md:col-span-6 md:pt-6'>
-          <h1 className='text-3xl font-extrabold'>Week {CURRENT_WEEK}</h1>
+          <h1 className='text-4xl font-extrabold tracking-tight'>
+            Week {CURRENT_WEEK}
+          </h1>
           <p className='mt-4 max-w-prose text-lg font-light'>
             Survivor picks lock Sunday at 1:00 pm Eastern.
           </p>
@@ -64,8 +65,8 @@ export default function DesignHome() {
             <PrimaryButton>Make your survivor pick</PrimaryButton>
           </div>
         </div>
-        <div className={clsx(OUTLINED, 'col-span-12 bg-card md:col-span-6')}>
-          <h2 className='border-b-2 border-ink px-5 py-3 font-bold'>
+        <div className={clsx(PANEL, 'col-span-12 md:col-span-6')}>
+          <h2 className='border-b border-border/50 px-5 py-3 font-bold'>
             Your week
           </h2>
           <ul>
@@ -101,10 +102,10 @@ export default function DesignHome() {
             <Link
               key={league.key}
               to={href('/design/standings')}
-              className={clsx(PRESSABLE, 'flex flex-col')}
+              className={clsx(CLICKABLE, 'flex flex-col overflow-hidden')}
             >
               <h3
-                className={`border-b-2 border-ink px-4 py-3 font-bold ${
+                className={`px-4 py-3 font-bold ${
                   LEAGUE_BLOCKS[league.key].head
                 }`}
               >
@@ -141,15 +142,7 @@ export default function DesignHome() {
             {PODCAST.length}
           </p>
           <span className='col-span-12 md:col-span-2 md:text-right'>
-            <a
-              href='/design'
-              className={clsx(
-                PRESSABLE_SM,
-                'inline-block bg-primary px-4 py-2 text-sm font-bold text-primary-foreground',
-              )}
-            >
-              Listen
-            </a>
+            <PrimaryButton size='sm'>Listen</PrimaryButton>
           </span>
         </Panel>
       </Section>

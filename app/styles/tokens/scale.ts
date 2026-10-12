@@ -17,10 +17,18 @@ export const TYPE_BASE = 16;
 export const TYPE_RATIO = 1.2;
 
 /**
- * The six steps, smallest first, by the Tailwind name each one takes. `base`
+ * The seven steps, smallest first, by the Tailwind name each one takes. `base`
  * is body text and tables; the steps above it are headings.
  */
-export const TYPE_STEPS = ['sm', 'base', 'lg', 'xl', '2xl', '3xl'] as const;
+export const TYPE_STEPS = [
+  'sm',
+  'base',
+  'lg',
+  'xl',
+  '2xl',
+  '3xl',
+  '4xl',
+] as const;
 const BASE_INDEX = TYPE_STEPS.indexOf('base');
 
 /** Text needs looser leading than headings. Both round up to the grid. */
@@ -55,7 +63,8 @@ export const STEP_DOWN_EM = `${Number((1 / TYPE_RATIO).toFixed(4))}em`;
 const rem = (px: number) => `${Number((px / 16).toFixed(4))}rem`;
 
 export const scaleTokens: Record<string, string> = {
-  radius: '2px',
+  /** Soft, like Discord's. Smaller controls step down from it. */
+  radius: '8px',
   'duration-fast': '100ms',
   'duration-base': '150ms',
   'ease-standard': 'cubic-bezier(0.2, 0, 0, 1)',

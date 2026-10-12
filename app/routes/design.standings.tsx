@@ -8,14 +8,7 @@ import {
   PLAYOFF_SPOTS,
   type Result,
 } from '~/components/mocks/data';
-import {
-  Panel,
-  PRESSABLE_SM,
-  PRESSED_SM,
-  Square,
-  SubNav,
-  useMockHref,
-} from '~/components/mocks/parts';
+import { Panel, Square, SubNav, useMockHref } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -85,7 +78,9 @@ export default function DesignStandings() {
   return (
     <MockShell current='Leagues'>
       <Panel tone='bg-league-champions-tint' className='p-8'>
-        <h1 className='text-3xl font-extrabold'>Champions league</h1>
+        <h1 className='text-4xl font-extrabold tracking-tight'>
+          Champions league
+        </h1>
         <p className='mt-2 text-muted-foreground'>
           The top tier. Twelve teams, six make the playoffs.
         </p>
@@ -97,13 +92,10 @@ export default function DesignStandings() {
                   to={href('/design/standings')}
                   aria-current={league.key === 'champions' ? 'page' : undefined}
                   className={clsx(
-                    'flex items-center gap-2 px-3 py-2 text-sm',
+                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-fast',
                     league.key === 'champions'
-                      ? clsx(
-                          PRESSED_SM,
-                          'bg-league-champions font-bold text-league-champions-foreground',
-                        )
-                      : clsx(PRESSABLE_SM, 'bg-card hover:bg-secondary'),
+                      ? 'bg-league-champions font-bold text-league-champions-foreground'
+                      : 'bg-background/60 hover:bg-secondary',
                   )}
                 >
                   {league.key !== 'champions' && <Square fill={league.fill} />}
@@ -126,7 +118,7 @@ export default function DesignStandings() {
         </p>
       </div>
 
-      <Panel className='mt-6 overflow-x-auto p-0'>
+      <Panel className='mt-6 overflow-x-auto p-4'>
         <table className='w-full min-w-[40rem] text-left'>
           <thead className='text-sm text-muted-foreground'>
             <tr>

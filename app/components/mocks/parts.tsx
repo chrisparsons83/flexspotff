@@ -1,27 +1,28 @@
-import { Link, useLocation } from '@remix-run/react';
+import { Link, useLocation, useSearchParams } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
 /**
- * Two levels of object. Everything that is a thing on the page gets an ink
- * outline. Things you can click also get a hard shadow and press into it;
- * the selected one shows already pressed in.
+ * Layers by lightness, the way Discord does it: a panel is one step up from
+ * the ground, slightly see-through so the page's glow tints it, with a
+ * faint edge. No outlines, no blur.
  */
-export const OUTLINED = 'border-2 border-ink';
-export const PRESSABLE = clsx(
-  OUTLINED,
-  'shadow-hard transition-[transform,box-shadow] duration-fast active:translate-x-1 active:translate-y-1 active:shadow-none',
-);
-export const PRESSABLE_SM = clsx(
-  OUTLINED,
-  'shadow-hard-sm transition-[transform,box-shadow] duration-fast active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
-);
-export const PRESSED_SM = clsx(OUTLINED, 'translate-x-0.5 translate-y-0.5');
+export const PANEL = 'rounded-lg border border-border/50 bg-card/80';
 
-/** Keeps the review toolbar's choices (the query string) on mock links. */
+/** Something you can click that is not a button: a faint edge that lights up. */
+export const CLICKABLE =
+  'rounded-lg ring-1 ring-border/50 transition-shadow duration-fast hover:ring-2 hover:ring-primary';
+
+/** Keeps the review bar's choices (the query string) on mock links. */
 export function useMockHref() {
   const { search } = useLocation();
   return (to: string) => to + search;
+}
+
+/** Whether the review bar has the main button's hard shadow switched on. */
+function useButtonShadow() {
+  const [params] = useSearchParams();
+  return params.get('shadow') === 'on';
 }
 
 /**
@@ -39,7 +40,7 @@ export function Square({
     <span
       aria-hidden
       className={clsx(
-        'inline-block shrink-0 border',
+        'inline-block shrink-0 rounded-sm border',
         size === 'sm' ? 'size-3' : 'size-6',
         fill,
       )}
@@ -47,19 +48,17 @@ export function Square({
   );
 }
 
-/** A panel: one step up from the ground, outlined in ink. */
+/** A panel; pass a league tint as `tone` to colour it. */
 export function Panel({
   children,
   className,
-  tone = 'bg-card',
+  tone,
 }: {
   children: ReactNode;
   className?: string;
   tone?: string;
 }) {
-  return (
-    <div className={clsx(OUTLINED, tone, 'p-6', className)}>{children}</div>
-  );
+  return <div className={clsx(PANEL, tone, 'p-6', className)}>{children}</div>;
 }
 
 /** A section's heading, set on the grid. */
@@ -74,13 +73,13 @@ export function Section({
 }) {
   return (
     <section className={className}>
-      <h2 className='mb-4 text-xl font-bold'>{title}</h2>
+      <h2 className='mb-4 text-xl font-bold tracking-tight'>{title}</h2>
       {children}
     </section>
   );
 }
 
-/** Sub-navigation for a section's pages, as a row of pressable tabs. */
+/** Sub-navigation for a section's pages: the current one is an accent block. */
 export function SubNav({
   items,
   current,
@@ -91,20 +90,17 @@ export function SubNav({
   const href = useMockHref();
   return (
     <nav aria-label='Section'>
-      <ul className='flex gap-3 overflow-x-auto pb-1 pr-1'>
+      <ul className='flex gap-1 overflow-x-auto'>
         {items.map(item => (
           <li key={item.label}>
             <Link
               to={href(item.to)}
               aria-current={item.label === current ? 'page' : undefined}
               className={clsx(
-                'block whitespace-nowrap px-3 py-1.5 text-sm',
+                'block whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors duration-fast',
                 item.label === current
-                  ? clsx(
-                      PRESSED_SM,
-                      'bg-primary font-semibold text-primary-foreground',
-                    )
-                  : clsx(PRESSABLE_SM, 'bg-card hover:bg-secondary'),
+                  ? 'bg-primary font-semibold text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
               {item.label}
@@ -116,14 +112,27 @@ export function SubNav({
   );
 }
 
-/** The primary action: an accent block that presses into its shadow. */
-export function PrimaryButton({ children }: { children: ReactNode }) {
+/**
+ * The primary action: a full-colour accent block. With the review bar's
+ * shadow switched on, it also gets the one hard offset shadow on the site
+ * and presses into it.
+ */
+export function PrimaryButton({
+  children,
+  size = 'md',
+}: {
+  children: ReactNode;
+  size?: 'sm' | 'md';
+}) {
+  const shadow = useButtonShadow();
   return (
     <button
       type='button'
       className={clsx(
-        PRESSABLE,
-        'bg-primary px-5 py-3 font-bold text-primary-foreground',
+        'rounded-md bg-primary font-bold text-primary-foreground transition-[background-color,transform,box-shadow] duration-fast hover:bg-primary/90',
+        size === 'md' ? 'px-5 py-3' : 'px-4 py-2 text-sm',
+        shadow &&
+          'border-2 border-ink shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-none',
       )}
     >
       {children}
