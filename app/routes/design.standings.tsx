@@ -89,9 +89,9 @@ export default function DesignStandings() {
                   to='/design/standings'
                   aria-current={league.key === 'champions' ? 'page' : undefined}
                   className={clsx(
-                    'flex items-center gap-2 border px-3 py-2 text-sm',
+                    'flex items-center gap-2 border-2 px-3 py-2 text-sm',
                     league.key === 'champions'
-                      ? 'border-league-champions-edge bg-league-champions font-semibold text-league-champions-foreground'
+                      ? 'border-ink bg-league-champions font-bold text-league-champions-foreground shadow-hard-sm'
                       : 'border-transparent bg-background hover:bg-secondary',
                   )}
                 >

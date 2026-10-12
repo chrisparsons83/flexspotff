@@ -1,13 +1,12 @@
-import { GoalpostsAtDusk } from '~/components/mocks/GoalpostsAtDusk';
 import { MockShell } from '~/components/mocks/MockShell';
 import {
   CURRENT_WEEK,
   LEAGUE_LEADERS,
   LEAGUES,
   PODCAST,
-  THIS_WEEK,
+  YOUR_WEEK,
 } from '~/components/mocks/data';
-import { Panel, PrimaryButton, Section } from '~/components/mocks/parts';
+import { Block, Panel, PrimaryButton, Section } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -15,23 +14,23 @@ export const loader = () => requireDesignMocks();
 /** Full class strings per league, so Tailwind can find them. */
 const LEAGUE_BLOCKS: Record<string, { head: string; body: string }> = {
   champions: {
-    head: 'bg-league-champions border-league-champions-edge text-league-champions-foreground',
+    head: 'bg-league-champions text-league-champions-foreground',
     body: 'bg-league-champions-tint',
   },
   admiral: {
-    head: 'bg-league-admiral border-league-admiral-edge text-league-admiral-foreground',
+    head: 'bg-league-admiral text-league-admiral-foreground',
     body: 'bg-league-admiral-tint',
   },
   dragon: {
-    head: 'bg-league-dragon border-league-dragon-edge text-league-dragon-foreground',
+    head: 'bg-league-dragon text-league-dragon-foreground',
     body: 'bg-league-dragon-tint',
   },
   galaxy: {
-    head: 'bg-league-galaxy border-league-galaxy-edge text-league-galaxy-foreground',
+    head: 'bg-league-galaxy text-league-galaxy-foreground',
     body: 'bg-league-galaxy-tint',
   },
   monarch: {
-    head: 'bg-league-monarch border-league-monarch-edge text-league-monarch-foreground',
+    head: 'bg-league-monarch text-league-monarch-foreground',
     body: 'bg-league-monarch-tint',
   },
 };
@@ -39,8 +38,8 @@ const LEAGUE_BLOCKS: Record<string, { head: string; body: string }> = {
 export default function DesignHome() {
   return (
     <MockShell current='Home'>
-      <div className='grid grid-cols-12 items-center gap-x-6 gap-y-10'>
-        <div className='col-span-12 md:col-span-6'>
+      <div className='grid grid-cols-12 items-start gap-x-6 gap-y-10'>
+        <div className='col-span-12 md:col-span-6 md:pt-6'>
           <h1 className='text-3xl font-extrabold'>Week {CURRENT_WEEK}</h1>
           <p className='mt-4 max-w-prose text-lg font-light'>
             Survivor picks lock Sunday at 1:00 pm Eastern.
@@ -53,38 +52,43 @@ export default function DesignHome() {
             <PrimaryButton>Make your survivor pick</PrimaryButton>
           </div>
         </div>
-        <GoalpostsAtDusk className='col-span-12 w-full md:col-span-6' />
+        <Block className='col-span-12 bg-card md:col-span-6'>
+          <h2 className='border-b-2 border-ink px-5 py-3 font-bold'>
+            Your week
+          </h2>
+          <ul>
+            {YOUR_WEEK.map(item => (
+              <li
+                key={item.game}
+                className='grid grid-cols-[1fr_auto] items-center gap-4 border-t border-border px-5 py-3 first:border-t-0'
+              >
+                <span>
+                  <span className='block font-semibold'>{item.game}</span>
+                  <span className='block text-sm text-muted-foreground'>
+                    {item.when}
+                  </span>
+                </span>
+                <span
+                  className={
+                    item.done
+                      ? 'text-sm text-muted-foreground'
+                      : 'text-sm font-semibold text-brand'
+                  }
+                >
+                  {item.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Block>
       </div>
-
-      <Section title='This week' className='mt-16'>
-        <Panel>
-          <table className='w-full text-left'>
-            <thead className='text-sm text-muted-foreground'>
-              <tr>
-                <th className='pb-2 pr-6 font-normal'>Game</th>
-                <th className='pb-2 pr-6 font-normal'>Due</th>
-                <th className='pb-2 font-normal'>When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {THIS_WEEK.map(row => (
-                <tr key={row.game} className='border-t border-border'>
-                  <td className='py-3 pr-6 font-semibold'>{row.game}</td>
-                  <td className='py-3 pr-6'>{row.due}</td>
-                  <td className='py-3'>{row.when}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Panel>
-      </Section>
 
       <Section title='League leaders' className='mt-16'>
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
           {LEAGUES.map(league => (
-            <div key={league.key} className='flex flex-col'>
+            <Block key={league.key} className='flex flex-col'>
               <h3
-                className={`border px-4 py-3 font-bold ${
+                className={`border-b-2 border-ink px-4 py-3 font-bold ${
                   LEAGUE_BLOCKS[league.key].head
                 }`}
               >
@@ -104,7 +108,7 @@ export default function DesignHome() {
                   </li>
                 ))}
               </ol>
-            </div>
+            </Block>
           ))}
         </div>
       </Section>

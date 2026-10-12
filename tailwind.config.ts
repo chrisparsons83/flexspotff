@@ -19,7 +19,7 @@ const color = (name: string) => `oklch(var(--${name}))`;
 /**
  * `bg-league-admiral`, `text-league-admiral-foreground`,
  * `border-league-admiral-edge`, and the same for every position, medal and
- * sequence step and brand colour. Only category fills have an edge, and only
+ * sequence step. Only category fills have an edge, and only
  * leagues have a tint (`bg-league-admiral-tint`).
  */
 const tokenFills = Object.fromEntries(
@@ -183,6 +183,11 @@ const config: Config = {
         '2xl': 'var(--radius)',
         '3xl': 'var(--radius)',
         full: '9999px',
+      },
+      // Hard offset shadows in ink, for things you act on or should notice.
+      boxShadow: {
+        hard: `4px 4px 0 0 ${color('ink')}`,
+        'hard-sm': `2px 2px 0 0 ${color('ink')}`,
       },
       transitionDuration: {
         DEFAULT: 'var(--duration-base)',

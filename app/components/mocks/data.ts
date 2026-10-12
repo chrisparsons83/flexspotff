@@ -225,11 +225,37 @@ export const LEAGUE_LEADERS: Record<
   ],
 };
 
-export const THIS_WEEK: { game: string; due: string; when: string }[] = [
-  { game: 'Survivor', due: 'Week 6 pick', when: 'Sunday 1:00 pm ET' },
-  { game: 'Locks challenge', due: 'Five locks', when: 'Each game’s kickoff' },
-  { game: 'Spread pool', due: 'Week 6 picks', when: 'Sunday 1:00 pm ET' },
-  { game: 'Leagues', due: 'Waivers process', when: 'Wednesday 11:00 pm ET' },
+/** The signed-in member's games this week, and where each one stands. */
+export const YOUR_WEEK: {
+  game: string;
+  when: string;
+  status: string;
+  done: boolean;
+}[] = [
+  {
+    game: 'Survivor',
+    when: 'Locks Sunday 1:00 pm ET',
+    status: 'Not picked',
+    done: false,
+  },
+  {
+    game: 'Spread pool',
+    when: 'Locks Sunday 1:00 pm ET',
+    status: '3 of 14 picked',
+    done: false,
+  },
+  {
+    game: 'Locks challenge',
+    when: 'Each game\u2019s kickoff',
+    status: '5 of 5 locked',
+    done: true,
+  },
+  {
+    game: 'Leagues',
+    when: 'Waivers Wednesday 11:00 pm ET',
+    status: '2 claims in',
+    done: true,
+  },
 ];
 
 export const PODCAST = {

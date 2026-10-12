@@ -1,13 +1,14 @@
 /**
  * The colour system, built by rule rather than picked by hand (see #191).
  *
- * - Neutrals are equal lightness steps at one navy hue. Chroma fades from
- *   the darkest step to the lightest, so the dark ground reads as navy and
- *   the light ground as a cool off-white. Each theme's roles are fixed
- *   offsets from its ground, so light is dark read from the other end.
- * - The brand palette is navy (the dark ground) plus coral, mustard and teal
- *   at one shared lightness and chroma. Illustration uses only these. Coral
- *   is also the primary colour: buttons, links and the current page.
+ * - Neutrals are equal lightness steps of grey with a faint blue-violet
+ *   tinge, the way Discord's are. The tinge fades toward the light end. Each
+ *   theme's roles are fixed offsets from its ground, so light is dark read
+ *   from the other end.
+ * - One vivid accent, between blue and purple and leaning purple, marks
+ *   buttons, links and the current page.
+ * - Ink is the colour of outlines and hard offset shadows, which only things
+ *   you act on or should notice get.
  * - Each league has a tint: its hue, at low chroma, at card lightness. A
  *   league's panels and pages wear it as a field; text sits on it as on a
  *   card.
@@ -39,13 +40,13 @@ const make = (color: Oklch) => round(toGamut(color));
 
 // Neutrals
 
-const NEUTRAL_DARKEST = 0.2;
+const NEUTRAL_DARKEST = 0.22;
 const NEUTRAL_LIGHTEST = 0.97;
 const NEUTRAL_STEP_COUNT = 21;
-const NEUTRAL_HUE = 260;
-/** Navy at the dark end, barely tinted at the light end. */
-const NEUTRAL_CHROMA_DARKEST = 0.045;
-const NEUTRAL_CHROMA_LIGHTEST = 0.006;
+const NEUTRAL_HUE = 285;
+/** Grey with a tinge at the dark end, barely tinted at the light end. */
+const NEUTRAL_CHROMA_DARKEST = 0.016;
+const NEUTRAL_CHROMA_LIGHTEST = 0.004;
 
 export const neutralSteps: Oklch[] = Array.from(
   { length: NEUTRAL_STEP_COUNT },
@@ -213,21 +214,16 @@ export const sequence: Oklch[] = Array.from(
     }),
 );
 
-// Brand
+// Accent
 
-/** Coral, mustard and teal share one lightness and chroma, so none shouts. */
-const BRAND_LIGHTNESS = 0.72;
-const BRAND_CHROMA = 0.13;
-const BRAND_HUES = { coral: 35, mustard: 85, teal: 190 } as const;
+/** Between blue and purple, leaning purple, at the neutrals' hue. */
+const ACCENT_HUE = NEUTRAL_HUE;
+const ACCENT_CHROMA = 0.19;
+/** Where the accent starts as a fill, before each theme adjusts it. */
+const ACCENT_LIGHTNESS = 0.55;
 
-export type BrandColor = keyof typeof BRAND_HUES;
-
-export const brand = Object.fromEntries(
-  Object.entries(BRAND_HUES).map(([name, h]) => [
-    name,
-    make({ l: BRAND_LIGHTNESS, c: BRAND_CHROMA, h }),
-  ]),
-) as Record<BrandColor, Oklch>;
+/** Outlines and hard shadows: darker than the dark ground, tinged. */
+const DARK_INK: Oklch = make({ l: 0.12, c: 0.02, h: NEUTRAL_HUE });
 
 // Theme roles
 
@@ -270,7 +266,7 @@ const clearing = (
 ) => {
   const direction = theme === 'dark' ? 1 : -1;
   for (let l = from; l > 0 && l < 1; l += direction * 0.005) {
-    const color = make({ l, c: BRAND_CHROMA, h });
+    const color = make({ l, c: ACCENT_CHROMA, h });
     if (contrast(color, against) >= ratio) return color;
   }
   throw new Error(`Nothing at hue ${h} clears ${ratio} in ${theme}`);
@@ -292,13 +288,13 @@ const buildRoles = (theme: Theme) => {
     throw new Error(`No ${theme} step clears ${ratio}`);
   };
 
-  /** Coral as a fill: the brand lightness, or nearer the text if needed. */
+  /** The accent as a fill: its own lightness, or nearer the text if needed. */
   const primaryFill = clearing(
-    BRAND_HUES.coral,
+    ACCENT_HUE,
     theme,
     surface,
     FILL_CONTRAST,
-    BRAND_LIGHTNESS,
+    ACCENT_LIGHTNESS,
   );
 
   const semantic = Object.fromEntries(
@@ -317,7 +313,8 @@ const buildRoles = (theme: Theme) => {
     'popover-foreground': foreground,
     primary: primaryFill,
     'primary-foreground': textOn(primaryFill),
-    brand: clearing(BRAND_HUES.coral, theme, raised, TEXT_CONTRAST, 0.5),
+    brand: clearing(ACCENT_HUE, theme, raised, TEXT_CONTRAST, 0.5),
+    ink: theme === 'dark' ? DARK_INK : step(NEUTRAL_STEP_COUNT - 1),
     secondary: raised,
     'secondary-foreground': foreground,
     muted: surface,
@@ -374,6 +371,7 @@ export const TEXT_PAIRS: [Role, Role][] = [
 export const EDGE_PAIRS: [Role, Role][] = [
   ['primary', 'background'],
   ['primary', 'card'],
+  ['ink', 'primary'],
   ['input', 'background'],
   ['input', 'card'],
   ['ring', 'background'],
@@ -394,14 +392,11 @@ export const categoryFills: Record<string, Oklch> = {
 };
 
 /**
- * Every fill, keyed by token name. Brand colours are for illustration and
- * sequence steps are read against each other, so neither is a category fill.
+ * Every fill, keyed by token name. Sequence steps are read against each
+ * other, not against the ground, so they are not category fills.
  */
 export const fills: Record<string, Oklch> = {
   ...categoryFills,
-  ...Object.fromEntries(
-    Object.entries(brand).map(([name, c]) => [`brand-${name}`, c]),
-  ),
   ...Object.fromEntries(sequence.map((c, i) => [`sequence-${i + 1}`, c])),
 };
 

@@ -60,8 +60,8 @@ export function Section({
 }
 
 /**
- * Sub-navigation for a section's pages. The current page is marked by a
- * coral bar under it.
+ * Sub-navigation for a section's pages. The current page is a raised accent
+ * block with an ink outline; the rest are plain text.
  */
 export function SubNav({
   items,
@@ -71,18 +71,18 @@ export function SubNav({
   current: string;
 }) {
   return (
-    <nav aria-label='Section' className='border-b border-border'>
-      <ul className='-mb-px flex gap-6 overflow-x-auto'>
+    <nav aria-label='Section'>
+      <ul className='flex gap-2 overflow-x-auto pb-1 pr-1'>
         {items.map(item => (
           <li key={item.label}>
             <Link
               to={item.to}
               aria-current={item.label === current ? 'page' : undefined}
               className={clsx(
-                'block whitespace-nowrap border-b-4 py-3 text-sm',
+                'block whitespace-nowrap border-2 px-3 py-1.5 text-sm',
                 item.label === current
-                  ? 'border-primary font-semibold text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
+                  ? 'border-ink bg-primary font-semibold text-primary-foreground shadow-hard-sm'
+                  : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
               {item.label}
@@ -94,14 +94,35 @@ export function SubNav({
   );
 }
 
-/** The primary action on a page: a flat coral block. */
+/**
+ * The primary action: an accent block with an ink outline and a hard shadow.
+ * Pressing it pushes it into its shadow.
+ */
 export function PrimaryButton({ children }: { children: ReactNode }) {
   return (
     <button
       type='button'
-      className='bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90'
+      className='border-2 border-ink bg-primary px-5 py-3 font-bold text-primary-foreground shadow-hard transition-[transform,box-shadow] duration-fast active:translate-x-1 active:translate-y-1 active:shadow-none'
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Something to notice, drawn as an object: an ink outline and a hard
+ * shadow. Ordinary panels stay flat; only these stand up off the page.
+ */
+export function Block({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={clsx('border-2 border-ink shadow-hard', className)}>
+      {children}
+    </div>
   );
 }
