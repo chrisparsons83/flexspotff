@@ -9,13 +9,19 @@ import {
   useRouteError,
 } from '@remix-run/react';
 import clsx from 'clsx';
-import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import {
+  typedjson,
+  useTypedLoaderData,
+  useTypedRouteLoaderData,
+} from 'remix-typedjson';
 import NavBar from '~/components/layout/NavBar';
 import {
   canViewProfiles,
   getProfileHandles,
 } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
+import { getThemePreference } from '~/services/theme.server';
+import { SYSTEM_THEME_SCRIPT } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
@@ -40,6 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // What those links point at: /u/:handle, looked up by user id. See
     // useProfileHref.
     profileHandles: profilesVisible ? await getProfileHandles() : {},
+    themePreference: await getThemePreference(request),
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
@@ -48,11 +55,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  // Missing when the root loader itself failed; the error page is dark then.
+  const themePreference =
+    useTypedRouteLoaderData<typeof loader>('root')?.themePreference ?? 'dark';
+
   return (
-    <html lang='en' className='dark h-full'>
+    // The system script may change the class before hydration.
+    <html
+      lang='en'
+      className={clsx(themePreference !== 'light' && 'dark', 'h-full')}
+      suppressHydrationWarning
+    >
       <head>
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
+        {themePreference === 'system' && (
+          <script dangerouslySetInnerHTML={{ __html: SYSTEM_THEME_SCRIPT }} />
+        )}
         <Meta />
         <Links />
         {
@@ -60,7 +79,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
         <script>let FF_FOUC_FIX;</script>
       </head>
-      <body className='h-full bg-slate-700 text-white'>
+      <body className='h-full bg-background text-foreground'>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -85,10 +104,10 @@ export default function App() {
       <div
         className={clsx(
           !regex.test(currentPath) && 'container',
-          'relative mx-auto min-h-screen p-4 text-white',
+          'relative mx-auto min-h-screen p-4',
         )}
       >
-        <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
+        <main className='prose max-w-none lg:prose-xl'>
           <Outlet />
         </main>
       </div>
@@ -111,23 +130,16 @@ export function ErrorBoundary() {
     errorMessage = error.message;
   }
 
+  // Layout wraps this, so it renders the page body only.
   return (
-    <html>
-      <head>
-        <title>Oh no!</title>
-        <Meta />
-        <Links />
-      </head>
-      <body className='h-full bg-slate-700 text-white'>
-        <NavBar user={null} userIsEditor={false} canViewProfiles={false} />
-        <div className='container relative mx-auto min-h-screen p-4 text-white'>
-          <main className='prose max-w-none dark:prose-invert lg:prose-xl'>
-            <h1>Error</h1>
-            <pre>{errorMessage}</pre>
-          </main>
-        </div>
-        <Scripts />
-      </body>
-    </html>
+    <>
+      <NavBar user={null} userIsEditor={false} canViewProfiles={false} />
+      <div className='container relative mx-auto min-h-screen p-4'>
+        <main className='prose max-w-none lg:prose-xl'>
+          <h1>Error</h1>
+          <pre>{errorMessage}</pre>
+        </main>
+      </div>
+    </>
   );
 }
