@@ -4,6 +4,7 @@ import {
   neutralSteps,
   themeRoles,
 } from './app/styles/tokens/palette';
+import { TYPE_STEPS, type TypeStep } from './app/styles/tokens/scale';
 import type { Config } from 'tailwindcss';
 
 /** A token as a Tailwind colour that takes opacity modifiers. */
@@ -43,6 +44,33 @@ const roleColors = Object.fromEntries(
     ]),
 );
 
+/** A type step as a Tailwind font size, with its line height. */
+const typeStep = (name: TypeStep): [string, string] => [
+  `var(--text-${name})`,
+  `var(--leading-${name})`,
+];
+
+/**
+ * The six steps keep Tailwind's names. Names off the scale point at the
+ * nearest step until #195 moves routes off them.
+ */
+const fontSize = {
+  ...Object.fromEntries(TYPE_STEPS.map(name => [name, typeStep(name)])),
+  xs: typeStep('sm'),
+  ...Object.fromEntries(
+    ['4xl', '5xl', '6xl', '7xl', '8xl', '9xl'].map(name => [
+      name,
+      typeStep('3xl'),
+    ]),
+  ),
+};
+
+/** Prose at the type scale: body and tables at `base`, h1 to h4 above it. */
+const proseStep = (name: TypeStep) => ({
+  fontSize: `var(--text-${name})`,
+  lineHeight: `var(--leading-${name})`,
+});
+
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -66,10 +94,33 @@ const config: Config = {
         '2xl': '1400px',
       },
     },
+    fontSize,
+    fontFamily: {
+      sans: 'var(--font-sans)',
+      mono: [
+        'ui-monospace',
+        'SFMono-Regular',
+        'Menlo',
+        'Monaco',
+        'Consolas',
+        'monospace',
+      ],
+    },
     extend: {
       typography: {
         DEFAULT: {
           css: {
+            ...proseStep('base'),
+            h1: proseStep('3xl'),
+            h2: proseStep('2xl'),
+            h3: proseStep('xl'),
+            h4: proseStep('lg'),
+            table: proseStep('base'),
+            // Separate keys, so each merges into the plugin's own rule rather
+            // than losing to it.
+            code: proseStep('sm'),
+            small: proseStep('sm'),
+            figcaption: proseStep('sm'),
             // Prose reads its colours from the tokens, so it follows the
             // theme without `prose-invert`.
             '--tw-prose-body': color('foreground'),

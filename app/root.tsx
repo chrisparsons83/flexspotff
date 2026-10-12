@@ -1,4 +1,5 @@
 import stylesheet from './styles/tailwind.css?url';
+import fontLatin from '@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url';
 import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Links,
@@ -24,6 +25,14 @@ import { getThemePreference } from '~/services/theme.server';
 import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
+  // The Latin face is on every page, so fetch it before the CSS asks for it.
+  {
+    rel: 'preload',
+    href: fontLatin,
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  },
   { rel: 'stylesheet', href: stylesheet },
 ];
 
@@ -109,7 +118,7 @@ export default function App() {
           'relative mx-auto min-h-screen p-4',
         )}
       >
-        <main className='prose max-w-none lg:prose-xl'>
+        <main className='prose max-w-none'>
           <Outlet />
         </main>
       </div>
@@ -137,7 +146,7 @@ export function ErrorBoundary() {
     <>
       <NavBar user={null} userIsEditor={false} canViewProfiles={false} />
       <div className='container relative mx-auto min-h-screen p-4'>
-        <main className='prose max-w-none lg:prose-xl'>
+        <main className='prose max-w-none'>
           <h1>Error</h1>
           <pre>{errorMessage}</pre>
         </main>

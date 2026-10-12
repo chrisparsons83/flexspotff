@@ -713,8 +713,8 @@ export default function GamesDfsSurvivorMyEntry() {
   const isError = !!(fetcher.data?.error || notice);
 
   return (
-    // The app shell wraps every page in `prose lg:prose-xl` (root.tsx), which
-    // sets a 20px base and styles bare tables. Both wreck a dense data view, so
+    // The app shell wraps every page in `prose` (root.tsx), which sets its
+    // own spacing and styles bare tables. Both wreck a dense data view, so
     // this one opts out and sets its own scale.
     <>
       <h2>My DFS Survivor Entries</h2>
