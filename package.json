@@ -26,6 +26,8 @@
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "postinstall": "patch-package",
     "setup": "prisma migrate dev && prisma db seed",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "start": "remix-serve ./build/server/index.js",
     "start:bot": "node ./build/bot/server.cjs",
     "start:scheduler": "node ./build/scheduler/server.cjs",
@@ -38,7 +40,8 @@
   "eslintIgnore": [
     "/node_modules",
     "/build",
-    "/public/build"
+    "/public/build",
+    "/storybook-static"
   ],
   "dependencies": {
     "@aws-sdk/client-s3": "^3.142.0",
@@ -92,6 +95,9 @@
     "@faker-js/faker": "^6.3.1",
     "@remix-run/dev": "^2.12.1",
     "@remix-run/eslint-config": "^2.12.1",
+    "@storybook/addon-a11y": "^10.6.1",
+    "@storybook/addon-themes": "^10.6.1",
+    "@storybook/react-vite": "^10.6.1",
     "@tailwindcss/forms": "^0.5.2",
     "@tailwindcss/typography": "^0.5.4",
     "@testing-library/dom": "^10.4.0",
@@ -123,6 +129,7 @@
     "prettier-plugin-tailwindcss": "^0.1.11",
     "prisma": "^3.15.2",
     "shadcn": "^3.7.0",
+    "storybook": "^10.6.1",
     "tailwindcss": "^3.4.9",
     "ts-node": "^10.7.0",
     "tsconfig-paths": "^3.14.1",
