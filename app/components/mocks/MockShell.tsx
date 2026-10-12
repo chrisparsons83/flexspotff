@@ -41,14 +41,14 @@ export function MockShell({
 
   return (
     <div className='min-h-full bg-background text-foreground'>
-      <header className='border-b border-border'>
+      <header className='bg-card'>
         <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
           <Link
             to='/design'
             className='col-span-12 flex items-center gap-3 md:col-span-3'
           >
             <Mark />
-            <span className='font-semibold'>The Flex Spot</span>
+            <span className='font-extrabold'>The Flex Spot</span>
           </Link>
           <nav
             aria-label='Main'
@@ -61,10 +61,10 @@ export function MockShell({
                     to={item.to}
                     aria-current={item.label === current ? 'page' : undefined}
                     className={clsx(
-                      'whitespace-nowrap',
+                      'whitespace-nowrap border-b-4 pb-1',
                       item.label === current
-                        ? 'font-semibold text-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
+                        ? 'border-primary font-semibold text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground',
                     )}
                   >
                     {item.label}

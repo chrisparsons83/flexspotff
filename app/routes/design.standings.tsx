@@ -8,7 +8,7 @@ import {
   PLAYOFF_SPOTS,
   type Result,
 } from '~/components/mocks/data';
-import { Square, SubNav } from '~/components/mocks/parts';
+import { Panel, Square, SubNav } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -45,7 +45,7 @@ function LastSix({ results }: { results: Result[] }) {
   );
 }
 
-/** Points for as a bar across the league's range, from the value sequence. */
+/** Points for as a bar across the league's range, in the league's colour. */
 function PointsBar({
   value,
   min,
@@ -61,7 +61,7 @@ function PointsBar({
       <span className='w-16 shrink-0'>{value.toFixed(1)}</span>
       <span className='hidden h-2 w-24 bg-muted sm:block' aria-hidden>
         <span
-          className='block h-2 bg-sequence-5'
+          className='block h-2 bg-league-champions'
           style={{ width: `${Math.round(10 + share * 90)}%` }}
         />
       </span>
@@ -76,36 +76,40 @@ export default function DesignStandings() {
 
   return (
     <MockShell current='Leagues'>
-      <h1 className='text-3xl font-semibold'>Leagues</h1>
-
-      <nav aria-label='League' className='mt-8'>
-        <ul className='flex flex-wrap gap-x-8 gap-y-3'>
-          {LEAGUES.map(league => (
-            <li key={league.key}>
-              <Link
-                to='/design/standings'
-                aria-current={league.key === 'champions' ? 'page' : undefined}
-                className={clsx(
-                  'flex items-center gap-2',
-                  league.key === 'champions'
-                    ? 'font-semibold'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <Square fill={league.fill} />
-                {league.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <Panel tone='bg-league-champions-tint' className='p-8'>
+        <h1 className='text-3xl font-extrabold'>Champions league</h1>
+        <p className='mt-2 text-muted-foreground'>
+          The top tier. Twelve teams, six make the playoffs.
+        </p>
+        <nav aria-label='League' className='mt-8'>
+          <ul className='flex flex-wrap gap-2'>
+            {LEAGUES.map(league => (
+              <li key={league.key}>
+                <Link
+                  to='/design/standings'
+                  aria-current={league.key === 'champions' ? 'page' : undefined}
+                  className={clsx(
+                    'flex items-center gap-2 border px-3 py-2 text-sm',
+                    league.key === 'champions'
+                      ? 'border-league-champions-edge bg-league-champions font-semibold text-league-champions-foreground'
+                      : 'border-transparent bg-background hover:bg-secondary',
+                  )}
+                >
+                  {league.key !== 'champions' && <Square fill={league.fill} />}
+                  {league.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </Panel>
 
       <div className='mt-8'>
         <SubNav items={SECTION_PAGES} current='Standings' />
       </div>
 
       <div className='mt-10 flex flex-wrap items-baseline justify-between gap-4'>
-        <h2 className='text-xl font-semibold'>Champions standings</h2>
+        <h2 className='text-xl font-bold'>Standings</h2>
         <p className='text-sm text-muted-foreground'>
           2026 season, after week {CURRENT_WEEK}
         </p>
@@ -115,7 +119,7 @@ export default function DesignStandings() {
         <table className='w-full min-w-[40rem] text-left'>
           <thead className='text-sm text-muted-foreground'>
             <tr>
-              <th className='w-10 pb-2 font-normal'>
+              <th className='w-12 pb-2 pl-3 font-normal'>
                 <span className='sr-only'>Rank</span>
               </th>
               <th className='pb-2 pr-6 font-normal'>Manager</th>
@@ -135,9 +139,10 @@ export default function DesignStandings() {
                   i === PLAYOFF_SPOTS
                     ? 'border-t-2 border-foreground'
                     : 'border-border',
+                  i < PLAYOFF_SPOTS && 'bg-league-champions-tint',
                 )}
               >
-                <td className='py-3 text-muted-foreground'>{i + 1}</td>
+                <td className='py-3 pl-3 text-muted-foreground'>{i + 1}</td>
                 <td className='py-3 pr-6 font-semibold'>{row.manager}</td>
                 <td className='py-3 pr-6'>
                   {row.wins}-{row.losses}
@@ -158,8 +163,7 @@ export default function DesignStandings() {
         </table>
       </div>
       <p className='mt-4 text-sm text-muted-foreground'>
-        The top {PLAYOFF_SPOTS} make the playoffs. The heavier rule marks the
-        cut.
+        The top {PLAYOFF_SPOTS}, on the tinted rows, make the playoffs.
       </p>
     </MockShell>
   );

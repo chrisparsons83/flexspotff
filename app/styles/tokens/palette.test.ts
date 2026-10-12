@@ -7,6 +7,7 @@ import {
   FILL_GROUNDS,
   fillEdges,
   fillHueGaps,
+  leagueTints,
   fills,
   leagues,
   TEXT_CONTRAST,
@@ -77,6 +78,17 @@ describe.each(THEMES)('%s theme', theme => {
         expect(
           contrast(edges[`${name}-edge`], roles[ground]),
         ).toBeGreaterThanOrEqual(FILL_CONTRAST);
+      }
+    },
+  );
+
+  it.each(['foreground', 'muted-foreground'] as const)(
+    'reads %s on every league tint',
+    text => {
+      for (const tint of Object.values(leagueTints(theme))) {
+        expect(contrast(roles[text], tint)).toBeGreaterThanOrEqual(
+          TEXT_CONTRAST,
+        );
       }
     },
   );

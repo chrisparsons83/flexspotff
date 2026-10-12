@@ -1,8 +1,16 @@
 /**
  * The colour system, built by rule rather than picked by hand (see #191).
  *
- * - Neutrals are equal lightness steps with no hue. Each theme's roles are
- *   fixed offsets from its ground, so light is dark read from the other end.
+ * - Neutrals are equal lightness steps at one navy hue. Chroma fades from
+ *   the darkest step to the lightest, so the dark ground reads as navy and
+ *   the light ground as a cool off-white. Each theme's roles are fixed
+ *   offsets from its ground, so light is dark read from the other end.
+ * - The brand palette is navy (the dark ground) plus coral, mustard and teal
+ *   at one shared lightness and chroma. Illustration uses only these. Coral
+ *   is also the primary colour: buttons, links and the current page.
+ * - Each league has a tint: its hue, at low chroma, at card lightness. A
+ *   league's panels and pages wear it as a field; text sits on it as on a
+ *   card.
  * - The five league colours are fixed: they are also Discord role and embed
  *   colours, so they come from LEAGUE_EMBED_COLORS unchanged.
  * - Every other categorical colour is placed at the midpoint of the largest
@@ -31,9 +39,13 @@ const make = (color: Oklch) => round(toGamut(color));
 
 // Neutrals
 
-const NEUTRAL_DARKEST = 0.18;
+const NEUTRAL_DARKEST = 0.2;
 const NEUTRAL_LIGHTEST = 0.97;
 const NEUTRAL_STEP_COUNT = 21;
+const NEUTRAL_HUE = 260;
+/** Navy at the dark end, barely tinted at the light end. */
+const NEUTRAL_CHROMA_DARKEST = 0.045;
+const NEUTRAL_CHROMA_LIGHTEST = 0.006;
 
 export const neutralSteps: Oklch[] = Array.from(
   { length: NEUTRAL_STEP_COUNT },
@@ -42,8 +54,11 @@ export const neutralSteps: Oklch[] = Array.from(
       l:
         NEUTRAL_DARKEST +
         (i * (NEUTRAL_LIGHTEST - NEUTRAL_DARKEST)) / (NEUTRAL_STEP_COUNT - 1),
-      c: 0,
-      h: 0,
+      c:
+        NEUTRAL_CHROMA_DARKEST +
+        (i * (NEUTRAL_CHROMA_LIGHTEST - NEUTRAL_CHROMA_DARKEST)) /
+          (NEUTRAL_STEP_COUNT - 1),
+      h: NEUTRAL_HUE,
     }),
 );
 
@@ -198,6 +213,22 @@ export const sequence: Oklch[] = Array.from(
     }),
 );
 
+// Brand
+
+/** Coral, mustard and teal share one lightness and chroma, so none shouts. */
+const BRAND_LIGHTNESS = 0.72;
+const BRAND_CHROMA = 0.13;
+const BRAND_HUES = { coral: 35, mustard: 85, teal: 190 } as const;
+
+export type BrandColor = keyof typeof BRAND_HUES;
+
+export const brand = Object.fromEntries(
+  Object.entries(BRAND_HUES).map(([name, h]) => [
+    name,
+    make({ l: BRAND_LIGHTNESS, c: BRAND_CHROMA, h }),
+  ]),
+) as Record<BrandColor, Oklch>;
+
 // Theme roles
 
 const SEMANTIC_HUES = {
@@ -226,6 +257,25 @@ const semanticText = (h: number, theme: Theme, against: Oklch) => {
   throw new Error(`No ${theme} text colour at hue ${h}`);
 };
 
+/**
+ * The colour at this hue nearest `from` in lightness that clears `ratio`
+ * on `against`, stepping away from the theme's ground.
+ */
+const clearing = (
+  h: number,
+  theme: Theme,
+  against: Oklch,
+  ratio: number,
+  from: number,
+) => {
+  const direction = theme === 'dark' ? 1 : -1;
+  for (let l = from; l > 0 && l < 1; l += direction * 0.005) {
+    const color = make({ l, c: BRAND_CHROMA, h });
+    if (contrast(color, against) >= ratio) return color;
+  }
+  throw new Error(`Nothing at hue ${h} clears ${ratio} in ${theme}`);
+};
+
 const buildRoles = (theme: Theme) => {
   const step = (offset: number) => neutralStep(theme, offset);
 
@@ -242,6 +292,15 @@ const buildRoles = (theme: Theme) => {
     throw new Error(`No ${theme} step clears ${ratio}`);
   };
 
+  /** Coral as a fill: the brand lightness, or nearer the text if needed. */
+  const primaryFill = clearing(
+    BRAND_HUES.coral,
+    theme,
+    surface,
+    FILL_CONTRAST,
+    BRAND_LIGHTNESS,
+  );
+
   const semantic = Object.fromEntries(
     Object.entries(SEMANTIC_HUES).map(([name, h]) => [
       name,
@@ -256,8 +315,9 @@ const buildRoles = (theme: Theme) => {
     'card-foreground': foreground,
     popover: surface,
     'popover-foreground': foreground,
-    primary: foreground,
-    'primary-foreground': background,
+    primary: primaryFill,
+    'primary-foreground': textOn(primaryFill),
+    brand: clearing(BRAND_HUES.coral, theme, raised, TEXT_CONTRAST, 0.5),
     secondary: raised,
     'secondary-foreground': foreground,
     muted: surface,
@@ -299,6 +359,9 @@ export const TEXT_PAIRS: [Role, Role][] = [
   ['muted-foreground', 'muted'],
   ['muted-foreground', 'secondary'],
   ['destructive-foreground', 'destructive'],
+  ['brand', 'background'],
+  ['brand', 'card'],
+  ['brand', 'secondary'],
   ...(['negative', 'warning', 'positive', 'info'] as const).flatMap(
     (role): [Role, Role][] => [
       [role, 'background'],
@@ -309,6 +372,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
 ];
 
 export const EDGE_PAIRS: [Role, Role][] = [
+  ['primary', 'background'],
+  ['primary', 'card'],
   ['input', 'background'],
   ['input', 'card'],
   ['ring', 'background'],
@@ -329,11 +394,14 @@ export const categoryFills: Record<string, Oklch> = {
 };
 
 /**
- * Every fill, keyed by token name. Sequence steps are read against each
- * other, not against the ground, so they are not category fills.
+ * Every fill, keyed by token name. Brand colours are for illustration and
+ * sequence steps are read against each other, so neither is a category fill.
  */
 export const fills: Record<string, Oklch> = {
   ...categoryFills,
+  ...Object.fromEntries(
+    Object.entries(brand).map(([name, c]) => [`brand-${name}`, c]),
+  ),
   ...Object.fromEntries(sequence.map((c, i) => [`sequence-${i + 1}`, c])),
 };
 
@@ -355,5 +423,19 @@ export const fillEdges = (theme: Theme) => {
       );
       return [`${name}-edge`, visible ? fill : themed.input];
     }),
+  );
+};
+
+/** Enough colour to name the league, quiet enough to read text on. */
+const TINT_CHROMA = 0.04;
+
+/** Each league's tint for the theme, at the theme's card lightness. */
+export const leagueTints = (theme: Theme) => {
+  const { card } = themeRoles(theme);
+  return Object.fromEntries(
+    Object.entries(leagues).map(([name, color]) => [
+      `league-${name}-tint`,
+      make({ l: card.l, c: TINT_CHROMA, h: color.h }),
+    ]),
   );
 };

@@ -26,31 +26,42 @@ export function Square({
 }
 
 /**
- * A section's heading, set on the grid with a rule above it. Drop the rule
- * when something just above already draws one, such as a SubNav.
+ * A flat layer: one step up from the ground, no border and no shadow. Pass a
+ * league tint as `tone` to colour it.
  */
+export function Panel({
+  children,
+  className,
+  tone = 'bg-card',
+}: {
+  children: ReactNode;
+  className?: string;
+  tone?: string;
+}) {
+  return <div className={clsx(tone, 'p-6', className)}>{children}</div>;
+}
+
+/** A section's heading, set on the grid. */
 export function Section({
   title,
   children,
   className,
-  rule = true,
 }: {
   title: string;
   children: ReactNode;
   className?: string;
-  rule?: boolean;
 }) {
   return (
-    <section className={clsx(rule && 'border-t border-border pt-4', className)}>
-      <h2 className='mb-6 text-lg font-semibold'>{title}</h2>
+    <section className={className}>
+      <h2 className='mb-4 text-xl font-bold'>{title}</h2>
       {children}
     </section>
   );
 }
 
 /**
- * Sub-navigation for a section's pages. The current page is marked by a bar
- * under it, not by colour.
+ * Sub-navigation for a section's pages. The current page is marked by a
+ * coral bar under it.
  */
 export function SubNav({
   items,
@@ -68,9 +79,9 @@ export function SubNav({
               to={item.to}
               aria-current={item.label === current ? 'page' : undefined}
               className={clsx(
-                'block whitespace-nowrap border-b-2 py-3 text-sm',
+                'block whitespace-nowrap border-b-4 py-3 text-sm',
                 item.label === current
-                  ? 'border-foreground font-semibold text-foreground'
+                  ? 'border-primary font-semibold text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
@@ -80,5 +91,17 @@ export function SubNav({
         ))}
       </ul>
     </nav>
+  );
+}
+
+/** The primary action on a page: a flat coral block. */
+export function PrimaryButton({ children }: { children: ReactNode }) {
+  return (
+    <button
+      type='button'
+      className='bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90'
+    >
+      {children}
+    </button>
   );
 }

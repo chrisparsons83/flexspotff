@@ -5,7 +5,7 @@ import {
   medalFor,
   PROFILE,
 } from '~/components/mocks/data';
-import { Section, Square, SubNav } from '~/components/mocks/parts';
+import { Panel, Section, Square, SubNav } from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -22,7 +22,7 @@ function Honour({ medal, label, year }: (typeof PROFILE.honours)[number]) {
   return (
     <li>
       <span
-        className={`flex size-16 items-end border p-2 text-sm font-semibold ${MEDAL_FILLS[medal]}`}
+        className={`flex size-24 items-end border p-3 text-lg font-extrabold ${MEDAL_FILLS[medal]}`}
       >
         {year}
       </span>
@@ -36,32 +36,32 @@ export default function DesignProfile() {
 
   return (
     <MockShell current=''>
-      <div className='grid grid-cols-12 gap-x-6'>
+      <Panel className='grid grid-cols-12 gap-x-6 p-8'>
         <div className='col-span-12 md:col-span-8'>
-          <h1 className='text-3xl font-semibold'>{PROFILE.name}</h1>
+          <h1 className='text-3xl font-extrabold'>{PROFILE.name}</h1>
           <p className='mt-2 text-muted-foreground'>@{PROFILE.handle}</p>
         </div>
         <dl className='col-span-12 mt-6 grid grid-cols-2 gap-x-6 md:col-span-4 md:mt-0'>
           <div>
             <dt className='text-sm text-muted-foreground'>Member since</dt>
-            <dd className='mt-1 text-xl font-semibold'>
+            <dd className='mt-1 text-xl font-extrabold'>
               {PROFILE.memberSince}
             </dd>
           </div>
           <div>
             <dt className='text-sm text-muted-foreground'>Titles</dt>
-            <dd className='mt-1 text-xl font-semibold'>
+            <dd className='mt-1 text-xl font-extrabold'>
               {PROFILE.honours.filter(h => h.medal === 'gold').length}
             </dd>
           </div>
         </dl>
-      </div>
+      </Panel>
 
       <div className='mt-10'>
         <SubNav items={PROFILE_PAGES} current='Overview' />
       </div>
 
-      <Section title='Honours' className='mt-10' rule={false}>
+      <Section title='Honours' className='mt-10'>
         <ul className='grid grid-cols-3 gap-6 sm:grid-cols-6'>
           {PROFILE.honours.map(honour => (
             <Honour key={`${honour.label}-${honour.year}`} {...honour} />
@@ -70,7 +70,7 @@ export default function DesignProfile() {
       </Section>
 
       <Section title='Seasons' className='mt-16'>
-        <div className='overflow-x-auto'>
+        <Panel className='overflow-x-auto'>
           <table className='w-full min-w-[32rem] text-left'>
             <thead className='text-sm text-muted-foreground'>
               <tr>
@@ -117,7 +117,7 @@ export default function DesignProfile() {
               })}
             </tbody>
           </table>
-        </div>
+        </Panel>
       </Section>
     </MockShell>
   );

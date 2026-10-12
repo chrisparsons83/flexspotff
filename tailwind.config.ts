@@ -19,7 +19,8 @@ const color = (name: string) => `oklch(var(--${name}))`;
 /**
  * `bg-league-admiral`, `text-league-admiral-foreground`,
  * `border-league-admiral-edge`, and the same for every position, medal and
- * sequence step. Only category fills have an edge.
+ * sequence step and brand colour. Only category fills have an edge, and only
+ * leagues have a tint (`bg-league-admiral-tint`).
  */
 const tokenFills = Object.fromEntries(
   Object.keys(fills).map(name => [
@@ -28,6 +29,7 @@ const tokenFills = Object.fromEntries(
       DEFAULT: token(name),
       foreground: token(`${name}-foreground`),
       ...(name in categoryFills ? { edge: token(`${name}-edge`) } : {}),
+      ...(name.startsWith('league-') ? { tint: token(`${name}-tint`) } : {}),
     },
   ]),
 );

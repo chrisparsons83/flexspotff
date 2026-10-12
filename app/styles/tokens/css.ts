@@ -1,5 +1,12 @@
 import { type Oklch, round } from './color';
-import { fillEdges, fills, neutralSteps, textOn, themeRoles } from './palette';
+import {
+  fillEdges,
+  fills,
+  leagueTints,
+  neutralSteps,
+  textOn,
+  themeRoles,
+} from './palette';
 import { scaleTokens } from './scale';
 
 export const TOKENS_CSS_PATH = 'app/styles/tokens.css';
@@ -21,8 +28,8 @@ const declarations = (tokens: Record<string, Oklch>) =>
 /**
  * One class drives both the tokens and Tailwind's `dark:` variants: the
  * server always renders `dark` or nothing on <html>, dark by default. Neutral
- * steps and fills are the same in both themes; only the roles and fill edges
- * change.
+ * steps and fills are the same in both themes; only the roles, fill edges
+ * and league tints change.
  */
 export const renderTokensCss = () => {
   const fixed = {
@@ -49,6 +56,7 @@ export const renderTokensCss = () => {
     ...declarations(themeRoles('light')),
     '',
     ...declarations(fillEdges('light')),
+    ...declarations(leagueTints('light')),
     '}',
     '',
     ':root.dark {',
@@ -56,6 +64,7 @@ export const renderTokensCss = () => {
     ...declarations(themeRoles('dark')),
     '',
     ...declarations(fillEdges('dark')),
+    ...declarations(leagueTints('dark')),
     '}',
     '',
   ].join('\n');
