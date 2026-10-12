@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --radius: 8px;
+  --radius: 0px;
   --duration-fast: 100ms;
   --duration-base: 150ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);

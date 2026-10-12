@@ -66,7 +66,7 @@ export default function DesignHome() {
           </div>
         </div>
         <div className={clsx(PANEL, 'col-span-12 md:col-span-6')}>
-          <h2 className='border-b border-border/50 px-5 py-3 font-bold'>
+          <h2 className='bg-secondary px-5 py-3 font-bold'>
             Your week
           </h2>
           <ul>

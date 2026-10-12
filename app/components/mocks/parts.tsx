@@ -3,15 +3,14 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
 /**
- * Layers by lightness, the way Discord does it: a panel is one step up from
- * the ground, slightly see-through so the page's glow tints it, with a
- * faint edge. No outlines, no blur.
+ * Layers by lightness, the way Discord does it: a panel is a flat, solid
+ * area one step up from the ground. No edges, no outlines, no blur.
  */
-export const PANEL = 'rounded-lg border border-border/50 bg-card/80';
+export const PANEL = 'bg-card';
 
-/** Something you can click that is not a button: a faint edge that lights up. */
+/** Something you can click that is not a button: an accent edge on hover. */
 export const CLICKABLE =
-  'rounded-lg ring-1 ring-border/50 transition-shadow duration-fast hover:ring-2 hover:ring-primary';
+  'ring-0 ring-primary transition-shadow duration-fast hover:ring-2';
 
 /** Keeps the review bar's choices (the query string) on mock links. */
 export function useMockHref() {
@@ -40,7 +39,7 @@ export function Square({
     <span
       aria-hidden
       className={clsx(
-        'inline-block shrink-0 rounded-sm border',
+        'inline-block shrink-0 border',
         size === 'sm' ? 'size-3' : 'size-6',
         fill,
       )}

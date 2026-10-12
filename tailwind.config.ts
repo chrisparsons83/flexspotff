@@ -175,9 +175,9 @@ const config: Config = {
       },
       borderRadius: {
         none: '0',
-        sm: 'calc(var(--radius) - 4px)',
-        DEFAULT: 'calc(var(--radius) - 2px)',
-        md: 'calc(var(--radius) - 2px)',
+        sm: 'var(--radius)',
+        DEFAULT: 'var(--radius)',
+        md: 'var(--radius)',
         lg: 'var(--radius)',
         xl: 'var(--radius)',
         '2xl': 'var(--radius)',

@@ -142,7 +142,7 @@ export function MockShell({
             }}
           />
         )}
-        <header className='relative border-b border-border/50 bg-card/60'>
+        <header className='relative bg-card'>
           <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
             <Link
               to={href('/design')}

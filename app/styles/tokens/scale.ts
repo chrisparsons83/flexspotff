@@ -63,8 +63,8 @@ export const STEP_DOWN_EM = `${Number((1 / TYPE_RATIO).toFixed(4))}em`;
 const rem = (px: number) => `${Number((px / 16).toFixed(4))}rem`;
 
 export const scaleTokens: Record<string, string> = {
-  /** Soft, like Discord's. Smaller controls step down from it. */
-  radius: '8px',
+  /** Square. */
+  radius: '0px',
   'duration-fast': '100ms',
   'duration-base': '150ms',
   'ease-standard': 'cubic-bezier(0.2, 0, 0, 1)',
