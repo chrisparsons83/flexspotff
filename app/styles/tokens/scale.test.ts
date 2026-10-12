@@ -1,5 +1,7 @@
+import { renderTokensCss } from './css';
 import {
   GRID_UNIT,
+  STEP_DOWN_EM,
   TYPE_BASE,
   TYPE_RATIO,
   TYPE_STEPS,
@@ -21,10 +23,29 @@ describe('type scale', () => {
     });
   });
 
-  it('puts every line height on the grid, and never tighter than the text', () => {
-    for (const { size, lineHeight } of steps) {
-      expect(lineHeight % GRID_UNIT).toBe(0);
-      expect(lineHeight).toBeGreaterThanOrEqual(size * 1.2);
+  it('lands each line on the grid, with leading between 1.2 and 1.6', () => {
+    for (const { size, leading } of steps) {
+      const lineHeight = size * leading;
+      expect(
+        Math.abs(lineHeight - Math.round(lineHeight / GRID_UNIT) * GRID_UNIT),
+      ).toBeLessThan(0.01);
+      expect(leading).toBeGreaterThanOrEqual(1.2);
+      expect(leading).toBeLessThanOrEqual(1.6);
+    }
+  });
+
+  it('steps code and small text down by exactly one step', () => {
+    expect(typeScale.base.size * parseFloat(STEP_DOWN_EM)).toBeCloseTo(
+      typeScale.sm.size,
+      1,
+    );
+  });
+
+  it('writes every step to tokens.css', () => {
+    const css = renderTokensCss();
+    for (const name of TYPE_STEPS) {
+      expect(css).toContain(`--text-${name}: `);
+      expect(css).toContain(`--leading-${name}: ${typeScale[name].leading};`);
     }
   });
 });

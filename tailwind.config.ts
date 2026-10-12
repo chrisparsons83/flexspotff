@@ -4,7 +4,11 @@ import {
   neutralSteps,
   themeRoles,
 } from './app/styles/tokens/palette';
-import { TYPE_STEPS, type TypeStep } from './app/styles/tokens/scale';
+import {
+  STEP_DOWN_EM,
+  TYPE_STEPS,
+  type TypeStep,
+} from './app/styles/tokens/scale';
 import type { Config } from 'tailwindcss';
 
 /** A token as a Tailwind colour that takes opacity modifiers. */
@@ -51,25 +55,19 @@ const typeStep = (name: TypeStep): [string, string] => [
 ];
 
 /**
- * The six steps keep Tailwind's names. Names off the scale point at the
- * nearest step until #195 moves routes off them.
+ * The six steps keep Tailwind's names. `text-xs` points at `sm` until #195
+ * moves routes off it; nothing else off the scale exists.
  */
 const fontSize = {
   ...Object.fromEntries(TYPE_STEPS.map(name => [name, typeStep(name)])),
   xs: typeStep('sm'),
-  ...Object.fromEntries(
-    ['4xl', '5xl', '6xl', '7xl', '8xl', '9xl'].map(name => [
-      name,
-      typeStep('3xl'),
-    ]),
-  ),
 };
 
 /** Prose at the type scale: body and tables at `base`, h1 to h4 above it. */
-const proseStep = (name: TypeStep) => ({
-  fontSize: `var(--text-${name})`,
-  lineHeight: `var(--leading-${name})`,
-});
+const proseStep = (name: TypeStep) => {
+  const [fontSize, lineHeight] = typeStep(name);
+  return { fontSize, lineHeight };
+};
 
 const config: Config = {
   darkMode: ['class'],
@@ -95,18 +93,11 @@ const config: Config = {
       },
     },
     fontSize,
-    fontFamily: {
-      sans: 'var(--font-sans)',
-      mono: [
-        'ui-monospace',
-        'SFMono-Regular',
-        'Menlo',
-        'Monaco',
-        'Consolas',
-        'monospace',
-      ],
-    },
     extend: {
+      // Extended rather than replaced, so mono keeps Tailwind's full stack.
+      fontFamily: {
+        sans: 'var(--font-sans)',
+      },
       typography: {
         DEFAULT: {
           css: {
@@ -117,9 +108,10 @@ const config: Config = {
             h4: proseStep('lg'),
             table: proseStep('base'),
             // Separate keys, so each merges into the plugin's own rule rather
-            // than losing to it.
-            code: proseStep('sm'),
-            small: proseStep('sm'),
+            // than losing to it. Code and small text sit one step below
+            // whatever holds them, so they stay on the scale inside headings.
+            code: { fontSize: STEP_DOWN_EM },
+            small: { fontSize: STEP_DOWN_EM },
             figcaption: proseStep('sm'),
             // Prose reads its colours from the tokens, so it follows the
             // theme without `prose-invert`.

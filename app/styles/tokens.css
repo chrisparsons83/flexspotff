@@ -8,17 +8,17 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --font-sans: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
   --text-sm: 0.8331rem;
-  --leading-sm: 1.25rem;
+  --leading-sm: 1.5;
   --text-base: 1rem;
-  --leading-base: 1.5rem;
+  --leading-base: 1.5;
   --text-lg: 1.2rem;
-  --leading-lg: 1.5rem;
+  --leading-lg: 1.25;
   --text-xl: 1.44rem;
-  --leading-xl: 1.75rem;
+  --leading-xl: 1.2153;
   --text-2xl: 1.7281rem;
-  --leading-2xl: 2.25rem;
+  --leading-2xl: 1.3021;
   --text-3xl: 2.0737rem;
-  --leading-3xl: 2.5rem;
+  --leading-3xl: 1.2056;
 
   --neutral-0: 0.18 0 0;
   --neutral-1: 0.2195 0 0;

@@ -17,8 +17,8 @@ export const TYPE_BASE = 16;
 export const TYPE_RATIO = 1.2;
 
 /**
- * The six steps, smallest first, by the Tailwind name each one takes. Step 0
- * (`base`) is body text and tables; the steps above are headings.
+ * The six steps, smallest first, by the Tailwind name each one takes. `base`
+ * is body text and tables; the steps above it are headings.
  */
 export const TYPE_STEPS = ['sm', 'base', 'lg', 'xl', '2xl', '3xl'] as const;
 const BASE_INDEX = TYPE_STEPS.indexOf('base');
@@ -29,14 +29,28 @@ const HEADING_LEADING = 1.2;
 
 export type TypeStep = (typeof TYPE_STEPS)[number];
 
+/**
+ * Each step's size in px, and its leading as a unitless ratio. The ratio
+ * puts the line on the grid at the step's own size, and scales with the text
+ * when something inside sets a different size.
+ */
 export const typeScale = Object.fromEntries(
   TYPE_STEPS.map((name, i) => {
     const size = TYPE_BASE * TYPE_RATIO ** (i - BASE_INDEX);
-    const leading = i <= BASE_INDEX ? BODY_LEADING : HEADING_LEADING;
-    const lineHeight = Math.ceil((size * leading) / GRID_UNIT) * GRID_UNIT;
-    return [name, { size: Number(size.toFixed(2)), lineHeight }];
+    const target = i <= BASE_INDEX ? BODY_LEADING : HEADING_LEADING;
+    const lineHeight = Math.ceil((size * target) / GRID_UNIT) * GRID_UNIT;
+    return [
+      name,
+      {
+        size: Number(size.toFixed(2)),
+        leading: Number((lineHeight / size).toFixed(4)),
+      },
+    ];
   }),
-) as Record<TypeStep, { size: number; lineHeight: number }>;
+) as Record<TypeStep, { size: number; leading: number }>;
+
+/** One step down from whatever surrounds it, as a relative size. */
+export const STEP_DOWN_EM = `${Number((1 / TYPE_RATIO).toFixed(4))}em`;
 
 const rem = (px: number) => `${Number((px / 16).toFixed(4))}rem`;
 
@@ -50,7 +64,7 @@ export const scaleTokens: Record<string, string> = {
   ...Object.fromEntries(
     TYPE_STEPS.flatMap(name => [
       [`text-${name}`, rem(typeScale[name].size)],
-      [`leading-${name}`, rem(typeScale[name].lineHeight)],
+      [`leading-${name}`, String(typeScale[name].leading)],
     ]),
   ),
 };
