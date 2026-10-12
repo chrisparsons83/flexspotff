@@ -105,6 +105,9 @@ export default function App() {
 
   const regex = /omni\/\d{4}\/board$/gm;
 
+  // The /design mocks draw the new shell themselves.
+  if (currentPath.startsWith('/design')) return <Outlet />;
+
   return (
     <>
       <NavBar
