@@ -1,7 +1,7 @@
+@import '@fontsource-variable/hanken-grotesk/wght.css';
+@import '@fontsource-variable/hanken-grotesk/wght-italic.css';
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --radius: 8px;
-}
