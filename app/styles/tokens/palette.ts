@@ -5,8 +5,9 @@
  *   tinge, the way Discord's are. The tinge fades toward the light end. Each
  *   theme's roles are fixed offsets from its ground, so light is dark read
  *   from the other end.
- * - One vivid accent, between blue and purple and leaning purple, marks
- *   buttons, links and the current page.
+ * - One vivid accent, the orange of the logo, marks buttons, links and the
+ *   current page. Like the league colours it is fixed: one colour in both
+ *   themes, so the logo and the buttons always match.
  * - Buttons sit on a short drop shadow in a darker shade of the accent, like
  *   a key, and press down into it.
  * - Each league has a tint: its hue, at low chroma, at card lightness. A
@@ -170,6 +171,26 @@ export const medals = Object.fromEntries(
   ]),
 ) as Record<Medal, Oklch>;
 
+// Accent (fixed)
+
+/** The logo orange, exactly. */
+const ACCENT_HEX = '#e65719';
+const accent = round(hexToOklch(ACCENT_HEX));
+
+/** Hover lifts the accent; lighter also raises its contrast with its text. */
+const PRIMARY_HOVER_LIFT = 0.05;
+/** How much darker a button's shadow is than the button. */
+const PRIMARY_SHADE_DROP = 0.16;
+
+/**
+ * Accent text starts from these and steps away from the ground until it reads
+ * on the ground and on cards. The light theme needs a deeper orange.
+ */
+const BRAND_START: Record<Theme, Oklch> = {
+  dark: accent,
+  light: { l: 0.55, c: 0.17, h: accent.h },
+};
+
 // Positions
 
 export type Position = 'qb' | 'rb' | 'wr' | 'te' | 'def';
@@ -177,7 +198,8 @@ export type Position = 'qb' | 'rb' | 'wr' | 'te' | 'def';
 /**
  * Positions in the order their hues are placed. The order is chosen so each
  * lands near its current colour: DEF red-brown, WR blue, QB maroon, TE
- * orange, RB green.
+ * orange, RB green. The orange accent is left out of the placement, so
+ * positions keep the colours people know even where TE and DEF sit near it.
  */
 const POSITION_ORDER: Position[] = ['def', 'wr', 'qb', 'te', 'rb'];
 
@@ -214,24 +236,13 @@ export const sequence: Oklch[] = Array.from(
     }),
 );
 
-// Accent
-
-/** Between blue and purple, leaning purple, at the neutrals' hue. */
-const ACCENT_HUE = NEUTRAL_HUE;
-const ACCENT_CHROMA = 0.19;
-/** Where the accent starts as a fill, before each theme adjusts it. */
-const ACCENT_LIGHTNESS = 0.55;
-
-/** How much darker a button's shadow is than the button. */
-const PRIMARY_SHADE_DROP = 0.16;
-
 // Theme roles
 
 const SEMANTIC_HUES = {
   negative: 25,
-  // Amber at 85 loses most of its chroma once it is dark enough to read on
-  // the light theme and turns olive; 55 stays a recognisable dark amber.
-  warning: 55,
+  // Yellow, well clear of the orange accent. Dark enough to read on the
+  // light theme it turns a deep olive, which still is not the accent.
+  warning: 90,
   positive: 145,
   info: 250,
 } as const;
@@ -258,18 +269,19 @@ const semanticText = (h: number, theme: Theme, against: Oklch) => {
  * on `against`, stepping away from the theme's ground.
  */
 const clearing = (
-  h: number,
+  from: Oklch,
   theme: Theme,
-  against: Oklch,
+  against: Oklch[],
   ratio: number,
-  from: number,
 ) => {
   const direction = theme === 'dark' ? 1 : -1;
-  for (let l = from; l > 0 && l < 1; l += direction * 0.005) {
-    const color = make({ l, c: ACCENT_CHROMA, h });
-    if (contrast(color, against) >= ratio) return color;
+  for (let l = from.l; l > 0 && l < 1; l += direction * 0.005) {
+    const color = make({ ...from, l });
+    if (against.every(ground => contrast(color, ground) >= ratio)) {
+      return color;
+    }
   }
-  throw new Error(`Nothing at hue ${h} clears ${ratio} in ${theme}`);
+  throw new Error(`Nothing at hue ${from.h} clears ${ratio} in ${theme}`);
 };
 
 const buildRoles = (theme: Theme) => {
@@ -288,13 +300,15 @@ const buildRoles = (theme: Theme) => {
     throw new Error(`No ${theme} step clears ${ratio}`);
   };
 
-  /** The accent as a fill: its own lightness, or nearer the text if needed. */
-  const primaryFill = clearing(
-    ACCENT_HUE,
-    theme,
-    surface,
-    FILL_CONTRAST,
-    ACCENT_LIGHTNESS,
+  const input = firstStepClearing(FILL_CONTRAST, raised);
+
+  /**
+   * The accent is fixed, so where it is too faint to show on the ground or a
+   * card (the light theme's cards) it gets a neutral edge, as category fills
+   * do.
+   */
+  const accentShows = [background, surface].every(
+    ground => contrast(accent, ground) >= FILL_CONTRAST,
   );
 
   const semantic = Object.fromEntries(
@@ -311,15 +325,20 @@ const buildRoles = (theme: Theme) => {
     'card-foreground': foreground,
     popover: surface,
     'popover-foreground': foreground,
-    // A fill: it clears 3:1, not text contrast. Accent text uses `brand`.
-    primary: primaryFill,
-    'primary-foreground': textOn(primaryFill),
-    brand: clearing(ACCENT_HUE, theme, raised, TEXT_CONTRAST, 0.5),
-    'primary-shade': make({
-      l: primaryFill.l - PRIMARY_SHADE_DROP,
-      c: ACCENT_CHROMA,
-      h: ACCENT_HUE,
-    }),
+    // A fill, not text. Accent text uses `brand`.
+    primary: accent,
+    // White on the orange is 3.7:1; the darkest neutral is 4.7:1. The same
+    // in both themes, like the accent itself.
+    'primary-foreground': neutralSteps[0],
+    'primary-hover': make({ ...accent, l: accent.l + PRIMARY_HOVER_LIFT }),
+    'primary-edge': accentShows ? accent : input,
+    'primary-shade': make({ ...accent, l: accent.l - PRIMARY_SHADE_DROP }),
+    brand: clearing(
+      BRAND_START[theme],
+      theme,
+      [background, surface],
+      TEXT_CONTRAST,
+    ),
     secondary: raised,
     'secondary-foreground': foreground,
     muted: surface,
@@ -329,7 +348,7 @@ const buildRoles = (theme: Theme) => {
     destructive: semantic.negative,
     'destructive-foreground': textOn(semantic.negative),
     border: step(BORDER_OFFSET),
-    input: firstStepClearing(FILL_CONTRAST, raised),
+    input,
     ring: foreground,
     ...semantic,
   };
@@ -355,15 +374,17 @@ export const TEXT_PAIRS: [Role, Role][] = [
   ['card-foreground', 'card'],
   ['popover-foreground', 'popover'],
   ['primary-foreground', 'primary'],
+  ['primary-foreground', 'primary-hover'],
   ['secondary-foreground', 'secondary'],
   ['accent-foreground', 'accent'],
   ['muted-foreground', 'background'],
   ['muted-foreground', 'muted'],
   ['muted-foreground', 'secondary'],
   ['destructive-foreground', 'destructive'],
+  // Accent text is for the page and cards; controls on the secondary
+  // surface use neutral text.
   ['brand', 'background'],
   ['brand', 'card'],
-  ['brand', 'secondary'],
   ...(['negative', 'warning', 'positive', 'info'] as const).flatMap(
     (role): [Role, Role][] => [
       [role, 'background'],
@@ -374,8 +395,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
 ];
 
 export const EDGE_PAIRS: [Role, Role][] = [
-  ['primary', 'background'],
-  ['primary', 'card'],
+  ['primary-edge', 'background'],
+  ['primary-edge', 'card'],
   ['input', 'background'],
   ['input', 'card'],
   ['ring', 'background'],

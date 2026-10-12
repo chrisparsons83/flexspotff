@@ -4,6 +4,7 @@ import { MenuIcon, UserIcon, XIcon } from '@heroicons/react/outline';
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import { Fragment } from 'react';
+import { Logo } from '~/components/brand/Logo';
 import MemberAvatar from '~/components/ui/MemberAvatar';
 import type { User } from '~/models/user.server';
 
@@ -41,13 +42,14 @@ export default function NavBar({ user, userIsEditor, canViewProfiles }: Props) {
                 </Disclosure.Button>
               </div>
               <div className='flex flex-1 items-center justify-center sm:items-stretch sm:justify-start'>
-                <div className='flex flex-shrink-0 items-center'>
-                  <img
-                    className='h-8 w-auto'
-                    src='/theflexspotlogo.svg'
-                    alt='The Flex Spot'
-                  />
-                </div>
+                <a
+                  href='/'
+                  aria-label='Flex Spot'
+                  className='flex flex-shrink-0 items-center'
+                >
+                  {/* The bar is dark in both themes until #194 rebuilds it. */}
+                  <Logo className='h-7 w-auto text-white' />
+                </a>
                 <div className='hidden sm:ml-6 sm:block'>
                   <div className='flex space-x-4'>
                     {navigation.map(item => (

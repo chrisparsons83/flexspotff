@@ -8,9 +8,12 @@ import type { ReactNode } from 'react';
  */
 export const PANEL = 'bg-card';
 
-/** Something you can click that is not a button: an accent edge on hover. */
+/**
+ * Something you can click that is not a button: an accent edge on hover, or a
+ * neutral one where the accent is too faint, as on light cards.
+ */
 export const CLICKABLE =
-  'ring-0 ring-primary transition-shadow duration-fast hover:ring-2';
+  'ring-0 ring-primary-edge transition-shadow duration-fast hover:ring-2';
 
 /**
  * A square of a category colour. The edge class draws an outline only where
@@ -85,8 +88,8 @@ export function SubNav({
               className={clsx(
                 'block whitespace-nowrap px-3 py-1.5 text-sm transition-colors duration-fast',
                 item.label === current
-                  ? 'bg-primary font-semibold text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                  ? 'border border-primary-edge bg-primary font-semibold text-primary-foreground'
+                  : 'border border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
             >
               {item.label}
@@ -113,7 +116,7 @@ export function PrimaryButton({
     <button
       type='button'
       className={clsx(
-        'bg-primary font-bold text-primary-foreground shadow-press transition-[background-color,transform,box-shadow] duration-fast hover:bg-primary/90 active:translate-y-[3px] active:shadow-none',
+        'border border-primary-edge bg-primary font-bold text-primary-foreground shadow-press transition-[background-color,transform,box-shadow] duration-fast hover:bg-primary-hover active:translate-y-[3px] active:shadow-none',
         size === 'md' ? 'px-5 py-3' : 'px-4 py-2 text-sm',
       )}
     >

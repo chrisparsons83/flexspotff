@@ -92,10 +92,12 @@
   --card-foreground: 0.22 0.016 285;
   --popover: 0.895 0.0052 285;
   --popover-foreground: 0.22 0.016 285;
-  --primary: 0.55 0.19 285;
-  --primary-foreground: 1 0 0;
-  --brand: 0.455 0.19 285;
-  --primary-shade: 0.39 0.19 285;
+  --primary: 0.639 0.1897 39.99;
+  --primary-foreground: 0.22 0.016 285;
+  --primary-hover: 0.689 0.1897 39.99;
+  --primary-edge: 0.52 0.0112 285;
+  --primary-shade: 0.479 0.1506 39.99;
+  --brand: 0.51 0.1603 39.99;
   --secondary: 0.82 0.0064 285;
   --secondary-foreground: 0.22 0.016 285;
   --muted: 0.895 0.0052 285;
@@ -108,7 +110,7 @@
   --input: 0.52 0.0112 285;
   --ring: 0.22 0.016 285;
   --negative: 0.45 0.1408 25;
-  --warning: 0.445 0.1104 55;
+  --warning: 0.435 0.089 90;
   --positive: 0.42 0.1323 145;
   --info: 0.435 0.1233 250;
 
@@ -141,10 +143,12 @@
   --card-foreground: 0.97 0.004 285;
   --popover: 0.295 0.0148 285;
   --popover-foreground: 0.97 0.004 285;
-  --primary: 0.58 0.19 285;
-  --primary-foreground: 1 0 0;
-  --brand: 0.75 0.134 285;
-  --primary-shade: 0.42 0.19 285;
+  --primary: 0.639 0.1897 39.99;
+  --primary-foreground: 0.22 0.016 285;
+  --primary-hover: 0.689 0.1897 39.99;
+  --primary-edge: 0.639 0.1897 39.99;
+  --primary-shade: 0.479 0.1506 39.99;
+  --brand: 0.684 0.1897 39.99;
   --secondary: 0.37 0.0136 285;
   --secondary-foreground: 0.97 0.004 285;
   --muted: 0.295 0.0148 285;
@@ -157,7 +161,7 @@
   --input: 0.6325 0.0094 285;
   --ring: 0.97 0.004 285;
   --negative: 0.755 0.1408 25;
-  --warning: 0.75 0.1408 55;
+  --warning: 0.74 0.1408 90;
   --positive: 0.725 0.1408 145;
   --info: 0.74 0.1396 250;
 

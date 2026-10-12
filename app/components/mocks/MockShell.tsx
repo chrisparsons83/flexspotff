@@ -1,8 +1,7 @@
-import { LEAGUES } from './data';
-import { Square } from './parts';
 import { Link, useLocation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
+import { Logo } from '~/components/brand/Logo';
 
 const NAV = [
   { label: 'Home', to: '/design/home' },
@@ -15,27 +14,17 @@ const NAV = [
 
 const THEMES = ['dark', 'light', 'system'] as const;
 
-/** The accent mixed into the ground, as a share from 0 to 100. */
+/**
+ * The accent mixed into the ground, as a share from 0 to 100. Mixed in OKLab:
+ * OKLCH would turn the hue from the orange to the ground's violet on the way,
+ * through pink.
+ */
 const tinted = (share: number) =>
-  `color-mix(in oklch, oklch(var(--primary)) ${share}%, oklch(var(--background)))`;
+  `color-mix(in oklab, oklch(var(--primary)) ${share}%, oklch(var(--background)))`;
 
 /** A glow of the accent from the top centre, fading out by mid-page. */
 const glow = (share: number) =>
   `radial-gradient(90% 680px at 50% 0, ${tinted(share)}, transparent)`;
-
-/**
- * Placeholder mark until the logo (#192): the five league colours as a row
- * of squares.
- */
-function Mark() {
-  return (
-    <span className='flex gap-0.5' aria-hidden>
-      {LEAGUES.map(league => (
-        <Square key={league.key} fill={league.fill} />
-      ))}
-    </span>
-  );
-}
 
 /** Development-only controls for reviewing themes and options. */
 function ReviewBar() {
@@ -81,12 +70,10 @@ export function MockShell({
           <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
             <Link
               to={'/design'}
-              className='col-span-12 flex items-center gap-3 md:col-span-3'
+              aria-label='Flex Spot'
+              className='col-span-12 flex items-center md:col-span-3'
             >
-              <Mark />
-              <span className='font-extrabold tracking-tight'>
-                The Flex Spot
-              </span>
+              <Logo className='h-7 w-auto' />
             </Link>
             <nav
               aria-label='Main'
