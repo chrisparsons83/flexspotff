@@ -1,3 +1,5 @@
+import { Link } from '@remix-run/react';
+import clsx from 'clsx';
 import { MockShell } from '~/components/mocks/MockShell';
 import {
   CURRENT_WEEK,
@@ -6,7 +8,15 @@ import {
   PODCAST,
   YOUR_WEEK,
 } from '~/components/mocks/data';
-import { Block, Panel, PrimaryButton, Section } from '~/components/mocks/parts';
+import {
+  OUTLINED,
+  Panel,
+  PRESSABLE,
+  PRESSABLE_SM,
+  PrimaryButton,
+  Section,
+  useMockHref,
+} from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -36,6 +46,8 @@ const LEAGUE_BLOCKS: Record<string, { head: string; body: string }> = {
 };
 
 export default function DesignHome() {
+  const href = useMockHref();
+
   return (
     <MockShell current='Home'>
       <div className='grid grid-cols-12 items-start gap-x-6 gap-y-10'>
@@ -52,7 +64,7 @@ export default function DesignHome() {
             <PrimaryButton>Make your survivor pick</PrimaryButton>
           </div>
         </div>
-        <Block className='col-span-12 bg-card md:col-span-6'>
+        <div className={clsx(OUTLINED, 'col-span-12 bg-card md:col-span-6')}>
           <h2 className='border-b-2 border-ink px-5 py-3 font-bold'>
             Your week
           </h2>
@@ -80,13 +92,17 @@ export default function DesignHome() {
               </li>
             ))}
           </ul>
-        </Block>
+        </div>
       </div>
 
       <Section title='League leaders' className='mt-16'>
         <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
           {LEAGUES.map(league => (
-            <Block key={league.key} className='flex flex-col'>
+            <Link
+              key={league.key}
+              to={href('/design/standings')}
+              className={clsx(PRESSABLE, 'flex flex-col')}
+            >
               <h3
                 className={`border-b-2 border-ink px-4 py-3 font-bold ${
                   LEAGUE_BLOCKS[league.key].head
@@ -108,7 +124,7 @@ export default function DesignHome() {
                   </li>
                 ))}
               </ol>
-            </Block>
+            </Link>
           ))}
         </div>
       </Section>
@@ -124,12 +140,17 @@ export default function DesignHome() {
           <p className='col-span-6 text-muted-foreground md:col-span-2'>
             {PODCAST.length}
           </p>
-          <a
-            href='/design'
-            className='col-span-12 font-semibold text-brand underline underline-offset-4 md:col-span-2 md:text-right'
-          >
-            Listen
-          </a>
+          <span className='col-span-12 md:col-span-2 md:text-right'>
+            <a
+              href='/design'
+              className={clsx(
+                PRESSABLE_SM,
+                'inline-block bg-primary px-4 py-2 text-sm font-bold text-primary-foreground',
+              )}
+            >
+              Listen
+            </a>
+          </span>
         </Panel>
       </Section>
     </MockShell>

@@ -8,7 +8,14 @@ import {
   PLAYOFF_SPOTS,
   type Result,
 } from '~/components/mocks/data';
-import { Panel, Square, SubNav } from '~/components/mocks/parts';
+import {
+  Panel,
+  PRESSABLE_SM,
+  PRESSED_SM,
+  Square,
+  SubNav,
+  useMockHref,
+} from '~/components/mocks/parts';
 import { requireDesignMocks } from '~/services/design.server';
 
 export const loader = () => requireDesignMocks();
@@ -59,7 +66,7 @@ function PointsBar({
   return (
     <span className='flex items-center gap-3'>
       <span className='w-16 shrink-0'>{value.toFixed(1)}</span>
-      <span className='hidden h-2 w-24 bg-muted sm:block' aria-hidden>
+      <span className='hidden h-2 w-24 bg-secondary sm:block' aria-hidden>
         <span
           className='block h-2 bg-league-champions'
           style={{ width: `${Math.round(10 + share * 90)}%` }}
@@ -73,6 +80,7 @@ export default function DesignStandings() {
   const points = CHAMPIONS_STANDINGS.map(row => row.pointsFor);
   const min = Math.min(...points);
   const max = Math.max(...points);
+  const href = useMockHref();
 
   return (
     <MockShell current='Leagues'>
@@ -82,17 +90,20 @@ export default function DesignStandings() {
           The top tier. Twelve teams, six make the playoffs.
         </p>
         <nav aria-label='League' className='mt-8'>
-          <ul className='flex flex-wrap gap-2'>
+          <ul className='flex flex-wrap gap-3'>
             {LEAGUES.map(league => (
               <li key={league.key}>
                 <Link
-                  to='/design/standings'
+                  to={href('/design/standings')}
                   aria-current={league.key === 'champions' ? 'page' : undefined}
                   className={clsx(
-                    'flex items-center gap-2 border-2 px-3 py-2 text-sm',
+                    'flex items-center gap-2 px-3 py-2 text-sm',
                     league.key === 'champions'
-                      ? 'border-ink bg-league-champions font-bold text-league-champions-foreground shadow-hard-sm'
-                      : 'border-transparent bg-background hover:bg-secondary',
+                      ? clsx(
+                          PRESSED_SM,
+                          'bg-league-champions font-bold text-league-champions-foreground',
+                        )
+                      : clsx(PRESSABLE_SM, 'bg-card hover:bg-secondary'),
                   )}
                 >
                   {league.key !== 'champions' && <Square fill={league.fill} />}
@@ -115,7 +126,7 @@ export default function DesignStandings() {
         </p>
       </div>
 
-      <div className='mt-6 overflow-x-auto'>
+      <Panel className='mt-6 overflow-x-auto p-0'>
         <table className='w-full min-w-[40rem] text-left'>
           <thead className='text-sm text-muted-foreground'>
             <tr>
@@ -161,7 +172,7 @@ export default function DesignStandings() {
             ))}
           </tbody>
         </table>
-      </div>
+      </Panel>
       <p className='mt-4 text-sm text-muted-foreground'>
         The top {PLAYOFF_SPOTS}, on the tinted rows, make the playoffs.
       </p>
