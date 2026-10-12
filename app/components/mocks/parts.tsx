@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams } from '@remix-run/react';
+import { Link, useLocation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -16,12 +16,6 @@ export const CLICKABLE =
 export function useMockHref() {
   const { search } = useLocation();
   return (to: string) => to + search;
-}
-
-/** Whether the review bar has the main button's hard shadow switched on. */
-function useButtonShadow() {
-  const [params] = useSearchParams();
-  return params.get('shadow') === 'on';
 }
 
 /**
@@ -112,9 +106,8 @@ export function SubNav({
 }
 
 /**
- * The primary action: a full-colour accent block. With the review bar's
- * shadow switched on, it also gets the one hard offset shadow on the site
- * and presses into it.
+ * The primary action: a full-colour accent block sitting on a short drop in
+ * a darker shade of itself, like a key. Pressing pushes it down into it.
  */
 export function PrimaryButton({
   children,
@@ -123,15 +116,12 @@ export function PrimaryButton({
   children: ReactNode;
   size?: 'sm' | 'md';
 }) {
-  const shadow = useButtonShadow();
   return (
     <button
       type='button'
       className={clsx(
-        'rounded-md bg-primary font-bold text-primary-foreground transition-[background-color,transform,box-shadow] duration-fast hover:bg-primary/90',
+        'bg-primary font-bold text-primary-foreground shadow-press transition-[background-color,transform,box-shadow] duration-fast hover:bg-primary/90 active:translate-y-[3px] active:shadow-none',
         size === 'md' ? 'px-5 py-3' : 'px-4 py-2 text-sm',
-        shadow &&
-          'border-2 border-ink shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-none',
       )}
     >
       {children}

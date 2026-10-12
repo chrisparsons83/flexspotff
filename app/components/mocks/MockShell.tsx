@@ -1,6 +1,6 @@
 import { LEAGUES } from './data';
 import { Square, useMockHref } from './parts';
-import { Link, useLocation, useSearchParams } from '@remix-run/react';
+import { Link, useLocation } from '@remix-run/react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -23,14 +23,6 @@ const tinted = (share: number) =>
 const glow = (share: number) =>
   `radial-gradient(90% 680px at 50% 0, ${tinted(share)}, transparent)`;
 
-const BACKGROUNDS = {
-  glow: 'Glow',
-  'glow-dots': 'Glow + dots',
-  plain: 'Plain',
-} as const;
-
-type Background = keyof typeof BACKGROUNDS;
-
 /**
  * Placeholder mark until the logo (#192): the five league colours as a row
  * of squares.
@@ -46,28 +38,8 @@ function Mark() {
 }
 
 /** Development-only controls for reviewing themes and options. */
-function ReviewBar({ background }: { background: Background }) {
+function ReviewBar() {
   const { pathname, search } = useLocation();
-  const [params] = useSearchParams();
-  const shadow = params.get('shadow') === 'on' ? 'on' : 'off';
-
-  /** The current page with one review option changed. */
-  const withOption = (key: string, value: string) => {
-    const next = new URLSearchParams(params);
-    next.set(key, value);
-    return `${pathname}?${next}`;
-  };
-
-  const option = (key: string, value: string, label: string, on: boolean) => (
-    <Link
-      key={value}
-      to={withOption(key, value)}
-      className={on ? 'font-bold underline' : 'hover:underline'}
-    >
-      {label}
-    </Link>
-  );
-
   return (
     <div className='bg-secondary text-sm'>
       <div className='mx-auto flex max-w-6xl flex-wrap gap-x-8 gap-y-2 px-4 py-2'>
@@ -85,17 +57,6 @@ function ReviewBar({ background }: { background: Background }) {
             </a>
           ))}
         </span>
-        <span className='flex gap-3'>
-          <span className='text-muted-foreground'>Background</span>
-          {Object.entries(BACKGROUNDS).map(([key, label]) =>
-            option('bg', key, label, key === background),
-          )}
-        </span>
-        <span className='flex gap-3'>
-          <span className='text-muted-foreground'>Button shadow</span>
-          {option('shadow', 'off', 'Off', shadow === 'off')}
-          {option('shadow', 'on', 'On', shadow === 'on')}
-        </span>
       </div>
     </div>
   );
@@ -110,38 +71,13 @@ export function MockShell({
   children: ReactNode;
 }) {
   const href = useMockHref();
-  const [params] = useSearchParams();
-  const requested = params.get('bg') ?? 'glow';
-  const background: Background =
-    requested in BACKGROUNDS ? (requested as Background) : 'glow';
-
   return (
     <div className='min-h-full bg-background text-foreground'>
-      <ReviewBar background={background} />
+      <ReviewBar />
       <div
         className='relative'
-        style={
-          background === 'plain'
-            ? undefined
-            : { backgroundImage: glow(32), backgroundRepeat: 'no-repeat' }
-        }
+        style={{ backgroundImage: glow(32), backgroundRepeat: 'no-repeat' }}
       >
-        {background === 'glow-dots' && (
-          // The dot grid fades out with the glow instead of covering the page.
-          <div
-            aria-hidden
-            className='pointer-events-none absolute inset-x-0 top-0 h-[680px]'
-            style={{
-              backgroundImage:
-                'radial-gradient(oklch(var(--foreground) / 0.18) 1.2px, transparent 1.2px)',
-              backgroundSize: '22px 22px',
-              maskImage:
-                'radial-gradient(70% 100% at 50% 0, black, transparent)',
-              WebkitMaskImage:
-                'radial-gradient(70% 100% at 50% 0, black, transparent)',
-            }}
-          />
-        )}
         <header className='relative bg-card'>
           <div className='mx-auto grid max-w-6xl grid-cols-12 items-center gap-x-6 px-4 py-4'>
             <Link

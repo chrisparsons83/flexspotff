@@ -95,7 +95,7 @@
   --primary: 0.55 0.19 285;
   --primary-foreground: 1 0 0;
   --brand: 0.455 0.19 285;
-  --ink: 0.22 0.016 285;
+  --primary-shade: 0.39 0.19 285;
   --secondary: 0.82 0.0064 285;
   --secondary-foreground: 0.22 0.016 285;
   --muted: 0.895 0.0052 285;
@@ -144,7 +144,7 @@
   --primary: 0.58 0.19 285;
   --primary-foreground: 1 0 0;
   --brand: 0.75 0.134 285;
-  --ink: 0.12 0.02 285;
+  --primary-shade: 0.42 0.19 285;
   --secondary: 0.37 0.0136 285;
   --secondary-foreground: 0.97 0.004 285;
   --muted: 0.295 0.0148 285;

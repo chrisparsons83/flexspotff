@@ -42,10 +42,12 @@ describe('type scale', () => {
   });
 
   it('writes every step to tokens.css', () => {
-    const css = renderTokensCss();
+    const tokensCss = renderTokensCss();
     for (const name of TYPE_STEPS) {
-      expect(css).toContain(`--text-${name}: `);
-      expect(css).toContain(`--leading-${name}: ${typeScale[name].leading};`);
+      expect(tokensCss).toContain(`--text-${name}: `);
+      expect(tokensCss).toContain(
+        `--leading-${name}: ${typeScale[name].leading};`,
+      );
     }
   });
 });

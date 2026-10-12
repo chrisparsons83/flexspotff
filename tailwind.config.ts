@@ -184,10 +184,9 @@ const config: Config = {
         '3xl': 'var(--radius)',
         full: '9999px',
       },
-      // Hard offset shadows in ink, for things you act on or should notice.
+      // A button sits on a short drop in a darker shade of itself.
       boxShadow: {
-        hard: `4px 4px 0 0 ${color('ink')}`,
-        'hard-sm': `2px 2px 0 0 ${color('ink')}`,
+        press: `0 3px 0 0 ${color('primary-shade')}`,
       },
       transitionDuration: {
         DEFAULT: 'var(--duration-base)',

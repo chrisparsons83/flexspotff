@@ -7,8 +7,8 @@
  *   from the other end.
  * - One vivid accent, between blue and purple and leaning purple, marks
  *   buttons, links and the current page.
- * - Ink is the colour of outlines and hard offset shadows, which only things
- *   you act on or should notice get.
+ * - Buttons sit on a short drop shadow in a darker shade of the accent, like
+ *   a key, and press down into it.
  * - Each league has a tint: its hue, at low chroma, at card lightness. A
  *   league's panels and pages wear it as a field; text sits on it as on a
  *   card.
@@ -222,8 +222,8 @@ const ACCENT_CHROMA = 0.19;
 /** Where the accent starts as a fill, before each theme adjusts it. */
 const ACCENT_LIGHTNESS = 0.55;
 
-/** Outlines and hard shadows: darker than the dark ground, tinged. */
-const DARK_INK: Oklch = make({ l: 0.12, c: 0.02, h: NEUTRAL_HUE });
+/** How much darker a button's shadow is than the button. */
+const PRIMARY_SHADE_DROP = 0.16;
 
 // Theme roles
 
@@ -314,7 +314,11 @@ const buildRoles = (theme: Theme) => {
     primary: primaryFill,
     'primary-foreground': textOn(primaryFill),
     brand: clearing(ACCENT_HUE, theme, raised, TEXT_CONTRAST, 0.5),
-    ink: theme === 'dark' ? DARK_INK : step(NEUTRAL_STEP_COUNT - 1),
+    'primary-shade': make({
+      l: primaryFill.l - PRIMARY_SHADE_DROP,
+      c: ACCENT_CHROMA,
+      h: ACCENT_HUE,
+    }),
     secondary: raised,
     'secondary-foreground': foreground,
     muted: surface,
@@ -371,7 +375,6 @@ export const TEXT_PAIRS: [Role, Role][] = [
 export const EDGE_PAIRS: [Role, Role][] = [
   ['primary', 'background'],
   ['primary', 'card'],
-  ['ink', 'primary'],
   ['input', 'background'],
   ['input', 'card'],
   ['ring', 'background'],
