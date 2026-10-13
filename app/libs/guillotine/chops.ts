@@ -178,16 +178,24 @@ export function weekStarters({
 }
 
 /**
- * Who owns each roster. Sleeper's own `owner_id` wins; the draft fills the
- * gap for a roster whose manager has since been removed from the league,
- * which is how the 2021 league ended up.
+ * Who owns each roster. Sleeper's own `owner_id` wins whenever it is there.
  *
- * An autodrafted roster whose manager then left has neither, as three of the
- * 2025 league's did. The roster's own waiver and free agent moves still name
- * who made them, so the last fallback is whoever made the most of those.
- * Commissioner moves, trades (either side can create one) and anyone who owns
- * another roster are left out, so a commissioner tidying up an abandoned
- * roster is never taken for its owner.
+ * Without it, the roster's own waiver and free agent moves come next: they
+ * name who actually ran the roster. The draft is not good enough on its own,
+ * because a draft's picks name whoever held that draft slot, and the manual
+ * leagues of 2022 and 2023 handed out rosters in a different order from the
+ * slots. There, nearly every roster's picks were made by someone who went on
+ * to manage a different roster.
+ *
+ * Commissioner moves and trades (either side can create one) are left out,
+ * and so is anyone who still owns another roster. Each mover is counted for
+ * the one roster they made the most moves on, so a commissioner tidying up an
+ * abandoned roster is never taken for its owner.
+ *
+ * The drafter is the fallback for a roster with no moves at all, and only
+ * when they are not already the owner of another roster. An autodrafted
+ * roster whose manager then left has neither, as three of the 2025 league's
+ * did, and stays unowned for the admin to assign by hand.
  */
 export function resolveRosterOwners(
   rosters: { roster_id: number; owner_id: string | null }[],
@@ -201,36 +209,64 @@ export function resolveRosterOwners(
     }
   }
 
-  const knownOwners = new Set<string>();
-  for (const roster of rosters) {
-    const owner = roster.owner_id ?? drafter.get(roster.roster_id);
-    if (owner) knownOwners.add(owner);
-  }
+  const sleeperOwners = new Set(
+    rosters.flatMap(roster => (roster.owner_id ? [roster.owner_id] : [])),
+  );
 
-  const movesByRoster = new Map<number, Map<string, number>>();
+  // Creator -> roster ID -> how many moves they made on it.
+  const movesByCreator = new Map<string, Map<number, number>>();
   for (const t of transactions) {
     if (t.type === 'commissioner' || t.roster_ids.length !== 1) continue;
-    if (!t.creator || knownOwners.has(t.creator)) continue;
+    if (!t.creator || sleeperOwners.has(t.creator)) continue;
     const rosterId = t.roster_ids[0];
-    const counts = movesByRoster.get(rosterId) ?? new Map<string, number>();
-    counts.set(t.creator, (counts.get(t.creator) ?? 0) + 1);
-    movesByRoster.set(rosterId, counts);
+    const counts = movesByCreator.get(t.creator) ?? new Map<number, number>();
+    counts.set(rosterId, (counts.get(rosterId) ?? 0) + 1);
+    movesByCreator.set(t.creator, counts);
   }
-  const mover = (rosterId: number) => {
-    const counts = movesByRoster.get(rosterId);
-    if (!counts) return undefined;
-    return [...counts].sort((a, b) => b[1] - a[1])[0][0];
-  };
 
-  return new Map(
+  // Each creator's home roster, and the moves they made there.
+  const moversByRoster = new Map<number, [string, number][]>();
+  for (const [creator, counts] of movesByCreator) {
+    const [rosterId, moves] = [...counts].sort((a, b) => b[1] - a[1])[0];
+    const movers = moversByRoster.get(rosterId) ?? [];
+    movers.push([creator, moves]);
+    moversByRoster.set(rosterId, movers);
+  }
+  const mover = (rosterId: number) =>
+    moversByRoster.get(rosterId)?.sort((a, b) => b[1] - a[1])[0][0];
+
+  const owners = new Map<number, string | null>(
     rosters.map(roster => [
       roster.roster_id,
-      roster.owner_id ??
-        drafter.get(roster.roster_id) ??
-        mover(roster.roster_id) ??
-        null,
+      roster.owner_id ?? mover(roster.roster_id) ?? null,
     ]),
   );
+
+  const taken = new Set(owners.values());
+  for (const roster of rosters) {
+    if (owners.get(roster.roster_id)) continue;
+    const owner = drafter.get(roster.roster_id);
+    if (owner && !taken.has(owner)) {
+      owners.set(roster.roster_id, owner);
+      taken.add(owner);
+    }
+  }
+
+  // Everyone who drafted ran exactly one roster, so when one drafted roster
+  // and one drafter are all that is left, they go together. The 2023 league's
+  // roster 17 is the case: its drafter ran roster 1, and the one drafter left
+  // over made no moves before being chopped.
+  const unowned = rosters.filter(roster => !owners.get(roster.roster_id));
+  const unused = [...new Set(drafter.values())].filter(d => !taken.has(d));
+  if (
+    unowned.length === 1 &&
+    unused.length === 1 &&
+    drafter.has(unowned[0].roster_id)
+  ) {
+    owners.set(unowned[0].roster_id, unused[0]);
+  }
+
+  return owners;
 }
 
 /**
