@@ -82,7 +82,8 @@ export async function deletePoolGamesWithPicks(poolGameIds: PoolGame['id'][]) {
  */
 export async function getPoolGamesOutsideTheirWeek(year: PoolWeek['year']) {
   const poolGames = await prisma.poolGame.findMany({
-    where: { poolWeek: { year } },
+    // A scored week's results stand, whatever Sleeper says later.
+    where: { poolWeek: { year, isWeekScored: false } },
     include: {
       poolWeek: true,
       game: { select: { year: true, week: true } },
@@ -101,6 +102,10 @@ export async function getPoolGamesByNflGameIds(gameIds: NFLGame['id'][]) {
   if (gameIds.length === 0) return [];
 
   return prisma.poolGame.findMany({
-    where: { gameId: { in: gameIds } },
+    where: {
+      gameId: { in: gameIds },
+      // A scored week's results stand, whatever Sleeper says later.
+      OR: [{ poolWeekId: null }, { poolWeek: { isWeekScored: false } }],
+    },
   });
 }

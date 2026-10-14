@@ -87,6 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await syncNflGameWeek(
         currentSeason.year,
         Array.from({ length: 18 }, (_, i) => i + 1),
+        { removeStaleGames: true },
       );
 
       return json<ActionData>({ message: 'NFL Games have been updated.' });

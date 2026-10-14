@@ -79,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
 
       // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);

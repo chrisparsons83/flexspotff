@@ -100,7 +100,16 @@ export async function syncAdp(league: League) {
   return true;
 }
 
-export async function syncNflGameWeek(year: number, weeks: number[]) {
+export async function syncNflGameWeek(
+  year: number,
+  weeks: number[],
+  {
+    // Removing games deletes picks, so only an admin's sync does it, never the
+    // scheduled score sync, where a short answer from Sleeper would quietly
+    // void real bets.
+    removeStaleGames = false,
+  }: { removeStaleGames?: boolean } = {},
+) {
   // Get season
   const season = await getSeason(year);
   if (!season) {
@@ -182,7 +191,9 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
   }
   await Promise.all(gameUpdatePromises);
 
-  await removeGamesSleeperNoLongerLists(year, weeks, games);
+  if (removeStaleGames) {
+    await removeGamesSleeperNoLongerLists(year, weeks, games);
+  }
 
   return true;
 }

@@ -120,7 +120,7 @@ describe('syncNflGameWeek', () => {
       { id: 'pool-extra' },
     ] as never);
 
-    await syncNflGameWeek(2026, [6]);
+    await syncNflGameWeek(2026, [6], { removeStaleGames: true });
 
     expect(poolGameModel.getPoolGamesByNflGameIds).toHaveBeenCalledWith([
       'game-extra',
@@ -144,7 +144,7 @@ describe('syncNflGameWeek', () => {
       { id: 'pool-moved' },
     ] as never);
 
-    await syncNflGameWeek(2026, [6]);
+    await syncNflGameWeek(2026, [6], { removeStaleGames: true });
 
     expect(poolGameModel.deletePoolGamesWithPicks).toHaveBeenCalledWith([
       'pool-moved',
@@ -155,9 +155,21 @@ describe('syncNflGameWeek', () => {
   it('leaves a week alone when Sleeper returns no games for it', async () => {
     vi.mocked(sleeperApi.getNflScores).mockResolvedValue({ scores: [] });
 
-    await syncNflGameWeek(2026, [6]);
+    await syncNflGameWeek(2026, [6], { removeStaleGames: true });
 
     expect(nflGameModel.getWeekNflGames).not.toHaveBeenCalled();
     expect(nflGameModel.deleteUnreferencedNflGames).toHaveBeenCalledWith([]);
+  });
+
+  it('removes nothing unless asked, as on the scheduled score sync', async () => {
+    vi.mocked(sleeperApi.getNflScores).mockResolvedValue({
+      scores: [sleeperGame('real', 6)],
+    });
+
+    await syncNflGameWeek(2026, [6]);
+
+    expect(nflGameModel.getWeekNflGames).not.toHaveBeenCalled();
+    expect(poolGameModel.deletePoolGamesWithPicks).not.toHaveBeenCalled();
+    expect(nflGameModel.deleteUnreferencedNflGames).not.toHaveBeenCalled();
   });
 });
