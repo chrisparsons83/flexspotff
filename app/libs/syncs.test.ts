@@ -4,6 +4,7 @@ import * as sleeperApi from '~/libs/sleeper/api.server';
 import * as draftPickModel from '~/models/draftpick.server';
 import type { League } from '~/models/league.server';
 import * as leagueModel from '~/models/league.server';
+import * as locksGameModel from '~/models/locksgame.server';
 import * as nflGameModel from '~/models/nflgame.server';
 import * as nflTeamModel from '~/models/nflteam.server';
 import * as playerModel from '~/models/players.server';
@@ -17,6 +18,7 @@ vi.mock('~/models/league.server');
 vi.mock('~/models/players.server');
 vi.mock('~/models/team.server');
 vi.mock('~/libs/sleeper/api.server');
+vi.mock('~/models/locksgame.server');
 vi.mock('~/models/nflgame.server');
 vi.mock('~/models/nflteam.server');
 vi.mock('~/models/poolgame.server');
@@ -106,9 +108,13 @@ describe('syncNflGameWeek', () => {
     });
     vi.mocked(poolGameModel.getPoolGamesByNflGameIds).mockResolvedValue([]);
     vi.mocked(poolGameModel.getPoolGamesOutsideTheirWeek).mockResolvedValue([]);
+    vi.mocked(locksGameModel.getLocksGamesByNflGameIds).mockResolvedValue([]);
+    vi.mocked(locksGameModel.getLocksGamesOutsideTheirWeek).mockResolvedValue(
+      [],
+    );
   });
 
-  it('removes a game Sleeper no longer lists, and its spread pool game', async () => {
+  it('removes a game Sleeper no longer lists, and its spread pool and locks games', async () => {
     vi.mocked(sleeperApi.getNflScores).mockResolvedValue({
       scores: [sleeperGame('real', 6)],
     });
@@ -119,6 +125,9 @@ describe('syncNflGameWeek', () => {
     vi.mocked(poolGameModel.getPoolGamesByNflGameIds).mockResolvedValue([
       { id: 'pool-extra' },
     ] as never);
+    vi.mocked(locksGameModel.getLocksGamesByNflGameIds).mockResolvedValue([
+      { id: 'locks-extra' },
+    ] as never);
 
     await syncNflGameWeek(2026, [6], { removeStaleGames: true });
 
@@ -128,12 +137,15 @@ describe('syncNflGameWeek', () => {
     expect(poolGameModel.deletePoolGamesWithPicks).toHaveBeenCalledWith([
       'pool-extra',
     ]);
+    expect(locksGameModel.deleteLocksGamesWithPicks).toHaveBeenCalledWith([
+      'locks-extra',
+    ]);
     expect(nflGameModel.deleteUnreferencedNflGames).toHaveBeenCalledWith([
       'game-extra',
     ]);
   });
 
-  it('removes a spread pool game whose NFL game moved to another week', async () => {
+  it('removes spread pool and locks games whose NFL game moved to another week', async () => {
     vi.mocked(sleeperApi.getNflScores).mockResolvedValue({
       scores: [sleeperGame('real', 6)],
     });
@@ -143,11 +155,17 @@ describe('syncNflGameWeek', () => {
     vi.mocked(poolGameModel.getPoolGamesOutsideTheirWeek).mockResolvedValue([
       { id: 'pool-moved' },
     ] as never);
+    vi.mocked(locksGameModel.getLocksGamesOutsideTheirWeek).mockResolvedValue([
+      { id: 'locks-moved' },
+    ] as never);
 
     await syncNflGameWeek(2026, [6], { removeStaleGames: true });
 
     expect(poolGameModel.deletePoolGamesWithPicks).toHaveBeenCalledWith([
       'pool-moved',
+    ]);
+    expect(locksGameModel.deleteLocksGamesWithPicks).toHaveBeenCalledWith([
+      'locks-moved',
     ]);
     expect(nflGameModel.deleteUnreferencedNflGames).toHaveBeenCalledWith([]);
   });
@@ -170,6 +188,7 @@ describe('syncNflGameWeek', () => {
 
     expect(nflGameModel.getWeekNflGames).not.toHaveBeenCalled();
     expect(poolGameModel.deletePoolGamesWithPicks).not.toHaveBeenCalled();
+    expect(locksGameModel.deleteLocksGamesWithPicks).not.toHaveBeenCalled();
     expect(nflGameModel.deleteUnreferencedNflGames).not.toHaveBeenCalled();
   });
 });
