@@ -73,8 +73,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
       if (!poolWeek) throw new Error(`There's no pool week here`);
 
+      // Read who bet before the sync below, which drops picks on games that
+      // are no longer in this week. A bet on one of those still counts as
+      // having entered the week, so it can't earn a missed-week penalty.
+      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
+
       // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
@@ -85,7 +90,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       // Add people that did not put in a bet to penalties
-      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
       const userIdsThatBet = [
         ...new Set(
           poolGamePicks
