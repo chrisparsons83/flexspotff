@@ -20,10 +20,19 @@ import {
 import type { League } from '~/models/league.server';
 import { getLeaguesByYear, updateLeague } from '~/models/league.server';
 import type { GameCreate } from '~/models/nflgame.server';
-import { upsertNflGame } from '~/models/nflgame.server';
+import {
+  deleteUnreferencedNflGames,
+  getWeekNflGames,
+  upsertNflGame,
+} from '~/models/nflgame.server';
 import { getNflTeams } from '~/models/nflteam.server';
 import type { PlayerCreate } from '~/models/players.server';
 import { getPlayers, upsertPlayer } from '~/models/players.server';
+import {
+  deletePoolGamesWithPicks,
+  getPoolGamesByNflGameIds,
+  getPoolGamesOutsideTheirWeek,
+} from '~/models/poolgame.server';
 import { getSeason } from '~/models/season.server';
 import {
   createSeasonWeek,
@@ -173,7 +182,54 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
   }
   await Promise.all(gameUpdatePromises);
 
+  await removeGamesSleeperNoLongerLists(year, weeks, games);
+
   return true;
+}
+
+/**
+ * The upsert above only ever adds or updates games, so a game Sleeper stops
+ * listing for a week (dropped, or reissued under a new id) would otherwise stay
+ * on our schedule for good. A game Sleeper moves to another week is updated in
+ * place, but the spread pool game made from it stays on the old pool week.
+ * This clears both out of the schedule and the spread pool, picks included,
+ * so nothing is scored against them.
+ */
+async function removeGamesSleeperNoLongerLists(
+  year: number,
+  weeks: number[],
+  games: SleeperGraphqlNflGames['scores'],
+) {
+  const staleGameIds: string[] = [];
+  for (const week of weeks) {
+    const sleeperGameIds = new Set(
+      games.filter(game => game.week === week).map(game => game.game_id),
+    );
+    // An empty answer is more likely a Sleeper hiccup than a week with no
+    // games, so leave the week alone rather than wipe it.
+    if (sleeperGameIds.size === 0) continue;
+
+    const storedGames = await getWeekNflGames(year, week);
+    staleGameIds.push(
+      ...storedGames
+        .filter(game => !sleeperGameIds.has(game.sleeperGameId))
+        .map(game => game.id),
+    );
+  }
+
+  const stalePoolGames = await getPoolGamesByNflGameIds(staleGameIds);
+  const movedPoolGames = await getPoolGamesOutsideTheirWeek(year);
+  const poolGameIds = [
+    ...new Set([...stalePoolGames, ...movedPoolGames].map(game => game.id)),
+  ];
+  await deletePoolGamesWithPicks(poolGameIds);
+
+  const { count } = await deleteUnreferencedNflGames(staleGameIds);
+  if (poolGameIds.length > 0 || staleGameIds.length > 0) {
+    console.warn(
+      `NFL schedule sync for ${year}: removed ${poolGameIds.length} spread pool game(s) and ${count} of ${staleGameIds.length} NFL game(s) Sleeper no longer lists.`,
+    );
+  }
 }
 
 export async function syncSleeperWeeklyScores(year: number, week: number) {
