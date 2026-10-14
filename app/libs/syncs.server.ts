@@ -19,6 +19,11 @@ import {
 } from '~/models/draftpick.server';
 import type { League } from '~/models/league.server';
 import { getLeaguesByYear, updateLeague } from '~/models/league.server';
+import {
+  deleteLocksGamesWithPicks,
+  getLocksGamesByNflGameIds,
+  getLocksGamesOutsideTheirWeek,
+} from '~/models/locksgame.server';
 import type { GameCreate } from '~/models/nflgame.server';
 import {
   deleteUnreferencedNflGames,
@@ -202,9 +207,9 @@ export async function syncNflGameWeek(
  * The upsert above only ever adds or updates games, so a game Sleeper stops
  * listing for a week (dropped, or reissued under a new id) would otherwise stay
  * on our schedule for good. A game Sleeper moves to another week is updated in
- * place, but the spread pool game made from it stays on the old pool week.
- * This clears both out of the schedule and the spread pool, picks included,
- * so nothing is scored against them.
+ * place, but the spread pool and locks games made from it stay on the old
+ * week. This clears both out of the schedule, the spread pool and the locks
+ * challenge, picks included, so nothing is scored against them.
  */
 async function removeGamesSleeperNoLongerLists(
   year: number,
@@ -235,10 +240,21 @@ async function removeGamesSleeperNoLongerLists(
   ];
   await deletePoolGamesWithPicks(poolGameIds);
 
+  const staleLocksGames = await getLocksGamesByNflGameIds(staleGameIds);
+  const movedLocksGames = await getLocksGamesOutsideTheirWeek(year);
+  const locksGameIds = [
+    ...new Set([...staleLocksGames, ...movedLocksGames].map(game => game.id)),
+  ];
+  await deleteLocksGamesWithPicks(locksGameIds);
+
   const { count } = await deleteUnreferencedNflGames(staleGameIds);
-  if (poolGameIds.length > 0 || staleGameIds.length > 0) {
+  if (
+    poolGameIds.length > 0 ||
+    locksGameIds.length > 0 ||
+    staleGameIds.length > 0
+  ) {
     console.warn(
-      `NFL schedule sync for ${year}: removed ${poolGameIds.length} spread pool game(s) and ${count} of ${staleGameIds.length} NFL game(s) Sleeper no longer lists.`,
+      `NFL schedule sync for ${year}: removed ${poolGameIds.length} spread pool game(s), ${locksGameIds.length} locks game(s) and ${count} of ${staleGameIds.length} NFL game(s) Sleeper no longer lists.`,
     );
   }
 }
