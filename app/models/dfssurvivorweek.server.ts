@@ -47,7 +47,8 @@ export async function createDfsSurvivorWeek(
  */
 export async function getUnscoredDfsSurvivorEntries(year: number) {
   return prisma.dFSSurvivorUserEntry.findMany({
-    where: { year, isScored: false },
+    // Scoring marks the user's week, not each entry, so that is what to check.
+    where: { year, userWeek: { isScored: false } },
     include: {
       nflGame: { select: { year: true, week: true } },
       player: { select: { currentNFLTeamId: true } },
