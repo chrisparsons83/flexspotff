@@ -1,6 +1,7 @@
 import { syncAdp, syncNflGameWeek } from './syncs.server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as sleeperApi from '~/libs/sleeper/api.server';
+import * as dfsSurvivorModel from '~/models/dfssurvivorweek.server';
 import * as draftPickModel from '~/models/draftpick.server';
 import type { League } from '~/models/league.server';
 import * as leagueModel from '~/models/league.server';
@@ -9,6 +10,7 @@ import * as nflGameModel from '~/models/nflgame.server';
 import * as nflTeamModel from '~/models/nflteam.server';
 import * as playerModel from '~/models/players.server';
 import * as poolGameModel from '~/models/poolgame.server';
+import * as qbOptionModel from '~/models/qbstreamingweekoption.server';
 import * as seasonModel from '~/models/season.server';
 import * as seasonWeekModel from '~/models/seasonWeek.server';
 import * as teamModel from '~/models/team.server';
@@ -18,7 +20,9 @@ vi.mock('~/models/league.server');
 vi.mock('~/models/players.server');
 vi.mock('~/models/team.server');
 vi.mock('~/libs/sleeper/api.server');
+vi.mock('~/models/dfssurvivorweek.server');
 vi.mock('~/models/locksgame.server');
+vi.mock('~/models/qbstreamingweekoption.server');
 vi.mock('~/models/nflgame.server');
 vi.mock('~/models/nflteam.server');
 vi.mock('~/models/poolgame.server');
@@ -112,6 +116,12 @@ describe('syncNflGameWeek', () => {
     vi.mocked(locksGameModel.getLocksGamesOutsideTheirWeek).mockResolvedValue(
       [],
     );
+    vi.mocked(dfsSurvivorModel.getUnscoredDfsSurvivorEntries).mockResolvedValue(
+      [],
+    );
+    vi.mocked(
+      qbOptionModel.getUnscoredQBStreamingWeekOptions,
+    ).mockResolvedValue([]);
   });
 
   it('removes a game Sleeper no longer lists, and its spread pool and locks games', async () => {
@@ -189,6 +199,113 @@ describe('syncNflGameWeek', () => {
     expect(nflGameModel.getWeekNflGames).not.toHaveBeenCalled();
     expect(poolGameModel.deletePoolGamesWithPicks).not.toHaveBeenCalled();
     expect(locksGameModel.deleteLocksGamesWithPicks).not.toHaveBeenCalled();
+    expect(
+      dfsSurvivorModel.getUnscoredDfsSurvivorEntries,
+    ).not.toHaveBeenCalled();
+    expect(
+      qbOptionModel.getUnscoredQBStreamingWeekOptions,
+    ).not.toHaveBeenCalled();
     expect(nflGameModel.deleteUnreferencedNflGames).not.toHaveBeenCalled();
+  });
+
+  it('moves DFS Survivor and QB Streaming picks off a dropped game', async () => {
+    vi.mocked(sleeperApi.getNflScores).mockResolvedValue({
+      scores: [sleeperGame('real', 6)],
+    });
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      {
+        id: 'game-real',
+        sleeperGameId: 'real',
+        homeTeamId: 'sea',
+        awayTeamId: 'sf',
+      },
+      {
+        id: 'game-extra',
+        sleeperGameId: 'extra',
+        homeTeamId: 'sea',
+        awayTeamId: 'sf',
+      },
+    ] as never);
+    vi.mocked(dfsSurvivorModel.getUnscoredDfsSurvivorEntries).mockResolvedValue(
+      [
+        {
+          id: 'entry-on-extra',
+          week: 6,
+          nflGameId: 'game-extra',
+          nflGame: { year: 2026, week: 6 },
+          player: { currentNFLTeamId: 'sea' },
+        },
+        {
+          id: 'entry-on-real',
+          week: 6,
+          nflGameId: 'game-real',
+          nflGame: { year: 2026, week: 6 },
+          player: { currentNFLTeamId: 'sf' },
+        },
+      ] as never,
+    );
+    vi.mocked(
+      qbOptionModel.getUnscoredQBStreamingWeekOptions,
+    ).mockResolvedValue([
+      {
+        id: 'option-no-game',
+        nflGameId: 'game-extra',
+        qbStreamingWeek: { year: 2026, week: 6 },
+        nflGame: { year: 2026, week: 6 },
+        player: { currentNFLTeamId: 'bye-team' },
+      },
+    ] as never);
+
+    await syncNflGameWeek(2026, [6], { removeStaleGames: true });
+
+    expect(dfsSurvivorModel.updateDfsSurvivorEntryGame).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(dfsSurvivorModel.updateDfsSurvivorEntryGame).toHaveBeenCalledWith(
+      'entry-on-extra',
+      'game-real',
+    );
+    expect(dfsSurvivorModel.deleteDfsSurvivorEntries).toHaveBeenCalledWith([]);
+    expect(
+      qbOptionModel.updateQBStreamingWeekOptionGame,
+    ).not.toHaveBeenCalled();
+    expect(qbOptionModel.deleteQBStreamingWeekOptions).toHaveBeenCalledWith([
+      'option-no-game',
+    ]);
+    expect(nflGameModel.deleteUnreferencedNflGames).toHaveBeenCalledWith([
+      'game-extra',
+    ]);
+  });
+
+  it('moves a QB Streaming option whose game moved to another week', async () => {
+    vi.mocked(sleeperApi.getNflScores).mockResolvedValue({
+      scores: [sleeperGame('real', 6)],
+    });
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      {
+        id: 'game-real',
+        sleeperGameId: 'real',
+        homeTeamId: 'sea',
+        awayTeamId: 'sf',
+      },
+    ] as never);
+    vi.mocked(
+      qbOptionModel.getUnscoredQBStreamingWeekOptions,
+    ).mockResolvedValue([
+      {
+        id: 'option-moved',
+        nflGameId: 'game-moved',
+        qbStreamingWeek: { year: 2026, week: 6 },
+        nflGame: { year: 2026, week: 7 },
+        player: { currentNFLTeamId: 'sf' },
+      },
+    ] as never);
+
+    await syncNflGameWeek(2026, [6], { removeStaleGames: true });
+
+    expect(qbOptionModel.updateQBStreamingWeekOptionGame).toHaveBeenCalledWith(
+      'option-moved',
+      'game-real',
+    );
   });
 });
