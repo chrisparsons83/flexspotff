@@ -106,9 +106,9 @@ export async function upsertNflGame(game: GameCreate) {
 }
 
 /**
- * Deletes the given NFL games, skipping any that another game mode still
- * points at. Deleting a game would cascade away QB Streaming options, so those
- * are left for an admin to sort out by hand.
+ * Deletes the given NFL games, skipping any that a game mode still points at
+ * (only a week that is already scored should). Deleting a game would cascade
+ * away QB Streaming options, so it is never left to the cascade.
  */
 export async function deleteUnreferencedNflGames(ids: NFLGame['id'][]) {
   if (ids.length === 0) return { count: 0 };
