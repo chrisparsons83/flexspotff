@@ -9,31 +9,15 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
 import InfoTip, { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  KeyList,
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WEEK_SCALE,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
@@ -51,6 +35,19 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
+import { LabelledRange, RangeBar } from '~/components/ui/bars';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  KeyList,
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WEEK_SCALE,
+  WeekGrid,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
   DFS_SURVIVOR_LAST_WEEK,
@@ -419,7 +416,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -504,7 +501,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
             </tr>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -530,14 +527,14 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
           <ScaleKey />
           <LegendItem
             swatch={
-              <Swatch tone={WEEK_SCALE[2].tone}>
+              <LegendSwatch tone={WEEK_SCALE[2].tone}>
                 <PartialMark />
-              </Swatch>
+              </LegendSwatch>
             }
           >
             Empty slots
           </LegendItem>
-          <LegendItem swatch={<Swatch tone={NO_LINEUP_TONE} />}>
+          <LegendItem swatch={<LegendSwatch tone={NO_LINEUP_TONE} />}>
             No lineup
           </LegendItem>
         </KeyList>
@@ -852,7 +849,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
         ) : undefined
       }
     >
-      <ProfileTable
+      <Table
         headers={['', ...STAGES.map(stage => stage.label)]}
         numericColumns={STAGES.map((_, index) => index + 1)}
       >
@@ -873,7 +870,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
             ))}
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
 
       <StarTimeline season={season} />
     </ProfileSection>
@@ -1006,7 +1003,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
           Nobody else has used any of their players yet.
         </p>
       ) : (
-        <ProfileTable
+        <Table
           headers={[
             'Player',
             'Week',
@@ -1086,7 +1083,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
               </td>
             </tr>
           ))}
-        </ProfileTable>
+        </Table>
       )}
       {compared.length > TIMING_PREVIEW && (
         <ShowAllButton
@@ -1260,7 +1257,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
       title='Lineup Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', 'Total', 'vs Field', 'Rank', '']}
         numericColumns={[2, 3, 4]}
         mobileCards={
@@ -1359,7 +1356,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
             </Fragment>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

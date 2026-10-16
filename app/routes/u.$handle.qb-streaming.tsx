@@ -7,28 +7,13 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
 import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  KeyList,
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WEEK_SCALE,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
@@ -38,6 +23,19 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
+import { LabelledRange } from '~/components/ui/bars';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  KeyList,
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WEEK_SCALE,
+  WeekGrid,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
@@ -352,7 +350,7 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
 function BySeason({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -425,7 +423,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
             </tr>
           </Fragment>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -488,7 +486,9 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
           <ScaleKey />
           {seasons.some(season => season.usesTopWeeks) && (
             <LegendItem
-              swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
+              swatch={
+                <LegendSwatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />
+              }
             >
               Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
               {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
@@ -612,7 +612,7 @@ function MostStreamed({
         </KeyList>
       }
     >
-      <ProfileTable
+      <Table
         headers={[
           'QB',
           ...years.map(String),
@@ -677,7 +677,7 @@ function MostStreamed({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > MOST_STREAMED_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -740,7 +740,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', 'Standard', 'Deep', 'Total', 'Rank', '']}
         numericColumns={[4, 5]}
         mobileCards={
@@ -800,7 +800,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

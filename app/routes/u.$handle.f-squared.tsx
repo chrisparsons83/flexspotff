@@ -9,7 +9,6 @@ import LeadContext from '~/components/layout/profile/LeadContext';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
@@ -26,6 +25,7 @@ import {
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import MemberName from '~/components/ui/MemberName';
+import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
 import type {
@@ -303,7 +303,7 @@ function PickCell({ pick }: { pick: FSquaredPick | null }) {
 function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -357,7 +357,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -457,7 +457,7 @@ function MostPickedManagers({
 
   return (
     <ProfileSection title='Most Picked Managers'>
-      <ProfileTable
+      <Table
         headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
         primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
@@ -494,7 +494,7 @@ function MostPickedManagers({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {managers.length > LIST_PREVIEW && (
         <ShowAllButton
           total={managers.length}

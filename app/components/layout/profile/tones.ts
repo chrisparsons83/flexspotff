@@ -1,3 +1,5 @@
+import type { Tone } from '~/components/ui/bars';
+
 /**
  * What each colour means on a profile, written down once so every tab uses
  * the same one for the same thing.
@@ -37,11 +39,11 @@ export const RESULT_TEXT = {
 } as const;
 
 /** Segments of a bar that splits wins from losses. */
-export const BAR = {
-  win: 'bg-emerald-400',
-  tie: 'bg-slate-400',
-  loss: 'bg-rose-400',
-} as const;
+export const BAR: Record<'win' | 'tie' | 'loss', Tone> = {
+  win: 'positive',
+  tie: 'neutral',
+  loss: 'negative',
+};
 
 /** The small rounded labels beside a row, by what they mean. */
 export const TAG = {

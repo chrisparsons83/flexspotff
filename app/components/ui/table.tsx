@@ -1,18 +1,95 @@
-import { ChevronDownIcon } from '@heroicons/react/solid';
-import clsx from 'clsx';
+import { FOCUS_RING } from './styles';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronDownIcon,
+} from '@radix-ui/react-icons';
 import type { ReactElement, ReactNode } from 'react';
 import {
   Children,
   Fragment,
   cloneElement,
   isValidElement,
+  useMemo,
   useState,
 } from 'react';
+import { cn } from '~/utils';
+
+export type SortDirection = 'asc' | 'desc';
+
+export type TableSort<K extends string = string> = {
+  key: K;
+  direction: SortDirection;
+  /** Sorts by this key; the same key again turns the order over. */
+  onSort(key: K): void;
+};
+
+type SortValue = number | string | null | undefined;
+
+/**
+ * Sorts rows by whichever column the reader picked. Each key reads a value
+ * off a row; empty values go last whichever way the order runs. A new column
+ * starts in its own default direction: numbers high to low, text A to Z.
+ */
+export function useTableSort<T, K extends string>(
+  rows: T[],
+  accessors: Record<K, (row: T) => SortValue>,
+  initial: { key: NoInfer<K>; direction?: SortDirection },
+) {
+  const [key, setKey] = useState<K>(initial.key);
+  const [direction, setDirection] = useState<SortDirection>(
+    initial.direction ?? 'desc',
+  );
+
+  const sorted = useMemo(() => {
+    const read = accessors[key];
+    const sign = direction === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const x = read(a);
+      const y = read(b);
+      if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+      return (
+        sign *
+        (typeof x === 'number' && typeof y === 'number'
+          ? x - y
+          : String(x).localeCompare(String(y)))
+      );
+    });
+    // The accessors are read fresh each render; the rows and order key it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, key, direction]);
+
+  const onSort = (next: K) => {
+    if (next === key) {
+      setDirection(current => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    const sample = rows.map(accessors[next]).find(value => value != null);
+    setKey(next);
+    setDirection(typeof sample === 'number' ? 'desc' : 'asc');
+  };
+
+  return { rows: sorted, sort: { key, direction, onSort } as TableSort<K> };
+}
 
 type Props = {
   headers: string[];
   /** Right-align numeric columns by index. */
   numericColumns?: number[];
+  /** Says what the table is, for screen readers. */
+  caption?: string;
+  /**
+   * The column headers stay at the top of the screen while the table
+   * scrolls past, from desktop width. Below it a wide table scrolls
+   * sideways inside itself, which no sticky header can survive.
+   */
+  stickyHeader?: boolean;
+  /**
+   * Which columns, by index, sort when their header is pressed, and by
+   * which key. Pass `sort` from useTableSort with it.
+   */
+  sortKeys?: Partial<Record<number, string>>;
+  sort?: TableSort;
   /** A totals row, set apart from the body and pinned to the bottom. */
   footer?: ReactNode;
   /**
@@ -23,12 +100,12 @@ type Props = {
    */
   primaryColumns?: number[];
   /**
-   * What to show below desktop width in place of the table - a list of
-   * MobileCards,
-   * for a log whose rows read better as two short lines than as a row of
-   * cells.
+   * What to show below desktop width in place of the table: a list of
+   * MobileCards, for a log whose rows read better as two short lines than
+   * as a row of cells.
    */
   mobileCards?: ReactNode;
+  className?: string;
   children: ReactNode;
 };
 
@@ -84,19 +161,35 @@ function flatten(children: ReactNode, prefix = ''): ReactNode[] {
 }
 
 /**
- * The table shell every profile table shares, so the tabs look alike.
+ * Cells take their spacing, rules and type from the table, so every table on
+ * the site reads alike whatever its rows bring. Rows are set apart by a rule
+ * rather than stripes; numbers line up on equal-width digits.
+ */
+const CELLS = cn(
+  '[&_td]:px-3 [&_td]:py-2.5 [&_th]:px-3 [&_th]:py-2.5',
+  '[&>table>tbody>tr]:border-b [&>table>tbody>tr]:border-border',
+  '[&>table>tfoot]:border-t-2 [&>table>tfoot]:border-border [&>table>tfoot]:font-semibold',
+);
+
+/**
+ * The table every page shares.
  *
  * On a phone a wide table either keeps its key columns and folds the rest
  * into each row (`primaryColumns`), or gives way to a list of cards
  * (`mobileCards`). A table with neither scrolls inside its own container
  * rather than the page.
  */
-export default function ProfileTable({
+export function Table({
   headers,
   numericColumns = [],
+  caption,
+  stickyHeader = false,
+  sortKeys = {},
+  sort,
   footer,
   primaryColumns,
   mobileCards,
+  className,
   children,
 }: Props) {
   const numeric = new Set(numericColumns);
@@ -126,46 +219,106 @@ export default function ProfileTable({
   return (
     <>
       <div
-        className={clsx(
+        className={cn(
           // Relative, so screen-reader-only text inside is placed within
           // the scroller rather than stretching the page on a phone.
-          'not-prose relative overflow-x-auto',
+          'not-prose relative max-lg:overflow-x-auto',
+          !stickyHeader && 'overflow-x-auto',
+          CELLS,
           folded.map(index => HIDE_ON_PHONE[index + 1]),
           mobileCards && 'max-lg:hidden',
+          className,
         )}
       >
-        <table className='w-full text-sm'>
+        <table className='w-full border-collapse text-left text-base tabular-nums'>
+          {caption && <caption className='sr-only'>{caption}</caption>}
           <thead>
-            <tr className='border-b border-slate-600 text-left text-slate-400'>
-              {headers.map((header, index) => (
-                <th
-                  key={`${header}-${index}`}
-                  scope='col'
-                  className={clsx(
-                    'px-2 py-2 font-medium',
-                    numeric.has(index) && 'text-right',
-                  )}
-                >
-                  {header}
-                </th>
-              ))}
+            <tr className='border-b border-border text-sm text-muted-foreground'>
+              {headers.map((header, index) => {
+                const sortKey = sortKeys[index];
+                const sorted = sort && sortKey && sort.key === sortKey;
+                return (
+                  <th
+                    key={`${header}-${index}`}
+                    scope='col'
+                    aria-sort={
+                      sorted
+                        ? sort.direction === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : undefined
+                    }
+                    className={cn(
+                      'whitespace-nowrap font-semibold',
+                      numeric.has(index) && 'text-right',
+                      stickyHeader &&
+                        'lg:sticky lg:top-0 lg:z-10 lg:bg-background',
+                    )}
+                  >
+                    {sort && sortKey ? (
+                      <SortButton
+                        sorted={sorted ? sort.direction : null}
+                        onClick={() => sort.onSort(sortKey)}
+                        alignEnd={numeric.has(index)}
+                      >
+                        {header}
+                      </SortButton>
+                    ) : (
+                      header
+                    )}
+                  </th>
+                );
+              })}
               {folds && (
-                <th scope='col' className='w-8 px-1 lg:hidden'>
+                <th scope='col' className='w-10 lg:hidden'>
                   <span className='sr-only'>More</span>
                 </th>
               )}
             </tr>
           </thead>
           <tbody>{folds ? foldRows(children) : children}</tbody>
-          {footer && (
-            <tfoot className='border-t-2 border-slate-600 font-medium'>
-              {folds ? foldRows(footer) : footer}
-            </tfoot>
-          )}
+          {footer && <tfoot>{folds ? foldRows(footer) : footer}</tfoot>}
         </table>
       </div>
       {mobileCards && <div className='not-prose lg:hidden'>{mobileCards}</div>}
     </>
+  );
+}
+
+/**
+ * A column header that sorts. The arrow shows the order it is sorted in; an
+ * unsorted column shows none, so the header reads as a plain label until
+ * it is used.
+ */
+function SortButton({
+  sorted,
+  onClick,
+  alignEnd,
+  children,
+}: {
+  sorted: SortDirection | null;
+  onClick: () => void;
+  alignEnd: boolean;
+  children: ReactNode;
+}) {
+  const Arrow = sorted === 'asc' ? ArrowUpIcon : ArrowDownIcon;
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1 font-semibold hover:text-foreground',
+        sorted && 'text-foreground',
+        alignEnd && 'flex-row-reverse',
+        FOCUS_RING,
+      )}
+    >
+      {children}
+      <Arrow
+        aria-hidden
+        className={cn('size-3.5 shrink-0', !sorted && 'invisible')}
+      />
+    </button>
   );
 }
 
@@ -208,18 +361,21 @@ function FoldingRow({
         row,
         {},
         ...cells,
-        <td key='fold' className='w-8 px-1 py-1 text-right lg:hidden'>
+        <td key='fold' className='w-10 !px-1 !py-1 text-right lg:hidden'>
           <button
             type='button'
             aria-expanded={open}
             aria-label={open ? 'Show less' : 'Show more'}
             onClick={() => setOpen(value => !value)}
-            className='inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-700 hover:text-white'
+            className={cn(
+              'inline-flex size-8 items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground',
+              FOCUS_RING,
+            )}
           >
             <ChevronDownIcon
               aria-hidden='true'
-              className={clsx(
-                'h-4 w-4 transition-transform',
+              className={cn(
+                'size-4 transition-transform duration-fast',
                 open && 'rotate-180',
               )}
             />
@@ -227,15 +383,15 @@ function FoldingRow({
         </td>,
       )}
       {open && (
-        <tr className='border-b border-slate-700/70 bg-slate-900/40 lg:hidden'>
-          <td colSpan={span} className='px-2 py-1'>
-            <table className='w-full text-sm'>
+        <tr className='bg-muted lg:hidden'>
+          <td colSpan={span} className='!py-1'>
+            <table className='w-full'>
               <tbody>
                 {hidden.map(index => (
                   <tr key={index}>
                     <th
                       scope='row'
-                      className='w-1/2 py-1 pr-2 text-left text-xs font-medium text-slate-400'
+                      className='w-1/2 !pl-0 text-left text-sm font-semibold text-muted-foreground'
                     >
                       {headers[index]}
                     </th>
@@ -254,7 +410,7 @@ function FoldingRow({
 /** The phone list a log shows in place of its table. */
 export function MobileCards({ children }: { children: ReactNode }) {
   return (
-    <ul className='m-0 list-none divide-y divide-slate-700/70 border-y border-slate-700/70 p-0'>
+    <ul className='m-0 list-none divide-y divide-border border-y border-border p-0'>
       {children}
     </ul>
   );
@@ -278,18 +434,20 @@ export function MobileCard({
   children?: ReactNode;
 }) {
   return (
-    <li className='py-2.5'>
+    <li className='py-3'>
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0'>
-          <div className='text-sm text-slate-100'>{title}</div>
+          <div>{title}</div>
           {subtitle && (
-            <div className='mt-0.5 text-xs text-slate-400'>{subtitle}</div>
+            <div className='mt-0.5 text-sm text-muted-foreground'>
+              {subtitle}
+            </div>
           )}
         </div>
         {(value !== undefined || status) && (
           <div className='shrink-0 text-right'>
             {value !== undefined && (
-              <div className='text-sm font-medium tabular-nums'>{value}</div>
+              <div className='font-semibold tabular-nums'>{value}</div>
             )}
             {status && (
               <div className='mt-1 flex flex-wrap justify-end gap-1'>

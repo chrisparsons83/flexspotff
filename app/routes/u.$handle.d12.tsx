@@ -11,8 +11,6 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import { CurrentTag } from '~/components/layout/profile/Tag';
@@ -24,6 +22,8 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { RangeBar } from '~/components/ui/bars';
+import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
 import type {
@@ -356,7 +356,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
         )
       }
     >
-      <ProfileTable
+      <Table
         headers={['Player', 'Teams', 'Average Pick', 'Range', 'Starter Points']}
         primaryColumns={[1, 4]}
         numericColumns={[2, 3, 4]}
@@ -406,7 +406,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {players.length > EXPOSURE_PREVIEW && (
         <ShowAllButton
           total={players.length}
@@ -422,7 +422,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
 function BySeason({ seasons }: { seasons: D12Season[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -475,7 +475,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

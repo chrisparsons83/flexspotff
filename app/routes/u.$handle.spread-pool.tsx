@@ -4,33 +4,17 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WeekLegend,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
@@ -49,6 +33,19 @@ import {
 } from '~/components/layout/profile/format';
 import type { TagTone } from '~/components/layout/profile/tones';
 import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
+import { KeyedBar, LabelledRange } from '~/components/ui/bars';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WeekGrid,
+  WeekLegend,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getSpreadPoolProfile } from '~/models/profile/spreadPool.server';
 import {
@@ -348,7 +345,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
       title='By Season'
       info='ROE is return on everything bet: the net as a share of the total bet.'
     >
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -411,7 +408,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -711,7 +708,7 @@ function WeekByWeek({ seasons }: { seasons: PoolSeason[] }) {
         <WonKey sample='+150' />
         <ScaleKey />
         {anyMissed && (
-          <LegendItem swatch={<Swatch tone={MISSED_TONE} />}>
+          <LegendItem swatch={<LegendSwatch tone={MISSED_TONE} />}>
             Missed week
           </LegendItem>
         )}
@@ -789,7 +786,7 @@ function SplitTable({
   const memberBets = buckets.reduce((total, b) => total + b.member.bets, 0);
 
   return (
-    <ProfileTable
+    <Table
       headers={[
         heading,
         'Bets',
@@ -852,7 +849,7 @@ function SplitTable({
           </td>
         </tr>
       ))}
-    </ProfileTable>
+    </Table>
   );
 }
 
@@ -1241,7 +1238,7 @@ function Teams({
         </TeamCallout>
       </div>
 
-      <ProfileTable
+      <Table
         headers={['Team', 'Backing', 'Fading', 'Total']}
         numericColumns={[3]}
         primaryColumns={[1, 3]}
@@ -1266,7 +1263,7 @@ function Teams({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > TEAMS_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -1356,7 +1353,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
       title='Bet Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Week',
@@ -1446,7 +1443,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

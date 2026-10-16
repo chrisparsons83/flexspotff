@@ -5,11 +5,11 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
 import { CurrentTag } from '~/components/layout/profile/Tag';
 import { ordinal, pct, plural } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import PickChip from '~/components/layout/survivor/PickChip';
+import { Table } from '~/components/ui/table';
 import { poolTitle } from '~/libs/survivor/views';
 import { requireProfileMember } from '~/models/profile/access.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
@@ -128,7 +128,7 @@ function Career({ career }: { career: SurvivorCareer }) {
 function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
     <ProfileSection title='By Pool'>
-      <ProfileTable
+      <Table
         headers={['Pool', 'Finish', 'Weeks Won', 'Went Out', 'Outlasted']}
         primaryColumns={[1, 2]}
         numericColumns={[2, 4]}
@@ -175,7 +175,7 @@ function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

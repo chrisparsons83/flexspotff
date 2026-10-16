@@ -4,31 +4,18 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
 import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  LegendItem,
-  Swatch,
-  WeekLegend,
-  WonKey,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
@@ -48,6 +35,16 @@ import {
 } from '~/components/layout/profile/format';
 import { BAR, TEXT } from '~/components/layout/profile/tones';
 import type { TagTone } from '~/components/layout/profile/tones';
+import { KeyedBar, LabelledRange } from '~/components/ui/bars';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  LegendItem,
+  LegendSwatch,
+  WeekGrid,
+  WeekLegend,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/locks.server';
 import {
@@ -140,9 +137,9 @@ function WeekStat({
  * one is the one that stings, so it gets the brightest red.
  */
 const BUST_BANDS = [
-  { key: 'one', label: 'by 1', tone: 'bg-rose-300' },
-  { key: 'two', label: 'by 2', tone: 'bg-rose-500' },
-  { key: 'more', label: 'by 3+', tone: 'bg-rose-800' },
+  { key: 'one', label: 'by 1', tone: 'sequence-6' },
+  { key: 'two', label: 'by 2', tone: 'sequence-4' },
+  { key: 'more', label: 'by 3+', tone: 'sequence-2' },
 ] as const;
 
 function Career({
@@ -353,7 +350,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: LocksSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -413,7 +410,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -702,8 +699,12 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
       />
       <WeekLegend>
         <WonKey sample='9' tone={CLEAN_TONE} />
-        <LegendItem swatch={<Swatch tone={CLEAN_TONE} />}>Scored</LegendItem>
-        <LegendItem swatch={<Swatch tone={BUSTED_TONE} />}>Busted</LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={CLEAN_TONE} />}>
+          Scored
+        </LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={BUSTED_TONE} />}>
+          Busted
+        </LegendItem>
       </WeekLegend>
     </ProfileSection>
   );
@@ -781,7 +782,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
       title='Risk Profile'
       footnote={<FieldKey>Field&rsquo;s performance</FieldKey>}
     >
-      <ProfileTable
+      <Table
         headers={['Picks', 'Weeks', 'Scoring % vs field', 'Average Score']}
         numericColumns={[1, 3]}
         primaryColumns={[2, 3]}
@@ -831,7 +832,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -850,7 +851,7 @@ function SplitTable({
   const memberPicks = buckets.reduce((total, b) => total + b.member.picks, 0);
 
   return (
-    <ProfileTable
+    <Table
       headers={[heading, 'Picks', 'Record', 'Win % vs field']}
       numericColumns={[1, 2]}
       primaryColumns={[3]}
@@ -893,7 +894,7 @@ function SplitTable({
           </td>
         </tr>
       ))}
-    </ProfileTable>
+    </Table>
   );
 }
 
@@ -1143,7 +1144,7 @@ function Teams({
         </TeamCallout>
       </div>
 
-      <ProfileTable
+      <Table
         headers={['Team', 'Picked', 'Win %', 'Picked Against', 'Busts']}
         numericColumns={[1, 2, 3, 4]}
         primaryColumns={[1, 2]}
@@ -1199,7 +1200,7 @@ function Teams({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > TEAMS_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -1265,7 +1266,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week Result']}
         mobileCards={
           <MobileCards>
@@ -1366,7 +1367,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
             </tr>
           )),
         )}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

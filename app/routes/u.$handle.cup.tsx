@@ -9,17 +9,14 @@ import { InfoText } from '~/components/layout/profile/InfoTip';
 import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import SplitBar from '~/components/layout/profile/SplitBar';
 import Tag from '~/components/layout/profile/Tag';
 import Truncate from '~/components/layout/profile/Truncate';
-import WinLoss from '~/components/layout/profile/WinLoss';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { SplitBar } from '~/components/ui/bars';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import type { CupSeeding } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
@@ -348,7 +345,7 @@ function SeedingHistory({
 }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'League',
@@ -386,7 +383,7 @@ function SeedingHistory({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -450,7 +447,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
       title='Match Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Round', 'Opponent', 'Score', 'Margin', 'Result']}
         numericColumns={[3, 4]}
         mobileCards={
@@ -544,7 +541,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
             </tr>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

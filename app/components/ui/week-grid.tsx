@@ -1,23 +1,21 @@
-import YearFilter from './YearFilter';
-import clsx from 'clsx';
+import { YearFilter } from './segmented-control';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import { cn } from '~/utils';
 
 /**
- * Where a week ranked in the field, top to bottom as bright green to dark red.
- * Ranking rather than raw points, so a week when the whole league scored low
- * does not paint the whole column red.
- *
- * Lightness falls with the rank as well as the hue moving, and each band is a
- * clear step darker than the one above it, so the scale still reads for
- * red-green colour blindness: bright is good, dark is bad.
+ * Where a week ranked in the field, on the value sequence: the lightest step
+ * for the top fifth, the darkest for the bottom. Ranking rather than raw
+ * points, so a week when the whole league scored low does not darken the
+ * whole column. One hue stepping in lightness reads the same for every kind
+ * of colour vision: bright is good, dark is bad.
  */
 export const WEEK_SCALE = [
-  { tone: 'bg-emerald-300 text-emerald-950', label: 'Top 20%' },
-  { tone: 'bg-emerald-500 text-emerald-950', label: '60–80%' },
-  { tone: 'bg-slate-500 text-white', label: '40–60%' },
-  { tone: 'bg-rose-800 text-rose-50', label: '20–40%' },
-  { tone: 'bg-rose-950 text-rose-200', label: 'Bottom 20%' },
+  { tone: 'bg-sequence-7 text-sequence-7-foreground', label: 'Top 20%' },
+  { tone: 'bg-sequence-5 text-sequence-5-foreground', label: '60–80%' },
+  { tone: 'bg-sequence-4 text-sequence-4-foreground', label: '40–60%' },
+  { tone: 'bg-sequence-2 text-sequence-2-foreground', label: '20–40%' },
+  { tone: 'bg-sequence-1 text-sequence-1-foreground', label: 'Bottom 20%' },
 ];
 
 /**
@@ -62,7 +60,7 @@ export type WeekGridRow = {
  * time instead, its weeks wrapped into rows, each square carrying its week
  * number since there is no header row to read it from.
  */
-export default function WeekGrid({
+export function WeekGrid({
   rows,
   lastWeek,
   minColumn = '3rem',
@@ -81,14 +79,14 @@ export default function WeekGrid({
     <>
       <div className='hidden overflow-x-auto lg:block'>
         <div
-          className='grid gap-1 p-0.5 text-xs xl:gap-1.5'
+          className='grid gap-1 p-0.5 text-sm xl:gap-1.5'
           style={{
             gridTemplateColumns: `3rem repeat(${lastWeek}, minmax(${minColumn}, 1fr))`,
           }}
         >
           <div />
           {weekNumbers.map(week => (
-            <div key={week} className='text-center text-slate-400'>
+            <div key={week} className='text-center text-muted-foreground'>
               {week}
             </div>
           ))}
@@ -113,7 +111,7 @@ export default function WeekGrid({
               showAll={false}
             />
           )}
-          <div className='mt-3 grid grid-cols-6 gap-1.5 text-xs sm:grid-cols-9'>
+          <div className='mt-3 grid grid-cols-6 gap-1.5 text-sm sm:grid-cols-9'>
             {weekNumbers.map(week => (
               <Square
                 key={week}
@@ -138,7 +136,7 @@ function SeasonStrip({
 }) {
   return (
     <>
-      <div className='flex h-8 items-center font-medium tabular-nums text-slate-300'>
+      <div className='flex h-8 items-center font-semibold tabular-nums'>
         {year}
       </div>
       {children}
@@ -157,7 +155,7 @@ function Square({
   labelled?: boolean;
 }) {
   const number = labelled && (
-    <span aria-hidden='true' className='text-[0.6rem] font-normal opacity-80'>
+    <span aria-hidden='true' className='text-xs font-normal opacity-80'>
       {week}
     </span>
   );
@@ -166,13 +164,12 @@ function Square({
     return (
       <div
         aria-hidden='true'
-        className={clsx(
-          'flex items-center justify-center rounded bg-slate-900/40 text-slate-400',
+        className={cn(
+          'flex items-center justify-center bg-muted text-muted-foreground',
           labelled ? 'h-11 flex-col' : 'h-8',
         )}
       >
         {number}
-        <span>·</span>
       </div>
     );
   }
@@ -180,17 +177,17 @@ function Square({
   return (
     <div
       title={cell.title}
-      className={clsx(
+      className={cn(
         // Relative, so the marker sits in the square and the sr-only text is
         // placed within the scroller rather than stretching the page.
-        'relative flex items-center justify-center rounded font-semibold tabular-nums',
+        'relative flex items-center justify-center font-semibold tabular-nums',
         labelled ? 'h-11 flex-col' : 'h-8',
         cell.tone,
         cell.className,
       )}
     >
       {number}
-      <span className={clsx(cell.won && WEEK_WON_TEXT)}>{cell.value}</span>
+      <span className={cn(cell.won && WEEK_WON_TEXT)}>{cell.value}</span>
       {cell.marker}
       <span className='sr-only'>. {cell.title}</span>
     </div>
@@ -198,7 +195,7 @@ function Square({
 }
 
 /** A square as the legend draws it, at a smaller size. */
-export function Swatch({
+export function LegendSwatch({
   tone,
   className,
   children,
@@ -210,8 +207,8 @@ export function Swatch({
   return (
     <span
       aria-hidden='true'
-      className={clsx(
-        'relative inline-flex h-4 w-5 items-center justify-center rounded-sm',
+      className={cn(
+        'relative inline-flex h-4 w-5 items-center justify-center',
         tone,
         className,
       )}
@@ -248,9 +245,9 @@ export function WonKey({
   return (
     <LegendItem
       swatch={
-        <Swatch tone={tone} className='w-8 text-[0.65rem]'>
-          <span className={clsx('font-semibold', WEEK_WON_TEXT)}>{sample}</span>
-        </Swatch>
+        <LegendSwatch tone={tone} className='w-10 text-sm'>
+          <span className={cn('font-semibold', WEEK_WON_TEXT)}>{sample}</span>
+        </LegendSwatch>
       }
     >
       Week won
@@ -265,7 +262,7 @@ export function ScaleKey() {
       {WEEK_SCALE[0].label}
       {WEEK_SCALE.map(({ tone, label }) => (
         <span key={tone} title={label}>
-          <Swatch tone={tone} />
+          <LegendSwatch tone={tone} />
         </span>
       ))}
       {WEEK_SCALE[WEEK_SCALE.length - 1].label}
@@ -275,7 +272,7 @@ export function ScaleKey() {
 
 export function WeekLegend({ children }: { children: ReactNode }) {
   return (
-    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400'>
+    <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
       {children}
     </div>
   );
