@@ -1,4 +1,4 @@
-import BadgeRow from './BadgeRow';
+import Honours from './Honours';
 import StatTile from './StatTile';
 import { Link } from '@remix-run/react';
 import type { ReactNode } from 'react';
@@ -44,7 +44,7 @@ export default function ProfileHero({ summary, tabs }: Props) {
           ))}
         </div>
 
-        <BadgeRow badges={badges} />
+        <Honours badges={badges} />
 
         {badges.length > 0 && (
           <p className='m-0 mt-3 text-xs text-slate-400'>

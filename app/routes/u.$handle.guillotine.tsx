@@ -6,7 +6,6 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
@@ -15,6 +14,7 @@ import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { PercentileStrip, SplitBar } from '~/components/ui/bars';
+import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { KeyList, LegendItem, LegendSwatch } from '~/components/ui/week-grid';
 import { leagueKind } from '~/libs/guillotine/display';
@@ -540,7 +540,7 @@ function PlayerCell({
   const player = players[sleeperId];
   return (
     <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-      <PositionChip position={player?.position ?? null} />
+      <PositionMark position={player?.position ?? null} />
       <span className='font-medium text-slate-100'>
         {player?.name ?? sleeperId}
       </span>

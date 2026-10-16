@@ -9,11 +9,10 @@ import DraftBoard, {
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import { CurrentTag } from '~/components/layout/profile/Tag';
+import { CurrentSeason } from '~/components/layout/profile/StatusText';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
@@ -23,6 +22,7 @@ import {
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { RangeBar } from '~/components/ui/bars';
+import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
@@ -365,7 +365,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
           <tr key={player.sleeperId} className='border-b border-slate-700/70'>
             <td className='px-2 py-2 sm:whitespace-nowrap'>
               <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-                <PositionChip position={player.position} />
+                <PositionMark position={player.position} />
                 <span className='font-medium text-slate-100'>
                   {player.firstName} {player.lastName}
                 </span>
@@ -440,7 +440,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
           <tr key={season.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>
               <Link to={`/games/d12/${season.year}`}>{season.year}</Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               {season.finish ? (

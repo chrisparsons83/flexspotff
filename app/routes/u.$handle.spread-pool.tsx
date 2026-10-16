@@ -14,7 +14,9 @@ import SeasonFinish, {
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
@@ -31,7 +33,7 @@ import {
   signed,
   weekLabel,
 } from '~/components/layout/profile/format';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
 import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
 import { KeyedBar, LabelledRange } from '~/components/ui/bars';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
@@ -366,7 +368,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
               <Link to={`/games/spread-pool/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -1303,29 +1305,24 @@ function TeamSide({
   );
 }
 
-const RESULT_TAG: Record<PoolBet['result'], { tone: TagTone; label: string }> =
-  {
-    win: { tone: 'win', label: 'Won' },
-    loss: { tone: 'loss', label: 'Lost' },
-    push: { tone: 'neutral', label: 'Push' },
-  };
+const RESULT_STATUS: Record<
+  PoolBet['result'],
+  { tone: StatusTone; label: string }
+> = {
+  win: { tone: 'win', label: 'Won' },
+  loss: { tone: 'loss', label: 'Lost' },
+  push: { tone: 'neutral', label: 'Push' },
+};
 
 /** How a bet went, and whether it went against the crowd. */
-function BetTags({ bet }: { bet: PoolBet }) {
+function BetStatus({ bet }: { bet: PoolBet }) {
   return (
     <>
-      <Tag tone={RESULT_TAG[bet.result].tone}>
-        {RESULT_TAG[bet.result].label}
-      </Tag>
+      <StatusText tone={RESULT_STATUS[bet.result].tone}>
+        {RESULT_STATUS[bet.result].label}
+      </StatusText>
       {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
-        <Tag
-          tone='accent'
-          title={`${Math.round(
-            bet.fieldShare * 100,
-          )}% of the others who bet this game took the same side`}
-        >
-          Contrarian
-        </Tag>
+        <StatusText tone='accent'>Contrarian</StatusText>
       )}
     </>
   );
@@ -1351,6 +1348,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
       title='Bet Log'
+      description='Contrarian marks a bet on the side fewer than half of the others who bet that game took.'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table
@@ -1388,7 +1386,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
                 value={
                   <span className={signedTone(bet.net)}>{signed(bet.net)}</span>
                 }
-                status={<BetTags bet={bet} />}
+                status={<BetStatus bet={bet} />}
               />
             ))}
           </MobileCards>
@@ -1438,7 +1436,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <span className='inline-flex gap-1'>
-                <BetTags bet={bet} />
+                <BetStatus bet={bet} />
               </span>
             </td>
           </tr>

@@ -5,16 +5,15 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LeagueChip from '~/components/layout/profile/LeagueChip';
 import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import Tag from '~/components/layout/profile/Tag';
+import StatusText from '~/components/layout/profile/StatusText';
 import Truncate from '~/components/layout/profile/Truncate';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { SplitBar } from '~/components/ui/bars';
+import { LeagueMark } from '~/components/ui/swatch';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
@@ -362,7 +361,7 @@ function SeedingHistory({
           <tr key={run.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>{run.year}</td>
             <td className='px-2 py-2'>
-              <LeagueChip name={run.leagueName} />
+              <LeagueMark name={run.leagueName} />
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {run.rounds[0]?.status === 'BYE' && (
@@ -393,15 +392,10 @@ function SeedingRow({ seeding }: { seeding: CupSeeding }) {
     <tr className='border-b border-slate-700/70'>
       <td className='px-2 py-2'>{seeding.year}</td>
       <td className='px-2 py-2'>
-        <LeagueChip name={seeding.leagueName} />
+        <LeagueMark name={seeding.leagueName} />
       </td>
       <td className='px-2 py-2 text-right font-medium tabular-nums'>
-        <InfoText
-          label={`#${seeding.rank}`}
-          tip='Where they rank in the seeding so far'
-        >
-          #{seeding.rank}
-        </InfoText>
+        #{seeding.rank}
       </td>
       <td className='px-2 py-2 text-right tabular-nums'>
         {pts(seeding.points)}
@@ -430,7 +424,9 @@ function MatchResult({ game }: { game: MatchLogRow }) {
       <span className={clsx('font-bold', RESULT_TONE[game.status])}>
         {game.status === 'PENDING' ? 'Live' : game.status}
       </span>
-      {game.decidedBySeed && <Tag tone='neutral'>Tie, higher seed</Tag>}
+      {game.decidedBySeed && (
+        <StatusText tone='neutral'>Tie, higher seed</StatusText>
+      )}
     </>
   );
 }

@@ -278,10 +278,11 @@ export function WeekLegend({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * A legend stacked one entry to a line, for inside a section's ⓘ rather than
- * under its grid.
- */
+/** A legend set in a row that wraps, for a section's key above its grid. */
 export function KeyList({ children }: { children: ReactNode }) {
-  return <span className='flex flex-col items-start gap-1.5'>{children}</span>;
+  return (
+    <span className='flex flex-wrap items-center gap-x-4 gap-y-1.5'>
+      {children}
+    </span>
+  );
 }

@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Ribbon } from '~/components/layout/profile/BadgeRow';
+import { Honour } from '~/components/layout/profile/Honours';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import {
   BADGE_DEFINITIONS,
@@ -60,7 +60,7 @@ export default function Badges() {
           title='League'
           description='Earned in the redraft leagues and the Cup.'
         >
-          <dl className='m-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <ul className='m-0 grid gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3'>
             {leagueDefinitions.map(definition => {
               const badge = atFullStrength(definition);
               if (!badge) return null;
@@ -73,14 +73,14 @@ export default function Badges() {
                 />
               );
             })}
-          </dl>
+          </ul>
         </ProfileSection>
 
         <ProfileSection
           title='Side games'
           description='Every side game runs on the same scale, so winning the Spread Pool reads exactly like winning DFS Survivor.'
         >
-          <dl className='m-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <ul className='m-0 grid gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3'>
             {SIDE_GAME_KEYS.map(game => {
               const badge = makeSideGameBadge(game, 3);
               if (!badge) return null;
@@ -93,7 +93,7 @@ export default function Badges() {
                 />
               );
             })}
-          </dl>
+          </ul>
         </ProfileSection>
       </div>
     </>
@@ -102,16 +102,11 @@ export default function Badges() {
 
 function Entry({ badge, detail }: { badge: Badge; detail: string }) {
   return (
-    <div className='flex items-start gap-3'>
-      {/* The real ribbon, at its top star, so this page can never drift from
+    <li className='not-prose grid list-none grid-cols-[8rem_1fr] items-start gap-4'>
+      {/* The real badge, at its top tier, so this page can never drift from
           what a profile actually renders. */}
-      <div className='not-prose h-[7.75rem] w-[5.5rem] shrink-0'>
-        <Ribbon badge={badge} />
-      </div>
-      <div className='min-w-0'>
-        <dt className='m-0 font-semibold text-white'>{badge.label}</dt>
-        <dd className='m-0 mt-1 text-sm text-slate-400'>{detail}</dd>
-      </div>
-    </div>
+      <Honour badge={badge} />
+      <p className='m-0 text-sm text-muted-foreground'>{detail}</p>
+    </li>
   );
 }

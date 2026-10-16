@@ -11,7 +11,6 @@
 export type Badge = {
   key: string;
   label: string;
-  emoji: string;
   /** The real number behind the badge - seasons, points, titles. */
   value: number;
   /** Which band was reached, 1-based. */
@@ -19,7 +18,7 @@ export type Badge = {
   /** How many bands the badge has, so the UI can show tier 2 of 3. */
   tierCount: number;
   scale: BadgeScale;
-  accent: BadgeAccent;
+  fill: BadgeFill;
   description: string;
 };
 
@@ -38,37 +37,24 @@ export type Badge = {
 export type BadgeScale = number[] | 'tally';
 
 /**
- * A badge's own colour, as whole Tailwind classes.
- *
- * Whole classes rather than a token, because Tailwind only emits what it can
- * find written out in the source - a `border-${colour}` built at runtime
- * compiles to nothing.
+ * The token colour of a badge's block. Titles are medals: the top tier's
+ * title wears the Champions colour, league and Cup titles gold, side-game
+ * titles silver, and the sacko its own medal. Banded badges are `sequence`:
+ * the block steps through the value sequence by tier, so a higher tier is a
+ * lighter block.
  */
-export type BadgeAccent = {
-  border: string;
-  text: string;
-  /** A dark wash of the same colour, so the ribbon is tinted rather than grey. */
-  bg: string;
-  /**
-   * Light ribbons, for the two awards that have to read as gold.
-   *
-   * Every other badge is a dark wash of its own colour, which works for all of
-   * them except gold: dark gold over a slate card is brown, and it put the
-   * league title, the Champions League title and the *sacko* in the same
-   * family. These two go the other way and sit on the metal itself, which
-   * means the label has to flip dark.
-   */
-  tone?: 'light';
-};
+export type BadgeFill =
+  | 'league-champions'
+  | 'medal-gold'
+  | 'medal-silver'
+  | 'medal-sacko'
+  | 'sequence';
 
 type BadgeDefinition = {
   key: string;
   label: string;
-  emoji: string;
   scale: BadgeScale;
-  /** One colour per badge, so a row of them reads as a set of awards rather
-   *  than a ranking - the stars already carry the ranking. */
-  accent: BadgeAccent;
+  fill: BadgeFill;
   description: string;
 };
 
@@ -84,99 +70,57 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
   championOfChampions: {
     key: 'champion-of-champions',
     label: 'Champion of Champions',
-    emoji: '👑',
     scale: 'tally',
-    accent: {
-      border: 'border-amber-600',
-      text: 'text-amber-800',
-      bg: 'bg-amber-300',
-      tone: 'light',
-    },
+    fill: 'league-champions',
     description: 'Won the Champions League title',
   },
   leagueChampion: {
     key: 'league-champion',
     label: 'League Champion',
-    emoji: '🏆',
     scale: 'tally',
-    accent: {
-      border: 'border-amber-500',
-      text: 'text-amber-700',
-      bg: 'bg-amber-200',
-      tone: 'light',
-    },
+    fill: 'medal-gold',
     description: 'Won a league championship',
   },
   cupChampion: {
     key: 'cup-champion',
     label: 'Cup Champion',
-    emoji: '🥇',
     scale: 'tally',
-    accent: {
-      border: 'border-sky-400',
-      text: 'text-sky-300',
-      bg: 'bg-sky-950/60',
-    },
+    fill: 'medal-gold',
     description: 'Won the Cup',
   },
   sacko: {
     key: 'sacko',
     label: 'Sacko',
-    emoji: '💩',
     scale: 'tally',
-    accent: {
-      border: 'border-brown',
-      text: 'text-brown-light',
-      bg: 'bg-amber-950/60',
-    },
+    fill: 'medal-sacko',
     description: 'Finished last - scored lowest in the sacko final',
   },
   championsLeague: {
     key: 'champions-league',
     label: 'Champions League',
-    emoji: '🛡️',
     scale: [1, 3, 5],
-    accent: {
-      border: 'border-violet-400',
-      text: 'text-violet-300',
-      bg: 'bg-violet-950/60',
-    },
+    fill: 'sequence',
     description: 'Seasons played in the top tier',
   },
   seasonsPlayed: {
     key: 'seasons',
     label: 'Seasons Played',
-    emoji: '📅',
     scale: [1, 5, 10],
-    accent: {
-      border: 'border-blue-400',
-      text: 'text-blue-300',
-      bg: 'bg-blue-950/60',
-    },
+    fill: 'sequence',
     description: 'Seasons in the redraft league',
   },
   highScoringWeek: {
     key: 'high-scoring-week',
     label: 'High Scoring Week',
-    emoji: '💥',
     scale: [150, 175, 200],
-    accent: {
-      border: 'border-rose-400',
-      text: 'text-rose-300',
-      bg: 'bg-rose-950/60',
-    },
+    fill: 'sequence',
     description: 'Highest score in a single week',
   },
   winStreak: {
     key: 'win-streak',
     label: 'Win Streak',
-    emoji: '🔥',
     scale: [5, 10, 15, 20],
-    accent: {
-      border: 'border-red-500',
-      text: 'text-red-400',
-      bg: 'bg-red-950/60',
-    },
+    fill: 'sequence',
     description: 'Longest run of consecutive wins',
   },
 };
@@ -188,88 +132,39 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
 export const SIDE_GAME_BADGES = {
   d12: {
     label: 'D12 Champion',
-    emoji: '🎯',
-    accent: {
-      border: 'border-emerald-400',
-      text: 'text-emerald-300',
-      bg: 'bg-emerald-950/60',
-    },
+    fill: 'medal-silver',
   },
   qbStreaming: {
     label: 'QB Streaming Champion',
-    emoji: '🏈',
-    accent: {
-      border: 'border-cyan-400',
-      text: 'text-cyan-300',
-      bg: 'bg-cyan-950/60',
-    },
+    fill: 'medal-silver',
   },
   spreadPool: {
     label: 'Spread Pool Champion',
-    emoji: '💰',
-    accent: {
-      border: 'border-green-400',
-      text: 'text-green-300',
-      bg: 'bg-green-950/60',
-    },
+    fill: 'medal-silver',
   },
   locks: {
     label: 'Locks Champion',
-    emoji: '🔒',
-    accent: {
-      border: 'border-indigo-400',
-      text: 'text-indigo-300',
-      bg: 'bg-indigo-950/60',
-    },
+    fill: 'medal-silver',
   },
   dfsSurvivor: {
     label: 'DFS Survivor Champion',
-    emoji: '👥',
-    // Not orange: a dark wash of orange is brown, and it made this badge the
-    // twin of the sacko two rows up.
-    accent: {
-      border: 'border-lime-400',
-      text: 'text-lime-300',
-      bg: 'bg-lime-950/60',
-    },
+    fill: 'medal-silver',
   },
   guillotine: {
     label: 'Guillotine Champion',
-    emoji: '🪓',
-    accent: {
-      border: 'border-pink-400',
-      text: 'text-pink-300',
-      bg: 'bg-pink-950/60',
-    },
+    fill: 'medal-silver',
   },
   bestBall: {
     label: 'Autodraft BBM Champion',
-    emoji: '🤖',
-    accent: {
-      border: 'border-teal-400',
-      text: 'text-teal-300',
-      bg: 'bg-teal-950/60',
-    },
+    fill: 'medal-silver',
   },
   survivor: {
     label: 'Survivor Champion',
-    emoji: '🏝️',
-    // Cyan, teal and the greens are all taken; yellow sits clear of the
-    // ambers once it is on a dark wash.
-    accent: {
-      border: 'border-yellow-300',
-      text: 'text-yellow-200',
-      bg: 'bg-yellow-950/60',
-    },
+    fill: 'medal-silver',
   },
   fSquared: {
     label: 'F² Champion',
-    emoji: '🧮',
-    accent: {
-      border: 'border-fuchsia-400',
-      text: 'text-fuchsia-300',
-      bg: 'bg-fuchsia-950/60',
-    },
+    fill: 'medal-silver',
   },
 } as const;
 
@@ -313,12 +208,11 @@ export function makeBadge(
   return {
     key: definition.key,
     label: definition.label,
-    emoji: definition.emoji,
     value,
     tier,
     tierCount: definition.scale === 'tally' ? tier : definition.scale.length,
     scale: definition.scale,
-    accent: definition.accent,
+    fill: definition.fill,
     description: definition.description,
   };
 }
@@ -353,14 +247,13 @@ export function makeSideGameBadge(
   game: SideGameKey,
   titles: number,
 ): Badge | null {
-  const { label, emoji, accent } = SIDE_GAME_BADGES[game];
+  const { label, fill } = SIDE_GAME_BADGES[game];
 
   return makeBadge(
     {
       key: `${game}-champion`,
       label,
-      emoji,
-      accent,
+      fill,
       scale: SIDE_GAME_SCALE,
       description: `Won ${label.replace(' Champion', '')}`,
     },

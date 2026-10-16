@@ -11,7 +11,7 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
-import { CurrentTag } from '~/components/layout/profile/Tag';
+import { CurrentSeason } from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   plural,
@@ -149,7 +149,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               >
                 {season.year}
               </Link>
-              {!season.isComplete && <CurrentTag />}
+              {!season.isComplete && <CurrentSeason />}
             </td>
             <td
               className={clsx(

@@ -7,7 +7,6 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import SeasonFinish, {
@@ -15,7 +14,9 @@ import SeasonFinish, {
 } from '~/components/layout/profile/SeasonFinish';
 import SegmentedControl from '~/components/layout/profile/SegmentedControl';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   CHART,
@@ -34,7 +35,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { BAR, TEXT } from '~/components/layout/profile/tones';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
 import { KeyedBar, LabelledRange } from '~/components/ui/bars';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import {
@@ -370,7 +371,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
               <Link to={`/games/locks-challenge/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -1129,16 +1130,11 @@ function Teams({
         <TeamCallout title='Costliest Loss' row={costliest} names={names}>
           {costliest && (
             <>
-              <InfoText
-                label={plural(costliest.pointsCost, 'point')}
-                className='font-semibold text-rose-300'
-                tip={`Lost as a week's only loss, with ${plural(
-                  costliest.busts,
-                  'bust',
-                )} in all`}
-              >
+              <span className='font-semibold text-negative'>
                 {plural(costliest.pointsCost, 'point')}
-              </InfoText>
+              </span>{' '}
+              lost as a week&rsquo;s only loss, with{' '}
+              {plural(costliest.busts, 'bust')} in all
             </>
           )}
         </TeamCallout>
@@ -1213,9 +1209,9 @@ function Teams({
   );
 }
 
-const RESULT_TAG: Record<
+const RESULT_STATUS: Record<
   LocksPick['result'],
-  { tone: TagTone; label: string }
+  { tone: StatusTone; label: string }
 > = {
   win: { tone: 'win', label: 'Won' },
   loss: { tone: 'loss', label: 'Lost' },
@@ -1233,9 +1229,9 @@ function FieldCell({ pick }: { pick: LocksPick }) {
         {pick.sameSide} of {pick.fieldCount}
       </span>
       {pick.fieldShare >= CHALK_SHARE ? (
-        <Tag tone='neutral'>Chalk</Tag>
+        <StatusText tone='neutral'>Chalk</StatusText>
       ) : pick.fieldShare <= 1 - CHALK_SHARE ? (
-        <Tag tone='accent'>Contrarian</Tag>
+        <StatusText tone='accent'>Contrarian</StatusText>
       ) : null}
     </span>
   );
@@ -1299,9 +1295,9 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                         <FieldCell pick={pick} />
                       </span>
                       <span className='ml-auto inline-flex gap-1'>
-                        <Tag tone={RESULT_TAG[pick.result].tone}>
-                          {RESULT_TAG[pick.result].label}
-                        </Tag>
+                        <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                          {RESULT_STATUS[pick.result].label}
+                        </StatusText>
                       </span>
                     </li>
                   ))}
@@ -1348,9 +1344,9 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                 <FieldCell pick={pick} />
               </td>
               <td className='whitespace-nowrap px-2 py-1.5'>
-                <Tag tone={RESULT_TAG[pick.result].tone}>
-                  {RESULT_TAG[pick.result].label}
-                </Tag>
+                <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                  {RESULT_STATUS[pick.result].label}
+                </StatusText>
               </td>
               {index === 0 && (
                 <td

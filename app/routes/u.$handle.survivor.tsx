@@ -5,7 +5,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import { CurrentTag } from '~/components/layout/profile/Tag';
+import { CurrentSeason } from '~/components/layout/profile/StatusText';
 import { ordinal, pct, plural } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import PickChip from '~/components/layout/survivor/PickChip';
@@ -142,7 +142,7 @@ function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
               >
                 {titleOf(pool)}
               </Link>
-              {!pool.isComplete && <CurrentTag />}
+              {!pool.isComplete && <CurrentSeason />}
             </td>
             <td
               className={clsx(

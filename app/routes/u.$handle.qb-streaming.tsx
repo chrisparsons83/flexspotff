@@ -6,14 +6,15 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
 import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
@@ -264,13 +265,10 @@ function VsFieldLead({
       {pts(value)}
       {vsField !== null && (
         <LeadContext>
-          <InfoText
-            label={signed(vsField)}
-            className={clsx('tabular-nums', signedTone(vsField))}
-            tip={`${signed(vsField)} a week against the field`}
-          >
+          <span className={clsx('tabular-nums', signedTone(vsField))}>
             {signed(vsField)}
-          </InfoText>
+          </span>{' '}
+          a week against the field
         </LeadContext>
       )}
     </>
@@ -376,7 +374,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                 <Link to={`/games/qb-streaming/standings/${season.year}`}>
                   {season.year}
                 </Link>
-                {season.inProgress && <CurrentTag />}
+                {season.inProgress && <CurrentSeason />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -721,9 +719,11 @@ function PickCell({ pick }: { pick: QbPick }) {
 function WeekTags({ week }: { week: QbWeek }) {
   return (
     <>
-      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
-      {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
-      {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
+      {week.rank === 1 && <StatusText tone='win'>Won week</StatusText>}
+      {week.doubled && <StatusText tone='accent'>Doubled up</StatusText>}
+      {!week.counts && (
+        <StatusText tone='neutral'>Didn&rsquo;t count</StatusText>
+      )}
     </>
   );
 }
