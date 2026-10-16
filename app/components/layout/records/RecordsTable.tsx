@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
+import { ProfileLink } from '~/components/ui/profile-link';
 import type { RecordRow } from '~/models/records.server';
 import { isLeagueName, RANK_COLORS } from '~/utils/constants';
 

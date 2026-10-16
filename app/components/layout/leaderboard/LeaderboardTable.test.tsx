@@ -58,7 +58,7 @@ describe('LeaderboardTable', () => {
     );
 
     // Only the first entry has details.
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
   // The D12 boards used to pass these explicitly while the league boards took a

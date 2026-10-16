@@ -1,8 +1,10 @@
+import { Button } from './button';
+
 /**
  * Opens a long list past its first few rows, and closes it again. `noun` is
- * what the list holds, plural - "Show all 40 opponents".
+ * what the list holds, plural: "Show all 40 opponents".
  */
-export default function ShowAllButton({
+export function ShowAllButton({
   total,
   noun,
   showAll,
@@ -14,13 +16,14 @@ export default function ShowAllButton({
   onToggle: () => void;
 }) {
   return (
-    <button
-      type='button'
+    <Button
+      variant='secondary'
+      size='sm'
       aria-expanded={showAll}
       onClick={onToggle}
-      className='mt-3 rounded bg-slate-700 px-3 py-1 text-sm text-slate-300 hover:bg-slate-600'
+      className='mt-4'
     >
       {showAll ? 'Show fewer' : `Show all ${total} ${noun}`}
-    </button>
+    </Button>
   );
 }

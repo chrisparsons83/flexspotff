@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useSubmit } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import PlayerLabel from '~/components/layout/guillotine/PlayerLabel';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import StatTile from '~/components/layout/profile/StatTile';
+import { PlayerLabel } from '~/components/ui/player-label';
+import { StatList } from '~/components/ui/stat-list';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { teamName } from '~/libs/guillotine/display';
 import type { ViewTransaction } from '~/libs/guillotine/views';
@@ -172,12 +172,15 @@ export default function GuillotineWaivers() {
 
   return (
     <div className='space-y-6'>
-      <div className='not-prose grid grid-cols-2 gap-3 md:grid-cols-4'>
-        <StatTile label='Claims Won' value={`${totalClaims}`} />
-        <StatTile label='Bids That Lost' value={`${totalLost}`} />
-        <StatTile label='FAAB Spent' value={`$${totalSpent}`} />
-        <StatTile label='Budget Each' value={budget ? `$${budget}` : '—'} />
-      </div>
+      <StatList
+        className='not-prose grid-cols-2 md:grid-cols-4'
+        stats={[
+          { label: 'Claims Won', value: totalClaims },
+          { label: 'Bids That Lost', value: totalLost },
+          { label: 'FAAB Spent', value: `$${totalSpent}` },
+          { label: 'Budget Each', value: budget ? `$${budget}` : '—' },
+        ]}
+      />
 
       <ProfileSection
         title='Budgets'

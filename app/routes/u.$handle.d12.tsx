@@ -11,9 +11,7 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import { CurrentSeason } from '~/components/layout/profile/StatusText';
-import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
   plural,
@@ -22,6 +20,8 @@ import {
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { RangeBar } from '~/components/ui/bars';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
 import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';

@@ -24,16 +24,16 @@ describe('MemberAvatar', () => {
     const img = screen.getByAltText('Panda');
 
     fireEvent.error(img);
-    expect(img.getAttribute('src')).toContain(
-      '/avatars/214093545747906562/account.webp',
+    expect(img).toHaveAttribute(
+      'src', expect.stringContaining('/avatars/214093545747906562/account.webp'),
     );
 
     fireEvent.error(img);
-    expect(img.getAttribute('src')).toMatch(/\/embed\/avatars\/\d\.png$/);
+    expect(img).toHaveAttribute('src', expect.stringMatching(/\/embed\/avatars\/\d\.png$/));
 
     // Nothing left to try: it stays on the default rather than looping.
     fireEvent.error(img);
-    expect(img.getAttribute('src')).toMatch(/\/embed\/avatars\/\d\.png$/);
+    expect(img).toHaveAttribute('src', expect.stringMatching(/\/embed\/avatars\/\d\.png$/));
   });
 
   it('uses the default avatar for someone who never set one', () => {

@@ -2,9 +2,9 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import PickChip from '~/components/layout/survivor/PickChip';
 import GoBox from '~/components/ui/GoBox';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
 import { buildBoard, poolTitle, summarizeWeeks } from '~/libs/survivor/views';
 import {

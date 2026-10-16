@@ -11,11 +11,9 @@ import ProfileSection from '~/components/layout/profile/ProfileSection';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import StatusText, {
   CurrentSeason,
 } from '~/components/layout/profile/StatusText';
-import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
   plural,
@@ -25,6 +23,8 @@ import {
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import { LabelledRange } from '~/components/ui/bars';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import {
   KeyList,

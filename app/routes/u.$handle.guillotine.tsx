@@ -8,12 +8,14 @@ import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { PercentileStrip, SplitBar } from '~/components/ui/bars';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
 import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { KeyList, LegendItem, LegendSwatch } from '~/components/ui/week-grid';

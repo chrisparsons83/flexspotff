@@ -30,32 +30,14 @@ export function useChartWidth<T extends HTMLElement>(initial = 720) {
 export const weekLabelStep = (plotWidth: number, weeks: number) =>
   plotWidth / weeks < 24 ? 2 : 1;
 
+/**
+ * Helpers every chart on the site shares: drawing at the real width, thinning
+ * week labels, and the key under the plot.
+ */
+
 /** One entry in a chart's key: a sample of the mark, then what it is. */
 export function ChartKey({ children }: { children: ReactNode }) {
   return <span className='inline-flex items-center gap-1.5'>{children}</span>;
-}
-
-/**
- * The key for the field's band that sits behind every season chart, after the
- * member's own line: the middle half, the whole spread, and the median.
- */
-export function FieldBandKeys({ rangeLabel }: { rangeLabel: string }) {
-  return (
-    <>
-      <ChartKey>
-        <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/30' />
-        Middle half of the field
-      </ChartKey>
-      <ChartKey>
-        <span className='inline-block h-2.5 w-4 rounded-sm bg-slate-400/10' />
-        {rangeLabel}
-      </ChartKey>
-      <ChartKey>
-        <span className='inline-block w-4 border-t border-dashed border-slate-300' />
-        Median
-      </ChartKey>
-    </>
-  );
 }
 
 /** The footnote a chart's keys sit in, wrapping on a phone. */

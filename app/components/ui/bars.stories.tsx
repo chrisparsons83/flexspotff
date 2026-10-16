@@ -2,6 +2,7 @@ import {
   KeyedBar,
   LabelledRange,
   PercentileStrip,
+  PositionBar,
   RangeBar,
   RankBar,
   SplitBar,
@@ -91,6 +92,18 @@ export const Range: Story = {
           format={value => value.toFixed(1)}
         />
       </Row>
+    </div>
+  ),
+};
+
+/** A roster by position, with a fainter comparison bar under it. */
+export const Positions: Story = {
+  render: () => (
+    <div className='grid max-w-md grid-cols-[5rem_1fr] items-center gap-x-3 gap-y-1 text-sm text-muted-foreground'>
+      <span>Drafted</span>
+      <PositionBar counts={{ QB: 3, RB: 6, WR: 7, TE: 2 }} />
+      <span>League</span>
+      <PositionBar counts={{ QB: 2, RB: 6, WR: 8, TE: 2 }} size='small' />
     </div>
   ),
 };

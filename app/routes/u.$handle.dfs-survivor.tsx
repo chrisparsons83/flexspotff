@@ -6,26 +6,16 @@ import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { FieldBandKeys } from '~/components/layout/profile/FieldBandKeys';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import StatusText, {
   CurrentSeason,
 } from '~/components/layout/profile/StatusText';
-import YearFilter from '~/components/layout/profile/YearFilter';
-import {
-  CHART,
-  ChartKey,
-  ChartKeys,
-  FieldBandKeys,
-  useChartWidth,
-  weekLabelStep,
-} from '~/components/layout/profile/chart';
 import {
   ordinal,
   plural,
@@ -35,6 +25,18 @@ import {
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import { LabelledRange, RangeBar } from '~/components/ui/bars';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/ui/chart';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
 import { PositionMark } from '~/components/ui/swatch';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import {

@@ -1,4 +1,4 @@
-import { Link } from '@remix-run/react';
+import { Link } from './link';
 import type { ReactNode } from 'react';
 import { useTypedRouteLoaderData } from 'remix-typedjson';
 import type { loader as rootLoader } from '~/root';
@@ -38,17 +38,12 @@ type Props = {
  * A link to a member's profile that drops to plain text for anyone who cannot
  * open it, so standings and records never link to a 404.
  */
-export default function ProfileLink({
-  userId,
-  tab,
-  className,
-  children,
-}: Props) {
+export function ProfileLink({ userId, tab, className, children }: Props) {
   const profileHref = useProfileHref();
   if (!useCanViewProfiles()) return <>{children}</>;
 
   return (
-    <Link to={profileHref(userId, tab)} className={className}>
+    <Link to={profileHref(userId, tab)} variant='quiet' className={className}>
       {children}
     </Link>
   );

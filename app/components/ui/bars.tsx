@@ -4,7 +4,7 @@
  * says in words or position what its colour shows, so the colour only
  * repeats it.
  */
-import { type Fill, FILLS } from './fills';
+import { type Fill, FILLS, positionFill } from './fills';
 import type { ReactNode } from 'react';
 import { cn } from '~/utils';
 
@@ -243,6 +243,60 @@ export function PercentileStrip({
         />
       ))}
       {average !== null && <Tick at={average} />}
+    </div>
+  );
+}
+
+/**
+ * A roster split by position, each part in its position's colour with its
+ * count written in it where it fits. Positions without a colour of their own
+ * (K, Other) share the neutral. The small one is fainter, for a comparison
+ * set right under a full-size bar.
+ */
+export function PositionBar({
+  counts,
+  label,
+  size = 'normal',
+}: {
+  /** Count by position, in the order the bar should run: QB, RB, WR, TE. */
+  counts: Record<string, number>;
+  /** Read by screen readers in place of the bar. */
+  label?: string;
+  size?: 'normal' | 'small';
+}) {
+  const groups = Object.entries(counts).filter(([, count]) => count > 0);
+  const total = groups.reduce((sum, [, count]) => sum + count, 0);
+  return (
+    <div
+      role='img'
+      aria-label={
+        label ?? groups.map(([group, count]) => `${count} ${group}`).join(', ')
+      }
+      className={cn(
+        'flex w-full gap-0.5 overflow-hidden bg-secondary',
+        size === 'small' ? 'h-4 opacity-70' : 'h-6',
+      )}
+    >
+      {total > 0 &&
+        groups.map(([group, count]) => {
+          const fill = positionFill(group);
+          return (
+            <div
+              key={group}
+              className={cn(
+                'flex items-center justify-center overflow-hidden whitespace-nowrap text-sm font-semibold tabular-nums',
+                fill ? FILLS[fill] : 'bg-muted-foreground text-background',
+              )}
+              style={{ width: `${(count / total) * 100}%` }}
+            >
+              {/* A sliver too narrow for its label is still named by the
+                  bar's label. */}
+              {size === 'normal' &&
+                count / total >= 0.08 &&
+                `${group === 'Other' ? 'OTH' : group} ${count}`}
+            </div>
+          );
+        })}
     </div>
   );
 }

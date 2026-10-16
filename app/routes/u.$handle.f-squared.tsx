@@ -6,15 +6,11 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
 import { CurrentSeason } from '~/components/layout/profile/StatusText';
-import Truncate from '~/components/layout/profile/Truncate';
-import YearFilter from '~/components/layout/profile/YearFilter';
 import {
   ordinal,
   pct,
@@ -24,8 +20,12 @@ import {
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
 import { LeagueMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
+import { Truncate } from '~/components/ui/truncate';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
 import type {

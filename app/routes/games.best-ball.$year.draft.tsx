@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { PositionChips } from '~/components/layout/best-ball/PositionCounts';
+import { PositionTally } from '~/components/layout/best-ball/PositionCounts';
 import DraftBoard, {
   DraftBoardCell,
 } from '~/components/layout/draftboard/DraftBoard';
@@ -95,7 +95,7 @@ export default function BestBallDraft() {
                   <td className='py-1.5 pr-2 tabular-nums'>{column.slot}</td>
                   <td className='py-1.5 pr-2 text-white'>{column.name}</td>
                   <td className='py-1.5 pr-2'>
-                    <PositionChips counts={column.counts} />
+                    <PositionTally counts={column.counts} />
                   </td>
                   <td className='py-1.5 text-xs text-amber-200'>
                     {column.outliers.join(' · ') || '—'}
