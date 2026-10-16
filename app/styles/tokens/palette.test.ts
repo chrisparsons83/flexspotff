@@ -6,10 +6,11 @@ import {
   FILL_CONTRAST,
   FILL_GROUNDS,
   fillEdges,
-  fillHueGaps,
   leagueTints,
   fills,
   leagues,
+  medals,
+  positions,
   TEXT_CONTRAST,
   TEXT_PAIRS,
   textOn,
@@ -26,7 +27,7 @@ import { LEAGUE_EMBED_COLORS } from '~/utils/constants';
  * show. These are the ones that get an edge.
  */
 const OUTLINED: Record<(typeof THEMES)[number], string[]> = {
-  dark: [],
+  dark: ['position-def'],
   light: [
     'league-admiral',
     'league-champions',
@@ -108,13 +109,20 @@ describe('fills', () => {
     expect(contrast(textOn(fill), fill)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
   });
 
-  it('keeps every category fill distinguishable from the others', () => {
-    const colors = Object.values(categoryFills);
-    const closest = Math.min(
-      ...colors.flatMap((a, i) => colors.slice(i + 1).map(b => distance(a, b))),
-    );
-    expect(closest).toBeGreaterThanOrEqual(0.07);
-  });
+  // Leagues and positions are fixed by Discord and Sleeper, and a position
+  // may sit near a league's hue. Only colours shown together need to differ.
+  it.each(Object.entries({ leagues, positions, medals }))(
+    'keeps the %s distinguishable from each other',
+    (_, group) => {
+      const colors = Object.values(group);
+      const closest = Math.min(
+        ...colors.flatMap((a, i) =>
+          colors.slice(i + 1).map(b => distance(a, b)),
+        ),
+      );
+      expect(closest).toBeGreaterThanOrEqual(0.07);
+    },
+  );
 });
 
 describe('sequence', () => {
@@ -123,16 +131,6 @@ describe('sequence', () => {
       expect(step.l).toBeGreaterThan(sequence[i].l);
       expect(distance(step, sequence[i])).toBeGreaterThanOrEqual(0.07);
     });
-  });
-});
-
-describe('fillHueGaps', () => {
-  it('places each hue in the widest remaining gap', () => {
-    expect(fillHueGaps([0, 90], 3)).toEqual([225, 157.5, 292.5]);
-  });
-
-  it('needs a hue to start from', () => {
-    expect(() => fillHueGaps([], 3)).toThrow();
   });
 });
 

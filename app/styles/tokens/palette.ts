@@ -15,8 +15,8 @@
  *   card.
  * - The five league colours are fixed: they are also Discord role and embed
  *   colours, so they come from LEAGUE_EMBED_COLORS unchanged.
- * - Every other categorical colour is placed at the midpoint of the largest
- *   hue gap left on the wheel, at the leagues' average chroma.
+ * - Position colours keep Sleeper's hues, at the leagues' average chroma,
+ *   so they match the draft board. DEF is Sleeper's brown exactly.
  * - Ordered data uses a value sequence: one hue stepping in lightness.
  * - Categorical colours are fills, never text. Text on a fill is pure black
  *   or pure white, whichever reads better.
@@ -89,32 +89,6 @@ const mean = (values: number[]) =>
 /** Every generated categorical colour shares the leagues' average chroma. */
 export const CATEGORY_CHROMA = mean(leagueColors.map(c => c.c));
 
-/**
- * Adds `count` hues, each at the midpoint of the widest gap left between the
- * hues already on the wheel. Returned in the order they were placed.
- */
-export const fillHueGaps = (taken: number[], count: number) => {
-  if (taken.length === 0) throw new Error('fillHueGaps needs a hue to start');
-  const hues = [...taken].sort((a, b) => a - b);
-  const placed: number[] = [];
-  for (let n = 0; n < count; n++) {
-    let widest = -1;
-    let start = 0;
-    hues.forEach((hue, i) => {
-      const next = i + 1 < hues.length ? hues[i + 1] : hues[0] + 360;
-      if (next - hue > widest) {
-        widest = next - hue;
-        start = hue;
-      }
-    });
-    const hue = (start + widest / 2) % 360;
-    placed.push(hue);
-    hues.push(hue);
-    hues.sort((a, b) => a - b);
-  }
-  return placed;
-};
-
 /** Steps from the ground for each layer; light mode counts from the top. */
 const SURFACE_OFFSET = 2;
 const RAISED_OFFSET = 4;
@@ -130,19 +104,20 @@ const fillGrounds = THEMES.flatMap(theme => [
 ]);
 
 /**
- * The lightest value at which every hue clears FILL_CONTRAST on the ground
- * and on a card, in both themes. Generated colours can meet that bar; some
- * fixed league colours cannot, which is what fill edges are for.
+ * The colour at this hue, at the leagues' average chroma and the lightest
+ * value that clears FILL_CONTRAST on the ground and on a card, in both
+ * themes. Generated colours can meet that bar; some fixed league colours
+ * cannot, which is what fill edges are for.
  */
-const categoryLightness = (hues: number[]) => {
+const categoryFill = (h: number) => {
   for (let l = mean(leagueColors.map(c => c.l)); l > 0; l -= 0.005) {
-    const colors = hues.map(h => make({ l, c: CATEGORY_CHROMA, h }));
-    const visible = colors.every(color =>
-      fillGrounds.every(ground => contrast(color, ground) >= FILL_CONTRAST),
+    const color = make({ l, c: CATEGORY_CHROMA, h });
+    const visible = fillGrounds.every(
+      ground => contrast(color, ground) >= FILL_CONTRAST,
     );
-    if (visible) return l;
+    if (visible) return color;
   }
-  throw new Error('No lightness clears every fill ground');
+  throw new Error(`No lightness at hue ${h} clears every fill ground`);
 };
 
 // Medals
@@ -196,25 +171,29 @@ const BRAND_START: Record<Theme, Oklch> = {
 export type Position = 'qb' | 'rb' | 'wr' | 'te' | 'def';
 
 /**
- * Positions in the order their hues are placed. The order is chosen so each
- * lands near its current colour: DEF red-brown, WR blue, QB maroon, TE
- * orange, RB green. The orange accent is left out of the placement, so
- * positions keep the colours people know even where TE and DEF sit near it.
+ * The hues Sleeper's draft board uses, so a position reads
+ * the same here as on the board people draft from. Each takes the lightest
+ * value its hue allows on every ground, which differs a little from hue to
+ * hue. DEF is Sleeper's brown exactly: lifting it to clear every ground
+ * makes it too light, so on dark cards it gets an edge instead. RB and WR
+ * sit near the Dragon and Galaxy leagues, which is fine: positions and
+ * leagues are never read against each other.
  */
-const POSITION_ORDER: Position[] = ['def', 'wr', 'qb', 'te', 'rb'];
+const POSITION_HUES: Record<Exclude<Position, 'def'>, number> = {
+  qb: 355,
+  rb: 166,
+  wr: 236,
+  te: 66,
+};
 
-const positionHues = fillHueGaps(
-  leagueColors.map(c => c.h),
-  POSITION_ORDER.length,
-);
-const positionLightness = categoryLightness(positionHues);
+const DEF_HEX = '#9a5f4e';
 
-export const positions = Object.fromEntries(
-  POSITION_ORDER.map((name, i) => [
-    name,
-    make({ l: positionLightness, c: CATEGORY_CHROMA, h: positionHues[i] }),
-  ]),
-) as Record<Position, Oklch>;
+export const positions = {
+  ...Object.fromEntries(
+    Object.entries(POSITION_HUES).map(([name, h]) => [name, categoryFill(h)]),
+  ),
+  def: round(hexToOklch(DEF_HEX)),
+} as Record<Position, Oklch>;
 
 // Value sequence for ordered data (ranks, percentiles)
 

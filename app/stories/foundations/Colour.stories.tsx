@@ -253,7 +253,7 @@ export const Categories: Story = {
   render: () => (
     <FoundationPage
       title='Positions and medals'
-      intro='Positions sit at the midpoints of the widest hue gaps the leagues leave, at the leagues’ average chroma, so no position reads as a league. Medals step down in lightness from gold to the sacko.'
+      intro='Positions keep the hues of Sleeper’s draft board, so they read the same as on the board people draft from. Medals step down in lightness from gold to the sacko.'
     >
       <FoundationSection
         title='Positions'
