@@ -20,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const streamingWeek = streamingWeeks.find(
     streamingWeek => streamingWeek.week === week,
   );
-  if (!streamingWeek) throw new Error('No streaming week found');
+  if (!streamingWeek) throw new Response('No such week', { status: 404 });
 
   const maxWeek = streamingWeeks[0].week;
 
