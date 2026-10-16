@@ -217,31 +217,6 @@ export function makeBadge(
   };
 }
 
-/**
- * What a member's stars actually mean, for the tooltip.
- *
- * A row of stars is comparable but not self-explanatory - it says this member
- * has two of a possible three without saying two of what, or what the third
- * would take. This spells out both, which is the whole reason the scale is
- * carried on the badge.
- */
-export function describeTier(badge: Badge): string {
-  const earned = `${badge.description} (${badge.value}).`;
-
-  if (badge.scale === 'tally') {
-    return `${earned} One star for each - there is no cap on this one.`;
-  }
-
-  const stars = `${badge.tier} of ${badge.tierCount} stars.`;
-  const next = badge.scale[badge.tier];
-
-  return `${earned} ${stars} ${
-    next === undefined
-      ? 'This is the top band.'
-      : `${next} earns the next star.`
-  }`;
-}
-
 /** A side-game title badge: one star per season won.  */
 export function makeSideGameBadge(
   game: SideGameKey,

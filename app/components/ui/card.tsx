@@ -4,11 +4,16 @@ import { cn } from '~/utils';
 
 /** Each league's tint, written out whole for Tailwind. */
 const TINTS: Record<LeagueFill, string> = {
-  'league-admiral': 'bg-league-admiral-tint',
-  'league-champions': 'bg-league-champions-tint',
-  'league-dragon': 'bg-league-dragon-tint',
-  'league-galaxy': 'bg-league-galaxy-tint',
-  'league-monarch': 'bg-league-monarch-tint',
+  'league-admiral':
+    'bg-league-admiral-tint [--surface:var(--league-admiral-tint)]',
+  'league-champions':
+    'bg-league-champions-tint [--surface:var(--league-champions-tint)]',
+  'league-dragon':
+    'bg-league-dragon-tint [--surface:var(--league-dragon-tint)]',
+  'league-galaxy':
+    'bg-league-galaxy-tint [--surface:var(--league-galaxy-tint)]',
+  'league-monarch':
+    'bg-league-monarch-tint [--surface:var(--league-monarch-tint)]',
 };
 
 /** A league's colour as a solid band, for a card's header. */
@@ -38,15 +43,20 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, league, ...props }, ref) => {
     const { inCard } = React.useContext(CardContext);
-    if (inCard && process.env.NODE_ENV !== 'production') {
-      console.error('A Card is inside another Card. Use space instead.');
-    }
+    // Once per card, when it mounts, rather than on every render.
+    React.useEffect(() => {
+      if (inCard && process.env.NODE_ENV !== 'production') {
+        console.error('A Card is inside another Card. Use space instead.');
+      }
+    }, [inCard]);
     return (
       <CardContext.Provider value={{ inCard: true, league }}>
         <div
           ref={ref}
           className={cn(
-            'bg-card text-card-foreground',
+            // --surface tells what sits on the card, such as a table's
+            // sticky header, which colour it is on.
+            'bg-card text-card-foreground [--surface:var(--card)]',
             league && TINTS[league],
             className,
           )}

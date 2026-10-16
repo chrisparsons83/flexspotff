@@ -10,7 +10,6 @@ import {
   Fragment,
   cloneElement,
   isValidElement,
-  useMemo,
   useState,
 } from 'react';
 import { cn } from '~/utils';
@@ -41,23 +40,21 @@ export function useTableSort<T, K extends string>(
     initial.direction ?? 'desc',
   );
 
-  const sorted = useMemo(() => {
-    const read = accessors[key];
-    const sign = direction === 'asc' ? 1 : -1;
-    return [...rows].sort((a, b) => {
-      const x = read(a);
-      const y = read(b);
-      if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
-      return (
-        sign *
-        (typeof x === 'number' && typeof y === 'number'
-          ? x - y
-          : String(x).localeCompare(String(y)))
-      );
-    });
-    // The accessors are read fresh each render; the rows and order key it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, key, direction]);
+  // Sorted every render rather than memoised: accessors are usually written
+  // inline and can read state of their own, such as a chosen season.
+  const read = accessors[key];
+  const sign = direction === 'asc' ? 1 : -1;
+  const sorted = [...rows].sort((a, b) => {
+    const x = read(a);
+    const y = read(b);
+    if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+    return (
+      sign *
+      (typeof x === 'number' && typeof y === 'number'
+        ? x - y
+        : String(x).localeCompare(String(y)))
+    );
+  });
 
   const onSort = (next: K) => {
     if (next === key) {
@@ -161,12 +158,13 @@ function flatten(children: ReactNode, prefix = ''): ReactNode[] {
 }
 
 /**
- * Cells take their spacing, rules and type from the table, so every table on
- * the site reads alike whatever its rows bring. Rows are set apart by a rule
- * rather than stripes; numbers line up on equal-width digits.
+ * The table's own cells take their spacing, rules and type from the table,
+ * so every table on the site reads alike whatever its rows bring. Only its
+ * own: a table inside a cell keeps its own spacing. Rows are set apart by a
+ * rule rather than stripes; numbers line up on equal-width digits.
  */
 const CELLS = cn(
-  '[&_td]:px-3 [&_td]:py-2.5 [&_th]:px-3 [&_th]:py-2.5',
+  '[&>table>*>tr>td]:px-3 [&>table>*>tr>td]:py-2.5 [&>table>*>tr>th]:px-3 [&>table>*>tr>th]:py-2.5',
   '[&>table>tbody>tr]:border-b [&>table>tbody>tr]:border-border',
   '[&>table>tfoot]:border-t-2 [&>table>tfoot]:border-border [&>table>tfoot]:font-semibold',
 );
@@ -251,8 +249,10 @@ export function Table({
                     className={cn(
                       'whitespace-nowrap font-semibold',
                       numeric.has(index) && 'text-right',
+                      // The surface the table sits on, which a Card or a
+                      // section panel sets, so the pinned row matches it.
                       stickyHeader &&
-                        'lg:sticky lg:top-0 lg:z-10 lg:bg-background',
+                        'lg:sticky lg:top-0 lg:z-10 lg:bg-[oklch(var(--surface,var(--background)))]',
                     )}
                   >
                     {sort && sortKey ? (
@@ -391,7 +391,7 @@ function FoldingRow({
                   <tr key={index}>
                     <th
                       scope='row'
-                      className='w-1/2 !pl-0 text-left text-sm font-semibold text-muted-foreground'
+                      className='w-1/2 py-1 pr-2 text-left text-sm font-semibold text-muted-foreground'
                     >
                       {headers[index]}
                     </th>

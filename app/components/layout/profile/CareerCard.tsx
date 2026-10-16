@@ -1,34 +1,12 @@
-import {
-  Children,
-  Fragment,
-  isValidElement,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '~/utils';
-
-type StatProps = { label?: string; hint?: string; info?: ReactNode };
-
-/**
- * The small stats among a card's children, with fragments and conditionals
- * opened up, so the card can write out what each one counts.
- */
-const stats = (children: ReactNode): ReactElement<StatProps>[] =>
-  Children.toArray(children).flatMap(child => {
-    if (!isValidElement<StatProps & { children?: ReactNode }>(child)) {
-      return [];
-    }
-    if (child.type === Fragment) return stats(child.props.children);
-    return [child];
-  });
 
 /**
  * One topic of a tab's Career section, led by the number that sums it up
  * rather than a tile per number. The small stats go in as `MiniStat`s.
  *
- * What a stat counts, where its label cannot say it all, is written once
- * under the stats as a short glossary, rather than behind a hover that a
- * phone never shows.
+ * What a stat counts, where its label cannot say it all, is written under
+ * the stat itself rather than behind a hover that a phone never shows.
  */
 export default function CareerCard({
   title,
@@ -60,10 +38,6 @@ export default function CareerCard({
   className?: string;
   children: ReactNode;
 }) {
-  const glossary = stats(children).filter(
-    stat => stat.props.label && (stat.props.hint || stat.props.info),
-  );
-
   return (
     // No panel of its own: these sit inside a ProfileSection, which is the
     // panel. A rule over each sets them apart on the grid instead.
@@ -96,18 +70,8 @@ export default function CareerCard({
           {children}
         </dl>
       </div>
-      {(glossary.length > 0 || footnote) && (
-        <div className='mt-5 grid gap-1 text-sm text-muted-foreground'>
-          {glossary.map(stat => (
-            <p key={stat.props.label} className='m-0'>
-              <span className='font-semibold text-foreground'>
-                {stat.props.label}
-              </span>{' '}
-              {stat.props.info ?? stat.props.hint}
-            </p>
-          ))}
-          {footnote && <p className='m-0'>{footnote}</p>}
-        </div>
+      {footnote && (
+        <p className='m-0 mt-5 text-sm text-muted-foreground'>{footnote}</p>
       )}
     </div>
   );
@@ -118,6 +82,8 @@ export function MiniStat({
   value,
   unit,
   detail,
+  hint,
+  info,
   tone = 'text-foreground',
 }: {
   label: string;
@@ -127,11 +93,11 @@ export function MiniStat({
   /** Trails the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
   /**
-   * What the stat counts, where its label cannot say it all. The card it is
-   * in writes it out under its stats.
+   * What the stat counts, where its label cannot say it all, written in
+   * small print under the value.
    */
   hint?: string;
-  /** A fuller explanation, written out under the card's stats like a hint. */
+  /** A fuller explanation, under the hint. */
   info?: ReactNode;
   tone?: string;
 }) {
@@ -162,6 +128,12 @@ export function MiniStat({
           </span>
         )}
       </dd>
+      {(hint || info) && (
+        <dd className='m-0 mt-1 grid gap-1 text-sm text-muted-foreground'>
+          {hint && <span>{hint}</span>}
+          {info && <span>{info}</span>}
+        </dd>
+      )}
     </div>
   );
 }

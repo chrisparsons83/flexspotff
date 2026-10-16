@@ -35,7 +35,7 @@ export default function ProfileSection({
   children,
 }: Props) {
   return (
-    <section className='not-prose bg-card p-4 text-card-foreground sm:p-5 md:p-6'>
+    <section className='not-prose bg-card p-4 text-card-foreground [--surface:var(--card)] sm:p-5 md:p-6'>
       <div className='mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3'>
         <div>
           <h3 className='m-0 text-xl font-extrabold tracking-tight'>{title}</h3>

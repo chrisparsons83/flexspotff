@@ -16,7 +16,7 @@ import {
 import { FOCUS_RING } from './styles';
 import { ThemeToggle } from './theme-toggle';
 import { Cross1Icon, HamburgerMenuIcon } from '@radix-ui/react-icons';
-import { Form, Link, useLocation } from '@remix-run/react';
+import { Form, Link, useLocation, useSubmit } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Logo } from '~/components/brand/Logo';
 import { cn } from '~/utils';
@@ -154,6 +154,10 @@ export function NavBar(props: Props) {
 
 function AccountMenu(props: Props & { user: NavUser }) {
   const { user } = props;
+  // Submitted from the item rather than by a form inside the menu: choosing
+  // an item closes the menu, which can take the form out of the page before
+  // the browser submits it.
+  const submit = useSubmit();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -170,11 +174,11 @@ function AccountMenu(props: Props & { user: NavUser }) {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <Form method='post' action='/logout'>
-          <DropdownMenuItem asChild>
-            <button type='submit'>Log out</button>
-          </DropdownMenuItem>
-        </Form>
+        <DropdownMenuItem
+          onSelect={() => submit(null, { method: 'post', action: '/logout' })}
+        >
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

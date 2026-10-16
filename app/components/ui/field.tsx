@@ -29,14 +29,19 @@ export function Field({
   const controlId = children.props.id ?? `${id}-control`;
   const helpId = `${id}-help`;
   const help = error ?? description;
+  // Added to any description the control already has, not in place of it.
+  const describedBy =
+    [children.props['aria-describedby'], help && helpId]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <div className={cn('grid gap-2', className)}>
       <Label htmlFor={controlId}>{label}</Label>
       {cloneElement(children, {
         id: controlId,
-        'aria-describedby': help ? helpId : undefined,
-        'aria-invalid': error ? true : undefined,
+        'aria-describedby': describedBy,
+        'aria-invalid': error ? true : children.props['aria-invalid'],
       })}
       {help && (
         <p
