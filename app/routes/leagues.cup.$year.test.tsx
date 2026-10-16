@@ -41,6 +41,13 @@ describe('leagues.cup.$year', () => {
     });
   });
 
+  it('is a 404 for a year that is not a number', async () => {
+    await expect(loader(loaderArgs('2026abc'))).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(cupModel.getCupByYear).not.toHaveBeenCalled();
+  });
+
   it('is a 404 for a past year with no Cup', async () => {
     await expect(loader(loaderArgs('2015'))).rejects.toMatchObject({
       status: 404,

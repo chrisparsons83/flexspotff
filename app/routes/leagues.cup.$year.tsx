@@ -18,12 +18,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const year = params.year;
   if (!year) throw new Error('What happened to the year');
+  if (!/^\d+$/.test(year))
+    throw new Response('No Cup that year', { status: 404 });
 
-  const cup = await getCupByYear(Number.parseInt(year));
+  const cup = await getCupByYear(Number(year));
   if (!cup) {
     // The current season is linked from the nav before its Cup is created, so
     // it shows a placeholder rather than an error.
-    if (Number.parseInt(year) !== currentSeason.year) {
+    if (Number(year) !== currentSeason.year) {
       throw new Response('No Cup that year', { status: 404 });
     }
     return typedjson({
