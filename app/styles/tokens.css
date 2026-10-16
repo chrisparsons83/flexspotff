@@ -100,12 +100,14 @@
   --brand: 0.51 0.1603 39.99;
   --secondary: 0.82 0.0064 285;
   --secondary-foreground: 0.22 0.016 285;
+  --secondary-shade: 0.66 0.0064 285;
   --muted: 0.895 0.0052 285;
   --muted-foreground: 0.4075 0.013 285;
   --accent: 0.82 0.0064 285;
   --accent-foreground: 0.22 0.016 285;
   --destructive: 0.45 0.1408 25;
   --destructive-foreground: 1 0 0;
+  --destructive-shade: 0.29 0.118 25;
   --border: 0.745 0.0076 285;
   --input: 0.52 0.0112 285;
   --ring: 0.22 0.016 285;
@@ -135,7 +137,60 @@
   --league-monarch-tint: 0.895 0.04 322.75;
 }
 
-:root.dark {
+.light {
+  color-scheme: light;
+  --background: 0.97 0.004 285;
+  --foreground: 0.22 0.016 285;
+  --card: 0.895 0.0052 285;
+  --card-foreground: 0.22 0.016 285;
+  --popover: 0.895 0.0052 285;
+  --popover-foreground: 0.22 0.016 285;
+  --primary: 0.639 0.1897 39.99;
+  --primary-foreground: 0.22 0.016 285;
+  --primary-hover: 0.689 0.1897 39.99;
+  --primary-edge: 0.52 0.0112 285;
+  --primary-shade: 0.479 0.1506 39.99;
+  --brand: 0.51 0.1603 39.99;
+  --secondary: 0.82 0.0064 285;
+  --secondary-foreground: 0.22 0.016 285;
+  --secondary-shade: 0.66 0.0064 285;
+  --muted: 0.895 0.0052 285;
+  --muted-foreground: 0.4075 0.013 285;
+  --accent: 0.82 0.0064 285;
+  --accent-foreground: 0.22 0.016 285;
+  --destructive: 0.45 0.1408 25;
+  --destructive-foreground: 1 0 0;
+  --destructive-shade: 0.29 0.118 25;
+  --border: 0.745 0.0076 285;
+  --input: 0.52 0.0112 285;
+  --ring: 0.22 0.016 285;
+  --negative: 0.45 0.1408 25;
+  --warning: 0.435 0.089 90;
+  --positive: 0.42 0.1323 145;
+  --info: 0.435 0.1233 250;
+
+  --league-admiral-edge: 0.52 0.0112 285;
+  --league-champions-edge: 0.52 0.0112 285;
+  --league-dragon-edge: 0.5626 0.1349 152.37;
+  --league-galaxy-edge: 0.52 0.0112 285;
+  --league-monarch-edge: 0.5965 0.1606 322.75;
+  --position-qb-edge: 0.6061 0.1408 355;
+  --position-rb-edge: 0.5711 0.1186 166;
+  --position-wr-edge: 0.5811 0.1251 236;
+  --position-te-edge: 0.5961 0.1328 66;
+  --position-def-edge: 0.5467 0.082 36.84;
+  --medal-gold-edge: 0.52 0.0112 285;
+  --medal-silver-edge: 0.52 0.0112 285;
+  --medal-bronze-edge: 0.52 0.0112 285;
+  --medal-sacko-edge: 0.52 0.0112 285;
+  --league-admiral-tint: 0.895 0.04 188.39;
+  --league-champions-tint: 0.895 0.04 92.92;
+  --league-dragon-tint: 0.895 0.04 152.37;
+  --league-galaxy-tint: 0.895 0.04 242.69;
+  --league-monarch-tint: 0.895 0.04 322.75;
+}
+
+.dark {
   color-scheme: dark;
   --background: 0.22 0.016 285;
   --foreground: 0.97 0.004 285;
@@ -151,12 +206,14 @@
   --brand: 0.684 0.1897 39.99;
   --secondary: 0.37 0.0136 285;
   --secondary-foreground: 0.97 0.004 285;
+  --secondary-shade: 0.21 0.0136 285;
   --muted: 0.295 0.0148 285;
   --muted-foreground: 0.745 0.0076 285;
   --accent: 0.37 0.0136 285;
   --accent-foreground: 0.97 0.004 285;
   --destructive: 0.755 0.1408 25;
   --destructive-foreground: 0 0 0;
+  --destructive-shade: 0.595 0.1408 25;
   --border: 0.445 0.0124 285;
   --input: 0.6325 0.0094 285;
   --ring: 0.97 0.004 285;

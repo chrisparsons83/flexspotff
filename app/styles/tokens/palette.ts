@@ -154,8 +154,8 @@ const accent = round(hexToOklch(ACCENT_HEX));
 
 /** Hover lifts the accent; lighter also raises its contrast with its text. */
 const PRIMARY_HOVER_LIFT = 0.05;
-/** How much darker a button's shadow is than the button. */
-const PRIMARY_SHADE_DROP = 0.16;
+/** How much darker a button's shadow is than the button, for every button. */
+const SHADE_DROP = 0.16;
 
 /**
  * Accent text starts from these and steps away from the ground until it reads
@@ -311,7 +311,7 @@ const buildRoles = (theme: Theme) => {
     'primary-foreground': neutralSteps[0],
     'primary-hover': make({ ...accent, l: accent.l + PRIMARY_HOVER_LIFT }),
     'primary-edge': accentShows ? accent : input,
-    'primary-shade': make({ ...accent, l: accent.l - PRIMARY_SHADE_DROP }),
+    'primary-shade': make({ ...accent, l: accent.l - SHADE_DROP }),
     brand: clearing(
       BRAND_START[theme],
       theme,
@@ -320,12 +320,18 @@ const buildRoles = (theme: Theme) => {
     ),
     secondary: raised,
     'secondary-foreground': foreground,
+    // The drop under a secondary button, as primary-shade is for the accent.
+    'secondary-shade': make({ ...raised, l: raised.l - SHADE_DROP }),
     muted: surface,
     'muted-foreground': firstStepClearing(TEXT_CONTRAST, raised),
     accent: raised,
     'accent-foreground': foreground,
     destructive: semantic.negative,
     'destructive-foreground': textOn(semantic.negative),
+    'destructive-shade': make({
+      ...semantic.negative,
+      l: semantic.negative.l - SHADE_DROP,
+    }),
     border: step(BORDER_OFFSET),
     input,
     ring: foreground,

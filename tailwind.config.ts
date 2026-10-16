@@ -184,9 +184,13 @@ const config: Config = {
         '3xl': 'var(--radius)',
         full: '9999px',
       },
-      // A button sits on a short drop in a darker shade of itself.
+      // A button sits on a short drop in a darker shade of itself. Overlays
+      // (dialogs, menus, popovers) are the only other things with a shadow.
       boxShadow: {
         press: `0 3px 0 0 ${color('primary-shade')}`,
+        'press-secondary': `0 3px 0 0 ${color('secondary-shade')}`,
+        'press-destructive': `0 3px 0 0 ${color('destructive-shade')}`,
+        overlay: '0 8px 24px 0 rgb(0 0 0 / 0.4)',
       },
       transitionDuration: {
         DEFAULT: 'var(--duration-base)',

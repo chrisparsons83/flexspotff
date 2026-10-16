@@ -80,6 +80,8 @@ const ROLE_USE: Partial<Record<keyof typeof dark, string>> = {
   primary: 'The accent fill: buttons, the current tab. Never text.',
   'primary-hover': 'The accent under the pointer.',
   'primary-shade': 'The drop a button sits on.',
+  'secondary-shade': 'The drop a secondary button sits on.',
+  'destructive-shade': 'The drop a destructive button sits on.',
   'primary-edge':
     'The accent edge, or the input step where the accent is too faint.',
   brand: 'Accent text: links and status.',
