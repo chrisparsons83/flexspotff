@@ -33,9 +33,13 @@ export const loader = async () => {
 
   let locksChallengeWeek = (await getLocksWeeksByYear(currentSeason.year))[0];
 
-  const locksChallengeCurrentWeek = locksChallengeWeek?.isWeekScored
-    ? locksChallengeWeek?.weekNumber
-    : locksChallengeWeek?.weekNumber - 1 || 1;
+  // Before the season's first week is created there are no weekly standings
+  // to link to, so the weekly links are left out.
+  const locksChallengeCurrentWeek = !locksChallengeWeek
+    ? undefined
+    : locksChallengeWeek.isWeekScored
+    ? locksChallengeWeek.weekNumber
+    : locksChallengeWeek.weekNumber - 1 || 1;
 
   // Get the current DFS Survivor week
   const dfsSurvivorWeek = await prisma.dFSSurvivorUserWeek.findFirst({
@@ -104,11 +108,15 @@ export default function GamesIndex() {
       href: `/games/qb-streaming/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/qb-streaming/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
-      current: false,
-    },
+    ...(qbStreamingCurrentWeek === undefined
+      ? []
+      : [
+          {
+            name: 'Weekly Standings',
+            href: `/games/qb-streaming/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
+            current: false,
+          },
+        ]),
   ];
 
   const spreadPoolLinks = [
@@ -119,11 +127,15 @@ export default function GamesIndex() {
       href: `/games/spread-pool/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/spread-pool/standings/${currentSeason.year}/${spreadPoolCurrentWeek}`,
-      current: false,
-    },
+    ...(spreadPoolCurrentWeek === undefined
+      ? []
+      : [
+          {
+            name: 'Weekly Standings',
+            href: `/games/spread-pool/standings/${currentSeason.year}/${spreadPoolCurrentWeek}`,
+            current: false,
+          },
+        ]),
   ];
 
   const nflLocksChallengeLinks = [
@@ -138,11 +150,15 @@ export default function GamesIndex() {
       href: `/games/locks-challenge/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
-      current: false,
-    },
+    ...(locksChallengeCurrentWeek === undefined
+      ? []
+      : [
+          {
+            name: 'Weekly Standings',
+            href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
+            current: false,
+          },
+        ]),
   ];
 
   const dfsSurvivorLinks = [

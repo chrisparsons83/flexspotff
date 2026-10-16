@@ -55,8 +55,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         locksGamePick.isActive !== 0,
     );
 
-  // Find the max week number
-  const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
+  // Find the max week number. A season with no weeks yet has no standings.
+  const maxWeek = locksWeeks[0]?.weekNumber ?? 0;
 
   let userIdToPointsMap: Map<string, number> = new Map();
 
