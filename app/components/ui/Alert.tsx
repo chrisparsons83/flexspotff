@@ -1,23 +1,38 @@
+import { cn } from '~/utils';
+
 type AlertStatus = 'success' | 'warning' | 'error';
 
 type Props = {
   message: string;
   status?: AlertStatus;
+  className?: string;
 };
 
+/**
+ * The message says what happened; the colour, each state's text-safe one on
+ * a card, only repeats it. No strip down the side.
+ */
 const statusClasses: Record<AlertStatus, string> = {
-  success: 'border-green-500 bg-green-100 text-green-700',
-  warning: 'border-yellow-500 bg-yellow-100 text-yellow-700',
-  error: 'border-red-500 bg-red-100 text-red-700',
+  success: 'text-positive',
+  warning: 'text-warning',
+  error: 'text-negative',
 };
 
-export default function Alert({ message, status = 'success' }: Props) {
-  // Get the specific classes for the status, or default to success
-  const specificClasses = statusClasses[status] || statusClasses.success;
-  const alertClasses = `border-l-4 p-4 ${specificClasses}`;
-
+/** The result of a form post, set above the form. */
+export default function Alert({
+  message,
+  status = 'success',
+  className,
+}: Props) {
   return (
-    <div className={alertClasses} role='alert'>
+    <div
+      role={status === 'error' ? 'alert' : 'status'}
+      className={cn(
+        'bg-card px-4 py-3 font-semibold',
+        statusClasses[status] ?? statusClasses.success,
+        className,
+      )}
+    >
       {message}
     </div>
   );

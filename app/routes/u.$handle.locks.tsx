@@ -4,40 +4,18 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { FieldBandKeys } from '~/components/layout/profile/FieldBandKeys';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  LegendItem,
-  Swatch,
-  WeekLegend,
-  WonKey,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
-import {
-  CHART,
-  ChartKey,
-  ChartKeys,
-  FieldBandKeys,
-  useChartWidth,
-  weekLabelStep,
-} from '~/components/layout/profile/chart';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   line,
   ordinal,
@@ -47,7 +25,29 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { BAR, TEXT } from '~/components/layout/profile/tones';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
+import { KeyedBar, LabelledRange } from '~/components/ui/bars';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/ui/chart';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  LegendItem,
+  LegendSwatch,
+  WeekGrid,
+  WeekLegend,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/locks.server';
 import {
@@ -140,9 +140,9 @@ function WeekStat({
  * one is the one that stings, so it gets the brightest red.
  */
 const BUST_BANDS = [
-  { key: 'one', label: 'by 1', tone: 'bg-rose-300' },
-  { key: 'two', label: 'by 2', tone: 'bg-rose-500' },
-  { key: 'more', label: 'by 3+', tone: 'bg-rose-800' },
+  { key: 'one', label: 'by 1', tone: 'sequence-6' },
+  { key: 'two', label: 'by 2', tone: 'sequence-4' },
+  { key: 'more', label: 'by 3+', tone: 'sequence-2' },
 ] as const;
 
 function Career({
@@ -353,7 +353,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: LocksSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -373,7 +373,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
               <Link to={`/games/locks-challenge/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -413,7 +413,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -702,8 +702,12 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
       />
       <WeekLegend>
         <WonKey sample='9' tone={CLEAN_TONE} />
-        <LegendItem swatch={<Swatch tone={CLEAN_TONE} />}>Scored</LegendItem>
-        <LegendItem swatch={<Swatch tone={BUSTED_TONE} />}>Busted</LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={CLEAN_TONE} />}>
+          Scored
+        </LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={BUSTED_TONE} />}>
+          Busted
+        </LegendItem>
       </WeekLegend>
     </ProfileSection>
   );
@@ -781,7 +785,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
       title='Risk Profile'
       footnote={<FieldKey>Field&rsquo;s performance</FieldKey>}
     >
-      <ProfileTable
+      <Table
         headers={['Picks', 'Weeks', 'Scoring % vs field', 'Average Score']}
         numericColumns={[1, 3]}
         primaryColumns={[2, 3]}
@@ -831,7 +835,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -850,7 +854,7 @@ function SplitTable({
   const memberPicks = buckets.reduce((total, b) => total + b.member.picks, 0);
 
   return (
-    <ProfileTable
+    <Table
       headers={[heading, 'Picks', 'Record', 'Win % vs field']}
       numericColumns={[1, 2]}
       primaryColumns={[3]}
@@ -893,7 +897,7 @@ function SplitTable({
           </td>
         </tr>
       ))}
-    </ProfileTable>
+    </Table>
   );
 }
 
@@ -1128,22 +1132,17 @@ function Teams({
         <TeamCallout title='Costliest Loss' row={costliest} names={names}>
           {costliest && (
             <>
-              <InfoText
-                label={plural(costliest.pointsCost, 'point')}
-                className='font-semibold text-rose-300'
-                tip={`Lost as a week's only loss, with ${plural(
-                  costliest.busts,
-                  'bust',
-                )} in all`}
-              >
+              <span className='font-semibold text-negative'>
                 {plural(costliest.pointsCost, 'point')}
-              </InfoText>
+              </span>{' '}
+              lost as a week&rsquo;s only loss, with{' '}
+              {plural(costliest.busts, 'bust')} in all
             </>
           )}
         </TeamCallout>
       </div>
 
-      <ProfileTable
+      <Table
         headers={['Team', 'Picked', 'Win %', 'Picked Against', 'Busts']}
         numericColumns={[1, 2, 3, 4]}
         primaryColumns={[1, 2]}
@@ -1199,7 +1198,7 @@ function Teams({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > TEAMS_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -1212,9 +1211,9 @@ function Teams({
   );
 }
 
-const RESULT_TAG: Record<
+const RESULT_STATUS: Record<
   LocksPick['result'],
-  { tone: TagTone; label: string }
+  { tone: StatusTone; label: string }
 > = {
   win: { tone: 'win', label: 'Won' },
   loss: { tone: 'loss', label: 'Lost' },
@@ -1232,9 +1231,9 @@ function FieldCell({ pick }: { pick: LocksPick }) {
         {pick.sameSide} of {pick.fieldCount}
       </span>
       {pick.fieldShare >= CHALK_SHARE ? (
-        <Tag tone='neutral'>Chalk</Tag>
+        <StatusText tone='neutral'>Chalk</StatusText>
       ) : pick.fieldShare <= 1 - CHALK_SHARE ? (
-        <Tag tone='accent'>Contrarian</Tag>
+        <StatusText tone='accent'>Contrarian</StatusText>
       ) : null}
     </span>
   );
@@ -1265,7 +1264,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week Result']}
         mobileCards={
           <MobileCards>
@@ -1298,9 +1297,9 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                         <FieldCell pick={pick} />
                       </span>
                       <span className='ml-auto inline-flex gap-1'>
-                        <Tag tone={RESULT_TAG[pick.result].tone}>
-                          {RESULT_TAG[pick.result].label}
-                        </Tag>
+                        <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                          {RESULT_STATUS[pick.result].label}
+                        </StatusText>
                       </span>
                     </li>
                   ))}
@@ -1347,9 +1346,9 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                 <FieldCell pick={pick} />
               </td>
               <td className='whitespace-nowrap px-2 py-1.5'>
-                <Tag tone={RESULT_TAG[pick.result].tone}>
-                  {RESULT_TAG[pick.result].label}
-                </Tag>
+                <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                  {RESULT_STATUS[pick.result].label}
+                </StatusText>
               </td>
               {index === 0 && (
                 <td
@@ -1366,7 +1365,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
             </tr>
           )),
         )}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

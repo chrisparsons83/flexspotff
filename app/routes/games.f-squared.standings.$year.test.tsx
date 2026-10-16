@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fSquaredModel from '~/models/fsquared.server';
 
 vi.mock('~/models/fsquared.server');
-// Only the loader is under test. The page's GoBox loads headlessui, which,
-// loaded here, breaks later component tests sharing the thread.
+// Only the loader is under test, so the page's year picker, and the UI
+// components it pulls in, are left out.
 vi.mock('~/components/layout/f-squared/FSquaredYearPicker', () => ({
   default: () => null,
 }));

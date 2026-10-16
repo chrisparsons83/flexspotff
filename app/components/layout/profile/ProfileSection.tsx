@@ -1,4 +1,3 @@
-import InfoTip from './InfoTip';
 import type { ReactNode } from 'react';
 
 type Props = {
@@ -9,8 +8,8 @@ type Props = {
    */
   description?: string;
   /**
-   * What the section's colours and marks mean, behind an ⓘ by the title, so
-   * the key is a tap away on a phone without sitting under every chart.
+   * What the section's colours and marks mean, set out under the
+   * description so it is on the page rather than behind a tap.
    */
   info?: ReactNode;
   /** Controls belonging to this section, e.g. the game log's year filter. */
@@ -21,17 +20,11 @@ type Props = {
 };
 
 /**
- * One block of a profile tab.
+ * One block of a profile tab: a panel one step up from the page, flat, with
+ * its title on the grid and any controls at the end of the title row.
  *
- * The sections used to be bare `<section><h3>` pairs, so a tab read as one
- * undivided column of tables - the hero was the only thing on the page with an
- * edge. Each block gets its own panel instead, one step lighter than the page
- * behind it, with the stat tiles inside a step darker again. That ordering is
- * what makes the nesting legible; the headings are `not-prose` for the same
- * reason, since prose sizing made every title compete with the member's name.
- *
- * The padding steps down on a phone, where three nested panels' worth of it
- * would take a fifth of the screen's width.
+ * The padding steps down on a phone, where it would otherwise take a fifth of
+ * the screen's width.
  */
 export default function ProfileSection({
   title,
@@ -42,15 +35,19 @@ export default function ProfileSection({
   children,
 }: Props) {
   return (
-    <section className='not-prose rounded-lg border border-slate-600/50 bg-slate-800/60 p-3 sm:p-4 md:p-5'>
-      <div className='mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2'>
+    <section className='not-prose bg-card p-4 text-card-foreground [--surface:var(--card)] sm:p-5 md:p-6'>
+      <div className='mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3'>
         <div>
-          <h3 className='m-0 flex items-center gap-1.5 text-lg font-semibold text-white'>
-            {title}
-            {info && <InfoTip label={`About ${title}`}>{info}</InfoTip>}
-          </h3>
+          <h3 className='m-0 text-xl font-extrabold tracking-tight'>{title}</h3>
           {description && (
-            <p className='m-0 mt-0.5 text-sm text-slate-400'>{description}</p>
+            <p className='m-0 mt-1 max-w-prose text-muted-foreground'>
+              {description}
+            </p>
+          )}
+          {info && (
+            <div className='mt-2 max-w-prose text-sm text-muted-foreground'>
+              {info}
+            </div>
           )}
         </div>
         {action}
@@ -58,7 +55,11 @@ export default function ProfileSection({
 
       {children}
 
-      {footnote && <p className='mt-3 text-xs text-slate-400'>{footnote}</p>}
+      {footnote && (
+        <p className='mt-4 max-w-prose text-sm text-muted-foreground'>
+          {footnote}
+        </p>
+      )}
     </section>
   );
 }

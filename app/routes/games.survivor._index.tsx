@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
 import { buildAllTime, entryLabel, poolTitle } from '~/libs/survivor/views';
 import { getSurvivorHistory } from '~/models/survivor.server';

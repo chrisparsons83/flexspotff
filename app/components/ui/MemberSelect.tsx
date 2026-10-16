@@ -7,7 +7,8 @@ import {
   CommandList,
 } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
+import { CONTROL, FOCUS_RING } from './styles';
+import { CheckIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { useMemo, useState } from 'react';
 import { cn } from '~/utils';
 
@@ -57,7 +58,7 @@ export default function MemberSelect({
   name,
   members,
   defaultValue = '',
-  placeholder = 'Select member...',
+  placeholder = 'Choose a member',
   className,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,28 +101,34 @@ export default function MemberSelect({
           <button
             type='button'
             className={cn(
-              'inline-flex w-56 items-center justify-between gap-2 rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100 hover:bg-slate-700',
+              'inline-flex h-10 w-56 items-center justify-between gap-2 px-3 text-base',
+              CONTROL,
+              FOCUS_RING,
               className,
             )}
           >
-            <span className={cn('truncate', !selectedName && 'text-slate-400')}>
+            <span
+              className={cn(
+                'truncate',
+                !selectedName && 'text-muted-foreground',
+              )}
+            >
               {selectedName ?? placeholder}
             </span>
-            <CaretSortIcon className='h-4 w-4 shrink-0 opacity-50' />
+            <ChevronDownIcon aria-hidden className='size-4 shrink-0' />
           </button>
         </PopoverTrigger>
-        <PopoverContent className='w-56 border-slate-600 bg-slate-700 p-0 text-slate-100'>
+        <PopoverContent className='w-72 p-0'>
           <Command
-            className='bg-slate-700 text-slate-100'
             filter={(value, search) =>
               (searchTextById.get(value) ?? '').includes(search.toLowerCase())
                 ? 1
                 : 0
             }
           >
-            <CommandInput placeholder='Search members...' className='h-9' />
+            <CommandInput placeholder='Search members' />
             <CommandList>
-              <CommandEmpty>No members found.</CommandEmpty>
+              <CommandEmpty>No members match.</CommandEmpty>
               <CommandGroup>
                 {members.map(member => (
                   <CommandItem
@@ -131,11 +138,10 @@ export default function MemberSelect({
                       setSelectedId(member.id);
                       setIsOpen(false);
                     }}
-                    className='data-[selected=true]:bg-slate-600 data-[selected=true]:text-slate-50'
                   >
                     <CheckIcon
+                      aria-hidden
                       className={cn(
-                        'h-4 w-4',
                         member.id === selectedId ? 'opacity-100' : 'opacity-0',
                       )}
                     />
@@ -143,7 +149,7 @@ export default function MemberSelect({
                       {member.discordName}
                       {member.discordUsername &&
                         member.discordUsername !== member.discordName && (
-                          <span className='ml-1 text-xs text-slate-400'>
+                          <span className='ml-2 text-sm text-muted-foreground'>
                             @{member.discordUsername}
                           </span>
                         )}

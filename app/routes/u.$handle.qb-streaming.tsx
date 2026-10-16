@@ -6,30 +6,14 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  KeyList,
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WEEK_SCALE,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   plural,
@@ -38,6 +22,21 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
+import { LabelledRange } from '~/components/ui/bars';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  KeyList,
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WEEK_SCALE,
+  WeekGrid,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
@@ -266,13 +265,10 @@ function VsFieldLead({
       {pts(value)}
       {vsField !== null && (
         <LeadContext>
-          <InfoText
-            label={signed(vsField)}
-            className={clsx('tabular-nums', signedTone(vsField))}
-            tip={`${signed(vsField)} a week against the field`}
-          >
+          <span className={clsx('tabular-nums', signedTone(vsField))}>
             {signed(vsField)}
-          </InfoText>
+          </span>{' '}
+          a week against the field
         </LeadContext>
       )}
     </>
@@ -352,7 +348,7 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
 function BySeason({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -378,7 +374,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
                 <Link to={`/games/qb-streaming/standings/${season.year}`}>
                   {season.year}
                 </Link>
-                {season.inProgress && <CurrentTag />}
+                {season.inProgress && <CurrentSeason />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -425,7 +421,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
             </tr>
           </Fragment>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -488,7 +484,9 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
           <ScaleKey />
           {seasons.some(season => season.usesTopWeeks) && (
             <LegendItem
-              swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
+              swatch={
+                <LegendSwatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />
+              }
             >
               Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
               {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
@@ -612,7 +610,7 @@ function MostStreamed({
         </KeyList>
       }
     >
-      <ProfileTable
+      <Table
         headers={[
           'QB',
           ...years.map(String),
@@ -677,7 +675,7 @@ function MostStreamed({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > MOST_STREAMED_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -721,9 +719,11 @@ function PickCell({ pick }: { pick: QbPick }) {
 function WeekTags({ week }: { week: QbWeek }) {
   return (
     <>
-      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
-      {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
-      {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
+      {week.rank === 1 && <StatusText tone='win'>Won week</StatusText>}
+      {week.doubled && <StatusText tone='accent'>Doubled up</StatusText>}
+      {!week.counts && (
+        <StatusText tone='neutral'>Didn&rsquo;t count</StatusText>
+      )}
     </>
   );
 }
@@ -740,7 +740,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', 'Standard', 'Deep', 'Total', 'Rank', '']}
         numericColumns={[4, 5]}
         mobileCards={
@@ -800,7 +800,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

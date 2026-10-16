@@ -5,21 +5,17 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LeagueChip from '~/components/layout/profile/LeagueChip';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import SplitBar from '~/components/layout/profile/SplitBar';
-import Tag from '~/components/layout/profile/Tag';
-import Truncate from '~/components/layout/profile/Truncate';
-import WinLoss from '~/components/layout/profile/WinLoss';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import StatusText from '~/components/layout/profile/StatusText';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { SplitBar } from '~/components/ui/bars';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { LeagueMark } from '~/components/ui/swatch';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import { Truncate } from '~/components/ui/truncate';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import type { CupSeeding } from '~/models/profile/cup.server';
 import { getCupProfile } from '~/models/profile/cup.server';
@@ -348,7 +344,7 @@ function SeedingHistory({
 }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'League',
@@ -365,7 +361,7 @@ function SeedingHistory({
           <tr key={run.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>{run.year}</td>
             <td className='px-2 py-2'>
-              <LeagueChip name={run.leagueName} />
+              <LeagueMark name={run.leagueName} />
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {run.rounds[0]?.status === 'BYE' && (
@@ -386,7 +382,7 @@ function SeedingHistory({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -396,15 +392,10 @@ function SeedingRow({ seeding }: { seeding: CupSeeding }) {
     <tr className='border-b border-slate-700/70'>
       <td className='px-2 py-2'>{seeding.year}</td>
       <td className='px-2 py-2'>
-        <LeagueChip name={seeding.leagueName} />
+        <LeagueMark name={seeding.leagueName} />
       </td>
       <td className='px-2 py-2 text-right font-medium tabular-nums'>
-        <InfoText
-          label={`#${seeding.rank}`}
-          tip='Where they rank in the seeding so far'
-        >
-          #{seeding.rank}
-        </InfoText>
+        #{seeding.rank}
       </td>
       <td className='px-2 py-2 text-right tabular-nums'>
         {pts(seeding.points)}
@@ -433,7 +424,9 @@ function MatchResult({ game }: { game: MatchLogRow }) {
       <span className={clsx('font-bold', RESULT_TONE[game.status])}>
         {game.status === 'PENDING' ? 'Live' : game.status}
       </span>
-      {game.decidedBySeed && <Tag tone='neutral'>Tie, higher seed</Tag>}
+      {game.decidedBySeed && (
+        <StatusText tone='neutral'>Tie, higher seed</StatusText>
+      )}
     </>
   );
 }
@@ -450,7 +443,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
       title='Match Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Round', 'Opponent', 'Score', 'Margin', 'Result']}
         numericColumns={[3, 4]}
         mobileCards={
@@ -544,7 +537,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
             </tr>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

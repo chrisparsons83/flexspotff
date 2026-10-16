@@ -1,4 +1,3 @@
-import { ClockIcon } from '@heroicons/react/solid';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
@@ -7,42 +6,16 @@ import { Fragment, useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { FieldBandKeys } from '~/components/layout/profile/FieldBandKeys';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import InfoTip, { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  KeyList,
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WEEK_SCALE,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
-import {
-  CHART,
-  ChartKey,
-  ChartKeys,
-  FieldBandKeys,
-  useChartWidth,
-  weekLabelStep,
-} from '~/components/layout/profile/chart';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   plural,
@@ -51,6 +24,32 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
+import { LabelledRange, RangeBar } from '~/components/ui/bars';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/ui/chart';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { PositionMark } from '~/components/ui/swatch';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  KeyList,
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WEEK_SCALE,
+  WeekGrid,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
   DFS_SURVIVOR_LAST_WEEK,
@@ -208,18 +207,8 @@ function TimingCard({ career }: { career: DfsCareer }) {
 
   return (
     <CareerCard
-      title={
-        <span className='inline-flex items-center gap-1.5'>
-          Timing Edge
-          <InfoTip label='About Timing Edge'>
-            Each player can only be used once a season, so what matters is the
-            week you use him. Every pick is compared with the other members who
-            used the same player in a different week. A positive number means
-            they got more out of their players, on average, than those members
-            did.
-          </InfoTip>
-        </span>
-      }
+      title='Timing Edge'
+      footnote='Each player can only be used once a season, so what matters is the week you use him. Every pick is compared with the other members who used the same player in a different week. A positive number means they got more out of their players, on average, than those members did.'
       lead={
         timing.edge === null ? (
           '—'
@@ -419,7 +408,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -442,7 +431,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
                 <Link to={`/games/dfs-survivor/standings/${season.year}`}>
                   {season.year}
                 </Link>
-                {season.inProgress && <CurrentTag />}
+                {season.inProgress && <CurrentSeason />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -504,7 +493,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
             </tr>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -530,14 +519,14 @@ function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
           <ScaleKey />
           <LegendItem
             swatch={
-              <Swatch tone={WEEK_SCALE[2].tone}>
+              <LegendSwatch tone={WEEK_SCALE[2].tone}>
                 <PartialMark />
-              </Swatch>
+              </LegendSwatch>
             }
           >
             Empty slots
           </LegendItem>
-          <LegendItem swatch={<Swatch tone={NO_LINEUP_TONE} />}>
+          <LegendItem swatch={<LegendSwatch tone={NO_LINEUP_TONE} />}>
             No lineup
           </LegendItem>
         </KeyList>
@@ -784,7 +773,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
   );
 }
 
-/** A stage's average with how far it sat from the field's, field on hover. */
+/** A stage's average, with how far it sat from the field's beside it. */
 function StageCell({
   split,
   digits = 2,
@@ -802,17 +791,12 @@ function StageCell({
       {split.field === null || diff === null ? (
         split.mine.toFixed(digits)
       ) : (
-        <InfoText
-          label={split.mine.toFixed(digits)}
-          tip={`Their average ${split.mine.toFixed(
-            digits,
-          )}, the field's ${split.field.toFixed(digits)}: ${signed(diff, 1)}`}
-        >
+        <>
           {split.mine.toFixed(digits)}
-          <span className={clsx('ml-1.5 text-xs', signedTone(diff))}>
+          <span className={clsx('ml-1.5 text-sm', signedTone(diff))}>
             {signed(diff, 1)}
           </span>
-        </InfoText>
+        </>
       )}
     </td>
   );
@@ -852,7 +836,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
         ) : undefined
       }
     >
-      <ProfileTable
+      <Table
         headers={['', ...STAGES.map(stage => stage.label)]}
         numericColumns={STAGES.map((_, index) => index + 1)}
       >
@@ -873,7 +857,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
             ))}
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
 
       <StarTimeline season={season} />
     </ProfileSection>
@@ -986,6 +970,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection
       title='Timing by Player'
+      description='Best timing marks a pick nobody who used that player that season got more points from.'
       action={
         <div className='flex flex-wrap gap-3'>
           <SegmentedControl
@@ -1006,7 +991,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
           Nobody else has used any of their players yet.
         </p>
       ) : (
-        <ProfileTable
+        <Table
           headers={[
             'Player',
             'Week',
@@ -1025,23 +1010,14 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
               className='border-b border-slate-700/70'
             >
               <td className='px-2 py-2 sm:whitespace-nowrap'>
-                <PositionChip position={pick.position} />
+                <PositionMark position={pick.position} />
                 <span className='ml-2 font-medium text-slate-100'>
                   {pick.name}
                 </span>
                 {pick.bestTiming && (
-                  <span className='ml-1.5'>
-                    <InfoTip
-                      label='Best timing'
-                      icon={
-                        <ClockIcon aria-hidden='true' className='h-4 w-4' />
-                      }
-                      iconClassName='text-emerald-300 hover:text-emerald-200'
-                    >
-                      Best timing: nobody who used {pick.name} that season got
-                      more points from him.
-                    </InfoTip>
-                  </span>
+                  <StatusText tone='win' className='ml-2'>
+                    Best timing
+                  </StatusText>
                 )}
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-slate-300'>
@@ -1086,7 +1062,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
               </td>
             </tr>
           ))}
-        </ProfileTable>
+        </Table>
       )}
       {compared.length > TIMING_PREVIEW && (
         <ShowAllButton
@@ -1136,7 +1112,7 @@ function PositionCard({ row }: { row: DfsPositionRow }) {
       className={clsx(isFlex && 'lg:col-start-4 lg:row-span-2 lg:row-start-1')}
       title={
         <span className='inline-flex items-center gap-2'>
-          <PositionChip position={row.group} />
+          <PositionMark position={row.group} />
           {GROUP_LABEL[row.group]}
         </span>
       }
@@ -1190,7 +1166,7 @@ function FlexFills({ row }: { row: DfsPositionRow }) {
       <ul className='m-0 mt-4 list-none space-y-2.5 p-0'>
         {row.flex.map(fill => (
           <li key={fill.position} className='flex items-center gap-2 text-sm'>
-            <PositionChip position={fill.position} />
+            <PositionMark position={fill.position} />
             <span className='text-slate-300'>{plural(fill.picks, 'pick')}</span>
             <span className='ml-auto font-semibold tabular-nums text-slate-100'>
               {pts(fill.average)}
@@ -1239,9 +1215,11 @@ function LowestStat({ row }: { row: DfsPositionRow }) {
 function LineupTags({ week }: { week: DfsWeek }) {
   return (
     <>
-      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
+      {week.rank === 1 && <StatusText tone='win'>Won week</StatusText>}
       {week.emptySlots > 0 && (
-        <Tag tone='highlight'>{plural(week.emptySlots, 'empty slot')}</Tag>
+        <StatusText tone='highlight'>
+          {plural(week.emptySlots, 'empty slot')}
+        </StatusText>
       )}
     </>
   );
@@ -1260,7 +1238,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
       title='Lineup Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', 'Total', 'vs Field', 'Rank', '']}
         numericColumns={[2, 3, 4]}
         mobileCards={
@@ -1359,7 +1337,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
             </Fragment>
           );
         })}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -1375,7 +1353,7 @@ function LineupDetail({ week }: { week: DfsWeek }) {
           <span className='w-11 shrink-0 text-right text-[0.7rem] font-bold uppercase tracking-wide text-slate-400'>
             {formatSlotName(pick.slot as DfsSurvivorSlot)}
           </span>
-          <PositionChip position={pick.position} />
+          <PositionMark position={pick.position} />
           <span className='min-w-0 flex-1 truncate text-slate-100'>
             {pick.name}
           </span>

@@ -4,41 +4,18 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { FieldBandKeys } from '~/components/layout/profile/FieldBandKeys';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WeekLegend,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import WinLoss from '~/components/layout/profile/WinLoss';
-import YearFilter from '~/components/layout/profile/YearFilter';
-import {
-  CHART,
-  ChartKey,
-  FieldBandKeys,
-  useChartWidth,
-  weekLabelStep,
-} from '~/components/layout/profile/chart';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   line,
   ordinal,
@@ -47,8 +24,32 @@ import {
   signed,
   weekLabel,
 } from '~/components/layout/profile/format';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
 import { BAR, signedTone, TEXT } from '~/components/layout/profile/tones';
+import { KeyedBar, LabelledRange } from '~/components/ui/bars';
+import {
+  CHART,
+  ChartKey,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/ui/chart';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WeekGrid,
+  WeekLegend,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getSpreadPoolProfile } from '~/models/profile/spreadPool.server';
 import {
@@ -348,7 +349,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
       title='By Season'
       info='ROE is return on everything bet: the net as a share of the total bet.'
     >
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -369,7 +370,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
               <Link to={`/games/spread-pool/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -411,7 +412,7 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -711,7 +712,7 @@ function WeekByWeek({ seasons }: { seasons: PoolSeason[] }) {
         <WonKey sample='+150' />
         <ScaleKey />
         {anyMissed && (
-          <LegendItem swatch={<Swatch tone={MISSED_TONE} />}>
+          <LegendItem swatch={<LegendSwatch tone={MISSED_TONE} />}>
             Missed week
           </LegendItem>
         )}
@@ -789,7 +790,7 @@ function SplitTable({
   const memberBets = buckets.reduce((total, b) => total + b.member.bets, 0);
 
   return (
-    <ProfileTable
+    <Table
       headers={[
         heading,
         'Bets',
@@ -852,7 +853,7 @@ function SplitTable({
           </td>
         </tr>
       ))}
-    </ProfileTable>
+    </Table>
   );
 }
 
@@ -1241,7 +1242,7 @@ function Teams({
         </TeamCallout>
       </div>
 
-      <ProfileTable
+      <Table
         headers={['Team', 'Backing', 'Fading', 'Total']}
         numericColumns={[3]}
         primaryColumns={[1, 3]}
@@ -1266,7 +1267,7 @@ function Teams({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > TEAMS_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -1306,29 +1307,24 @@ function TeamSide({
   );
 }
 
-const RESULT_TAG: Record<PoolBet['result'], { tone: TagTone; label: string }> =
-  {
-    win: { tone: 'win', label: 'Won' },
-    loss: { tone: 'loss', label: 'Lost' },
-    push: { tone: 'neutral', label: 'Push' },
-  };
+const RESULT_STATUS: Record<
+  PoolBet['result'],
+  { tone: StatusTone; label: string }
+> = {
+  win: { tone: 'win', label: 'Won' },
+  loss: { tone: 'loss', label: 'Lost' },
+  push: { tone: 'neutral', label: 'Push' },
+};
 
 /** How a bet went, and whether it went against the crowd. */
-function BetTags({ bet }: { bet: PoolBet }) {
+function BetStatus({ bet }: { bet: PoolBet }) {
   return (
     <>
-      <Tag tone={RESULT_TAG[bet.result].tone}>
-        {RESULT_TAG[bet.result].label}
-      </Tag>
+      <StatusText tone={RESULT_STATUS[bet.result].tone}>
+        {RESULT_STATUS[bet.result].label}
+      </StatusText>
       {bet.fieldShare !== null && bet.fieldShare < 0.5 && (
-        <Tag
-          tone='accent'
-          title={`${Math.round(
-            bet.fieldShare * 100,
-          )}% of the others who bet this game took the same side`}
-        >
-          Contrarian
-        </Tag>
+        <StatusText tone='accent'>Contrarian</StatusText>
       )}
     </>
   );
@@ -1354,9 +1350,10 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
       title='Bet Log'
+      description='Contrarian marks a bet on the side fewer than half of the others who bet that game took.'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Week',
@@ -1391,7 +1388,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
                 value={
                   <span className={signedTone(bet.net)}>{signed(bet.net)}</span>
                 }
-                status={<BetTags bet={bet} />}
+                status={<BetStatus bet={bet} />}
               />
             ))}
           </MobileCards>
@@ -1441,12 +1438,12 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <span className='inline-flex gap-1'>
-                <BetTags bet={bet} />
+                <BetStatus bet={bet} />
               </span>
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

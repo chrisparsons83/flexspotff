@@ -1,6 +1,6 @@
 import clsx from 'clsx';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import type { GetLeaguesByYearElement } from '~/models/league.server';
 import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 

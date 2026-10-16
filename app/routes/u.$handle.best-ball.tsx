@@ -10,9 +10,8 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
-import { CurrentTag } from '~/components/layout/profile/Tag';
+import { CurrentSeason } from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   plural,
@@ -20,6 +19,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
 import type {
@@ -127,7 +127,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
       title='By Season'
       description='Ranked on points for through week 17.'
     >
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -149,7 +149,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
               >
                 {season.year}
               </Link>
-              {!season.isComplete && <CurrentTag />}
+              {!season.isComplete && <CurrentSeason />}
             </td>
             <td
               className={clsx(
@@ -190,7 +190,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

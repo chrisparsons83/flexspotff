@@ -1,10 +1,12 @@
-import InfoTip, { InfoText } from './InfoTip';
-import clsx from 'clsx';
 import type { ReactNode } from 'react';
+import { cn } from '~/utils';
 
 /**
  * One topic of a tab's Career section, led by the number that sums it up
  * rather than a tile per number. The small stats go in as `MiniStat`s.
+ *
+ * What a stat counts, where its label cannot say it all, is written under
+ * the stat itself rather than behind a hover that a phone never shows.
  */
 export default function CareerCard({
   title,
@@ -12,6 +14,7 @@ export default function CareerCard({
   leadNote,
   meter,
   compactStats = false,
+  footnote,
   className,
   children,
 }: {
@@ -29,18 +32,24 @@ export default function CareerCard({
    * fit in a row on a quarter-width card.
    */
   compactStats?: boolean;
+  /** How the headline is worked out, where the title cannot say. */
+  footnote?: ReactNode;
   /** Placement in the parent grid, e.g. a card two rows tall. */
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className={clsx('rounded-md bg-slate-900/50 p-3 sm:p-4', className)}>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
-      <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
+    // No panel of its own: these sit inside a ProfileSection, which is the
+    // panel. A rule over each sets them apart on the grid instead.
+    <div className={cn('min-w-0 border-t border-border pt-4', className)}>
+      <h4 className='m-0 text-sm font-semibold text-muted-foreground'>
+        {title}
+      </h4>
+      <div className='mt-2 text-3xl font-extrabold leading-none tabular-nums'>
         {lead}
       </div>
       {leadNote !== undefined && (
-        <div className='mt-1.5 text-sm text-slate-400'>{leadNote}</div>
+        <div className='mt-1.5 text-sm text-muted-foreground'>{leadNote}</div>
       )}
       {/* Flowed from the top rather than pinned to the bottom. The headlines
           are all the same height, so the bars and stat labels line up across
@@ -51,7 +60,7 @@ export default function CareerCard({
         {/* As many equal columns as fit, so four small stats sit in a row on
             a desktop and wrap to two rows on a phone rather than squeeze. */}
         <dl
-          className={clsx(
+          className={cn(
             'm-0 mt-4 grid',
             compactStats
               ? 'grid-cols-[repeat(auto-fit,minmax(3.5rem,1fr))] gap-3'
@@ -61,6 +70,9 @@ export default function CareerCard({
           {children}
         </dl>
       </div>
+      {footnote && (
+        <p className='m-0 mt-5 text-sm text-muted-foreground'>{footnote}</p>
+      )}
     </div>
   );
 }
@@ -72,7 +84,7 @@ export function MiniStat({
   detail,
   hint,
   info,
-  tone = 'text-slate-100',
+  tone = 'text-foreground',
 }: {
   label: string;
   value: ReactNode;
@@ -81,31 +93,19 @@ export function MiniStat({
   /** Trails the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
   /**
-   * More about a stat whose label cannot say everything it counts, opened
-   * from the label itself on hover or a tap.
+   * What the stat counts, where its label cannot say it all, written in
+   * small print under the value.
    */
   hint?: string;
-  /**
-   * A fuller explanation behind an ⓘ beside the label, for a stat that needs
-   * more than a line of hover text to make sense.
-   */
+  /** A fuller explanation, under the hint. */
   info?: ReactNode;
   tone?: string;
 }) {
   return (
     <div className='flex flex-col'>
-      <dt className='flex items-center gap-1 text-xs text-slate-400'>
-        {hint ? (
-          <InfoText label={label} tip={hint}>
-            {label}
-          </InfoText>
-        ) : (
-          label
-        )}
-        {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
-      </dt>
+      <dt className='text-sm text-muted-foreground'>{label}</dt>
       <dd
-        className={clsx(
+        className={cn(
           'm-0 mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xl font-bold tabular-nums',
           tone,
         )}
@@ -113,7 +113,7 @@ export function MiniStat({
         <span>
           {value}
           {unit && (
-            <span className='ml-0.5 text-xs font-semibold text-slate-400'>
+            <span className='ml-0.5 text-sm font-semibold text-muted-foreground'>
               {unit}
             </span>
           )}
@@ -123,11 +123,17 @@ export function MiniStat({
             value, and then onto a second line, instead of running into the
             next stat. */}
         {detail && (
-          <span className='min-w-0 text-xs font-normal text-slate-400'>
+          <span className='min-w-0 text-sm font-normal text-muted-foreground'>
             {detail}
           </span>
         )}
       </dd>
+      {(hint || info) && (
+        <dd className='m-0 mt-1 grid gap-1 text-sm text-muted-foreground'>
+          {hint && <span>{hint}</span>}
+          {info && <span>{info}</span>}
+        </dd>
+      )}
     </div>
   );
 }

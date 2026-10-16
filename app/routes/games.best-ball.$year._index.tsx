@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { PositionChips } from '~/components/layout/best-ball/PositionCounts';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
+import { PositionTally } from '~/components/layout/best-ball/PositionCounts';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { requireBestBallAccess } from '~/libs/best-ball/access.server';
 import {
   buildStandings,
@@ -139,7 +139,7 @@ export default function BestBallStandings() {
                     {row.draftSlot ?? '—'}
                   </td>
                   <td className='py-1.5'>
-                    <PositionChips counts={row.positions} />
+                    <PositionTally counts={row.positions} />
                   </td>
                 </tr>
               ))}

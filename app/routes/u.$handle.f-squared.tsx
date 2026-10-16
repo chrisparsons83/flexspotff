@@ -6,17 +6,11 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import LeagueChip from '~/components/layout/profile/LeagueChip';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import { CurrentTag } from '~/components/layout/profile/Tag';
-import Truncate from '~/components/layout/profile/Truncate';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import { CurrentSeason } from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   pct,
@@ -26,6 +20,12 @@ import {
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { LeagueMark } from '~/components/ui/swatch';
+import { Table } from '~/components/ui/table';
+import { Truncate } from '~/components/ui/truncate';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getFSquaredProfile } from '~/models/profile/fSquared.server';
 import type {
@@ -303,7 +303,7 @@ function PickCell({ pick }: { pick: FSquaredPick | null }) {
 function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -323,7 +323,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               <Link to={`/games/f-squared/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -357,7 +357,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -406,7 +406,7 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
         {Array.from(leagues.entries()).map(([leagueName, picks]) => (
           <div key={leagueName} className='rounded-md bg-slate-900/50 p-3'>
-            <LeagueChip name={leagueName} />
+            <LeagueMark name={leagueName} />
             <ul className='m-0 mt-3 space-y-2 p-0'>
               {picks.map(pick => (
                 <li key={pick.teamId} className='flex list-none gap-2'>
@@ -457,7 +457,7 @@ function MostPickedManagers({
 
   return (
     <ProfileSection title='Most Picked Managers'>
-      <ProfileTable
+      <Table
         headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
         primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
@@ -494,7 +494,7 @@ function MostPickedManagers({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {managers.length > LIST_PREVIEW && (
         <ShowAllButton
           total={managers.length}

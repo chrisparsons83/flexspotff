@@ -6,22 +6,18 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import LeagueChip from '~/components/layout/profile/LeagueChip';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import SplitBar from '~/components/layout/profile/SplitBar';
-import Tag from '~/components/layout/profile/Tag';
-import WinLoss from '~/components/layout/profile/WinLoss';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import StatusText from '~/components/layout/profile/StatusText';
 import { pct, plural, weekLabel } from '~/components/layout/profile/format';
 import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
+import { RangeBar, SplitBar } from '~/components/ui/bars';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { LeagueMark } from '~/components/ui/swatch';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import type {
   GameLogRow,
@@ -242,7 +238,7 @@ function CareerByTier({
           : undefined
       }
     >
-      <ProfileTable
+      <Table
         headers={[
           'Tier',
           'Seasons',
@@ -278,7 +274,7 @@ function CareerByTier({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -343,7 +339,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
 
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={columns}
         numericColumns={columns
           .map((_, index) => index)
@@ -395,7 +391,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
           <tr key={season.leagueId} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>{season.year}</td>
             <td className='px-2 py-2'>
-              <LeagueChip name={season.leagueName} />
+              <LeagueMark name={season.leagueName} />
             </td>
             <td className='px-2 py-2'>
               <Finish season={season} />
@@ -451,7 +447,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -531,7 +527,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
 
   return (
     <ProfileSection title='Head to Head'>
-      <ProfileTable
+      <Table
         headers={['Opponent', 'Record', 'Meetings', 'When']}
         numericColumns={[1, 2]}
         mobileCards={
@@ -571,7 +567,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > 15 && (
         <ShowAllButton
           total={rows.length}
@@ -591,17 +587,17 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
  * season is either a playoff game or a sacko one - "P" said neither. A
  * postseason game with no bracket is a season Sleeper has not finished yet.
  */
-function PostseasonTag({ game }: { game: GameLogRow }) {
+function PostseasonStatus({ game }: { game: GameLogRow }) {
   if (game.isRegularSeason) return null;
 
-  const [label, tone]: [string, TagTone] =
+  const [label, tone]: [string, StatusTone] =
     game.postseasonBracket === 'WINNERS'
       ? ['Playoff', 'highlight']
       : game.postseasonBracket === 'LOSERS'
       ? ['Sacko', 'loss']
       : ['Post', 'neutral'];
 
-  return <Tag tone={tone}>{label}</Tag>;
+  return <StatusText tone={tone}>{label}</StatusText>;
 }
 
 function GameLog({ games }: { games: GameLogRow[] }) {
@@ -617,7 +613,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
       title='Game Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', '', 'League', 'Opponent', 'Score', 'Result']}
         numericColumns={[1, 5]}
         mobileCards={
@@ -642,8 +638,8 @@ function GameLog({ games }: { games: GameLogRow[] }) {
                 subtitle={
                   <span className='inline-flex flex-wrap items-center gap-1.5'>
                     {weekLabel(game)}
-                    <LeagueChip name={game.leagueName} />
-                    <PostseasonTag game={game} />
+                    <LeagueMark name={game.leagueName} />
+                    <PostseasonStatus game={game} />
                   </span>
                 }
                 value={
@@ -675,10 +671,10 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             <td className='px-2 py-2'>{game.year}</td>
             <td className='px-2 py-2 text-right'>{game.week}</td>
             <td className='py-2 pr-2'>
-              <PostseasonTag game={game} />
+              <PostseasonStatus game={game} />
             </td>
             <td className='px-2 py-2'>
-              <LeagueChip name={game.leagueName} />
+              <LeagueMark name={game.leagueName} />
             </td>
             <td className='px-2 py-2'>
               {game.opponentUserId ? (
@@ -703,7 +699,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

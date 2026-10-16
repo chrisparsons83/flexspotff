@@ -3,9 +3,9 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import StarterGrid from '~/components/layout/leaderboard/StarterGrid';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import GoBox from '~/components/ui/GoBox';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,

@@ -5,6 +5,7 @@ import {
   leagueTints,
   neutralSteps,
   textOn,
+  type Theme,
   themeRoles,
 } from './palette';
 import { scaleTokens } from './scale';
@@ -30,7 +31,19 @@ const declarations = (tokens: Record<string, Oklch>) =>
  * server always renders `dark` or nothing on <html>, dark by default. Neutral
  * steps and fills are the same in both themes; only the roles, fill edges
  * and league tints change.
+ *
+ * The theme classes work on any element, not only <html>, so a block can be
+ * set in the other theme: `light` restores the light values inside a dark
+ * page. Storybook uses this to show a component in both themes side by side.
  */
+/** What changes between the themes. */
+const themed = (theme: Theme) => [
+  ...declarations(themeRoles(theme)),
+  '',
+  ...declarations(fillEdges(theme)),
+  ...declarations(leagueTints(theme)),
+];
+
 export const renderTokensCss = () => {
   const fixed = {
     ...Object.fromEntries(neutralSteps.map((c, i) => [`neutral-${i}`, c])),
@@ -53,18 +66,17 @@ export const renderTokensCss = () => {
     '',
     ...declarations(fixed),
     '',
-    ...declarations(themeRoles('light')),
-    '',
-    ...declarations(fillEdges('light')),
-    ...declarations(leagueTints('light')),
+    ...themed('light'),
     '}',
     '',
-    ':root.dark {',
-    '  color-scheme: dark;',
-    ...declarations(themeRoles('dark')),
+    '.light {',
+    '  color-scheme: light;',
+    ...themed('light'),
+    '}',
     '',
-    ...declarations(fillEdges('dark')),
-    ...declarations(leagueTints('dark')),
+    '.dark {',
+    '  color-scheme: dark;',
+    ...themed('dark'),
     '}',
     '',
   ].join('\n');

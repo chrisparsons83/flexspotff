@@ -1,3 +1,5 @@
+import type { Tone } from '~/components/ui/bars';
+
 /**
  * What each colour means on a profile, written down once so every tab uses
  * the same one for the same thing.
@@ -37,23 +39,25 @@ export const RESULT_TEXT = {
 } as const;
 
 /** Segments of a bar that splits wins from losses. */
-export const BAR = {
-  win: 'bg-emerald-400',
-  tie: 'bg-slate-400',
-  loss: 'bg-rose-400',
-} as const;
+export const BAR: Record<'win' | 'tie' | 'loss', Tone> = {
+  win: 'positive',
+  tie: 'neutral',
+  loss: 'negative',
+};
 
-/** The small rounded labels beside a row, by what they mean. */
-export const TAG = {
-  win: 'bg-emerald-400/15 text-emerald-200',
-  loss: 'bg-rose-400/15 text-rose-200',
-  neutral: 'bg-slate-600/40 text-slate-300',
-  /** The season still being played. */
-  current: 'bg-sky-400/15 text-sky-200',
+/**
+ * A word of status in a row - "Won", "Contrarian" - by what it means. Plain
+ * text in each state's text-safe colour, never a chip: the word says it, the
+ * colour repeats it.
+ */
+export const STATUS = {
+  win: 'text-positive',
+  loss: 'text-negative',
+  neutral: 'text-muted-foreground',
   /** Worth a second look: a playoff game, an empty slot. */
-  highlight: 'bg-amber-400/15 text-amber-200',
+  highlight: 'text-warning',
   /** Going against the grain: a contrarian pick, a doubled-up QB. */
-  accent: 'bg-violet-400/15 text-violet-200',
+  accent: 'text-brand',
 } as const;
 
-export type TagTone = keyof typeof TAG;
+export type StatusTone = keyof typeof STATUS;
