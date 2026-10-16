@@ -119,7 +119,13 @@ const preview: Preview = {
     a11y: { test: 'error' },
     options: {
       storySort: {
-        order: ['Foundations', 'Primitives', 'Layout', 'Data display'],
+        order: [
+          'Foundations',
+          'Review',
+          'Primitives',
+          'Layout',
+          'Data display',
+        ],
       },
     },
   },

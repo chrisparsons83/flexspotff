@@ -60,6 +60,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button';
     return (
       <Comp
+        // Marks a button however it renders, for the Storybook check that
+        // keeps shadows to buttons and overlays.
+        data-slot='button'
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         type={asChild ? type : type ?? 'button'}

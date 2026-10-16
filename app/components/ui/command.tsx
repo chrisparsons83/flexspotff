@@ -6,7 +6,11 @@ import * as React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '~/components/ui/dialog';
 import { cn } from '~/utils';
 
-/** A list you narrow by typing, such as a member picker. */
+/**
+ * A list you narrow by typing, such as a member picker. Groups with headings
+ * divide it; there is no separator, since cmdk's sits inside the listbox,
+ * where a screen reader does not expect one.
+ */
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
@@ -98,18 +102,6 @@ const CommandGroup = React.forwardRef<
 ));
 CommandGroup.displayName = CommandPrimitive.Group.displayName;
 
-const CommandSeparator = React.forwardRef<
-  React.ElementRef<typeof CommandPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <CommandPrimitive.Separator
-    ref={ref}
-    className={cn('h-px bg-border', className)}
-    {...props}
-  />
-));
-CommandSeparator.displayName = CommandPrimitive.Separator.displayName;
-
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
@@ -133,5 +125,4 @@ export {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-  CommandSeparator,
 };

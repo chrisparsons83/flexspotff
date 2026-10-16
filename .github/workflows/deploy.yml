@@ -90,6 +90,12 @@ jobs:
       - name: 📚 Build Storybook
         run: npm run build-storybook
 
+      - name: 🎭 Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: ♿ Check stories for a11y and the patterns we do not use
+        run: npm run check-storybook
+
   vitest:
     name: ⚡ Vitest
     runs-on: ubuntu-latest

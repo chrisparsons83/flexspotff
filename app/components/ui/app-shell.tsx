@@ -37,6 +37,8 @@ type Props = ComponentProps<typeof NavBar> & {
 export function AppShell({ width = 'contained', children, ...nav }: Props) {
   return (
     <div
+      // Marks the one sanctioned gradient for the Storybook pattern check.
+      data-page-glow
       className='flex min-h-full flex-col bg-background text-foreground'
       style={PAGE_GLOW}
     >

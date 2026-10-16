@@ -6,7 +6,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from './command';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
@@ -41,7 +40,6 @@ export const Default: Story = {
           <CommandItem>Leaderboard</CommandItem>
           <CommandItem>Cup</CommandItem>
         </CommandGroup>
-        <CommandSeparator />
         <CommandGroup heading='Games'>
           <CommandItem>Spread pool</CommandItem>
           <CommandItem>QB streaming</CommandItem>
