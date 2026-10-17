@@ -45,4 +45,18 @@ describe('assignCompetitionRanks', () => {
   it('returns nothing for an empty list', () => {
     expect(assignCompetitionRanks([], () => 0)).toEqual([]);
   });
+
+  it('breaks ties on the first score with the next one', () => {
+    const ranked = assignCompetitionRanks(
+      [
+        { wins: 4, points: 500 },
+        { wins: 4, points: 450 },
+        { wins: 4, points: 450 },
+        { wins: 3, points: 600 },
+      ],
+      entry => [entry.wins, entry.points],
+    );
+
+    expect(ranked.map(entry => entry.rank)).toEqual([1, 2, 2, 4]);
+  });
 });

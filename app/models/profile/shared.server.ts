@@ -12,6 +12,7 @@ import {
   placesForPlacementGame,
   type BracketKind,
 } from '~/libs/bracket';
+import { isSettledWeek, type SeasonState } from '~/utils/seasonStructure';
 
 export type MedianRecord = {
   medianWins: number;
@@ -180,6 +181,96 @@ export function pairTeamGames<T extends PairableGame>(
   }
 
   return paired;
+}
+
+/** Both sides on zero means the week has not been scored yet. */
+export function hasBeenPlayed(points: number, opponentPoints: number): boolean {
+  return points > 0 || opponentPoints > 0;
+}
+
+type SettleableGame = PairableGame & { team: { league: { year: number } } };
+
+/**
+ * The league games a profile counts as results: paired with an opponent,
+ * scored, and final.
+ *
+ * Rows are created when a week opens and score live as games are played, so
+ * without this a 0.00-0.00 week shows up as a tie and a Thursday-night partial
+ * score as a loss - and as somebody's worst week. The League tab and the
+ * profile hero both read their games through here so they cannot disagree.
+ */
+export function settledLeagueGames<T extends SettleableGame>(
+  games: T[],
+  state: SeasonState,
+): PairedGame<T>[] {
+  return pairTeamGames(games).filter(
+    pair =>
+      hasBeenPlayed(pair.game.pointsScored, pair.opponent.pointsScored) &&
+      isSettledWeek(
+        { year: pair.game.team.league.year, week: pair.game.week },
+        state,
+      ),
+  );
+}
+
+export type LeagueHighlights = {
+  bestWeek: { points: number; year: number; week: number } | null;
+  worstWeek: { points: number; year: number; week: number } | null;
+  longestWinStreak: number;
+  longestLossStreak: number;
+  averagePointsPerGame: number;
+};
+
+/**
+ * Best and worst weeks, streaks and the weekly average from a member's own
+ * settled games. Postseason games count, so a playoff win extends a streak
+ * rather than ending it.
+ */
+export function buildLeagueHighlights(
+  games: {
+    year: number;
+    week: number;
+    pointsScored: number;
+    result: GameResult;
+  }[],
+): LeagueHighlights {
+  // A zero is an unplayed week rather than a historically bad one.
+  const played = games
+    .filter(game => game.pointsScored > 0)
+    // Streaks run forward through time.
+    .sort((a, b) => a.year - b.year || a.week - b.week);
+
+  if (played.length === 0) {
+    return {
+      bestWeek: null,
+      worstWeek: null,
+      longestWinStreak: 0,
+      longestLossStreak: 0,
+      averagePointsPerGame: 0,
+    };
+  }
+
+  const best = played.reduce((a, b) =>
+    b.pointsScored > a.pointsScored ? b : a,
+  );
+  const worst = played.reduce((a, b) =>
+    b.pointsScored < a.pointsScored ? b : a,
+  );
+
+  return {
+    bestWeek: { points: best.pointsScored, year: best.year, week: best.week },
+    worstWeek: {
+      points: worst.pointsScored,
+      year: worst.year,
+      week: worst.week,
+    },
+    longestWinStreak:
+      computeStreak(played, game => game.result === 'W')?.length ?? 0,
+    longestLossStreak:
+      computeStreak(played, game => game.result === 'L')?.length ?? 0,
+    averagePointsPerGame:
+      played.reduce((sum, game) => sum + game.pointsScored, 0) / played.length,
+  };
 }
 
 export type Streak = {
