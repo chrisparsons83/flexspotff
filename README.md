@@ -144,23 +144,27 @@ the code that way.
 
 ## Deployment
 
-We use GitHub Actions for continuous integration and deployment. Anything that
-gets into the `main` branch will be deployed to production after running
-tests/build/etc..
+We use GitHub Actions (`.github/workflows/deploy.yml`) for continuous
+integration and deployment. Every push and pull request runs Prettier, ESLint,
+TypeScript, Vitest and a migration drift check.
+
+A push to `main` or `dev` also deploys, once those checks pass:
+
+1. The Docker image is built from `Dockerfile` and pushed to the Vultr container
+   registry as `sjc.vultrcr.com/chrisparsons/flexspotff:latest`.
+2. The workflow connects to the VPS over SSH and runs `docker compose pull` and
+   `docker compose up -d` in the `flexspotff` directory there.
+
+The container runs `npm run start:production`, which applies pending Prisma
+migrations and then starts the website, the Discord bot and the job scheduler
+together (`scripts/start-production.mjs`). If any of the three exits, the
+container stops so Docker restarts it.
+
+The workflow reads these repository secrets: `VULTR_USERNAME`, `VULTR_API_KEY`,
+`PROD_DATABASE_URL`, `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER` and
+`DEPLOY_KEY`.
 
 ## Testing
-
-### End to End
-
-This uses Playwright to do E2E testing. In order to set up playwright, you may
-need to run the following command first:
-
-```
-npx playwright install --with-deps
-```
-
-Tests are stored in `/tests`, and there's a npm script `test:e2e:ui` that you
-can run to visualize the testing to debug things.
 
 ### Vitest
 

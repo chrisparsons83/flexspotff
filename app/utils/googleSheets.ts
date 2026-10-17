@@ -50,7 +50,6 @@ export function parseCsv(text: string): string[][] {
   return rows;
 }
 
-/**
 /** Parses a Google Sheets link and returns the spreadsheet's ID. */
 function parseSheetLink(url: string) {
   let parsed: URL;
@@ -65,23 +64,7 @@ function parseSheetLink(url: string) {
     throw new Error('That is not a link to a Google Sheet.');
   }
 
-  return { id, parsed };
-}
-
-/**
- * Turns any link to a Google Sheet into its CSV export URL, keeping the tab
- * the link points at. A link with no tab gets the first one, which in both
- * QB streaming sheets is the "Data" tab.
- */
-export function sheetCsvUrl(url: string): string {
-  const { id, parsed } = parseSheetLink(url);
-
-  const gid =
-    parsed.searchParams.get('gid') ??
-    parsed.hash.match(/gid=(\d+)/)?.[1] ??
-    '0';
-
-  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  return id;
 }
 
 /**
@@ -91,7 +74,7 @@ export function sheetCsvUrl(url: string): string {
  * otherwise sometimes gets wrong and merges the first data row into.
  */
 export function sheetTabCsvUrl(url: string, tab: string): string {
-  const { id } = parseSheetLink(url);
+  const id = parseSheetLink(url);
 
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(
     tab,

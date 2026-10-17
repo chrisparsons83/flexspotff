@@ -135,10 +135,6 @@ export default function AdminQBStreaming() {
   return (
     <>
       <h2>QB Streaming</h2>
-      <p>
-        Seasons before the site ran QB streaming can be brought in from their
-        Google Sheets on the <Link to='./import'>import page</Link>.
-      </p>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
