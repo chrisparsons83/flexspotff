@@ -104,3 +104,22 @@ export async function upsertNflGame(game: GameCreate) {
     },
   });
 }
+
+/**
+ * Deletes the given NFL games, skipping any that a game mode still points at
+ * (only a week that is already scored should). Deleting a game would cascade
+ * away QB Streaming options, so it is never left to the cascade.
+ */
+export async function deleteUnreferencedNflGames(ids: NFLGame['id'][]) {
+  if (ids.length === 0) return { count: 0 };
+
+  return prisma.nFLGame.deleteMany({
+    where: {
+      id: { in: ids },
+      poolGame: null,
+      locksGame: null,
+      QBStreamingWeekOption: { none: {} },
+      dfsSurvivorEntries: { none: {} },
+    },
+  });
+}

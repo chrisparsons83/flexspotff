@@ -24,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   // Get this week
   const currentWeek = await getPoolWeekByYearAndWeek(year, week);
-  if (!currentWeek) throw new Error('Week does not exist');
+  if (!currentWeek) throw new Response('No such week', { status: 404 });
 
   // Get current picks for the week
   const weeklyPicks =

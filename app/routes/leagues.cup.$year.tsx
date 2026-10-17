@@ -18,9 +18,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const year = params.year;
   if (!year) throw new Error('What happened to the year');
+  if (!/^\d+$/.test(year))
+    throw new Response('No Cup that year', { status: 404 });
 
-  const cup = await getCupByYear(Number.parseInt(year));
-  if (!cup) throw new Error('No cup found for this year');
+  const cup = await getCupByYear(Number(year));
+  if (!cup) {
+    // The current season is linked from the nav before its Cup is created, so
+    // it shows a placeholder rather than an error.
+    if (Number(year) !== currentSeason.year) {
+      throw new Response('No Cup that year', { status: 404 });
+    }
+    return typedjson({
+      hasCup: false,
+      cupGames: [] as Awaited<ReturnType<typeof getCupGamesByCup>>,
+      scoreArray: [] as ScoreArray[],
+      year,
+    });
+  }
 
   const cupGames = await getCupGamesByCup(cup.id);
 
@@ -56,11 +70,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     }
   }
 
-  return typedjson({ cupGames, scoreArray, year });
+  return typedjson({ hasCup: true, cupGames, scoreArray, year });
 };
 
 export default function CupYear() {
-  const { cupGames, scoreArray, year } = useTypedLoaderData<typeof loader>();
+  const { hasCup, cupGames, scoreArray, year } =
+    useTypedLoaderData<typeof loader>();
 
   const rankColors: Record<string, string> = {
     admiral: 'bg-admiral text-gray-900',
@@ -69,6 +84,15 @@ export default function CupYear() {
     galaxy: 'bg-galaxy text-gray-900',
     monarch: 'bg-monarch text-gray-900',
   };
+
+  if (!hasCup) {
+    return (
+      <>
+        <h2>{year} Cup</h2>
+        <p>The {year} Cup has not been set up yet.</p>
+      </>
+    );
+  }
 
   return (
     <>

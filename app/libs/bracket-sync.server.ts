@@ -47,6 +47,12 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
     if (body === null) continue;
 
     const entries = sleeperBracketJson.parse(body);
+
+    // Before the playoffs Sleeper also serves a projected bracket, seeded from
+    // the current standings with no results in it. Storing that would put
+    // members in the playoffs or the sacko bracket on a projection, so wait
+    // until a game in it has been decided.
+    if (!entries.some(entry => entry.w != null)) continue;
     const { games } = classifyBracket(entries, bracket);
 
     for (const game of games) {

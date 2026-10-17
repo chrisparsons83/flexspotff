@@ -12,6 +12,7 @@ import {
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
+import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
@@ -23,7 +24,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!yearParam) throw new Error('No year existing');
   const year = +yearParam;
 
-  const locksWeeks = await getLocksWeeksByYear(year);
+  const [locksWeeks, currentSeason] = await Promise.all([
+    getLocksWeeksByYear(year),
+    getCurrentSeason(),
+  ]);
+  // The current season is linked from the nav before its first week exists,
+  // so it shows an empty table rather than a 404.
+  if (locksWeeks.length === 0 && year !== currentSeason?.year) {
+    throw new Response('No Locks Challenge that year', { status: 404 });
+  }
 
   // Get the most active week
   const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
@@ -55,8 +64,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         locksGamePick.isActive !== 0,
     );
 
-  // Find the max week number
-  const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
+  // Find the max week number. A season with no weeks yet has no standings.
+  const maxWeek = locksWeeks[0]?.weekNumber ?? 0;
 
   let userIdToPointsMap: Map<string, number> = new Map();
 

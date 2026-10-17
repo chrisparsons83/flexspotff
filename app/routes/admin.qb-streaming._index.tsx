@@ -73,8 +73,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
 
-      // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      // Update NFL scores for the week, dropping any game Sleeper no longer
+      // lists for it (a game that never kicks off would block scoring)
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);

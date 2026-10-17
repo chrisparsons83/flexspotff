@@ -140,6 +140,11 @@ export type LeagueProfile = {
     hasAnyMedianSeason: boolean;
   };
   byTier: TierRecord[];
+  /**
+   * The year of a season they are still playing, which `byTier` leaves out.
+   * Null when every season they have played is finished.
+   */
+  inProgressYear: number | null;
   seasons: SeasonRow[];
   gameLog: GameLogRow[];
   headToHead: HeadToHeadRow[];
@@ -290,7 +295,17 @@ export async function getLeagueProfile(userId: string): Promise<LeagueProfile> {
   return {
     hasPlayed: true,
     career: buildCareer(teams),
-    byTier: buildTierRecords(teams, state),
+    // A season still being played would count as a whole one in the tier's
+    // records, so the tier table is finished seasons only and says so.
+    byTier: buildTierRecords(
+      teams.filter(team => team.league.year !== state.inProgressYear),
+      state,
+    ),
+    inProgressYear: teams.some(
+      team => team.league.year === state.inProgressYear,
+    )
+      ? state.inProgressYear
+      : null,
     seasons: buildSeasons(teams, {
       state,
       playoffSeasons,
@@ -330,6 +345,7 @@ function emptyProfile(): LeagueProfile {
       hasAnyMedianSeason: false,
     },
     byTier: [],
+    inProgressYear: null,
     seasons: [],
     gameLog: [],
     headToHead: [],

@@ -11,6 +11,11 @@ import type {
   SleeperGraphqlNflGames,
   SleeperNflStateJson,
 } from '~/libs/sleeper/schemas';
+import {
+  deleteDfsSurvivorEntries,
+  getUnscoredDfsSurvivorEntries,
+  updateDfsSurvivorEntryGame,
+} from '~/models/dfssurvivorweek.server';
 import type { DraftPickCreate } from '~/models/draftpick.server';
 import {
   createDraftPick,
@@ -19,11 +24,30 @@ import {
 } from '~/models/draftpick.server';
 import type { League } from '~/models/league.server';
 import { getLeaguesByYear, updateLeague } from '~/models/league.server';
+import {
+  deleteLocksGamesWithPicks,
+  getLocksGamesByNflGameIds,
+  getLocksGamesOutsideTheirWeek,
+} from '~/models/locksgame.server';
 import type { GameCreate } from '~/models/nflgame.server';
-import { upsertNflGame } from '~/models/nflgame.server';
+import {
+  deleteUnreferencedNflGames,
+  getWeekNflGames,
+  upsertNflGame,
+} from '~/models/nflgame.server';
 import { getNflTeams } from '~/models/nflteam.server';
 import type { PlayerCreate } from '~/models/players.server';
 import { getPlayers, upsertPlayer } from '~/models/players.server';
+import {
+  deletePoolGamesWithPicks,
+  getPoolGamesByNflGameIds,
+  getPoolGamesOutsideTheirWeek,
+} from '~/models/poolgame.server';
+import {
+  deleteQBStreamingWeekOptions,
+  getUnscoredQBStreamingWeekOptions,
+  updateQBStreamingWeekOptionGame,
+} from '~/models/qbstreamingweekoption.server';
 import { getSeason } from '~/models/season.server';
 import {
   createSeasonWeek,
@@ -91,7 +115,16 @@ export async function syncAdp(league: League) {
   return true;
 }
 
-export async function syncNflGameWeek(year: number, weeks: number[]) {
+export async function syncNflGameWeek(
+  year: number,
+  weeks: number[],
+  {
+    // Removing games deletes picks, so only an admin's sync does it, never the
+    // scheduled score sync, where a short answer from Sleeper would quietly
+    // void real bets.
+    removeStaleGames = false,
+  }: { removeStaleGames?: boolean } = {},
+) {
   // Get season
   const season = await getSeason(year);
   if (!season) {
@@ -173,7 +206,140 @@ export async function syncNflGameWeek(year: number, weeks: number[]) {
   }
   await Promise.all(gameUpdatePromises);
 
+  if (removeStaleGames) {
+    await removeGamesSleeperNoLongerLists(year, weeks, games);
+  }
+
   return true;
+}
+
+/**
+ * The upsert above only ever adds or updates games, so a game Sleeper stops
+ * listing for a week (dropped, or reissued under a new id) would otherwise stay
+ * on our schedule for good, and every game mode would keep offering it. A game
+ * Sleeper moves to another week is updated in place, but whatever was made
+ * from it stays on the old week.
+ *
+ * The spread pool and locks challenge pick a game, so those games and their
+ * picks are deleted and nothing is scored against them. DFS Survivor and QB
+ * Streaming pick a player, so those picks follow the player to their team's
+ * real game that week. Once nothing points at a stale game it is deleted.
+ * Weeks that are already scored are never touched.
+ */
+async function removeGamesSleeperNoLongerLists(
+  year: number,
+  weeks: number[],
+  games: SleeperGraphqlNflGames['scores'],
+) {
+  const staleGameIds: string[] = [];
+  for (const week of weeks) {
+    const sleeperGameIds = new Set(
+      games.filter(game => game.week === week).map(game => game.game_id),
+    );
+    // An empty answer is more likely a Sleeper hiccup than a week with no
+    // games, so leave the week alone rather than wipe it.
+    if (sleeperGameIds.size === 0) continue;
+
+    const storedGames = await getWeekNflGames(year, week);
+    staleGameIds.push(
+      ...storedGames
+        .filter(game => !sleeperGameIds.has(game.sleeperGameId))
+        .map(game => game.id),
+    );
+  }
+
+  const stalePoolGames = await getPoolGamesByNflGameIds(staleGameIds);
+  const movedPoolGames = await getPoolGamesOutsideTheirWeek(year);
+  const poolGameIds = [
+    ...new Set([...stalePoolGames, ...movedPoolGames].map(game => game.id)),
+  ];
+  await deletePoolGamesWithPicks(poolGameIds);
+
+  const staleLocksGames = await getLocksGamesByNflGameIds(staleGameIds);
+  const movedLocksGames = await getLocksGamesOutsideTheirWeek(year);
+  const locksGameIds = [
+    ...new Set([...staleLocksGames, ...movedLocksGames].map(game => game.id)),
+  ];
+  await deleteLocksGamesWithPicks(locksGameIds);
+
+  const playerPicks = await movePlayerPicksToRealGames(year, staleGameIds);
+
+  const { count } = await deleteUnreferencedNflGames(staleGameIds);
+  if (
+    poolGameIds.length > 0 ||
+    locksGameIds.length > 0 ||
+    playerPicks.moved > 0 ||
+    playerPicks.removed > 0 ||
+    staleGameIds.length > 0
+  ) {
+    console.warn(
+      `NFL schedule sync for ${year}: removed ${poolGameIds.length} spread pool game(s), ${locksGameIds.length} locks game(s) and ${count} of ${staleGameIds.length} NFL game(s) Sleeper no longer lists; moved ${playerPicks.moved} and removed ${playerPicks.removed} DFS Survivor or QB Streaming pick(s).`,
+    );
+  }
+}
+
+/**
+ * Points DFS Survivor entries and QB Streaming options saved against a stale
+ * game, or a game no longer in their week, at the player's team's real game
+ * that week. A player whose team has no real game that week can't score, so
+ * their pick is removed (for QB Streaming that also removes the selections
+ * made with it).
+ */
+async function movePlayerPicksToRealGames(
+  year: number,
+  staleGameIds: string[],
+) {
+  const stale = new Set(staleGameIds);
+  const realGamesByWeek = new Map<number, Map<string, string>>();
+  const realGameFor = async (week: number, teamId: string | null) => {
+    if (!teamId) return undefined;
+    let gameIdByTeam = realGamesByWeek.get(week);
+    if (!gameIdByTeam) {
+      gameIdByTeam = new Map();
+      for (const game of await getWeekNflGames(year, week)) {
+        if (stale.has(game.id)) continue;
+        gameIdByTeam.set(game.homeTeamId, game.id);
+        gameIdByTeam.set(game.awayTeamId, game.id);
+      }
+      realGamesByWeek.set(week, gameIdByTeam);
+    }
+    return gameIdByTeam.get(teamId);
+  };
+  const needsMoving = (
+    gameId: string,
+    game: { year: number; week: number },
+    week: number,
+  ) => stale.has(gameId) || game.year !== year || game.week !== week;
+
+  let moved = 0;
+  const entriesToRemove: string[] = [];
+  for (const entry of await getUnscoredDfsSurvivorEntries(year)) {
+    if (!needsMoving(entry.nflGameId, entry.nflGame, entry.week)) continue;
+    const gameId = await realGameFor(entry.week, entry.player.currentNFLTeamId);
+    if (gameId) {
+      await updateDfsSurvivorEntryGame(entry.id, gameId);
+      moved++;
+    } else {
+      entriesToRemove.push(entry.id);
+    }
+  }
+  await deleteDfsSurvivorEntries(entriesToRemove);
+
+  const optionsToRemove: string[] = [];
+  for (const option of await getUnscoredQBStreamingWeekOptions(year)) {
+    const { week } = option.qbStreamingWeek;
+    if (!needsMoving(option.nflGameId, option.nflGame, week)) continue;
+    const gameId = await realGameFor(week, option.player.currentNFLTeamId);
+    if (gameId) {
+      await updateQBStreamingWeekOptionGame(option.id, gameId);
+      moved++;
+    } else {
+      optionsToRemove.push(option.id);
+    }
+  }
+  await deleteQBStreamingWeekOptions(optionsToRemove);
+
+  return { moved, removed: entriesToRemove.length + optionsToRemove.length };
 }
 
 export async function syncSleeperWeeklyScores(year: number, week: number) {

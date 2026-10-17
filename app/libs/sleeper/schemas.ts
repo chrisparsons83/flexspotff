@@ -211,6 +211,9 @@ export const sleeperDraftListJson = z.array(
     // slot from here, since a traded first-round pick breaks reading it off
     // the picks.
     draft_order: z.record(z.number()).nullish(),
+    // Draft slot -> roster ID. Not always the slot of the roster's owner: the
+    // 2022 and 2023 manual leagues handed rosters out in a different order.
+    slot_to_roster_id: z.record(z.number().nullable()).nullish(),
   }),
 );
 export type SleeperDraftListJson = z.infer<typeof sleeperDraftListJson>;
