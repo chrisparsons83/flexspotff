@@ -48,12 +48,12 @@ three years.
 
 ## Names
 
-Entrant names are matched to members once and saved as `MemberAlias` rows,
-shared with the QB streaming import (see `docs/qb-streaming-history-import.md`).
-Most entrants also played in the leagues under the same name, so a name is
-suggested as the member who managed that team, even when their Discord name
-looks nothing like it (e.g. `Jad` is slimarabia and `tc216997` is Tee Cee).
-Names that don't match a team fall back to members with similar names.
+Entrant names are matched to members once and saved as `MemberAlias` rows, which
+the old QB streaming import also wrote. Most entrants also played in the leagues
+under the same name, so a name is suggested as the member who managed that team,
+even when their Discord name looks nothing like it (e.g. `Jad` is slimarabia and
+`tc216997` is Tee Cee). Names that don't match a team fall back to members with
+similar names.
 
 In a trial run of all three years against a copy of the dev database, every name
 got a suggestion except `moose#0017` (2019), who managed no team that year. That

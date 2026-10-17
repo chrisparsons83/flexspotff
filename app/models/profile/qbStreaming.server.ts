@@ -9,8 +9,13 @@ import {
   type QbSelectionRow,
 } from './qbStreamingProfile';
 import { prisma } from '~/db.server';
-import { NO_PICK_SLEEPER_ID } from '~/libs/qb-streaming/history-import.server';
 import { getInProgressYear } from '~/models/seasonState.server';
+
+/**
+ * The 2020 and 2021 seasons were imported from Google Sheets, and an entry that
+ * only made one pick has this placeholder player in its empty slot.
+ */
+const NO_PICK_SLEEPER_ID = 'NO_PICK';
 
 /**
  * Everything the QB Streaming tab shows.
