@@ -346,7 +346,7 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
             className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 md:grid-cols-[6.5rem_1fr_5rem]'
           >
             <Link
-              to={`/games/guillotine/${season.leagueId}`}
+              to={`/side-leagues/guillotine/${season.leagueId}`}
               title={season.leagueName}
               className='truncate text-sm text-slate-200 no-underline hover:underline'
             >
@@ -463,7 +463,7 @@ function BySeason({
           <tr key={season.leagueId} className='border-b border-slate-700/60'>
             <td className='px-2 py-2'>
               <Link
-                to={`/games/guillotine/${season.leagueId}`}
+                to={`/side-leagues/guillotine/${season.leagueId}`}
                 title={season.leagueName}
                 className='whitespace-nowrap text-white no-underline hover:underline'
               >

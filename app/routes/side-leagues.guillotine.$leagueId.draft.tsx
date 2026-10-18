@@ -1,10 +1,14 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import ProfileSection from '~/components/layout/profile/ProfileSection';
-import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import {
+  DraftBoard,
+  DraftBoardCell,
+  DraftBoardHeader,
+} from '~/components/ui/draft-board';
+import { EmptyState } from '~/components/ui/empty-state';
 import { positionTint } from '~/components/ui/fills';
+import { Section } from '~/components/ui/section';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { ordinal, teamName } from '~/libs/guillotine/display';
 import {
@@ -12,6 +16,7 @@ import {
   getGuillotineLeagueForPage,
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
+import { cn } from '~/utils';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { width: 'full' };
@@ -39,7 +44,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         team.finish === 1
           ? 'Champion'
           : team.choppedWeek
-          ? `${ordinal(team.finish ?? 0)} · wk ${team.choppedWeek}`
+          ? `${ordinal(team.finish ?? 0)}, week ${team.choppedWeek}`
           : 'Alive',
       picks: picks
         .filter(pick => pick.rosterId === team.rosterId)
@@ -85,12 +90,12 @@ export default function GuillotineDraft() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   if (columns.length === 0 || rounds === 0) {
-    return <p>The draft has not happened yet.</p>;
+    return <EmptyState title='The draft has not happened yet' />;
   }
 
   return (
-    <ProfileSection
-      title='Draft Board'
+    <Section
+      title='Draft board'
       description='One column per team in draft order, with how far each team got.'
     >
       <DraftBoard
@@ -98,23 +103,19 @@ export default function GuillotineDraft() {
         rounds={rounds}
         columnKey={column => column.rosterId}
         renderHeader={column => (
-          <div className='flex h-14 flex-col justify-between rounded bg-slate-900/70 p-1 text-center'>
-            <div className='truncate font-semibold text-white'>
-              {column.name}
-            </div>
-            <div
-              className={clsx(
-                'text-[0.7rem]',
-                column.fate === 'Champion'
-                  ? 'font-semibold text-amber-300'
-                  : column.fate === 'Alive'
-                  ? 'text-emerald-300'
-                  : 'text-slate-400',
-              )}
-            >
-              {column.fate}
-            </div>
-          </div>
+          <DraftBoardHeader
+            title={column.name}
+            subtitle={
+              <span
+                className={cn(
+                  column.fate === 'Champion' && 'font-semibold text-foreground',
+                  column.fate === 'Alive' && 'text-positive',
+                )}
+              >
+                {column.fate}
+              </span>
+            }
+          />
         )}
         renderCell={(column, round) => {
           const pick = column.picks.find(p => p.round === round);
@@ -122,21 +123,10 @@ export default function GuillotineDraft() {
           return (
             <DraftBoardCell
               title={shortName(pick)}
-              subtitle={
-                <span className='flex items-center gap-1'>
-                  <span className='font-semibold text-white'>
-                    {pick.position ?? '?'}
-                  </span>
-                  <span className='text-white/70'>{pick.nflTeam ?? 'FA'}</span>
-                </span>
-              }
-              corner={
-                <span className='tabular-nums text-white/60'>
-                  {pick.pickNo}
-                </span>
-              }
+              subtitle={`${pick.position ?? '?'} ${pick.nflTeam ?? 'FA'}`}
+              corner={pick.pickNo}
               tone={positionTint(pick.position)}
-              tooltip={`${pick.fullName} · pick ${pick.pickNo} by ${column.name}`}
+              tooltip={`${pick.fullName}, pick ${pick.pickNo} by ${column.name}`}
               highlighted={hovered === pick.sleeperId}
               dimmed={hovered !== null && hovered !== pick.sleeperId}
               onMouseEnter={() => setHovered(pick.sleeperId)}
@@ -145,6 +135,6 @@ export default function GuillotineDraft() {
           );
         }}
       />
-    </ProfileSection>
+    </Section>
   );
 }

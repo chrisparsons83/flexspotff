@@ -35,4 +35,17 @@ const Textarea = React.forwardRef<
 ));
 Textarea.displayName = 'Textarea';
 
-export { Input, Textarea };
+/**
+ * The browser's own select, styled like the other fields. For a form that
+ * submits as soon as it changes, or a long plain list, where the Select's
+ * popover is more than the job needs.
+ */
+const NativeSelect = React.forwardRef<
+  HTMLSelectElement,
+  React.SelectHTMLAttributes<HTMLSelectElement>
+>(({ className, ...props }, ref) => (
+  <select ref={ref} className={cn(FIELD, 'h-10 pr-8', className)} {...props} />
+));
+NativeSelect.displayName = 'NativeSelect';
+
+export { Input, NativeSelect, Textarea };

@@ -144,7 +144,7 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
           <tr key={season.year} className='border-b border-slate-700/60'>
             <td className='px-2 py-2'>
               <Link
-                to={`/games/best-ball/${season.year}`}
+                to={`/side-leagues/best-ball/${season.year}`}
                 className='text-white no-underline hover:underline'
               >
                 {season.year}

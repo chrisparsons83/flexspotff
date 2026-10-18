@@ -1,5 +1,5 @@
 import { Field } from './field';
-import { Input, Textarea } from './input';
+import { Input, NativeSelect, Textarea } from './input';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof Input> = {
@@ -24,6 +24,13 @@ export const Default: Story = {
       </Field>
       <Field label='Week' error='Week has to be between 1 and 18.'>
         <Input type='number' defaultValue={19} />
+      </Field>
+      <Field label='Week'>
+        <NativeSelect defaultValue='3'>
+          <option value='all'>All weeks</option>
+          <option value='3'>Week 3</option>
+          <option value='2'>Week 2</option>
+        </NativeSelect>
       </Field>
       <Field label='Notes'>
         <Textarea defaultValue='Waivers run Wednesday morning.' />

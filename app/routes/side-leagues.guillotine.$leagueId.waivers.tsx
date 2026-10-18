@@ -1,9 +1,13 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useSubmit } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { Button } from '~/components/ui/button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { NativeSelect } from '~/components/ui/input';
 import { PlayerLabel } from '~/components/ui/player-label';
+import { Section } from '~/components/ui/section';
 import { StatList } from '~/components/ui/stat-list';
+import { Table } from '~/components/ui/table';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { teamName } from '~/libs/guillotine/display';
 import type { ViewTransaction } from '~/libs/guillotine/views';
@@ -171,98 +175,81 @@ export default function GuillotineWaivers() {
   const totalLost = totals.reduce((sum, t) => sum + t.lost, 0);
 
   return (
-    <div className='space-y-6'>
+    <>
       <StatList
-        className='not-prose grid-cols-2 md:grid-cols-4'
+        className='mb-16 grid-cols-2 md:grid-cols-4'
         stats={[
-          { label: 'Claims Won', value: totalClaims },
-          { label: 'Bids That Lost', value: totalLost },
-          { label: 'FAAB Spent', value: `$${totalSpent}` },
-          { label: 'Budget Each', value: budget ? `$${budget}` : '—' },
+          { label: 'Claims won', value: totalClaims },
+          { label: 'Bids that lost', value: totalLost },
+          { label: 'FAAB spent', value: `$${totalSpent}` },
+          { label: 'Budget each', value: budget ? `$${budget}` : '–' },
         ]}
       />
 
-      <ProfileSection
+      <Section
         title='Budgets'
         description='Every team’s season on the wire, biggest spenders first.'
       >
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='text-left text-slate-400'>
-                <th className='py-1 pr-2'>Team</th>
-                <th className='py-1 pr-2 text-right'>Won</th>
-                <th className='py-1 pr-2 text-right'>Lost</th>
-                <th className='py-1 pr-2 text-right'>Spent</th>
-                <th className='py-1 pr-2 text-right'>Biggest</th>
-                <th className='py-1 text-right'>Left</th>
-              </tr>
-            </thead>
-            <tbody>
-              {totals.map(team => (
-                <tr key={team.rosterId} className='border-t border-slate-700'>
-                  <td className='py-1.5 pr-2 text-white'>{team.name}</td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {team.won}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {team.lost}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    ${team.spent}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {team.biggest ? `$${team.biggest}` : '—'}
-                  </td>
-                  <td className='py-1.5 text-right tabular-nums'>
-                    {budget ? `$${team.left}` : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </ProfileSection>
+        <Table
+          headers={['Team', 'Won', 'Lost', 'Spent', 'Biggest', 'Left']}
+          numericColumns={[1, 2, 3, 4, 5]}
+          primaryColumns={[3, 5]}
+        >
+          {totals.map(team => (
+            <tr key={team.rosterId}>
+              <td>{team.name}</td>
+              <td className='text-right'>{team.won}</td>
+              <td className='text-right'>{team.lost}</td>
+              <td className='text-right'>${team.spent}</td>
+              <td className='text-right'>
+                {team.biggest ? `$${team.biggest}` : '–'}
+              </td>
+              <td className='text-right'>{budget ? `$${team.left}` : '–'}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
 
       {biggest.length > 0 && (
-        <ProfileSection title='Biggest Bids'>
-          <ol className='m-0 list-none space-y-1 p-0 text-sm'>
+        <Section title='Biggest bids'>
+          <Table
+            headers={['Rank', 'Player', 'Team', 'Bid', 'For week']}
+            numericColumns={[0, 3, 4]}
+            primaryColumns={[1, 3]}
+          >
             {biggest.map((claim, index) => (
-              <li
-                key={`${claim.sleeperId}-${claim.week}`}
-                className='flex flex-wrap justify-between gap-x-3 border-t border-slate-700 pt-1'
-              >
-                <span className='text-white'>
-                  <span className='mr-2 text-slate-500'>{index + 1}.</span>
+              <tr key={`${claim.sleeperId}-${claim.week}`}>
+                <td className='text-right text-muted-foreground'>
+                  {index + 1}
+                </td>
+                <td>
                   <PlayerLabel player={claim} />
-                </span>
-                <span>
-                  {claim.winner.name},{' '}
-                  <span className='font-semibold text-white'>
-                    ${claim.winner.bid}
-                  </span>{' '}
-                  <span className='text-slate-400'>for week {claim.week}</span>
-                </span>
-              </li>
+                </td>
+                <td>{claim.winner.name}</td>
+                <td className='text-right font-semibold'>
+                  ${claim.winner.bid}
+                </td>
+                <td className='text-right'>{claim.week}</td>
+              </tr>
             ))}
-          </ol>
-        </ProfileSection>
+          </Table>
+        </Section>
       )}
 
-      <ProfileSection
-        title='Every Claim'
+      <Section
+        title='Every claim'
         description='Each waiver run with every bid on every player. Pick all weeks to see the whole season.'
         action={
           <Form
             method='get'
-            className='flex flex-wrap gap-2 text-sm'
+            className='flex flex-wrap gap-2'
             onChange={e => submit(e.currentTarget)}
           >
-            <select
+            <NativeSelect
               name='week'
               defaultValue={weekFilter ?? 'all'}
               aria-label='Week'
-              className='rounded border border-slate-600 bg-slate-900 px-2 py-1 text-white'
+              className='w-auto'
             >
               <option value='all'>All weeks</option>
               {weeks.map(week => (
@@ -270,12 +257,12 @@ export default function GuillotineWaivers() {
                   Week {week}
                 </option>
               ))}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
               name='team'
               defaultValue={teamFilter ?? ''}
               aria-label='Team'
-              className='rounded border border-slate-600 bg-slate-900 px-2 py-1 text-white'
+              className='w-auto'
             >
               <option value=''>All teams</option>
               {teams.map(team => (
@@ -283,63 +270,61 @@ export default function GuillotineWaivers() {
                   {team.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
             <noscript>
-              <button type='submit'>Filter</button>
+              <Button type='submit' variant='secondary'>
+                Filter
+              </Button>
             </noscript>
           </Form>
         }
       >
-        {runs.length === 0 && (
-          <p className='m-0 text-sm text-slate-400'>No claims match.</p>
-        )}
-        <div className='space-y-5'>
-          {runs.map(run => (
-            <div key={run.week}>
-              <h4 className='m-0 mb-1 text-sm font-semibold uppercase tracking-wide text-slate-400'>
-                For week {run.week}
-              </h4>
-              <table className='w-full text-sm'>
-                <tbody>
-                  {run.claims.map(claim => (
-                    <tr
-                      key={claim.sleeperId}
-                      className='border-t border-slate-700 align-top'
-                    >
-                      <td className='py-1.5 pr-2 text-white'>
-                        <PlayerLabel player={claim} />
-                        {claim.fromChop && (
-                          <div className='text-xs text-slate-400'>
-                            from {claim.fromChop}
-                          </div>
-                        )}
-                      </td>
-                      <td className='py-1.5 pr-2'>
-                        {claim.winner ? (
-                          <span className='text-emerald-300'>
-                            {claim.winner.name} ${claim.winner.bid}
-                          </span>
-                        ) : (
-                          <span className='text-slate-500'>
-                            No claim went through
-                          </span>
-                        )}
-                        {claim.losingBids.length > 0 && (
-                          <div className='text-xs text-slate-400'>
-                            {claim.losingBids
-                              .map(bid => `${bid.name} $${bid.bid}`)
-                              .join(' · ')}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-      </ProfileSection>
-    </div>
+        {runs.length === 0 && <EmptyState title='No claims match' />}
+        {runs.map(run => (
+          <Section
+            key={run.week}
+            as='h3'
+            title={`For week ${run.week}`}
+            className='mt-10'
+          >
+            <Table
+              headers={['Player', 'Winning bid', 'Losing bids']}
+              primaryColumns={[1]}
+            >
+              {run.claims.map(claim => (
+                <tr key={claim.sleeperId} className='align-top'>
+                  <td>
+                    <PlayerLabel player={claim} />
+                    {claim.fromChop && (
+                      <div className='text-sm text-muted-foreground'>
+                        from {claim.fromChop}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {claim.winner ? (
+                      `${claim.winner.name} $${claim.winner.bid}`
+                    ) : (
+                      <span className='text-muted-foreground'>
+                        No claim went through
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <ul className='text-sm text-muted-foreground'>
+                      {claim.losingBids.map((bid, index) => (
+                        <li key={index}>
+                          {bid.name} ${bid.bid}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ))}
+            </Table>
+          </Section>
+        ))}
+      </Section>
+    </>
   );
 }

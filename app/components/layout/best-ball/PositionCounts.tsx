@@ -1,12 +1,13 @@
 import { PositionBar as Bar } from '~/components/ui/bars';
-import { positionFill } from '~/components/ui/fills';
+import { FILLS, positionFill } from '~/components/ui/fills';
 import { Swatch } from '~/components/ui/swatch';
 import type { PositionCounts, PositionGroup } from '~/libs/best-ball/views';
 import { POSITION_GROUPS } from '~/libs/best-ball/views';
-import { POSITION_RANK_COLORS } from '~/utils/constants';
 
-export const positionColor = (group: PositionGroup | string) =>
-  POSITION_RANK_COLORS[group.toLowerCase()] ?? 'bg-secondary';
+export const positionColor = (group: PositionGroup | string) => {
+  const fill = positionFill(group);
+  return fill ? FILLS[fill] : 'bg-secondary';
+};
 
 /** How many of each position a roster took: a swatch, the position, the count. */
 export function PositionTally({ counts }: { counts: PositionCounts }) {

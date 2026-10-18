@@ -1,10 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LiveChopLinePanel from '~/components/layout/guillotine/LiveChopLinePanel';
-import ProfileSection from '~/components/layout/profile/ProfileSection';
 import GoBox from '~/components/ui/GoBox';
+import { EmptyState } from '~/components/ui/empty-state';
 import { PlayerLabel } from '~/components/ui/player-label';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { GUILLOTINE_FINAL_WEEK } from '~/libs/guillotine/chops';
 import { pts, teamName } from '~/libs/guillotine/display';
@@ -16,6 +17,7 @@ import {
   getGuillotineTransactions,
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
+import { cn } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);
@@ -176,16 +178,14 @@ export default function GuillotineWeek() {
     (_, i) => lastWeek - i,
   ).map(w => ({
     label: `Week ${w}`,
-    url: `/games/guillotine/${leagueId}/week/${w}`,
+    url: `/side-leagues/guillotine/${leagueId}/week/${w}`,
   }));
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h3 className='m-0'>Week {week}</h3>
-        <GoBox options={weekOptions} buttonText='Choose Week' />
-      </div>
-
+    <Section
+      title={`Week ${week}`}
+      action={<GoBox options={weekOptions} buttonText='Week' />}
+    >
       {live ? (
         <LiveChopLinePanel
           week={week}
@@ -195,143 +195,132 @@ export default function GuillotineWeek() {
           showWeekLink={false}
         />
       ) : isLive ? (
-        <p>Week {week} has not started yet.</p>
+        <EmptyState title={`Week ${week} has not started yet`} />
       ) : ranked.length === 0 ? (
-        <p>No scores for week {week}.</p>
+        <EmptyState title={`No scores for week ${week}`} />
       ) : (
-        <ProfileSection
+        <Section
+          as='h3'
           title='Scores'
           description='Every surviving team, highest first. The line is the chop.'
         >
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='text-left text-slate-400'>
-                <th className='py-1 pr-2'>#</th>
-                <th className='py-1 pr-2'>Team</th>
-                <th className='py-1 pr-2 text-right'>Points</th>
-                <th className='py-1 text-right'>Above the Chop</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ranked.map((row, index) => (
-                <tr
-                  key={row.rosterId}
-                  className={clsx(
-                    'border-t border-slate-700',
-                    row.chopped && 'bg-rose-900/40',
-                    index === ranked.length - 2 &&
-                      'border-b-2 border-b-rose-500',
-                  )}
-                >
-                  <td className='py-1.5 pr-2 text-slate-400'>{row.rank}</td>
-                  <td className='py-1.5 pr-2 text-white'>
-                    {row.name}
-                    {row.chopped && (
-                      <span className='ml-2 rounded bg-rose-600 px-1.5 py-0.5 text-xs font-bold uppercase'>
-                        Chopped
-                      </span>
-                    )}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {pts(row.points)}
-                  </td>
-                  <td className='py-1.5 text-right tabular-nums'>
-                    {row.chopped || row.margin === null
-                      ? '—'
-                      : `+${pts(row.margin)}`}
-                  </td>
+          <div className='overflow-x-auto'>
+            <table className='w-full text-left tabular-nums'>
+              <thead>
+                <tr className='border-b border-border text-sm text-muted-foreground'>
+                  <th className='px-3 py-2.5 text-right font-semibold'>Rank</th>
+                  <th className='px-3 py-2.5 font-semibold'>Team</th>
+                  <th className='px-3 py-2.5 text-right font-semibold'>
+                    Points
+                  </th>
+                  <th className='px-3 py-2.5 text-right font-semibold'>
+                    Above the chop
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </ProfileSection>
+              </thead>
+              <tbody>
+                {ranked.map((row, index) => (
+                  <tr
+                    key={row.rosterId}
+                    className={cn(
+                      'border-b border-border',
+                      row.chopped && 'bg-destructive/20',
+                      index === ranked.length - 2 &&
+                        'border-b-[3px] border-b-destructive',
+                    )}
+                  >
+                    <td className='px-3 py-2.5 text-right text-muted-foreground'>
+                      {row.rank}
+                    </td>
+                    <td className='px-3 py-2.5'>
+                      {row.name}
+                      {row.chopped && (
+                        <div className='font-semibold text-negative'>
+                          Chopped
+                        </div>
+                      )}
+                    </td>
+                    <td className='px-3 py-2.5 text-right'>
+                      {pts(row.points)}
+                    </td>
+                    <td className='px-3 py-2.5 text-right'>
+                      {row.chopped || row.margin === null
+                        ? '–'
+                        : `+${pts(row.margin)}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
       )}
 
       {chopped && (
-        <ProfileSection
-          title={`${chopped.name} Released`}
+        <Section
+          as='h3'
+          title={`${chopped.name} released`}
           description={`Chopped with ${pts(
             chopped.points,
           )} points. Where the roster went in the next waiver run.`}
         >
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='text-left text-slate-400'>
-                <th className='py-1 pr-2'>Player</th>
-                <th className='py-1 pr-2'>Claimed By</th>
-                <th className='py-1 pr-2 text-right'>Winning Bid</th>
-                <th className='py-1 text-right'>Bids</th>
+          <Table
+            headers={['Player', 'Claimed by', 'Winning bid', 'Bids']}
+            numericColumns={[2, 3]}
+            primaryColumns={[1]}
+          >
+            {chopped.released.map(player => (
+              <tr key={player.sleeperId}>
+                <td>
+                  <PlayerLabel player={player} />
+                </td>
+                <td>
+                  {player.claimedBy?.name ?? (
+                    <span className='text-muted-foreground'>Nobody</span>
+                  )}
+                </td>
+                <td className='text-right'>
+                  {player.claimedBy ? `$${player.claimedBy.bid}` : '–'}
+                </td>
+                <td className='text-right'>{player.bids || '–'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {chopped.released.map(player => (
-                <tr
-                  key={player.sleeperId}
-                  className='border-t border-slate-700'
-                >
-                  <td className='py-1.5 pr-2 text-white'>
-                    <PlayerLabel player={player} />
-                  </td>
-                  <td className='py-1.5 pr-2'>
-                    {player.claimedBy?.name ?? (
-                      <span className='text-slate-500'>Nobody</span>
-                    )}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {player.claimedBy ? `$${player.claimedBy.bid}` : '—'}
-                  </td>
-                  <td className='py-1.5 text-right tabular-nums'>
-                    {player.bids || '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ProfileSection>
+            ))}
+          </Table>
+        </Section>
       )}
 
       {nextRun && nextRun.claims.length > 0 && (
-        <ProfileSection
-          title={`Waivers for Week ${nextRun.week}`}
+        <Section
+          as='h3'
+          title={`Waivers for week ${nextRun.week}`}
           description='Every claim that went through in the run after this week, biggest bids first.'
         >
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='text-left text-slate-400'>
-                <th className='py-1 pr-2'>Player</th>
-                <th className='py-1 pr-2'>Won By</th>
-                <th className='py-1 pr-2 text-right'>Bid</th>
-                <th className='py-1 pr-2 text-right'>Next Best</th>
-                <th className='py-1 text-right'>Bids</th>
+          <Table
+            headers={['Player', 'Won by', 'Bid', 'Next best', 'Bids']}
+            numericColumns={[2, 3, 4]}
+            primaryColumns={[1, 2]}
+          >
+            {nextRun.claims.map(claim => (
+              <tr key={claim.sleeperId}>
+                <td>
+                  <PlayerLabel player={claim} />
+                  {claim.fromChop && (
+                    <div className='text-sm text-muted-foreground'>
+                      from {claim.fromChop}
+                    </div>
+                  )}
+                </td>
+                <td>{claim.winner.name}</td>
+                <td className='text-right'>${claim.winner.bid}</td>
+                <td className='text-right'>
+                  {claim.runnerUpBid === null ? '–' : `$${claim.runnerUpBid}`}
+                </td>
+                <td className='text-right'>{claim.bids}</td>
               </tr>
-            </thead>
-            <tbody>
-              {nextRun.claims.map(claim => (
-                <tr key={claim.sleeperId} className='border-t border-slate-700'>
-                  <td className='py-1.5 pr-2 text-white'>
-                    <PlayerLabel player={claim} />
-                    {claim.fromChop && (
-                      <div className='text-xs text-slate-400'>
-                        from {claim.fromChop}
-                      </div>
-                    )}
-                  </td>
-                  <td className='py-1.5 pr-2'>{claim.winner.name}</td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    ${claim.winner.bid}
-                  </td>
-                  <td className='py-1.5 pr-2 text-right tabular-nums'>
-                    {claim.runnerUpBid === null ? '—' : `$${claim.runnerUpBid}`}
-                  </td>
-                  <td className='py-1.5 text-right tabular-nums'>
-                    {claim.bids}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ProfileSection>
+            ))}
+          </Table>
+        </Section>
       )}
-    </div>
+    </Section>
   );
 }

@@ -2,9 +2,15 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { PositionTally } from '~/components/layout/best-ball/PositionCounts';
-import ProfileSection from '~/components/layout/profile/ProfileSection';
-import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import {
+  DraftBoard,
+  DraftBoardCell,
+  DraftBoardHeader,
+} from '~/components/ui/draft-board';
+import { EmptyState } from '~/components/ui/empty-state';
 import { positionTint } from '~/components/ui/fills';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { requireBestBallAccess } from '~/libs/best-ball/access.server';
 import {
   averagePositionCounts,
@@ -71,56 +77,62 @@ export default function BestBallDraft() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   if (columns.length === 0 || rounds === 0) {
-    return <p>The draft has not happened yet.</p>;
+    return <EmptyState title='The draft has not happened yet' />;
   }
 
   return (
-    <div className='space-y-6'>
-      <ProfileSection
-        title='What the CPU Drafted'
+    <>
+      <Section
+        title='What the CPU drafted'
         description='Every roster by position, with the oddities the autodraft left behind.'
       >
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='text-left text-slate-400'>
-                <th className='py-1 pr-2'>Slot</th>
-                <th className='py-1 pr-2'>Team</th>
-                <th className='py-1 pr-2'>Positions</th>
-                <th className='py-1'>Notable</th>
+        <Table
+          headers={['Slot', 'Team', 'Positions', 'Notable']}
+          numericColumns={[0]}
+          primaryColumns={[1]}
+          footer={
+            average && (
+              <tr className='text-muted-foreground'>
+                <td />
+                <td>League average</td>
+                <td colSpan={2}>
+                  <span className='inline-flex flex-wrap gap-x-3 text-sm'>
+                    <span>QB {average.QB}</span>
+                    <span>RB {average.RB}</span>
+                    <span>WR {average.WR}</span>
+                    <span>TE {average.TE}</span>
+                    {average.Other > 0 && <span>Other {average.Other}</span>}
+                  </span>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {columns.map(column => (
-                <tr key={column.rosterId} className='border-t border-slate-700'>
-                  <td className='py-1.5 pr-2 tabular-nums'>{column.slot}</td>
-                  <td className='py-1.5 pr-2 text-white'>{column.name}</td>
-                  <td className='py-1.5 pr-2'>
-                    <PositionTally counts={column.counts} />
-                  </td>
-                  <td className='py-1.5 text-xs text-amber-200'>
-                    {column.outliers.join(' · ') || '—'}
-                  </td>
-                </tr>
-              ))}
-              {average && (
-                <tr className='border-t border-slate-600 text-slate-400'>
-                  <td className='py-1.5 pr-2' />
-                  <td className='py-1.5 pr-2'>League average</td>
-                  <td className='py-1.5 pr-2 text-xs' colSpan={2}>
-                    QB {average.QB} · RB {average.RB} · WR {average.WR} · TE{' '}
-                    {average.TE}
-                    {average.Other > 0 ? ` · Other ${average.Other}` : ''}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </ProfileSection>
+            )
+          }
+        >
+          {columns.map(column => (
+            <tr key={column.rosterId}>
+              <td className='text-right'>{column.slot}</td>
+              <td>{column.name}</td>
+              <td>
+                <PositionTally counts={column.counts} />
+              </td>
+              <td className='text-sm'>
+                {column.outliers.length > 0 ? (
+                  <ul>
+                    {column.outliers.map(outlier => (
+                      <li key={outlier}>{outlier}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  '–'
+                )}
+              </td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
 
-      <ProfileSection
-        title='Draft Board'
+      <Section
+        title='Draft board'
         description='One column per team in draft order.'
       >
         <DraftBoard
@@ -128,14 +140,10 @@ export default function BestBallDraft() {
           rounds={rounds}
           columnKey={column => column.rosterId}
           renderHeader={column => (
-            <div className='flex h-14 flex-col justify-between rounded bg-slate-900/70 p-1 text-center'>
-              <div className='truncate font-semibold text-white'>
-                {column.name}
-              </div>
-              <div className='text-[0.7rem] tabular-nums text-slate-400'>
-                {column.pointsFor.toFixed(1)} pts
-              </div>
-            </div>
+            <DraftBoardHeader
+              title={column.name}
+              subtitle={`${column.pointsFor.toFixed(1)} pts`}
+            />
           )}
           renderCell={(column, round) => {
             const pick = column.picks.find(p => p.round === round);
@@ -143,23 +151,10 @@ export default function BestBallDraft() {
             return (
               <DraftBoardCell
                 title={shortName(pick.playerName)}
-                subtitle={
-                  <span className='flex items-center gap-1'>
-                    <span className='font-semibold text-white'>
-                      {pick.position}
-                    </span>
-                    <span className='text-white/70'>
-                      {pick.nflTeam ?? 'FA'}
-                    </span>
-                  </span>
-                }
-                corner={
-                  <span className='tabular-nums text-white/60'>
-                    {pick.pickNo}
-                  </span>
-                }
+                subtitle={`${pick.position} ${pick.nflTeam ?? 'FA'}`}
+                corner={pick.pickNo}
                 tone={positionTint(pick.position)}
-                tooltip={`${pick.playerName} · pick ${pick.pickNo} by ${column.name}`}
+                tooltip={`${pick.playerName}, pick ${pick.pickNo} by ${column.name}`}
                 highlighted={hovered === pick.sleeperId}
                 dimmed={hovered !== null && hovered !== pick.sleeperId}
                 onMouseEnter={() => setHovered(pick.sleeperId)}
@@ -168,7 +163,7 @@ export default function BestBallDraft() {
             );
           }}
         />
-      </ProfileSection>
-    </div>
+      </Section>
+    </>
   );
 }

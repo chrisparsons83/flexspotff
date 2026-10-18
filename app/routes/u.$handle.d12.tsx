@@ -433,7 +433,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
         {seasons.map(season => (
           <tr key={season.year} className='border-b border-slate-700/70'>
             <td className='px-2 py-2'>
-              <Link to={`/games/d12/${season.year}`}>{season.year}</Link>
+              <Link to={`/side-leagues/d12/${season.year}`}>{season.year}</Link>
               {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
