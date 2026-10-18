@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getDraftSlot, updateDraftSlot } from '~/models/draftSlot.server';
 import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -133,7 +133,7 @@ export default function EditDraftSlot() {
 
   return (
     <>
-      <h2>Edit Draft Slot</h2>
+      <h2>Edit draft slot</h2>
       <p>
         <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
       </p>
@@ -159,7 +159,7 @@ export default function EditDraftSlot() {
             <select
               name='seasonId'
               id='seasonId'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
               required
               defaultValue={draftSlot.seasonId}
             >
@@ -190,7 +190,7 @@ export default function EditDraftSlot() {
               ref={dateInputRef}
               type='datetime-local'
               id='draftDateTimeLocal'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
               required
             />
           </label>
@@ -222,7 +222,7 @@ export default function EditDraftSlot() {
                 {actionData.error.general[0]}
               </p>
             )}
-          <Button type='submit'>Update Draft Slot</Button>
+          <Button type='submit'>Update draft slot</Button>
         </div>
       </Form>
     </>

@@ -8,7 +8,7 @@ import {
 import z from 'zod';
 import DraftSlotRow from '~/components/layout/admin/DraftSlotRow';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   createDraftSlot,
   deleteDraftSlot,
@@ -152,10 +152,10 @@ export default function DraftSlotsAdmin() {
 
   return (
     <>
-      <h2>Draft Slots Management</h2>
+      <h2>Draft slots management</h2>
       <p>
         <Link to='/admin/draft-slots/new'>
-          <Button type='button'>Add New Draft Slot</Button>
+          <Button type='button'>Add new draft slot</Button>
         </Link>
       </p>
       <p>
@@ -178,8 +178,8 @@ export default function DraftSlotsAdmin() {
         <thead>
           <tr>
             <th>Season</th>
-            <th>Draft Date & Time</th>
-            <th>Available People</th>
+            <th>Draft date & time</th>
+            <th>Available people</th>
             <th>Actions</th>
           </tr>
         </thead>

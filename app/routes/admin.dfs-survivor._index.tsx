@@ -12,7 +12,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { prisma } from '~/db.server';
 import { syncPlayerWeekScores } from '~/libs/dfs-survivor/player-week-scores.server';
 import { scoreDfsSurvivorPlayer } from '~/libs/dfs-survivor/scoring';
@@ -261,11 +261,11 @@ export default function AdminDfsSurvivorIndex() {
 
   return (
     <>
-      <h2>DFS Survivor</h2>
+      <h2>DFS survivor</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' className='mb-4'>
         <Button type='submit' name='_action' value='syncPlayerScores'>
-          Sync Player Scores &amp; Projections
+          Sync player scores &amp; projections
         </Button>
         <p className='mt-1 text-sm'>
           Refreshes every player's weekly points and projections from Sleeper.

@@ -7,14 +7,13 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { getSleeperLeagueUsers } from '~/libs/league-sync.server';
-import { getLeaguesByYear } from '~/models/league.server';
+import { getUnmatchedTeams } from '~/libs/members/unmatched.server';
 import { getCurrentSeason } from '~/models/season.server';
 import {
   getSleeperUserByOwnerId,
-  getSleeperUsersByOwnerIds,
   matchSleeperOwnerToUser,
 } from '~/models/sleeperUser.server';
 import { getUser, getUsers } from '~/models/user.server';
@@ -104,30 +103,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const [leagues, members] = await Promise.all([
-    getLeaguesByYear(currentSeason.year),
+    getUnmatchedTeams(currentSeason.year),
     getUsers(),
   ]);
-
-  // The mapping table is the source of truth for what "matched" means. A team
-  // can carry a stale userId from an older sync, so checking Team.userId alone
-  // would hide owners whose mapping has since been deleted.
-  const existingMatches = await getSleeperUsersByOwnerIds(
-    leagues.flatMap(league => league.teams.map(team => team.sleeperOwnerId)),
-  );
-  const matchedOwnerIds = new Set(
-    existingMatches.map(({ sleeperOwnerID }) => sleeperOwnerID),
-  );
 
   // A Discord name that belongs to two members can't be suggested, since there
   // is no way to tell which of them the Sleeper account is.
   const suggestMemberId = createMemberSuggester(members);
 
   const leaguesWithUnmatched = await Promise.all(
-    leagues.map(async league => {
-      const unmatchedTeams = league.teams.filter(
-        team => !matchedOwnerIds.has(team.sleeperOwnerId),
-      );
-
+    leagues.map(async ({ league, unmatchedTeams }) => {
       // Team only stores the owner ID, so Sleeper has to tell us who that is.
       // One league failing to answer shouldn't take down the whole page.
       let sleeperUsers = null;
@@ -221,10 +206,10 @@ export default function UnmatchedSleeperUsers() {
             <table className='w-full'>
               <thead>
                 <tr>
-                  <th>Sleeper User</th>
-                  <th>Team Name</th>
-                  <th>Sleeper Owner ID</th>
-                  <th>Discord Member</th>
+                  <th>Sleeper user</th>
+                  <th>Team name</th>
+                  <th>Sleeper owner ID</th>
+                  <th>Discord member</th>
                 </tr>
               </thead>
               <tbody>

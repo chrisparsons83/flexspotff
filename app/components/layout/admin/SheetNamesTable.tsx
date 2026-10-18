@@ -1,7 +1,7 @@
 import { Form, Link } from '@remix-run/react';
-import Button from '~/components/ui/FlexSpotButton';
 import type { SelectableMember } from '~/components/ui/MemberSelect';
 import MemberSelect from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import type { SheetName } from '~/libs/sheet-names';
 
 type Props = {

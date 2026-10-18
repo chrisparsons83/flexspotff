@@ -7,8 +7,8 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { getUsers } from '~/models/user.server';
 import {
   MergeGuardError,
@@ -132,7 +132,7 @@ export default function MergeMembers() {
 
   return (
     <>
-      <h2 className='mt-0'>Merge Duplicate Members</h2>
+      <h2 className='mt-0'>Merge duplicate members</h2>
       <p>
         When the same person exists twice - usually because they were{' '}
         <Link to='/admin/members/add'>added by hand</Link> for old seasons and

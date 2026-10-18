@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { PoolGame, PoolGameCreate } from '~/models/poolgame.server';
 import {
@@ -222,7 +222,7 @@ export default function AdminSpreadPoolYearWeek() {
             <tr>
               <th>Date</th>
               <th>Game</th>
-              <th>Home Spread</th>
+              <th>Home spread</th>
             </tr>
           </thead>
           <tbody>
@@ -242,7 +242,7 @@ export default function AdminSpreadPoolYearWeek() {
                       type='number'
                       step='0.5'
                       name={`homeSpread[${game.id}]`}
-                      className='dark:border-0 dark:bg-slate-800'
+                      className=''
                       defaultValue={
                         actionData?.updatedNflGames?.get(game.homeTeam.name)
                           ? actionData?.updatedNflGames?.get(game.homeTeam.name)
@@ -277,7 +277,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='updateSpreads'
             disabled={navigation.state !== 'idle'}
           >
-            Update Week
+            Update week
           </Button>
           <span style={{ marginRight: '10px' }}></span>
           <Button
@@ -286,7 +286,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='getSpreads'
             disabled={navigation.state !== 'idle'}
           >
-            Get Spreads
+            Get spreads
           </Button>
         </div>
       </Form>

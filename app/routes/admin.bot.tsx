@@ -4,7 +4,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import type { DeleteCommandsProps } from '~/../bot/utils';
 import { deleteCommand, deployCommands, getCommands } from '~/../bot/utils';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { envSchema } from '~/utils/helpers';
 
@@ -79,18 +79,18 @@ export default function AdminBotPage() {
       <Form method='post'>
         <div>
           <Button type='submit' name='_action' value='registerGuildCommands'>
-            Register Dev Guild Commands
+            Register dev guild commands
           </Button>
         </div>
         <div>
           <Button type='submit' name='_action' value='registerGlobalCommands'>
-            Register Global Commands
+            Register global commands
           </Button>
         </div>
       </Form>
       <hr />
       <h2>Commands</h2>
-      <h3>Global Commands</h3>
+      <h3>Global commands</h3>
       {globalCommands?.map(command => (
         <li key={command.id}>
           {command.name}
@@ -102,7 +102,7 @@ export default function AdminBotPage() {
           </Form>
         </li>
       ))}
-      <h3>Dev Guild Commands</h3>
+      <h3>Dev guild commands</h3>
       {guildCommands?.map(command => (
         <li key={command.id}>
           {command.name}

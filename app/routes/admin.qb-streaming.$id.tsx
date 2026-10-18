@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getProjections, getRostership } from '~/libs/sleeper/api.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
@@ -200,15 +200,12 @@ export default function AdminSpreadPoolYearWeek() {
 
   return (
     <div>
-      <h2>Edit Picks for Week</h2>
+      <h2>Edit picks for week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
-        <h3>Add Player</h3>
+        <h3>Add player</h3>
         <div>
-          <select
-            name='playerId'
-            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-          >
+          <select name='playerId' className='form-select mt-1 block w-full '>
             {filteredQBs.map(qb => (
               <option key={qb.id} value={qb.id}>
                 {qb.lastName}, {qb.firstName}: {qb.nflTeam}
@@ -234,7 +231,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='addPlayer'
             disabled={navigation.state !== 'idle'}
           >
-            Add Player
+            Add player
           </Button>
           <div className='pt-4'>
             <Button
@@ -243,18 +240,18 @@ export default function AdminSpreadPoolYearWeek() {
               value='importPlayers'
               disabled={navigation.state !== 'idle'}
             >
-              Import Players
+              Import players
             </Button>
           </div>
         </div>
       </Form>
-      <h3>Available Players</h3>
+      <h3>Available players</h3>
       <table className='w-full'>
         <thead>
           <tr>
             <th>Player</th>
             <th>Team</th>
-            <th>Both Pools?</th>
+            <th>Both pools?</th>
             <th>Points</th>
             <th>Remove</th>
           </tr>
@@ -287,7 +284,7 @@ export default function AdminSpreadPoolYearWeek() {
           ))}
         </tbody>
       </table>
-      <h3>Week Settings</h3>
+      <h3>Week settings</h3>
       <Form method='POST'>
         <label htmlFor='isOpen'>
           <input
@@ -305,7 +302,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='updateWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Update Week
+            Update week
           </Button>
         </div>
       </Form>

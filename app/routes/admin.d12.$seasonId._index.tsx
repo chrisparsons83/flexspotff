@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   syncD12LeagueWeek,
   syncD12Season,
@@ -229,7 +229,7 @@ export default function AdminD12SeasonIndex() {
             value='syncAllScores'
             disabled={isSubmitting}
           >
-            Sync All Scores
+            Sync all scores
           </Button>
         </Form>
         <Form method='POST' className='flex gap-2 items-end'>
@@ -239,7 +239,7 @@ export default function AdminD12SeasonIndex() {
             value='syncCurrentWeek'
             disabled={isSubmitting}
           >
-            Sync This Week
+            Sync this week
           </Button>
           <div>
             <label htmlFor='week' className='block text-sm'>
@@ -251,7 +251,7 @@ export default function AdminD12SeasonIndex() {
               type='number'
               min='1'
               max='17'
-              className='rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white w-20'
+              className='border border-border bg-card px-2 py-1 text-foreground w-20'
             />
           </div>
         </Form>
@@ -259,13 +259,13 @@ export default function AdminD12SeasonIndex() {
 
       <h3>Leagues</h3>
       {season.leagues.length === 0 ? (
-        <p className='text-gray-400 mb-4'>No leagues added yet.</p>
+        <p className='text-muted-foreground mb-4'>No leagues added yet.</p>
       ) : (
         <table className='w-full mb-4'>
           <thead>
             <tr>
               <th className='text-left'>Name</th>
-              <th className='text-left'>Sleeper League ID</th>
+              <th className='text-left'>Sleeper league ID</th>
               <th></th>
             </tr>
           </thead>
@@ -317,18 +317,18 @@ export default function AdminD12SeasonIndex() {
         </table>
       )}
 
-      <h3>Add League</h3>
+      <h3>Add league</h3>
       <Form
         key={actionData?.message}
         method='POST'
         className='flex gap-2 items-end flex-wrap'
       >
         <div>
-          <label className='block text-sm'>Sleeper League URL</label>
+          <label className='block text-sm'>Sleeper league URL</label>
           <input
             name='sleeperUrl'
             type='text'
-            className='rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white w-96'
+            className='border border-border bg-card px-2 py-1 text-foreground w-96'
             placeholder='https://sleeper.com/leagues/123456789'
           />
         </div>
@@ -338,11 +338,11 @@ export default function AdminD12SeasonIndex() {
           value='addLeague'
           disabled={isSubmitting}
         >
-          Add League
+          Add league
         </Button>
       </Form>
 
-      <h3>Draft Picks</h3>
+      <h3>Draft picks</h3>
       <Form method='POST'>
         <Button
           type='submit'
@@ -350,7 +350,7 @@ export default function AdminD12SeasonIndex() {
           value='syncDraftPicks'
           disabled={isSubmitting}
         >
-          Sync Draft Picks
+          Sync draft picks
         </Button>
       </Form>
     </div>

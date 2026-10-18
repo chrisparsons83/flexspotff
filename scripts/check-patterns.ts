@@ -4,6 +4,10 @@
  * library from its rendered stories; this covers the pages, which have no
  * stories.
  *
+ * A line can opt out with a comment naming why on the line before it:
+ * `// check:patterns allow: <reason>`, for text the site does not show, such
+ * as a Discord message.
+ *
  * Usage: tsx scripts/check-patterns.ts [path ...]
  * With no paths it checks app/routes and app/components. Prints one line per
  * finding and a count per rule, and exits 1 if there are any.
@@ -70,6 +74,7 @@ for (const file of targets.flatMap(files)) {
   const lines = readFileSync(file, 'utf8').split('\n');
   for (const [index, line] of lines.entries()) {
     if (isComment(line)) continue;
+    if (lines[index - 1]?.includes('check:patterns allow')) continue;
     const found = new Set<string>();
     for (const [rule, pattern] of LINE_RULES) {
       if (pattern.test(line)) found.add(rule);

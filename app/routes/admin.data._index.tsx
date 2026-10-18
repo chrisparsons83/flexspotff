@@ -7,7 +7,7 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -263,11 +263,11 @@ export default function AdminDataIndex() {
 
   return (
     <>
-      <h2>Data Updates</h2>
+      <h2>Data updates</h2>
       <p>This is a good list of things to eventually automate.</p>
       {actionData?.message && <Alert message={actionData.message} />}
       <section>
-        <h3>Feature Flags</h3>
+        <h3>Feature flags</h3>
         <p>
           Switches for features that are built but not open to every member yet.
           Admins always see them either way.
@@ -283,7 +283,7 @@ export default function AdminDataIndex() {
                 <strong>{flag.label}</strong>:{' '}
                 {enabled ? 'on for everyone' : 'admins only'}
                 <br />
-                <span className='text-base text-slate-300'>
+                <span className='text-base text-foreground'>
                   {flag.description}
                 </span>
               </p>
@@ -301,7 +301,7 @@ export default function AdminDataIndex() {
       </section>
       <Form method='POST'>
         <section>
-          <h3>Update NFL Games</h3>
+          <h3>Update NFL games</h3>
           <p>
             This will resync all NFL games in the system. This should probably
             be run on Monday nights late or maybe Tuesday morning.
@@ -317,11 +317,11 @@ export default function AdminDataIndex() {
             value='resyncNflGames'
             disabled={navigation.state !== 'idle'}
           >
-            Resync NFL Games
+            Resync NFL games
           </Button>
         </section>
         <section>
-          <h3>Update Current Week Scores</h3>
+          <h3>Update current week scores</h3>
           <p>
             This will resync NFL game state plus league, D12, guillotine and
             best ball scores for the current week. This can be run at any time
@@ -339,11 +339,11 @@ export default function AdminDataIndex() {
             value='resyncCurrentWeekScores'
             disabled={navigation.state !== 'idle'}
           >
-            Resync Current Week Scores
+            Resync current week scores
           </Button>
         </section>
         <section>
-          <h3>Update Current Year Scores</h3>
+          <h3>Update current year scores</h3>
           <p>
             This will resync all week scores in the system. Only do this once in
             a while, generally the resync current week score should be all you
@@ -375,12 +375,12 @@ export default function AdminDataIndex() {
               value='resyncCurrentYearScores'
               disabled={navigation.state !== 'idle'}
             >
-              Resync Current Year Scores
+              Resync current year scores
             </Button>
           </div>
         </section>
         <section>
-          <h3>Update NFL Players Database</h3>
+          <h3>Update NFL players database</h3>
           <p>
             This will resync all NFL players in the system. You only really need
             to do this if there's a player that's not showing up for some
@@ -397,11 +397,11 @@ export default function AdminDataIndex() {
             value='resyncNflPlayers'
             disabled={navigation.state !== 'idle'}
           >
-            Resync NFL Players
+            Resync NFL players
           </Button>
         </section>
         <section>
-          <h3>Resync League Season Structure</h3>
+          <h3>Resync league season structure</h3>
           <p>
             Reads each league's playoff start week from Sleeper and works out
             whether it played median games, for every league in every year. Run
@@ -414,11 +414,11 @@ export default function AdminDataIndex() {
             value='resyncLeagueSettings'
             disabled={navigation.state !== 'idle'}
           >
-            Resync League Season Structure
+            Resync league season structure
           </Button>
         </section>
         <section>
-          <h3>Resync Playoff Brackets</h3>
+          <h3>Resync playoff brackets</h3>
           <p>
             Reads the winners and losers brackets from Sleeper for every league
             in every year. This is what league championships, playoff records
@@ -431,11 +431,11 @@ export default function AdminDataIndex() {
             value='resyncPlayoffBrackets'
             disabled={navigation.state !== 'idle'}
           >
-            Resync Playoff Brackets
+            Resync playoff brackets
           </Button>
         </section>
         <section>
-          <h3>Backfill Median Records</h3>
+          <h3>Backfill median records</h3>
           <p>
             Recomputes every team&rsquo;s record against the league median from
             the scores already on file. Sleeper only describes median games for
@@ -449,11 +449,11 @@ export default function AdminDataIndex() {
             value='backfillMedianRecords'
             disabled={navigation.state !== 'idle'}
           >
-            Backfill Median Records
+            Backfill median records
           </Button>
         </section>
         <section>
-          <h3>Sync Test Database</h3>
+          <h3>Sync test database</h3>
           <p>
             Copies the production database to <code>flexspotff_test</code> so
             developers can point their local apps at the shared test database
@@ -466,7 +466,7 @@ export default function AdminDataIndex() {
             value='syncTestDatabase'
             disabled={navigation.state !== 'idle'}
           >
-            Sync Test Database from Production
+            Sync test database from production
           </Button>
         </section>
       </Form>

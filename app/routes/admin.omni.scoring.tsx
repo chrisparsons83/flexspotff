@@ -13,7 +13,7 @@ import {
 } from 'remix-typedjson';
 import { sendMessageToChannel } from '~/../bot/utils';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   getPlayersAndAssociatedPick,
   updateOmniPlayer,
@@ -292,15 +292,15 @@ const AdminOmniScoring = () => {
 
   return (
     <div>
-      <h2>Adjust Scoring</h2>
+      <h2>Adjust scoring</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' ref={formRef} preventScrollReset={true}>
-        <h3>Choose Sport</h3>
+        <h3>Choose sport</h3>
         <p>Note: only the sport selected here will have its data updated.</p>
         <div>
           <select
             name='sportId'
-            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
+            className='form-select mt-1 block w-full '
             onChange={handleChange}
           >
             <option value=''>Choose sport...</option>
@@ -313,19 +313,19 @@ const AdminOmniScoring = () => {
         </div>
         {activeSport !== '' && (
           <>
-            <h3>Active Players</h3>
+            <h3>Active players</h3>
             <div className='mb-4 flex gap-2'>
               <Button
                 type='button'
                 onClick={toggleAllCheckboxes}
-                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
+                variant='secondary'
               >
                 {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
               </Button>
               <Button
                 type='button'
                 onClick={toggleInputMode}
-                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
+                variant='secondary'
               >
                 {useInputField ? 'Use Dropdown' : 'Use Custom Values'}
               </Button>
@@ -334,9 +334,9 @@ const AdminOmniScoring = () => {
               <thead>
                 <tr className='text-left'>
                   <th className='not-prose px-4'>Player</th>
-                  <th>Current Points</th>
-                  <th>Points to Add</th>
-                  <th className='px-4'>Player Eliminated</th>
+                  <th>Current points</th>
+                  <th>Points to add</th>
+                  <th className='px-4'>Player eliminated</th>
                 </tr>
               </thead>
               <tbody className='align-middle'>
@@ -354,7 +354,7 @@ const AdminOmniScoring = () => {
                       <tr
                         key={player.id}
                         className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+                          index % 2 === 0 ? 'bg-background' : 'bg-card',
                           'p-2',
                         )}
                       >
@@ -369,12 +369,12 @@ const AdminOmniScoring = () => {
                               name={`${player.id}--pointsAdded`}
                               defaultValue='0'
                               min='0'
-                              className='form-input block w-full dark:border-0 dark:bg-slate-600'
+                              className='form-input block w-full '
                             />
                           ) : (
                             <select
                               name={`${player.id}--pointsAdded`}
-                              className='form-select block w-full dark:border-0 dark:bg-slate-600'
+                              className='form-select block w-full '
                             >
                               <option value='0'>0</option>
                               <option value='10'>10</option>
@@ -397,15 +397,15 @@ const AdminOmniScoring = () => {
             </table>
             <div className='pt-4'>
               <Button type='submit' name='_action' value='updatePoints'>
-                Update Scores
+                Update scores
               </Button>
             </div>
-            <h3>Completed Players</h3>
+            <h3>Completed players</h3>
             <table>
               <thead>
                 <tr>
                   <th className='not-prose px-4 text-left'>Player</th>
-                  <th>Total Points</th>
+                  <th>Total points</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,7 +423,7 @@ const AdminOmniScoring = () => {
                       <tr
                         key={player.id}
                         className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+                          index % 2 === 0 ? 'bg-background' : 'bg-card',
                           'p-2',
                         )}
                       >

@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
 import {
@@ -173,7 +173,7 @@ export default function SpreadLocksList() {
 
   return (
     <div>
-      <h2>Locks Challenge Lines by Week</h2>
+      <h2>Locks challenge lines by week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -183,7 +183,7 @@ export default function SpreadLocksList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
@@ -193,7 +193,7 @@ export default function SpreadLocksList() {
             <th>Week</th>
             <th>Published?</th>
             <th>Scored?</th>
-            <th>Publish Week?</th>
+            <th>Publish week?</th>
             <th>Score</th>
           </tr>
         </thead>
@@ -217,7 +217,7 @@ export default function SpreadLocksList() {
                     value='publishWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Publish Week
+                    Publish week
                   </Button>
                 </Form>
               </td>
@@ -235,7 +235,7 @@ export default function SpreadLocksList() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   addBestBallLeague,
   syncBestBallLeague,
@@ -133,7 +133,7 @@ export default function AdminBestBallIndex() {
 
   return (
     <div>
-      <h2>Autodraft Best Ball Mania Leagues</h2>
+      <h2>Autodraft best ball mania leagues</h2>
       {actionData?.message && (
         <Alert message={actionData.message} status={actionData.status} />
       )}
@@ -142,7 +142,7 @@ export default function AdminBestBallIndex() {
       ))}
 
       <section className='mb-8'>
-        <h3>Add League</h3>
+        <h3>Add league</h3>
         <p className='text-sm'>
           Paste the year's Best Ball Mania Sleeper URL, from any year. The
           season and name come from Sleeper, and the whole league - draft and
@@ -156,13 +156,13 @@ export default function AdminBestBallIndex() {
         >
           <div>
             <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper League URL
+              Sleeper league URL
             </label>
             <input
               id='sleeperUrl'
               name='sleeperUrl'
               type='text'
-              className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
+              className='w-96 max-w-full border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/leagues/123456789'
             />
           </div>
@@ -189,7 +189,7 @@ export default function AdminBestBallIndex() {
               <th className='text-left'>League</th>
               <th className='text-left'>Status</th>
               <th className='text-left'>Members</th>
-              <th className='text-left'>Last Synced</th>
+              <th className='text-left'>Last synced</th>
               <th></th>
             </tr>
           </thead>
@@ -199,7 +199,7 @@ export default function AdminBestBallIndex() {
                 <td>{league.year}</td>
                 <td>
                   <Link to={league.id}>{league.name}</Link>
-                  <div className='font-mono text-xs opacity-75'>
+                  <div className='font-mono text-sm opacity-75'>
                     {league.sleeperLeagueId}
                   </div>
                 </td>
@@ -212,7 +212,7 @@ export default function AdminBestBallIndex() {
                 </td>
                 <td>
                   {league.unmatchedTeams > 0 ? (
-                    <Link to={league.id} className='text-yellow-400'>
+                    <Link to={league.id} className='text-warning'>
                       {league.unmatchedTeams} of {league.teamCount} unmatched
                     </Link>
                   ) : (

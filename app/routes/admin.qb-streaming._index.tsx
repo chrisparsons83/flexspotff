@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { scoreQbStats } from '~/libs/qb-streaming/scoring';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { syncNflGameWeek } from '~/libs/syncs.server';
@@ -134,7 +134,7 @@ export default function AdminQBStreaming() {
 
   return (
     <>
-      <h2>QB Streaming</h2>
+      <h2>QB streaming</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -144,7 +144,7 @@ export default function AdminQBStreaming() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
@@ -186,7 +186,7 @@ export default function AdminQBStreaming() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

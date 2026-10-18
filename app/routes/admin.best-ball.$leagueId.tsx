@@ -7,8 +7,8 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { syncBestBallLeague } from '~/libs/best-ball/sync.server';
 import {
   assignOwnerlessBestBallTeam,
@@ -276,13 +276,13 @@ export default function AdminBestBallLeague() {
           value='syncLeague'
           disabled={isSubmitting}
         >
-          Resync From Sleeper
+          Resync from Sleeper
         </Button>
       </Form>
 
       {unmatched.length > 0 && (
         <section className='mb-8'>
-          <h3>Unmatched Teams</h3>
+          <h3>Unmatched teams</h3>
           <p className='text-sm'>
             These Sleeper accounts aren't tied to a member yet. Matching one
             here links it everywhere on the site, not just in this league. A
@@ -292,7 +292,7 @@ export default function AdminBestBallLeague() {
           <table className='w-full'>
             <thead>
               <tr>
-                <th className='text-left'>Sleeper User</th>
+                <th className='text-left'>Sleeper user</th>
                 <th className='text-left'>Member</th>
               </tr>
             </thead>
@@ -301,7 +301,7 @@ export default function AdminBestBallLeague() {
                 <tr key={team.id}>
                   <td>
                     {team.sleeperDisplayName ?? 'Unknown'}
-                    <div className='font-mono text-xs opacity-75'>
+                    <div className='font-mono text-sm opacity-75'>
                       {team.sleeperOwnerId ??
                         `Roster ${team.rosterId}, no owner`}
                     </div>
@@ -357,8 +357,8 @@ export default function AdminBestBallLeague() {
             <tr>
               <th className='text-left'>Place</th>
               <th className='text-left'>Team</th>
-              <th className='text-left'>Points For</th>
-              <th className='text-left'>Draft Slot</th>
+              <th className='text-left'>Points for</th>
+              <th className='text-left'>Draft slot</th>
             </tr>
           </thead>
           <tbody>
@@ -376,14 +376,14 @@ export default function AdminBestBallLeague() {
                   {team.member &&
                     team.sleeperDisplayName &&
                     team.sleeperDisplayName !== team.member.discordName && (
-                      <div className='text-xs opacity-75'>
+                      <div className='text-sm opacity-75'>
                         {team.sleeperDisplayName} on Sleeper
                       </div>
                     )}
                   {team.member && !team.sleeperOwnerId && (
                     <Form
                       method='POST'
-                      className='not-prose flex items-center gap-2 text-xs opacity-75'
+                      className='not-prose flex items-center gap-2 text-sm opacity-75'
                     >
                       Assigned by hand
                       <input type='hidden' name='teamId' value={team.id} />
@@ -400,7 +400,7 @@ export default function AdminBestBallLeague() {
                   )}
                 </td>
                 <td className='tabular-nums'>{team.pointsFor.toFixed(2)}</td>
-                <td>{team.draftSlot ?? '—'}</td>
+                <td>{team.draftSlot ?? '–'}</td>
               </tr>
             ))}
           </tbody>

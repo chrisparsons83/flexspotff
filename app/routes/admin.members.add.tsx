@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { typedjson, useTypedActionData } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { createOrUpdateSleeperUser } from '~/models/sleeperUser.server';
 import { createUser } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -68,7 +68,7 @@ export default function MembersAdd() {
 
   return (
     <article>
-      <h2>Add Member</h2>
+      <h2>Add member</h2>
       <p>
         This is to add a member manually to the system. You almost never want to
         do this, you would much rather them log in via Discord so that this is
@@ -85,7 +85,7 @@ export default function MembersAdd() {
               required
               name='discordName'
               id='discordName'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
             />
           </label>
         </div>
@@ -97,7 +97,7 @@ export default function MembersAdd() {
               required
               name='discordId'
               id='discordId'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
             />
           </label>
         </div>
@@ -109,7 +109,7 @@ export default function MembersAdd() {
               required
               name='sleeperOwnerId'
               id='sleeperOwnerId'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
             />
           </label>
         </div>

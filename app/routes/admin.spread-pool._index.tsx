@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import {
@@ -150,7 +150,7 @@ export default function SpreadPoolList() {
 
   return (
     <div>
-      <h2>Spread Pool Lines by Week</h2>
+      <h2>Spread pool lines by week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -160,7 +160,7 @@ export default function SpreadPoolList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
@@ -199,7 +199,7 @@ export default function SpreadPoolList() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

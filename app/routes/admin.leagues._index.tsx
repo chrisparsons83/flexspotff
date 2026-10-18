@@ -6,7 +6,8 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
 import { syncLeague } from '~/libs/league-sync.server';
 import { getLeague, getLeagues } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -65,7 +66,12 @@ export default function LeaguesList() {
 
   return (
     <>
-      <h2>League List</h2>
+      <h2>League list</h2>
+      <Button asChild className='mb-6'>
+        <Link to='/admin/leagues/new' variant='quiet'>
+          Add league
+        </Link>
+      </Button>
       {actionData?.message && <Alert message={actionData.message} />}
       <table className='w-full'>
         <thead>
@@ -73,8 +79,8 @@ export default function LeaguesList() {
             <th>Year</th>
             <th>Name</th>
             <th>Tier</th>
-            <th>Sleeper Link</th>
-            <th>Draft Link</th>
+            <th>Sleeper link</th>
+            <th>Draft link</th>
             <th>Actions</th>
           </tr>
         </thead>
