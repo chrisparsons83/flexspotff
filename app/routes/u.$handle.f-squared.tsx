@@ -46,7 +46,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 /** A member's name, linked to their profile for anyone who can open it. */
 function Member({ member }: { member: FSquaredMember | null }) {
-  if (!member) return <span className='text-slate-400'>Unknown</span>;
+  if (!member) return <span className='text-muted-foreground'>Unknown</span>;
   return (
     <ProfileLink userId={member.id}>
       <MemberName user={member} />
@@ -124,7 +124,7 @@ function PointsCard({ career }: { career: FSquaredCareer }) {
   // Only a running season so far: nothing settled to measure yet.
   if (averageVsField === null || averageTotal === null) {
     return (
-      <CareerCard title={title} lead='—'>
+      <CareerCard title={title} lead='–'>
         <MiniStat label='Seasons' value={career.seasons} />
       </CareerCard>
     );
@@ -140,7 +140,7 @@ function PointsCard({ career }: { career: FSquaredCareer }) {
       />
       <MiniStat
         label='Best'
-        value={bestSeason ? signed(bestSeason.vsField, 0) : '—'}
+        value={bestSeason ? signed(bestSeason.vsField, 0) : '–'}
         hint={
           bestSeason
             ? `Their best season against the average entry: ${bestSeason.year}`
@@ -150,7 +150,7 @@ function PointsCard({ career }: { career: FSquaredCareer }) {
       />
       <MiniStat
         label='Worst'
-        value={worstSeason ? signed(worstSeason.vsField, 0) : '—'}
+        value={worstSeason ? signed(worstSeason.vsField, 0) : '–'}
         hint={
           worstSeason
             ? `Their worst season against the average entry: ${worstSeason.year}`
@@ -231,13 +231,13 @@ function PickQualityCard({ career }: { career: FSquaredCareer }) {
         label='Top 3'
         value={pct(career.topThreeShare)}
         hint='Picks that finished top 3 in their league on points'
-        tone='text-emerald-300'
+        tone='text-positive'
       />
       <MiniStat
         label='Bottom 3'
         value={pct(career.bottomThreeShare)}
         hint='Picks that finished in the bottom 3 of their league on points'
-        tone='text-rose-300'
+        tone='text-negative'
       />
       <MiniStat label='Picks' value={career.picks} />
     </CareerCard>
@@ -267,7 +267,7 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
       />
       <MiniStat
         label='Peak'
-        value={mostPicked ? pct(mostPicked.share) : '—'}
+        value={mostPicked ? pct(mostPicked.share) : '–'}
         hint={
           mostPicked
             ? `Their most-picked season: ${pct(
@@ -281,16 +281,16 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
 }
 
 function PickCell({ pick }: { pick: FSquaredPick | null }) {
-  if (!pick) return <>—</>;
+  if (!pick) return <>–</>;
   // The margin is written with its sign, so the colour only repeats it.
   return (
     <span title={`${pts(pick.pointsFor)} points`}>
-      <span className='text-slate-100'>
+      <span className='text-foreground'>
         {pick.manager?.discordName ?? 'Unknown'}
       </span>
       <span
         className={clsx(
-          'ml-1.5 text-xs tabular-nums',
+          'ml-1.5 text-sm tabular-nums',
           signedTone(pick.vsLeague),
         )}
       >
@@ -318,7 +318,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
         numericColumns={[2, 3, 4, 7]}
       >
         {seasons.map(season => (
-          <tr key={season.year} className='border-b border-slate-700/70'>
+          <tr key={season.year} className='border-b border-border'>
             <td className='px-2 py-2 sm:whitespace-nowrap'>
               <Link to={`/games/f-squared/standings/${season.year}`}>
                 {season.year}
@@ -344,7 +344,9 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               title="Picks that outscored their league's average team"
             >
               {season.beatAverage}
-              <span className='text-slate-400'>/{season.picks.length}</span>
+              <span className='text-muted-foreground'>
+                /{season.picks.length}
+              </span>
             </td>
             <td className='px-2 py-2 xl:whitespace-nowrap'>
               <PickCell pick={season.bestPick} />
@@ -353,7 +355,7 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
               <PickCell pick={season.worstPick} />
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
-              {season.timesPicked ?? '—'}
+              {season.timesPicked ?? '–'}
             </td>
           </tr>
         ))}
@@ -370,8 +372,8 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
  * hue and still read apart with red-green colour blindness.
  */
 const HALVES = {
-  top: { tone: 'bg-emerald-300 text-emerald-950', label: 'Top half' },
-  bottom: { tone: 'bg-rose-900 text-rose-50', label: 'Bottom half' },
+  top: { tone: 'bg-positive/20 text-positive', label: 'Top half' },
+  bottom: { tone: 'bg-destructive/20 text-negative', label: 'Bottom half' },
 } as const;
 
 function rankTone(rank: number, size: number): string {
@@ -405,14 +407,14 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
     >
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
         {Array.from(leagues.entries()).map(([leagueName, picks]) => (
-          <div key={leagueName} className='rounded-md bg-slate-900/50 p-3'>
+          <div key={leagueName} className='bg-background/50 p-3'>
             <LeagueMark name={leagueName} />
             <ul className='m-0 mt-3 space-y-2 p-0'>
               {picks.map(pick => (
                 <li key={pick.teamId} className='flex list-none gap-2'>
                   <span
                     className={clsx(
-                      'flex h-8 w-9 shrink-0 items-center justify-center rounded text-xs font-bold tabular-nums',
+                      'flex h-8 w-9 shrink-0 items-center justify-center text-sm font-bold tabular-nums',
                       rankTone(pick.leagueRank, pick.leagueSize),
                     )}
                     title={`${ordinal(pick.leagueRank)} of ${
@@ -422,15 +424,15 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
                     {ordinal(pick.leagueRank)}
                   </span>
                   <div className='min-w-0 text-sm leading-tight'>
-                    <div className='truncate text-slate-100'>
+                    <div className='truncate text-foreground'>
                       <Member member={pick.manager} />
                       {pick.isSelf && (
-                        <span className='ml-1 text-gold' title='Their own team'>
-                          ★
+                        <span className='ml-1.5 text-muted-foreground'>
+                          own team
                         </span>
                       )}
                     </div>
-                    <div className='text-xs text-slate-400 tabular-nums'>
+                    <div className='text-sm text-muted-foreground tabular-nums'>
                       {pts(pick.pointsFor)}
                     </div>
                   </div>
@@ -463,7 +465,7 @@ function MostPickedManagers({
         numericColumns={[1, 3, 4]}
       >
         {visible.map(row => (
-          <tr key={row.manager.id} className='border-b border-slate-700/70'>
+          <tr key={row.manager.id} className='border-b border-border'>
             <td className='whitespace-nowrap px-2 py-2'>
               <Truncate
                 title={row.manager.discordName}
@@ -472,15 +474,17 @@ function MostPickedManagers({
                 <Member member={row.manager} />
               </Truncate>
               {row.isSelf && (
-                <span className='ml-1 text-gold' title='Themselves'>
-                  ★
+                <span className='ml-1.5 text-sm text-muted-foreground'>
+                  themselves
                 </span>
               )}
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {row.picks}
             </td>
-            <td className='px-2 py-2 text-slate-400'>{row.years.join(', ')}</td>
+            <td className='px-2 py-2 text-muted-foreground'>
+              {row.years.join(', ')}
+            </td>
             <td className='px-2 py-2 text-right tabular-nums'>
               {row.averageRank.toFixed(1)}
             </td>
@@ -525,16 +529,16 @@ function WhoPickedThem({
   return (
     <ProfileSection title={`Who Picked ${memberName}`}>
       {pickers.length === 0 ? (
-        <p className='m-0 text-sm text-slate-400'>Nobody yet.</p>
+        <p className='m-0 text-sm text-muted-foreground'>Nobody yet.</p>
       ) : (
         <ol className='m-0 p-0'>
           {visible.map(row => (
             <li
               key={row.member.id}
-              className='flex list-none items-baseline gap-4 border-b border-slate-700/70 py-2 text-sm last:border-b-0'
+              className='flex list-none items-baseline gap-4 border-b border-border py-2 text-sm last:border-b-0'
             >
               <span
-                className='w-6 shrink-0 text-right text-lg font-bold tabular-nums text-white'
+                className='w-6 shrink-0 text-right text-lg font-bold tabular-nums text-foreground'
                 title={`Picked them ${plural(row.picks, 'time')}`}
               >
                 {row.picks}
@@ -542,7 +546,7 @@ function WhoPickedThem({
               <span className='min-w-0 truncate'>
                 <Member member={row.member} />
               </span>
-              <span className='ml-auto shrink-0 text-xs tabular-nums text-slate-400'>
+              <span className='ml-auto shrink-0 text-sm tabular-nums text-muted-foreground'>
                 {row.years.join(', ')}
               </span>
             </li>

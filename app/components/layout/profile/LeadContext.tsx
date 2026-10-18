@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
  */
 export default function LeadContext({ children }: { children: ReactNode }) {
   return (
-    <span className='ml-2 text-sm font-normal leading-none text-slate-400'>
+    <span className='ml-2 text-sm font-normal leading-none text-muted-foreground'>
       {children}
     </span>
   );

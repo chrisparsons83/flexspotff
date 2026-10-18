@@ -13,14 +13,15 @@ import type { Tone } from '~/components/ui/bars';
 
 /** Text that says how something went. */
 export const TEXT = {
-  good: 'text-emerald-300',
-  bad: 'text-rose-300',
-  neutral: 'text-slate-400',
-  champion: 'text-gold',
+  good: 'text-positive',
+  bad: 'text-negative',
+  neutral: 'text-muted-foreground',
+  /** Gold is a fill, never text; a champion is set in weight, beside its gold square. */
+  champion: 'font-semibold text-foreground',
   /** The sacko's fill is too dark for text; this is its text-safe stand-in. */
-  sacko: 'text-brown-light',
+  sacko: 'text-warning',
   /** Something still being played. */
-  live: 'text-amber-200',
+  live: 'text-warning',
 } as const;
 
 /** Green above zero, red below, grey at nothing. */

@@ -1,6 +1,7 @@
 import { ordinal } from './format';
 import { TEXT } from './tones';
 import clsx from 'clsx';
+import { Swatch } from '~/components/ui/swatch';
 
 /**
  * Where a season ended - "3rd of 24", or "🏆 1st of 24" in gold for a title.
@@ -14,26 +15,33 @@ export default function SeasonFinish({
   finish: { rank: number; fieldSize: number; tied?: boolean } | null;
   champion: boolean;
 }) {
-  if (!finish) return <span className='text-slate-400'>—</span>;
+  if (!finish) return <span className='text-muted-foreground'>–</span>;
 
   return (
     <span
       className={clsx(
         'whitespace-nowrap font-medium',
-        champion ? TEXT.champion : 'text-slate-100',
+        champion ? TEXT.champion : 'text-foreground',
       )}
     >
-      {champion && '🏆 '}
+      {champion && <Swatch fill='medal-gold' className='mr-1.5' />}
       {finish.tied && 'T-'}
       {ordinal(finish.rank)}
-      <span className='font-normal text-slate-400'> of {finish.fieldSize}</span>
+      <span className='font-normal text-muted-foreground'>
+        {' '}
+        of {finish.fieldSize}
+      </span>
     </span>
   );
 }
 
-/** The trophy count a Finishes card leads with: 🏆, or 🏆 × 3. */
+/** The title count a Finishes card leads with: a gold square and the count. */
 export function Trophies({ titles }: { titles: number }) {
   return (
-    <span className={TEXT.champion}>🏆{titles > 1 && ` × ${titles}`}</span>
+    <span className={clsx('inline-flex items-center gap-1.5', TEXT.champion)}>
+      <Swatch fill='medal-gold' />
+      {titles}
+      <span className='sr-only'>{titles === 1 ? 'title' : 'titles'}</span>
+    </span>
   );
 }

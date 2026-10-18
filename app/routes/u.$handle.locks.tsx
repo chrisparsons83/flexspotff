@@ -128,7 +128,7 @@ function WeekStat({
   return (
     <MiniStat
       label={label}
-      value={week ? value(week) : '—'}
+      value={week ? value(week) : '–'}
       hint={week ? `${hint}: ${weekLabel(week)}, ${record(week.record)}` : hint}
       tone={week ? tone : undefined}
     />
@@ -204,7 +204,7 @@ function Career({
                 ? `, with ${plural(career.record.ties, 'tie')} besides`
                 : ''
             }`}
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Incorrect'
@@ -232,7 +232,7 @@ function Career({
             week={career.bestWeek}
             value={week => week.points}
             hint='Most points in a week'
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <WeekStat
             label='Smallest'
@@ -265,14 +265,14 @@ function Career({
             week={career.worstBust}
             value={week => record(week.record)}
             hint='The bust that wiped out the most wins'
-            tone='text-rose-300'
+            tone='text-negative'
           />
           <WeekStat
             label='Nearest Miss'
             week={career.nearMiss}
             value={week => record(week.record)}
             hint='The most wins a single loss wiped out'
-            tone='text-rose-300'
+            tone='text-negative'
           />
         </CareerCard>
 
@@ -368,7 +368,7 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
         primaryColumns={[1, 2]}
       >
         {seasons.map(season => (
-          <tr key={season.year} className='border-b border-slate-700/70'>
+          <tr key={season.year} className='border-b border-border'>
             <td className='px-2 py-2'>
               <Link to={`/games/locks-challenge/standings/${season.year}`}>
                 {season.year}
@@ -389,24 +389,27 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.cleanWeeks}
-              <span className='text-slate-400'> of {season.weeks.length}</span>
+              <span className='text-muted-foreground'>
+                {' '}
+                of {season.weeks.length}
+              </span>
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.bestWeek ? (
                 <>
                   {season.bestWeek.points}
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     Week {season.bestWeek.week}
                   </span>
                 </>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td
               className={clsx(
                 'px-2 py-2 text-right tabular-nums',
-                season.forfeited > 0 ? TEXT.bad : 'text-slate-400',
+                season.forfeited > 0 ? TEXT.bad : 'text-muted-foreground',
               )}
             >
               {season.forfeited}
@@ -505,16 +508,16 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
       footnote={
         <ChartKeys>
           <ChartKey>
-            <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
+            <span className='inline-block h-0.5 w-4 bg-info/20' />
             Points
           </ChartKey>
           <FieldBandKeys rangeLabel='Lowest to the leader' />
           <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full bg-rose-400' />
+            <span className='inline-block h-2 w-2 bg-destructive/20' />
             Busted
           </ChartKey>
           <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full border-2 border-slate-500' />
+            <span className='inline-block h-2 w-2 border-2 border-border' />
             Sat out
           </ChartKey>
         </ChartKeys>
@@ -537,7 +540,9 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 y1={y(value)}
                 y2={y(value)}
                 className={
-                  value === 0 ? 'stroke-slate-400' : 'stroke-slate-700'
+                  value === 0
+                    ? 'stroke-muted-foreground'
+                    : 'stroke-muted-foreground'
                 }
                 strokeWidth={1}
               />
@@ -546,7 +551,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 y={y(value)}
                 textAnchor='end'
                 dominantBaseline='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {value}
               </text>
@@ -560,7 +565,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 x={x(week)}
                 y={CHART.height - 8}
                 textAnchor='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {week}
               </text>
@@ -571,21 +576,21 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               point => point.high,
               point => point.low,
             )}
-            className='fill-slate-400/10'
+            className='fill-muted-foreground/10'
           />
           <polygon
             points={area(
               point => point.q3,
               point => point.q1,
             )}
-            className='fill-slate-400/25'
+            className='fill-muted-foreground/25'
           />
           <polyline
             points={field
               .map(point => `${x(point.week)},${y(point.median)}`)
               .join(' ')}
             fill='none'
-            className='stroke-slate-300'
+            className='stroke-foreground'
             strokeWidth={1.25}
             strokeDasharray='4 4'
           />
@@ -594,7 +599,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               .map(point => `${x(point.week)},${y(point.total)}`)
               .join(' ')}
             fill='none'
-            className='stroke-sky-400'
+            className='stroke-info'
             strokeWidth={2.5}
             strokeLinejoin='round'
           />
@@ -606,12 +611,12 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               r={point.entered || point.week === 0 ? 3.5 : 3}
               className={
                 point.week === 0
-                  ? 'fill-sky-400 stroke-slate-900'
+                  ? 'fill-info stroke-background'
                   : !point.entered
-                  ? 'fill-slate-900 stroke-slate-500'
+                  ? 'fill-background stroke-muted-foreground'
                   : point.entered.clean
-                  ? 'fill-sky-400 stroke-slate-900'
-                  : 'fill-rose-400 stroke-slate-900'
+                  ? 'fill-info stroke-background'
+                  : 'fill-negative stroke-background'
               }
               strokeWidth={2}
             >
@@ -649,9 +654,9 @@ function describePoint(point: RacePoint) {
  * busted week has a dashed edge, so the two never rely on hue alone and still
  * read for red-green colour blindness.
  */
-const CLEAN_TONE = 'bg-emerald-400 text-emerald-950';
+const CLEAN_TONE = 'bg-positive/20 text-positive';
 const BUSTED_TONE =
-  'border border-dashed border-rose-400/70 bg-rose-950 text-rose-300';
+  'border border-dashed border-destructive bg-destructive/20 text-negative';
 
 const RESULT_WORD = { win: 'Won', loss: 'Lost', tie: 'Tied' } as const;
 
@@ -719,7 +724,7 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
  * above the field and red when it is below.
  */
 const FIELD_DOT =
-  'absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-900 bg-sky-300';
+  'absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 border-2 border-border bg-info/20';
 
 function RateBar({
   member,
@@ -731,17 +736,17 @@ function RateBar({
   return (
     <div
       aria-hidden='true'
-      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700 max-sm:hidden'
+      className='relative h-2 w-full min-w-[6rem] bg-secondary max-sm:hidden'
     >
       {member !== null && (
         <div
           className={clsx(
-            'absolute inset-y-0 left-0 rounded-full',
+            'absolute inset-y-0 left-0',
             field === null
-              ? 'bg-sky-400'
+              ? 'bg-info/20'
               : member >= field
-              ? 'bg-emerald-400'
-              : 'bg-rose-400',
+              ? 'bg-positive/20'
+              : 'bg-destructive/20',
           )}
           style={{ width: `${member * 100}%` }}
         />
@@ -791,13 +796,13 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
         primaryColumns={[2, 3]}
       >
         {buckets.map(bucket => (
-          <tr key={bucket.key} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2 text-slate-100'>
+          <tr key={bucket.key} className='border-b border-border'>
+            <td className='whitespace-nowrap px-2 py-2 text-foreground'>
               {bucket.label}
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {bucket.member.weeks}
-              <span className='ml-1.5 text-xs text-slate-400'>
+              <span className='ml-1.5 text-sm text-muted-foreground'>
                 {memberWeeks > 0
                   ? `${Math.round((bucket.member.weeks / memberWeeks) * 100)}%`
                   : ''}
@@ -813,7 +818,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <div className='flex items-center gap-3'>
                 <span className='shrink-0 whitespace-nowrap sm:w-24'>
                   {pct(bucket.member.cleanRate, 0)}
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {pct(bucket.field.cleanRate, 0)}
                   </span>
                 </span>
@@ -827,10 +832,10 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <span
                 className={clsx(
                   'font-medium',
-                  bucket === bestBucket ? TEXT.good : 'text-slate-100',
+                  bucket === bestBucket ? TEXT.good : 'text-foreground',
                 )}
               >
-                {bucket.member.pointsPerWeek?.toFixed(2) ?? '—'}
+                {bucket.member.pointsPerWeek?.toFixed(2) ?? '–'}
               </span>
             </td>
           </tr>
@@ -860,13 +865,13 @@ function SplitTable({
       primaryColumns={[3]}
     >
       {buckets.map(bucket => (
-        <tr key={bucket.key} className='border-b border-slate-700/70'>
-          <td className='whitespace-nowrap px-2 py-2 text-slate-100'>
+        <tr key={bucket.key} className='border-b border-border'>
+          <td className='whitespace-nowrap px-2 py-2 text-foreground'>
             {bucket.label}
           </td>
           <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
             {bucket.member.picks}
-            <span className='ml-1.5 text-xs text-slate-400'>
+            <span className='ml-1.5 text-sm text-muted-foreground'>
               {memberPicks > 0
                 ? `${Math.round((bucket.member.picks / memberPicks) * 100)}%`
                 : ''}
@@ -885,7 +890,7 @@ function SplitTable({
             <div className='flex items-center gap-3'>
               <span className='shrink-0 whitespace-nowrap sm:w-24'>
                 {pct(bucket.member.winRate)}
-                <span className='ml-1.5 text-xs text-slate-400'>
+                <span className='ml-1.5 text-sm text-muted-foreground'>
                   {pct(bucket.field.winRate)}
                 </span>
               </span>
@@ -904,10 +909,10 @@ function SplitTable({
 const WIN_RATE_KEY = <FieldKey>Field&rsquo;s performance</FieldKey>;
 
 const SIDE_TONE: Record<string, string> = {
-  favorite: 'bg-amber-400',
-  underdog: 'bg-violet-400',
-  pick: 'bg-slate-400',
-  none: 'bg-slate-600',
+  favorite: 'bg-warning/20',
+  underdog: 'bg-primary',
+  pick: 'bg-secondary',
+  none: 'bg-secondary',
 };
 
 /**
@@ -928,14 +933,14 @@ function ShareBar({
 
   return (
     <div className='relative'>
-      <div className='flex h-6 gap-0.5 overflow-hidden rounded'>
+      <div className='flex h-6 gap-0.5 overflow-hidden'>
         {buckets
           .filter(bucket => shareOf(bucket) > 0)
           .map(bucket => (
             <div
               key={bucket.key}
               className={clsx(
-                'flex items-center overflow-hidden whitespace-nowrap px-2 text-xs font-semibold text-slate-950',
+                'flex items-center overflow-hidden whitespace-nowrap px-2 text-sm font-semibold text-muted-foreground',
                 SIDE_TONE[bucket.key],
               )}
               style={{ width: `${shareOf(bucket) * 100}%` }}
@@ -948,7 +953,7 @@ function ShareBar({
       </div>
       {consensus !== null && (
         <div
-          className='absolute -inset-y-1 w-1 -translate-x-1/2 rounded-full bg-sky-300 shadow'
+          className='absolute -inset-y-1 w-1 -translate-x-1/2 bg-info/20'
           style={{ left: `${consensus * 100}%` }}
           title={`Field: ${Math.round(consensus * 100)}% favorites`}
         />
@@ -1057,16 +1062,18 @@ function TeamCallout({
 }) {
   if (!row) return null;
   return (
-    <div className='rounded-md bg-slate-900/50 p-4'>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
+    <div className='bg-background/50 p-4'>
+      <h4 className='m-0 text-sm font-semibold text-foreground'>{title}</h4>
       {/* The team, then its number pushed to the far end of the same line;
           a narrow card wraps the number under the name instead. */}
       <div className='mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
-        <span className='text-2xl font-bold leading-none text-white'>
+        <span className='text-2xl font-bold leading-none text-foreground'>
           {row.team}
         </span>
-        <span className='text-sm text-slate-400'>{names[row.team] ?? ''}</span>
-        <span className='ml-auto text-sm tabular-nums text-slate-300'>
+        <span className='text-sm text-muted-foreground'>
+          {names[row.team] ?? ''}
+        </span>
+        <span className='ml-auto text-sm tabular-nums text-foreground'>
           {children}
         </span>
       </div>
@@ -1148,9 +1155,9 @@ function Teams({
         primaryColumns={[1, 2]}
       >
         {visible.map(row => (
-          <tr key={row.team} className='border-b border-slate-700/70'>
+          <tr key={row.team} className='border-b border-border'>
             <td
-              className='whitespace-nowrap px-2 py-2 font-medium text-slate-100'
+              className='whitespace-nowrap px-2 py-2 font-medium text-foreground'
               title={names[row.team]}
             >
               {row.team}
@@ -1159,17 +1166,17 @@ function Teams({
               {row.backing.picks > 0 ? (
                 record(row.backing)
               ) : (
-                <span className='text-slate-400'>—</span>
+                <span className='text-muted-foreground'>–</span>
               )}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
               {pct(winRate(row.backing), 0)}
             </td>
-            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-slate-300'>
+            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-foreground'>
               {row.fading.picks > 0 ? (
                 record(row.fading)
               ) : (
-                <span className='text-slate-400'>—</span>
+                <span className='text-muted-foreground'>–</span>
               )}
             </td>
             <td
@@ -1185,15 +1192,15 @@ function Teams({
             >
               {row.busts > 0 ? (
                 <>
-                  <span className='text-rose-300'>{row.busts}</span>
+                  <span className='text-negative'>{row.busts}</span>
                   {row.pointsCost > 0 && (
-                    <span className='ml-1.5 text-xs text-slate-400'>
+                    <span className='ml-1.5 text-sm text-muted-foreground'>
                       −{row.pointsCost}
                     </span>
                   )}
                 </>
               ) : (
-                <span className='text-slate-400'>0</span>
+                <span className='text-muted-foreground'>0</span>
               )}
             </td>
           </tr>
@@ -1223,11 +1230,11 @@ const RESULT_STATUS: Record<
 /** How many of the others on the game took the same side, and what that makes it. */
 function FieldCell({ pick }: { pick: LocksPick }) {
   if (pick.fieldShare === null) {
-    return <span className='text-slate-400'>Only pick</span>;
+    return <span className='text-muted-foreground'>Only pick</span>;
   }
   return (
     <span className='inline-flex items-center gap-1.5'>
-      <span className='tabular-nums text-slate-300'>
+      <span className='tabular-nums text-foreground'>
         {pick.sameSide} of {pick.fieldCount}
       </span>
       {pick.fieldShare >= CHALK_SHARE ? (
@@ -1242,11 +1249,11 @@ function FieldCell({ pick }: { pick: LocksPick }) {
 /** A week's result for the log: the points, or that it busted. */
 function WeekResult({ week }: { week: LocksWeek }) {
   return week.clean ? (
-    <span className='font-semibold tabular-nums text-emerald-300'>
+    <span className='font-semibold tabular-nums text-positive'>
       {plural(week.points, 'point')}
     </span>
   ) : (
-    <span className='text-rose-300'>Busted</span>
+    <span className='text-negative'>Busted</span>
   );
 }
 
@@ -1283,17 +1290,17 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                       key={pick.team}
                       className='flex flex-wrap items-center gap-x-2 gap-y-1'
                     >
-                      <span className='font-medium text-slate-100'>
+                      <span className='font-medium text-foreground'>
                         {pick.team}
                         {pick.spread !== null && ` ${line(pick.spread)}`}
                       </span>
-                      <span className='text-slate-400'>
+                      <span className='text-muted-foreground'>
                         {pick.isHome ? 'vs' : '@'} {pick.opponent},{' '}
                         <span className='tabular-nums'>
                           {pick.teamScore}–{pick.opponentScore}
                         </span>
                       </span>
-                      <span className='text-xs'>
+                      <span className='text-sm'>
                         <FieldCell pick={pick} />
                       </span>
                       <span className='ml-auto inline-flex gap-1'>
@@ -1314,9 +1321,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
             <tr
               key={`${week.year}-${week.week}-${pick.team}`}
               className={clsx(
-                index === week.picks.length - 1
-                  ? 'border-b border-slate-700/70'
-                  : '',
+                index === week.picks.length - 1 ? 'border-b border-border' : '',
               )}
             >
               {index === 0 && (
@@ -1325,21 +1330,23 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                   className='whitespace-nowrap px-2 py-2 align-top tabular-nums'
                 >
                   {year === 'all' && (
-                    <span className='mr-1.5 text-slate-400'>{week.year}</span>
+                    <span className='mr-1.5 text-muted-foreground'>
+                      {week.year}
+                    </span>
                   )}
                   Week {week.week}
                 </td>
               )}
               <td className='whitespace-nowrap px-2 py-1.5'>
-                <span className='font-medium text-slate-100'>
+                <span className='font-medium text-foreground'>
                   {pick.team}
                   {pick.spread !== null && ` ${line(pick.spread)}`}
                 </span>
-                <span className='ml-1.5 text-slate-400'>
+                <span className='ml-1.5 text-muted-foreground'>
                   {pick.isHome ? 'vs' : '@'} {pick.opponent}
                 </span>
               </td>
-              <td className='whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-300'>
+              <td className='whitespace-nowrap px-2 py-1.5 tabular-nums text-foreground'>
                 {pick.teamScore}–{pick.opponentScore}
               </td>
               <td className='whitespace-nowrap px-2 py-1.5'>
@@ -1357,7 +1364,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                   title={`${ordinal(week.rank)} of ${week.fieldSize} that week`}
                 >
                   <WeekResult week={week} />
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {ordinal(week.rank)} of {week.fieldSize}
                   </span>
                 </td>

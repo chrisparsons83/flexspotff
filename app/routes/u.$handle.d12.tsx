@@ -21,7 +21,7 @@ import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
 import { positionTint } from '~/components/ui/fills';
 import { YearFilter } from '~/components/ui/segmented-control';
 import { ShowAllButton } from '~/components/ui/show-all-button';
-import { PositionMark } from '~/components/ui/swatch';
+import { PositionMark, Swatch } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getD12Profile } from '~/models/profile/d12.server';
@@ -94,13 +94,13 @@ function Career({ career }: { career: D12Career }) {
           <MiniStat
             label='Worst Week'
             value={pts(worstWeek?.points)}
-            tone='text-rose-300'
+            tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
             value={pts(bestWeek?.points)}
-            tone='text-emerald-300'
+            tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
@@ -128,13 +128,13 @@ function Career({ career }: { career: D12Career }) {
           <MiniStat
             label='Worst Team'
             value={pts(worstTeam?.points, 1)}
-            tone='text-rose-300'
+            tone='text-negative'
             detail={worstTeam && teamDetail(worstTeam)}
           />
           <MiniStat
             label='Best Team'
             value={pts(bestTeam?.points, 1)}
-            tone='text-emerald-300'
+            tone='text-positive'
             detail={bestTeam && teamDetail(bestTeam)}
           />
         </CareerCard>
@@ -150,7 +150,7 @@ function Career({ career }: { career: D12Career }) {
               ) : career.bestFinish ? (
                 ordinal(career.bestFinish.rank)
               ) : (
-                '—'
+                '–'
               )
             }
             leadNote={
@@ -173,7 +173,7 @@ function Career({ career }: { career: D12Career }) {
               label='Average Finish'
               value={
                 career.averageFinish === null
-                  ? '—'
+                  ? '–'
                   : career.averageFinish.toFixed(1)
               }
             />
@@ -195,11 +195,11 @@ const teamDetail = (team: TeamSeasonMark) =>
  * is coloured by position.
  */
 const HEAT_BAR: Record<D12Heat, string | undefined> = {
-  5: 'bg-sky-200',
-  4: 'bg-sky-300',
-  3: 'bg-sky-500',
-  2: 'bg-sky-700',
-  1: 'bg-sky-900',
+  5: 'bg-info/20',
+  4: 'bg-info/20',
+  3: 'bg-info/20',
+  2: 'bg-info/20',
+  1: 'bg-info/20',
   bust: 'bg-[repeating-linear-gradient(180deg,theme(colors.rose.400)_0_3px,transparent_3px_6px)]',
   none: undefined,
 };
@@ -240,25 +240,27 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
         renderHeader={column => (
           <div
             className={clsx(
-              'flex h-12 flex-col justify-between rounded p-1 text-center',
-              column.league ? 'bg-slate-900/70' : 'bg-slate-900/30',
+              'flex h-12 flex-col justify-between p-1 text-center',
+              column.league ? 'bg-background/70' : 'bg-background/30',
             )}
           >
             <div className='flex justify-center gap-1.5'>
-              <span className='font-semibold text-white'>{column.slot}</span>
+              <span className='font-semibold text-foreground'>
+                {column.slot}
+              </span>
               {column.league && (
-                <span className='text-slate-400'>
+                <span className='text-muted-foreground'>
                   {column.league.shortName}
                 </span>
               )}
             </div>
             {column.league ? (
-              <div className='tabular-nums text-slate-200'>
+              <div className='tabular-nums text-foreground'>
                 {pts(column.teamPoints, 1)}
-                <span className='ml-1 text-slate-400'>points</span>
+                <span className='ml-1 text-muted-foreground'>points</span>
               </div>
             ) : (
-              <div className='text-slate-400'>No picks</div>
+              <div className='text-muted-foreground'>No picks</div>
             )}
           </div>
         )}
@@ -270,14 +272,16 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
               title={shortName(pick)}
               subtitle={
                 <span className='flex items-center gap-1'>
-                  <span className='font-semibold text-white'>
+                  <span className='font-semibold text-foreground'>
                     {pick.position ?? '?'}
                   </span>
-                  <span className='text-white/70'>{pick.nflTeam ?? 'FA'}</span>
+                  <span className='text-foreground'>
+                    {pick.nflTeam ?? 'FA'}
+                  </span>
                 </span>
               }
               trailing={
-                <span className='font-semibold tabular-nums text-white'>
+                <span className='font-semibold tabular-nums text-foreground'>
                   {pts(pick.points, 1)}
                 </span>
               }
@@ -356,14 +360,14 @@ function Exposure({ boards }: { boards: D12Board[] }) {
         numericColumns={[2, 3, 4]}
       >
         {visible.map(player => (
-          <tr key={player.sleeperId} className='border-b border-slate-700/70'>
+          <tr key={player.sleeperId} className='border-b border-border'>
             <td className='px-2 py-2 sm:whitespace-nowrap'>
               <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
                 <PositionMark position={player.position} />
-                <span className='font-medium text-slate-100'>
+                <span className='font-medium text-foreground'>
                   {player.firstName} {player.lastName}
                 </span>
-                <span className='text-xs text-slate-400'>
+                <span className='text-sm text-muted-foreground'>
                   {player.nflTeam ?? 'FA'}
                 </span>
               </span>
@@ -372,14 +376,14 @@ function Exposure({ boards }: { boards: D12Board[] }) {
               <div className='flex items-center gap-2'>
                 <span className='w-12 tabular-nums'>
                   {player.leagues}
-                  <span className='text-slate-400'>/{teams}</span>
+                  <span className='text-muted-foreground'>/{teams}</span>
                 </span>
                 <div
                   aria-hidden='true'
-                  className='hidden h-1.5 w-24 overflow-hidden rounded-full bg-slate-700 sm:block'
+                  className='hidden h-1.5 w-24 overflow-hidden bg-secondary sm:block'
                 >
                   <div
-                    className='h-full rounded-full bg-emerald-400'
+                    className='h-full bg-positive/20'
                     style={{
                       width: `${(player.leagues / Math.max(teams, 1)) * 100}%`,
                     }}
@@ -390,7 +394,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
             <td className='px-2 py-2 text-right tabular-nums'>
               {player.averagePick.toFixed(1)}
             </td>
-            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {player.earliestPick === player.latestPick
                 ? player.earliestPick
                 : `${player.earliestPick}–${player.latestPick}`}
@@ -431,7 +435,7 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
         numericColumns={[2, 3, 4, 5, 6, 7]}
       >
         {seasons.map(season => (
-          <tr key={season.year} className='border-b border-slate-700/70'>
+          <tr key={season.year} className='border-b border-border'>
             <td className='px-2 py-2'>
               <Link to={`/side-leagues/d12/${season.year}`}>{season.year}</Link>
               {season.inProgress && <CurrentSeason />}
@@ -443,27 +447,29 @@ function BySeason({ seasons }: { seasons: D12Season[] }) {
                     'font-medium',
                     season.finish.rank === 1 && !season.inProgress
                       ? TEXT.champion
-                      : 'text-slate-100',
+                      : 'text-foreground',
                   )}
                 >
-                  {season.finish.rank === 1 && !season.inProgress && '🏆 '}
+                  {season.finish.rank === 1 && !season.inProgress && (
+                    <Swatch fill='medal-gold' className='mr-1.5' />
+                  )}
                   {ordinal(season.finish.rank)}
-                  <span className='font-normal text-slate-400'>
+                  <span className='font-normal text-muted-foreground'>
                     {' '}
                     of {season.finish.fieldSize}
                   </span>
                 </span>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {pts(season.total)}
             </td>
-            <WeekCell mark={season.bestWeek} tone='text-emerald-300' />
-            <WeekCell mark={season.worstWeek} tone='text-rose-300' />
-            <TeamCell mark={season.bestTeam} tone='text-emerald-300' />
-            <TeamCell mark={season.worstTeam} tone='text-rose-300' />
+            <WeekCell mark={season.bestWeek} tone='text-positive' />
+            <WeekCell mark={season.worstWeek} tone='text-negative' />
+            <TeamCell mark={season.bestTeam} tone='text-positive' />
+            <TeamCell mark={season.worstTeam} tone='text-negative' />
             <td className='px-2 py-2 text-right tabular-nums'>
               {pts(season.averageTeam, 1)}
             </td>
@@ -486,12 +492,12 @@ function WeekCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(2)}</span>
-          <span className='ml-1.5 text-xs text-slate-400'>
+          <span className='ml-1.5 text-sm text-muted-foreground'>
             Week {mark.week}
           </span>
         </>
       ) : (
-        '—'
+        '–'
       )}
     </td>
   );
@@ -509,12 +515,12 @@ function TeamCell({
       {mark ? (
         <>
           <span className={tone}>{mark.points.toFixed(1)}</span>
-          <span className='ml-1.5 text-xs text-slate-400'>
+          <span className='ml-1.5 text-sm text-muted-foreground'>
             {shortD12LeagueName(mark.leagueName)}
           </span>
         </>
       ) : (
-        '—'
+        '–'
       )}
     </td>
   );

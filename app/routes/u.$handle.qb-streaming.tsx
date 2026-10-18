@@ -68,8 +68,8 @@ const signed = (value: number) => signedBy(value, 2);
  * cards.
  */
 const SIDE = {
-  standard: { label: 'Standard', dot: 'bg-sky-400' },
-  deep: { label: 'Deep', dot: 'bg-violet-400' },
+  standard: { label: 'Standard', dot: 'bg-info/20' },
+  deep: { label: 'Deep', dot: 'bg-primary' },
 } as const;
 
 type Side = keyof typeof SIDE;
@@ -78,7 +78,7 @@ function SideDot({ side }: { side: Side }) {
   return (
     <span
       aria-hidden='true'
-      className={clsx('inline-block h-2 w-2 rounded-full', SIDE[side].dot)}
+      className={clsx('inline-block h-2 w-2', SIDE[side].dot)}
     />
   );
 }
@@ -191,7 +191,7 @@ function RateStat({
   return (
     <MiniStat
       label={label}
-      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '—'}
+      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '–'}
       hint={`${hint}: ${plural(count, 'week')}`}
       tone={tone}
     />
@@ -335,7 +335,7 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
   if (value === null) return null;
   return (
     <span
-      className={clsx('ml-1.5 cursor-help text-xs', signedTone(value))}
+      className={clsx('ml-1.5 cursor-help text-sm', signedTone(value))}
       title={`${signed(
         value,
       )} a week against the average ${side} pick of everyone who played`}
@@ -369,7 +369,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
             {!season.usesTopWeeks && seasons[index - 1]?.usesTopWeeks && (
               <ScoringRuleDivider />
             )}
-            <tr className='border-b border-slate-700/70'>
+            <tr className='border-b border-border'>
               <td className='px-2 py-2'>
                 <Link to={`/games/qb-streaming/standings/${season.year}`}>
                   {season.year}
@@ -399,21 +399,23 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {season.bestWeek ? (
                   <>
-                    <span className='text-emerald-300'>
+                    <span className='text-positive'>
                       {season.bestWeek.total.toFixed(2)}
                     </span>
-                    <span className='ml-1.5 text-xs text-slate-400'>
+                    <span className='ml-1.5 text-sm text-muted-foreground'>
                       Week {season.bestWeek.week}
                     </span>
                   </>
                 ) : (
-                  '—'
+                  '–'
                 )}
               </td>
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
-                  season.weeklyWins > 0 ? TEXT.champion : 'text-slate-400',
+                  season.weeklyWins > 0
+                    ? TEXT.champion
+                    : 'text-muted-foreground',
                 )}
               >
                 {season.weeklyWins}
@@ -429,10 +431,10 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
 /** Marks where totals switch from every week to the best twelve. */
 function ScoringRuleDivider() {
   return (
-    <tr className='border-b border-slate-700/70'>
+    <tr className='border-b border-border'>
       <td
         colSpan={8}
-        className='bg-slate-900/40 px-2 py-1 text-center text-xs text-slate-400'
+        className='bg-background/40 px-2 py-1 text-center text-sm text-muted-foreground'
       >
         ↑ Best {QB_STREAMING_COUNTING_WEEKS} weeks count from{' '}
         {QB_STREAMING_TOP_WEEKS_FROM_YEAR}; every week counted before ↓
@@ -447,7 +449,7 @@ function ScoringRuleDivider() {
  * score in a week when everyone scored well. Seasons that counted every week
  * get no outlines at all, since there is nothing to tell apart.
  */
-const COUNTED_RING = 'ring-1 ring-white/90 ring-offset-1 ring-offset-slate-900';
+const COUNTED_RING = 'ring-1 ring-border ring-offset-1 ring-offset-background';
 
 const describePicks = (week: QbWeek) =>
   week.doubled
@@ -525,14 +527,14 @@ const MOST_STREAMED_PREVIEW = 15;
 /** Stronger with every week that season, so a favourite stands out. */
 const yearCellTone = (count: number) =>
   count >= 5
-    ? 'bg-emerald-400/80 text-emerald-950'
+    ? 'bg-positive/40 text-positive'
     : count === 4
-    ? 'bg-emerald-400/65 text-emerald-950'
+    ? 'bg-positive/40 text-positive'
     : count === 3
-    ? 'bg-emerald-400/50 text-white'
+    ? 'bg-positive/40 text-foreground'
     : count === 2
-    ? 'bg-emerald-400/35 text-white'
-    : 'bg-emerald-400/20 text-white';
+    ? 'bg-positive/35 text-foreground'
+    : 'bg-positive/20 text-foreground';
 
 /** How a QB's weeks split between the two picks, most-used QB as full width. */
 function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
@@ -546,7 +548,7 @@ function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
   return (
     <div
       aria-hidden='true'
-      className='hidden h-1.5 w-20 gap-0.5 overflow-hidden rounded-full bg-slate-700 sm:flex'
+      className='hidden h-1.5 w-20 gap-0.5 overflow-hidden bg-secondary sm:flex'
     >
       {segments
         .filter(segment => segment.value > 0)
@@ -561,7 +563,7 @@ function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
   );
 }
 
-const DOUBLED_TONE = 'bg-slate-200';
+const DOUBLED_TONE = 'bg-foreground';
 
 /** A legend entry drawn as a piece of the split bar it explains. */
 function BarKey({ tone, children }: { tone: string; children: string }) {
@@ -569,7 +571,7 @@ function BarKey({ tone, children }: { tone: string; children: string }) {
     <span className='inline-flex items-center gap-1.5'>
       <span
         aria-hidden='true'
-        className={clsx('inline-block h-1.5 w-4 rounded-full', tone)}
+        className={clsx('inline-block h-1.5 w-4', tone)}
       />
       {children}
     </span>
@@ -624,8 +626,8 @@ function MostStreamed({
         primaryColumns={[firstNumeric, firstNumeric + 1]}
       >
         {visible.map(row => (
-          <tr key={row.playerId} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2 font-medium text-slate-100'>
+          <tr key={row.playerId} className='border-b border-border'>
+            <td className='whitespace-nowrap px-2 py-2 font-medium text-foreground'>
               {row.name}
             </td>
             {years.map(year => {
@@ -636,7 +638,7 @@ function MostStreamed({
                     <span
                       title={`${plural(count, 'pick')} in ${year}`}
                       className={clsx(
-                        'flex h-6 min-w-[2.25rem] items-center justify-center rounded text-xs font-semibold tabular-nums',
+                        'flex h-6 min-w-[2.25rem] items-center justify-center text-sm font-semibold tabular-nums',
                         yearCellTone(count),
                       )}
                     >
@@ -645,7 +647,7 @@ function MostStreamed({
                   ) : (
                     <span
                       aria-hidden='true'
-                      className='flex h-6 min-w-[2.25rem] items-center justify-center text-slate-600'
+                      className='flex h-6 min-w-[2.25rem] items-center justify-center text-muted-foreground'
                     >
                       ·
                     </span>
@@ -667,10 +669,10 @@ function MostStreamed({
             <td className='px-2 py-2 text-right tabular-nums'>
               {pts(row.averagePoints)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {pts(row.bestPoints)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {pts(row.worstPoints)}
             </td>
           </tr>
@@ -692,11 +694,11 @@ function MostStreamed({
 function PickSummary({ pick }: { pick: QbPick }) {
   return (
     <>
-      <span className='text-slate-100'>{pick.name}</span>
+      <span className='text-foreground'>{pick.name}</span>
       <span className='ml-2 tabular-nums'>{pick.points.toFixed(2)}</span>
       <span
         className={clsx(
-          'ml-1.5 text-xs tabular-nums',
+          'ml-1.5 text-sm tabular-nums',
           signedTone(pick.vsField),
         )}
         title={`${signed(pick.vsField)} against the field's average pick`}
@@ -749,7 +751,9 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               <MobileCard
                 key={`${week.year}-${week.week}`}
                 title={
-                  <span className={clsx(!week.counts && 'text-slate-400')}>
+                  <span
+                    className={clsx(!week.counts && 'text-muted-foreground')}
+                  >
                     {year === 'all' ? weekLabel(week) : `Week ${week.week}`}
                   </span>
                 }
@@ -759,13 +763,15 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               >
                 <ul className='m-0 list-none space-y-0.5 p-0 text-sm'>
                   <li>
-                    <span className='mr-1.5 text-xs text-slate-400'>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
                       Standard
                     </span>
                     <PickSummary pick={week.standard} />
                   </li>
                   <li>
-                    <span className='mr-1.5 text-xs text-slate-400'>Deep</span>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
+                      Deep
+                    </span>
                     <PickSummary pick={week.deep} />
                   </li>
                 </ul>
@@ -778,8 +784,8 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
           <tr
             key={`${week.year}-${week.week}`}
             className={clsx(
-              'border-b border-slate-700/70',
-              !week.counts && 'text-slate-400',
+              'border-b border-border',
+              !week.counts && 'text-muted-foreground',
             )}
           >
             <td className='px-2 py-2'>{week.year}</td>
@@ -791,7 +797,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {ordinal(week.rank)}
-              <span className='text-slate-400'> / {week.fieldSize}</span>
+              <span className='text-muted-foreground'> / {week.fieldSize}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <span className='inline-flex gap-1'>

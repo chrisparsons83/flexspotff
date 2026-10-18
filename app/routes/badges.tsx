@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Honour } from '~/components/layout/profile/Honours';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { PageHeader } from '~/components/ui/page-header';
 import {
   BADGE_DEFINITIONS,
   SIDE_GAME_KEYS,
@@ -53,9 +54,12 @@ export default function Badges() {
 
   return (
     <>
-      <h2>Badges</h2>
+      <PageHeader
+        title='Badges'
+        description='Every badge a profile can show, at its highest tier.'
+      />
 
-      <div className='mt-6 space-y-6'>
+      <div className='grid gap-6'>
         <ProfileSection
           title='League'
           description='Earned in the redraft leagues and the Cup.'
@@ -102,7 +106,7 @@ export default function Badges() {
 
 function Entry({ badge, detail }: { badge: Badge; detail: string }) {
   return (
-    <li className='not-prose grid list-none grid-cols-[8rem_1fr] items-start gap-4'>
+    <li className='grid grid-cols-[8rem_1fr] items-start gap-4'>
       {/* The real badge, at its top tier, so this page can never drift from
           what a profile actually renders. */}
       <Honour badge={badge} />

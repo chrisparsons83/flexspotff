@@ -19,17 +19,9 @@ export enum Leagues {
 export const isLeagueName = (value: string): value is Leagues =>
   value in Leagues;
 
-export const POSITION_RANK_COLORS: Record<string, string> = {
-  qb: 'bg-qb',
-  rb: 'bg-rb',
-  wr: 'bg-wr',
-  te: 'bg-te',
-  def: 'bg-def',
-};
-
 /**
  * Discord embed sidebar colours per league, keyed lowercase because League.name
- * is stored capitalized ("Admiral") - the same convention as RANK_COLORS.
+ * is stored capitalized ("Admiral").
  */
 export const LEAGUE_EMBED_COLORS: Record<Leagues, number> = {
   admiral: 0x15c9bf,
@@ -43,14 +35,6 @@ export const DEFAULT_EMBED_COLOR = 0x00ff00;
 export const leagueEmbedColor = (leagueName: string) =>
   LEAGUE_EMBED_COLORS[leagueName.toLowerCase() as Leagues] ??
   DEFAULT_EMBED_COLOR;
-
-export const RANK_COLORS: Record<Leagues, string> = {
-  admiral: 'bg-admiral text-gray-900',
-  champions: 'bg-champions text-gray-900',
-  dragon: 'bg-dragon text-gray-900',
-  galaxy: 'bg-galaxy text-gray-900',
-  monarch: 'bg-monarch text-gray-900',
-};
 
 type RoundName = {
   key: string;

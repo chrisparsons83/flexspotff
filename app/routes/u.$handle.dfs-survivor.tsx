@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
@@ -211,7 +212,7 @@ function TimingCard({ career }: { career: DfsCareer }) {
       footnote='Each player can only be used once a season, so what matters is the week you use him. Every pick is compared with the other members who used the same player in a different week. A positive number means they got more out of their players, on average, than those members did.'
       lead={
         timing.edge === null ? (
-          '—'
+          '–'
         ) : (
           <>
             <span className={signedTone(timing.edge)}>
@@ -226,41 +227,41 @@ function TimingCard({ career }: { career: DfsCareer }) {
           <>
             <div
               aria-hidden='true'
-              className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
+              className='flex h-2 gap-0.5 overflow-hidden bg-secondary'
             >
               {/* Behind to ahead, like a worst-to-best scale. */}
               <div
-                className='bg-rose-400'
+                className='bg-destructive/20'
                 style={{ width: `${(behind / compared) * 100}%` }}
               />
               {even > 0 && (
                 <div
-                  className='bg-slate-400'
+                  className='bg-secondary'
                   style={{ width: `${(even / compared) * 100}%` }}
                 />
               )}
               <div
-                className='bg-emerald-400'
+                className='bg-positive/20'
                 style={{ width: `${(ahead / compared) * 100}%` }}
               />
             </div>
-            <div className='mt-2 flex justify-between gap-2 text-xs text-slate-400'>
+            <div className='mt-2 flex justify-between gap-2 text-sm text-muted-foreground'>
               <span>
-                <span className='font-semibold tabular-nums text-rose-300'>
+                <span className='font-semibold tabular-nums text-negative'>
                   {behind}
                 </span>{' '}
                 picks behind
               </span>
               {even > 0 && (
                 <span>
-                  <span className='font-semibold tabular-nums text-slate-200'>
+                  <span className='font-semibold tabular-nums text-foreground'>
                     {even}
                   </span>{' '}
                   even
                 </span>
               )}
               <span>
-                <span className='font-semibold tabular-nums text-emerald-300'>
+                <span className='font-semibold tabular-nums text-positive'>
                   {ahead}
                 </span>{' '}
                 ahead
@@ -287,7 +288,7 @@ function TimingCard({ career }: { career: DfsCareer }) {
         label='Late Season'
         value={
           timing.lateVsField === null ? (
-            '—'
+            '–'
           ) : (
             <span className={signedTone(timing.lateVsField)}>
               {signed(timing.lateVsField, 1)}
@@ -330,7 +331,7 @@ function RateStat({
   return (
     <MiniStat
       label={label}
-      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '—'}
+      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '–'}
       hint={hint}
       info={info}
       tone={tone}
@@ -426,7 +427,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
         {seasons.map(season => {
           const { vsField } = season;
           return (
-            <tr key={season.year} className='border-b border-slate-700/70'>
+            <tr key={season.year} className='border-b border-border'>
               <td className='px-2 py-2'>
                 <Link to={`/games/dfs-survivor/standings/${season.year}`}>
                   {season.year}
@@ -444,7 +445,7 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {season.weeks.length}
-                <span className='text-slate-400'>
+                <span className='text-muted-foreground'>
                   {' '}
                   / {season.weeksAvailable}
                 </span>
@@ -463,31 +464,33 @@ function BySeason({ seasons }: { seasons: DfsSeason[] }) {
                     : `${signed(vsField)} a week against the average lineup`
                 }
               >
-                {vsField === null ? '—' : signed(vsField)}
+                {vsField === null ? '–' : signed(vsField)}
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {season.bestWeek ? (
                   <>
-                    <span className='text-emerald-300'>
+                    <span className='text-positive'>
                       {season.bestWeek.total.toFixed(2)}
                     </span>
-                    <span className='ml-1.5 text-xs text-slate-400'>
+                    <span className='ml-1.5 text-sm text-muted-foreground'>
                       Week {season.bestWeek.week}
                     </span>
                   </>
                 ) : (
-                  '—'
+                  '–'
                 )}
               </td>
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
-                  season.weeklyWins > 0 ? TEXT.champion : 'text-slate-400',
+                  season.weeklyWins > 0
+                    ? TEXT.champion
+                    : 'text-muted-foreground',
                 )}
               >
                 {season.weeklyWins}
               </td>
-              <td className='px-2 py-2 text-right tabular-nums text-slate-300'>
+              <td className='px-2 py-2 text-right tabular-nums text-foreground'>
                 {season.playersUsed}
               </td>
             </tr>
@@ -506,7 +509,8 @@ const describeWeek = (week: DfsWeek) =>
   }`;
 
 /** A dashed square for a week they could have played and did not. */
-const NO_LINEUP_TONE = 'border border-dashed border-slate-500 text-slate-400';
+const NO_LINEUP_TONE =
+  'border border-dashed border-border text-muted-foreground';
 
 /** Every season as a strip of weeks, so a career's hot and cold runs show. */
 function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
@@ -569,7 +573,7 @@ function PartialMark() {
   return (
     <span
       aria-hidden='true'
-      className='absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-amber-300 ring-1 ring-slate-900'
+      className='absolute right-0.5 top-0.5 h-1.5 w-1.5 bg-warning/20 ring-1 ring-border'
     />
   );
 }
@@ -659,11 +663,11 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
       footnote={
         <ChartKeys>
           <ChartKey>
-            <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
+            <span className='inline-block h-0.5 w-4 bg-info/20' />
             Their lineup
           </ChartKey>
           <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full bg-gold' />
+            <span className='inline-block h-2 w-2 bg-medal-gold' />
             Week won
           </ChartKey>
           <FieldBandKeys rangeLabel='Lowest to highest' />
@@ -687,7 +691,9 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 y1={y(value)}
                 y2={y(value)}
                 className={
-                  value === 0 ? 'stroke-slate-400' : 'stroke-slate-700'
+                  value === 0
+                    ? 'stroke-muted-foreground'
+                    : 'stroke-muted-foreground'
                 }
                 strokeWidth={1}
               />
@@ -696,7 +702,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 y={y(value)}
                 textAnchor='end'
                 dominantBaseline='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {value}
               </text>
@@ -710,7 +716,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 x={x(week)}
                 y={CHART.height - 8}
                 textAnchor='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {week}
               </text>
@@ -721,21 +727,21 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
               point => point.high,
               point => point.low,
             )}
-            className='fill-slate-400/10'
+            className='fill-muted-foreground/10'
           />
           <polygon
             points={area(
               point => point.q3,
               point => point.q1,
             )}
-            className='fill-slate-400/25'
+            className='fill-muted-foreground/25'
           />
           <polyline
             points={field
               .map(point => `${x(point.week)},${y(point.median)}`)
               .join(' ')}
             fill='none'
-            className='stroke-slate-300'
+            className='stroke-foreground'
             strokeWidth={1.25}
             strokeDasharray='4 4'
           />
@@ -746,7 +752,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 .map(week => `${x(week.week)},${y(week.total)}`)
                 .join(' ')}
               fill='none'
-              className='stroke-sky-400'
+              className='stroke-info'
               strokeWidth={2.5}
               strokeLinejoin='round'
             />
@@ -758,8 +764,8 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
               cy={y(week.total)}
               r={week.rank === 1 ? 4.5 : 3.5}
               className={clsx(
-                'stroke-slate-900',
-                week.rank === 1 ? 'fill-gold' : 'fill-sky-400',
+                'stroke-background',
+                week.rank === 1 ? 'fill-medal-gold' : 'fill-info',
               )}
               strokeWidth={2}
             >
@@ -782,7 +788,7 @@ function StageCell({
   digits?: number;
 }) {
   if (split.mine === null) {
-    return <td className='px-2 py-2 text-right text-slate-400'>—</td>;
+    return <td className='px-2 py-2 text-right text-muted-foreground'>–</td>;
   }
   const diff = split.field === null ? null : split.mine - split.field;
 
@@ -840,17 +846,19 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
         headers={['', ...STAGES.map(stage => stage.label)]}
         numericColumns={STAGES.map((_, index) => index + 1)}
       >
-        <tr className='border-b border-slate-600 font-medium'>
-          <td className='px-2 py-2 text-slate-100'>Lineup</td>
+        <tr className='border-b border-border font-medium'>
+          <td className='px-2 py-2 text-foreground'>Lineup</td>
           {season.lineup.map(split => (
             <StageCell key={split.stage} split={split} />
           ))}
         </tr>
         {season.groups.map(({ group, stages }) => (
-          <tr key={group} className='border-b border-slate-700/70'>
-            <td className='px-2 py-2 text-slate-300'>
+          <tr key={group} className='border-b border-border'>
+            <td className='px-2 py-2 text-foreground'>
               {GROUP_LABEL[group]}
-              <span className='ml-1 text-xs text-slate-400'>per pick</span>
+              <span className='ml-1 text-sm text-muted-foreground'>
+                per pick
+              </span>
             </td>
             {stages.map(split => (
               <StageCell key={split.stage} split={split} />
@@ -879,7 +887,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
 
   return (
     <div className='mt-6'>
-      <h4 className='m-0 mb-2 text-sm font-semibold text-white'>
+      <h4 className='m-0 mb-2 text-sm font-semibold text-foreground'>
         When their best {STAR_PICKS} picks came
       </h4>
       {/* On a phone, only the weeks that had one of them, as a list. */}
@@ -888,12 +896,14 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
           .filter(week => byWeek.has(week))
           .map(week => (
             <li key={week} className='flex gap-3'>
-              <span className='w-16 shrink-0 text-slate-400'>Week {week}</span>
+              <span className='w-16 shrink-0 text-muted-foreground'>
+                Week {week}
+              </span>
               <span className='flex flex-wrap gap-x-3 gap-y-0.5'>
                 {byWeek.get(week)!.map(pick => (
                   <span key={pick.playerId}>
-                    <span className='text-slate-100'>{pick.shortName}</span>{' '}
-                    <span className='font-semibold tabular-nums text-emerald-300'>
+                    <span className='text-foreground'>{pick.shortName}</span>{' '}
+                    <span className='font-semibold tabular-nums text-positive'>
                       {pick.points.toFixed(1)}
                     </span>
                   </span>
@@ -904,7 +914,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
       </ol>
       <div className='hidden overflow-x-auto lg:block'>
         <div
-          className='grid gap-1 text-xs'
+          className='grid gap-1 text-sm'
           style={{
             gridTemplateColumns: `repeat(${DFS_SURVIVOR_LAST_WEEK}, minmax(3.25rem, 1fr))`,
           }}
@@ -912,7 +922,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
           {weekNumbers.map(week => (
             <div
               key={week}
-              className='border-b border-slate-700 pb-1 text-center text-slate-400'
+              className='border-b border-border pb-1 text-center text-muted-foreground'
             >
               {week}
             </div>
@@ -925,12 +935,12 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
                   title={`${pick.name}, ${pick.points.toFixed(2)} in week ${
                     pick.week
                   }`}
-                  className='rounded bg-slate-900/60 px-1.5 py-1 leading-tight'
+                  className='bg-background/60 px-1.5 py-1 leading-tight'
                 >
-                  <div className='truncate text-slate-100'>
+                  <div className='truncate text-foreground'>
                     {pick.shortName}
                   </div>
-                  <div className='font-semibold tabular-nums text-emerald-300'>
+                  <div className='font-semibold tabular-nums text-positive'>
                     {pick.points.toFixed(1)}
                   </div>
                 </div>
@@ -987,7 +997,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
       }
     >
       {compared.length === 0 ? (
-        <p className='m-0 text-sm text-slate-400'>
+        <p className='m-0 text-sm text-muted-foreground'>
           Nobody else has used any of their players yet.
         </p>
       ) : (
@@ -1007,11 +1017,11 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
           {visible.map(pick => (
             <tr
               key={`${pick.year}-${pick.playerId}`}
-              className='border-b border-slate-700/70'
+              className='border-b border-border'
             >
               <td className='px-2 py-2 sm:whitespace-nowrap'>
                 <PositionMark position={pick.position} />
-                <span className='ml-2 font-medium text-slate-100'>
+                <span className='ml-2 font-medium text-foreground'>
                   {pick.name}
                 </span>
                 {pick.bestTiming && (
@@ -1020,16 +1030,16 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
                   </StatusText>
                 )}
               </td>
-              <td className='whitespace-nowrap px-2 py-2 text-slate-300'>
+              <td className='whitespace-nowrap px-2 py-2 text-foreground'>
                 {year === 'all' && `${pick.year} `}Week {pick.week}
               </td>
               <td className='px-2 py-2 text-right font-medium tabular-nums'>
                 {pick.points.toFixed(2)}
               </td>
-              <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+              <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
                 {pick.others.count}
               </td>
-              <td className='px-2 py-2 text-right tabular-nums text-slate-300'>
+              <td className='px-2 py-2 text-right tabular-nums text-foreground'>
                 {pts(pick.others.average)}
               </td>
               <td
@@ -1042,7 +1052,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
               </td>
               <td className='px-2 py-2'>
                 <div
-                  className='flex items-center gap-2 text-xs tabular-nums text-slate-400'
+                  className='flex items-center gap-2 text-sm tabular-nums text-muted-foreground'
                   title={`Everyone who used him: ${pick.others.worst.toFixed(
                     2,
                   )} to ${pick.others.best.toFixed(2)}`}
@@ -1076,7 +1086,11 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
   );
 }
 
-const FLEX_TONES = { RB: 'bg-rb', WR: 'bg-wr', TE: 'bg-te' } as const;
+const FLEX_TONES = {
+  RB: 'bg-position-rb',
+  WR: 'bg-position-wr',
+  TE: 'bg-position-te',
+} as const;
 
 /**
  * Where their points come from, slot by slot, against the field's picks. On a
@@ -1131,7 +1145,7 @@ function PositionCard({ row }: { row: DfsPositionRow }) {
     >
       <MiniStat
         label='Best'
-        value={row.best ? row.best.points.toFixed(1) : '—'}
+        value={row.best ? row.best.points.toFixed(1) : '–'}
         detail={row.best?.shortName}
         hint={row.best ? `${row.best.name}, ${weekLabel(row.best)}` : undefined}
         tone={row.best && row.best.points >= BIG_PICK ? TEXT.good : undefined}
@@ -1151,7 +1165,7 @@ function FlexFills({ row }: { row: DfsPositionRow }) {
     <>
       <div
         aria-hidden='true'
-        className='flex h-2 gap-0.5 overflow-hidden rounded-full bg-slate-700'
+        className='flex h-2 gap-0.5 overflow-hidden bg-secondary'
       >
         {row.flex
           .filter(fill => fill.picks > 0)
@@ -1167,11 +1181,13 @@ function FlexFills({ row }: { row: DfsPositionRow }) {
         {row.flex.map(fill => (
           <li key={fill.position} className='flex items-center gap-2 text-sm'>
             <PositionMark position={fill.position} />
-            <span className='text-slate-300'>{plural(fill.picks, 'pick')}</span>
-            <span className='ml-auto font-semibold tabular-nums text-slate-100'>
+            <span className='text-foreground'>
+              {plural(fill.picks, 'pick')}
+            </span>
+            <span className='ml-auto font-semibold tabular-nums text-foreground'>
               {pts(fill.average)}
             </span>
-            <span className='text-xs text-slate-400'>average</span>
+            <span className='text-sm text-muted-foreground'>average</span>
           </li>
         ))}
       </ul>
@@ -1197,14 +1213,14 @@ function LowestStat({ row }: { row: DfsPositionRow }) {
           row.emptySlots,
           `${GROUP_LABEL[row.group]} slot`,
         )} left empty`}
-        tone='text-rose-300'
+        tone='text-negative'
       />
     );
   }
   return (
     <MiniStat
       label='Lowest'
-      value={worst ? worst.points.toFixed(1) : '—'}
+      value={worst ? worst.points.toFixed(1) : '–'}
       detail={worst?.shortName}
       hint={worst ? `${worst.name}, ${weekLabel(worst)}` : undefined}
     />
@@ -1260,7 +1276,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                 status={<LineupTags week={week} />}
               >
                 <details>
-                  <summary className='cursor-pointer text-xs text-slate-400'>
+                  <summary className='cursor-pointer text-sm text-muted-foreground'>
                     Lineup
                   </summary>
                   <div className='mt-2'>
@@ -1279,8 +1295,8 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
             <Fragment key={key}>
               <tr
                 className={clsx(
-                  'cursor-pointer border-b border-slate-700/70 hover:bg-slate-700/30',
-                  isOpen && 'bg-slate-700/30',
+                  'cursor-pointer border-b border-border hover:bg-secondary/30',
+                  isOpen && 'bg-secondary/30',
                 )}
                 onClick={() => setOpen(isOpen ? null : key)}
               >
@@ -1293,15 +1309,13 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                     } week ${week.week} lineup`}
                     className='inline-flex items-center gap-1.5'
                   >
-                    <span
+                    <ChevronRightIcon
                       aria-hidden='true'
                       className={clsx(
-                        'inline-block text-[0.6rem] text-slate-400 transition-transform',
+                        'size-4 text-muted-foreground transition-transform duration-fast',
                         isOpen && 'rotate-90',
                       )}
-                    >
-                      ▶
-                    </span>
+                    />
                     {week.year}
                   </button>
                 </td>
@@ -1319,7 +1333,10 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                 </td>
                 <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                   {ordinal(week.rank)}
-                  <span className='text-slate-400'> / {week.fieldSize}</span>
+                  <span className='text-muted-foreground'>
+                    {' '}
+                    / {week.fieldSize}
+                  </span>
                 </td>
                 <td className='whitespace-nowrap px-2 py-2'>
                   <span className='inline-flex gap-1'>
@@ -1328,7 +1345,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
                 </td>
               </tr>
               {isOpen && (
-                <tr className='border-b border-slate-700/70 bg-slate-900/40'>
+                <tr className='border-b border-border bg-background/40'>
                   <td colSpan={6} className='px-2 py-3'>
                     <LineupDetail week={week} />
                   </td>
@@ -1348,19 +1365,19 @@ function LineupDetail({ week }: { week: DfsWeek }) {
       {week.picks.map(pick => (
         <li
           key={pick.slot}
-          className='flex items-center gap-2 border-b border-slate-800 py-1 text-sm last:border-b-0'
+          className='flex items-center gap-2 border-b border-border py-1 text-sm last:border-b-0'
         >
-          <span className='w-11 shrink-0 text-right text-[0.7rem] font-bold uppercase tracking-wide text-slate-400'>
+          <span className='w-11 shrink-0 text-right text-sm font-bold text-muted-foreground'>
             {formatSlotName(pick.slot as DfsSurvivorSlot)}
           </span>
           <PositionMark position={pick.position} />
-          <span className='min-w-0 flex-1 truncate text-slate-100'>
+          <span className='min-w-0 flex-1 truncate text-foreground'>
             {pick.name}
           </span>
           {/* Left out on a phone, where it would squeeze the name to nothing;
               the timing table has it. */}
           <span
-            className='shrink-0 text-xs text-slate-400 max-sm:hidden'
+            className='shrink-0 text-sm text-muted-foreground max-sm:hidden'
             title={
               pick.others.count > 0
                 ? `${plural(
@@ -1374,12 +1391,12 @@ function LineupDetail({ week }: { week: DfsWeek }) {
               ? `others ${pts(pick.others.average, 1)} (${pick.others.count})`
               : 'only them'}
           </span>
-          <span className='w-12 shrink-0 text-right font-semibold tabular-nums text-slate-100'>
+          <span className='w-12 shrink-0 text-right font-semibold tabular-nums text-foreground'>
             {pick.points.toFixed(2)}
           </span>
           <span
             className={clsx(
-              'w-12 shrink-0 text-right text-xs tabular-nums',
+              'w-12 shrink-0 text-right text-sm tabular-nums',
               signedTone(pick.vsSlotField),
             )}
             title={`${signed(pick.vsSlotField)} against the field's ${
