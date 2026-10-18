@@ -1,31 +1,25 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import clsx from 'clsx';
 import { useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
 import MemberName from '~/components/ui/MemberName';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  if (!params.year) {
-    throw new Error('No year param specified');
-  }
-  if (!params.sportId) {
-    throw new Error('No sportId param specified');
-  }
-
   const year = Number(params.year);
-  const { sportId } = params;
 
   const seasonResults = await getOmniSeason(year);
-
   if (!seasonResults) {
-    throw new Error('No season found');
+    throw new Response('No Omni that year', { status: 404 });
   }
 
   // TODO: Make a getOmniSportEventsBySportId function
   const allSportEvents = await getOmniSportEvents();
+  // The first sport when none is picked.
+  const sportId = params.sportId ?? allSportEvents[0]?.sportId;
   const sportEvents = allSportEvents.filter(
     sportEvent => sportEvent.sportId === sportId,
   );
@@ -44,7 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const currentSport = sports.find(sport => sport.id === sportId);
   if (!currentSport) {
-    throw new Error('Sport not found');
+    throw new Response('Sport not found', { status: 404 });
   }
 
   const qualifyingPointsMap = sportEvents
@@ -84,62 +78,43 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return { currentSport, pointsLeaderboard, sports, year };
 };
 
-export default function OmniQualifyingPointsYearIndex() {
+export default function OmniQualifyingPoints() {
   const { currentSport, pointsLeaderboard, sports, year } =
     useTypedLoaderData<typeof loader>();
 
-  const sportsArray = sports.map(sport => ({
-    label: sport.name,
-    url: `/omni-league/qualifying-points/${year}/${sport.id}`,
-  }));
-
   return (
-    <>
-      <h2>{year} Omni Qualifying Points</h2>
-      <h3>Sport: {currentSport.name}</h3>
-      <div className='float-right mb-4'>
-        <GoBox options={sportsArray} buttonText='Choose Sport' />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Player</th>
-            <th>Manager</th>
-            <th>Points</th>
+    <Section
+      title={`Qualifying points: ${currentSport.name}`}
+      action={
+        <GoBox
+          buttonText='Sport'
+          options={sports.map(sport => ({
+            label: sport.name,
+            url: `/games/omni/${year}/qualifying-points/${sport.id}`,
+          }))}
+        />
+      }
+    >
+      <Table
+        headers={['Rank', 'Player', 'Manager', 'Points']}
+        numericColumns={[0, 3]}
+        primaryColumns={[1, 3]}
+      >
+        {pointsLeaderboard.map(position => (
+          <tr key={position.player.id}>
+            <td className='text-right text-muted-foreground'>
+              {position.rank}
+            </td>
+            <td>{position.player.displayName}</td>
+            <td>
+              {position.player.draftPick?.team.user && (
+                <MemberName user={position.player.draftPick.team.user} />
+              )}
+            </td>
+            <td className='text-right'>{position.points.toFixed(2)}</td>
           </tr>
-        </thead>
-        <tbody>
-          {pointsLeaderboard.map((position, index) => {
-            return (
-              <tr
-                key={position.player.id}
-                className={clsx(
-                  index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-                  'p-2',
-                )}
-              >
-                <td className='pl-1'>
-                  <div
-                    className={clsx(
-                      'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
-                    )}
-                  >
-                    {position.rank}
-                  </div>
-                </td>
-                <td>{position.player.displayName}</td>
-                <td>
-                  {position.player.draftPick?.team.user && (
-                    <MemberName user={position.player.draftPick.team.user} />
-                  )}
-                </td>
-                <td>{position.points.toFixed(2)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </>
+        ))}
+      </Table>
+    </Section>
   );
 }

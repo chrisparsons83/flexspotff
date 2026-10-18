@@ -6,6 +6,8 @@ export const SLEEPER_ADMIN_ID = `329096543967641600`;
 
 export const FIRST_YEAR = 2018;
 export const OMNI_YEAR = 2025;
+/** The Omni seasons with a rules page. */
+export const OMNI_RULES_YEARS = [2025];
 
 export enum Leagues {
   admiral = 'admiral',

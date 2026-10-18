@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import OmniDraftBoard from '~/components/layout/omni/OmniDraftBoard';
+import { Section } from '~/components/ui/section';
 import { getOmniSeason } from '~/models/omniseason.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
@@ -12,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const season = await getOmniSeason(Number(year));
   if (!season) {
-    throw new Error(`No season found for year ${year}`);
+    throw new Response('No Omni that year', { status: 404 });
   }
 
   for (const omniTeam of season.omniTeams) {
@@ -26,15 +27,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return { year, season };
 };
 
-const OmniYearDraftboard = () => {
-  const { year, season } = useTypedLoaderData<typeof loader>();
+export default function OmniDraft() {
+  const { season } = useTypedLoaderData<typeof loader>();
 
   return (
-    <div>
-      <h2>Omni Draftboard for {year}</h2>
+    <Section
+      title='Draft board'
+      description='Each pick shaded by the points it scored; red is a pick whose season ended with none.'
+    >
       <OmniDraftBoard teams={season.omniTeams} />
-    </div>
+    </Section>
   );
-};
-
-export default OmniYearDraftboard;
+}
