@@ -19,6 +19,8 @@ const SKIP = [
   /^app\/components\/ui\//,
   /^app\/components\/mocks\//,
   /^app\/routes\/design\./,
+  // A reprinted magazine article, kept unlinked: its copy is not ours to edit.
+  /^app\/routes\/in-a-dingy-corner-of-the-internet-is-a-message-board\.tsx$/,
 ];
 
 const PALETTE =
