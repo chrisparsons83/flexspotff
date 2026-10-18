@@ -172,11 +172,7 @@ export default function EditUser() {
             />
           </label>
           {actionData?.fieldErrors?.sleeperOwnerID ? (
-            <p
-              className='form-validation-error'
-              role='alert'
-              id='sleeperOwnerID-error'
-            >
+            <p className='text-negative' role='alert' id='sleeperOwnerID-error'>
               {actionData.fieldErrors.sleeperOwnerID}
             </p>
           ) : null}

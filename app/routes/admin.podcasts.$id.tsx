@@ -215,11 +215,7 @@ export default function PodcastEpisodeCreate() {
               />
             </label>
             {actionData?.fieldErrors?.title ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='title-error'
-              >
+              <p className='text-negative' role='alert' id='title-error'>
                 {actionData.fieldErrors.title}
               </p>
             ) : null}
@@ -282,11 +278,7 @@ export default function PodcastEpisodeCreate() {
               ></textarea>
             </label>
             {actionData?.fieldErrors?.description ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='description-error'
-              >
+              <p className='text-negative' role='alert' id='description-error'>
                 {actionData.fieldErrors.description}
               </p>
             ) : null}
@@ -317,11 +309,7 @@ export default function PodcastEpisodeCreate() {
               ></textarea>
             </label>
             {actionData?.fieldErrors?.showNotes ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='showNotes-error'
-              >
+              <p className='text-negative' role='alert' id='showNotes-error'>
                 {actionData.fieldErrors.showNotes}
               </p>
             ) : null}

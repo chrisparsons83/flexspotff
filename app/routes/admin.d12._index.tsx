@@ -98,7 +98,7 @@ export default function AdminD12Index() {
         </Form>
       </section>
 
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th className='text-left'>Year</th>

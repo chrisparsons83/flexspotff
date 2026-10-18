@@ -199,7 +199,7 @@ export default function MergeMembers() {
               {preview.canonical.discordName} from now on.
             </p>
           ) : (
-            <table className='w-full'>
+            <table>
               <thead>
                 <tr>
                   <th>Data</th>
@@ -278,7 +278,7 @@ export default function MergeMembers() {
       {suggestions.length === 0 ? (
         <p>No likely duplicates found.</p>
       ) : (
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th>Duplicate</th>
@@ -344,7 +344,7 @@ export default function MergeMembers() {
             lands on them afterwards shows up here, and re-running the merge
             sweeps it up.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th>Merged member</th>

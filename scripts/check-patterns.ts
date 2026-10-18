@@ -17,12 +17,10 @@ import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
 
-/** Checked by check-storybook, or on their way out with #195. */
+/** Checked by check-storybook, or not ours to edit. */
 const SKIP = [
   /\.(test|stories)\.tsx?$/,
   /^app\/components\/ui\//,
-  /^app\/components\/mocks\//,
-  /^app\/routes\/design\./,
   // A reprinted magazine article, kept unlinked: its copy is not ours to edit.
   /^app\/routes\/in-a-dingy-corner-of-the-internet-is-a-message-board\.tsx$/,
 ];

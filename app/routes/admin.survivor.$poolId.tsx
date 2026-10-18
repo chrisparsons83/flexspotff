@@ -298,7 +298,7 @@ export default function AdminSurvivorPool() {
                 name='inviteUrl'
                 type='text'
                 defaultValue={pool.inviteUrl ?? ''}
-                className='w-96 max-w-full border border-border bg-card px-2 py-1 text-foreground'
+                className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
                 placeholder='https://sleeper.com/i/…'
               />
             </div>
@@ -327,7 +327,7 @@ export default function AdminSurvivorPool() {
             account (its owner left, or Yahoo closed the account) is assigned to
             a member for this pool only.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Entry</th>
@@ -397,7 +397,7 @@ export default function AdminSurvivorPool() {
 
       <section>
         <h3>Entries</h3>
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Place</th>

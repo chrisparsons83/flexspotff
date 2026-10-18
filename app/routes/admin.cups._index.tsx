@@ -106,7 +106,7 @@ export default function QBStreamingStandingsYearIndex() {
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Year</th>

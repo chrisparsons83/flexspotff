@@ -30,7 +30,7 @@ export default function SheetNamesTable({ names, members, busy }: Props) {
         as you go and reused by later imports.
       </p>
       {unmatched.length > 0 && (
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th>Sheet name</th>
@@ -90,7 +90,7 @@ export default function SheetNamesTable({ names, members, busy }: Props) {
       {matched.length > 0 && (
         <details open={unmatched.length === 0}>
           <summary>{matched.length} matched</summary>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th>Sheet name</th>

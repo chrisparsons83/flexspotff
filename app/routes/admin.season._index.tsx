@@ -185,7 +185,7 @@ export default function SeasonIndex() {
     <>
       <h2 className='mt-0'>Season list</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Year</th>

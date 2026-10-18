@@ -346,7 +346,7 @@ export default function ImportFSquaredHistory() {
                 closest. Differences of a few points are stat corrections made
                 after the sheet was scored.
               </p>
-              <table className='w-full'>
+              <table>
                 <thead>
                   <tr>
                     <th>League</th>
@@ -393,7 +393,7 @@ export default function ImportFSquaredHistory() {
                 What the standings will show, with the sheet's own total to
                 check against.
               </p>
-              <table className='w-full'>
+              <table>
                 <thead>
                   <tr>
                     <th>Member</th>

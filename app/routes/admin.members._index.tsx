@@ -21,7 +21,7 @@ export default function PodcastEpisodeList() {
   return (
     <>
       <h2 className='mt-0'>Members</h2>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Member</th>

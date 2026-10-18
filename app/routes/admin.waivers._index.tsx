@@ -165,7 +165,7 @@ export default function AdminWaiversIndex() {
 
       <Form
         method='GET'
-        className='my-4 flex gap-4 items-end'
+        className='my-4 flex flex-wrap items-end gap-4'
         onChange={event =>
           // Explicit pairs, not the FormData itself: createSearchParams falls
           // through to Object.keys for anything it does not special-case, and a
@@ -188,7 +188,7 @@ export default function AdminWaiversIndex() {
             id='year'
             name='year'
             defaultValue={year}
-            className='text-muted-foreground px-2 py-1'
+            className='w-24'
           />
         </div>
         <div>
@@ -202,13 +202,13 @@ export default function AdminWaiversIndex() {
             min={1}
             max={18}
             defaultValue={week}
-            className='text-muted-foreground px-2 py-1'
+            className='w-24'
           />
         </div>
         <Button type='submit'>Show</Button>
       </Form>
 
-      <Form method='POST' className='my-4 flex gap-2'>
+      <Form method='POST' className='my-4 flex flex-wrap gap-2'>
         <input type='hidden' name='year' value={year} />
         <input type='hidden' name='week' value={week} />
         <Button type='submit' name='_action' value='sync' disabled={isRunning}>
@@ -237,7 +237,7 @@ export default function AdminWaiversIndex() {
           {transactions.length === 0 ? (
             <p className='text-sm text-muted-foreground'>No stored claims.</p>
           ) : (
-            <table className='w-full text-sm'>
+            <table>
               <thead>
                 <tr>
                   <th className='text-left'>Player</th>

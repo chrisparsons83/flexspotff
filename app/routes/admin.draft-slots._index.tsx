@@ -174,7 +174,7 @@ export default function DraftSlotsAdmin() {
           }
         />
       )}
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Season</th>

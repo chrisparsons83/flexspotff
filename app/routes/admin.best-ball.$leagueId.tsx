@@ -289,7 +289,7 @@ export default function AdminBestBallLeague() {
             roster Sleeper has no owner for is assigned to a member for this
             league only, and resyncing keeps it.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Sleeper user</th>
@@ -352,7 +352,7 @@ export default function AdminBestBallLeague() {
 
       <section>
         <h3>Standings</h3>
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Place</th>

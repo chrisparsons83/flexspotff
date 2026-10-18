@@ -73,7 +73,7 @@ export default function LeaguesList() {
         </Link>
       </Button>
       {actionData?.message && <Alert message={actionData.message} />}
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Year</th>

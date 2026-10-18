@@ -6,7 +6,6 @@ import {
   TokenTable,
 } from './parts';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { CHAMPIONS_STANDINGS } from '~/components/mocks/data';
 import {
   GRID_UNIT,
   TYPE_BASE,
@@ -47,12 +46,13 @@ const WEIGHTS = [
   },
 ];
 
-const SCORES = CHAMPIONS_STANDINGS.slice(0, 4).map(row => [
-  row.manager,
-  String(row.wins),
-  String(row.losses),
-  row.pointsFor.toFixed(2),
-]);
+/** A few made-up rows, to show figures lining up on equal-width digits. */
+const SCORES = [
+  ['Harbor Lights', '5', '1', '812.40'],
+  ['Quiet Corner', '5', '1', '788.90'],
+  ['Orbit Seven', '4', '2', '801.30'],
+  ['Paper Lantern', '4', '2', '760.10'],
+];
 
 export const Scale: Story = {
   render: () => (

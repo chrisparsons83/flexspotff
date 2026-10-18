@@ -203,7 +203,7 @@ export default function UnmatchedSleeperUsers() {
                 ' (This league has fewer than 12 teams synced.)'}
             </p>
           ) : (
-            <table className='w-full'>
+            <table>
               <thead>
                 <tr>
                   <th>Sleeper user</th>

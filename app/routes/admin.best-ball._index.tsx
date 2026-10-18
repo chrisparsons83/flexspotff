@@ -162,7 +162,7 @@ export default function AdminBestBallIndex() {
               id='sleeperUrl'
               name='sleeperUrl'
               type='text'
-              className='w-96 max-w-full border border-border bg-card px-2 py-1 text-foreground'
+              className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/leagues/123456789'
             />
           </div>
@@ -182,7 +182,7 @@ export default function AdminBestBallIndex() {
       {leagues.length === 0 && <p>No best ball leagues added yet.</p>}
 
       {leagues.length > 0 && (
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Year</th>

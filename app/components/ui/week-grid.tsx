@@ -162,7 +162,7 @@ function Square({
   labelled?: boolean;
 }) {
   const number = labelled && (
-    <span aria-hidden='true' className='text-xs font-normal opacity-80'>
+    <span aria-hidden='true' className='text-sm font-normal opacity-80'>
       {week}
     </span>
   );

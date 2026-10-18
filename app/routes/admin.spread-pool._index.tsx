@@ -164,7 +164,7 @@ export default function SpreadPoolList() {
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Week</th>

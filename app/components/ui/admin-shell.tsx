@@ -125,7 +125,7 @@ const ADMIN_CONTENT = cn(
   '[&_h3:not([class])]:mb-3 [&_h3:not([class])]:mt-10 [&_h3:not([class])]:text-xl [&_h3:not([class])]:font-bold',
   '[&_h4:not([class])]:mb-2 [&_h4:not([class])]:mt-6 [&_h4:not([class])]:font-bold',
   '[&_p:not([class])]:mb-3 [&_p:not([class])]:max-w-prose',
-  '[&_table:not([class])]:mb-6 [&_table:not([class])]:w-full [&_table:not([class])]:text-left [&_table:not([class])]:tabular-nums',
+  '[&_table:not([class])]:mb-6 [&_table:not([class])]:block [&_table:not([class])]:max-w-full [&_table:not([class])]:overflow-x-auto lg:[&_table:not([class])]:table [&_table:not([class])]:w-full [&_table:not([class])]:text-left [&_table:not([class])]:tabular-nums',
   '[&_th]:px-3 [&_th]:py-2.5 [&_th]:text-sm [&_th]:font-semibold [&_th]:text-muted-foreground',
   '[&_td]:px-3 [&_td]:py-2.5 [&_thead_tr]:border-b [&_thead_tr]:border-border [&_tbody_tr]:border-b [&_tbody_tr]:border-border',
   '[&_input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file])]:h-10 [&_input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file])]:px-3',

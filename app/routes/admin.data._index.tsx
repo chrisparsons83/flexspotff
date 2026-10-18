@@ -307,7 +307,7 @@ export default function AdminDataIndex() {
             be run on Monday nights late or maybe Tuesday morning.
           </p>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -329,7 +329,7 @@ export default function AdminDataIndex() {
             are in progress.
           </p>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -350,11 +350,11 @@ export default function AdminDataIndex() {
             need.
           </p>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
-          <div className='flex flex-start gap-4'>
+          <div className='flex flex-wrap gap-4'>
             <div>
               <Select name='year'>
                 <SelectTrigger>
@@ -387,7 +387,7 @@ export default function AdminDataIndex() {
             reason.
           </p>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}

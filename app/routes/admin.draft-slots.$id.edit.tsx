@@ -174,7 +174,7 @@ export default function EditDraftSlot() {
           {isErrorResponse(actionData) &&
             'seasonId' in actionData.error &&
             actionData.error.seasonId && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.seasonId[0]}
               </p>
             )}
@@ -199,7 +199,7 @@ export default function EditDraftSlot() {
           {isErrorResponse(actionData) &&
             'draftDateTime' in actionData.error &&
             actionData.error.draftDateTime && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.draftDateTime[0]}
               </p>
             )}
@@ -218,7 +218,7 @@ export default function EditDraftSlot() {
           {isErrorResponse(actionData) &&
             'general' in actionData.error &&
             actionData.error.general && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.general[0]}
               </p>
             )}

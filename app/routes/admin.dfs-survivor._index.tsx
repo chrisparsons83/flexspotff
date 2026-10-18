@@ -272,7 +272,7 @@ export default function AdminDfsSurvivorIndex() {
           Runs hourly on its own; this is for backfilling.
         </p>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Week</th>

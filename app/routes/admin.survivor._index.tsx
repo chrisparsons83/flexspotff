@@ -277,7 +277,7 @@ export default function AdminSurvivorIndex() {
               id='sleeperUrl'
               name='sleeperUrl'
               type='text'
-              className='w-96 max-w-full border border-border bg-card px-2 py-1 text-foreground'
+              className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/i/0NLXm3e7a1Pk5'
             />
           </div>
@@ -324,7 +324,7 @@ export default function AdminSurvivorIndex() {
             often the better clue. A suggestion comes from a member's Sleeper
             handle turning up in one of them.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Yahoo account</th>
@@ -377,7 +377,7 @@ export default function AdminSurvivorIndex() {
       {years.map(year => (
         <section key={year} className='mb-8'>
           <h3>{year}</h3>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Pool</th>

@@ -246,7 +246,7 @@ export default function AdminSpreadPoolYearWeek() {
         </div>
       </Form>
       <h3>Available players</h3>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Player</th>

@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { Swatch } from '~/components/ui/swatch';
 
 /**
- * Where a season ended - "3rd of 24", or "🏆 1st of 24" in gold for a title.
+ * Where a season ended: "3rd of 24", or "1st of 24" beside a gold square for a title.
  * The trophy says it as well as the colour does. A season still being played
  * shows where it stands; the year beside it carries the Current tag.
  */

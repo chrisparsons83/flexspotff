@@ -100,14 +100,14 @@ export default function LeagueNew() {
             />
           </label>
           {actionData?.fieldErrors?.url ? (
-            <p className='form-validation-error' role='alert' id='url-error'>
+            <p className='text-negative' role='alert' id='url-error'>
               {actionData.fieldErrors.url}
             </p>
           ) : null}
         </div>
         <div>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}

@@ -261,7 +261,7 @@ export default function AdminD12SeasonIndex() {
       {season.leagues.length === 0 ? (
         <p className='text-muted-foreground mb-4'>No leagues added yet.</p>
       ) : (
-        <table className='w-full mb-4'>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Name</th>

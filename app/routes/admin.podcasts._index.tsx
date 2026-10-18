@@ -25,7 +25,7 @@ export default function PodcastEpisodeList() {
       <Button asChild className='mb-6'>
         <Link to='/admin/podcasts/new'>Add podcast</Link>
       </Button>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Season</th>

@@ -28,7 +28,7 @@ changes (#195) start once it is agreed.
 | Right    | Account menu |                 | Signed in: Dashboard, Profile, Admin (admins), Log out |
 | Right    | Log in       | `/login`        | Signed out, in place of the account menu               |
 
-The theme toggle joins the right side when light mode opens up (#197).
+The theme toggle (System, Dark, Light) sits on the right side.
 
 On mobile, the three sections and the account items collapse into one menu
 button. The menu lists the three sections first, then the account items.
@@ -55,7 +55,6 @@ the section's landing page.
 - `/badges`: members only, linked from every profile, as today.
 - `/in-a-dingy-corner-of-the-internet-is-a-message-board`: an old meme page,
   kept where it is and unlinked.
-- `/design/*`: development only, removed when #195 finishes.
 
 ## Leagues
 
@@ -327,7 +326,6 @@ and `/me`.
 | `/login`, `/logout`, `/auth/:provider/*`                | Anyone  | Unchanged                                                           |
 | `/resources/theme`                                      | Anyone  | Unchanged (theme toggle action)                                     |
 | `/api/sync-week-scores`, `/healthcheck`                 | Machine | Unchanged                                                           |
-| `/design/*`                                             | Dev     | Removed after #195                                                  |
 
 ### Admin
 

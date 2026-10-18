@@ -169,7 +169,7 @@ export default function AdminGuillotineIndex() {
               id='sleeperUrl'
               name='sleeperUrl'
               type='text'
-              className='w-96 max-w-full border border-border bg-card px-2 py-1 text-foreground'
+              className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/leagues/123456789'
             />
           </div>
@@ -191,7 +191,7 @@ export default function AdminGuillotineIndex() {
       {seasons.map(season => (
         <section key={season.year} className='mb-8'>
           <h3>{season.year}</h3>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>League</th>

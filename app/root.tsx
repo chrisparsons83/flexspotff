@@ -23,10 +23,7 @@ import {
   getProfileHandles,
 } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
-import {
-  getThemePreference,
-  isLightModeAvailable,
-} from '~/services/theme.server';
+import { getThemePreference } from '~/services/theme.server';
 import { usePageWidth } from '~/utils/route-handle';
 import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
@@ -53,7 +50,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const themePreference = getThemePreference(request);
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
-  const currentPath = new URL(request.url).pathname;
   const profilesVisible = await canViewProfiles(user);
 
   return typedjson({
@@ -66,12 +62,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // useProfileHref.
     profileHandles: profilesVisible ? await getProfileHandles() : {},
     themePreference: await themePreference,
-    // Shows the theme toggle. Light mode is development only until #197.
-    lightModeAvailable: isLightModeAvailable(),
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
-    currentPath,
   });
 };
 
@@ -111,36 +104,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const {
-    user,
-    userIsEditor,
-    canViewProfiles,
-    themePreference,
-    lightModeAvailable,
-    ENV,
-    currentPath,
-  } = useTypedLoaderData<typeof loader>();
+  const { user, userIsEditor, canViewProfiles, themePreference, ENV } =
+    useTypedLoaderData<typeof loader>();
   const width = usePageWidth();
-
-  // The /design mocks draw the new shell themselves.
-  const isDesignMock =
-    currentPath === '/design' || currentPath.startsWith('/design/');
 
   return (
     <>
-      {isDesignMock ? (
+      <AppShell
+        user={user}
+        isEditor={userIsEditor}
+        canViewProfiles={canViewProfiles}
+        theme={themePreference}
+        width={width}
+      >
         <Outlet />
-      ) : (
-        <AppShell
-          user={user}
-          isEditor={userIsEditor}
-          canViewProfiles={canViewProfiles}
-          theme={lightModeAvailable ? themePreference : undefined}
-          width={width}
-        >
-          <Outlet />
-        </AppShell>
-      )}
+      </AppShell>
       <script
         dangerouslySetInnerHTML={{
           __html: `window.ENV = ${JSON.stringify(ENV)}`,
@@ -179,6 +157,7 @@ export function ErrorBoundary() {
       user={root?.user ?? null}
       isEditor={root?.userIsEditor ?? false}
       canViewProfiles={root?.canViewProfiles ?? false}
+      theme={root?.themePreference}
     >
       <PageHeader title={title} description={message} />
     </AppShell>
