@@ -2,10 +2,9 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { PositionTally } from '~/components/layout/best-ball/PositionCounts';
-import DraftBoard, {
-  DraftBoardCell,
-} from '~/components/layout/draftboard/DraftBoard';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import { positionTint } from '~/components/ui/fills';
 import { requireBestBallAccess } from '~/libs/best-ball/access.server';
 import {
   averagePositionCounts,
@@ -18,7 +17,6 @@ import {
   getBestBallDraftPicks,
   getBestBallLeagueForPage,
 } from '~/models/bestball.server';
-import { POSITION_TINT_COLORS } from '~/utils/constants';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { width: 'full' };
@@ -129,7 +127,6 @@ export default function BestBallDraft() {
           columns={columns}
           rounds={rounds}
           columnKey={column => column.rosterId}
-          snake
           renderHeader={column => (
             <div className='flex h-14 flex-col justify-between rounded bg-slate-900/70 p-1 text-center'>
               <div className='truncate font-semibold text-white'>
@@ -161,10 +158,7 @@ export default function BestBallDraft() {
                     {pick.pickNo}
                   </span>
                 }
-                tone={
-                  POSITION_TINT_COLORS[pick.position.toLowerCase()] ??
-                  'bg-slate-700/60'
-                }
+                tone={positionTint(pick.position)}
                 tooltip={`${pick.playerName} · pick ${pick.pickNo} by ${column.name}`}
                 highlighted={hovered === pick.sleeperId}
                 dimmed={hovered !== null && hovered !== pick.sleeperId}

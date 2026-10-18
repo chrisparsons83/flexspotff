@@ -83,3 +83,22 @@ export const SEQUENCE: Fill[] = [
   'sequence-6',
   'sequence-7',
 ];
+
+/**
+ * Each position's colour faded to a tint, for a large area like a draft
+ * board cell, where the full fill would drown out the text on it. Text on a
+ * tint is the foreground, not the fill's own.
+ */
+const POSITION_TINTS: Record<PositionFill, string> = {
+  'position-qb': 'bg-position-qb/30',
+  'position-rb': 'bg-position-rb/30',
+  'position-wr': 'bg-position-wr/30',
+  'position-te': 'bg-position-te/30',
+  'position-def': 'bg-position-def/30',
+};
+
+/** A position's tint, or the secondary surface for K and the like. */
+export const positionTint = (position: string | null | undefined): string => {
+  const fill = positionFill(position);
+  return fill ? POSITION_TINTS[fill] : 'bg-secondary';
+};

@@ -19,6 +19,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { positionTint } from '~/components/ui/fills';
 import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
@@ -27,7 +28,6 @@ import type {
   BestBallSeason,
 } from '~/models/profile/bestBallProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { POSITION_TINT_COLORS } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -272,8 +272,7 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
                     title={`Round ${pick.round}, pick ${pick.pickNo} overall`}
                     className={clsx(
                       'rounded px-1.5 py-1',
-                      POSITION_TINT_COLORS[pick.position.toLowerCase()] ??
-                        'bg-slate-700/60',
+                      positionTint(pick.position),
                     )}
                   >
                     <div className='truncate font-semibold text-white'>

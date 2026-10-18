@@ -1,5 +1,9 @@
-import clsx from 'clsx';
 import type { ReactNode } from 'react';
+import { cn } from '~/utils';
+
+/** The surface the board sits on, so the pinned round column matches it. */
+const PINNED =
+  'sticky left-0 z-10 bg-[oklch(var(--surface,var(--background)))]';
 
 type Props<Column> = {
   columns: Column[];
@@ -8,8 +12,6 @@ type Props<Column> = {
   renderHeader: (column: Column) => ReactNode;
   /** The cell for a column's pick in a round, or null to leave it empty. */
   renderCell: (column: Column, round: number) => ReactNode;
-  /** Round labels point the way a snake draft runs through that round. */
-  snake?: boolean;
   /** Narrowest a column gets before the board scrolls sideways instead. */
   minColumnWidth?: string;
 };
@@ -19,15 +21,14 @@ type Props<Column> = {
  *
  * Laid out as a single grid rather than a stack of columns, so a row's cells
  * always line up even when a column is missing picks. Wider than the screen,
- * it scrolls inside its own container with the round labels pinned.
+ * it scrolls inside its own container with the round numbers pinned.
  */
-export default function DraftBoard<Column>({
+export function DraftBoard<Column>({
   columns,
   rounds,
   columnKey,
   renderHeader,
   renderCell,
-  snake = false,
   minColumnWidth = '6.5rem',
 }: Props<Column>) {
   const roundNumbers = Array.from({ length: rounds }, (_, index) => index + 1);
@@ -35,12 +36,14 @@ export default function DraftBoard<Column>({
   return (
     <div className='not-prose overflow-x-auto'>
       <div
-        className='grid gap-1 text-xs'
+        className='grid gap-1 text-sm'
         style={{
           gridTemplateColumns: `auto repeat(${columns.length}, minmax(${minColumnWidth}, 1fr))`,
         }}
       >
-        <div className='sticky left-0 z-10 bg-slate-800' />
+        <div className={PINNED}>
+          <span className='sr-only'>Round</span>
+        </div>
         {columns.map(column => (
           <div key={columnKey(column)} className='min-w-0'>
             {renderHeader(column)}
@@ -51,7 +54,6 @@ export default function DraftBoard<Column>({
           <RoundRow
             key={round}
             round={round}
-            snake={snake}
             cells={columns.map(column => (
               <div key={columnKey(column)} className='min-w-0'>
                 {renderCell(column, round) ?? <EmptyCell />}
@@ -64,24 +66,16 @@ export default function DraftBoard<Column>({
   );
 }
 
-function RoundRow({
-  round,
-  snake,
-  cells,
-}: {
-  round: number;
-  snake: boolean;
-  cells: ReactNode[];
-}) {
+function RoundRow({ round, cells }: { round: number; cells: ReactNode[] }) {
   return (
     <>
-      <div className='sticky left-0 z-10 flex flex-col items-center justify-center bg-slate-800 pr-1 text-slate-400'>
-        <span className='font-semibold tabular-nums'>{round}</span>
-        {snake && (
-          <span aria-hidden='true' className='text-[0.65rem] text-slate-500'>
-            {round % 2 === 1 ? '→' : '←'}
-          </span>
+      <div
+        className={cn(
+          PINNED,
+          'flex items-center justify-center pr-2 font-semibold tabular-nums text-muted-foreground',
         )}
+      >
+        {round}
       </div>
       {cells}
     </>
@@ -92,8 +86,28 @@ function EmptyCell() {
   return (
     <div
       aria-hidden='true'
-      className='h-16 rounded border border-dashed border-slate-700'
+      className='h-16 border border-dashed border-border'
     />
+  );
+}
+
+/** The top of a board's column: the team, and a line under it. */
+export function DraftBoardHeader({
+  title,
+  subtitle,
+}: {
+  title: ReactNode;
+  subtitle?: ReactNode;
+}) {
+  return (
+    <div className='flex h-14 flex-col justify-between bg-secondary p-1.5 text-center text-secondary-foreground'>
+      <div className='truncate font-semibold'>{title}</div>
+      {subtitle && (
+        <div className='truncate text-sm tabular-nums text-muted-foreground'>
+          {subtitle}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -116,11 +130,11 @@ export function DraftBoardCell({
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
-  /** Top right, small and muted - usually the pick number. */
+  /** Top right, small and muted: usually the pick number. */
   corner?: ReactNode;
-  /** Bottom right - a score, an emoji. */
+  /** Bottom right: a score. */
   trailing?: ReactNode;
-  /** Background classes. */
+  /** Background classes, such as a position's tint from positionTint. */
   tone: string;
   /**
    * Background class for a strip down the left edge, for a second measure
@@ -138,28 +152,26 @@ export function DraftBoardCell({
       title={tooltip}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={clsx(
-        'relative flex h-16 gap-1 overflow-hidden rounded p-1 transition-opacity',
-        indicator && 'pl-1.5',
+      className={cn(
+        'relative flex h-16 gap-1 overflow-hidden p-1 text-foreground transition-opacity duration-fast',
+        indicator && 'pl-2',
         tone,
         dimmed && 'opacity-30',
-        highlighted && 'ring-2 ring-white/80',
+        highlighted && 'outline outline-2 -outline-offset-2 outline-foreground',
       )}
     >
       <div className='flex min-w-0 flex-1 flex-col justify-between'>
-        <div className='line-clamp-2 font-bold leading-tight text-white'>
-          {title}
-        </div>
-        {subtitle && <div className='truncate'>{subtitle}</div>}
+        <div className='line-clamp-2 font-bold leading-tight'>{title}</div>
+        {subtitle && <div className='truncate text-sm'>{subtitle}</div>}
       </div>
       <div
-        className={clsx(
+        className={cn(
           'flex flex-col items-end text-right',
           corner ? 'justify-between' : 'justify-end',
         )}
       >
         {corner && (
-          <div className='text-[0.65rem] tabular-nums text-white/70'>
+          <div className='text-sm tabular-nums text-muted-foreground'>
             {corner}
           </div>
         )}
@@ -168,7 +180,7 @@ export function DraftBoardCell({
       {indicator && (
         <div
           aria-hidden='true'
-          className={clsx('absolute inset-y-0 left-0 w-0.5', indicator)}
+          className={cn('absolute inset-y-0 left-0 w-1', indicator)}
         />
       )}
     </div>

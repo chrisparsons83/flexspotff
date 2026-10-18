@@ -8,7 +8,7 @@ const entries = [
     id: 'a',
     rank: 1,
     name: 'greg_irl',
-    badgeClassName: 'bg-dragon text-gray-900',
+    league: 'Dragon',
     values: ['156.62'],
     details: <div>dragon starters</div>,
   },
@@ -39,16 +39,16 @@ describe('LeaderboardTable', () => {
 
     expect(screen.queryByText('dragon starters')).not.toBeInTheDocument();
 
-    const toggle = screen.getByRole('button', { name: 'Show Details' });
+    const toggle = screen.getByRole('button', { name: 'Show details' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(toggle);
     expect(screen.getByText('dragon starters')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Hide Details' }),
+      screen.getByRole('button', { name: 'Hide details' }),
     ).toHaveAttribute('aria-expanded', 'true');
 
-    await user.click(screen.getByRole('button', { name: 'Hide Details' }));
+    await user.click(screen.getByRole('button', { name: 'Hide details' }));
     expect(screen.queryByText('dragon starters')).not.toBeInTheDocument();
   });
 
@@ -74,6 +74,18 @@ describe('LeaderboardTable', () => {
     expect(
       screen.getByRole('columnheader', { name: 'Manager' }),
     ).toBeInTheDocument();
+  });
+
+  it('gives the league a column of its own when an entry has one', () => {
+    render(
+      <LeaderboardTable entries={entries} valueHeadings={['Points For']} />,
+    );
+
+    expect(
+      screen.getByRole('columnheader', { name: 'League' }),
+    ).toBeInTheDocument();
+    const first = screen.getByText('greg_irl').closest('tr')!;
+    expect(within(first).getByText('Dragon')).toBeInTheDocument();
   });
 
   it('shows the empty message rather than an empty table', () => {

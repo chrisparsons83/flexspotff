@@ -88,6 +88,42 @@ export async function getLeaguesByYear(year: League['year']) {
   });
 }
 
+/** Each league's table order: wins, then ties, then points for. */
+const STANDINGS_ORDER = [
+  { wins: 'desc' },
+  { ties: 'desc' },
+  { pointsFor: 'desc' },
+] as const;
+
+/**
+ * One league's season by its name in any case ("admiral"), with its teams in
+ * table order. Names are unique within a year.
+ */
+export async function getLeagueByYearAndName(
+  year: League['year'],
+  name: League['name'],
+) {
+  return prisma.league.findFirst({
+    where: { year, name: { equals: name, mode: 'insensitive' } },
+    include: {
+      teams: {
+        include: { user: true },
+        orderBy: [...STANDINGS_ORDER],
+      },
+    },
+  });
+}
+
+/** The years a league of this name ran, newest first. */
+export async function getLeagueYearsByName(name: League['name']) {
+  const leagues = await prisma.league.findMany({
+    where: { name: { equals: name, mode: 'insensitive' } },
+    select: { year: true },
+    orderBy: { year: 'desc' },
+  });
+  return leagues.map(league => league.year);
+}
+
 export async function getLeagueCountsByYear() {
   return prisma.league.groupBy({
     by: ['year'],

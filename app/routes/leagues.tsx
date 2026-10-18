@@ -1,61 +1,58 @@
 import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { NavigationSection } from '~/components/layout/NavigationSection';
+import GoBox from '~/components/ui/GoBox';
+import { PageHeader } from '~/components/ui/page-header';
+import { SubNav } from '~/components/ui/sub-nav';
+import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
 
 export const loader = async () => {
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
-
-  const teamGameNewestWeek =
-    (await getNewestWeekTeamGameByYear(currentSeason.year))._max.week || 1;
+  const season = await getCurrentSeason();
+  const leagues = season ? await getLeaguesByYear(season.year) : [];
 
   return typedjson({
-    teamGameNewestWeek,
-    currentSeason,
+    year: season?.year ?? null,
+    leagues: leagues.map(league => league.name),
   });
 };
 
-export default function LeaguesIndex() {
-  const { teamGameNewestWeek, currentSeason } =
-    useTypedLoaderData<typeof loader>();
+const ITEMS = [
+  { label: 'Overview', to: '/leagues', end: true },
+  { label: 'Standings', to: '/leagues/standings' },
+  { label: 'Leaderboard', to: '/leagues/leaderboard' },
+  { label: 'Cup', to: '/leagues/cup' },
+  { label: 'Records', to: '/leagues/records' },
+  { label: 'ADP', to: '/leagues/adp' },
+  { label: 'Rules', to: '/leagues/rules' },
+];
 
-  const navigationLinks = [
-    {
-      name: 'Overall Leaderboard',
-      href: '/leagues/leaderboard',
-      current: false,
-    },
-    {
-      name: 'Weekly Leaderboards',
-      href: `/leagues/leaderboard/${currentSeason.year}/${teamGameNewestWeek}`,
-      current: false,
-    },
-    { name: 'Standings', href: '/leagues/standings', current: false },
-    { name: 'Cup', href: `/leagues/cup/${currentSeason.year}`, current: false },
-    { name: 'ADP', href: '/leagues/adp', current: false },
-    { name: 'Records', href: '/leagues/records', current: false },
-    { name: 'Rules', href: '/leagues/rules', current: false },
-  ];
+export default function Leagues() {
+  const { year, leagues } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
-      <h2>FlexSpotFF Leagues</h2>
-      <div className='grid md:grid-cols-12 md:gap-4'>
-        <div className='not-prose text-sm md:col-span-2'>
-          <NavigationSection
-            title='Leagues'
-            links={navigationLinks}
-            headingId='admin-leagues-heading'
+      <PageHeader
+        title='Leagues'
+        nav={
+          <SubNav
+            label='Leagues'
+            items={ITEMS}
+            picker={
+              year &&
+              leagues.length > 0 && (
+                <GoBox
+                  buttonText={`${year} leagues`}
+                  options={leagues.map(name => ({
+                    label: name,
+                    url: `/leagues/${year}/${name.toLowerCase()}`,
+                  }))}
+                />
+              )
+            }
           />
-        </div>
-        <div className='md:col-span-10'>
-          <Outlet />
-        </div>
-      </div>
+        }
+      />
+      <Outlet />
     </>
   );
 }

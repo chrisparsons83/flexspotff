@@ -1,8 +1,6 @@
-import DraftBoard, {
-  DraftBoardCell,
-} from '~/components/layout/draftboard/DraftBoard';
 import MemberAvatar from '~/components/ui/MemberAvatar';
 import MemberName from '~/components/ui/MemberName';
+import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
 import type { DraftBoardColumnProps } from '~/models/omniseason.server';
 
 type OmniTeam = DraftBoardColumnProps['omniTeam'];

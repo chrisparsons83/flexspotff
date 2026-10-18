@@ -3,9 +3,6 @@ import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import DraftBoard, {
-  DraftBoardCell,
-} from '~/components/layout/draftboard/DraftBoard';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
@@ -20,6 +17,8 @@ import {
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { RangeBar } from '~/components/ui/bars';
+import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import { positionTint } from '~/components/ui/fills';
 import { YearFilter } from '~/components/ui/segmented-control';
 import { ShowAllButton } from '~/components/ui/show-all-button';
 import { PositionMark } from '~/components/ui/swatch';
@@ -39,7 +38,6 @@ import {
   shortD12LeagueName,
 } from '~/models/profile/d12Profile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { POSITION_TINT_COLORS } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -239,7 +237,6 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
         columns={board.columns}
         rounds={board.rounds}
         columnKey={column => column.league?.id ?? `slot-${column.slot}`}
-        snake
         renderHeader={column => (
           <div
             className={clsx(
@@ -284,10 +281,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
                   {pts(pick.points, 1)}
                 </span>
               }
-              tone={
-                POSITION_TINT_COLORS[pick.position?.toLowerCase() ?? ''] ??
-                'bg-slate-700/60'
-              }
+              tone={positionTint(pick.position)}
               indicator={HEAT_BAR[pick.heat]}
               tooltip={`${pick.firstName ?? ''} ${pick.lastName ?? ''}, ${
                 pick.pickLabel

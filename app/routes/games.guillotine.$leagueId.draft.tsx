@@ -2,10 +2,9 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import DraftBoard, {
-  DraftBoardCell,
-} from '~/components/layout/draftboard/DraftBoard';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import { positionTint } from '~/components/ui/fills';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { ordinal, teamName } from '~/libs/guillotine/display';
 import {
@@ -13,7 +12,6 @@ import {
   getGuillotineLeagueForPage,
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
-import { POSITION_TINT_COLORS } from '~/utils/constants';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { width: 'full' };
@@ -99,7 +97,6 @@ export default function GuillotineDraft() {
         columns={columns}
         rounds={rounds}
         columnKey={column => column.rosterId}
-        snake
         renderHeader={column => (
           <div className='flex h-14 flex-col justify-between rounded bg-slate-900/70 p-1 text-center'>
             <div className='truncate font-semibold text-white'>
@@ -138,10 +135,7 @@ export default function GuillotineDraft() {
                   {pick.pickNo}
                 </span>
               }
-              tone={
-                POSITION_TINT_COLORS[pick.position?.toLowerCase() ?? ''] ??
-                'bg-slate-700/60'
-              }
+              tone={positionTint(pick.position)}
               tooltip={`${pick.fullName} · pick ${pick.pickNo} by ${column.name}`}
               highlighted={hovered === pick.sleeperId}
               dimmed={hovered !== null && hovered !== pick.sleeperId}

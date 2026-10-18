@@ -2,8 +2,10 @@ import type { LeaderboardEntry } from './LeaderboardTable';
 import LeaderboardTable from './LeaderboardTable';
 import GoBox from '~/components/ui/GoBox';
 import MemberName from '~/components/ui/MemberName';
-import { FIRST_YEAR, RANK_COLORS, isLeagueName } from '~/utils/constants';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
 import { assignCompetitionRanks } from '~/utils/rank';
+import { yearOptions } from '~/utils/years';
 
 // Described structurally rather than off the model return types, so the
 // JSON-serialised shapes the loaders hand back still satisfy it.
@@ -19,37 +21,29 @@ type SeasonTeam = {
 };
 
 type Props = {
-  heading: string;
+  year: number;
   /** Per-team season totals, best first. */
   leaderboard: SeasonTotal[];
   teams: SeasonTeam[];
   /** Newest year offered in the year picker. */
   maxYear: number;
+  /** The newest week with scores, for the link to the weekly board. */
+  newestWeek: number | null;
 };
 
 /**
  * Season points-for standings across every league.
  *
  * Shared by /leagues/leaderboard and /leagues/leaderboard/:year, which were
- * copies of each other and had already drifted - the undated one was applying
- * league colours without the isLeagueName guard.
+ * copies of each other and had already drifted.
  */
 export default function SeasonLeaderboard({
-  heading,
+  year,
   leaderboard,
   teams,
   maxYear,
+  newestWeek,
 }: Props) {
-  const yearArray = Array.from(
-    { length: maxYear - FIRST_YEAR + 1 },
-    (_, i) => FIRST_YEAR + i,
-  )
-    .reverse()
-    .map(yearNumber => ({
-      label: `${yearNumber}`,
-      url: `/leagues/leaderboard/${yearNumber}`,
-    }));
-
   const entries: LeaderboardEntry[] = assignCompetitionRanks(
     leaderboard,
     position => position._sum.pointsScored ?? 0,
@@ -58,27 +52,35 @@ export default function SeasonLeaderboard({
       const team = teams.find(team => team.id === position.teamId);
       if (!team) return null;
 
-      const teamLeague = team.league.name.toLocaleLowerCase();
-
       return {
         id: position.teamId,
         rank: position.rank,
-        name: team.user ? <MemberName user={team.user} /> : 'Missing user',
-        badgeClassName: isLeagueName(teamLeague)
-          ? RANK_COLORS[teamLeague]
-          : undefined,
+        name: team.user ? <MemberName user={team.user} /> : 'Unclaimed team',
+        league: team.league.name,
         values: [position._sum.pointsScored?.toFixed(2)],
       };
     })
     .filter((entry): entry is LeaderboardEntry => entry !== null);
 
   return (
-    <>
-      <h2>{heading}</h2>
-      <div className='float-right mb-4'>
-        <GoBox options={yearArray} buttonText='Choose Year' />
-      </div>
-      <LeaderboardTable entries={entries} valueHeadings={['Points For']} />
-    </>
+    <Section
+      title={`${year} season leaderboard`}
+      description='Regular-season points for, across every league.'
+      action={
+        <div className='flex flex-wrap items-center gap-4'>
+          {newestWeek && (
+            <Link to={`/leagues/leaderboard/${year}/${newestWeek}`}>
+              By week
+            </Link>
+          )}
+          <GoBox
+            options={yearOptions(maxYear, y => `/leagues/leaderboard/${y}`)}
+            buttonText='Season'
+          />
+        </div>
+      }
+    >
+      <LeaderboardTable entries={entries} valueHeadings={['Points for']} />
+    </Section>
   );
 }

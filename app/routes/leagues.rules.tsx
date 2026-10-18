@@ -1,7 +1,7 @@
 export default function RulesPage() {
   return (
-    <section>
-      <h2 id='ffdiscord-club-rules'>FFDiscord Club Rules</h2>
+    <section className='prose'>
+      <h2 id='ffdiscord-club-rules'>FFDiscord Club rules</h2>
 
       <h3 id='1-object'>1. Object</h3>
 
@@ -110,7 +110,7 @@ export default function RulesPage() {
         <li>6 points for every Receiving TD</li>
       </ul>
 
-      <h4 id='other-offense'>Other Offense</h4>
+      <h4 id='other-offense'>Other offense</h4>
       <ul>
         <li>-2 points for every Fumble Lost</li>
         <li>6 points for every Offensive Fumble Recovery TD</li>
@@ -118,7 +118,7 @@ export default function RulesPage() {
         <li>6 points for every Kick Return TD</li>
       </ul>
 
-      <h4 id='defensespecial-teams'>Defense/Special Teams</h4>
+      <h4 id='defensespecial-teams'>Defense/special teams</h4>
       <ul>
         <li>6 points for every Defensive TD from an Interception</li>
         <li>6 points for every Defensive TD from a Fumble Recovery</li>
@@ -257,7 +257,7 @@ export default function RulesPage() {
         8.7. There is no limit on the number of trades that can be performed.
       </p>
 
-      <h3 id='9-regular-season'>9. Regular Season</h3>
+      <h3 id='9-regular-season'>9. Regular season</h3>
 
       <p>
         9.1. The regular season will last through Week 14 of the NFL regular
@@ -290,7 +290,7 @@ export default function RulesPage() {
         of the league will earn an additional loss.
       </p>
 
-      <h3 id='10-valid-lineups'>10. Valid Lineups</h3>
+      <h3 id='10-valid-lineups'>10. Valid lineups</h3>
 
       <p>
         10.1. Lineups, both starting and bench players, lock individually at
@@ -375,7 +375,7 @@ export default function RulesPage() {
         registration for the following season.
       </p>
 
-      <h3 id='11-the-cup'>11. The Cup</h3>
+      <h3 id='11-the-cup'>11. The cup</h3>
 
       <p>
         11.1. The Cup is a single elimination tournament that takes place
@@ -446,7 +446,7 @@ export default function RulesPage() {
 
       <p>13.4. Playoff matches will be one-week playoff games.</p>
 
-      <h3 id='14-league-hierarchy'>14. League Hierarchy</h3>
+      <h3 id='14-league-hierarchy'>14. League hierarchy</h3>
 
       <p>
         14.1. The Flex Spot Football Club is distributed into two “tiers”: Tier
@@ -468,7 +468,7 @@ export default function RulesPage() {
         co-champions).
       </p>
 
-      <h3 id='15-promotionrelegation'>15. Promotion/Relegation</h3>
+      <h3 id='15-promotionrelegation'>15. Promotion/relegation</h3>
 
       <p>
         15.1. At the end of each season, a certain number of top and bottom
@@ -518,11 +518,11 @@ export default function RulesPage() {
         will be reshuffled if there are multiple leagues within the tier.
       </p>
 
-      <h3 id='16-rookie-members'>16. Rookie Members</h3>
+      <h3 id='16-rookie-members'>16. Rookie members</h3>
 
       <p>16.1. New members to the FFDiscord Club will begin in Tier Two.</p>
 
-      <h3 id='17-re-entry'>17. Re-Entry</h3>
+      <h3 id='17-re-entry'>17. Re-entry</h3>
 
       <p>
         17.1. If a member leaves the league for a season, when applying for
@@ -537,7 +537,7 @@ export default function RulesPage() {
       </p>
 
       <h3 id='18-league-growth-and-expansion'>
-        18. League Growth and Expansion
+        18. League growth and expansion
       </h3>
 
       <p>
@@ -545,7 +545,7 @@ export default function RulesPage() {
         will be added in Tier Two to accommodate the growth.
       </p>
 
-      <h3 id='19-player-conduct'>19. Player Conduct</h3>
+      <h3 id='19-player-conduct'>19. Player conduct</h3>
 
       <p>
         19.1. Don’t be a jerk, and be respectful to others. Abuse, disrespect,

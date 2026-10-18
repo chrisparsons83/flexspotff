@@ -1,7 +1,15 @@
-import clsx from 'clsx';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import RecordsTable from '~/components/layout/records/RecordsTable';
+import { Section } from '~/components/ui/section';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import type { RecordTable } from '~/models/records.server';
 import {
   getCareerRecords,
@@ -15,8 +23,8 @@ import { getUnfinishedLeagueIds } from '~/models/season.server';
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },
-  { key: 'season', label: 'Single Season' },
-  { key: 'game', label: 'Single Game' },
+  { key: 'season', label: 'Single season' },
+  { key: 'game', label: 'Single game' },
   { key: 'playoffs', label: 'Playoffs' },
   { key: 'cup', label: 'Cup' },
   { key: 'streaks', label: 'Streaks' },
@@ -27,14 +35,7 @@ type CategoryKey = (typeof CATEGORIES)[number]['key'];
 export const loader = async () => {
   const unfinished = await getUnfinishedLeagueIds();
 
-  const [
-    careerRecords,
-    singleSeasonRecords,
-    singleGameRecords,
-    playoffRecords,
-    cupRecords,
-    streakRecords,
-  ] = await Promise.all([
+  const [career, season, game, playoffs, cup, streaks] = await Promise.all([
     getCareerRecords(unfinished),
     getSingleSeasonRecords(unfinished),
     getSingleGameRecords(),
@@ -43,83 +44,62 @@ export const loader = async () => {
     getStreakRecords(),
   ]);
 
-  return typedjson({
-    careerRecords,
-    singleSeasonRecords,
-    singleGameRecords,
-    playoffRecords,
-    cupRecords,
-    streakRecords,
-  });
+  return typedjson({ career, season, game, playoffs, cup, streaks });
 };
 
 export default function Records() {
-  const data = useTypedLoaderData<typeof loader>();
-  const [category, setCategory] = useState<CategoryKey>('career');
-  const [tableIndex, setTableIndex] = useState(0);
+  const tables = useTypedLoaderData<typeof loader>();
 
-  const tablesMap: Record<CategoryKey, RecordTable[]> = {
-    career: data.careerRecords,
-    season: data.singleSeasonRecords,
-    game: data.singleGameRecords,
-    playoffs: data.playoffRecords,
-    cup: data.cupRecords,
-    streaks: data.streakRecords,
-  };
+  return (
+    <Section title='Record books'>
+      <Tabs defaultValue='career'>
+        <TabsList>
+          {CATEGORIES.map(category => (
+            <TabsTrigger key={category.key} value={category.key}>
+              {category.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {CATEGORIES.map(category => (
+          <TabsContent key={category.key} value={category.key}>
+            <Category tables={tables[category.key as CategoryKey]} />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </Section>
+  );
+}
 
-  const tables = tablesMap[category];
-  const currentTable = tables[tableIndex] ?? tables[0];
-
-  const handleCategoryChange = (key: CategoryKey) => {
-    setCategory(key);
-    setTableIndex(0);
-  };
+/** One category's tables, one at a time, picked from a list. */
+function Category({ tables }: { tables: RecordTable[] }) {
+  const [index, setIndex] = useState(0);
+  const table = tables[index] ?? tables[0];
+  if (!table) return null;
 
   return (
     <>
-      <h2>Record Books</h2>
-
-      <div className='not-prose my-4 flex flex-wrap gap-2'>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat.key}
-            type='button'
-            onClick={() => handleCategoryChange(cat.key)}
-            className={clsx(
-              'rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              category === cat.key
-                ? 'bg-white text-gray-900 shadow'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
-            )}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
       {tables.length > 1 && (
-        <div className='not-prose mb-6'>
-          <select
-            value={tableIndex}
-            onChange={e => setTableIndex(Number(e.target.value))}
-            className='rounded-md bg-gray-800 px-3 py-2 text-sm text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-white'
-          >
-            {tables.map((t, i) => (
-              <option key={i} value={i}>
-                {t.title}
-              </option>
+        <Select
+          value={String(index)}
+          onValueChange={value => setIndex(Number(value))}
+        >
+          <SelectTrigger className='mb-6 max-w-md' aria-label='Record'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {tables.map((option, i) => (
+              <SelectItem key={option.title} value={String(i)}>
+                {option.title}
+              </SelectItem>
             ))}
-          </select>
-        </div>
+          </SelectContent>
+        </Select>
       )}
-
-      {currentTable && (
-        <RecordsTable
-          title={currentTable.title}
-          headers={currentTable.headers}
-          rows={currentTable.rows}
-        />
-      )}
+      <RecordsTable
+        title={table.title}
+        headers={table.headers}
+        rows={table.rows}
+      />
     </>
   );
 }
