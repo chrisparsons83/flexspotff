@@ -193,9 +193,16 @@ export async function syncGuillotineLeague(
       nameByOwner.set(user.user_id, user.display_name ?? user.username);
     }
   }
-  // The draft's own order, by owner. The first-round pick is only a fallback
-  // for a draft Sleeper has no order for: a traded first would give one
-  // roster two slots and leave another with none.
+  // The draft's own slot for each roster, so the board lines up with the
+  // picks, which are filed by roster. Then the owner's slot, and the
+  // first-round pick only for a draft Sleeper has no order for: a traded first
+  // would give one roster two slots and leave another with none.
+  const rosterSlot = new Map<number, number>();
+  for (const [slot, rosterId] of Object.entries(
+    draft?.slot_to_roster_id ?? {},
+  )) {
+    if (rosterId !== null) rosterSlot.set(rosterId, Number(slot));
+  }
   const firstRoundSlot = new Map<number, number>();
   for (const pick of picks) {
     if (pick.round === 1 && !firstRoundSlot.has(pick.roster_id)) {
@@ -203,6 +210,7 @@ export async function syncGuillotineLeague(
     }
   }
   const draftSlotFor = (rosterId: number, ownerId: string | null) =>
+    rosterSlot.get(rosterId) ??
     (ownerId ? draft?.draft_order?.[ownerId] : undefined) ??
     firstRoundSlot.get(rosterId) ??
     null;

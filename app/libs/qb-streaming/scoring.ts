@@ -10,9 +10,7 @@ export type QbStreamingStats = SleeperStatsJson[string];
  * QB streaming scoring: 4pt passing TDs, 1pt per 25 passing yards, minus two
  * for turnovers.
  *
- * The admin week scorer (`admin.qb-streaming._index.tsx`) and the historical
- * import both read from here, so an imported season is checked against the
- * same rules the site scores live weeks on.
+ * The admin week scorer (`admin.qb-streaming._index.tsx`) reads from here.
  */
 export function scoreQbStats(stats: QbStreamingStats): number {
   return (

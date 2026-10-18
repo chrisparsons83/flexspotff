@@ -211,6 +211,9 @@ export const sleeperDraftListJson = z.array(
     // slot from here, since a traded first-round pick breaks reading it off
     // the picks.
     draft_order: z.record(z.number()).nullish(),
+    // Draft slot -> roster ID. Not always the slot of the roster's owner: the
+    // 2022 and 2023 manual leagues handed rosters out in a different order.
+    slot_to_roster_id: z.record(z.number().nullable()).nullish(),
   }),
 );
 export type SleeperDraftListJson = z.infer<typeof sleeperDraftListJson>;
@@ -315,30 +318,6 @@ export const sleeperStatsJson = z.record(
   }),
 );
 export type SleeperStatsJson = z.infer<typeof sleeperStatsJson>;
-
-/**
- * Weekly stat lines from the undocumented `/stats/nfl/{year}/{week}` endpoint.
- * Unlike `/v1/stats`, each row says which team the player was on and which
- * game it was, as of that week - the only way to place a player who has since
- * moved teams or retired.
- */
-export const sleeperHistoricalStatsJson = z.array(
-  z.object({
-    player_id: z.string(),
-    team: z.string().nullable(),
-    game_id: z.string().nullable(),
-    week: z.number(),
-    stats: sleeperStatsJson.element,
-    player: z.object({
-      first_name: z.string(),
-      last_name: z.string(),
-      position: z.string().nullable(),
-    }),
-  }),
-);
-export type SleeperHistoricalStatsJson = z.infer<
-  typeof sleeperHistoricalStatsJson
->;
 
 /**
  * Rostership research, keyed by Sleeper player ID. Only `owned` is read, and

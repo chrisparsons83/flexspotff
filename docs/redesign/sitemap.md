@@ -248,7 +248,7 @@ confirmed against what the data can tell us:
 | This week      | Admin home, Spread pool weeks, QB streaming weeks, Locks challenge, DFS survivor, Waiver reports       |
 | Season setup   | Seasons, Registration list, Draft slots, Leagues, Cups, D12, Guillotine, Autodraft BBM, Survivor pools |
 | Members        | Members, Unmatched Sleeper users, Merge duplicates, Add members                                        |
-| Syncs and data | Syncing, Scheduler, F² history import, QB streaming import, Bot commands                               |
+| Syncs and data | Syncing, Scheduler, F² history import, Bot commands                                                    |
 | Archive        | Omni scoring, Omni qualifying points, Omni players, Podcasts                                           |
 
 Every admin route is in the appendix with its group.
@@ -355,7 +355,6 @@ and `/me`.
 | `/admin/data`                             | Syncs and data |
 | `/admin/scheduler`                        | Syncs and data |
 | `/admin/f-squared/import`                 | Syncs and data |
-| `/admin/qb-streaming/import`              | Syncs and data |
 | `/admin/bot`                              | Syncs and data |
 | `/admin/omni/scoring`                     | Archive        |
 | `/admin/omni/qualifying-points`           | Archive        |

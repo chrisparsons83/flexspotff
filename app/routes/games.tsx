@@ -12,6 +12,7 @@ import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getLatestSurvivorPools } from '~/models/survivor.server';
+import { weeklyStandingsLink } from '~/utils/standings';
 
 const navigationLinks = [
   { name: 'F²', href: '/games/f-squared', current: false },
@@ -33,11 +34,16 @@ export const loader = async () => {
 
   let locksChallengeWeek = (await getLocksWeeksByYear(currentSeason.year))[0];
 
-  const locksChallengeCurrentWeek = locksChallengeWeek?.isWeekScored
-    ? locksChallengeWeek?.weekNumber
-    : locksChallengeWeek?.weekNumber - 1 || 1;
+  // Before the season's first week is created there are no weekly standings
+  // to link to, so the weekly links are left out.
+  const locksChallengeCurrentWeek = !locksChallengeWeek
+    ? undefined
+    : locksChallengeWeek.isWeekScored
+    ? locksChallengeWeek.weekNumber
+    : locksChallengeWeek.weekNumber - 1 || 1;
 
-  // Get the current DFS Survivor week
+  // The latest scored DFS Survivor week, if any. Like the games above, the
+  // weekly link is left out until there is one.
   const dfsSurvivorWeek = await prisma.dFSSurvivorUserWeek.findFirst({
     where: {
       year: currentSeason.year,
@@ -47,7 +53,7 @@ export const loader = async () => {
       week: 'desc',
     },
   });
-  const dfsSurvivorCurrentWeek = dfsSurvivorWeek?.week || 1;
+  const dfsSurvivorCurrentWeek = dfsSurvivorWeek?.week;
 
   const latestD12Season = await getLatestD12Season();
   const d12CurrentWeek = latestD12Season
@@ -104,11 +110,11 @@ export default function GamesIndex() {
       href: `/games/qb-streaming/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/qb-streaming/standings/${currentSeason.year}/${qbStreamingCurrentWeek}`,
-      current: false,
-    },
+    ...weeklyStandingsLink(
+      '/games/qb-streaming/standings',
+      currentSeason.year,
+      qbStreamingCurrentWeek,
+    ),
   ];
 
   const spreadPoolLinks = [
@@ -119,11 +125,11 @@ export default function GamesIndex() {
       href: `/games/spread-pool/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/spread-pool/standings/${currentSeason.year}/${spreadPoolCurrentWeek}`,
-      current: false,
-    },
+    ...weeklyStandingsLink(
+      '/games/spread-pool/standings',
+      currentSeason.year,
+      spreadPoolCurrentWeek,
+    ),
   ];
 
   const nflLocksChallengeLinks = [
@@ -138,11 +144,11 @@ export default function GamesIndex() {
       href: `/games/locks-challenge/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/locks-challenge/standings/${currentSeason.year}/${locksChallengeCurrentWeek}`,
-      current: false,
-    },
+    ...weeklyStandingsLink(
+      '/games/locks-challenge/standings',
+      currentSeason.year,
+      locksChallengeCurrentWeek,
+    ),
   ];
 
   const dfsSurvivorLinks = [
@@ -157,11 +163,11 @@ export default function GamesIndex() {
       href: `/games/dfs-survivor/standings/${currentSeason.year}`,
       current: false,
     },
-    {
-      name: 'Weekly Standings',
-      href: `/games/dfs-survivor/standings/${currentSeason.year}/${dfsSurvivorCurrentWeek}`,
-      current: false,
-    },
+    ...weeklyStandingsLink(
+      '/games/dfs-survivor/standings',
+      currentSeason.year,
+      dfsSurvivorCurrentWeek,
+    ),
   ];
 
   return (

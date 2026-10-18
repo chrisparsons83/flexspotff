@@ -11,6 +11,7 @@ import {
   getLocksWeekByYearAndWeek,
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
+import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
@@ -26,7 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   // Get this week
   const currentWeek = await getLocksWeekByYearAndWeek(year, week);
-  if (!currentWeek) throw new Error('Week does not exist');
+  if (!currentWeek) throw new Response('No such week', { status: 404 });
 
   const now = getCurrentTime();
 
@@ -49,37 +50,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   // Find the max week number
   const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
 
-  let userIdToPointsMap: Map<string, number> = new Map();
-
-  // Get the locks week for that week
-  const locksWeek = await getLocksWeekByYearAndWeek(year, week);
-
-  if (locksWeek) {
-    // Get a list of the userId and their wins for the week
-    const locksWeekResults = await getLocksGamePicksWonLossWeek(locksWeek);
-
-    // If a user got a loss for the week, set their wins to 0
-    const filteredPoints = locksWeekResults.map(amount => {
-      return {
-        userId: amount.userId,
-        _sum: {
-          isWin: amount._sum.isLoss !== 0 ? 0 : amount._sum.isWin,
-          isLoss: amount._sum.isLoss,
-          isTie: amount._sum.isTie,
-        },
-      };
-    });
-
-    filteredPoints.forEach(amount => {
-      const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
-      const weekPoints = amount._sum.isWin || 0;
-      userIdToPointsMap.set(amount.userId, currentPoints + weekPoints);
-    });
-  }
-
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
   const totalPointsRaw = await getLocksGamePicksWonLossWeek(currentWeek);
+
+  // A single loss voids the whole week - locksWeekPoints owns that rule,
+  // shared with the overall standings and the profile title badges.
+  const userIdToPointsMap: Map<string, number> = new Map(
+    totalPointsRaw.map(amount => [amount.userId, locksWeekPoints(amount._sum)]),
+  );
   const wonLossByUserId = new Map(
     totalPointsRaw.map(point => [point.userId, point._sum]),
   );

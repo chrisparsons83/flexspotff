@@ -4,11 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { League } from '~/models/league.server';
 import * as leagueModel from '~/models/league.server';
 import * as teamModel from '~/models/team.server';
+import * as teamGameModel from '~/models/teamgame.server';
 import * as userModel from '~/models/user.server';
 
 vi.mock('./syncs.server');
 vi.mock('~/models/league.server');
 vi.mock('~/models/team.server');
+vi.mock('~/models/teamgame.server');
 vi.mock('~/models/user.server');
 vi.mock('~/db.server', () => ({
   prisma: {},
@@ -210,6 +212,14 @@ describe('syncLeague', () => {
       id: 'league-1',
       draftDateTime: new Date(1725411600000),
     });
+  });
+
+  it('re-files stored games against the league playoff start', async () => {
+    await syncLeague(league);
+
+    expect(teamGameModel.reclassifyRegularSeasonGames).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'league-1' }),
+    );
   });
 
   it('leaves a team unowned when no member claims the Sleeper account', async () => {

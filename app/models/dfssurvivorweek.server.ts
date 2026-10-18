@@ -39,3 +39,37 @@ export async function createDfsSurvivorWeek(
     },
   });
 }
+
+/**
+ * Unscored DFS Survivor picks for a year, with the week their saved game is in
+ * and the picked player's team, so a pick saved against a game Sleeper later
+ * dropped or moved can be pointed at the player's real game.
+ */
+export async function getUnscoredDfsSurvivorEntries(year: number) {
+  return prisma.dFSSurvivorUserEntry.findMany({
+    // Scoring marks the user's week, not each entry, so that is what to check.
+    where: { year, userWeek: { isScored: false } },
+    include: {
+      nflGame: { select: { year: true, week: true } },
+      player: { select: { currentNFLTeamId: true } },
+    },
+  });
+}
+
+export async function updateDfsSurvivorEntryGame(
+  id: string,
+  nflGameId: string,
+) {
+  return prisma.dFSSurvivorUserEntry.update({
+    where: { id },
+    data: { nflGameId },
+  });
+}
+
+export async function deleteDfsSurvivorEntries(ids: string[]) {
+  if (ids.length === 0) return { count: 0 };
+
+  return prisma.dFSSurvivorUserEntry.deleteMany({
+    where: { id: { in: ids } },
+  });
+}

@@ -68,7 +68,6 @@ const groups: {
       { label: 'Syncing', to: '/admin/data' },
       { label: 'Scheduler', to: '/admin/scheduler' },
       { label: 'F² history import', to: '/admin/f-squared/import' },
-      { label: 'QB streaming import', to: '/admin/qb-streaming/import' },
       { label: 'Bot commands', to: '/admin/bot' },
     ],
   },

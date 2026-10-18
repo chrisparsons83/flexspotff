@@ -76,8 +76,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const locksWeek = await getLocksWeekByYearAndWeek(+year, +weekNumber);
       if (!locksWeek) throw new Error(`There's no locks week here`);
 
-      // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      // Update NFL scores for the week, dropping any game Sleeper no longer
+      // lists for it so its picks are never scored
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);

@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
   useRouteError,
 } from '@remix-run/react';
 import clsx from 'clsx';
@@ -152,6 +153,11 @@ export function ErrorBoundary() {
   let errorMessage = 'Unknown error';
   if (error instanceof Error) {
     errorMessage = error.message;
+  } else if (isRouteErrorResponse(error)) {
+    errorMessage =
+      typeof error.data === 'string' && error.data
+        ? error.data
+        : `${error.status} ${error.statusText}`;
   }
 
   // Layout wraps this, so it renders the page body only.

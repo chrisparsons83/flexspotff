@@ -4,7 +4,7 @@ import {
   type FSquaredTeamRow,
 } from './fSquaredProfile';
 import { prisma } from '~/db.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 const memberSelect = {
   id: true,
@@ -45,7 +45,7 @@ export async function getFSquaredProfile(userId: string) {
   );
   if (years.length === 0) return { hasPlayed: false as const };
 
-  const [entries, teams, currentSeason] = await Promise.all([
+  const [entries, teams, inProgressYear] = await Promise.all([
     prisma.fSquaredEntry.findMany({
       where: { year: { in: years } },
       select: {
@@ -71,7 +71,7 @@ export async function getFSquaredProfile(userId: string) {
         },
       },
     }),
-    getCurrentSeason(),
+    getInProgressYear(),
   ]);
 
   const entryRows: FSquaredEntryRow[] = entries.map(entry => ({
@@ -94,7 +94,7 @@ export async function getFSquaredProfile(userId: string) {
     userId,
     teams: teamRows,
     entries: entryRows,
-    inProgressYear: currentSeason?.year ?? null,
+    inProgressYear,
     now: new Date(),
   });
 

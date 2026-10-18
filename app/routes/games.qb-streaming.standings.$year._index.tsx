@@ -19,6 +19,7 @@ import {
   getQBStreamingYears,
 } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const yearParam = params.year;
@@ -35,11 +36,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     getQBSelectionsByYear(year),
     getQBStreamingYears(),
   ]);
-  // The current season is linked from the nav before its first week exists,
-  // so it shows an empty table rather than a 404.
-  if (qbStreamingWeeks.length === 0 && year !== currentSeason.year) {
-    throw new Response('No QB streaming that year', { status: 404 });
-  }
+  assertSeasonHasDataOrIsCurrent(
+    year,
+    qbStreamingWeeks.length > 0,
+    currentSeason.year,
+    'No QB streaming that year',
+  );
 
   // The best-twelve rule only applies from 2025; qbStreamingUsesTopWeeks owns
   // the cutover, shared with the profile title badges.
