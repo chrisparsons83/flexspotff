@@ -6,7 +6,10 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
 import { getNflGameById } from '~/models/nflgame.server';
 import type { QBSelection } from '~/models/qbselection.server';
 import {
@@ -151,91 +154,75 @@ export default function QBStreamingYearWeekEntry() {
   const deepIsLocked =
     !!qbSelection && qbSelection?.deepPlayer.nflGame.gameStartTime < new Date();
 
+  const options = (deep: boolean) =>
+    qbStreamingWeek?.QBStreamingWeekOptions.filter(
+      qbOption => !deep || qbOption.isDeep,
+    ).map(qbOption => {
+      const matchup =
+        qbOption.player.currentNFLTeamId === qbOption.nflGame.homeTeamId
+          ? `vs ${qbOption.nflGame.awayTeam.mascot}`
+          : `at ${qbOption.nflGame.homeTeam.mascot}`;
+      return (
+        <option
+          key={qbOption.id}
+          value={qbOption.id}
+          disabled={qbOption.nflGame.gameStartTime < new Date()}
+        >
+          {qbOption.player.fullName} {matchup}
+        </option>
+      );
+    });
+
   return (
-    <>
-      <h2>Edit Streaming Picks for Week {qbStreamingWeek?.week}</h2>
+    <Section title={`Week ${qbStreamingWeek?.week} picks`}>
       {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <div className='mb-4'>
-          <label htmlFor='standardPlayerId'>
-            Standard Selection:
-            {standardIsLocked && qbSelection?.standardPlayerId && (
-              <input
-                type='hidden'
-                name='standardPlayerId'
-                value={qbSelection.standardPlayerId}
-              />
-            )}
-            <select
-              defaultValue={qbSelection?.standardPlayerId}
-              name={standardIsLocked ? undefined : 'standardPlayerId'}
-              id='standardPlayerId'
-              required={!standardIsLocked}
-              className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              disabled={standardIsLocked}
-            >
-              <option value=''></option>
-              {qbStreamingWeek?.QBStreamingWeekOptions.map(qbOption => {
-                const matchup =
-                  qbOption.player.currentNFLTeamId ===
-                  qbOption.nflGame.homeTeamId
-                    ? `vs ${qbOption.nflGame.awayTeam.mascot}`
-                    : `@ ${qbOption.nflGame.homeTeam.mascot}`;
-
-                return (
-                  <option
-                    key={qbOption.id}
-                    value={qbOption.id}
-                    disabled={qbOption.nflGame.gameStartTime < new Date()}
-                  >
-                    {qbOption.player.fullName} {matchup}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='deepPlayerId'>
-            Deep Selection:
-            {deepIsLocked && qbSelection?.deepPlayerId && (
-              <input
-                type='hidden'
-                name='deepPlayerId'
-                value={qbSelection.deepPlayerId}
-              />
-            )}
-            <select
-              defaultValue={qbSelection?.deepPlayerId}
-              name={deepIsLocked ? undefined : 'deepPlayerId'}
-              id='deepPlayerId'
-              required={!deepIsLocked}
-              className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              disabled={deepIsLocked}
-            >
-              <option value=''></option>
-              {qbStreamingWeek?.QBStreamingWeekOptions.filter(
-                qbOption => qbOption.isDeep,
-              ).map(qbOption => {
-                const matchup =
-                  qbOption.player.currentNFLTeamId ===
-                  qbOption.nflGame.homeTeamId
-                    ? `vs ${qbOption.nflGame.awayTeam.mascot}`
-                    : `@ ${qbOption.nflGame.homeTeam.mascot}`;
-
-                return (
-                  <option
-                    key={qbOption.id}
-                    value={qbOption.id}
-                    disabled={qbOption.nflGame.gameStartTime < new Date()}
-                  >
-                    {qbOption.player.fullName} {matchup}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-        </div>
+      <Form method='POST' className='grid max-w-md gap-6'>
+        {standardIsLocked && qbSelection?.standardPlayerId && (
+          <input
+            type='hidden'
+            name='standardPlayerId'
+            value={qbSelection.standardPlayerId}
+          />
+        )}
+        <Field
+          label='Standard pick'
+          description={
+            standardIsLocked ? 'Locked: the game has started.' : undefined
+          }
+        >
+          <NativeSelect
+            defaultValue={qbSelection?.standardPlayerId}
+            name={standardIsLocked ? undefined : 'standardPlayerId'}
+            required={!standardIsLocked}
+            disabled={standardIsLocked}
+          >
+            <option value=''></option>
+            {options(false)}
+          </NativeSelect>
+        </Field>
+        {deepIsLocked && qbSelection?.deepPlayerId && (
+          <input
+            type='hidden'
+            name='deepPlayerId'
+            value={qbSelection.deepPlayerId}
+          />
+        )}
+        <Field
+          label='Deep pick'
+          description={
+            deepIsLocked ? 'Locked: the game has started.' : undefined
+          }
+        >
+          <NativeSelect
+            defaultValue={qbSelection?.deepPlayerId}
+            name={deepIsLocked ? undefined : 'deepPlayerId'}
+            required={!deepIsLocked}
+            disabled={deepIsLocked}
+          >
+            <option value=''></option>
+            {options(true)}
+          </NativeSelect>
+        </Field>
         <div>
           <Button
             type='submit'
@@ -243,10 +230,10 @@ export default function QBStreamingYearWeekEntry() {
             value='saveOptions'
             disabled={navigation.state !== 'idle'}
           >
-            Update Entry
+            Update entry
           </Button>
         </div>
       </Form>
-    </>
+    </Section>
   );
 }

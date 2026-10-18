@@ -8,7 +8,10 @@ import {
 } from 'remix-typedjson';
 import SpreadPoolGameComponent from '~/components/layout/spread-pool/SpreadPoolGame';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { Section } from '~/components/ui/section';
+import { StatList } from '~/components/ui/stat-list';
 import type { Bet } from '~/models/poolgame.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import type { PoolGamePickCreate } from '~/models/poolgamepicks.server';
@@ -31,13 +34,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const poolWeekId = params.id;
-  if (!poolWeekId) throw new Error(`No pool week ID set`);
+  if (!poolWeekId) throw new Response('Week not found', { status: 404 });
 
   const poolWeek = await getPoolWeek(poolWeekId);
   if (!poolWeek) throw new Error(`Missing pool week.`);
@@ -162,13 +165,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const poolWeekId = params.id;
-  if (!poolWeekId) throw new Error(`No pool week ID set`);
+  if (!poolWeekId) throw new Response('Week not found', { status: 404 });
 
   const poolWeek = await getPoolWeek(poolWeekId);
 
@@ -271,17 +274,23 @@ export default function GamesSpreadPoolWeek() {
     navigation.state !== 'idle' || availableToBet < 0 || poolWeek?.isWeekScored;
 
   return (
-    <>
-      <h2>Week Entry</h2>
+    <Section
+      title={poolWeek ? `Week ${poolWeek.weekNumber} entry` : 'Week entry'}
+    >
       <Form method='POST' reloadDocument>
-        {notOpenYet || (
+        {notOpenYet ? (
+          <EmptyState title={notOpenYet} />
+        ) : (
           <>
             {actionData?.message && <Alert message={actionData.message} />}
-            <div className='mb-4'>
-              <div>Available to bet: {availableToBet}</div>
-              <div>Amount currently bet: {betAmount}</div>
-            </div>
-            <div className='grid md:grid-cols-2 gap-12'>
+            <StatList
+              className='mb-10 grid-cols-2'
+              stats={[
+                { label: 'Available to bet', value: availableToBet },
+                { label: 'Currently bet', value: betAmount },
+              ]}
+            />
+            <div className='grid gap-6 md:grid-cols-2'>
               {poolGames?.map(poolGame => {
                 const existingBet = existingBets.find(
                   existingBet =>
@@ -306,9 +315,9 @@ export default function GamesSpreadPoolWeek() {
                 );
               })}
             </div>
-            <div className='m-4'>
+            <div className='mt-10 grid gap-4'>
               {availableToBet < 0 && (
-                <p className='text-red-500'>
+                <p className='text-negative'>
                   You cannot bet more than your available budget, which is
                   currently {availableToBet}.
                 </p>
@@ -318,13 +327,15 @@ export default function GamesSpreadPoolWeek() {
                 name='isNewEntry'
                 value={Number(newEntryDeduction) !== 0 ? 'true' : 'false'}
               />
-              <Button type='submit' disabled={disableSubmit}>
-                Update Picks
-              </Button>
+              <div>
+                <Button type='submit' disabled={disableSubmit}>
+                  Update picks
+                </Button>
+              </div>
             </div>
           </>
         )}
       </Form>
-    </>
+    </Section>
   );
 }

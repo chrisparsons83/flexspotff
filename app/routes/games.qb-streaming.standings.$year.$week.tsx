@@ -1,28 +1,33 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
-import GoBox from '~/components/ui/GoBox';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import { qbStreamingStandingsEntry } from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import { getQBSelectionsByWeek } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
-import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
+import {
+  getQBStreamingWeeks,
+  getQBStreamingYears,
+} from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
-  const year = params.year || `${currentSeason.year}`;
+  const year = Number(params.year || currentSeason.year);
   const week = Number(params.week || '1');
 
-  const streamingWeeks = await getQBStreamingWeeks(+year);
+  const [streamingWeeks, years] = await Promise.all([
+    getQBStreamingWeeks(year),
+    getQBStreamingYears(),
+  ]);
   const streamingWeek = streamingWeeks.find(
     streamingWeek => streamingWeek.week === week,
   );
   if (!streamingWeek) throw new Response('No such week', { status: 404 });
-
-  const maxWeek = streamingWeeks[0].week;
 
   const qbSelections = await getQBSelectionsByWeek(streamingWeek.id);
 
@@ -54,69 +59,36 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     rankings,
     year,
     week,
-    maxWeek,
+    weeks: streamingWeeks.map(streamingWeek => streamingWeek.week),
+    years,
   });
 };
 
-export default function QBStreamingStandingsYearWeek() {
-  const { qbSelections, rankings, year, week, maxWeek } =
+export default function QBStreamingWeekStandings() {
+  const { qbSelections, rankings, year, week, weeks, years } =
     useTypedLoaderData<typeof loader>();
 
-  const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
-    .reverse()
-    .map(weekNumber => ({
-      label: `Week ${weekNumber}`,
-      url: `/games/qb-streaming/standings/${year}/${weekNumber}`,
-    }));
-
   return (
-    <>
-      <h2>
-        {year} Standings for Week {week}
-      </h2>
-
-      <div className='float-right mb-4'>
-        <GoBox options={weekArray} buttonText='Choose Week' />
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rankings.map(result => {
-            const currentWeekPick = qbSelections.find(
-              pick => pick.userId === result.userId,
-            );
-            const standardPlayer = !currentWeekPick
-              ? 'No pick'
-              : currentWeekPick.standardPlayer.nflGame.gameStartTime <
-                new Date()
-              ? currentWeekPick.standardPlayer.player.fullName
-              : 'Pending';
-
-            const deepPlayer = !currentWeekPick
-              ? 'No pick'
-              : currentWeekPick.deepPlayer.nflGame.gameStartTime < new Date()
-              ? currentWeekPick.deepPlayer.player.fullName
-              : 'Pending';
-            return (
-              <QBStreamingStandingsRowComponent
-                key={result.userId}
-                rank={result.rank}
-                user={result}
-                pointsScored={result.pointsScored}
-                standardPlayer={standardPlayer}
-                deepPlayer={deepPlayer}
-              />
-            );
-          })}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/qb-streaming/standings'
+      year={year}
+      week={week}
+      years={years}
+      weeks={weeks}
+    >
+      <LeaderboardTable
+        entries={rankings.map(result =>
+          qbStreamingStandingsEntry({
+            rank: result.rank,
+            user: result,
+            pointsScored: result.pointsScored,
+            pick: qbSelections.find(pick => pick.userId === result.userId),
+          }),
+        )}
+        nameHeading='Member'
+        valueHeadings={['Points']}
+        emptyMessage={`No scores yet for week ${week}.`}
+      />
+    </StandingsSection>
   );
 }

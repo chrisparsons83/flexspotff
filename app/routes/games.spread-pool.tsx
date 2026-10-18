@@ -1,10 +1,11 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Outlet } from '@remix-run/react';
+import GameHeader from '~/components/layout/games/GameHeader';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return {};
-};
-
-export default function FSquaredIndex() {
-  return <Outlet />;
+export default function SpreadPool() {
+  return (
+    <>
+      <GameHeader title='Spread pool' tabs={{ base: '/games/spread-pool' }} />
+      <Outlet />
+    </>
+  );
 }
