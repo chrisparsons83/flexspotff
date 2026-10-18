@@ -8,7 +8,10 @@ const input = JSON.parse(readFileSync(0, 'utf8'));
 if (input.stop_hook_active) process.exit(0);
 
 const cwd = process.env.CLAUDE_PROJECT_DIR;
-const changed = execSync('git status --porcelain', { cwd, encoding: 'utf8' });
+const changed = execSync('git status --porcelain -uall', {
+  cwd,
+  encoding: 'utf8',
+});
 if (!/\.tsx?$/m.test(changed)) process.exit(0);
 
 const result = spawnSync('npm', ['run', '-s', 'typecheck'], {
