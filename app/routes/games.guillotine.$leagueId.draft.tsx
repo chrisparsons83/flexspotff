@@ -14,6 +14,9 @@ import {
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
 import { POSITION_TINT_COLORS } from '~/utils/constants';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { width: 'full' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);
