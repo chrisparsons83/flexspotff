@@ -7,16 +7,14 @@ import {
   getLocksGamePicksWonLossWeek,
   getLocksGamesPicksByLocksWeek,
 } from '~/models/locksgamepicks.server';
-import {
-  getLocksWeekByYearAndWeek,
-  getLocksWeeksByYear,
-} from '~/models/locksweek.server';
+import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import { getCurrentSeason } from '~/models/season.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
 import { assignCompetitionRanks } from '~/utils/rank';
+import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 import { getCurrentTime } from '~/utils/time';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -28,11 +26,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     getLocksWeeksByYear(year),
     getCurrentSeason(),
   ]);
-  // The current season is linked from the nav before its first week exists,
-  // so it shows an empty table rather than a 404.
-  if (locksWeeks.length === 0 && year !== currentSeason?.year) {
-    throw new Response('No Locks Challenge that year', { status: 404 });
-  }
+  assertSeasonHasDataOrIsCurrent(
+    year,
+    locksWeeks.length > 0,
+    currentSeason?.year,
+    'No Locks Challenge that year',
+  );
 
   // Get the most active week
   const currentWeek = locksWeeks.find(locksWeek => locksWeek.isOpen === true);
@@ -64,30 +63,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         locksGamePick.isActive !== 0,
     );
 
-  // Find the max week number. A season with no weeks yet has no standings.
-  const maxWeek = locksWeeks[0]?.weekNumber ?? 0;
-
   let userIdToPointsMap: Map<string, number> = new Map();
 
-  // loop through all the completed weeks for the season
-  for (let i = 1; i <= maxWeek; i++) {
-    // Get the locks week for that week
-    const locksWeek = await getLocksWeekByYearAndWeek(year, i);
+  // Each user's won/loss for every week of the season. A season with no weeks
+  // yet has no standings.
+  const resultsByWeek = await Promise.all(
+    locksWeeks.map(locksWeek => getLocksGamePicksWonLossWeek(locksWeek)),
+  );
 
-    if (locksWeek) {
-      // Get a list of the userId and their wins for the week
-      const locksWeekResults = await getLocksGamePicksWonLossWeek(locksWeek);
-
-      // A single loss voids the whole week - locksWeekPoints owns that rule,
-      // shared with the profile title badges.
-      locksWeekResults.forEach(amount => {
-        const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
-        userIdToPointsMap.set(
-          amount.userId,
-          currentPoints + locksWeekPoints(amount._sum),
-        );
-      });
-    }
+  // A single loss voids the whole week - locksWeekPoints owns that rule,
+  // shared with the profile title badges.
+  for (const locksWeekResults of resultsByWeek) {
+    locksWeekResults.forEach(amount => {
+      const currentPoints = userIdToPointsMap.get(amount.userId) || 0;
+      userIdToPointsMap.set(
+        amount.userId,
+        currentPoints + locksWeekPoints(amount._sum),
+      );
+    });
   }
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow

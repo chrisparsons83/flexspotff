@@ -9,6 +9,7 @@ import { getCupWeeks } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamGameMultiweekTotalsSeparated } from '~/models/teamgame.server';
 import { roundNameMapping } from '~/utils/constants';
+import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   let currentSeason = await getCurrentSeason();
@@ -22,12 +23,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Response('No Cup that year', { status: 404 });
 
   const cup = await getCupByYear(Number(year));
+  assertSeasonHasDataOrIsCurrent(
+    Number(year),
+    !!cup,
+    currentSeason.year,
+    'No Cup that year',
+  );
   if (!cup) {
-    // The current season is linked from the nav before its Cup is created, so
-    // it shows a placeholder rather than an error.
-    if (Number(year) !== currentSeason.year) {
-      throw new Response('No Cup that year', { status: 404 });
-    }
     return typedjson({
       hasCup: false,
       cupGames: [] as Awaited<ReturnType<typeof getCupGamesByCup>>,
