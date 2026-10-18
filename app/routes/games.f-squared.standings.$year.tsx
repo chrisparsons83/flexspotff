@@ -1,8 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import FSquaredStandingsTable from '~/components/layout/f-squared/FSquaredStandingsTable';
-import FSquaredYearPicker from '~/components/layout/f-squared/FSquaredYearPicker';
+import StandingsSection from '~/components/layout/games/StandingsSection';
 import {
   getFSquaredYears,
   getStandingsForYear,
@@ -25,17 +24,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return typedjson({ year, results, years });
 };
 
-export default function FSquaredYearStandings() {
+export default function FSquaredStandings() {
   const { year, results, years } = useTypedLoaderData<typeof loader>();
 
   return (
-    <>
-      <FSquaredYearPicker years={years} />
-      <h2>{year} F² Standings</h2>
-      <p>
-        <Link to='/games/f-squared'>Back to this season</Link>
-      </p>
+    <StandingsSection
+      base='/games/f-squared/standings'
+      year={year}
+      years={years}
+      weeks={[]}
+      description='The combined points for of the teams each member picked.'
+    >
       <FSquaredStandingsTable results={results} />
-    </>
+    </StandingsSection>
   );
 }

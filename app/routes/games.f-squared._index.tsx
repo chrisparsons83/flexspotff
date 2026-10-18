@@ -1,59 +1,69 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import FSquaredStandingsTable from '~/components/layout/f-squared/FSquaredStandingsTable';
-import FSquaredYearPicker from '~/components/layout/f-squared/FSquaredYearPicker';
-import {
-  getEntryByUserAndYear,
-  getFSquaredYears,
-  getStandingsForYear,
-} from '~/models/fsquared.server';
+import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { getSeasonLeaders } from '~/libs/games/history.server';
+import { getEntryByUserAndYear } from '~/models/fsquared.server';
+import { fSquaredSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request);
+  const [season, user] = await Promise.all([
+    getCurrentSeason(),
+    authenticator.isAuthenticated(request),
+  ]);
+  if (!season) throw new Response('No season set up yet', { status: 404 });
 
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
-
-  const [existingEntry, currentResults, years] = await Promise.all([
-    user ? getEntryByUserAndYear(user.id, currentSeason.year) : null,
-    getStandingsForYear(currentSeason.year),
-    getFSquaredYears(),
+  const [existingEntry, totals] = await Promise.all([
+    user ? getEntryByUserAndYear(user.id, season.year) : null,
+    fSquaredSeasonTotals([season.year]),
   ]);
 
-  return typedjson({ currentResults, existingEntry, currentSeason, years });
+  return typedjson({
+    year: season.year,
+    isOpen: season.isOpenForFSquared,
+    signedIn: !!user,
+    hasEntry: !!existingEntry,
+    leaders: await getSeasonLeaders(totals, season.year),
+  });
 };
 
-export default function FSquaredIndex() {
-  const { currentResults, existingEntry, currentSeason, years } =
+export default function FSquaredOverview() {
+  const { year, isOpen, signedIn, hasEntry, leaders } =
     useTypedLoaderData<typeof loader>();
 
   return (
     <>
-      <h2>F²</h2>
-      <p>
-        Pick two teams from each league before they draft. Get points based on
-        how many fantasy points they earn during the season. Most combined
-        points wins.
-      </p>
-      <div>
-        <h3>My entry</h3>
-        <p>Status: {existingEntry ? `Submitted` : `Not Submitted`}</p>
-        <p>
-          {currentSeason.isOpenForFSquared && (
-            <Link to='my-entry'>View/Edit My Entry</Link>
-          )}
-        </p>
-      </div>
-      <section>
-        <FSquaredYearPicker years={years} />
-        <h3>Standings</h3>
-        <FSquaredStandingsTable results={currentResults} />
-      </section>
+      <Section
+        title='Your entry'
+        description={
+          !signedIn
+            ? 'Log in to make an entry.'
+            : hasEntry
+            ? 'You have an entry in this season.'
+            : 'You have not entered this season.'
+        }
+      >
+        {signedIn && isOpen && (
+          <Button asChild>
+            <Link to='entries' variant='quiet'>
+              {hasEntry ? 'Change your entry' : 'Make your entry'}
+            </Link>
+          </Button>
+        )}
+        {!isOpen && (
+          <p className='text-muted-foreground'>Entries are closed.</p>
+        )}
+      </Section>
+      <SeasonLeaders
+        year={year}
+        leaders={leaders}
+        standingsPath='standings'
+        valueHeading='Points'
+      />
     </>
   );
 }
