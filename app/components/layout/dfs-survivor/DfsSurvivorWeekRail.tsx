@@ -1,5 +1,9 @@
+import { LockClosedIcon } from '@radix-ui/react-icons';
 import clsx from 'clsx';
 import type { WeekSummary } from '~/routes/games.dfs-survivor.entries._index';
+
+/** This week, underlined rather than marked with a dot. */
+const WEEK_CURRENT = 'underline decoration-2 underline-offset-2';
 
 type Props = {
   weeks: WeekSummary[];
@@ -57,37 +61,32 @@ export default function DfsSurvivorWeekRail({
             }
             data-testid={`week-chip-${week.week}`}
             className={clsx(
-              'rounded-md border px-1 py-1 text-center leading-tight transition-colors',
+              'border px-1 py-1 text-center leading-tight transition-colors',
               isSelected
-                ? 'border-blue-400 bg-blue-900/70 text-white'
+                ? 'border-primary-edge bg-primary text-primary-foreground'
                 : isDisabled
-                ? 'cursor-not-allowed border-slate-800 bg-slate-800/30 text-slate-600'
-                : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800',
+                ? 'cursor-not-allowed border-border bg-card text-muted-foreground'
+                : 'border-border bg-card text-foreground hover:bg-secondary',
             )}
           >
-            <div className='flex items-center justify-center gap-0.5 text-xs font-semibold'>
-              {isCurrent && (
-                <span
-                  aria-hidden
-                  className='h-1.5 w-1.5 rounded-full bg-blue-400'
-                />
-              )}
-              <span>{week.week}</span>
+            <div className='flex items-center justify-center gap-0.5 text-sm font-semibold'>
+              <span className={isCurrent ? WEEK_CURRENT : undefined}>
+                {week.week}
+              </span>
+              {isCurrent && <span className='sr-only'>, this week</span>}
               {week.isLocked && !week.isScored && (
-                <span aria-hidden className='text-[0.6rem] text-slate-500'>
-                  🔒
-                </span>
+                <LockClosedIcon aria-label='Locked' className='size-3' />
               )}
               {isCurrent && <span className='sr-only'>(current week)</span>}
             </div>
             <div
               className={clsx(
-                'text-[0.65rem] tabular-nums',
+                'text-sm tabular-nums',
                 week.isScored
-                  ? 'text-slate-300'
+                  ? 'text-foreground'
                   : isComplete
-                  ? 'text-green-400'
-                  : 'text-slate-500',
+                  ? 'text-positive'
+                  : 'text-muted-foreground',
               )}
             >
               {week.isScored

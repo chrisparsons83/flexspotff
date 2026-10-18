@@ -1,12 +1,12 @@
-import clsx from 'clsx';
 import { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import type {
   LocksGameByYearAndWeekElement,
   TeamPick,
 } from '~/models/locksgame.server';
 import type { LocksGamePick } from '~/models/locksgamepicks.server';
 import type { NFLTeam } from '~/models/nflteam.server';
+import { cn } from '~/utils';
 
 type Props = {
   handleChange: (teamPick: TeamPick[]) => void;
@@ -72,58 +72,60 @@ export default function LocksChallengeGameComponent({
       ]);
     }
   };
+  const result = wonGame === 1 ? 'Won' : lostGame === 1 ? 'Lost' : null;
+  const options = [
+    { value: 'awayTeamPick', label: locksGame.game.awayTeam.mascot },
+    { value: 'noTeamPick', label: 'No pick' },
+    { value: 'homeTeamPick', label: locksGame.game.homeTeam.mascot },
+  ];
+
   return (
-    <div>
+    <fieldset
+      className={cn(
+        'bg-card px-5 py-4',
+        result === 'Won' && 'bg-positive/20',
+        result === 'Lost' && 'bg-destructive/20',
+      )}
+    >
+      <legend className='sr-only'>
+        {locksGame.game.awayTeam.mascot} at {locksGame.game.homeTeam.mascot}
+      </legend>
       <input
         type='hidden'
         name={`${locksGame.id}-${pickedTeam?.id}`}
         value={pickedTeam?.id ? 1 : 0}
       />
-      <div className='mt-4 bg-slate-800 rounded-md'>
-        <Tabs defaultValue={defaultTabValue}>
-          <TabsList className={`grid w-full grid-cols-3`}>
-            <TabsTrigger
-              value='awayTeamPick'
-              onClick={() => handleTabTriggerPress('awayTeamPick')}
-              className={clsx({
-                '!bg-green-900':
-                  wonGame === 1 && defaultTabValue === 'awayTeamPick',
-                '!bg-red-900':
-                  lostGame === 1 && defaultTabValue === 'awayTeamPick',
-              })}
-              disabled={pickLocked || false}
-            >
-              {locksGame.game.awayTeam.mascot}
-            </TabsTrigger>
-            <TabsTrigger
-              value='noTeamPick'
-              onClick={() => handleTabTriggerPress('noTeamPick')}
-              className={clsx({
-                '!bg-green-900':
-                  wonGame === 1 && defaultTabValue === 'noTeamPick',
-                '!bg-red-900':
-                  lostGame === 1 && defaultTabValue === 'noTeamPick',
-              })}
-              disabled={pickLocked || false}
-            >
-              No Pick
-            </TabsTrigger>
-            <TabsTrigger
-              value='homeTeamPick'
-              onClick={() => handleTabTriggerPress('homeTeamPick')}
-              className={clsx({
-                '!bg-green-900':
-                  wonGame === 1 && defaultTabValue === 'homeTeamPick',
-                '!bg-red-900':
-                  lostGame === 1 && defaultTabValue === 'homeTeamPick',
-              })}
-              disabled={pickLocked || false}
-            >
-              {locksGame.game.homeTeam.mascot}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-    </div>
+      <RadioGroup
+        defaultValue={defaultTabValue}
+        onValueChange={handleTabTriggerPress}
+        disabled={pickLocked || false}
+        className='grid-cols-3'
+      >
+        {options.map(option => (
+          <label
+            key={option.value}
+            className={cn(
+              'flex items-center gap-2',
+              option.value === 'homeTeamPick' && 'justify-end',
+              option.value === 'noTeamPick' &&
+                'justify-center text-muted-foreground',
+            )}
+          >
+            <RadioGroupItem value={option.value} />
+            {option.label}
+          </label>
+        ))}
+      </RadioGroup>
+      {result && (
+        <p
+          className={cn(
+            'mt-2 text-sm font-semibold',
+            result === 'Won' ? 'text-positive' : 'text-negative',
+          )}
+        >
+          {result}
+        </p>
+      )}
+    </fieldset>
   );
 }

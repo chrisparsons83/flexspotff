@@ -8,7 +8,10 @@ import {
 } from 'remix-typedjson';
 import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { Section } from '~/components/ui/section';
+import { StatList } from '~/components/ui/stat-list';
 import type { TeamPick } from '~/models/locksgame.server';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import type { LocksGamePickCreate } from '~/models/locksgamepicks.server';
@@ -303,18 +306,27 @@ export default function GamesLocksChallengeWeek() {
   const disableSubmit =
     navigation.state !== 'idle' || locksWeek?.isWeekScored || weekLocked;
   return (
-    <>
-      <h2>Week {weekNumber} Entry</h2>
+    <Section
+      title={`Week ${weekNumber} entry`}
+      description={
+        weekLocked
+          ? 'This week has locked.'
+          : 'Picks lock as each game kicks off, and all of them at 1:00 pm Eastern on Sunday.'
+      }
+    >
       <Form method='POST' reloadDocument>
-        {notOpenYet || (
+        {notOpenYet ? (
+          <EmptyState title={notOpenYet} />
+        ) : (
           <>
             {actionData?.message && (
               <Alert message={actionData.message} status={actionData.status} />
             )}
-            <div className='mb-4'>
-              <div>Teams Picked: {gamesBetOn}</div>
-            </div>
-            <div className='md:w-1/2'>
+            <StatList
+              className='mb-10 grid-cols-2'
+              stats={[{ label: 'Teams picked', value: gamesBetOn }]}
+            />
+            <div className='grid max-w-2xl gap-3'>
               {locksGames?.map(locksGame => {
                 const existingPick = existingPicks.find(
                   existingPick =>
@@ -340,17 +352,16 @@ export default function GamesLocksChallengeWeek() {
                 );
               })}
             </div>
-            <div style={{ height: '1em' }}></div>
             <Button
               type='submit'
               disabled={disableSubmit || false}
-              className='!ml-0'
+              className='mt-10'
             >
-              Update Picks
+              Update picks
             </Button>
           </>
         )}
       </Form>
-    </>
+    </Section>
   );
 }

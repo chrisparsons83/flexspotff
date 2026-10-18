@@ -1,7 +1,8 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import type { DFSSurvivorUserEntry, User } from '@prisma/client';
-import { useState } from 'react';
+import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { Table } from '~/components/ui/table';
 
 type Props = {
   rank: number | undefined;
@@ -66,22 +67,17 @@ const formatPoints = (points: number) => {
   return points.toFixed(2);
 };
 
-export default function DfsSurvivorStandingsRow({
+/**
+ * A DFS survivor standings row: rank, member and points, opening to the
+ * lineup behind them, by position and then points.
+ */
+export function dfsSurvivorStandingsEntry({
   rank,
   user,
   points,
   entries,
   showFlexAsActualPosition = true,
-}: Props) {
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleAccordion = () => {
-    setShowDetails(prevState => !prevState);
-  };
-
-  if (!user) return null;
-
-  // Sort entries by position type first, then by points within each position
+}: Props & { user: User }): LeaderboardEntry {
   const sortedEntries = [...entries].sort((a, b) => {
     let positionTypeA = getPositionType(a.position, showFlexAsActualPosition);
     let positionTypeB = getPositionType(b.position, showFlexAsActualPosition);
@@ -94,7 +90,6 @@ export default function DfsSurvivorStandingsRow({
       positionTypeB = b.player.position;
     }
 
-    // First sort by position type
     const positionOrderA =
       positionTypeOrder[positionTypeA as keyof typeof positionTypeOrder] || 999;
     const positionOrderB =
@@ -108,55 +103,34 @@ export default function DfsSurvivorStandingsRow({
     return b.points - a.points;
   });
 
-  return (
-    <>
-      <tr>
-        <td>{rank}</td>
-        <td className='flex items-center gap-3'>
-          <MemberName user={user} />{' '}
-          {showDetails ? (
-            <ChevronUpIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Hide Details'
-            />
-          ) : (
-            <ChevronDownIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Show Details'
-            />
-          )}
-        </td>
-        <td>{formatPoints(points)}</td>
-      </tr>
-      {showDetails && (
-        <tr className='border-b-1 bg-gray-800'>
-          <td></td>
-          <td colSpan={2}>
-            {sortedEntries.length === 0 && <div>No entries</div>}
-            <div className='grid grid-cols-3 gap-4'>
-              {sortedEntries.map(entry => (
-                <div key={entry.id} className='contents'>
-                  <div>
-                    {formatPosition(
-                      entry.position,
-                      entry.player.position,
-                      showFlexAsActualPosition,
-                    )}
-                  </div>
-                  <div>{entry.player.fullName}</div>
-                  <div>{formatPoints(entry.points)}</div>
-                </div>
-              ))}
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
+  return {
+    id: user.id,
+    rank: rank ?? 0,
+    name: (
+      <ProfileLink userId={user.id}>
+        <MemberName user={user} />
+      </ProfileLink>
+    ),
+    values: [formatPoints(points)],
+    details:
+      sortedEntries.length === 0 ? (
+        <p className='text-muted-foreground'>No entries.</p>
+      ) : (
+        <Table headers={['Slot', 'Player', 'Points']} numericColumns={[2]}>
+          {sortedEntries.map(entry => (
+            <tr key={entry.id}>
+              <td>
+                {formatPosition(
+                  entry.position,
+                  entry.player.position,
+                  showFlexAsActualPosition,
+                )}
+              </td>
+              <td>{entry.player.fullName}</td>
+              <td className='text-right'>{formatPoints(entry.points)}</td>
+            </tr>
+          ))}
+        </Table>
+      ),
+  };
 }

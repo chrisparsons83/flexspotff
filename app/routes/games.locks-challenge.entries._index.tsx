@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import EntryWeeks from '~/components/layout/games/EntryWeeks';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -10,9 +10,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const locksWeeks = await getLocksWeeksByYear(currentSeason.year);
@@ -22,29 +22,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-export default function GamesLocksMyEntries() {
+export default function LocksChallengeEntries() {
   const { locksWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
-    <>
-      <h2>My Entries</h2>
-      <ul>
-        {locksWeeks.map(locksWeek => {
-          const suffix = locksWeek.isWeekScored
-            ? ' - Week Scored'
-            : !locksWeek.isOpen
-            ? ' - Not Open'
-            : '';
-
-          return (
-            <li key={locksWeek.id}>
-              <Link to={`./${locksWeek.id}`}>
-                Week {locksWeek.weekNumber} {suffix}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+    <EntryWeeks
+      weeks={locksWeeks.map(locksWeek => ({
+        id: locksWeek.id,
+        week: locksWeek.weekNumber,
+        status: locksWeek.isWeekScored
+          ? 'Scored'
+          : locksWeek.isOpen
+          ? 'Open'
+          : 'Not open yet',
+      }))}
+    />
   );
 }

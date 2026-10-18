@@ -1,6 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import {
+  LOCKS_HEADINGS,
+  locksStandingsEntry,
+} from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import {
   getLocksGamePicksWonLoss,
@@ -9,8 +14,8 @@ import {
 } from '~/models/locksgamepicks.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
-import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
 import { assignCompetitionRanks } from '~/utils/rank';
@@ -18,13 +23,12 @@ import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 import { getCurrentTime } from '~/utils/time';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  if (!yearParam) throw new Error('No year existing');
-  const year = +yearParam;
+  const year = Number(params.year);
 
-  const [locksWeeks, currentSeason] = await Promise.all([
+  const [locksWeeks, currentSeason, years] = await Promise.all([
     getLocksWeeksByYear(year),
     getCurrentSeason(),
+    sideGameYears('locks'),
   ]);
   assertSeasonHasDataOrIsCurrent(
     year,
@@ -142,10 +146,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     weeklyPicks,
     userIdToPointsMap,
     year,
+    years,
+    weeks: locksWeeks.map(locksWeek => locksWeek.weekNumber),
   });
 };
 
-export default function LockChallengeStandingsYearIndex() {
+export default function LocksStandings() {
   const {
     totalPoints,
     users,
@@ -153,41 +159,41 @@ export default function LockChallengeStandingsYearIndex() {
     weeklyPicks,
     userIdToPointsMap,
     year,
+    years,
+    weeks,
   } = useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
+  const entries = totalPoints.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          locksStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            points: userIdToPointsMap.get(result.userId),
+            locksChallengeWonLoss: result,
+            picksLocked: weeklyPicks?.filter(
+              pick => pick.userId === result.userId,
+            ),
+          }),
+        ]
+      : [];
+  });
 
   return (
-    <>
-      <h2>{year} Overall Standings</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-            <th>W-L-T</th>
-            <th>Percent</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totalPoints.map(result => (
-            <LocksChallengeStandingsRow
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              points={userIdToPointsMap.get(result.userId)}
-              locksChallengeWonLoss={result}
-              picksLocked={weeklyPicks?.filter(
-                pick => pick.userId === result.userId,
-              )}
-            />
-          ))}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/locks-challenge/standings'
+      year={year}
+      years={years}
+      weeks={weeks}
+      description='One point for each winning pick in a week with no losses. A week with any loss scores nothing.'
+    >
+      <LeaderboardTable
+        entries={entries}
+        nameHeading='Member'
+        valueHeadings={LOCKS_HEADINGS}
+        emptyMessage='No weeks scored yet this season.'
+      />
+    </StandingsSection>
   );
 }

@@ -1,7 +1,10 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import DfsSurvivorStandingsRow from '~/components/layout/dfs-survivor/DfsSurvivorStandingsRow';
+import { dfsSurvivorStandingsEntry } from '~/components/layout/dfs-survivor/DfsSurvivorStandingsRow';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import { prisma } from '~/db.server';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
@@ -14,6 +17,9 @@ type LoaderData = {
   }[];
   users: User[];
   userIdToRankMap: Map<string, number>;
+  year: number;
+  weeks: number[];
+  years: number[];
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -21,9 +27,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  const yearParam = params.year;
-  if (!yearParam) throw new Error('No year existing');
-  const year = +yearParam;
+  const year = Number(params.year);
 
   // Get all scored weeks for the season
   const scoredWeeks = await prisma.dFSSurvivorUserWeek.findMany({
@@ -85,41 +89,44 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     totalPoints,
     users,
     userIdToRankMap,
+    year,
+    weeks: [...new Set(scoredWeeks.map(row => row.week))].sort((a, b) => b - a),
+    years: await sideGameYears('dfsSurvivor'),
   });
 };
 
-export default function DfsSurvivorStandingsYearIndex() {
-  const { totalPoints, users, userIdToRankMap } =
+export default function DfsSurvivorStandings() {
+  const { totalPoints, users, userIdToRankMap, year, weeks, years } =
     useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
+  const entries = totalPoints.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          dfsSurvivorStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            points: result.points,
+            entries: result.entries,
+          }),
+        ]
+      : [];
+  });
 
   return (
-    <>
-      <h2>DFS Survivor Overall Standings</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totalPoints.map(result => (
-            <DfsSurvivorStandingsRow
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              points={result.points}
-              entries={result.entries}
-            />
-          ))}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/dfs-survivor/standings'
+      year={year}
+      years={years}
+      weeks={weeks}
+      description='Points from every scored week.'
+    >
+      <LeaderboardTable
+        entries={entries}
+        nameHeading='Member'
+        valueHeadings={['Points']}
+        emptyMessage='No weeks scored yet this season.'
+      />
+    </StandingsSection>
   );
 }

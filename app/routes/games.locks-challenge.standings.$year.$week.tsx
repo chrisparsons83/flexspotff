@@ -1,7 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
-import GoBox from '~/components/ui/GoBox';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import {
+  LOCKS_HEADINGS,
+  locksStandingsEntry,
+} from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import {
   getLocksGamePicksWonLossWeek,
@@ -12,18 +16,14 @@ import {
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
-import type { User } from '~/models/user.server';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
 import { getCurrentTime } from '~/utils/time';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  const weekParam = params.week;
-  if (!yearParam) throw new Error('No year existing');
-  if (!weekParam) throw new Error('No week existing');
-  const year = +yearParam;
-  const week = +weekParam;
+  const year = Number(params.year);
+  const week = Number(params.week);
 
   // Get this week
   const currentWeek = await getLocksWeekByYearAndWeek(year, week);
@@ -46,9 +46,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       (locksGamePick.locksGame.game.gameStartTime < now || weekLocked) &&
       locksGamePick.isActive !== 0,
   );
-
-  // Find the max week number
-  const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
@@ -111,13 +108,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     userIdToRankMap,
     weeklyPicks,
     userIdToPointsMap,
-    maxWeek,
+    weeks: (await getLocksWeeksByYear(year)).map(
+      locksWeek => locksWeek.weekNumber,
+    ),
+    years: await sideGameYears('locks'),
     year,
     week,
   });
 };
 
-export default function SpreadPoolStandingsYearWeekIndex() {
+export default function LocksWeekStandings() {
   const {
     totalPoints,
     users,
@@ -126,54 +126,41 @@ export default function SpreadPoolStandingsYearWeekIndex() {
     userIdToPointsMap,
     year,
     week,
-    maxWeek,
+    weeks,
+    years,
   } = useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
-
-  const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
-    .reverse()
-    .map(weekNumber => ({
-      label: `Week ${weekNumber}`,
-      url: `/games/locks-challenge/standings/${year}/${weekNumber}`,
-    }));
+  const entries = totalPoints.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          locksStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            points: userIdToPointsMap.get(result.userId),
+            locksChallengeWonLoss: result,
+            picksLocked: weeklyPicks?.filter(
+              pick => pick.userId === result.userId,
+            ),
+          }),
+        ]
+      : [];
+  });
 
   return (
-    <>
-      <h2>
-        {year} Standings for Week {week}
-      </h2>
-      <div className='float-right mb-4'>
-        <GoBox options={weekArray} buttonText='Choose Week' />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-            <th>W-L-T</th>
-            <th>Percent</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totalPoints.map(result => (
-            <LocksChallengeStandingsRow
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              points={userIdToPointsMap.get(result.userId)}
-              locksChallengeWonLoss={result}
-              picksLocked={weeklyPicks?.filter(
-                pick => pick.userId === result.userId,
-              )}
-            />
-          ))}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/locks-challenge/standings'
+      year={year}
+      week={week}
+      years={years}
+      weeks={weeks}
+    >
+      <LeaderboardTable
+        entries={entries}
+        nameHeading='Member'
+        valueHeadings={LOCKS_HEADINGS}
+        emptyMessage={`No picks scored yet for week ${week}.`}
+      />
+    </StandingsSection>
   );
 }
