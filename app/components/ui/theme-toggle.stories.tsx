@@ -4,10 +4,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 const meta: Meta<typeof ThemeToggle> = {
   title: 'Primitives/ThemeToggle',
   component: ThemeToggle,
-  args: { value: 'system' },
-  argTypes: {
-    value: { control: 'inline-radio', options: ['system', 'dark', 'light'] },
-  },
 };
 export default meta;
 

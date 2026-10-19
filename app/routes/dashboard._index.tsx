@@ -20,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-const SECTIONS: DashboardSection[] = ['Leagues', 'Side leagues', 'Games'];
+const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
 
 export default function YourWeek() {
   const { rows } = useTypedLoaderData<typeof loader>();

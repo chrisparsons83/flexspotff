@@ -80,8 +80,8 @@ export default function Index() {
         description={
           <>
             A fantasy football Discord, around since 2016. We run promotion and
-            relegation leagues with a cup across all of them, a few side leagues
-            and a set of weekly games, and make awful football takes when we
+            relegation leagues with a cup across all of them, a set of weekly
+            games and a few side leagues, and make awful football takes when we
             should probably be working.
           </>
         }
@@ -102,7 +102,7 @@ export default function Index() {
 
       {!year && (
         <EmptyState title='The new season has not started yet'>
-          Leagues, side leagues and games open here once it is set up.
+          Leagues, games and side leagues open here once it is set up.
         </EmptyState>
       )}
 

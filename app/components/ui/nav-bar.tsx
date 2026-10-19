@@ -25,8 +25,8 @@ import type { ThemePreference } from '~/utils/theme';
 /** The three sections, in the order the sitemap gives them. */
 export const NAV_SECTIONS = [
   { label: 'Leagues', to: '/leagues' },
-  { label: 'Side leagues', to: '/side-leagues' },
   { label: 'Games', to: '/games' },
+  { label: 'Side leagues', to: '/side-leagues' },
 ] as const;
 
 export type NavUser = {
@@ -118,7 +118,7 @@ export function NavBar(props: Props) {
           </nav>
 
           <div className='ml-auto hidden items-center gap-4 md:flex'>
-            {theme && <ThemeToggle value={theme} />}
+            {theme && <ThemeToggle />}
             {user ? (
               <AccountMenu {...props} user={user} />
             ) : (
@@ -245,7 +245,7 @@ function MobileMenu(props: Props) {
           </li>
         )}
       </ul>
-      {theme && <ThemeToggle value={theme} className='px-4 pt-2' />}
+      {theme && <ThemeToggle className='px-4 pt-2' />}
     </nav>
   );
 }
