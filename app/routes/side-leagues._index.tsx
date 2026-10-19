@@ -43,7 +43,8 @@ export default function SideLeagues() {
     {
       title: 'D12',
       to: '/side-leagues/d12',
-      description: null,
+      description:
+        'Twelve best-ball leagues with the same twelve managers, each drafting once from every slot.',
       current: d12
         ? [
             {

@@ -9,6 +9,7 @@ export default function LocksChallenge() {
     <>
       <GameHeader
         title='Locks challenge'
+        description='Pick as many winners as you like each week. If every one of them wins, you score a point for each; if any of them loses, the week scores nothing.'
         tabs={{ base: '/games/locks-challenge' }}
       />
       <Outlet />

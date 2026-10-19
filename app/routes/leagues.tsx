@@ -36,6 +36,7 @@ export default function Leagues() {
     <>
       <PageHeader
         title='Leagues'
+        description='Twelve-team leagues in two tiers, with promotion and relegation between them every season and a cup across all of them.'
         nav={
           <SubNav
             label='Leagues'

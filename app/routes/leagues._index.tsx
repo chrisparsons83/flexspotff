@@ -60,7 +60,9 @@ export default function LeaguesOverview() {
     <>
       <Section
         title={`${year} leagues`}
-        description='Five leagues in three tiers. Each table is best first.'
+        description={`${leagues.length} leagues in ${
+          new Set(leagues.map(league => league.tier)).size
+        } tiers. Each table is best first.`}
       >
         <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
           {leagues.map(league => (

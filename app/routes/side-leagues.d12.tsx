@@ -11,6 +11,9 @@ import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { title: 'D12' };
 
+const D12_DESCRIPTION =
+  'Twelve best-ball leagues with the same twelve managers, and each manager drafts once from every slot. The most points across all twelve through week 17 wins.';
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const years = await getAllD12SeasonYears();
   // The season in the URL, or the newest one on the history page.
@@ -31,6 +34,7 @@ export default function D12() {
     <>
       <PageHeader
         title={season ? `D12 ${season.year}` : 'D12'}
+        description={D12_DESCRIPTION}
         nav={
           <SubNav
             label='D12'
