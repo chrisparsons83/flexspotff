@@ -19,6 +19,7 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { positionTint } from '~/components/ui/fills';
 import { Table } from '~/components/ui/table';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getBestBallProfile } from '~/models/profile/bestBall.server';
@@ -27,7 +28,6 @@ import type {
   BestBallSeason,
 } from '~/models/profile/bestBallProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { POSITION_TINT_COLORS } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -36,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 const finishLabel = (season: BestBallSeason) =>
-  season.isComplete && season.place === 1 ? '🏆 1st' : ordinal(season.place);
+  season.isComplete && season.place === 1 ? 'Champion' : ordinal(season.place);
 
 export default function MemberBestBall() {
   const { profile } = useTypedLoaderData<typeof loader>();
@@ -83,7 +83,7 @@ function Career({ career }: { career: BestBallCareer }) {
                 <LeadContext>{best.year}</LeadContext>
               </>
             ) : (
-              '—'
+              '–'
             )
           }
         >
@@ -112,7 +112,7 @@ function Career({ career }: { career: BestBallCareer }) {
           <MiniStat
             label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
-            tone='text-emerald-300'
+            tone='text-positive'
             detail={career.bestWeek && weekLabel(career.bestWeek)}
           />
         </CareerCard>
@@ -141,11 +141,11 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
         numericColumns={[2, 3, 4, 5, 6]}
       >
         {seasons.map(season => (
-          <tr key={season.year} className='border-b border-slate-700/60'>
+          <tr key={season.year} className='border-b border-border'>
             <td className='px-2 py-2'>
               <Link
-                to={`/games/best-ball/${season.year}`}
-                className='text-white no-underline hover:underline'
+                to={`/side-leagues/best-ball/${season.year}`}
+                className='text-foreground no-underline hover:underline'
               >
                 {season.year}
               </Link>
@@ -156,37 +156,37 @@ function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
                 'px-2 py-2 font-semibold',
                 season.isComplete && season.place === 1
                   ? TEXT.champion
-                  : 'text-slate-200',
+                  : 'text-foreground',
               )}
             >
               {finishLabel(season)}
-              <span className='ml-1 text-xs font-normal text-slate-400'>
+              <span className='ml-1 text-sm font-normal text-muted-foreground'>
                 of {season.teamCount}
               </span>
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-white'>
+            <td className='px-2 py-2 text-right tabular-nums text-foreground'>
               {pts(season.pointsFor)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-300'>
-              {season.gap > 0 ? `-${pts(season.gap)}` : '—'}
+            <td className='px-2 py-2 text-right tabular-nums text-foreground'>
+              {season.gap > 0 ? `-${pts(season.gap)}` : '–'}
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.bestWeek ? (
                 <>
                   {pts(season.bestWeek.points)}
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     Week {season.bestWeek.week}
                   </span>
                 </>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
-              {season.topScores || '—'}
+              {season.topScores || '–'}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
-              {season.draftSlot ?? '—'}
+              {season.draftSlot ?? '–'}
             </td>
           </tr>
         ))}
@@ -213,13 +213,13 @@ function PositionsDrafted({
       <div className='space-y-4'>
         {withPicks.map(season => (
           <div key={season.year}>
-            <div className='mb-1 text-sm font-semibold text-white'>
+            <div className='mb-1 text-sm font-semibold text-foreground'>
               {season.year}
             </div>
             {/* The league's average roster as a fainter bar right under
                 theirs, on the same scale, so a position they took more or
                 less of shows as its boundary shifting. */}
-            <div className='grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 text-xs text-slate-400'>
+            <div className='grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 text-sm text-muted-foreground'>
               <span>Drafted</span>
               <PositionBar counts={season.counts} />
               <span>League avg</span>
@@ -235,8 +235,8 @@ function PositionsDrafted({
         ))}
 
         {withPicks.length > 1 && (
-          <div className='border-t border-slate-700 pt-4'>
-            <div className='mb-1 text-sm font-semibold text-white'>
+          <div className='border-t border-border pt-4'>
+            <div className='mb-1 text-sm font-semibold text-foreground'>
               All seasons
             </div>
             <PositionBar counts={career.positions} />
@@ -262,34 +262,30 @@ function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
           .filter(season => season.picks.length > 0)
           .map(season => (
             <div key={season.year}>
-              <div className='mb-1 text-sm font-semibold text-white'>
+              <div className='mb-1 text-sm font-semibold text-foreground'>
                 {season.year}
               </div>
-              <ol className='m-0 grid list-none grid-cols-2 gap-1 p-0 text-xs sm:grid-cols-3 lg:grid-cols-6'>
+              <ol className='m-0 grid list-none grid-cols-2 gap-1 p-0 text-sm sm:grid-cols-3 lg:grid-cols-6'>
                 {season.picks.map(pick => (
                   <li
                     key={pick.pickNo}
                     title={`Round ${pick.round}, pick ${pick.pickNo} overall`}
-                    className={clsx(
-                      'rounded px-1.5 py-1',
-                      POSITION_TINT_COLORS[pick.position.toLowerCase()] ??
-                        'bg-slate-700/60',
-                    )}
+                    className={clsx('px-1.5 py-1', positionTint(pick.position))}
                   >
-                    <div className='truncate font-semibold text-white'>
+                    <div className='truncate font-semibold text-foreground'>
                       {pick.playerName}
                     </div>
-                    <div className='flex items-center gap-1 text-white/70'>
+                    <div className='flex items-center gap-1 text-foreground'>
                       <span
                         className={clsx(
-                          'rounded px-1 text-[0.65rem] font-semibold text-white',
+                          'px-1 text-sm font-semibold text-foreground',
                           positionColor(pick.position),
                         )}
                       >
                         {pick.position}
                       </span>
                       {pick.nflTeam ?? 'FA'}
-                      <span className='ml-auto tabular-nums text-white/50'>
+                      <span className='ml-auto tabular-nums text-foreground'>
                         {pickLabel(pick, season.teamCount)}
                       </span>
                     </div>

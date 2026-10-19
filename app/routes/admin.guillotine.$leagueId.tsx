@@ -7,8 +7,8 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { syncGuillotineLeague } from '~/libs/guillotine/sync.server';
 import {
   assignOwnerlessGuillotineTeam,
@@ -290,23 +290,23 @@ export default function AdminGuillotineLeague() {
           value='syncLeague'
           disabled={isSubmitting}
         >
-          Resync From Sleeper
+          Resync from Sleeper
         </Button>
       </Form>
 
       {unmatched.length > 0 && (
         <section className='mb-8'>
-          <h3>Unmatched Teams</h3>
+          <h3>Unmatched teams</h3>
           <p className='text-sm'>
             These Sleeper accounts aren't tied to a member yet. Matching one
             here links it everywhere on the site, not just in this league. A
             roster Sleeper has no owner for is assigned to a member for this
             league only, and resyncing keeps it.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
-                <th className='text-left'>Sleeper User</th>
+                <th className='text-left'>Sleeper user</th>
                 <th className='text-left'>Member</th>
               </tr>
             </thead>
@@ -315,7 +315,7 @@ export default function AdminGuillotineLeague() {
                 <tr key={team.id}>
                   <td>
                     {team.sleeperDisplayName ?? 'Unknown'}
-                    <div className='font-mono text-xs opacity-75'>
+                    <div className='font-mono text-sm opacity-75'>
                       {team.sleeperOwnerId ??
                         `Roster ${team.rosterId}, no owner`}
                     </div>
@@ -365,14 +365,14 @@ export default function AdminGuillotineLeague() {
       )}
 
       <section>
-        <h3>Chop Order</h3>
-        <table className='w-full'>
+        <h3>Chop order</h3>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Place</th>
               <th className='text-left'>Team</th>
               <th className='text-left'>Chopped</th>
-              <th className='text-left'>Draft Slot</th>
+              <th className='text-left'>Draft slot</th>
             </tr>
           </thead>
           <tbody>
@@ -386,14 +386,14 @@ export default function AdminGuillotineLeague() {
                   {team.member &&
                     team.sleeperDisplayName &&
                     team.sleeperDisplayName !== team.member.discordName && (
-                      <div className='text-xs opacity-75'>
+                      <div className='text-sm opacity-75'>
                         {team.sleeperDisplayName} on Sleeper
                       </div>
                     )}
                   {team.member && !team.sleeperOwnerId && (
                     <Form
                       method='POST'
-                      className='not-prose flex items-center gap-2 text-xs opacity-75'
+                      className='not-prose flex items-center gap-2 text-sm opacity-75'
                     >
                       Assigned by hand
                       <input type='hidden' name='teamId' value={team.id} />
@@ -409,8 +409,8 @@ export default function AdminGuillotineLeague() {
                     </Form>
                   )}
                 </td>
-                <td>{team.choppedWeek ? `Week ${team.choppedWeek}` : '—'}</td>
-                <td>{team.draftSlot ?? '—'}</td>
+                <td>{team.choppedWeek ? `Week ${team.choppedWeek}` : '–'}</td>
+                <td>{team.draftSlot ?? '–'}</td>
               </tr>
             ))}
           </tbody>

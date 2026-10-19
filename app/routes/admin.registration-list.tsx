@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   deleteRegistrationWithDraftPreferences,
   getRegistrationById,
@@ -126,7 +126,7 @@ export default function RegistrationList() {
 
   return (
     <>
-      <h2 className='mt-0'>Registration List</h2>
+      <h2 className='mt-0'>Registration list</h2>
       {actionData?.message && (
         <Alert message={actionData.message} status={actionData.status} />
       )}
@@ -158,7 +158,7 @@ export default function RegistrationList() {
                   name='_action'
                   value='deleteRegistration'
                   disabled={navigation.state !== 'idle'}
-                  className='bg-red-100 text-red-900 hover:bg-red-200'
+                  variant='destructive'
                 >
                   Remove
                 </Button>

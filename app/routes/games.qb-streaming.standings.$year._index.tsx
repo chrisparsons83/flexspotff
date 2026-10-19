@@ -1,8 +1,12 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
+import type { ReactNode } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import QBStreamingStandingsRowComponent from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
-import GoBox from '~/components/ui/GoBox';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import { qbStreamingStandingsEntry } from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { Table } from '~/components/ui/table';
 import {
   QB_STREAMING_COUNTING_WEEKS,
   qbStreamingSeasonTotal,
@@ -19,15 +23,15 @@ import {
   getQBStreamingYears,
 } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { cn } from '~/utils';
+import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  if (!yearParam) throw new Error('No year existing');
-  const year = +yearParam;
+  const year = Number(params.year);
 
   const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const [qbStreamingWeeks, qbSelections, years] = await Promise.all([
@@ -35,11 +39,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     getQBSelectionsByYear(year),
     getQBStreamingYears(),
   ]);
-  // The current season is linked from the nav before its first week exists,
-  // so it shows an empty table rather than a 404.
-  if (qbStreamingWeeks.length === 0 && year !== currentSeason.year) {
-    throw new Response('No QB streaming that year', { status: 404 });
-  }
+  assertSeasonHasDataOrIsCurrent(
+    year,
+    qbStreamingWeeks.length > 0,
+    currentSeason.year,
+    'No QB streaming that year',
+  );
 
   // The best-twelve rule only applies from 2025; qbStreamingUsesTopWeeks owns
   // the cutover, shared with the profile title badges.
@@ -135,6 +140,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       currentSeason,
       isTop12Season: true,
       years,
+      weeks: qbStreamingWeeks.map(week => week.week),
       qbStreamingWeeks: qbStreamingWeeks
         .filter(week => week.isScored)
         .sort((a, b) => a.week - b.week),
@@ -189,141 +195,109 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     currentSeason,
     isTop12Season: false,
     years,
+    weeks: qbStreamingWeeks.map(week => week.week),
     qbStreamingWeeks: [],
   });
 };
 
-export default function QBStreamingStandingsYearIndex() {
+export default function QBStreamingStandings() {
   const {
     year,
     qbStreamingResults,
     currentWeekPicks,
-    currentSeason,
     isTop12Season,
     qbStreamingWeeks,
     years,
+    weeks,
   } = useTypedLoaderData<typeof loader>();
 
-  const displayYear = +year !== currentSeason.year ? year : '';
-
-  const yearPicker = (
-    <div className='float-right mb-4'>
-      <GoBox
-        options={years.map(optionYear => ({
-          label: `${optionYear}`,
-          url: `/games/qb-streaming/standings/${optionYear}`,
-        }))}
-        buttonText='Choose Year'
-      />
-    </div>
+  const section = (children: ReactNode, description: string) => (
+    <StandingsSection
+      base='/games/qb-streaming/standings'
+      year={Number(year)}
+      years={years}
+      weeks={weeks}
+      description={description}
+    >
+      {children}
+    </StandingsSection>
   );
 
   if (isTop12Season) {
-    return (
-      <>
-        {yearPicker}
-        <h2>{displayYear} Overall Standings</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Points</th>
-              {qbStreamingWeeks.map(week => (
-                <th key={week.id}>W{week.week}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {qbStreamingResults.map(result => {
-              const resultWithWeekly = result as typeof result & {
-                weeklyScores: Array<{
-                  week: number;
-                  score: number;
-                  countsToward: boolean;
-                }>;
-              };
-              return (
-                <tr key={result.userId}>
-                  <td>{result.rank}</td>
-                  <td>
-                    <MemberName user={result} />
+    return section(
+      <Table
+        headers={[
+          'Rank',
+          'Member',
+          'Points',
+          ...qbStreamingWeeks.map(week => `Week ${week.week}`),
+        ]}
+        numericColumns={[0, 2, ...qbStreamingWeeks.map((_, i) => i + 3)]}
+        primaryColumns={[1, 2]}
+        stickyHeader
+      >
+        {qbStreamingResults.map(result => {
+          const resultWithWeekly = result as typeof result & {
+            weeklyScores: Array<{
+              week: number;
+              score: number;
+              countsToward: boolean;
+            }>;
+          };
+          return (
+            <tr key={result.userId}>
+              <td className='text-right text-muted-foreground'>
+                {result.rank}
+              </td>
+              <td>
+                <ProfileLink userId={result.userId}>
+                  <MemberName user={result} />
+                </ProfileLink>
+              </td>
+              <td className='text-right font-semibold'>
+                {result.pointsScored.toFixed(2)}
+              </td>
+              {qbStreamingWeeks.map(week => {
+                const weekScore = resultWithWeekly.weeklyScores?.find(
+                  ws => ws.week === week.week,
+                );
+                const dropped = weekScore && !weekScore.countsToward;
+                return (
+                  <td
+                    key={week.id}
+                    className={cn(
+                      'text-right',
+                      dropped && 'text-muted-foreground line-through',
+                    )}
+                    title={dropped ? 'Not one of the best 12' : undefined}
+                  >
+                    {weekScore ? weekScore.score.toFixed(2) : '–'}
                   </td>
-                  <td>{result.pointsScored.toFixed(2)}</td>
-                  {qbStreamingWeeks.map(week => {
-                    const weekScore = resultWithWeekly.weeklyScores?.find(
-                      ws => ws.week === week.week,
-                    );
-                    return (
-                      <td
-                        key={week.id}
-                        className={
-                          weekScore && !weekScore.countsToward
-                            ? 'text-gray-400'
-                            : ''
-                        }
-                        title={
-                          weekScore && !weekScore.countsToward
-                            ? 'Does not count toward top 12'
-                            : ''
-                        }
-                      >
-                        {weekScore ? weekScore.score.toFixed(2) : '-'}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </Table>,
+      'Each member’s best 12 weeks. Weeks struck through do not count.',
     );
   }
 
-  // Original rendering for pre-2025 seasons
-  return (
-    <>
-      {yearPicker}
-      <h2>{displayYear} Overall Standings</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-          </tr>
-        </thead>
-        <tbody>
-          {qbStreamingResults.map(result => {
-            const currentWeekPick = currentWeekPicks.find(
-              pick => pick.userId === result.userId,
-            );
-            const standardPlayer = !currentWeekPick
-              ? 'No pick'
-              : currentWeekPick.standardPlayer.nflGame.gameStartTime <
-                new Date()
-              ? currentWeekPick.standardPlayer.player.fullName
-              : 'Pending';
-
-            const deepPlayer = !currentWeekPick
-              ? 'No pick'
-              : currentWeekPick.deepPlayer.nflGame.gameStartTime < new Date()
-              ? currentWeekPick.deepPlayer.player.fullName
-              : 'Pending';
-            return (
-              <QBStreamingStandingsRowComponent
-                key={result.userId}
-                rank={result.rank}
-                user={result}
-                pointsScored={result.pointsScored}
-                standardPlayer={standardPlayer}
-                deepPlayer={deepPlayer}
-              />
-            );
-          })}
-        </tbody>
-      </table>
-    </>
+  // Before 2025 every week counted.
+  return section(
+    <LeaderboardTable
+      entries={qbStreamingResults.map(result =>
+        qbStreamingStandingsEntry({
+          rank: result.rank,
+          user: result,
+          pointsScored: result.pointsScored,
+          pick: currentWeekPicks.find(pick => pick.userId === result.userId),
+        }),
+      )}
+      nameHeading='Member'
+      valueHeadings={['Points']}
+      emptyMessage='No scores yet this season.'
+    />,
+    'Every week counts.',
   );
 }

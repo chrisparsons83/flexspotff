@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';
@@ -86,7 +86,7 @@ export default function QBStreamingStandingsYearIndex() {
             defaultValue={
               availableSeasons.find(season => season.isCurrent)?.year
             }
-            className='form-select dark:border-0 dark:bg-slate-800'
+            className='form-select '
           >
             {availableSeasons.map(season => (
               <option value={season.year} key={season.id}>
@@ -102,11 +102,11 @@ export default function QBStreamingStandingsYearIndex() {
               navigation.state !== 'idle' || availableSeasons.length === 0
             }
           >
-            Create Cup
+            Create cup
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Year</th>

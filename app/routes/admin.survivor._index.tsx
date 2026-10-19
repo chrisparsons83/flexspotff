@@ -7,8 +7,8 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { prisma } from '~/db.server';
 import { suggestFromSleeperHandles } from '~/libs/survivor/suggest';
 import {
@@ -252,13 +252,13 @@ export default function AdminSurvivorIndex() {
 
   return (
     <div>
-      <h2>Survivor Pools</h2>
+      <h2>Survivor pools</h2>
       {actionData?.message && (
         <Alert message={actionData.message} status={actionData.status} />
       )}
 
       <section className='mb-8'>
-        <h3>Add Sleeper Pool</h3>
+        <h3>Add Sleeper pool</h3>
         <p className='text-sm'>
           Paste the pool's Sleeper league URL or its invite link. The season and
           name come from Sleeper, and an invite link is kept to show on the
@@ -271,13 +271,13 @@ export default function AdminSurvivorIndex() {
         >
           <div>
             <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper URL or Invite Link
+              Sleeper URL or invite link
             </label>
             <input
               id='sleeperUrl'
               name='sleeperUrl'
               type='text'
-              className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
+              className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/i/0NLXm3e7a1Pk5'
             />
           </div>
@@ -293,7 +293,7 @@ export default function AdminSurvivorIndex() {
       </section>
 
       <section className='mb-8'>
-        <h3>Yahoo History</h3>
+        <h3>Yahoo history</h3>
         <p className='text-sm'>
           The five Yahoo Survival Football pools from 2022 and 2023 ship with
           the site. Loading them again rewrites them from that file and keeps
@@ -317,17 +317,17 @@ export default function AdminSurvivorIndex() {
 
       {yahooAccounts.length > 0 && (
         <section className='mb-8'>
-          <h3>Unmatched Yahoo Accounts</h3>
+          <h3>Unmatched Yahoo accounts</h3>
           <p className='text-sm'>
             Matching an account gives the member every Yahoo pool it played.
             Yahoo nicknames are mostly first names, so the pick set names are
             often the better clue. A suggestion comes from a member's Sleeper
             handle turning up in one of them.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
-                <th className='text-left'>Yahoo Account</th>
+                <th className='text-left'>Yahoo account</th>
                 <th className='text-left'>Member</th>
               </tr>
             </thead>
@@ -336,10 +336,10 @@ export default function AdminSurvivorIndex() {
                 <tr key={account.yahooGuid}>
                   <td>
                     {account.nicknames.join(', ') || 'No nickname'}
-                    <div className='text-xs opacity-75'>
-                      {account.entryNames.join(' · ')}
+                    <div className='text-sm opacity-75'>
+                      {account.entryNames.join(', ')}
                     </div>
-                    <div className='text-xs opacity-60'>
+                    <div className='text-sm opacity-60'>
                       {account.pools.join(', ')}
                     </div>
                   </td>
@@ -377,13 +377,13 @@ export default function AdminSurvivorIndex() {
       {years.map(year => (
         <section key={year} className='mb-8'>
           <h3>{year}</h3>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Pool</th>
                 <th className='text-left'>Status</th>
                 <th className='text-left'>Members</th>
-                <th className='text-left'>Last Synced</th>
+                <th className='text-left'>Last synced</th>
                 <th></th>
               </tr>
             </thead>
@@ -394,20 +394,20 @@ export default function AdminSurvivorIndex() {
                   <tr key={pool.id}>
                     <td>
                       <Link to={pool.id}>{pool.name}</Link>
-                      <div className='font-mono text-xs opacity-75'>
+                      <div className='font-mono text-sm opacity-75'>
                         {pool.source === 'YAHOO' ? 'Yahoo' : 'Sleeper'}{' '}
                         {pool.externalId}
                       </div>
                     </td>
                     <td>
                       {pool.isComplete ? 'Decided' : 'Running'}
-                      <div className='text-xs opacity-75'>
+                      <div className='text-sm opacity-75'>
                         From week {pool.startWeek}
                       </div>
                     </td>
                     <td>
                       {pool.unmatchedEntries > 0 ? (
-                        <Link to={pool.id} className='text-yellow-400'>
+                        <Link to={pool.id} className='text-warning'>
                           {pool.unmatchedEntries} of {pool.entryCount} unmatched
                         </Link>
                       ) : (

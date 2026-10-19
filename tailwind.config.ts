@@ -56,14 +56,10 @@ const typeStep = (name: TypeStep): [string, string] => [
   `var(--leading-${name})`,
 ];
 
-/**
- * The seven steps keep Tailwind's names. `text-xs` points at `sm` until #195
- * moves routes off it; nothing else off the scale exists.
- */
-const fontSize = {
-  ...Object.fromEntries(TYPE_STEPS.map(name => [name, typeStep(name)])),
-  xs: typeStep('sm'),
-};
+/** The seven steps keep Tailwind's names; nothing off the scale exists. */
+const fontSize = Object.fromEntries(
+  TYPE_STEPS.map(name => [name, typeStep(name)]),
+);
 
 /** Prose at the type scale: body and tables at `base`, h1 to h4 above it. */
 const proseStep = (name: TypeStep) => {
@@ -152,25 +148,6 @@ const config: Config = {
         neutral: Object.fromEntries(
           neutralSteps.map((_, i) => [i, token(`neutral-${i}`)]),
         ),
-        // The names routes use today. They point at the tokens so existing
-        // classes pick up the new colours; #195 moves routes onto the
-        // `league-*`, `position-*` and `medal-*` names and removes these.
-        admiral: token('league-admiral'),
-        champions: token('league-champions'),
-        dragon: token('league-dragon'),
-        galaxy: token('league-galaxy'),
-        monarch: token('league-monarch'),
-        gold: token('medal-gold'),
-        silver: token('medal-silver'),
-        bronze: token('medal-bronze'),
-        // The sacko fill is too dark to read as text, so the text alias uses
-        // the text-safe colour nearest its hue.
-        brown: { DEFAULT: token('medal-sacko'), light: token('warning') },
-        qb: token('position-qb'),
-        rb: token('position-rb'),
-        wr: token('position-wr'),
-        te: token('position-te'),
-        def: token('position-def'),
         ...roleColors,
       },
       borderRadius: {

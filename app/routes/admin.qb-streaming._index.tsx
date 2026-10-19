@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { scoreQbStats } from '~/libs/qb-streaming/scoring';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { syncNflGameWeek } from '~/libs/syncs.server';
@@ -73,8 +73,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
 
-      // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      // Update NFL scores for the week, dropping any game Sleeper no longer
+      // lists for it (a game that never kicks off would block scoring)
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
@@ -133,11 +134,7 @@ export default function AdminQBStreaming() {
 
   return (
     <>
-      <h2>QB Streaming</h2>
-      <p>
-        Seasons before the site ran QB streaming can be brought in from their
-        Google Sheets on the <Link to='./import'>import page</Link>.
-      </p>
+      <h2>QB streaming</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -147,11 +144,11 @@ export default function AdminQBStreaming() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Week</th>
@@ -189,7 +186,7 @@ export default function AdminQBStreaming() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

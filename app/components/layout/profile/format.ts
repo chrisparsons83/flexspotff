@@ -21,7 +21,7 @@ export const signed = (value: number, digits = 0) =>
 /** A share from 0 to 1 as a percentage, or a dash when there is none. */
 export const pct = (value: number | null | undefined, digits = 0) =>
   value === null || value === undefined
-    ? '—'
+    ? '–'
     : `${(value * 100).toFixed(digits)}%`;
 
 export const plural = (count: number, noun: string) =>

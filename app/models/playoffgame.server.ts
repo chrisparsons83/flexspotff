@@ -34,3 +34,25 @@ export async function upsertPlayoffGame(game: PlayoffGameUpsert) {
     create: game,
   });
 }
+
+const PLAYOFF_TEAM = { include: { user: true } } as const;
+
+/**
+ * A league's playoff games in both brackets, round by round, with the teams
+ * and their managers.
+ */
+export async function getPlayoffGamesByLeague(leagueId: string) {
+  return prisma.playoffGame.findMany({
+    where: { leagueId },
+    orderBy: [{ bracket: 'asc' }, { round: 'asc' }, { matchupId: 'asc' }],
+    include: {
+      topTeam: PLAYOFF_TEAM,
+      bottomTeam: PLAYOFF_TEAM,
+      winningTeam: PLAYOFF_TEAM,
+    },
+  });
+}
+
+export async function countPlayoffGamesByLeague(leagueId: string) {
+  return prisma.playoffGame.count({ where: { leagueId } });
+}

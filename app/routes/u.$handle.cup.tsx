@@ -10,9 +10,10 @@ import StatusText from '~/components/layout/profile/StatusText';
 import { plural, pts, signed } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { SplitBar } from '~/components/ui/bars';
+import { FILLS, leagueFill } from '~/components/ui/fills';
 import { ProfileLink } from '~/components/ui/profile-link';
 import { YearFilter } from '~/components/ui/segmented-control';
-import { LeagueMark } from '~/components/ui/swatch';
+import { LeagueMark, Swatch } from '~/components/ui/swatch';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import { Truncate } from '~/components/ui/truncate';
 import { WinLoss } from '~/components/ui/win-loss';
@@ -33,7 +34,6 @@ import {
   ROUND_SHORT,
 } from '~/models/profile/cupProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
-import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -79,7 +79,7 @@ function OpponentLink({ opponent }: { opponent: CupOpponent }) {
           opponent.name
         )}
       </Truncate>{' '}
-      <span className='text-slate-400'>(#{opponent.seed})</span>
+      <span className='text-muted-foreground'>(#{opponent.seed})</span>
     </>
   );
 }
@@ -94,9 +94,12 @@ function Career({ career }: { career: CupCareer }) {
           title='Best Run'
           lead={
             career.bestRun?.depth === ROUNDS_TO_WIN ? (
-              <span className='text-gold'>🏆 Champion</span>
+              <span className='inline-flex items-center gap-1.5 font-medium'>
+                <Swatch fill='medal-gold' />
+                Champion
+              </span>
             ) : (
-              career.bestRun?.finish ?? '—'
+              career.bestRun?.finish ?? '–'
             )
           }
           leadNote={
@@ -133,12 +136,12 @@ function Career({ career }: { career: CupCareer }) {
           <MiniStat
             label='Beat Higher Seed'
             value={career.upsetsWon}
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Lost to Lower Seed'
             value={career.upsetsLost}
-            tone='text-rose-300'
+            tone='text-negative'
           />
         </CareerCard>
       </div>
@@ -154,12 +157,12 @@ function DepthMeter({ depth }: { depth: number }) {
         <div
           key={round}
           className={clsx(
-            'flex-1 first:rounded-l-full last:rounded-r-full',
+            'flex-1',
             index < depth
               ? depth >= ROUNDS_TO_WIN
-                ? 'bg-gold'
-                : 'bg-emerald-400'
-              : 'bg-slate-700',
+                ? 'bg-medal-gold'
+                : 'bg-positive/20'
+              : 'bg-secondary',
           )}
         />
       ))}
@@ -168,13 +171,13 @@ function DepthMeter({ depth }: { depth: number }) {
 }
 
 function SeedChip({ seed, leagueName }: { seed: number; leagueName: string }) {
-  const key = leagueName.toLocaleLowerCase();
+  const fill = leagueFill(leagueName);
   return (
     <span
       title={`Seed ${seed}, from ${leagueName}`}
       className={clsx(
-        'inline-block w-9 rounded px-1 py-0.5 text-center text-xs font-bold tabular-nums',
-        isLeagueName(key) ? RANK_COLORS[key] : 'bg-slate-700 text-slate-100',
+        'inline-block w-9 px-1 py-0.5 text-center text-sm font-bold tabular-nums',
+        fill ? FILLS[fill] : 'bg-secondary text-foreground',
       )}
     >
       #{seed}
@@ -189,10 +192,10 @@ function SeedChip({ seed, leagueName }: { seed: number; leagueName: string }) {
  * played a dotted one.
  */
 const PILL_TONE: Record<RoundResult['status'], string> = {
-  W: 'bg-emerald-300 text-emerald-950',
-  L: 'border border-dashed border-rose-400 bg-rose-950 text-rose-200',
-  BYE: 'border border-slate-400 text-slate-300',
-  PENDING: 'border border-dotted border-amber-300 text-amber-200',
+  W: 'bg-positive/20 text-positive',
+  L: 'border border-dashed border-destructive bg-destructive/20 text-negative',
+  BYE: 'border border-border text-foreground',
+  PENDING: 'border border-dotted border-warning text-warning',
 };
 
 const RUN_KEY: [string, string][] = [
@@ -232,7 +235,7 @@ function BracketRuns({ runs }: { runs: CupRun[] }) {
         <span className='flex flex-col items-start gap-1.5'>
           {RUN_KEY.map(([label, tone]) => (
             <span key={label} className='inline-flex items-center gap-1.5'>
-              <span className={clsx('inline-block h-3 w-4 rounded-sm', tone)} />
+              <span className={clsx('inline-block h-3 w-4', tone)} />
               {label}
             </span>
           ))}
@@ -253,9 +256,9 @@ function RunRow({ run }: { run: CupRun }) {
   const exit = run.rounds.find(result => result.status === 'L');
 
   return (
-    <li className='flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-md bg-slate-900/50 px-3 py-2'>
+    <li className='flex flex-wrap items-center gap-x-4 gap-y-1.5 bg-background/50 px-3 py-2'>
       <div className='flex items-center gap-2'>
-        <span className='w-10 text-sm font-medium tabular-nums text-slate-300'>
+        <span className='w-10 text-sm font-medium tabular-nums text-foreground'>
           {run.year}
         </span>
         <SeedChip seed={run.seed} leagueName={run.leagueName} />
@@ -270,7 +273,7 @@ function RunRow({ run }: { run: CupRun }) {
                 <span
                   title={describeRound(result)}
                   className={clsx(
-                    'flex h-6 w-8 items-center justify-center rounded text-[0.65rem] font-semibold sm:w-10 sm:text-xs',
+                    'flex h-6 w-8 items-center justify-center text-sm font-semibold sm:w-10 sm:text-sm',
                     PILL_TONE[result.status],
                   )}
                 >
@@ -280,7 +283,7 @@ function RunRow({ run }: { run: CupRun }) {
               ) : (
                 <span
                   aria-hidden='true'
-                  className='flex h-6 w-8 items-center justify-center text-slate-600 sm:w-10'
+                  className='flex h-6 w-8 items-center justify-center text-muted-foreground sm:w-10'
                 >
                   ·
                 </span>
@@ -290,7 +293,12 @@ function RunRow({ run }: { run: CupRun }) {
         })}
         {/* The slot is kept either way so every row's finish lines up. */}
         <li className='flex h-6 w-6 items-center justify-center'>
-          {run.status === 'champion' && <span title='Cup Champion'>🏆</span>}
+          {run.status === 'champion' && (
+            <span className='inline-flex items-center gap-1.5'>
+              <Swatch fill='medal-gold' />
+              Champion
+            </span>
+          )}
         </li>
       </ol>
 
@@ -299,7 +307,7 @@ function RunRow({ run }: { run: CupRun }) {
       <div className='flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:basis-0'>
         <Finish run={run} />
         {run.eliminatedBy && (
-          <span className='text-slate-400'>
+          <span className='text-muted-foreground'>
             lost to <OpponentLink opponent={run.eliminatedBy} />
             {exit && exit.points !== null && exit.opponentPoints !== null && (
               <span className='ml-2 tabular-nums'>
@@ -321,8 +329,8 @@ function Finish({ run }: { run: CupRun }) {
         run.status === 'champion'
           ? TEXT.champion
           : run.status === 'alive'
-          ? 'text-amber-200'
-          : 'text-slate-100',
+          ? 'text-warning'
+          : 'text-foreground',
       )}
     >
       {run.finish}
@@ -358,14 +366,14 @@ function SeedingHistory({
       >
         {seeding && <SeedingRow seeding={seeding} />}
         {runs.map(run => (
-          <tr key={run.year} className='border-b border-slate-700/70'>
+          <tr key={run.year} className='border-b border-border'>
             <td className='px-2 py-2'>{run.year}</td>
             <td className='px-2 py-2'>
               <LeagueMark name={run.leagueName} />
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {run.rounds[0]?.status === 'BYE' && (
-                <span className='mr-2 rounded bg-slate-600/40 px-1.5 py-0.5 text-xs font-normal text-slate-300'>
+                <span className='mr-2 bg-secondary/40 px-1.5 py-0.5 text-sm font-normal text-foreground'>
                   Bye
                 </span>
               )}
@@ -377,7 +385,7 @@ function SeedingHistory({
             <td className='px-2 py-2'>
               <Finish run={run} />
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {run.fieldSize}
             </td>
           </tr>
@@ -389,7 +397,7 @@ function SeedingHistory({
 
 function SeedingRow({ seeding }: { seeding: CupSeeding }) {
   return (
-    <tr className='border-b border-slate-700/70'>
+    <tr className='border-b border-border'>
       <td className='px-2 py-2'>{seeding.year}</td>
       <td className='px-2 py-2'>
         <LeagueMark name={seeding.leagueName} />
@@ -400,10 +408,10 @@ function SeedingRow({ seeding }: { seeding: CupSeeding }) {
       <td className='px-2 py-2 text-right tabular-nums'>
         {pts(seeding.points)}
       </td>
-      <td className='whitespace-nowrap px-2 py-2 font-medium text-amber-200'>
+      <td className='whitespace-nowrap px-2 py-2 font-medium text-warning'>
         Seeding, week {seeding.weeksPlayed} of {seeding.seedingWeeks}
       </td>
-      <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+      <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
         {seeding.fieldSize}
       </td>
     </tr>
@@ -413,7 +421,7 @@ function SeedingRow({ seeding }: { seeding: CupSeeding }) {
 const RESULT_TONE: Record<RoundResult['status'], string> = {
   W: TEXT.good,
   L: TEXT.bad,
-  BYE: 'text-slate-400',
+  BYE: 'text-muted-foreground',
   PENDING: TEXT.live,
 };
 
@@ -453,13 +461,13 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
                 key={`${game.year}-${game.round}`}
                 title={
                   game.status === 'BYE' ? (
-                    <span className='text-slate-400'>Bye</span>
+                    <span className='text-muted-foreground'>Bye</span>
                   ) : game.opponent ? (
                     <>
                       vs <OpponentLink opponent={game.opponent} />
                     </>
                   ) : (
-                    <span className='text-slate-400'>To be decided</span>
+                    <span className='text-muted-foreground'>To be decided</span>
                   )
                 }
                 subtitle={`${year === 'all' ? `${game.year} ` : ''}${
@@ -488,45 +496,45 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
           return (
             <tr
               key={`${game.year}-${game.round}`}
-              className='border-b border-slate-700/70'
+              className='border-b border-border'
             >
               <td className='px-2 py-2'>{game.year}</td>
               <td className='whitespace-nowrap px-2 py-2'>
                 {ROUND_LABEL[game.round]}
                 {game.weeks > 1 && game.status !== 'BYE' && (
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {game.weeks} weeks
                   </span>
                 )}
               </td>
               <td className='px-2 py-2'>
                 {game.status === 'BYE' ? (
-                  <span className='text-slate-400'>Bye</span>
+                  <span className='text-muted-foreground'>Bye</span>
                 ) : game.opponent ? (
                   <OpponentLink opponent={game.opponent} />
                 ) : (
-                  <span className='text-slate-400'>To be decided</span>
+                  <span className='text-muted-foreground'>To be decided</span>
                 )}
               </td>
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {game.status === 'BYE'
-                  ? '—'
+                  ? '–'
                   : `${pts(game.points)} – ${pts(game.opponentPoints)}`}
               </td>
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
                   margin === null
-                    ? 'text-slate-400'
+                    ? 'text-muted-foreground'
                     : margin > 0
                     ? TEXT.good
                     : margin < 0
                     ? TEXT.bad
-                    : 'text-slate-300',
+                    : 'text-foreground',
                 )}
               >
                 {margin === null || game.status === 'BYE'
-                  ? '—'
+                  ? '–'
                   : signed(margin, 2)}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>

@@ -7,7 +7,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { createOmniPlayer } from '~/models/omniplayer.server';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';
@@ -125,7 +125,7 @@ export default function AddOmniPlayerPage() {
 
   return (
     <div>
-      <h2>Add Omni Player</h2>
+      <h2>Add Omni player</h2>
       {actionData &&
         'successMessage' in actionData &&
         actionData.successMessage && (
@@ -143,9 +143,9 @@ export default function AddOmniPlayerPage() {
         <div>
           <label
             htmlFor='displayName'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+            className='block text-sm font-medium text-muted-foreground '
           >
-            Display Name
+            Display name
           </label>
           <input
             type='text'
@@ -153,7 +153,7 @@ export default function AddOmniPlayerPage() {
             id='displayName'
             ref={displayNameInputRef}
             required
-            className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
+            className='mt-1 block w-full border-border focus:border-primary focus:ring-primary sm:text-sm'
             aria-describedby='displayName-error'
           />
           {actionData &&
@@ -161,7 +161,7 @@ export default function AddOmniPlayerPage() {
             actionData.errors &&
             'displayName' in actionData.errors &&
             actionData.errors.displayName && (
-              <p className='mt-2 text-sm text-red-600' id='displayName-error'>
+              <p className='mt-2 text-sm text-negative' id='displayName-error'>
                 {actionData.errors.displayName}
               </p>
             )}
@@ -170,14 +170,14 @@ export default function AddOmniPlayerPage() {
         <div>
           <label
             htmlFor='sportId'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+            className='block text-sm font-medium text-muted-foreground '
           >
             Sport
           </label>
           <select
             id='sportId'
             name='sportId'
-            className='mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
+            className='mt-1 block w-full border-border py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm'
             aria-describedby='sportId-error'
           >
             <option value=''>Select Sport</option>
@@ -192,7 +192,7 @@ export default function AddOmniPlayerPage() {
             actionData.errors &&
             'sportId' in actionData.errors &&
             actionData.errors.sportId && (
-              <p className='mt-2 text-sm text-red-600' id='sportId-error'>
+              <p className='mt-2 text-sm text-negative' id='sportId-error'>
                 {actionData.errors.sportId}
               </p>
             )}
@@ -201,14 +201,14 @@ export default function AddOmniPlayerPage() {
         <div>
           <label
             htmlFor='seasonId'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+            className='block text-sm font-medium text-muted-foreground '
           >
-            Omni Season
+            Omni season
           </label>
           <select
             id='seasonId'
             name='seasonId'
-            className='mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
+            className='mt-1 block w-full border-border py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm'
             aria-describedby='seasonId-error'
           >
             <option value=''>Select Omni Season</option>
@@ -223,7 +223,7 @@ export default function AddOmniPlayerPage() {
             actionData.errors &&
             'seasonId' in actionData.errors &&
             actionData.errors.seasonId && (
-              <p className='mt-2 text-sm text-red-600' id='seasonId-error'>
+              <p className='mt-2 text-sm text-negative' id='seasonId-error'>
                 {actionData.errors.seasonId}
               </p>
             )}
@@ -232,9 +232,9 @@ export default function AddOmniPlayerPage() {
         <div>
           <label
             htmlFor='relativeSort'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
+            className='block text-sm font-medium text-muted-foreground '
           >
-            Relative Sort
+            Relative sort
           </label>
           <input
             type='number'
@@ -242,7 +242,7 @@ export default function AddOmniPlayerPage() {
             id='relativeSort'
             required
             defaultValue={99}
-            className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
+            className='mt-1 block w-full border-border focus:border-primary focus:ring-primary sm:text-sm'
             aria-describedby='relativeSort-error'
           />
           {actionData &&
@@ -250,7 +250,7 @@ export default function AddOmniPlayerPage() {
             actionData.errors &&
             'relativeSort' in actionData.errors &&
             actionData.errors.relativeSort && (
-              <p className='mt-2 text-sm text-red-600' id='relativeSort-error'>
+              <p className='mt-2 text-sm text-negative' id='relativeSort-error'>
                 {actionData.errors.relativeSort}
               </p>
             )}

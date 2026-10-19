@@ -10,7 +10,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
@@ -186,15 +186,15 @@ const AdminOmniScoring = () => {
 
   return (
     <div>
-      <h2>Adjust Qualifying Points</h2>
+      <h2>Adjust qualifying points</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' ref={formRef} preventScrollReset={true}>
-        <h3>Choose Sport</h3>
+        <h3>Choose sport</h3>
         <p>Note: only the sport selected here will have its data updated.</p>
         <div>
           <select
             name='sportId'
-            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
+            className='form-select mt-1 block w-full '
             onChange={handleSportChange}
           >
             <option value=''>Choose sport...</option>
@@ -209,7 +209,7 @@ const AdminOmniScoring = () => {
           <div>
             <select
               name='sportEventId'
-              className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='form-select mt-1 block w-full '
               onChange={handleSportEventChange}
             >
               <option value=''>Choose event...</option>
@@ -225,12 +225,12 @@ const AdminOmniScoring = () => {
         )}
         {activeSportEvent !== '' && (
           <>
-            <h3>Active Players</h3>
+            <h3>Active players</h3>
             <div className='mb-4'>
               <Button
                 type='button'
                 onClick={toggleAllCheckboxes}
-                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
+                variant='secondary'
               >
                 {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
               </Button>
@@ -239,9 +239,9 @@ const AdminOmniScoring = () => {
               <thead>
                 <tr className='text-left'>
                   <th className='not-prose px-4'>Player</th>
-                  <th>Current Points</th>
-                  <th>Points to Add</th>
-                  <th className='px-4'>Player Eliminated</th>
+                  <th>Current points</th>
+                  <th>Points to add</th>
+                  <th className='px-4'>Player eliminated</th>
                 </tr>
               </thead>
               <tbody className='align-middle'>
@@ -271,7 +271,7 @@ const AdminOmniScoring = () => {
                       <tr
                         key={player.id}
                         className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+                          index % 2 === 0 ? 'bg-background' : 'bg-card',
                           'p-2',
                         )}
                       >
@@ -282,7 +282,7 @@ const AdminOmniScoring = () => {
                         <td>
                           <input
                             name={`${player.id}--pointsAdded`}
-                            className='form-input block w-full dark:border-0 dark:bg-slate-600'
+                            className='form-input block w-full '
                           />
                         </td>
                         <td>
@@ -299,15 +299,15 @@ const AdminOmniScoring = () => {
             </table>
             <div className='pt-4'>
               <Button type='submit' name='_action' value='updatePoints'>
-                Update Scores
+                Update scores
               </Button>
             </div>
-            <h3>Completed Players</h3>
+            <h3>Completed players</h3>
             <table>
               <thead>
                 <tr>
                   <th className='not-prose px-4 text-left'>Player</th>
-                  <th>Total Points</th>
+                  <th>Total points</th>
                 </tr>
               </thead>
               <tbody>
@@ -336,7 +336,7 @@ const AdminOmniScoring = () => {
                       <tr
                         key={player.id}
                         className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
+                          index % 2 === 0 ? 'bg-background' : 'bg-card',
                           'p-2',
                         )}
                       >

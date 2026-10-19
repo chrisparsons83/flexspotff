@@ -1,25 +1,28 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
+import { EmptyState } from '~/components/ui/empty-state';
+import { Section } from '~/components/ui/section';
+import { PositionMark } from '~/components/ui/swatch';
+import { Table } from '~/components/ui/table';
 import { getAverageDraftPositionByYear } from '~/models/draftpick.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
-import { FIRST_YEAR, POSITION_RANK_COLORS } from '~/utils/constants';
+import { yearOptions } from '~/utils/years';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const yearParam = params['*'];
   const year = !yearParam ? currentSeason.year : Number.parseInt(yearParam);
 
   if (isNaN(year)) {
-    throw new Error('Invalid year parameter');
+    throw new Response('Season not found', { status: 404 });
   }
 
   const leagueCount = (await getLeaguesByYear(year)).filter(
@@ -56,74 +59,53 @@ export default function ADP() {
   const { adp, playersMap, year, maxYear } =
     useTypedLoaderData<typeof loader>();
 
-  const yearArray = Array.from(
-    { length: maxYear - FIRST_YEAR + 1 },
-    (_, i) => FIRST_YEAR + i,
-  )
-    .reverse()
-    .map(yearNumber => ({
-      label: `${yearNumber}`,
-      url: `/leagues/adp/${yearNumber}`,
-    }));
-
   return (
-    <div>
-      <h2>{year} Server ADP</h2>
-      <div className='float-right mb-4'>
-        <GoBox options={yearArray} buttonText='Choose Year' />
-      </div>
+    <Section
+      title={`${year} server ADP`}
+      description='Average draft position across every league that has drafted. A player one league left undrafted counts as pick 181 there.'
+      action={
+        <GoBox
+          options={yearOptions(maxYear, y => `/leagues/adp/${y}`)}
+          buttonText='Season'
+        />
+      }
+    >
       {adp.length === 0 ? (
-        <div>To be loaded once leagues have started drafting.</div>
+        <EmptyState title='No drafts yet'>
+          ADP fills in once leagues have started drafting.
+        </EmptyState>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Player</th>
-              <th>Position</th>
-              <th>ADP</th>
-              <th>Min</th>
-              <th>Max</th>
-            </tr>
-          </thead>
-          <tbody>
-            {adp.map((adpPlayer, index) => {
-              const playerInfo = playersMap.get(adpPlayer.playerId);
-              return (
-                <tr
-                  key={adpPlayer.playerId}
-                  className={clsx(
-                    index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-                    'p-2',
-                  )}
-                >
-                  <td className='pl-1'>
-                    <div
-                      className={clsx(
-                        POSITION_RANK_COLORS[
-                          playerInfo?.position?.toLowerCase() ?? ''
-                        ],
-                        'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
-                      )}
-                    >
-                      {index + 1}
-                    </div>
-                  </td>
-                  <td>{playerInfo?.fullName}</td>
-                  <td>{playerInfo?.position}</td>
-                  <td>{adpPlayer._avg.pickNumber?.toFixed(1)}</td>
-                  <td>{adpPlayer._min.pickNumber}</td>
-                  <td>
-                    {adpPlayer._max.pickNumber === 181
-                      ? 'UD'
-                      : adpPlayer._max.pickNumber}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <Table
+          headers={['Rank', 'Player', 'Position', 'ADP', 'Min', 'Max']}
+          numericColumns={[0, 3, 4, 5]}
+          primaryColumns={[1, 3]}
+          stickyHeader
+        >
+          {adp.map((adpPlayer, index) => {
+            const playerInfo = playersMap.get(adpPlayer.playerId);
+            return (
+              <tr key={adpPlayer.playerId}>
+                <td className='text-right text-muted-foreground'>
+                  {index + 1}
+                </td>
+                <td>{playerInfo?.fullName}</td>
+                <td>
+                  <PositionMark position={playerInfo?.position ?? null} />
+                </td>
+                <td className='text-right'>
+                  {adpPlayer._avg.pickNumber?.toFixed(1)}
+                </td>
+                <td className='text-right'>{adpPlayer._min.pickNumber}</td>
+                <td className='text-right'>
+                  {adpPlayer._max.pickNumber === 181
+                    ? 'Undrafted'
+                    : adpPlayer._max.pickNumber}
+                </td>
+              </tr>
+            );
+          })}
+        </Table>
       )}
-    </div>
+    </Section>
   );
 }

@@ -1,10 +1,11 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Outlet } from '@remix-run/react';
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return {};
-};
+import GameHeader from '~/components/layout/games/GameHeader';
 
 export default function QBStreaming() {
-  return <Outlet />;
+  return (
+    <>
+      <GameHeader title='QB streaming' tabs={{ base: '/games/qb-streaming' }} />
+      <Outlet />
+    </>
+  );
 }

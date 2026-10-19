@@ -7,8 +7,8 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import { suggestFromSleeperHandles } from '~/libs/survivor/suggest';
 import { syncSleeperSurvivorPool } from '~/libs/survivor/sync.server';
 import {
@@ -281,7 +281,7 @@ export default function AdminSurvivorPool() {
               value='syncPool'
               disabled={isSubmitting}
             >
-              Resync From Sleeper
+              Resync from Sleeper
             </Button>
           </Form>
           <Form
@@ -291,14 +291,14 @@ export default function AdminSurvivorPool() {
           >
             <div>
               <label htmlFor='inviteUrl' className='block text-sm'>
-                Invite Link
+                Invite link
               </label>
               <input
                 id='inviteUrl'
                 name='inviteUrl'
                 type='text'
                 defaultValue={pool.inviteUrl ?? ''}
-                className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
+                className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
                 placeholder='https://sleeper.com/i/…'
               />
             </div>
@@ -311,7 +311,7 @@ export default function AdminSurvivorPool() {
               Save
             </Button>
           </Form>
-          <p className='text-xs opacity-75'>
+          <p className='text-sm opacity-75'>
             Shown on the Survivor page while the pool is still running. Leave it
             empty to hide it.
           </p>
@@ -320,14 +320,14 @@ export default function AdminSurvivorPool() {
 
       {unmatched.length > 0 && (
         <section className='mb-8'>
-          <h3>Unmatched Entries</h3>
+          <h3>Unmatched entries</h3>
           <p className='text-sm'>
             Matching a {isYahoo ? 'Yahoo' : 'Sleeper'} account here links it
             everywhere on the site, not just in this pool. An entry with no
             account (its owner left, or Yahoo closed the account) is assigned to
             a member for this pool only.
           </p>
-          <table className='w-full'>
+          <table>
             <thead>
               <tr>
                 <th className='text-left'>Entry</th>
@@ -340,11 +340,11 @@ export default function AdminSurvivorPool() {
                   <td>
                     {entry.displayName ?? 'Unknown'}
                     {entry.entryName && (
-                      <div className='text-xs opacity-75'>
+                      <div className='text-sm opacity-75'>
                         {entry.entryName}
                       </div>
                     )}
-                    <div className='font-mono text-xs opacity-60'>
+                    <div className='font-mono text-sm opacity-60'>
                       {entry.sleeperOwnerId ?? entry.yahooGuid ?? 'No account'}
                     </div>
                   </td>
@@ -397,7 +397,7 @@ export default function AdminSurvivorPool() {
 
       <section>
         <h3>Entries</h3>
-        <table className='w-full'>
+        <table>
           <thead>
             <tr>
               <th className='text-left'>Place</th>
@@ -415,7 +415,7 @@ export default function AdminSurvivorPool() {
                     : entry.finish
                     ? entry.finish
                     : entry.eliminatedWeek
-                    ? '—'
+                    ? '–'
                     : 'Alive'}
                 </td>
                 <td>
@@ -423,7 +423,7 @@ export default function AdminSurvivorPool() {
                   {entry.member &&
                     entry.displayName &&
                     entry.displayName !== entry.member.discordName && (
-                      <div className='text-xs opacity-75'>
+                      <div className='text-sm opacity-75'>
                         {entry.displayName} on {isYahoo ? 'Yahoo' : 'Sleeper'}
                       </div>
                     )}
@@ -432,7 +432,7 @@ export default function AdminSurvivorPool() {
                     !entry.yahooGuid && (
                       <Form
                         method='POST'
-                        className='not-prose flex items-center gap-2 text-xs opacity-75'
+                        className='not-prose flex items-center gap-2 text-sm opacity-75'
                       >
                         Assigned by hand
                         <input type='hidden' name='entryId' value={entry.id} />
@@ -449,7 +449,7 @@ export default function AdminSurvivorPool() {
                     )}
                 </td>
                 <td>
-                  {entry.eliminatedWeek ? `Week ${entry.eliminatedWeek}` : '—'}
+                  {entry.eliminatedWeek ? `Week ${entry.eliminatedWeek}` : '–'}
                 </td>
                 <td>{entry.picks}</td>
               </tr>

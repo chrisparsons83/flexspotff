@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
 import {
@@ -76,8 +76,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const locksWeek = await getLocksWeekByYearAndWeek(+year, +weekNumber);
       if (!locksWeek) throw new Error(`There's no locks week here`);
 
-      // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      // Update NFL scores for the week, dropping any game Sleeper no longer
+      // lists for it so its picks are never scored
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
@@ -172,7 +173,7 @@ export default function SpreadLocksList() {
 
   return (
     <div>
-      <h2>Locks Challenge Lines by Week</h2>
+      <h2>Locks challenge lines by week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -182,17 +183,17 @@ export default function SpreadLocksList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Week</th>
             <th>Published?</th>
             <th>Scored?</th>
-            <th>Publish Week?</th>
+            <th>Publish week?</th>
             <th>Score</th>
           </tr>
         </thead>
@@ -216,7 +217,7 @@ export default function SpreadLocksList() {
                     value='publishWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Publish Week
+                    Publish week
                   </Button>
                 </Form>
               </td>
@@ -234,7 +235,7 @@ export default function SpreadLocksList() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

@@ -1,7 +1,7 @@
-import { LockClosedIcon } from '@heroicons/react/outline';
-import clsx from 'clsx';
+import { LockClosedIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import MemberName from '~/components/ui/MemberName';
+import { LeagueMark } from '~/components/ui/swatch';
 import type { League } from '~/models/league.server';
 import type { Team, getTeamsInSeason } from '~/models/team.server';
 
@@ -39,38 +39,40 @@ export default function FSquaredEntryFormSection({
   };
 
   return (
-    <div>
-      <h3 className='flex gap-2'>
-        {leagueName}
-        {leagueLocked && <LockClosedIcon width={32} height={32} />}
-      </h3>
-      {teams.map((team, index) => (
-        <div
-          key={team.id}
-          className={clsx(
-            index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-            'p-2',
-          )}
-        >
-          <label className='block'>
-            <input
-              type='checkbox'
-              name={leagueName}
-              value={team.id}
-              onChange={handleChangeCheck}
-              disabled={
-                leagueLocked ||
-                (selected.length === 2 && !selected.includes(team.id))
-              }
-              className='disabled:opacity-25'
-              defaultChecked={
-                existingPicks ? existingPicks.includes(team.id) : false
-              }
-            />{' '}
-            {team.user ? <MemberName user={team.user} /> : 'N/A'}
-          </label>
-        </div>
-      ))}
-    </div>
+    <fieldset className='bg-card'>
+      <legend className='sr-only'>{leagueName}</legend>
+      <div className='flex items-center justify-between gap-2 bg-secondary px-5 py-3 font-bold text-secondary-foreground'>
+        <LeagueMark name={leagueName} />
+        {leagueLocked && (
+          <span className='inline-flex items-center gap-1 text-sm font-normal text-muted-foreground'>
+            <LockClosedIcon aria-hidden />
+            Drafted
+          </span>
+        )}
+      </div>
+      <ul className='divide-y divide-border'>
+        {teams.map(team => (
+          <li key={team.id}>
+            <label className='flex items-center gap-3 px-5 py-2'>
+              <input
+                type='checkbox'
+                name={leagueName}
+                value={team.id}
+                onChange={handleChangeCheck}
+                disabled={
+                  leagueLocked ||
+                  (selected.length === 2 && !selected.includes(team.id))
+                }
+                className='size-4 accent-[oklch(var(--primary))] disabled:opacity-50'
+                defaultChecked={
+                  existingPicks ? existingPicks.includes(team.id) : false
+                }
+              />
+              {team.user ? <MemberName user={team.user} /> : 'Unclaimed team'}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </fieldset>
   );
 }

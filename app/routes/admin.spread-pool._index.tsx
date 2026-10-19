@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import {
@@ -73,8 +73,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
       if (!poolWeek) throw new Error(`There's no pool week here`);
 
+      // Read who bet before the sync below, which drops picks on games that
+      // are no longer in this week. A bet on one of those still counts as
+      // having entered the week, so it can't earn a missed-week penalty.
+      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
+
       // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber]);
+      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
 
       // Check if all NFL games for the week are completed
       const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
@@ -85,7 +90,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       // Add people that did not put in a bet to penalties
-      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
       const userIdsThatBet = [
         ...new Set(
           poolGamePicks
@@ -146,7 +150,7 @@ export default function SpreadPoolList() {
 
   return (
     <div>
-      <h2>Spread Pool Lines by Week</h2>
+      <h2>Spread pool lines by week</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST'>
         <div>
@@ -156,11 +160,11 @@ export default function SpreadPoolList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create Next Week
+            Create next week
           </Button>
         </div>
       </Form>
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Week</th>
@@ -195,7 +199,7 @@ export default function SpreadPoolList() {
                     value='scoreWeek'
                     disabled={navigation.state !== 'idle'}
                   >
-                    Score Week
+                    Score week
                   </Button>
                 </Form>
               </td>

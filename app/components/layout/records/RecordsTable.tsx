@@ -1,7 +1,7 @@
-import clsx from 'clsx';
 import { ProfileLink } from '~/components/ui/profile-link';
+import { LeagueMark } from '~/components/ui/swatch';
+import { Table } from '~/components/ui/table';
 import type { RecordRow } from '~/models/records.server';
-import { isLeagueName, RANK_COLORS } from '~/utils/constants';
 
 type Props = {
   title: string;
@@ -10,51 +10,28 @@ type Props = {
 };
 
 export default function RecordsTable({ title, headers, rows }: Props) {
+  const league = headers.indexOf('League');
+
   return (
-    <section className='mb-8'>
-      <h3>{title}</h3>
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            {headers.map((header, i) => (
-              <th key={i}>{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr
-              key={index}
-              className={clsx(index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800')}
-            >
-              <td className='px-2'>
-                <div
-                  className={clsx(
-                    isLeagueName(row.leagueName ?? '')
-                      ? RANK_COLORS[row.leagueName as keyof typeof RANK_COLORS]
-                      : 'bg-gray-700 text-gray-200',
-                    'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
-                  )}
-                >
-                  {index + 1}
-                </div>
-              </td>
-              {row.cells.map((cell, i) => (
-                <td key={i}>
-                  {/* The first cell is always the player. Rows that aggregate
-                      several members carry no id and stay plain text. */}
-                  {i === 0 && row.playerUserId ? (
-                    <ProfileLink userId={row.playerUserId}>{cell}</ProfileLink>
-                  ) : (
-                    cell
-                  )}
-                </td>
-              ))}
-            </tr>
+    <Table headers={['Rank', ...headers]} numericColumns={[0]} caption={title}>
+      {rows.map((row, index) => (
+        <tr key={index}>
+          <td className='text-right text-muted-foreground'>{index + 1}</td>
+          {row.cells.map((cell, i) => (
+            <td key={i}>
+              {/* The first cell is always the player. Rows that aggregate
+                  several members carry no id and stay plain text. */}
+              {i === 0 && row.playerUserId ? (
+                <ProfileLink userId={row.playerUserId}>{cell}</ProfileLink>
+              ) : i === league && cell ? (
+                <LeagueMark name={String(cell)} />
+              ) : (
+                cell
+              )}
+            </td>
           ))}
-        </tbody>
-      </table>
-    </section>
+        </tr>
+      ))}
+    </Table>
   );
 }

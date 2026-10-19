@@ -28,7 +28,7 @@ changes (#195) start once it is agreed.
 | Right    | Account menu |                 | Signed in: Dashboard, Profile, Admin (admins), Log out |
 | Right    | Log in       | `/login`        | Signed out, in place of the account menu               |
 
-The theme toggle joins the right side when light mode opens up (#197).
+The theme toggle (System, Dark, Light) sits on the right side.
 
 On mobile, the three sections and the account items collapse into one menu
 button. The menu lists the three sections first, then the account items.
@@ -55,7 +55,6 @@ the section's landing page.
 - `/badges`: members only, linked from every profile, as today.
 - `/in-a-dingy-corner-of-the-internet-is-a-message-board`: an old meme page,
   kept where it is and unlinked.
-- `/design/*`: development only, removed when #195 finishes.
 
 ## Leagues
 
@@ -248,7 +247,7 @@ confirmed against what the data can tell us:
 | This week      | Admin home, Spread pool weeks, QB streaming weeks, Locks challenge, DFS survivor, Waiver reports       |
 | Season setup   | Seasons, Registration list, Draft slots, Leagues, Cups, D12, Guillotine, Autodraft BBM, Survivor pools |
 | Members        | Members, Unmatched Sleeper users, Merge duplicates, Add members                                        |
-| Syncs and data | Syncing, Scheduler, F² history import, QB streaming import, Bot commands                               |
+| Syncs and data | Syncing, Scheduler, F² history import, Bot commands                                                    |
 | Archive        | Omni scoring, Omni qualifying points, Omni players, Podcasts                                           |
 
 Every admin route is in the appendix with its group.
@@ -327,7 +326,6 @@ and `/me`.
 | `/login`, `/logout`, `/auth/:provider/*`                | Anyone  | Unchanged                                                           |
 | `/resources/theme`                                      | Anyone  | Unchanged (theme toggle action)                                     |
 | `/api/sync-week-scores`, `/healthcheck`                 | Machine | Unchanged                                                           |
-| `/design/*`                                             | Dev     | Removed after #195                                                  |
 
 ### Admin
 
@@ -355,7 +353,6 @@ and `/me`.
 | `/admin/data`                             | Syncs and data |
 | `/admin/scheduler`                        | Syncs and data |
 | `/admin/f-squared/import`                 | Syncs and data |
-| `/admin/qb-streaming/import`              | Syncs and data |
 | `/admin/bot`                              | Syncs and data |
 | `/admin/omni/scoring`                     | Archive        |
 | `/admin/omni/qualifying-points`           | Archive        |

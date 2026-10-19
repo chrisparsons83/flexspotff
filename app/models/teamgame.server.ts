@@ -1,5 +1,6 @@
 import type { League, TeamGame } from '@prisma/client';
 import { prisma } from '~/db.server';
+import { regularSeasonWeeks } from '~/utils/seasonStructure';
 
 export type { TeamGame } from '@prisma/client';
 
@@ -121,6 +122,35 @@ export async function getTeamGamesByYearAndWeek(
   });
 }
 
+/** One league's games in a week, with the teams and their starters. */
+export async function getTeamGamesByLeagueAndWeek(
+  leagueId: League['id'],
+  week: TeamGame['week'],
+) {
+  return prisma.teamGame.findMany({
+    where: { week, team: { leagueId } },
+    orderBy: [{ sleeperMatchupId: 'asc' }, { pointsScored: 'desc' }],
+    include: {
+      team: { include: { user: true } },
+      startingPlayers: true,
+    },
+  });
+}
+
+/**
+ * The weeks a league has scores for, in order. Rows for a week exist from
+ * the moment it opens, so a week counts once anyone in it has scored.
+ */
+export async function getTeamGameWeeksByLeague(leagueId: League['id']) {
+  const weeks = await prisma.teamGame.findMany({
+    where: { team: { leagueId }, pointsScored: { gt: 0 } },
+    distinct: ['week'],
+    select: { week: true },
+    orderBy: { week: 'asc' },
+  });
+  return weeks.map(({ week }) => week);
+}
+
 export async function upsertTeamGame(teamGame: TeamGameUpsert) {
   if (teamGame.id) {
     return prisma.teamGame.update({
@@ -167,4 +197,39 @@ export async function updateTeamGame(teamGame: Partial<TeamGame>) {
       },
     },
   });
+}
+
+/**
+ * Re-marks a league's games as regular season or postseason from its current
+ * playoff start week.
+ *
+ * `isRegularSeason` is written when a game is synced, from whatever boundary
+ * the league had then. A league whose `playoffWeekStart` is synced or changed
+ * afterwards would otherwise keep games filed on the wrong side of it, and
+ * every page reading the column would disagree with the ones that work the
+ * boundary out.
+ */
+export async function reclassifyRegularSeasonGames(
+  league: Pick<League, 'id' | 'year' | 'playoffWeekStart'>,
+) {
+  const firstPostseasonWeek = regularSeasonWeeks(league) + 1;
+
+  return prisma.$transaction([
+    prisma.teamGame.updateMany({
+      where: {
+        team: { leagueId: league.id },
+        week: { lt: firstPostseasonWeek },
+        isRegularSeason: false,
+      },
+      data: { isRegularSeason: true },
+    }),
+    prisma.teamGame.updateMany({
+      where: {
+        team: { leagueId: league.id },
+        week: { gte: firstPostseasonWeek },
+        isRegularSeason: true,
+      },
+      data: { isRegularSeason: false },
+    }),
+  ]);
 }

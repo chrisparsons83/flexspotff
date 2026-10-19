@@ -68,7 +68,6 @@ const groups: {
       { label: 'Syncing', to: '/admin/data' },
       { label: 'Scheduler', to: '/admin/scheduler' },
       { label: 'F² history import', to: '/admin/f-squared/import' },
-      { label: 'QB streaming import', to: '/admin/qb-streaming/import' },
       { label: 'Bot commands', to: '/admin/bot' },
     ],
   },
@@ -113,6 +112,30 @@ const currentLink = (groups: AdminNavGroup[], pathname: string) =>
     .flatMap(group => group.items.map(item => item.to))
     .filter(to => pathname === to || pathname.startsWith(`${to}/`))
     .sort((a, b) => b.length - a.length)[0];
+
+/**
+ * Admin's pages are working tools, written as plain headings, paragraphs,
+ * tables and form fields. This sets those bare elements in the same type,
+ * rules and control edges as the library's Table and Input, so a page reads
+ * like the rest of the site before it is moved onto the components. Only
+ * bare elements: anything the library draws has its own classes and wins.
+ */
+const ADMIN_CONTENT = cn(
+  '[&_h2:not([class])]:mb-6 [&_h2:not([class])]:text-2xl [&_h2:not([class])]:font-extrabold [&_h2:not([class])]:tracking-tight',
+  '[&_h3:not([class])]:mb-3 [&_h3:not([class])]:mt-10 [&_h3:not([class])]:text-xl [&_h3:not([class])]:font-bold',
+  '[&_h4:not([class])]:mb-2 [&_h4:not([class])]:mt-6 [&_h4:not([class])]:font-bold',
+  '[&_p:not([class])]:mb-3 [&_p:not([class])]:max-w-prose',
+  '[&_table:not([class])]:mb-6 [&_table:not([class])]:block [&_table:not([class])]:max-w-full [&_table:not([class])]:overflow-x-auto lg:[&_table:not([class])]:table [&_table:not([class])]:w-full [&_table:not([class])]:text-left [&_table:not([class])]:tabular-nums',
+  '[&_th]:px-3 [&_th]:py-2.5 [&_th]:text-sm [&_th]:font-semibold [&_th]:text-muted-foreground',
+  '[&_td]:px-3 [&_td]:py-2.5 [&_thead_tr]:border-b [&_thead_tr]:border-border [&_tbody_tr]:border-b [&_tbody_tr]:border-border',
+  '[&_input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file])]:h-10 [&_input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file])]:px-3',
+  '[&_input:not([type=checkbox]):not([type=radio])]:border [&_input:not([type=checkbox]):not([type=radio])]:border-input [&_input:not([type=checkbox]):not([type=radio])]:bg-background',
+  '[&_select]:h-10 [&_select]:border [&_select]:border-input [&_select]:bg-background [&_select]:px-3',
+  '[&_textarea]:border [&_textarea]:border-input [&_textarea]:bg-background [&_textarea]:px-3 [&_textarea]:py-2',
+  '[&_input[type=checkbox]]:size-4 [&_input[type=checkbox]]:accent-[oklch(var(--primary))] [&_input[type=radio]]:accent-[oklch(var(--primary))]',
+  '[&_label]:font-semibold',
+  '[&_a:not([class])]:text-brand [&_a:not([class])]:underline [&_a:not([class])]:underline-offset-4',
+);
 
 type Props = {
   groups: AdminNavGroup[];
@@ -174,7 +197,9 @@ export function AdminShell({ groups, children }: Props) {
         </Collapsible>
       </div>
       <aside className='hidden lg:col-span-3 lg:block'>{nav}</aside>
-      <div className='col-span-12 min-w-0 lg:col-span-9'>{children}</div>
+      <div className={cn('col-span-12 min-w-0 lg:col-span-9', ADMIN_CONTENT)}>
+        {children}
+      </div>
     </div>
   );
 }

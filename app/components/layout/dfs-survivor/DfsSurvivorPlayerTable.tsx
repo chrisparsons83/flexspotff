@@ -47,11 +47,11 @@ function FilterToggle({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={clsx(
-        'rounded-md border px-2 py-1 text-xs transition-colors',
+        'border px-2 py-1 text-sm transition-colors',
         className,
         checked
-          ? 'border-blue-400 bg-blue-900/70 text-white'
-          : 'border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500',
+          ? 'border-primary-edge bg-primary text-primary-foreground'
+          : 'border-border bg-card text-muted-foreground hover:bg-secondary',
       )}
     >
       {children}
@@ -145,8 +145,8 @@ export default function DfsSurvivorPlayerTable({
   };
 
   return (
-    <section className='overflow-hidden rounded-md border border-slate-700 bg-slate-800/40'>
-      <header className='flex flex-col gap-2 border-b border-slate-700 px-2 py-2 sm:h-12 sm:flex-row sm:items-center sm:py-0'>
+    <section className='overflow-hidden border border-border bg-card'>
+      <header className='flex flex-col gap-2 border-b border-border px-2 py-2 sm:h-12 sm:flex-row sm:items-center sm:py-0'>
         <label className='min-w-0 sm:flex-1'>
           <span className='sr-only'>Search players</span>
           <input
@@ -155,7 +155,7 @@ export default function DfsSurvivorPlayerTable({
             onChange={event => setSearch(event.target.value)}
             placeholder={`Search ${eligiblePositions.join('/')}\u2026`}
             data-testid='player-search'
-            className='w-full rounded-md border border-slate-600 bg-slate-900/60 px-2 py-1 text-sm placeholder:text-slate-500 focus:border-blue-400 focus:outline-none sm:max-w-xs'
+            className='w-full border border-border bg-background px-2 py-1 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:max-w-xs'
           />
         </label>
         <div className='flex gap-2 sm:ml-auto'>
@@ -180,7 +180,7 @@ export default function DfsSurvivorPlayerTable({
           seven rows, and scrollable on both axes on narrow screens. */}
       <div className='max-h-[calc(100vh-17rem)] min-h-[20rem] overflow-auto'>
         <table className='w-full border-collapse text-sm'>
-          <thead className='sticky top-0 z-10 bg-slate-900/95 backdrop-blur'>
+          <thead className='sticky top-0 z-10 bg-background'>
             <tr>
               {COLUMNS.map(column => (
                 <th
@@ -194,7 +194,7 @@ export default function DfsSurvivorPlayerTable({
                       : 'none'
                   }
                   className={clsx(
-                    'whitespace-nowrap border-b border-slate-700 px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-400',
+                    'whitespace-nowrap border-b border-border px-2 py-1.5 text-sm font-medium text-muted-foreground',
                     column.align === 'right' ? 'text-right' : 'text-left',
                   )}
                 >
@@ -202,7 +202,7 @@ export default function DfsSurvivorPlayerTable({
                     type='button'
                     onClick={() => toggleSort(column.key)}
                     data-testid={`sort-${column.key}`}
-                    className='hover:text-blue-300'
+                    className='hover:text-primary'
                   >
                     {column.label}
                     {sortKey === column.key && (sortDescending ? ' ▾' : ' ▴')}
@@ -216,7 +216,7 @@ export default function DfsSurvivorPlayerTable({
               <tr>
                 <td
                   colSpan={COLUMNS.length}
-                  className='p-6 text-center text-slate-500'
+                  className='p-6 text-center text-muted-foreground'
                 >
                   No players match those filters.
                 </td>
@@ -236,48 +236,50 @@ export default function DfsSurvivorPlayerTable({
                   data-testid={`player-row-${player.id}`}
                   onClick={() => !disabled && onSelectPlayer(player)}
                   className={clsx(
-                    'border-b border-slate-800/70 odd:bg-slate-900/20',
+                    'border-b border-border',
                     disabled
-                      ? 'cursor-not-allowed text-slate-600'
-                      : 'cursor-pointer hover:bg-blue-900/30',
-                    inLineup && 'bg-blue-900/40 odd:bg-blue-900/40',
-                    usedElsewhere && !disabled && 'text-slate-400',
+                      ? 'cursor-not-allowed text-muted-foreground'
+                      : 'cursor-pointer hover:bg-secondary',
+                    inLineup && 'bg-primary/20 odd:bg-primary/20',
+                    usedElsewhere && !disabled && 'text-muted-foreground',
                   )}
                 >
                   <td className='px-2 py-1.5'>
                     <span className='font-medium'>{player.name}</span>
                     {showPosition && (
-                      <span className='ml-1.5 text-[0.65rem] uppercase text-slate-500'>
+                      <span className='ml-1.5 text-sm text-muted-foreground'>
                         {player.position}
                       </span>
                     )}
-                    {inLineup && (
-                      <span className='ml-2 whitespace-nowrap rounded bg-blue-700 px-1 py-0.5 text-[0.65rem] text-blue-50'>
-                        in lineup
-                      </span>
-                    )}
-                    {usedElsewhere && (
-                      <span className='ml-2 whitespace-nowrap rounded bg-amber-900/80 px-1 py-0.5 text-[0.65rem] text-amber-100'>
-                        Week {player.usedInWeek}
-                        {player.usedPoints != null &&
-                          ` - ${player.usedPoints.toFixed(1)}`}
-                      </span>
-                    )}
-                    {player.isLocked && (
-                      <span className='ml-2 whitespace-nowrap text-[0.65rem] text-slate-500'>
-                        kicked off
-                      </span>
+                    {(inLineup || usedElsewhere || player.isLocked) && (
+                      <div className='text-sm text-muted-foreground'>
+                        {inLineup && (
+                          <span className='font-semibold text-foreground'>
+                            In your lineup
+                          </span>
+                        )}
+                        {usedElsewhere && (
+                          <span className='text-warning'>
+                            Used in week {player.usedInWeek}
+                            {player.usedPoints != null &&
+                              `, ${player.usedPoints.toFixed(1)} pts`}
+                          </span>
+                        )}
+                        {player.isLocked && (
+                          <span className='block'>Kicked off</span>
+                        )}
+                      </div>
                     )}
                   </td>
-                  <td className='px-2 py-1.5 text-slate-300'>
+                  <td className='px-2 py-1.5 text-foreground'>
                     {player.teamAbbr}
                   </td>
                   <td className='whitespace-nowrap px-2 py-1.5'>
                     {isBye ? (
-                      <span className='text-slate-500'>BYE</span>
+                      <span className='text-muted-foreground'>BYE</span>
                     ) : (
                       <>
-                        <span className='text-slate-500'>
+                        <span className='text-muted-foreground'>
                           {player.isHome ? 'vs ' : '@ '}
                         </span>
                         {player.opponentAbbr}
@@ -286,10 +288,10 @@ export default function DfsSurvivorPlayerTable({
                   </td>
                   <td className='px-2 py-1.5 text-right font-medium tabular-nums'>
                     {player.projection == null
-                      ? '—'
+                      ? '–'
                       : player.projection.toFixed(1)}
                   </td>
-                  <td className='px-2 py-1.5 text-right tabular-nums text-slate-400'>
+                  <td className='px-2 py-1.5 text-right tabular-nums text-muted-foreground'>
                     {player.seasonPoints.toFixed(1)}
                   </td>
                 </tr>

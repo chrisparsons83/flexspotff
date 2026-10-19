@@ -3,10 +3,12 @@ import {
   aggregatePlayoffSeasons,
   aggregateCupStats,
   aggregatePlayoffStats,
+  buildLeagueHighlights,
   computeStreak,
   medianGames,
   memberSinceYear,
   pairTeamGames,
+  settledLeagueGames,
   totalGames,
   winPct,
 } from './shared.server';
@@ -184,6 +186,92 @@ describe('pairTeamGames', () => {
     ]);
 
     expect(paired).toEqual([]);
+  });
+});
+
+describe('settledLeagueGames', () => {
+  const game = (
+    teamId: string,
+    year: number,
+    week: number,
+    pointsScored: number,
+  ) => ({
+    teamId,
+    week,
+    sleeperMatchupId: 1,
+    pointsScored,
+    team: { leagueId: `league-${year}`, league: { year } },
+  });
+
+  // Week 5 of 2026: weeks 1-4 are final, week 5 has started.
+  const midSeason = { inProgressYear: 2026, settledWeek: 4 };
+
+  it('keeps settled weeks and past seasons', () => {
+    const pairs = settledLeagueGames(
+      [
+        game('a', 2026, 4, 110),
+        game('b', 2026, 4, 95),
+        game('a', 2025, 16, 120),
+        game('b', 2025, 16, 130),
+      ],
+      midSeason,
+    );
+
+    expect(pairs).toHaveLength(4);
+  });
+
+  it('leaves out the week being played, so a partial score is not a loss', () => {
+    const pairs = settledLeagueGames(
+      [game('a', 2026, 5, 14.2), game('b', 2026, 5, 31.6)],
+      midSeason,
+    );
+
+    expect(pairs).toEqual([]);
+  });
+
+  it('leaves out a week nobody has scored in', () => {
+    const pairs = settledLeagueGames(
+      [game('a', 2025, 3, 0), game('b', 2025, 3, 0)],
+      midSeason,
+    );
+
+    expect(pairs).toEqual([]);
+  });
+
+  it('counts every week once no season is being played', () => {
+    const pairs = settledLeagueGames(
+      [game('a', 2026, 17, 101), game('b', 2026, 17, 99)],
+      { inProgressYear: null, settledWeek: 0 },
+    );
+
+    expect(pairs).toHaveLength(2);
+  });
+});
+
+describe('buildLeagueHighlights', () => {
+  it('finds best and worst weeks, streaks and the weekly average', () => {
+    const highlights = buildLeagueHighlights([
+      { year: 2026, week: 2, pointsScored: 90, result: 'L' },
+      { year: 2025, week: 17, pointsScored: 140, result: 'W' },
+      { year: 2026, week: 1, pointsScored: 120, result: 'W' },
+      { year: 2025, week: 16, pointsScored: 110, result: 'W' },
+    ]);
+
+    expect(highlights.bestWeek).toEqual({ points: 140, year: 2025, week: 17 });
+    expect(highlights.worstWeek).toEqual({ points: 90, year: 2026, week: 2 });
+    // 2025 wk16, 2025 wk17, 2026 wk1 run together across the season break.
+    expect(highlights.longestWinStreak).toBe(3);
+    expect(highlights.longestLossStreak).toBe(1);
+    expect(highlights.averagePointsPerGame).toBe(115);
+  });
+
+  it('ignores a zero, which is an unplayed week', () => {
+    const highlights = buildLeagueHighlights([
+      { year: 2026, week: 1, pointsScored: 0, result: 'L' },
+    ]);
+
+    expect(highlights.worstWeek).toBeNull();
+    expect(highlights.averagePointsPerGame).toBe(0);
   });
 });
 

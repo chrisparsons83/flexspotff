@@ -8,7 +8,7 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { createDraftSlot } from '~/models/draftSlot.server';
 import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -96,7 +96,7 @@ export default function NewDraftSlot() {
 
   return (
     <>
-      <h2>Create New Draft Slot</h2>
+      <h2>Create new draft slot</h2>
       <p>
         <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
       </p>
@@ -123,7 +123,7 @@ export default function NewDraftSlot() {
             <select
               name='seasonId'
               id='seasonId'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
               required
               defaultValue={
                 seasons.find((s: any) => s.isCurrent)?.id ||
@@ -142,7 +142,7 @@ export default function NewDraftSlot() {
           {isErrorResponse(actionData) &&
             'seasonId' in actionData.error &&
             actionData.error.seasonId && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.seasonId[0]}
               </p>
             )}
@@ -157,7 +157,7 @@ export default function NewDraftSlot() {
             <input
               type='datetime-local'
               id='draftDateTimeLocal'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
               required
             />
           </label>
@@ -166,7 +166,7 @@ export default function NewDraftSlot() {
           {isErrorResponse(actionData) &&
             'draftDateTime' in actionData.error &&
             actionData.error.draftDateTime && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.draftDateTime[0]}
               </p>
             )}
@@ -185,11 +185,11 @@ export default function NewDraftSlot() {
           {isErrorResponse(actionData) &&
             'general' in actionData.error &&
             actionData.error.general && (
-              <p className='form-validation-error' role='alert'>
+              <p className='text-negative' role='alert'>
                 {actionData.error.general[0]}
               </p>
             )}
-          <Button type='submit'>Create Draft Slot</Button>
+          <Button type='submit'>Create draft slot</Button>
         </div>
       </Form>
     </>

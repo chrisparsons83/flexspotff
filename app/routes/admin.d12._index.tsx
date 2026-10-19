@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   createD12Season,
   deleteD12Season,
@@ -69,11 +69,11 @@ export default function AdminD12Index() {
 
   return (
     <div>
-      <h2>D12 Administration</h2>
+      <h2>D12 administration</h2>
       {actionData?.message && <Alert message={actionData.message} />}
 
       <section className='mb-8'>
-        <h3>Create Season</h3>
+        <h3>Create season</h3>
         <Form method='POST' className='flex gap-2 items-end'>
           <div>
             <label htmlFor='year' className='block text-sm'>
@@ -83,7 +83,7 @@ export default function AdminD12Index() {
               id='year'
               name='year'
               type='number'
-              className='rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
+              className='border border-border bg-card px-2 py-1 text-foreground'
               placeholder='2025'
             />
           </div>
@@ -93,12 +93,12 @@ export default function AdminD12Index() {
             value='createSeason'
             disabled={isSubmitting}
           >
-            Create Season
+            Create season
           </Button>
         </Form>
       </section>
 
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th className='text-left'>Year</th>

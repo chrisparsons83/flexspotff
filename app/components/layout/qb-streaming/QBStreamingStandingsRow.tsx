@@ -1,68 +1,61 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
-import { useState } from 'react';
+import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 
-type Props = {
-  rank?: number;
-  user: { discordName: string; discordUsername?: string | null };
-  pointsScored: number;
-  standardPlayer: string;
-  deepPlayer?: string;
+type Pick = {
+  standardPlayer: {
+    nflGame: { gameStartTime: Date };
+    player: { fullName: string };
+  };
+  deepPlayer: {
+    nflGame: { gameStartTime: Date };
+    player: { fullName: string };
+  };
 };
 
-export default function QBStreamingStandingsRowComponent({
+/** A pick shows once its game has kicked off. */
+const shown = (pick: Pick | undefined, side: 'standardPlayer' | 'deepPlayer') =>
+  !pick
+    ? 'No pick'
+    : pick[side].nflGame.gameStartTime < new Date()
+    ? pick[side].player.fullName
+    : 'Pending';
+
+/**
+ * A QB streaming standings row: rank, member and points, opening to the week's
+ * two picks once their games have kicked off.
+ */
+export function qbStreamingStandingsEntry({
   rank,
   user,
   pointsScored,
-  standardPlayer,
-  deepPlayer,
-}: Props) {
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleAccordion = () => {
-    setShowDetails(prevState => !prevState);
+  pick,
+}: {
+  rank?: number;
+  user: {
+    userId: string;
+    discordName: string;
+    discordUsername?: string | null;
   };
-
-  return (
-    <>
-      <tr>
-        <td>{rank}</td>
-        <td className='flex items-center gap-3'>
-          <MemberName user={user} />{' '}
-          {showDetails ? (
-            <ChevronUpIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Hide Details'
-            />
-          ) : (
-            <ChevronDownIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Show Details'
-            />
-          )}
-        </td>
-        <td>{pointsScored.toFixed(2)}</td>
-      </tr>
-      {showDetails && (
-        <tr className='border-b-1 bg-gray-800'>
-          <td></td>
-          <td>
-            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
-              Standard: {standardPlayer}
-            </div>
-            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
-              Deep: {deepPlayer}
-            </div>
-          </td>
-          <td></td>
-        </tr>
-      )}
-    </>
-  );
+  pointsScored: number;
+  pick?: Pick;
+}): LeaderboardEntry {
+  return {
+    id: user.userId,
+    rank: rank ?? 0,
+    name: (
+      <ProfileLink userId={user.userId}>
+        <MemberName user={user} />
+      </ProfileLink>
+    ),
+    values: [pointsScored.toFixed(2)],
+    details: (
+      <dl className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1'>
+        <dt className='text-muted-foreground'>Standard</dt>
+        <dd>{shown(pick, 'standardPlayer')}</dd>
+        <dt className='text-muted-foreground'>Deep</dt>
+        <dd>{shown(pick, 'deepPlayer')}</dd>
+      </dl>
+    ),
+  };
 }

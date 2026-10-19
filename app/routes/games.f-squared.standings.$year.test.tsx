@@ -4,11 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fSquaredModel from '~/models/fsquared.server';
 
 vi.mock('~/models/fsquared.server');
-// Only the loader is under test, so the page's year picker, and the UI
-// components it pulls in, are left out.
-vi.mock('~/components/layout/f-squared/FSquaredYearPicker', () => ({
-  default: () => null,
-}));
 vi.mock('~/db.server', () => ({
   prisma: {},
 }));

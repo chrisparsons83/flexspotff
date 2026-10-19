@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import { Button } from '~/components/ui/button';
 import { getEpisodes } from '~/models/episode.server';
 import { authenticator, requirePodcastEditor } from '~/services/auth.server';
 
@@ -20,14 +21,17 @@ export default function PodcastEpisodeList() {
 
   return (
     <>
-      <h2 className='mt-0'>Podcasts</h2>
-      <table className='w-full'>
+      <h2>Podcasts</h2>
+      <Button asChild className='mb-6'>
+        <Link to='/admin/podcasts/new'>Add podcast</Link>
+      </Button>
+      <table>
         <thead>
           <tr>
             <th>Season</th>
             <th>Episode</th>
             <th>Title</th>
-            <th>Publish Date</th>
+            <th>Publish date</th>
             <th>Actions</th>
           </tr>
         </thead>

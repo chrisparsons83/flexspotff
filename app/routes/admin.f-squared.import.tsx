@@ -8,8 +8,8 @@ import {
 import { z } from 'zod';
 import SheetNamesTable from '~/components/layout/admin/SheetNamesTable';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
 import type { HistoryPreview } from '~/libs/f-squared/history-import.server';
 import {
   FIRST_SITE_F_SQUARED_YEAR,
@@ -192,8 +192,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-const inputClass =
-  'rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100';
+const inputClass = 'border border-border bg-card px-3 py-2 text-foreground';
 
 export default function ImportFSquaredHistory() {
   const { source, preview, error, members } =
@@ -204,7 +203,7 @@ export default function ImportFSquaredHistory() {
 
   return (
     <>
-      <h2 className='mt-0'>Import F² History</h2>
+      <h2 className='mt-0'>Import F² history</h2>
       <p>
         Brings an F² season that was run in Google Sheets onto the site. The
         sheet has to be viewable by anyone with the link. Two of its tabs are
@@ -347,7 +346,7 @@ export default function ImportFSquaredHistory() {
                 closest. Differences of a few points are stat corrections made
                 after the sheet was scored.
               </p>
-              <table className='w-full'>
+              <table>
                 <thead>
                   <tr>
                     <th>League</th>
@@ -394,7 +393,7 @@ export default function ImportFSquaredHistory() {
                 What the standings will show, with the sheet's own total to
                 check against.
               </p>
-              <table className='w-full'>
+              <table>
                 <thead>
                   <tr>
                     <th>Member</th>

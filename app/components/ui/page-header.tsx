@@ -24,7 +24,9 @@ export function PageHeader({
   className,
 }: Props) {
   return (
-    <header className={cn('mb-10 grid gap-6', className)}>
+    <header
+      className={cn('mb-10 grid grid-cols-[minmax(0,1fr)] gap-6', className)}
+    >
       <div className='grid grid-cols-12 items-end gap-x-6 gap-y-4'>
         <div className={cn('col-span-12', actions && 'md:col-span-8')}>
           <h1 className='text-4xl font-extrabold tracking-tight'>{title}</h1>

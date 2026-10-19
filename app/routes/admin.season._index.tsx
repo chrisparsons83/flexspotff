@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   getLeagueCountForYear,
   getLeagueCountsByYear,
@@ -183,17 +183,17 @@ export default function SeasonIndex() {
 
   return (
     <>
-      <h2 className='mt-0'>Season List</h2>
+      <h2 className='mt-0'>Season list</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <table className='w-full'>
+      <table>
         <thead>
           <tr>
             <th>Year</th>
             <th>Leagues</th>
             <th>Active?</th>
-            <th>Open Registration?</th>
+            <th>Open registration?</th>
             <th>Open F²?</th>
-            <th>Open DFS Survivor?</th>
+            <th>Open DFS survivor?</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -223,7 +223,7 @@ export default function SeasonIndex() {
                     <Form method='POST'>
                       <input type='hidden' name='seasonId' value={id} />
                       <Button type='submit' name='_action' value='setActive'>
-                        Set Active
+                        Set active
                       </Button>
                     </Form>
                   )}
@@ -313,7 +313,7 @@ export default function SeasonIndex() {
                         to={`/admin/season/${id}/sorting`}
                         className='inline-block'
                       >
-                        <Button type='button'>League Sorting</Button>
+                        <Button type='button'>League sorting</Button>
                       </Link>
                     </>
                   )}
@@ -331,7 +331,7 @@ export default function SeasonIndex() {
             value='createSeason'
             disabled={navigation.state !== 'idle'}
           >
-            Create Season for Current Year
+            Create season for current year
           </Button>
         </div>
       </Form>

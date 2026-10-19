@@ -7,7 +7,7 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getScheduledJobRuns } from '~/models/scheduledJobRun.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { getScheduler } from '~/services/scheduler.server';
@@ -112,7 +112,7 @@ export default function AdminSchedulerIndex() {
 
   return (
     <>
-      <h2>Scheduler Management</h2>
+      <h2>Scheduler management</h2>
       <p>Manage and monitor scheduled tasks.</p>
 
       {schedulerStale && (
@@ -127,26 +127,23 @@ export default function AdminSchedulerIndex() {
 
       <div className='space-y-6'>
         <section>
-          <h3>Scheduled Jobs</h3>
+          <h3>Scheduled jobs</h3>
           <div className='space-y-4'>
             {jobs.map(job => (
-              <div
-                key={job.name}
-                className='border rounded-lg p-4 bg-gray-50 dark:bg-gray-800'
-              >
+              <div key={job.name} className='border p-4 bg-foreground '>
                 <div className='flex justify-between items-start'>
                   <div>
                     <h4 className='font-semibold text-lg'>{job.name}</h4>
-                    <p className='text-sm text-gray-600 dark:text-gray-400'>
+                    <p className='text-sm text-muted-foreground '>
                       Schedule: {cronToHuman(job.cron, job.timezone)}
                     </p>
-                    <p className='text-xs text-gray-500 mt-1'>
+                    <p className='text-sm text-muted-foreground mt-1'>
                       Cron: {job.cron || 'Not scheduled'}
                     </p>
-                    <p className='text-sm text-gray-500 mt-1'>
+                    <p className='text-sm text-muted-foreground mt-1'>
                       {job.description}
                     </p>
-                    <p className='text-xs text-gray-500 mt-2'>
+                    <p className='text-sm text-muted-foreground mt-2'>
                       {job.lastStarted
                         ? [
                             `Last started ${job.lastStarted}`,
@@ -155,11 +152,11 @@ export default function AdminSchedulerIndex() {
                             job.lastFailed && `last failed ${job.lastFailed}`,
                           ]
                             .filter(Boolean)
-                            .join(' · ')
+                            .join(', ')
                         : 'No runs recorded yet'}
                     </p>
                     {job.lastError && (
-                      <p className='text-xs text-red-600 dark:text-red-400 mt-1'>
+                      <p className='text-sm text-negative mt-1'>
                         {job.lastError}
                       </p>
                     )}
@@ -172,7 +169,7 @@ export default function AdminSchedulerIndex() {
                       value='runJob'
                       disabled={isRunning}
                     >
-                      Run Now
+                      Run now
                     </Button>
                   </Form>
                 </div>

@@ -15,7 +15,7 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   createEpisode,
   getEpisode,
@@ -188,7 +188,7 @@ export default function PodcastEpisodeCreate() {
 
   return (
     <>
-      <h2 className='mt-0'>Add Podcast Episode</h2>
+      <h2 className='mt-0'>Add podcast episode</h2>
       <div>
         <Form
           method='POST'
@@ -211,15 +211,11 @@ export default function PodcastEpisodeCreate() {
                 aria-errormessage={
                   actionData?.fieldErrors?.title ? 'title-error' : undefined
                 }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                className='mt-1 block w-full '
               />
             </label>
             {actionData?.fieldErrors?.title ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='title-error'
-              >
+              <p className='text-negative' role='alert' id='title-error'>
                 {actionData.fieldErrors.title}
               </p>
             ) : null}
@@ -232,7 +228,7 @@ export default function PodcastEpisodeCreate() {
                   defaultValue={episode?.season ?? actionData?.fields?.season}
                   name='season'
                   required
-                  className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                  className='form-select mt-1 block w-full '
                 >
                   {SEASONS.map(season => {
                     return (
@@ -254,7 +250,7 @@ export default function PodcastEpisodeCreate() {
                   defaultValue={episode?.episode ?? actionData?.fields?.episode}
                   name='episode'
                   id='episode'
-                  className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                  className='mt-1 block w-full '
                 />
               </label>
             </div>
@@ -277,16 +273,12 @@ export default function PodcastEpisodeCreate() {
                     ? 'description-error'
                     : undefined
                 }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                className='mt-1 block w-full '
                 rows={3}
               ></textarea>
             </label>
             {actionData?.fieldErrors?.description ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='description-error'
-              >
+              <p className='text-negative' role='alert' id='description-error'>
                 {actionData.fieldErrors.description}
               </p>
             ) : null}
@@ -294,7 +286,7 @@ export default function PodcastEpisodeCreate() {
           <div>
             <label htmlFor='showNotes'>
               Long Description:{' '}
-              <span className='text-sm italic text-gray-400'>
+              <span className='text-sm italic text-muted-foreground'>
                 (can take HTML)
               </span>
               <textarea
@@ -312,16 +304,12 @@ export default function PodcastEpisodeCreate() {
                     ? 'showNotes-error'
                     : undefined
                 }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                className='mt-1 block w-full '
                 rows={3}
               ></textarea>
             </label>
             {actionData?.fieldErrors?.showNotes ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='showNotes-error'
-              >
+              <p className='text-negative' role='alert' id='showNotes-error'>
                 {actionData.fieldErrors.showNotes}
               </p>
             ) : null}
@@ -339,7 +327,7 @@ export default function PodcastEpisodeCreate() {
                 name='publishDate'
                 required
                 id='publishDate'
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                className='mt-1 block w-full '
               />
             </label>
           </div>
@@ -372,7 +360,7 @@ export default function PodcastEpisodeCreate() {
                 defaultValue={actionData?.fields?.podcastFile}
                 name='podcastFile'
                 id='podcastFile'
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+                className='mt-1 block w-full '
               />
             </label>
           </div>

@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { redirect } from 'remix-typedjson';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import { getLeagueInfo } from '~/libs/sleeper/api.server';
 import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -81,7 +81,7 @@ export default function LeagueNew() {
 
   return (
     <>
-      <h2>Add New League</h2>
+      <h2>Add new league</h2>
       <Form method='POST' className='grid grid-cols-1 gap-6'>
         <div>
           <label htmlFor='url'>
@@ -96,18 +96,18 @@ export default function LeagueNew() {
               aria-errormessage={
                 actionData?.fieldErrors?.url ? 'url-error' : undefined
               }
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
             />
           </label>
           {actionData?.fieldErrors?.url ? (
-            <p className='form-validation-error' role='alert' id='url-error'>
+            <p className='text-negative' role='alert' id='url-error'>
               {actionData.fieldErrors.url}
             </p>
           ) : null}
         </div>
         <div>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}

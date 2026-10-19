@@ -576,6 +576,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     sortedLeagueNames.forEach(leagueName => {
       const groups = leagueGroups[leagueName];
       const embed = new EmbedBuilder()
+        // check:patterns allow: the title of a Discord embed, not the site.
         .setTitle(`🏈 ${leagueName} League ${season.year}`)
         .setColor(leagueEmbedColor(leagueName));
 
@@ -1385,7 +1386,7 @@ export default function LeagueSorting() {
   // Helper function to render player name with preferences popover
   const renderPlayerWithPopover = (player: any) => {
     if (!player || !player.id || !player.discordName) {
-      return <span className='text-white'>Unknown Player</span>;
+      return <span className='text-foreground'>Unknown Player</span>;
     }
 
     const preferences =
@@ -1394,7 +1395,7 @@ export default function LeagueSorting() {
         : [];
 
     if (!Array.isArray(preferences) || preferences.length === 0) {
-      return <div className='text-white'>{player.discordName}</div>;
+      return <div className='text-foreground'>{player.discordName}</div>;
     }
 
     // Sort preferences by draft date/time (chronological order)
@@ -1407,18 +1408,18 @@ export default function LeagueSorting() {
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button className='text-white cursor-help hover:text-blue-300 underline decoration-dotted'>
+          <button className='text-foreground cursor-help hover:text-primary underline decoration-dotted'>
             {player.discordName}
           </button>
         </PopoverTrigger>
-        <PopoverContent className='w-80 bg-gray-800 border border-gray-600 text-white'>
+        <PopoverContent className='w-80 bg-card border border-border text-foreground'>
           <div className='space-y-2'>
-            <p className='text-sm font-semibold text-gray-200 mb-2'>
+            <p className='text-sm font-semibold text-foreground mb-2'>
               Draft Time Preferences:
             </p>
             <div className='space-y-1'>
               {sortedPreferences.map(pref => (
-                <div key={pref.draftSlotId} className='text-xs text-gray-300'>
+                <div key={pref.draftSlotId} className='text-sm text-foreground'>
                   <LocalDateTime
                     value={pref.draftDateTime || new Date()}
                     locale='en-US'
@@ -1444,10 +1445,10 @@ export default function LeagueSorting() {
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-bold text-white'>
+        <h1 className='text-2xl font-bold text-foreground'>
           League Sorting - {season.year} Season
         </h1>
-        <p className='mt-1 text-sm text-gray-300'>
+        <p className='mt-1 text-sm text-foreground'>
           Manage league assignments for registered players
         </p>
       </div>
@@ -1455,7 +1456,7 @@ export default function LeagueSorting() {
       {/* Registered Players List */}
       <div>
         <div className='mb-4'>
-          <h3 className='text-lg leading-6 font-medium text-white mb-4'>
+          <h3 className='text-lg leading-6 font-medium text-foreground mb-4'>
             Registered Players ({registrations.length})
           </h3>
 
@@ -1464,24 +1465,22 @@ export default function LeagueSorting() {
               <button
                 type='button'
                 onClick={handleResetTiers}
-                className='px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700'
+                className='px-3 py-1 bg-primary text-foreground text-sm hover:bg-primary'
               >
-                Reset All to Tier 2
+                Reset all to tier 2
               </button>
               <div className='text-sm'>
                 <span
                   className={
-                    hasValidChampionsCount
-                      ? 'text-green-300'
-                      : 'text-yellow-300'
+                    hasValidChampionsCount ? 'text-positive' : 'text-warning'
                   }
                 >
                   Champions: {championPlayers.length}/{GROUP_SIZE}
                 </span>
-                <span className='text-gray-500 mx-2'>|</span>
+                <span className='text-muted-foreground mx-2'>|</span>
                 <span
                   className={
-                    hasValidTier2Count ? 'text-green-300' : 'text-yellow-300'
+                    hasValidTier2Count ? 'text-positive' : 'text-warning'
                   }
                 >
                   Tier 2: {tier2Players.length}
@@ -1497,7 +1496,7 @@ export default function LeagueSorting() {
         </div>
 
         {registrations.length === 0 ? (
-          <p className='text-gray-400'>
+          <p className='text-muted-foreground'>
             No players registered for this season.
           </p>
         ) : (
@@ -1510,11 +1509,11 @@ export default function LeagueSorting() {
                 <div
                   key={registration.id}
                   className={`p-2 ${
-                    index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800'
+                    index % 2 === 0 ? 'bg-background' : 'bg-card'
                   }`}
                 >
-                  <div className='text-white flex items-center gap-3'>
-                    <div className='flex rounded overflow-hidden text-xs shrink-0'>
+                  <div className='text-foreground flex items-center gap-3'>
+                    <div className='flex overflow-hidden text-sm shrink-0'>
                       {(['champions', 'tier2'] as PlayerTier[]).map(tier => {
                         const isActive = tierOf(registration.user.id) === tier;
                         return (
@@ -1528,9 +1527,9 @@ export default function LeagueSorting() {
                             className={`px-2 py-1 ${
                               isActive
                                 ? tier === 'champions'
-                                  ? 'bg-yellow-600 text-white'
-                                  : 'bg-blue-600 text-white'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                  ? 'bg-warning/20 text-foreground'
+                                  : 'bg-primary text-foreground'
+                                : 'bg-secondary text-foreground hover:bg-secondary'
                             }`}
                           >
                             {tier === 'champions' ? 'Champions' : 'Tier 2'}
@@ -1572,13 +1571,13 @@ export default function LeagueSorting() {
                   disabled={!isValidSelection}
                   className={`px-6 py-2 rounded font-medium ${
                     isValidSelection
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      ? 'bg-positive/20 text-foreground hover:bg-positive/20'
+                      : 'bg-secondary text-muted-foreground cursor-not-allowed'
                   }`}
                 >
-                  Sort into Draft Slots
+                  Sort into draft slots
                 </button>
-                <div className='text-sm text-gray-300'>
+                <div className='text-sm text-foreground'>
                   {isValidSelection
                     ? `Ready: ${GROUP_SIZE} Champions + ${
                         tier2Players.length / GROUP_SIZE
@@ -1594,27 +1593,27 @@ export default function LeagueSorting() {
 
         {/* Error Display */}
         {actionData && 'error' in actionData && (
-          <div className='mt-6 bg-red-900 bg-opacity-20 border border-red-600 rounded-lg p-4'>
-            <p className='text-red-200'>{String(actionData.error)}</p>
+          <div className='mt-6 bg-destructive/20 bg-opacity-20 border border-destructive p-4'>
+            <p className='text-negative'>{String(actionData.error)}</p>
           </div>
         )}
 
         {/* Success Display */}
         {actionData && 'success' in actionData && (
-          <div className='mt-6 bg-green-900 bg-opacity-20 border border-green-600 rounded-lg p-4'>
-            <p className='text-green-200'>{String(actionData.success)}</p>
+          <div className='mt-6 bg-positive/20 border border-positive p-4'>
+            <p className='text-positive'>{String(actionData.success)}</p>
           </div>
         )}
 
         {/* Role assignment failures -- the announcement still went out */}
         {roleFailures.length > 0 && (
-          <div className='mt-6 bg-yellow-900 bg-opacity-20 border border-yellow-600 rounded-lg p-4'>
-            <h4 className='font-medium text-yellow-200 mb-2'>
+          <div className='mt-6 bg-warning/20 bg-opacity-20 border border-warning p-4'>
+            <h4 className='font-medium text-warning mb-2'>
               {roleFailures.length} role
               {roleFailures.length === 1 ? '' : 's'} could not be assigned -
               apply these by hand:
             </h4>
-            <ul className='text-sm text-yellow-100 space-y-1'>
+            <ul className='text-sm text-warning space-y-1'>
               {roleFailures.map((failure, index) => (
                 <li key={`${failure.discordName}-${index}`}>
                   <span className='font-medium'>{failure.discordName}</span> (
@@ -1628,8 +1627,8 @@ export default function LeagueSorting() {
         {/* Sorting Results */}
         {sortingData && (
           <div className='mt-8'>
-            <h2 className='text-xl font-bold text-white mb-6'>
-              Sorting Results
+            <h2 className='text-xl font-bold text-foreground mb-6'>
+              Sorting results
             </h2>
 
             {/* Completed Groups */}
@@ -1637,13 +1636,13 @@ export default function LeagueSorting() {
               sortingData.completedGroups.length > 0 && (
                 <div className='mb-8'>
                   <div className='flex justify-between items-center mb-4'>
-                    <h3 className='text-lg font-medium text-white'>
+                    <h3 className='text-lg font-medium text-foreground'>
                       Completed Draft Slots (
                       {sortingData.completedGroups.length})
                     </h3>
                     <div className='flex gap-2 items-center'>
                       {hasDuplicateLeagues && (
-                        <p className='text-sm text-yellow-300'>
+                        <p className='text-sm text-warning'>
                           Each league can only be assigned to one group.
                         </p>
                       )}
@@ -1675,9 +1674,9 @@ export default function LeagueSorting() {
                                   ) + announcementPayload.champions.length
                                 : 0
                             } players (Champions included, roles only).`}
-                            className='px-4 py-2 rounded font-medium text-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2'
+                            className='px-4 py-2 font-medium text-sm bg-positive/20 text-foreground hover:bg-positive/20 flex items-center gap-2'
                           >
-                            📢 Announce to Discord &amp; Assign Roles
+                            Announce to Discord and assign roles
                           </button>
                         </Form>
                       )}
@@ -1688,10 +1687,10 @@ export default function LeagueSorting() {
                       sortingData.completedGroups.map((group, groupIndex) => (
                         <div
                           key={groupIndex}
-                          className='bg-gray-800 border border-gray-600 rounded-lg p-4'
+                          className='bg-card border border-border p-4'
                         >
                           <div className='flex justify-between items-center mb-3'>
-                            <h4 className='text-lg font-medium text-white'>
+                            <h4 className='text-lg font-medium text-foreground'>
                               Draft Slot:{' '}
                               <LocalDateTime
                                 value={
@@ -1722,7 +1721,7 @@ export default function LeagueSorting() {
                                   e.target.value,
                                 )
                               }
-                              className='bg-gray-700 text-white border border-gray-600 rounded px-3 py-1 text-sm'
+                              className='bg-secondary text-foreground border border-border px-3 py-1 text-sm'
                             >
                               <option value=''>Select League</option>
                               {assignableLeagues.map(league => {
@@ -1759,7 +1758,7 @@ export default function LeagueSorting() {
                                   key={player.id}
                                   className='flex items-center justify-between'
                                 >
-                                  <span className='text-white'>
+                                  <span className='text-foreground'>
                                     {renderPlayerWithPopover(player)}
                                   </span>
                                 </div>
@@ -1775,16 +1774,16 @@ export default function LeagueSorting() {
             {Array.isArray(sortingData.ungroupedPlayers) &&
               sortingData.ungroupedPlayers.length > 0 && (
                 <div className='mb-8'>
-                  <h3 className='text-lg font-medium text-yellow-400 mb-4'>
+                  <h3 className='text-lg font-medium text-warning mb-4'>
                     Unable to Group ({sortingData.ungroupedPlayers.length}{' '}
                     players)
                   </h3>
-                  <div className='bg-yellow-900 border border-yellow-600 rounded-lg p-4'>
+                  <div className='bg-warning/20 border border-warning p-4'>
                     <div className='space-y-2'>
                       {sortingData.ungroupedPlayers.map(player => (
                         <div
                           key={player.id || Math.random()}
-                          className='text-yellow-100'
+                          className='text-warning'
                         >
                           {renderPlayerWithPopover(player)}
                         </div>
@@ -1797,10 +1796,10 @@ export default function LeagueSorting() {
             {/* Best draft times for the Champions league */}
             {championsSlotOptions.length > 0 && (
               <div className='mt-8'>
-                <h3 className='text-lg font-medium text-white mb-1'>
-                  Champions Draft Time Options
+                <h3 className='text-lg font-medium text-foreground mb-1'>
+                  Champions draft time options
                 </h3>
-                <p className='text-sm text-gray-400 mb-4'>
+                <p className='text-sm text-muted-foreground mb-4'>
                   Ranked by how many of the {announcedChampions.length}{' '}
                   Champions can attend. Champions with no recorded preferences
                   count as available for every slot.
@@ -1815,16 +1814,16 @@ export default function LeagueSorting() {
                         key={option.draftSlot.id}
                         className={`rounded-lg p-3 border ${
                           isBest
-                            ? 'bg-green-900 bg-opacity-20 border-green-600'
-                            : 'bg-gray-800 border-gray-700'
+                            ? 'bg-positive/20 bg-opacity-20 border-positive'
+                            : 'bg-card border-border'
                         }`}
                       >
                         <div className='flex items-center justify-between gap-4 flex-wrap'>
                           <div className='flex items-center gap-2'>
-                            <span className='text-gray-500 text-sm'>
+                            <span className='text-muted-foreground text-sm'>
                               #{index + 1}
                             </span>
-                            <span className='text-white'>
+                            <span className='text-foreground'>
                               <LocalDateTime
                                 value={option.draftSlot.draftDateTime}
                                 locale='en-US'
@@ -1840,14 +1839,14 @@ export default function LeagueSorting() {
                               />
                             </span>
                             {option.usedByGroup && (
-                              <span className='text-xs text-yellow-300 border border-yellow-700 rounded px-1.5 py-0.5'>
+                              <span className='text-sm text-warning border border-warning px-1.5 py-0.5'>
                                 also a Tier 2 group slot
                               </span>
                             )}
                           </div>
                           <span
                             className={
-                              isBest ? 'text-green-300' : 'text-gray-300'
+                              isBest ? 'text-positive' : 'text-foreground'
                             }
                           >
                             {option.availableCount}/{announcedChampions.length}{' '}
@@ -1855,7 +1854,7 @@ export default function LeagueSorting() {
                           </span>
                         </div>
                         {option.unavailablePlayers.length > 0 && (
-                          <p className='text-xs text-red-300 mt-2'>
+                          <p className='text-sm text-negative mt-2'>
                             Can&apos;t make it:{' '}
                             {option.unavailablePlayers
                               .map(player => player.discordName)
@@ -1873,17 +1872,17 @@ export default function LeagueSorting() {
             {Array.isArray(sortingData.slotAvailabilityAnalysis) &&
               sortingData.slotAvailabilityAnalysis.length > 0 && (
                 <div className='mt-8'>
-                  <h3 className='text-lg font-medium text-gray-300 mb-4'>
-                    Slot Availability Analysis
+                  <h3 className='text-lg font-medium text-foreground mb-4'>
+                    Slot availability analysis
                   </h3>
                   <div className='space-y-4'>
                     {sortingData.slotAvailabilityAnalysis.map(
                       (analysis, index) => (
                         <div
                           key={index}
-                          className='bg-gray-800 border border-gray-600 rounded-lg p-4'
+                          className='bg-card border border-border p-4'
                         >
-                          <h4 className='text-white font-medium mb-2'>
+                          <h4 className='text-foreground font-medium mb-2'>
                             <LocalDateTime
                               value={
                                 analysis.draftSlot?.draftDateTime || new Date()
@@ -1905,17 +1904,17 @@ export default function LeagueSorting() {
                               }}
                             />
                           </h4>
-                          <p className='text-gray-300 text-sm mb-2'>
+                          <p className='text-foreground text-sm mb-2'>
                             Available Players:{' '}
                             {analysis.availablePlayerCount || 0}
                           </p>
                           {Array.isArray(analysis.unavailablePlayers) &&
                             analysis.unavailablePlayers.length > 0 && (
                               <div>
-                                <p className='text-red-300 text-sm mb-1'>
+                                <p className='text-negative text-sm mb-1'>
                                   Unavailable Players:
                                 </p>
-                                <div className='text-red-400 text-sm space-y-1'>
+                                <div className='text-negative text-sm space-y-1'>
                                   {analysis.unavailablePlayers.map(player => (
                                     <div key={player.id || Math.random()}>
                                       {player.discordName || 'Unknown Player'}
@@ -1937,12 +1936,11 @@ export default function LeagueSorting() {
               sortingData.completedGroups.length > 0 &&
               Array.isArray(sortingData.ungroupedPlayers) &&
               sortingData.ungroupedPlayers.length === 0 && (
-                <div className='bg-green-900 bg-opacity-20 border border-green-600 rounded-lg p-4'>
-                  <p className='text-green-200'>
-                    ✅ Successfully sorted all{' '}
-                    {sortingData.completedGroups.length * GROUP_SIZE} players
-                    into {sortingData.completedGroups.length} complete draft
-                    slots!
+                <div className='bg-positive/20 border border-positive p-4'>
+                  <p className='text-positive'>
+                    Sorted all {sortingData.completedGroups.length * GROUP_SIZE}{' '}
+                    players into {sortingData.completedGroups.length} complete
+                    draft slots!
                   </p>
                 </div>
               )}

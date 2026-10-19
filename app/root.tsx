@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
   useRouteError,
 } from '@remix-run/react';
 import clsx from 'clsx';
@@ -15,13 +16,15 @@ import {
   useTypedLoaderData,
   useTypedRouteLoaderData,
 } from 'remix-typedjson';
-import NavBar from '~/components/layout/NavBar';
+import { AppShell } from '~/components/ui/app-shell';
+import { PageHeader } from '~/components/ui/page-header';
 import {
   canViewProfiles,
   getProfileHandles,
 } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 import { getThemePreference } from '~/services/theme.server';
+import { usePageWidth } from '~/utils/route-handle';
 import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
@@ -47,7 +50,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const themePreference = getThemePreference(request);
   const user = await authenticator.isAuthenticated(request);
   const userIsEditor = !user ? false : isEditor(user);
-  const currentPath = new URL(request.url).pathname;
   const profilesVisible = await canViewProfiles(user);
 
   return typedjson({
@@ -63,7 +65,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
-    currentPath,
   });
 };
 
@@ -103,38 +104,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { user, userIsEditor, canViewProfiles, ENV, currentPath } =
+  const { user, userIsEditor, canViewProfiles, themePreference, ENV } =
     useTypedLoaderData<typeof loader>();
-
-  const regex = /omni\/\d{4}\/board$/gm;
-
-  // The /design mocks draw the new shell themselves.
-  const isDesignMock =
-    currentPath === '/design' || currentPath.startsWith('/design/');
+  const width = usePageWidth();
 
   return (
     <>
-      {isDesignMock ? (
+      <AppShell
+        user={user}
+        isEditor={userIsEditor}
+        canViewProfiles={canViewProfiles}
+        theme={themePreference}
+        width={width}
+      >
         <Outlet />
-      ) : (
-        <>
-          <NavBar
-            user={user}
-            userIsEditor={userIsEditor}
-            canViewProfiles={canViewProfiles}
-          />
-          <div
-            className={clsx(
-              !regex.test(currentPath) && 'container',
-              'relative mx-auto min-h-screen p-4',
-            )}
-          >
-            <main className='prose max-w-none'>
-              <Outlet />
-            </main>
-          </div>
-        </>
-      )}
+      </AppShell>
       <script
         dangerouslySetInnerHTML={{
           __html: `window.ENV = ${JSON.stringify(ENV)}`,
@@ -146,24 +130,36 @@ export default function App() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+  // Missing when the root loader itself failed.
+  const root = useTypedRouteLoaderData<typeof loader>('root');
 
-  // Don't forget to typecheck with your own logic.
-  // Any value can be thrown, not just errors!
-  let errorMessage = 'Unknown error';
-  if (error instanceof Error) {
-    errorMessage = error.message;
+  let title = 'Something went wrong';
+  let message = 'Unknown error';
+  if (isRouteErrorResponse(error)) {
+    // Remix's own 404 data names the router; a loader's says what is missing.
+    const data =
+      typeof error.data === 'string' && !error.data.startsWith('Error: ')
+        ? error.data
+        : null;
+    if (error.status === 404) {
+      title = 'Page not found';
+      message = data ?? 'There is no page at this address.';
+    } else {
+      message = data ?? `${error.status} ${error.statusText}`;
+    }
+  } else if (error instanceof Error) {
+    message = error.message;
   }
 
   // Layout wraps this, so it renders the page body only.
   return (
-    <>
-      <NavBar user={null} userIsEditor={false} canViewProfiles={false} />
-      <div className='container relative mx-auto min-h-screen p-4'>
-        <main className='prose max-w-none'>
-          <h1>Error</h1>
-          <pre>{errorMessage}</pre>
-        </main>
-      </div>
-    </>
+    <AppShell
+      user={root?.user ?? null}
+      isEditor={root?.userIsEditor ?? false}
+      canViewProfiles={root?.canViewProfiles ?? false}
+      theme={root?.themePreference}
+    >
+      <PageHeader title={title} description={message} />
+    </AppShell>
   );
 }

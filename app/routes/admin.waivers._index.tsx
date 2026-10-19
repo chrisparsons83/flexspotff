@@ -8,7 +8,7 @@ import {
   useSearchParams,
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   leagueWaiverChannelIds,
   postWaiverReports,
@@ -144,7 +144,7 @@ export default function AdminWaiversIndex() {
 
   return (
     <>
-      <h2>Waiver Reports</h2>
+      <h2>Waiver reports</h2>
       <p>
         Inspect the stored waiver claims behind the weekly report each league
         gets in its own channel, and re-run a week without waiting for
@@ -165,7 +165,7 @@ export default function AdminWaiversIndex() {
 
       <Form
         method='GET'
-        className='my-4 flex gap-4 items-end'
+        className='my-4 flex flex-wrap items-end gap-4'
         onChange={event =>
           // Explicit pairs, not the FormData itself: createSearchParams falls
           // through to Object.keys for anything it does not special-case, and a
@@ -188,7 +188,7 @@ export default function AdminWaiversIndex() {
             id='year'
             name='year'
             defaultValue={year}
-            className='text-gray-900 rounded px-2 py-1'
+            className='w-24'
           />
         </div>
         <div>
@@ -202,13 +202,13 @@ export default function AdminWaiversIndex() {
             min={1}
             max={18}
             defaultValue={week}
-            className='text-gray-900 rounded px-2 py-1'
+            className='w-24'
           />
         </div>
         <Button type='submit'>Show</Button>
       </Form>
 
-      <Form method='POST' className='my-4 flex gap-2'>
+      <Form method='POST' className='my-4 flex flex-wrap gap-2'>
         <input type='hidden' name='year' value={year} />
         <input type='hidden' name='week' value={week} />
         <Button type='submit' name='_action' value='sync' disabled={isRunning}>
@@ -227,17 +227,17 @@ export default function AdminWaiversIndex() {
       {byLeague.map(({ league, report, transactions }) => (
         <section key={league.id} className='my-6'>
           <h3>
-            {league.name} — week {week}{' '}
-            <span className='text-sm font-normal text-gray-500'>
+            {league.name}, week {week}{' '}
+            <span className='text-sm font-normal text-muted-foreground'>
               {report
                 ? `posted ${new Date(report.postedAt).toLocaleString()}`
                 : 'not posted'}
             </span>
           </h3>
           {transactions.length === 0 ? (
-            <p className='text-sm text-gray-500'>No stored claims.</p>
+            <p className='text-sm text-muted-foreground'>No stored claims.</p>
           ) : (
-            <table className='w-full text-sm'>
+            <table>
               <thead>
                 <tr>
                   <th className='text-left'>Player</th>
@@ -262,7 +262,7 @@ export default function AdminWaiversIndex() {
                     <td className='text-right'>${transaction.bid}</td>
                     <td className='text-right'>{transaction.seq}</td>
                     <td>{transaction.status}</td>
-                    <td className='text-xs text-gray-500'>
+                    <td className='text-sm text-muted-foreground'>
                       {transaction.notes}
                     </td>
                   </tr>

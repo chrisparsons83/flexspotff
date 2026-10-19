@@ -42,7 +42,7 @@ type Props = {
   isEditor: boolean;
   /** False while profiles are admin-only; hides Profile. */
   canViewProfiles: boolean;
-  /** The visitor's theme. Leave it out to hide the toggle (#197). */
+  /** The visitor's theme, for the toggle. Leave it out to hide the toggle. */
   theme?: ThemePreference;
 };
 

@@ -1,26 +1,17 @@
-import DraftBoard, {
-  DraftBoardCell,
-} from '~/components/layout/draftboard/DraftBoard';
 import MemberAvatar from '~/components/ui/MemberAvatar';
 import MemberName from '~/components/ui/MemberName';
+import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
 import type { DraftBoardColumnProps } from '~/models/omniseason.server';
 
 type OmniTeam = DraftBoardColumnProps['omniTeam'];
 
 const getBackgroundColor = (points: number, isComplete: boolean) => {
-  if (points === 80) {
-    return 'bg-green-600 bg-opacity-80';
-  } else if (points >= 50) {
-    return 'bg-green-600 bg-opacity-50';
-  } else if (points >= 30) {
-    return 'bg-green-600 bg-opacity-30';
-  } else if (points > 0) {
-    return 'bg-green-600 bg-opacity-20';
-  } else if (isComplete) {
-    return 'bg-red-600 bg-opacity-30';
-  } else {
-    return 'bg-slate-600';
-  }
+  if (points === 80) return 'bg-positive/60';
+  if (points >= 50) return 'bg-positive/40';
+  if (points >= 30) return 'bg-positive/25';
+  if (points > 0) return 'bg-positive/15';
+  if (isComplete) return 'bg-destructive/30';
+  return 'bg-secondary';
 };
 
 /** The Omni draft, a column per team. Teams' picks are expected in order. */
@@ -39,9 +30,6 @@ export default function OmniDraftBoard({ teams }: { teams: OmniTeam[] }) {
             title={draftPick.player?.displayName}
             subtitle={draftPick.player?.sport.shortName}
             corner={draftPick.pickNumber}
-            trailing={
-              <span className='text-2xl'>{draftPick.player?.sport.emoji}</span>
-            }
             tone={getBackgroundColor(
               draftPick.player?.pointsScored || 0,
               draftPick.player?.isComplete || false,
@@ -55,11 +43,11 @@ export default function OmniDraftBoard({ teams }: { teams: OmniTeam[] }) {
 
 function TeamHeader({ team }: { team: OmniTeam }) {
   return (
-    <div className='flex h-16 flex-col justify-between rounded bg-slate-800 p-1'>
+    <div className='flex h-16 flex-col justify-between bg-secondary p-1 text-secondary-foreground'>
       {team.user ? (
         <MemberAvatar user={team.user} size={32} className='mx-auto' />
       ) : (
-        <div className='mx-auto h-8 w-8 rounded-2xl bg-slate-700' />
+        <div className='mx-auto size-8 bg-muted' />
       )}
       <div className='line-clamp-1 w-full text-center'>
         {team.user && <MemberName user={team.user} />}

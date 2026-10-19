@@ -1,16 +1,18 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
-import clsx from 'clsx';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import PickChip from '~/components/layout/survivor/PickChip';
 import GoBox from '~/components/ui/GoBox';
+import { ExternalLink } from '~/components/ui/link';
 import { ProfileLink } from '~/components/ui/profile-link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
 import { buildBoard, poolTitle, summarizeWeeks } from '~/libs/survivor/views';
 import {
   getAllSurvivorPools,
   getSurvivorPoolWithEntries,
 } from '~/models/survivor.server';
+import { cn } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireSurvivorAccess(request);
@@ -51,178 +53,172 @@ const placeLabel = (row: {
     ? `Out week ${row.eliminatedWeek}`
     : 'Alive';
 
+/** The surface the board sits on, so the pinned entry column matches it. */
+const PINNED =
+  'sticky left-0 z-10 bg-[oklch(var(--surface,var(--background)))]';
+
 export default function SurvivorPool() {
   const { pool, board, weeks, allPools } = useTypedLoaderData<typeof loader>();
 
   return (
-    <div>
-      <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-        <h2 className='mb-0 break-words'>{poolTitle(pool)}</h2>
-        <GoBox options={allPools} buttonText='Choose Pool' />
-      </div>
-      <p className='mt-1 text-sm'>
-        <Link to='/games/survivor'>All pools</Link> ·{' '}
-        {pool.source === 'YAHOO'
-          ? 'Played on Yahoo.'
-          : pool.isComplete
-          ? 'Played on Sleeper.'
-          : 'Live on Sleeper, synced hourly.'}{' '}
-        {pool.source === 'SLEEPER' && (
-          <a
-            href={
-              pool.inviteUrl ?? `https://sleeper.com/leagues/${pool.externalId}`
-            }
-            target='_blank'
-            rel='noreferrer'
+    <>
+      <Section
+        title={poolTitle(pool)}
+        description={
+          pool.source === 'YAHOO'
+            ? 'Played on Yahoo.'
+            : pool.isComplete
+            ? 'Played on Sleeper.'
+            : 'Live on Sleeper, synced hourly.'
+        }
+        action={
+          <div className='flex flex-wrap items-center gap-4'>
+            {pool.source === 'SLEEPER' && (
+              <ExternalLink
+                href={
+                  pool.inviteUrl ??
+                  `https://sleeper.com/leagues/${pool.externalId}`
+                }
+                target='_blank'
+              >
+                {pool.inviteUrl ? 'Join on Sleeper' : 'Open in Sleeper'}
+              </ExternalLink>
+            )}
+            <GoBox options={allPools} buttonText='Pool' />
+          </div>
+        }
+      >
+        <Section as='h3' title='Week by week' className='mt-0'>
+          <Table
+            headers={['Week', 'Alive', 'Out', 'Most picked', 'Did the damage']}
+            numericColumns={[1, 2]}
+            primaryColumns={[1, 2]}
           >
-            {pool.inviteUrl ? 'Join on Sleeper' : 'Open in Sleeper'}
-          </a>
-        )}
-      </p>
-
-      <section className='mb-8'>
-        <h3>Week by Week</h3>
-        <div className='not-prose overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='border-b border-slate-600 text-left text-slate-400'>
-                <th className='px-2 py-1 font-semibold'>Week</th>
-                <th className='px-2 py-1 text-right font-semibold'>Alive</th>
-                <th className='px-2 py-1 text-right font-semibold'>Out</th>
-                <th className='px-2 py-1 font-semibold'>Most Picked</th>
-                <th className='px-2 py-1 font-semibold'>Did the Damage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weeks.map(week => {
-                const out = week.aliveBefore - week.aliveAfter;
-                return (
-                  <tr
-                    key={week.week}
-                    className='border-b border-slate-700/60 text-slate-200'
+            {weeks.map(week => {
+              const out = week.aliveBefore - week.aliveAfter;
+              const damage = [
+                week.topBust &&
+                  `${week.topBust.team} took out ${week.topBust.count}`,
+                week.missed > 0 &&
+                  `${week.missed} missed ${
+                    week.missed === 1 ? 'a pick' : 'picks'
+                  }`,
+              ].filter((line): line is string => Boolean(line));
+              return (
+                <tr key={week.week}>
+                  <td>Week {week.week}</td>
+                  <td className='text-right'>
+                    {week.aliveAfter}
+                    <span className='text-muted-foreground'>
+                      {' '}
+                      of {week.aliveBefore}
+                    </span>
+                  </td>
+                  <td
+                    className={cn(
+                      'text-right',
+                      out > 0 ? 'text-negative' : 'text-muted-foreground',
+                    )}
                   >
-                    <td className='px-2 py-1.5'>Week {week.week}</td>
-                    <td className='px-2 py-1.5 text-right tabular-nums'>
-                      {week.aliveAfter}
-                      <span className='text-slate-500'>
-                        /{week.aliveBefore}
-                      </span>
-                    </td>
-                    <td
-                      className={clsx(
-                        'px-2 py-1.5 text-right tabular-nums',
-                        out > 0 ? 'text-rose-300' : 'text-slate-500',
-                      )}
-                    >
-                      {out || '—'}
-                    </td>
-                    <td className='px-2 py-1.5'>
-                      {week.topPick ? (
-                        <>
-                          <PickChip cell={{ kind: 'pick', ...week.topPick }} />
-                          <span className='ml-2 text-xs text-slate-400'>
-                            {week.topPick.count} of {week.aliveBefore}
-                          </span>
-                        </>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td className='px-2 py-1.5 text-xs text-slate-400'>
-                      {[
-                        week.topBust &&
-                          `${week.topBust.team} took out ${week.topBust.count}`,
-                        week.missed > 0 &&
-                          `${week.missed} missed ${
-                            week.missed === 1 ? 'a pick' : 'picks'
-                          }`,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h3>Every Pick</h3>
-        <p className='text-sm'>
-          ✓ won, ✗ lost, … not played yet. "✗ none" is a week with no pick.
-        </p>
-        <div className='not-prose overflow-x-auto'>
-          <table className='text-sm'>
-            <thead>
-              <tr className='border-b border-slate-600 text-left text-slate-400'>
-                <th className='sticky left-0 z-10 bg-slate-700 px-2 py-1 font-semibold'>
-                  Entry
-                </th>
-                {board.weeks.map(week => (
-                  <th
-                    key={week}
-                    className='px-1 py-1 text-center font-semibold tabular-nums'
-                  >
-                    {week}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {board.rows.map(row => (
-                <tr key={row.id} className='border-b border-slate-700/60'>
-                  <th
-                    scope='row'
-                    className='sticky left-0 z-10 max-w-[11rem] bg-slate-700 px-2 py-1.5 text-left font-normal'
-                  >
-                    <div className='truncate text-white'>
-                      {row.userId ? (
-                        <ProfileLink
-                          userId={row.userId}
-                          tab='survivor'
-                          className='text-white no-underline hover:underline'
-                        >
-                          {row.name}
-                        </ProfileLink>
-                      ) : (
-                        row.name
-                      )}
-                    </div>
-                    <div
-                      className={clsx(
-                        'truncate text-xs',
-                        row.finish === 1
-                          ? 'font-semibold text-gold'
-                          : row.eliminatedWeek
-                          ? 'text-slate-400'
-                          : 'text-emerald-300',
-                      )}
-                    >
-                      {placeLabel(row)}
-                      {row.entryName && (
-                        <span className='font-normal text-slate-500'>
-                          {' '}
-                          · {row.entryName}
+                    {out || '–'}
+                  </td>
+                  <td>
+                    {week.topPick ? (
+                      <span className='inline-flex items-center gap-2'>
+                        <PickChip cell={{ kind: 'pick', ...week.topPick }} />
+                        <span className='text-sm text-muted-foreground'>
+                          {week.topPick.count} of {week.aliveBefore}
                         </span>
-                      )}
-                    </div>
+                      </span>
+                    ) : (
+                      '–'
+                    )}
+                  </td>
+                  <td className='text-sm text-muted-foreground'>
+                    {damage.length > 0
+                      ? damage.map(line => <div key={line}>{line}</div>)
+                      : '–'}
+                  </td>
+                </tr>
+              );
+            })}
+          </Table>
+        </Section>
+
+        <Section
+          as='h3'
+          title='Every pick'
+          description='A win is in bold, a loss struck through, and a game not played yet is muted. None is a week with no pick.'
+        >
+          <div className='overflow-x-auto'>
+            <table className='text-sm'>
+              <thead>
+                <tr className='border-b border-border text-left text-muted-foreground'>
+                  <th className={cn(PINNED, 'px-2 py-2 font-semibold')}>
+                    Entry
                   </th>
-                  {row.cells.map((cell, index) => (
-                    <td
-                      key={board.weeks[index]}
-                      className='px-1 py-1.5 text-center'
+                  {board.weeks.map(week => (
+                    <th
+                      key={week}
+                      className='px-1 py-2 text-center font-semibold tabular-nums'
                     >
-                      <PickChip cell={cell} />
-                    </td>
+                      {week}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+              </thead>
+              <tbody>
+                {board.rows.map(row => (
+                  <tr key={row.id} className='border-b border-border'>
+                    <th
+                      scope='row'
+                      className={cn(
+                        PINNED,
+                        'max-w-[11rem] px-2 py-1.5 text-left font-normal',
+                      )}
+                    >
+                      <div className='truncate'>
+                        {row.userId ? (
+                          <ProfileLink userId={row.userId} tab='survivor'>
+                            {row.name}
+                          </ProfileLink>
+                        ) : (
+                          row.name
+                        )}
+                      </div>
+                      <div
+                        className={cn(
+                          'truncate text-sm',
+                          row.finish === 1
+                            ? 'font-semibold'
+                            : row.eliminatedWeek
+                            ? 'text-muted-foreground'
+                            : 'text-positive',
+                        )}
+                      >
+                        {placeLabel(row)}
+                      </div>
+                      {row.entryName && (
+                        <div className='truncate text-sm text-muted-foreground'>
+                          {row.entryName}
+                        </div>
+                      )}
+                    </th>
+                    {row.cells.map((cell, index) => (
+                      <td
+                        key={board.weeks[index]}
+                        className='px-1 py-1.5 text-center'
+                      >
+                        <PickChip cell={cell} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      </Section>
+    </>
   );
 }

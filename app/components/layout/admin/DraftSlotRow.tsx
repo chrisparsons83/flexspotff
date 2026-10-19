@@ -1,8 +1,8 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { Form, Link } from '@remix-run/react';
 import { useState } from 'react';
-import Button from '~/components/ui/FlexSpotButton';
 import LocalDateTime from '~/components/ui/LocalDateTime';
+import { Button } from '~/components/ui/button';
 
 type User = {
   id: string;
@@ -47,23 +47,23 @@ export default function DraftSlotRow({ slot }: Props) {
           {slot.availableCount > 0 && (
             <>
               {' '}
-              {showDetails ? (
-                <ChevronUpIcon
-                  width={20}
-                  height={20}
-                  onClick={handleAccordion}
-                  className='cursor-pointer'
-                  aria-label='Hide Available Users'
-                />
-              ) : (
-                <ChevronDownIcon
-                  width={20}
-                  height={20}
-                  onClick={handleAccordion}
-                  className='cursor-pointer'
-                  aria-label='Show Available Users'
-                />
-              )}
+              <button
+                type='button'
+                onClick={handleAccordion}
+                aria-expanded={showDetails}
+                aria-label={
+                  showDetails
+                    ? 'Hide available members'
+                    : 'Show available members'
+                }
+                className='inline-flex size-8 items-center justify-center align-middle text-muted-foreground hover:bg-secondary hover:text-foreground'
+              >
+                {showDetails ? (
+                  <ChevronUpIcon aria-hidden />
+                ) : (
+                  <ChevronDownIcon aria-hidden />
+                )}
+              </button>
             </>
           )}
         </td>
@@ -93,7 +93,7 @@ export default function DraftSlotRow({ slot }: Props) {
         </td>
       </tr>
       {showDetails && (
-        <tr className='bg-gray-800'>
+        <tr className='bg-card'>
           <td></td>
           <td colSpan={3}>
             <div style={{ padding: '1rem' }}>

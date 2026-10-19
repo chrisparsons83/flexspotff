@@ -9,7 +9,7 @@ import {
   type DfsPlayer,
 } from './dfsSurvivorProfile';
 import { prisma } from '~/db.server';
-import { getCurrentSeason } from '~/models/season.server';
+import { getInProgressYear } from '~/models/seasonState.server';
 
 /**
  * Only entries in scored weeks. An open week's lineups are hidden on the
@@ -39,7 +39,7 @@ export async function getDfsSurvivorProfile(userId: string) {
   const years = entered.map(row => row.year);
   if (years.length === 0) return { hasPlayed: false as const };
 
-  const [entries, currentSeason, memberPlayers] = await Promise.all([
+  const [entries, inProgressYear, memberPlayers] = await Promise.all([
     prisma.dFSSurvivorUserEntry.findMany({
       where: { year: { in: years }, ...scoredEntry },
       select: {
@@ -51,7 +51,7 @@ export async function getDfsSurvivorProfile(userId: string) {
         points: true,
       },
     }),
-    getCurrentSeason(),
+    getInProgressYear(),
     // Only the member's own players are named on the tab.
     prisma.player.findMany({
       where: { dfsSurvivorEntries: { some: { userId, ...scoredEntry } } },
@@ -95,7 +95,7 @@ export async function getDfsSurvivorProfile(userId: string) {
     weeks,
     rows,
     finishes: buildDfsFinishes(rows, userId),
-    inProgressYear: currentSeason?.year ?? null,
+    inProgressYear,
   });
 
   return {

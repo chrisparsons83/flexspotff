@@ -278,6 +278,101 @@ describe('resolveRosterOwners', () => {
     expect(owners.get(3)).toBeNull();
     expect(owners.get(4)).toBeNull();
   });
+
+  // The 2022 Guillotine for the People: eddie made roster 10's picks and zed
+  // roster 11's, but zed ran roster 10 (chopped week 1) and codemonkey, who
+  // drafted roster 16, ran roster 11.
+  it("trusts the roster's own moves over who made its picks", () => {
+    const owners = resolveRosterOwners(
+      [
+        { roster_id: 10, owner_id: null },
+        { roster_id: 11, owner_id: null },
+        { roster_id: 16, owner_id: null },
+      ],
+      [
+        { roster_id: 10, picked_by: 'eddie' },
+        { roster_id: 11, picked_by: 'zed' },
+        { roster_id: 16, picked_by: 'codemonkey' },
+      ],
+      [
+        { type: 'free_agent', roster_ids: [10], creator: 'zed' },
+        { type: 'free_agent', roster_ids: [11], creator: 'codemonkey' },
+        { type: 'waiver', roster_ids: [11], creator: 'codemonkey' },
+        { type: 'free_agent', roster_ids: [16], creator: 'dklocks' },
+        { type: 'commissioner', roster_ids: [16], creator: 'commish' },
+      ],
+    );
+
+    expect(owners.get(10)).toBe('zed');
+    expect(owners.get(11)).toBe('codemonkey');
+    expect(owners.get(16)).toBe('dklocks');
+  });
+
+  it('counts a mover only for the roster they made the most moves on', () => {
+    const owners = resolveRosterOwners(
+      [
+        { roster_id: 1, owner_id: null },
+        { roster_id: 2, owner_id: null },
+      ],
+      [
+        { roster_id: 1, picked_by: 'a' },
+        { roster_id: 2, picked_by: 'b' },
+      ],
+      [
+        { type: 'free_agent', roster_ids: [1], creator: 'a' },
+        { type: 'free_agent', roster_ids: [1], creator: 'a' },
+        { type: 'free_agent', roster_ids: [2], creator: 'a' },
+      ],
+    );
+
+    expect(owners.get(1)).toBe('a');
+    // a has a roster already, so b keeps the one they drafted.
+    expect(owners.get(2)).toBe('b');
+  });
+
+  it('gives the last roster left to the last drafter left', () => {
+    const owners = resolveRosterOwners(
+      [
+        { roster_id: 1, owner_id: null },
+        { roster_id: 2, owner_id: null },
+      ],
+      [
+        { roster_id: 1, picked_by: 'b' },
+        { roster_id: 2, picked_by: 'a' },
+      ],
+      [{ type: 'waiver', roster_ids: [2], creator: 'b' }],
+    );
+
+    // a is the only drafter left, and roster 1 the only roster.
+    expect(owners.get(2)).toBe('b');
+    expect(owners.get(1)).toBe('a');
+  });
+
+  it('leaves rosters unowned when more than one drafter could have them', () => {
+    const owners = resolveRosterOwners(
+      [
+        { roster_id: 1, owner_id: null },
+        { roster_id: 2, owner_id: null },
+        { roster_id: 3, owner_id: null },
+        { roster_id: 4, owner_id: null },
+      ],
+      [
+        { roster_id: 1, picked_by: 'a' },
+        { roster_id: 2, picked_by: 'b' },
+        { roster_id: 3, picked_by: 'c' },
+        { roster_id: 4, picked_by: 'd' },
+      ],
+      [
+        { type: 'waiver', roster_ids: [1], creator: 'c' },
+        { type: 'waiver', roster_ids: [2], creator: 'd' },
+      ],
+    );
+
+    expect(owners.get(1)).toBe('c');
+    expect(owners.get(2)).toBe('d');
+    expect(owners.get(3)).toBeNull();
+    expect(owners.get(4)).toBeNull();
+  });
 });
 
 describe('weeksToSync', () => {

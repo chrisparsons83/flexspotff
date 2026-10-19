@@ -6,7 +6,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import {
   createOrUpdateSleeperUser,
   deleteSleeperUser,
@@ -122,10 +122,10 @@ export default function EditUser() {
     <>
       <h2>Edit User {user.discordName}</h2>
       {actionData?.message && <Alert message={actionData.message} />}
-      <h3>Existing Account IDs</h3>
+      <h3>Existing account IDs</h3>
       <table>
         <tr>
-          <th>Sleeper Owner ID</th>
+          <th>Sleeper owner ID</th>
           <th>Action</th>
         </tr>
         {sleeperUsers.map(({ sleeperOwnerID }) => (
@@ -168,15 +168,11 @@ export default function EditUser() {
                   ? 'sleeperOwnerID-error'
                   : undefined
               }
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
+              className='mt-1 block w-full '
             />
           </label>
           {actionData?.fieldErrors?.sleeperOwnerID ? (
-            <p
-              className='form-validation-error'
-              role='alert'
-              id='sleeperOwnerID-error'
-            >
+            <p className='text-negative' role='alert' id='sleeperOwnerID-error'>
               {actionData.fieldErrors.sleeperOwnerID}
             </p>
           ) : null}

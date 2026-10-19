@@ -7,15 +7,22 @@ import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import StatusText from '~/components/layout/profile/StatusText';
-import { pct, plural, weekLabel } from '~/components/layout/profile/format';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
+import {
+  ordinal,
+  pct,
+  plural,
+  weekLabel,
+} from '~/components/layout/profile/format';
 import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
 import type { StatusTone } from '~/components/layout/profile/tones';
 import { RangeBar, SplitBar } from '~/components/ui/bars';
 import { ProfileLink } from '~/components/ui/profile-link';
 import { YearFilter } from '~/components/ui/segmented-control';
 import { ShowAllButton } from '~/components/ui/show-all-button';
-import { LeagueMark } from '~/components/ui/swatch';
+import { LeagueMark, Swatch } from '~/components/ui/swatch';
 import { MobileCard, MobileCards, Table } from '~/components/ui/table';
 import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
@@ -128,7 +135,7 @@ function Highlights({
                   ties={career.medianTies}
                 />
               ) : (
-                '—'
+                '–'
               )
             }
           />
@@ -136,13 +143,13 @@ function Highlights({
             label='Win Streak'
             value={highlights.longestWinStreak}
             unit='W'
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Skid'
             value={highlights.longestLossStreak}
             unit='L'
-            tone='text-rose-300'
+            tone='text-negative'
           />
         </CareerCard>
 
@@ -167,14 +174,14 @@ function Highlights({
         >
           <MiniStat
             label='Worst Week'
-            value={worstWeek ? worstWeek.points.toFixed(2) : '—'}
-            tone='text-rose-300'
+            value={worstWeek ? worstWeek.points.toFixed(2) : '–'}
+            tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
-            value={bestWeek ? bestWeek.points.toFixed(2) : '—'}
-            tone='text-emerald-300'
+            value={bestWeek ? bestWeek.points.toFixed(2) : '–'}
+            tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
@@ -186,7 +193,7 @@ function Highlights({
               <WinLoss wins={playoffs.wins} losses={playoffs.losses} />
               {playoffs.championships > 0 && (
                 <LeadContext>
-                  🏆 {plural(playoffs.championships, 'league championship')}
+                  {plural(playoffs.championships, 'league championship')}
                 </LeadContext>
               )}
             </>
@@ -206,7 +213,7 @@ function Highlights({
               tone={playoffs.sackos > 0 ? TEXT.sacko : undefined}
               detail={
                 playoffs.sackos > 0
-                  ? `💩 ${plural(playoffs.sackos, 'sacko')}`
+                  ? plural(playoffs.sackos, 'sacko')
                   : '0 sackos'
               }
             />
@@ -253,7 +260,7 @@ function CareerByTier({
         numericColumns={[1, 2, 3, 4, 5, 6, 7]}
       >
         {tiers.map(tier => (
-          <tr key={tier.tier} className='border-b border-slate-700/70'>
+          <tr key={tier.tier} className='border-b border-border'>
             <td className='px-2 py-2 font-medium'>{tier.label}</td>
             <td className='px-2 py-2 text-right'>{tier.seasons}</td>
             <td className='px-2 py-2 text-right'>
@@ -264,18 +271,30 @@ function CareerByTier({
               {tier.pointsFor.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsForPerSeason.toFixed(1)}
+              <PerSeason value={tier.pointsForPerSeason} />
             </td>
             <td className='px-2 py-2 text-right'>
               {tier.pointsAgainst.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {tier.pointsAgainstPerSeason.toFixed(1)}
+              <PerSeason value={tier.pointsAgainstPerSeason} />
             </td>
           </tr>
         ))}
       </Table>
     </ProfileSection>
+  );
+}
+
+/**
+ * A per-season average, which only counts finished seasons - one a few weeks
+ * old would drag it down to a fraction of a real one.
+ */
+function PerSeason({ value }: { value: number | null }) {
+  return value === null ? (
+    <span className='text-muted-foreground'>–</span>
+  ) : (
+    <>{value.toFixed(1)}</>
   );
 }
 
@@ -388,8 +407,11 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
         }
       >
         {seasons.map(season => (
-          <tr key={season.leagueId} className='border-b border-slate-700/70'>
-            <td className='px-2 py-2'>{season.year}</td>
+          <tr key={season.leagueId} className='border-b border-border'>
+            <td className='whitespace-nowrap px-2 py-2'>
+              {season.year}
+              {season.inProgress && <CurrentSeason />}
+            </td>
             <td className='px-2 py-2'>
               <LeagueMark name={season.leagueName} />
             </td>
@@ -401,17 +423,17 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
             </td>
             {anyMedian && (
               <>
-                <td className='px-2 py-2 text-right text-slate-400'>
+                <td className='px-2 py-2 text-right text-muted-foreground'>
                   {record(season.wins, season.losses, season.ties)}
                 </td>
-                <td className='px-2 py-2 text-right text-slate-400'>
+                <td className='px-2 py-2 text-right text-muted-foreground'>
                   {season.hasMedianScoring
                     ? record(
                         season.medianWins,
                         season.medianLosses,
                         season.medianTies,
                       )
-                    : '—'}
+                    : '–'}
                 </td>
               </>
             )}
@@ -425,16 +447,18 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
                   {/* Named as well as coloured: the sacko bracket's record
                       is not a playoff run. */}
                   {season.playoffBracket === 'LOSERS' && (
-                    <span className='mr-1.5 text-xs text-slate-400'>Sacko</span>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
+                      Sacko
+                    </span>
                   )}
                   {season.playoffWins}-{season.playoffLosses}
                 </span>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td className='px-2 py-2 text-right'>
-              {season.pointsForRank ?? '—'}
+              {season.pointsForRank ?? '–'}
             </td>
             <td className='px-2 py-2 text-right'>
               {season.pointsFor.toFixed(1)}
@@ -443,7 +467,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
               {season.pointsAgainst.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {season.draftPosition ?? '—'}
+              {season.draftPosition ?? '–'}
             </td>
           </tr>
         ))}
@@ -455,25 +479,39 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
 /**
  * Where a season actually ended, from the postseason brackets rather than the
  * regular-season table - a champion who was the four seed finished first.
+ * While a season is being played, where they stand in the table instead.
  */
 function Finish({ season }: { season: SeasonRow }) {
-  if (!season.finish) return <span className='text-slate-400'>—</span>;
+  // A season still being played has no finish yet, only a place in the table.
+  if (season.standing && !season.finish) {
+    return (
+      <span className={clsx('whitespace-nowrap', TEXT.live)}>
+        {ordinal(season.standing.place)}
+        <span className='text-muted-foreground'>
+          {' '}
+          of {season.standing.fieldSize}
+        </span>
+      </span>
+    );
+  }
+
+  if (!season.finish) return <span className='text-muted-foreground'>–</span>;
 
   // The two ends of the table are the ones worth spotting from across the page.
-  const { tone, emoji } =
+  const { tone, medal } =
     season.finish === 'Champion'
-      ? { tone: 'text-gold font-medium', emoji: '🏆' }
+      ? { tone: 'font-medium', medal: 'medal-gold' as const }
       : season.finish === 'Sacko'
-      ? { tone: 'text-brown-light font-medium', emoji: '💩' }
+      ? { tone: 'font-medium', medal: 'medal-sacko' as const }
       : season.finish === 'Sacko Finalist'
-      ? { tone: TEXT.sacko, emoji: null }
+      ? { tone: TEXT.sacko, medal: null }
       : season.place !== null && season.place <= 6
-      ? { tone: 'text-slate-100', emoji: null }
-      : { tone: 'text-slate-400', emoji: null };
+      ? { tone: 'text-foreground', medal: null }
+      : { tone: 'text-muted-foreground', medal: null };
 
   return (
-    <span className={clsx('inline-flex items-center gap-1', tone)}>
-      {emoji && <span aria-hidden='true'>{emoji}</span>}
+    <span className={clsx('inline-flex items-center gap-1.5', tone)}>
+      {medal && <Swatch fill={medal} />}
       {season.finish}
     </span>
   );
@@ -543,7 +581,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
                 subtitle={plural(row.meetingCount, 'meeting')}
                 value={record(row.wins, row.losses, row.ties)}
               >
-                <div className='text-xs leading-relaxed text-slate-400'>
+                <div className='text-sm leading-relaxed text-muted-foreground'>
                   <MeetingsByYear meetings={row.meetings} />
                 </div>
               </MobileCard>
@@ -552,7 +590,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
         }
       >
         {visible.map(row => (
-          <tr key={row.opponentUserId} className='border-b border-slate-700/70'>
+          <tr key={row.opponentUserId} className='border-b border-border'>
             <td className='px-2 py-2'>
               <ProfileLink userId={row.opponentUserId}>
                 {row.opponentName}
@@ -562,7 +600,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
               {record(row.wins, row.losses, row.ties)}
             </td>
             <td className='px-2 py-2 text-right'>{row.meetingCount}</td>
-            <td className='px-2 py-2 text-xs text-slate-400'>
+            <td className='px-2 py-2 text-sm text-muted-foreground'>
               <MeetingsByYear meetings={row.meetings} />
             </td>
           </tr>
@@ -666,7 +704,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             key={`${game.year}-${game.week}-${
               game.opponentUserId ?? game.opponentName
             }`}
-            className='border-b border-slate-700/70'
+            className='border-b border-border'
           >
             <td className='px-2 py-2'>{game.year}</td>
             <td className='px-2 py-2 text-right'>{game.week}</td>

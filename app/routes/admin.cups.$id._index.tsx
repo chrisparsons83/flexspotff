@@ -7,7 +7,7 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import type { ChallongeMatchReport } from '~/libs/challonge-cup';
 import { importChallongeCup } from '~/libs/challonge-cup-import.server';
 import { decideCupGame } from '~/libs/cup-bracket';
@@ -309,7 +309,7 @@ export default function CupAdministerPage() {
                       name={`week-${cupWeek.id}`}
                       id={`week-${cupWeek.id}`}
                       defaultValue={cupWeek.mapping}
-                      className='form-select dark:border-0 dark:bg-slate-800'
+                      className='form-select '
                     >
                       {selectOptions.map(option => (
                         <option value={option.value} key={option.value}>
@@ -336,11 +336,11 @@ export default function CupAdministerPage() {
         </table>
         <div>
           <Button type='submit' name='_action' value='updateCup'>
-            Update Mapping
+            Update mapping
           </Button>
         </div>
       </Form>
-      <h3>Import from Challonge</h3>
+      <h3>Import from challonge</h3>
       <p>
         For cups played on Challonge before the site ran them. Map the weeks
         above first. Importing replaces this cup's seeds and games with
@@ -353,10 +353,10 @@ export default function CupAdministerPage() {
           name='slug'
           id='slug'
           defaultValue={`${cup.year}FSCup`}
-          className='form-input dark:border-0 dark:bg-slate-800'
+          className='form-input '
         />
         <Button type='submit' name='_action' value='challongePreview'>
-          Preview Import
+          Preview import
         </Button>
         <Button type='submit' name='_action' value='challongeImport'>
           Import
