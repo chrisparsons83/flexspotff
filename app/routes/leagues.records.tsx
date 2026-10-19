@@ -20,6 +20,9 @@ import {
   getStreakRecords,
 } from '~/models/records.server';
 import { getUnfinishedLeagueIds } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Records' };
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },

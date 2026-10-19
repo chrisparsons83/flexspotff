@@ -18,6 +18,12 @@ import {
   getTeamGameWeeksByLeague,
 } from '~/models/teamgame.server';
 import { cn } from '~/utils';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) =>
+    params.week ? `Week ${params.week} matchups` : 'Matchups',
+};
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });

@@ -9,7 +9,13 @@ import { LeagueMark } from '~/components/ui/swatch';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { FIRST_YEAR } from '~/utils/constants';
+import type { RouteHandle } from '~/utils/route-handle';
 import { yearOptions } from '~/utils/years';
+
+export const handle: RouteHandle = {
+  title: ({ params }) =>
+    params.year ? `${params.year} standings` : 'Standings',
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const currentSeason = await getCurrentSeason();

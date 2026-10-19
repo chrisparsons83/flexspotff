@@ -1,4 +1,7 @@
 import { Section } from '~/components/ui/section';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Rules' };
 
 export default function QBStreamingRules() {
   return (

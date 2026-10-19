@@ -17,9 +17,12 @@ import {
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
 import { cn } from '~/utils';
-import type { RouteHandle } from '~/utils/route-handle';
+import { type RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { width: 'full' };
+export const handle: RouteHandle = {
+  width: 'full',
+  title: 'Draft',
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);

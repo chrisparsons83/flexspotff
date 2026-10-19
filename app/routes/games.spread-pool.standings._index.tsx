@@ -1,6 +1,9 @@
 import { loader as yearLoader } from './games.spread-pool.standings.$year._index';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { getCurrentSeason } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Standings' };
 
 export { default } from './games.spread-pool.standings.$year._index';
 

@@ -13,6 +13,11 @@ import {
   getTeamGamesByYearAndWeek,
 } from '~/models/teamgame.server';
 import { assignCompetitionRanks } from '~/utils/rank';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}, ${params.year}`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

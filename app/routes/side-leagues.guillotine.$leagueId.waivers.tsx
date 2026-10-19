@@ -17,6 +17,9 @@ import {
   getGuillotineTransactions,
 } from '~/models/guillotine.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Waivers' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);

@@ -4,6 +4,9 @@ import { SocialsProvider } from 'remix-auth-socials';
 import { Button } from '~/components/ui/button';
 import { PageHeader } from '~/components/ui/page-header';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Log in' };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {

@@ -10,7 +10,12 @@ import { getLeaguesByYear } from '~/models/league.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
 import { yearOptions } from '~/utils/years';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => (params['*'] ? `${params['*']} ADP` : 'ADP'),
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const currentSeason = await getCurrentSeason();

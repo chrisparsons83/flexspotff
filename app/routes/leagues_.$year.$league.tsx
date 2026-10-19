@@ -14,6 +14,14 @@ import { getLeagueYearsByName, getLeaguesByYear } from '~/models/league.server';
 import { countPlayoffGamesByLeague } from '~/models/playoffgame.server';
 import { getTeamGameWeeksByLeague } from '~/models/teamgame.server';
 import { countWaiverTransactionsByLeague } from '~/models/waiver.server';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data, params }) => {
+    const name = dataOf<typeof loader>(data)?.league?.name;
+    return name && `${name} ${params.year}`;
+  },
+};
 
 export const ROUTE_ID = 'routes/leagues_.$year.$league';
 

@@ -19,7 +19,12 @@ import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}, ${params.year} standings`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

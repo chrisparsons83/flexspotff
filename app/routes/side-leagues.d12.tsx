@@ -7,6 +7,9 @@ import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { getAllD12SeasonYears } from '~/models/d12season.server';
 import { getNewestD12WeekByYear } from '~/models/d12weekscore.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'D12' };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const years = await getAllD12SeasonYears();

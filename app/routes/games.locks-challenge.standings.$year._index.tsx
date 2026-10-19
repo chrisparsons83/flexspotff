@@ -19,8 +19,13 @@ import { getCurrentSeason } from '~/models/season.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
 import { assignCompetitionRanks } from '~/utils/rank';
+import type { RouteHandle } from '~/utils/route-handle';
 import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `${params.year} standings`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

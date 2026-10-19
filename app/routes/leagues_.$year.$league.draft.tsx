@@ -10,9 +10,12 @@ import { positionTint } from '~/components/ui/fills';
 import { Section } from '~/components/ui/section';
 import { requireLeague } from '~/libs/leagues/page.server';
 import { getDraftBoardPicks } from '~/models/draftpick.server';
-import type { RouteHandle } from '~/utils/route-handle';
+import { type RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { width: 'full' };
+export const handle: RouteHandle = {
+  width: 'full',
+  title: 'Draft',
+};
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });

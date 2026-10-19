@@ -1,5 +1,8 @@
 import { Outlet } from '@remix-run/react';
 import GameHeader from '~/components/layout/games/GameHeader';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'F²' };
 
 export default function FSquared() {
   return (

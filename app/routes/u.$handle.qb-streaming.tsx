@@ -52,6 +52,9 @@ import {
   QB_STREAMING_TOP_WEEKS_FROM_YEAR,
 } from '~/models/profile/sideGameScoring';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'QB streaming' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);

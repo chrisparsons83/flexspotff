@@ -10,6 +10,14 @@ import { getD12SeasonByYear } from '~/models/d12season.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
 import { getUserById } from '~/models/user.server';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data, params }) => {
+    const name = dataOf<typeof loader>(data)?.discordName;
+    return name && `${name}, ${params.year}`;
+  },
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { year: yearParam, userId } = params;

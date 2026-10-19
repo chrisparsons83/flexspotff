@@ -6,6 +6,11 @@ import {
   getFSquaredYears,
   getStandingsForYear,
 } from '~/models/fsquared.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `${params.year} standings`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

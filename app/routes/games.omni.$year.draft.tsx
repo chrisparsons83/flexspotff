@@ -4,9 +4,12 @@ import { z } from 'zod';
 import OmniDraftBoard from '~/components/layout/omni/OmniDraftBoard';
 import { Section } from '~/components/ui/section';
 import { getOmniSeason } from '~/models/omniseason.server';
-import type { RouteHandle } from '~/utils/route-handle';
+import { type RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { width: 'full' };
+export const handle: RouteHandle = {
+  width: 'full',
+  title: 'Draft board',
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = z.string().parse(params.year);

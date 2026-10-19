@@ -7,6 +7,9 @@ import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { requireSurvivorAccess } from '~/libs/survivor/access.server';
 import { getSurvivorPools } from '~/libs/survivor/pools.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'History' };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireSurvivorAccess(request);

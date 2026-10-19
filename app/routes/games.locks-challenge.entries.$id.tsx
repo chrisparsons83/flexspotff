@@ -24,7 +24,10 @@ import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = { title: 'My entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {

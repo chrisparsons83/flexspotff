@@ -3,6 +3,9 @@ import GameHistory from '~/components/layout/games/GameHistory';
 import { getGameHistory } from '~/libs/games/history.server';
 import { spreadPoolSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { STARTING_BANK } from '~/models/profile/spreadPoolProfile';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'History' };
 
 export const loader = async () =>
   typedjson({ history: await getGameHistory(await spreadPoolSeasonTotals()) });

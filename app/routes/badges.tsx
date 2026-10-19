@@ -10,6 +10,9 @@ import {
   type Badge,
 } from '~/models/profile/badges';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Badges' };
 
 /**
  * What every badge is, and what each of its stars costs.
@@ -24,8 +27,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   return null;
 };
-
-export const meta = () => [{ title: 'Badges - FlexSpot FF' }];
 
 /**
  * Each badge at its top star, so the page shows what one looks like when it is

@@ -3,6 +3,9 @@ import { Outlet } from '@remix-run/react';
 import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Dashboard' };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, { failureRedirect: '/login' });

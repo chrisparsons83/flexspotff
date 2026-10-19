@@ -11,6 +11,9 @@ import {
   computeD12Leaderboard,
   getD12WeekScoresBySeasonYear,
 } from '~/models/d12weekscore.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: ({ params }) => params.year };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

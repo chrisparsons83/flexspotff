@@ -5,6 +5,9 @@ import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Leagues' };
 
 export const loader = async () => {
   const season = await getCurrentSeason();

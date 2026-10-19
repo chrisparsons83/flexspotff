@@ -7,6 +7,9 @@ import { Table } from '~/components/ui/table';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Qualifying points' };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

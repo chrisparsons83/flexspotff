@@ -11,6 +11,9 @@ import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { getLatestSurvivorPools } from '~/models/survivor.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Games' };
 
 type WeekState = { week: number; isOpen: boolean; isScored: boolean };
 

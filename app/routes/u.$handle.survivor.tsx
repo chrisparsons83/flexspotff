@@ -19,6 +19,9 @@ import type {
   SurvivorPoolResult,
   SurvivorTeamRow,
 } from '~/models/profile/survivorProfile';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Survivor' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);

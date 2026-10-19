@@ -113,6 +113,13 @@ const currentLink = (groups: AdminNavGroup[], pathname: string) =>
     .filter(to => pathname === to || pathname.startsWith(`${to}/`))
     .sort((a, b) => b.length - a.length)[0];
 
+/** The admin navigation's name for the page at this path. */
+export const adminPageLabel = (pathname: string) => {
+  const to = currentLink(ADMIN_NAV, pathname);
+  return ADMIN_NAV.flatMap(group => group.items).find(item => item.to === to)
+    ?.label;
+};
+
 /**
  * Admin's pages are working tools, written as plain headings, paragraphs,
  * tables and form fields. This sets those bare elements in the same type,

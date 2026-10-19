@@ -13,6 +13,14 @@ import {
   getSurvivorPoolWithEntries,
 } from '~/models/survivor.server';
 import { cn } from '~/utils';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data }) => {
+    const pool = dataOf<typeof loader>(data)?.pool;
+    return pool && poolTitle(pool);
+  },
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireSurvivorAccess(request);

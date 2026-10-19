@@ -5,6 +5,9 @@ import { PageHeader } from '~/components/ui/page-header';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { getEpisodes } from '~/models/episode.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Trash Turtle Football' };
 
 export const loader = async () => {
   const episodes = await getEpisodes();
