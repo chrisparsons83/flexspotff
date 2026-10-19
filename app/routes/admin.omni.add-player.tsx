@@ -59,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (typeof displayName !== 'string' || displayName.trim() === '') {
     return typedjson(
-      { errors: { displayName: 'Display Name is required' } },
+      { errors: { displayName: 'Display name is required' } },
       { status: 400 },
     );
   }
@@ -71,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   if (typeof seasonId !== 'string' || seasonId.trim() === '') {
     return typedjson(
-      { errors: { seasonId: 'Omni Season is required' } },
+      { errors: { seasonId: 'Omni season is required' } },
       { status: 400 },
     );
   }
@@ -80,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     !/^-?\d+$/.test(relativeSortString)
   ) {
     return typedjson(
-      { errors: { relativeSort: 'Relative Sort must be an integer' } },
+      { errors: { relativeSort: 'Relative sort must be an integer' } },
       { status: 400 },
     );
   }
@@ -98,10 +98,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       successMessage: `Omni player ${newPlayer.displayName} created successfully`,
     });
   } catch (error) {
-    console.error('Error creating Omni Player:', error);
+    console.error('Error creating Omni player:', error);
     // Consider more specific error handling based on Prisma errors if needed
     return typedjson(
-      { errors: { form: 'Failed to create Omni Player. Please try again.' } },
+      { errors: { form: 'Failed to create Omni player. Please try again.' } },
       { status: 500 },
     );
   }
@@ -180,7 +180,7 @@ export default function AddOmniPlayerPage() {
             className='mt-1 block w-full border-border py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm'
             aria-describedby='sportId-error'
           >
-            <option value=''>Select Sport</option>
+            <option value=''>Select sport</option>
             {omniSports.map(sport => (
               <option key={sport.id} value={sport.id}>
                 {sport.name}
@@ -211,7 +211,7 @@ export default function AddOmniPlayerPage() {
             className='mt-1 block w-full border-border py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm'
             aria-describedby='seasonId-error'
           >
-            <option value=''>Select Omni Season</option>
+            <option value=''>Select Omni season</option>
             {omniSeasons.map(season => (
               <option key={season.id} value={season.id}>
                 {season.year}

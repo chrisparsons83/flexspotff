@@ -182,7 +182,7 @@ export default function SpreadPoolList() {
               <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
               <td>
                 <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
-                  Edit Week
+                  Edit week
                 </Link>
               </td>
               <td>

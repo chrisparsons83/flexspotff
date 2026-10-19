@@ -54,7 +54,7 @@ export default function MemberCup() {
       <SeedingHistory runs={[]} seeding={profile.seeding} />
     ) : (
       <ContestEmptyState
-        contest='the Cup'
+        contest='the cup'
         memberName={summary.user.discordName}
       />
     );
@@ -94,7 +94,7 @@ function Career({ career }: { career: CupCareer }) {
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
         <CareerCard
-          title='Best Run'
+          title='Best run'
           lead={
             career.bestRun?.depth === ROUNDS_TO_WIN ? (
               <span className='inline-flex items-center gap-1.5 font-medium'>
@@ -122,11 +122,11 @@ function Career({ career }: { career: CupCareer }) {
             tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat label='Finals' value={career.finals} />
-          <MiniStat label='Final Fours' value={career.finalFours} />
+          <MiniStat label='Final fours' value={career.finalFours} />
         </CareerCard>
 
         <CareerCard
-          title='Cup Record'
+          title='Cup record'
           lead={<WinLoss wins={career.wins} losses={career.losses} />}
           leadNote={
             games > 0
@@ -137,12 +137,12 @@ function Career({ career }: { career: CupCareer }) {
         >
           <MiniStat label='Byes' value={career.byes} />
           <MiniStat
-            label='Beat Higher Seed'
+            label='Beat higher seed'
             value={career.upsetsWon}
             tone='text-positive'
           />
           <MiniStat
-            label='Lost to Lower Seed'
+            label='Lost to lower seed'
             value={career.upsetsLost}
             tone='text-negative'
           />
@@ -233,7 +233,7 @@ function describeRound(result: RoundResult): string {
 function BracketRuns({ runs }: { runs: CupRun[] }) {
   return (
     <ProfileSection
-      title='Bracket Runs'
+      title='Bracket runs'
       info={
         <span className='flex flex-col items-start gap-1.5'>
           {RUN_KEY.map(([label, tone]) => (
@@ -354,13 +354,13 @@ function SeedingHistory({
   seeding: CupSeeding | null;
 }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Year',
           'League',
           'Seed',
-          'Seeding Points',
+          'Seeding points',
           'Finish',
           'Field',
         ]}
@@ -451,7 +451,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
 
   return (
     <ProfileSection
-      title='Match Log'
+      title='Match log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

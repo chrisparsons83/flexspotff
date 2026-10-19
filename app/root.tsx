@@ -114,9 +114,7 @@ function PageTitle() {
   const error = useRouteError();
   return (
     <title>
-      {error
-        ? `${errorPage(error).title} - ${SITE_NAME}`
-        : pageTitle(matches)}
+      {error ? `${errorPage(error).title} - ${SITE_NAME}` : pageTitle(matches)}
     </title>
   );
 }

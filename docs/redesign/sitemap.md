@@ -169,8 +169,8 @@ How each game fits:
 - **QB streaming, spread pool, locks challenge, DFS survivor** fit as they are.
   Their landing pages today only point at the sub-navigation; they become the
   overview.
-- **F²** has no weekly standings and no rules page yet. The rules page is
-  written in the content pass (#196). `my-entry` becomes `entries`.
+- **F²** has no weekly standings. Its rules page was written in the content pass
+  (#196). `my-entry` becomes `entries`.
 - **Survivor** is organised by pool, not by week: the overview lists this
   season's pools, `/games/survivor/:poolId` is one pool, and History is the
   all-time table that is on today's index.

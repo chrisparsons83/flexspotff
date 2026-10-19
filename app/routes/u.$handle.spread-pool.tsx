@@ -90,7 +90,7 @@ export default function MemberSpreadPool() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='the Spread Pool'
+        contest='the spread pool'
         memberName={summary.user.discordName}
       />
     );
@@ -178,12 +178,12 @@ function Career({
           }
         >
           <MiniStat
-            label='Total Bet'
+            label='Total bet'
             value={career.wagered.toLocaleString()}
             hint='Every point bet, won or lost'
           />
           <MiniStat
-            label='Average Bet'
+            label='Average bet'
             value={
               career.averageBet === null ? '–' : career.averageBet.toFixed(1)
             }
@@ -197,7 +197,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Bets Won'
+          title='Bets won'
           lead={pct(career.winRate)}
           meter={
             <SplitKey
@@ -212,7 +212,7 @@ function Career({
             hint='Every bet placed, pushes included'
           />
           <MiniStat
-            label='Best Season'
+            label='Best season'
             value={bestSeason ? pct(bestSeason.rate) : '–'}
             detail={bestSeason ? String(bestSeason.year) : null}
             hint='Their best win rate in a season'
@@ -252,7 +252,7 @@ function WeeksCard({ career }: { career: PoolCareer }) {
 
   return (
     <CareerCard
-      title='Up Weeks'
+      title='Up weeks'
       lead={
         <>
           {career.weeksPlayed > 0
@@ -306,7 +306,7 @@ function FinishesCard({
           </>
         }
       >
-        <MiniStat label='Weeks Played' value={career.weeksPlayed} />
+        <MiniStat label='Weeks played' value={career.weeksPlayed} />
       </CareerCard>
     ) : null;
   }
@@ -330,7 +330,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Average Finish'
+        label='Average finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -338,7 +338,7 @@ function FinishesCard({
         )}`}
       />
       <MiniStat
-        label='Up Seasons'
+        label='Up seasons'
         value={`${career.profitableSeasons}/${career.completedSeasons}`}
         hint={`Finished seasons that ended above the ${STARTING_BANK} they started with`}
       />
@@ -349,7 +349,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: PoolSeason[] }) {
   return (
     <ProfileSection
-      title='By Season'
+      title='By season'
       info='ROE is return on everything bet: the net as a share of the total bet.'
     >
       <Table
@@ -360,8 +360,8 @@ function BySeason({ seasons }: { seasons: PoolSeason[] }) {
           'Record',
           'Win %',
           'ROE',
-          'Best Week',
-          'Worst Week',
+          'Best week',
+          'Worst week',
           'Missed',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7, 8]}
@@ -689,7 +689,7 @@ function WeekByWeek({ seasons }: { seasons: PoolSeason[] }) {
 
   return (
     <ProfileSection
-      title='Week by Week'
+      title='Week by week'
       description='Each week’s net, shaded by where it ranked among everyone who played it.'
     >
       <WeekGrid
@@ -928,7 +928,7 @@ function SideCard({
         hint='Share of their bets'
       />
       <MiniStat
-        label='Average Bet'
+        label='Average bet'
         value={averageBet === null ? '–' : averageBet.toFixed(1)}
       />
     </CareerCard>
@@ -1230,17 +1230,17 @@ function Teams({
       }
     >
       <div className='mb-5 grid gap-3 sm:grid-cols-3'>
-        <TeamCallout title='Most Profitable' row={mostProfitable} names={names}>
+        <TeamCallout title='Most profitable' row={mostProfitable} names={names}>
           {mostProfitable && <BackedFaded row={mostProfitable} />}
         </TeamCallout>
         <TeamCallout
-          title='Least Profitable'
+          title='Least profitable'
           row={leastProfitable}
           names={names}
         >
           {leastProfitable && <BackedFaded row={leastProfitable} />}
         </TeamCallout>
-        <TeamCallout title='Most Often Bet' row={mostBet} names={names}>
+        <TeamCallout title='Most often bet' row={mostBet} names={names}>
           {mostBet && <BackedFaded row={mostBet} />}
         </TeamCallout>
       </div>
@@ -1352,7 +1352,7 @@ function BetLog({ seasons }: { seasons: PoolSeason[] }) {
 
   return (
     <ProfileSection
-      title='Bet Log'
+      title='Bet log'
       description='Contrarian marks a bet on the side fewer than half of the others who bet that game took.'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >

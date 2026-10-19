@@ -232,7 +232,7 @@ const AdminOmniScoring = () => {
                 onClick={toggleAllCheckboxes}
                 variant='secondary'
               >
-                {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
+                {allChecked ? 'Clear checkboxes' : 'Select all players'}
               </Button>
             </div>
             <table>

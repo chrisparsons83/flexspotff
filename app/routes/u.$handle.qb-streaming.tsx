@@ -93,7 +93,7 @@ export default function MemberQbStreaming() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='QB Streaming'
+        contest='QB streaming'
         memberName={summary.user.discordName}
       />
     );
@@ -137,7 +137,7 @@ function Career({
         <SideCard side='deep' career={career.deep} weeks={career.weeks} />
 
         <CareerCard
-          title='Weekly Total'
+          title='Weekly total'
           lead={
             <VsFieldLead value={career.averageWeek} vsField={career.vsField} />
           }
@@ -157,14 +157,14 @@ function Career({
           }
         >
           <RateStat
-            label='Weeks Won'
+            label='Weeks won'
             count={career.weeklyWins}
             of={career.weeks}
             hint='Weeks with the top total of everyone who played'
             tone={career.weeklyWins > 0 ? TEXT.champion : undefined}
           />
           <RateStat
-            label='Doubled Up'
+            label='Doubled up'
             count={career.doubledWeeks}
             of={career.weeks}
             hint='Weeks the same QB was both the standard and the deep pick'
@@ -226,7 +226,7 @@ function FinishesCard({
           </>
         }
       >
-        <MiniStat label='Weeks Played' value={career.weeks} />
+        <MiniStat label='Weeks played' value={career.weeks} />
       </CareerCard>
     ) : null;
   }
@@ -315,7 +315,7 @@ function SideCard({
       }
     >
       <RateStat
-        label='Beat the Field'
+        label='Beat the field'
         count={career.beatFieldWeeks}
         of={weeks}
         hint={`Weeks this pick outscored the average ${side} pick`}
@@ -350,17 +350,17 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
 
 function BySeason({ seasons }: { seasons: QbSeason[] }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Year',
           'Finish',
           'Total',
-          'Average Week',
-          'Average Standard',
-          'Average Deep',
-          'Best Week',
-          'Weeks Won',
+          'Average week',
+          'Average standard',
+          'Average deep',
+          'Best week',
+          'Weeks won',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
         primaryColumns={[1, 2]}
@@ -482,7 +482,7 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
 
   return (
     <ProfileSection
-      title='Week by Week'
+      title='Week by week'
       info={
         <KeyList>
           <WonKey sample='40' />
@@ -606,7 +606,7 @@ function MostStreamed({
 
   return (
     <ProfileSection
-      title='Most Streamed'
+      title='Most streamed'
       info={
         <KeyList>
           <BarKey tone={SIDE.standard.dot}>Standard pick</BarKey>
@@ -742,7 +742,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
 
   return (
     <ProfileSection
-      title='Pick Log'
+      title='Pick log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

@@ -181,7 +181,7 @@ export default function AdminGuillotineIndex() {
           >
             {isSubmitting && navigation.formData?.get('_action') === 'addLeague'
               ? 'Adding…'
-              : 'Add League'}
+              : 'Add league'}
           </Button>
         </Form>
       </section>

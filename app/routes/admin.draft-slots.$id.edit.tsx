@@ -27,7 +27,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const { id } = params;
   if (!id) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const formData = await request.formData();
@@ -72,12 +72,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const { id } = params;
   if (!id) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const draftSlot = await getDraftSlot({ id });
   if (!draftSlot) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const seasons = await getSeasons();
@@ -135,7 +135,7 @@ export default function EditDraftSlot() {
     <>
       <h2>Edit draft slot</h2>
       <p>
-        <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
+        <Link to='/admin/draft-slots'>← Back to draft slots</Link>
       </p>
       {isSuccessWithMessage(actionData) && (
         <Alert message={`${actionData.message} Redirecting…`} />
@@ -181,7 +181,7 @@ export default function EditDraftSlot() {
         </div>
         <div>
           <label htmlFor='draftDateTimeLocal'>
-            Draft Date & Time (in your local timezone:{' '}
+            Draft date and time (in your local timezone:{' '}
             <span suppressHydrationWarning>
               {Intl.DateTimeFormat().resolvedOptions().timeZone}
             </span>

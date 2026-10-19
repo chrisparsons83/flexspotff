@@ -146,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
         if (teamsCompleted.length > 0) {
           fields.push({
-            name: 'Teams Completed',
+            name: 'Teams completed',
             value: teamsCompleted
               .map(update => {
                 const player = players.find(p => p.id === update.id);
@@ -160,7 +160,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
 
         const embed = new EmbedBuilder()
-          .setTitle(`${sport.emoji} Scores Updated`)
+          .setTitle(`${sport.emoji} scores updated`)
           .setDescription(
             `The following scores have been updated in ${sport.name}`,
           )
@@ -320,14 +320,14 @@ const AdminOmniScoring = () => {
                 onClick={toggleAllCheckboxes}
                 variant='secondary'
               >
-                {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
+                {allChecked ? 'Clear checkboxes' : 'Select all players'}
               </Button>
               <Button
                 type='button'
                 onClick={toggleInputMode}
                 variant='secondary'
               >
-                {useInputField ? 'Use Dropdown' : 'Use Custom Values'}
+                {useInputField ? 'Use dropdown' : 'Use custom values'}
               </Button>
             </div>
             <table>

@@ -49,6 +49,18 @@ const LINE_RULES: [string, RegExp][] = [
 
 const STRING = /(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
 
+/**
+ * Rules read off the copy: the text in string literals, and a line of JSX
+ * text. Code is not copy, so `a!` and `{...rest}` outside them pass.
+ */
+const COPY_RULES: [string, RegExp][] = [
+  ['exclamation mark', /[\p{L})]!(?:\s|$)/u],
+  ['three dots for an ellipsis', /\p{L}\.\.\.(?:\s|$)/u],
+];
+
+/** A line that is only text between JSX tags. */
+const JSX_TEXT = /^\s*[\p{L}\p{N}][^{}<>=;()]*$/u;
+
 const files = (path: string): string[] =>
   statSync(path).isDirectory()
     ? readdirSync(path).flatMap(name => files(join(path, name)))
@@ -76,6 +88,13 @@ for (const file of targets.flatMap(files)) {
     const found = new Set<string>();
     for (const [rule, pattern] of LINE_RULES) {
       if (pattern.test(line)) found.add(rule);
+    }
+    const copy = [...line.matchAll(STRING)].map(([, , text]) => text);
+    if (JSX_TEXT.test(line)) copy.push(line);
+    for (const text of copy) {
+      for (const [rule, pattern] of COPY_RULES) {
+        if (pattern.test(text)) found.add(rule);
+      }
     }
     for (const [, , text] of line.matchAll(STRING)) {
       for (const token of text.split(/\s+/)) {

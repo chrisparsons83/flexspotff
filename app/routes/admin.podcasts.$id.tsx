@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     title: title.length === 0 ? 'Title has no content' : undefined,
     description:
       description.length === 0 ? 'Description has no content' : undefined,
-    showNotes: showNotes.length === 0 ? 'Show Notes has no content' : undefined,
+    showNotes: showNotes.length === 0 ? 'Show notes has no content' : undefined,
   };
 
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -183,7 +183,7 @@ export default function PodcastEpisodeCreate() {
     navigation.state === 'submitting'
       ? 'Submitting…'
       : navigation.state === 'loading'
-      ? 'Submitted!'
+      ? 'Submitted'
       : 'Submit';
 
   return (
@@ -285,7 +285,7 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             <label htmlFor='showNotes'>
-              Long Description:{' '}
+              Long description:{' '}
               <span className='text-sm italic text-muted-foreground'>
                 (can take HTML)
               </span>
@@ -316,7 +316,7 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             <label htmlFor='publishDate'>
-              Publish Date:
+              Publish date:
               <input
                 type='date'
                 defaultValue={
@@ -333,10 +333,10 @@ export default function PodcastEpisodeCreate() {
           </div>
           <div>
             <label htmlFor='podcastFile'>
-              Podcast File:{' '}
+              Podcast file:{' '}
               {episode && (
                 <>
-                  <a href={episode.filepath}>Current File</a>
+                  <a href={episode.filepath}>Current file</a>
                   <input
                     type='hidden'
                     name='duration'

@@ -287,7 +287,7 @@ export default function AdminSurvivorIndex() {
             value='addPool'
             disabled={isSubmitting}
           >
-            {submitting('addPool') ? 'Adding…' : 'Add Pool'}
+            {submitting('addPool') ? 'Adding…' : 'Add pool'}
           </Button>
         </Form>
       </section>
@@ -309,8 +309,8 @@ export default function AdminSurvivorIndex() {
             {submitting('importYahoo')
               ? 'Loading…'
               : hasYahoo
-              ? 'Reload Yahoo Pools'
-              : 'Load Yahoo Pools'}
+              ? 'Reload Yahoo pools'
+              : 'Load Yahoo pools'}
           </Button>
         </Form>
       </section>

@@ -76,7 +76,7 @@ export default function LeagueNew() {
     navigation.state === 'submitting'
       ? 'Submitting…'
       : navigation.state === 'loading'
-      ? 'Submitted!'
+      ? 'Submitted'
       : 'Submit';
 
   return (

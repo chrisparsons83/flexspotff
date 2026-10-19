@@ -214,7 +214,7 @@ export default function AdminSpreadPoolYearWeek() {
 
   return (
     <div>
-      <h2>Edit Picks for Week {nflGames[0].week}</h2>
+      <h2>Edit picks for week {nflGames[0].week}</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' reloadDocument>
         <table>

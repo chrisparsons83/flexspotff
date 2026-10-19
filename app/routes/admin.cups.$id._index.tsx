@@ -50,7 +50,7 @@ const selectOptions: CupMappingOptions[] = [
     value: 'PENDING',
   },
   {
-    label: 'Seeding Week',
+    label: 'Seeding week',
     value: 'SEEDING',
   },
   {
@@ -299,7 +299,7 @@ export default function CupAdministerPage() {
                   ? cupWeek.mapping
                   : undefined;
               const buttonText =
-                action === 'SEEDING' ? 'Set Seeds' : 'Score Week';
+                action === 'SEEDING' ? 'Set seeds' : 'Score week';
 
               return (
                 <tr key={cupWeek.id}>

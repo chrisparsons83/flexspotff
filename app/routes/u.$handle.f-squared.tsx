@@ -122,7 +122,7 @@ const whole = (value: number) => Math.round(value).toLocaleString('en-US');
  */
 function PointsCard({ career }: { career: FSquaredCareer }) {
   const { bestSeason, worstSeason, averageVsField, averageTotal } = career;
-  const title = 'Average Score';
+  const title = 'Average score';
 
   // Only a running season so far: nothing settled to measure yet.
   if (averageVsField === null || averageTotal === null) {
@@ -208,7 +208,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       />
       <MiniStat label='Top 3' value={career.podiums} />
       <MiniStat
-        label='Top Half'
+        label='Top half'
         value={career.topHalves}
         unit={`/${career.completedSeasons}`}
         hint='Finished seasons in the top half of the field'
@@ -226,7 +226,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
 function PickQualityCard({ career }: { career: FSquaredCareer }) {
   return (
     <CareerCard
-      title='Picks That Beat League Average'
+      title='Picks that beat league average'
       lead={pct(career.beatAverageShare)}
       compactStats
     >
@@ -252,7 +252,7 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
 
   return (
     <CareerCard
-      title='Picked By Others'
+      title='Picked by others'
       lead={pct(pickedBy.averageShare)}
       compactStats
     >
@@ -305,17 +305,17 @@ function PickCell({ pick }: { pick: FSquaredPick | null }) {
 
 function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Year',
           'Finish',
           'Score',
           'vs Field',
-          'Beat Average',
-          'Best Pick',
-          'Worst Pick',
-          'Picked By',
+          'Beat average',
+          'Best pick',
+          'Worst pick',
+          'Picked by',
         ]}
         primaryColumns={[1, 3]}
         numericColumns={[2, 3, 4, 7]}
@@ -461,9 +461,9 @@ function MostPickedManagers({
   const visible = showAll ? managers : managers.slice(0, LIST_PREVIEW);
 
   return (
-    <ProfileSection title='Most Picked Managers'>
+    <ProfileSection title='Most picked managers'>
       <Table
-        headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
+        headers={['Manager', 'Picks', 'Years', 'Average finish', 'vs league']}
         primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
       >
@@ -530,7 +530,7 @@ function WhoPickedThem({
   const visible = showAll ? pickers : pickers.slice(0, LIST_PREVIEW);
 
   return (
-    <ProfileSection title={`Who Picked ${memberName}`}>
+    <ProfileSection title={`Who picked ${memberName}`}>
       {pickers.length === 0 ? (
         <p className='m-0 text-sm text-muted-foreground'>Nobody yet.</p>
       ) : (

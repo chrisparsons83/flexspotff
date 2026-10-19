@@ -71,7 +71,7 @@ export default function AdminBotPage() {
 
   return (
     <div>
-      <h1>Bot Admin</h1>
+      <h1>Bot commands</h1>
       <p>
         You probably don't need to touch these ever, but they're here for new
         commands.

@@ -63,7 +63,7 @@ export default function MembersAdd() {
     navigation.state === 'submitting'
       ? 'Adding…'
       : navigation.state === 'loading'
-      ? 'Added!'
+      ? 'Added'
       : 'Add';
 
   return (
@@ -79,7 +79,7 @@ export default function MembersAdd() {
       <Form method='POST' className='grid grid-cols-1 gap-6' ref={formRef}>
         <div>
           <label htmlFor='discordName'>
-            Discord Name
+            Discord name
             <input
               type='text'
               required
@@ -103,7 +103,7 @@ export default function MembersAdd() {
         </div>
         <div>
           <label htmlFor='discordId'>
-            Sleeper Owner ID
+            Sleeper owner ID
             <input
               type='text'
               required

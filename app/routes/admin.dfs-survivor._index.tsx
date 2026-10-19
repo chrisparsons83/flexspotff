@@ -80,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
 
     if (allWeekRecords.length === 0) {
-      throw new Error('No DFS Survivor Week records found for this week');
+      throw new Error('No DFS survivor week records found for this week');
     }
 
     // Check if the week is already scored
@@ -168,7 +168,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         console.error('Player score sync after scoring failed:', error);
         return typedjson({
           message:
-            'Week has been scored, but refreshing player scores failed. Use Sync Player Scores to retry.',
+            'Week has been scored, but refreshing player scores failed. Use Sync player scores to retry.',
         });
       }
 
@@ -291,7 +291,7 @@ export default function AdminDfsSurvivorIndex() {
                   <input type='hidden' name='year' value={week.year} />
                   <input type='hidden' name='id' value={week.id} />
                   <Button type='submit' name='_action' value='scoreWeek'>
-                    {week.isScored ? 'Revert Scoring' : 'Score Week'}
+                    {week.isScored ? 'Revert scoring' : 'Score week'}
                   </Button>
                 </Form>
               </td>
