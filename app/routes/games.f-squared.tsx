@@ -10,8 +10,7 @@ export default function FSquared() {
       <GameHeader
         title='F²'
         description='Before each league drafts, pick two of its teams. Your score is the points every team you picked scores all season, and the highest total wins.'
-        // The rules page is written in the content pass (#196).
-        tabs={{ base: '/games/f-squared', rules: false }}
+        tabs={{ base: '/games/f-squared' }}
       />
       <Outlet />
     </>
