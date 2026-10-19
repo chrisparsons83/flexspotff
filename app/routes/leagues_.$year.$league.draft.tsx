@@ -52,7 +52,9 @@ export default function LeagueDraft() {
   return (
     <Section title='Draft' description='One column per team in draft order.'>
       {rounds === 0 ? (
-        <EmptyState title='The draft has not happened yet' />
+        <EmptyState title='The draft has not happened yet'>
+          The board fills in once the league drafts.
+        </EmptyState>
       ) : (
         <DraftBoard
           columns={columns}

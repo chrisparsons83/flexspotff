@@ -53,7 +53,11 @@ export default function LeaguesOverview() {
   const { year, leagues, week } = useTypedLoaderData<typeof loader>();
 
   if (!year || leagues.length === 0) {
-    return <EmptyState title='No leagues set up for this season yet' />;
+    return (
+      <EmptyState title='No leagues set up for this season yet'>
+        This season’s leagues appear here once they are drafted on Sleeper.
+      </EmptyState>
+    );
   }
 
   return (

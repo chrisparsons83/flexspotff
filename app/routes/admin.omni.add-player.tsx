@@ -258,7 +258,7 @@ export default function AddOmniPlayerPage() {
 
         <div>
           <Button type='submit' disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Omni Player'}
+            {isSubmitting ? 'Creating…' : 'Create Omni Player'}
           </Button>
         </div>
       </Form>

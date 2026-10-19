@@ -113,7 +113,7 @@ export default function EditUser() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Adding...'
+      ? 'Adding…'
       : navigation.state === 'loading'
       ? 'Added!'
       : 'Add';

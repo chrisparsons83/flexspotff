@@ -95,7 +95,7 @@ export default function D12MemberRoster() {
       action={<Link to={`/side-leagues/d12/${year}`}>{year} standings</Link>}
     >
       {ownership.length === 0 ? (
-        <EmptyState title='No picks found for this member' />
+        <EmptyState title='No picks for this member this season' />
       ) : (
         <Table
           headers={['Player', 'Position', 'Leagues owned', 'Average pick']}

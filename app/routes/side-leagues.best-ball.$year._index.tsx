@@ -76,7 +76,11 @@ export default function BestBallStandings() {
     useTypedLoaderData<typeof loader>();
 
   if (rows.length === 0) {
-    return <EmptyState title='Nothing synced from Sleeper yet' />;
+    return (
+      <EmptyState title='No scores yet'>
+        Standings fill in once the first week is scored.
+      </EmptyState>
+    );
   }
 
   return (

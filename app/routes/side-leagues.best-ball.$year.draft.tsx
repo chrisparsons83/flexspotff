@@ -80,7 +80,11 @@ export default function BestBallDraft() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   if (columns.length === 0 || rounds === 0) {
-    return <EmptyState title='The draft has not happened yet' />;
+    return (
+      <EmptyState title='The draft has not happened yet'>
+        The board fills in once the league drafts.
+      </EmptyState>
+    );
   }
 
   return (

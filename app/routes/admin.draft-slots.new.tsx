@@ -131,7 +131,7 @@ export default function NewDraftSlot() {
                 ''
               }
             >
-              <option value=''>Select a season...</option>
+              <option value=''>Select a season…</option>
               {seasons.map((season: any) => (
                 <option key={season.id} value={season.id}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}

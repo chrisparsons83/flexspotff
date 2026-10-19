@@ -18,7 +18,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function SurvivorHistory() {
   const { years, allTime } = useTypedLoaderData<typeof loader>();
-  if (years.length === 0) return <EmptyState title='No survivor pools yet' />;
+  if (years.length === 0)
+    return (
+      <EmptyState title='No survivor pools yet'>
+        A pool appears here once it is set up on Sleeper.
+      </EmptyState>
+    );
 
   return (
     <>

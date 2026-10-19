@@ -45,7 +45,9 @@ export default function Standings() {
       }
     >
       {leagues.length === 0 ? (
-        <EmptyState title='No leagues for this season yet' />
+        <EmptyState title='No leagues for this season yet'>
+          Standings appear once the leagues are set up.
+        </EmptyState>
       ) : (
         leagues.map(league => (
           <Section

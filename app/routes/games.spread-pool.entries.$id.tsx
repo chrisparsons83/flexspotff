@@ -180,7 +180,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!poolWeek) {
     return typedjson({
-      notOpenYet: 'Week has not been created yet.',
+      notOpenYet: 'This week is not set up yet.',
       poolWeek,
       poolGames: [],
       poolGamePicks: [],
@@ -191,7 +191,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   if (!poolWeek.isOpen) {
     return typedjson({
-      notOpenYet: 'Lines have not been set for this week yet.',
+      notOpenYet: 'The lines for this week are not set yet.',
       poolWeek,
       poolGames: [],
       poolGamePicks: [],

@@ -227,7 +227,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!locksWeek) {
     return typedjson({
-      notOpenYet: 'Week has not been created yet.',
+      notOpenYet: 'This week is not set up yet.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],
@@ -237,7 +237,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   if (!locksWeek.isOpen) {
     return typedjson({
-      notOpenYet: 'Week is not open yet (Blame Chris)',
+      notOpenYet: 'This week is not open for picks yet. Blame Chris.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],

@@ -181,7 +181,7 @@ export default function PodcastEpisodeCreate() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Submitting...'
+      ? 'Submitting…'
       : navigation.state === 'loading'
       ? 'Submitted!'
       : 'Submit';

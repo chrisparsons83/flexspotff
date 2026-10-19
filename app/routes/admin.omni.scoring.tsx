@@ -303,7 +303,7 @@ const AdminOmniScoring = () => {
             className='form-select mt-1 block w-full '
             onChange={handleChange}
           >
-            <option value=''>Choose sport...</option>
+            <option value=''>Choose sport…</option>
             {sports.map(({ id, name }) => (
               <option key={id} value={id}>
                 {name}

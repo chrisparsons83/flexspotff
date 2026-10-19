@@ -61,7 +61,7 @@ export default function MembersAdd() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Adding...'
+      ? 'Adding…'
       : navigation.state === 'loading'
       ? 'Added!'
       : 'Add';

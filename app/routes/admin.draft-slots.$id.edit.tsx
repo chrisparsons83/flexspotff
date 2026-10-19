@@ -138,7 +138,7 @@ export default function EditDraftSlot() {
         <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
       </p>
       {isSuccessWithMessage(actionData) && (
-        <Alert message={`${actionData.message} Redirecting...`} />
+        <Alert message={`${actionData.message} Redirecting…`} />
       )}
       {isErrorResponse(actionData) && (
         <Alert
@@ -163,7 +163,7 @@ export default function EditDraftSlot() {
               required
               defaultValue={draftSlot.seasonId}
             >
-              <option value=''>Select a season...</option>
+              <option value=''>Select a season…</option>
               {seasons.map((season: any) => (
                 <option key={season.id} value={season.id}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}
