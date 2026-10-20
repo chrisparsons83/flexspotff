@@ -159,7 +159,7 @@ export function ErrorBoundary() {
       theme={root?.themePreference}
     >
       <PageHeader title={title} description={message} />
-      {detail && (
+      {detail && import.meta.env.DEV && (
         <p className='mb-6 font-mono text-sm text-muted-foreground'>{detail}</p>
       )}
       <p className='max-w-prose'>

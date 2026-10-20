@@ -11,7 +11,10 @@ const GENERIC = /^(?:not found|forbidden|error: .*)$/i;
 export function errorPage(error: unknown): {
   title: string;
   message: string;
-  /** The error's own text, for whoever is debugging. */
+  /**
+   * The error's own text, for whoever is debugging. Not for every visitor:
+   * the admin pages show it, the public ones only in development.
+   */
   detail?: string;
 } {
   if (isRouteErrorResponse(error)) {
@@ -46,6 +49,8 @@ export function errorPage(error: unknown): {
     detail:
       error instanceof Error && error.message !== 'Unexpected Server Error'
         ? error.message
+        : isRouteErrorResponse(error) && typeof error.data === 'string'
+        ? error.data
         : undefined,
   };
 }

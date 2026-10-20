@@ -44,4 +44,28 @@ describe('pageTitle', () => {
       ]),
     ).toBe('Guillotine - Flex Spot');
   });
+
+  it('gives every title the page’s path, not its own route’s', () => {
+    const seen: string[] = [];
+    pageTitle([
+      {
+        handle: {
+          title: ({ pathname }: { pathname: string }) => {
+            seen.push(pathname);
+            return 'Admin';
+          },
+        },
+        data: null,
+        params: {},
+        pathname: '/admin',
+      },
+      {
+        handle: undefined,
+        data: null,
+        params: {},
+        pathname: '/admin/members/merge',
+      },
+    ]);
+    expect(seen).toEqual(['/admin/members/merge']);
+  });
 });

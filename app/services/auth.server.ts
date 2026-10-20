@@ -179,8 +179,8 @@ export const isAdmin = (user: User) => {
 };
 
 /** A 403 the error page can explain; a thrown Error reaches it blank. */
-const noAccess = () =>
-  new Response('This page is for the site’s admins.', { status: 403 });
+const noAccess = (who: string) =>
+  new Response(`This page is for ${who}.`, { status: 403 });
 
 export const requireAdmin = (user: User) => {
   if (process.env.FORCE_ADMIN === 'on') {
@@ -188,7 +188,7 @@ export const requireAdmin = (user: User) => {
   }
 
   if (!isAdmin(user)) {
-    throw noAccess();
+    throw noAccess('the site’s admins');
   }
 
   return true;
@@ -208,7 +208,7 @@ export const isPodcastEditor = (user: User) => {
 
 export const requirePodcastEditor = (user: User) => {
   if (!isPodcastEditor(user)) {
-    throw noAccess();
+    throw noAccess('podcast editors');
   }
 
   return true;
@@ -220,7 +220,7 @@ export const isEditor = (user: User) => {
 
 export const requireEditor = (user: User) => {
   if (!isEditor(user)) {
-    throw noAccess();
+    throw noAccess('admins and podcast editors');
   }
 
   return true;

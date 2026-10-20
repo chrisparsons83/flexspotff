@@ -41,14 +41,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [leagues, week, games] = await Promise.all([
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
-    getGamesThisWeek(season),
+    season ? getGamesThisWeek(season) : [],
   ]);
 
   return typedjson({
     year: season?.year ?? null,
     week,
     signedIn: Boolean(user),
-    games,
+    // The Omni archive has no week to report.
+    games: games.filter(game => game.to !== '/games/omni'),
     leagues: leagues.map(league => ({
       id: league.id,
       name: league.name,
@@ -108,7 +109,11 @@ export default function Index() {
 
       {leagues.length > 0 && year && (
         <Section
-          title={week ? `${year}, week ${week}` : `${year} leagues`}
+          title={
+            week && week <= LAST_PLAYOFF_WEEK
+              ? `${year}, week ${week}`
+              : `${year} leagues`
+          }
           description={`${
             week ? `${leagueWeek(week)} ` : ''
           }The top of each league’s table.`}

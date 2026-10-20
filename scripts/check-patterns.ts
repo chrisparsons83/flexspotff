@@ -59,7 +59,7 @@ const COPY_RULES: [string, RegExp][] = [
 ];
 
 /** A line that is only text between JSX tags. */
-const JSX_TEXT = /^\s*[\p{L}\p{N}][^{}<>=;()]*$/u;
+const JSX_TEXT = /^\s*[\p{L}\p{N}“‘"'][^{}<>=;]*$/u;
 
 const files = (path: string): string[] =>
   statSync(path).isDirectory()

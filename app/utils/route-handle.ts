@@ -5,6 +5,7 @@ import type { UseDataFunctionReturn } from 'remix-typedjson';
 /** What a title can be read from: the URL, and the route's own loader data. */
 export type TitleArgs = {
   params: Params;
+  /** The page's path, the same for every route on it. */
   pathname: string;
   /** The route's loader data, as JSON. Missing when the loader threw. */
   data: unknown;
@@ -50,12 +51,14 @@ type TitleMatch = {
  */
 export const pageTitle = (matches: TitleMatch[]): string => {
   const names: string[] = [];
+  // A match's own pathname is only the part of the URL it matched.
+  const pathname = matches.at(-1)?.pathname ?? '/';
   for (const match of [...matches].reverse()) {
     if (!isRouteHandle(match.handle) || !match.handle.title) continue;
     const { title } = match.handle;
     let name: string | null | undefined;
     try {
-      name = typeof title === 'string' ? title : title(match);
+      name = typeof title === 'string' ? title : title({ ...match, pathname });
     } catch {
       // A title read off data the loader never sent is no title at all.
       name = null;

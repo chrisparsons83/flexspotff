@@ -154,6 +154,21 @@ const lineup = (side: Side) =>
  */
 function MatchupStarters({ week, sides }: { week: number; sides: Side[] }) {
   const [a, b] = sides;
+  return (
+    <DialogContent className='max-w-2xl'>
+      <DialogHeader>
+        <DialogTitle>
+          {sideName(a)} v {sideName(b)}
+        </DialogTitle>
+        <DialogDescription>Week {week} starters</DialogDescription>
+      </DialogHeader>
+      {/* Radix mounts this only while the dialog is open. */}
+      <Lineups a={a} b={b} />
+    </DialogContent>
+  );
+}
+
+function Lineups({ a, b }: { a: Side; b: Side }) {
   const left = lineup(a);
   const right = lineup(b);
   const rows = Math.max(left.length, right.length);
@@ -168,14 +183,7 @@ function MatchupStarters({ week, sides }: { week: number; sides: Side[] }) {
     );
 
   return (
-    <DialogContent className='max-w-2xl'>
-      <DialogHeader>
-        <DialogTitle>
-          {sideName(a)} v {sideName(b)}
-        </DialogTitle>
-        <DialogDescription>Week {week} starters</DialogDescription>
-      </DialogHeader>
-
+    <>
       <div className='hidden grid-cols-[auto_minmax(0,1fr)_auto_auto_minmax(0,1fr)_auto] items-baseline gap-x-3 sm:grid'>
         <span className='col-span-3 border-r border-border pb-2 pr-3 text-right text-lg font-bold tabular-nums'>
           {a.pointsScored.toFixed(2)}
@@ -217,7 +225,10 @@ function MatchupStarters({ week, sides }: { week: number; sides: Side[] }) {
       </div>
 
       <div className='grid gap-6 sm:hidden'>
-        {sides.map(side => (
+        {[
+          { side: a, starters: left },
+          { side: b, starters: right },
+        ].map(({ side, starters }) => (
           <section key={side.id}>
             <h3 className='mb-2 flex justify-between gap-4 font-bold'>
               <span className='truncate'>{sideName(side)}</span>
@@ -226,7 +237,7 @@ function MatchupStarters({ week, sides }: { week: number; sides: Side[] }) {
               </span>
             </h3>
             <ul className='grid gap-1'>
-              {lineup(side).map(starter => (
+              {starters.map(starter => (
                 <li key={starter.key} className='flex items-baseline gap-2'>
                   <PositionMark position={starter.position} />
                   <span className='min-w-0 flex-1 truncate'>
@@ -241,6 +252,6 @@ function MatchupStarters({ week, sides }: { week: number; sides: Side[] }) {
           </section>
         ))}
       </div>
-    </DialogContent>
+    </>
   );
 }
