@@ -33,6 +33,11 @@ const CardContext = React.createContext<{
 type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Wears the league's tint, and its colour on the header. */
   league?: LeagueFill;
+  /**
+   * The orange halo, for the one card that asks for it by name, such as a
+   * live game. The card keeps its edge under the glow.
+   */
+  glow?: boolean;
 };
 
 /**
@@ -42,7 +47,7 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
  * and the grid separate the rest. Cards do not go inside cards.
  */
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, league, ...props }, ref) => {
+  ({ className, league, glow = false, ...props }, ref) => {
     const { inCard } = React.useContext(CardContext);
     // Once per card, when it mounts, rather than on every render.
     React.useEffect(() => {
@@ -57,7 +62,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           className={cn(
             // --surface tells what sits on the card, such as a table's
             // sticky header, which colour it is on.
-            'bg-card text-card-foreground shadow-card [--surface:var(--card)]',
+            'bg-card text-card-foreground [--surface:var(--card)]',
+            glow ? 'shadow-card-glow' : 'shadow-card-edge',
             league && TINTS[league],
             className,
           )}
@@ -86,7 +92,7 @@ const CardHeader = React.forwardRef<
         'flex items-center justify-between gap-4 px-5',
         league
           ? cn('py-3', BANDS[league])
-          : 'bg-header-fill pb-[var(--header-pad-bottom)] pt-[var(--header-pad-top)] text-secondary-foreground [background-color:var(--header-bg)]',
+          : 'bg-header bg-header-fill pb-[var(--header-pad-bottom)] pt-[var(--header-pad-top)] text-secondary-foreground',
         className,
       )}
       {...props}

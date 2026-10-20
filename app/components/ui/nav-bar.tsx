@@ -62,8 +62,8 @@ function accountLinks({ isEditor, canViewProfiles }: Props) {
 /**
  * The site's bar: the logo home, the three sections, and the account menu or
  * Log in. The section you are in is marked on every page inside it, by its
- * name in the accent, with the gradient's bar under it if the depth tokens
- * give it one. On a phone everything folds into one menu
+ * name in the accent and the gradient's bar under it. The bar is what marks
+ * it for anyone who cannot tell the accent from the other names. On a phone everything folds into one menu
  * button: the sections first, then the account items.
  */
 export function NavBar(props: Props) {
@@ -77,7 +77,7 @@ export function NavBar(props: Props) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} asChild>
-      <header className='relative border-b border-hairline text-card-foreground [background-color:var(--chrome-bg)]'>
+      <header className='relative border-b border-hairline bg-chrome text-card-foreground'>
         <div className='mx-auto flex h-16 max-w-6xl items-stretch gap-8 px-4'>
           <Link
             to='/'

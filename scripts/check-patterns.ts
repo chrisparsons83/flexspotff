@@ -33,8 +33,11 @@ const CLASS_RULES: [string, RegExp][] = [
   ['raw palette class', PALETTE],
   ['dark: variant', /^dark:/],
   ['rounded corner', /^(?:[a-z-]+:)*rounded(?:-[a-z0-9[\]]+)*$/],
-  // The depth tokens' card shadow and glow are the shadows a page may use.
-  ['shadow', /^(?:[a-z-]+:)*shadow(?:-(?!none|card|glow)[a-z0-9]+)?$/],
+  // The depth tokens' card shadows and glow are the shadows a page may use.
+  [
+    'shadow',
+    /^(?:[a-z-]+:)*shadow(?:-(?!(?:none|card-edge|card-glow|glow)$)[a-z0-9-]+)?$/,
+  ],
   ['gradient', /^(?:[a-z-]+:)*bg-gradient-/],
   ['eyebrow', /^(?:[a-z-]+:)*tracking-(?:wide|wider|widest)$/],
 ];

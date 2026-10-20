@@ -222,7 +222,8 @@ export function Table({
           // the scroller rather than stretching the page on a phone.
           'not-prose relative max-lg:overflow-x-auto',
           // A well a little darker than what the table sits on, with the
-          // header row raised back up to the surface.
+          // header row raised back up to the surface. With no well, both
+          // are see-through.
           'bg-[color-mix(in_oklab,oklch(var(--surface,var(--background))),var(--well-mix))]',
           !stickyHeader && 'overflow-x-auto',
           CELLS,
@@ -236,7 +237,7 @@ export function Table({
           <thead>
             <tr
               className={cn(
-                'border-b border-border bg-[oklch(var(--surface,var(--background)))] text-sm text-muted-foreground',
+                'border-b border-border bg-[color-mix(in_oklab,oklch(var(--surface,var(--background))),var(--well-head-mix))] text-sm text-muted-foreground',
                 LABEL,
               )}
             >

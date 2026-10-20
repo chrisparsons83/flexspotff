@@ -23,9 +23,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'border-primary-edge bg-primary bg-primary-fill text-primary-foreground shadow-press hover:brightness-110 active:translate-y-[var(--press-drop)] active:shadow-none',
+          'border-primary-edge bg-primary bg-primary-fill text-primary-foreground shadow-press hover:bg-primary-hover hover:bg-primary-fill-hover active:translate-y-[var(--press-drop)] active:shadow-none',
         secondary:
-          'border-[color:var(--secondary-edge)] text-secondary-foreground shadow-press-secondary [background-color:var(--secondary-bg)] hover:bg-accent active:translate-y-[var(--press-drop)] active:shadow-none',
+          'border-control-edge bg-control text-secondary-foreground shadow-press-secondary hover:bg-accent active:translate-y-[var(--press-drop)] active:shadow-none',
         destructive:
           'border-transparent bg-destructive text-destructive-foreground shadow-press-destructive active:translate-y-[var(--press-drop)] active:shadow-none',
         ghost:

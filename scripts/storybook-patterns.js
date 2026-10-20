@@ -98,12 +98,12 @@ function findPatterns() {
     }
 
     // Shadows on buttons (their drop) and overlays, and otherwise only the
-    // depth tokens' card shadow and glow.
+    // depth tokens' card shadows and glow.
     if (style.boxShadow !== 'none') {
       const allowed =
         el.closest(
           'button, [data-slot="button"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [data-radix-popper-content-wrapper]',
-        ) || fromToken(el, 'boxShadow', ['card-shadow', 'glow']);
+        ) || fromToken(el, 'boxShadow', ['card-shadow', 'card-glow', 'glow']);
       if (!allowed) add('shadow', el);
     }
 
@@ -131,7 +131,9 @@ function findPatterns() {
     if (
       style.textTransform === 'uppercase' &&
       parseFloat(style.letterSpacing) > 0 &&
-      !el.closest('nav, button, [data-slot="button"], thead, [role="tab"]')
+      !el.closest(
+        'nav a, nav button, button, [data-slot="button"], thead, [role="tab"]',
+      )
     ) {
       add('uppercase eyebrow', el);
     }

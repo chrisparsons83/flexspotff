@@ -13,7 +13,7 @@ type Props = {
 };
 
 /**
- * The top of a page: a title in Archivo Black on the grid, what the page is in
+ * The top of a page: an extra-bold title on the grid, what the page is in
  * plain words, and the way around its section. No label above the title.
  */
 export function PageHeader({

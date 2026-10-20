@@ -64,7 +64,7 @@ export function AppShell({ width = 'contained', children, ...nav }: Props) {
 /** The Discord invite and the podcast archive. */
 export function Footer() {
   return (
-    <footer className='border-t border-hairline text-card-foreground [background-color:var(--chrome-bg)]'>
+    <footer className='border-t border-hairline bg-chrome text-card-foreground'>
       <ul className='mx-auto flex max-w-6xl flex-wrap gap-x-8 gap-y-2 px-4 py-8 text-sm'>
         <li>
           <ExternalLink href={DISCORD_INVITE} variant='quiet'>

@@ -159,12 +159,13 @@ const ACCENT_HEX = '#e65719';
 const accent = round(hexToOklch(ACCENT_HEX));
 
 /**
- * The red the accent gradient starts from: the accent turned toward red,
- * a touch darker, so the bar runs red into the logo orange. Fixed, like the
- * accent. A fill, never text.
+ * The red at the other end of the accent gradient: the accent turned toward
+ * red, so the bar and the primary button run from the logo orange into red.
+ * Only a touch darker than the accent, because the button's dark text has to
+ * read on this end too. Fixed, like the accent. A fill, never text.
  */
-const ACCENT_RED_HUE = 27;
-const ACCENT_RED_DROP = 0.06;
+const ACCENT_RED_HUE = 20;
+const ACCENT_RED_DROP = 0.01;
 const accentRed = make({
   l: accent.l - ACCENT_RED_DROP,
   c: accent.c,
@@ -393,6 +394,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
   ['popover-foreground', 'popover'],
   ['primary-foreground', 'primary'],
   ['primary-foreground', 'primary-hover'],
+  // The foot of the primary button's gradient.
+  ['primary-foreground', 'primary-red'],
   ['secondary-foreground', 'secondary'],
   ['accent-foreground', 'accent'],
   ['muted-foreground', 'background'],

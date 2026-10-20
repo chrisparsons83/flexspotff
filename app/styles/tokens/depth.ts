@@ -20,7 +20,7 @@
  * and show the result in both themes before it is fixed here. The knobs also
  * reach back to the flat look the site had before, for comparison.
  */
-import type { Theme } from './palette';
+import { neutralSteps, type Theme } from './palette';
 
 export type Depth = {
   /** Opacity of the 1px edge around cards and outlined buttons, 0 to 1. */
@@ -35,7 +35,11 @@ export type Depth = {
   warmth: number;
   /** The nav and footer on the page colour rather than a card-coloured bar. */
   chromeOnPage: boolean;
-  /** Height in px of the gradient bar under the current nav section. */
+  /**
+   * Height in px of the gradient bar under the current nav section. At
+   * least 1: the bar, not only the accent colour of the label, is what marks
+   * the section for anyone who cannot tell the two colours apart.
+   */
   navBar: number;
   /** The current tab as an underlined label, or as an accent block. */
   tabs: 'underline' | 'block';
@@ -92,7 +96,7 @@ export const DEFAULT_DEPTH: Depth = {
   headerBand: false,
   warmth: 0,
   chromeOnPage: true,
-  navBar: 0,
+  navBar: 2,
   tabs: 'underline',
   gradientButton: true,
   pressDrop: 0,
@@ -132,7 +136,6 @@ export const FLAT_DEPTH: Depth = {
   pageGlowReach: 680,
   texture: 'none',
   positionTint: 0.3,
-  capitalLabels: false,
   labelWidth: 100,
 };
 
@@ -154,7 +157,7 @@ const THEMED = {
   // glow, so the light page takes less of it.
   light: {
     edge: '0 0 0',
-    drop: '0.205 0.015 268',
+    drop: (({ l, c, h }) => `${l} ${c} ${h}`)(neutralSteps[0]),
     dropScale: 0.4,
     liftScale: 8,
     glowScale: 0.5,
@@ -240,7 +243,6 @@ const textures = (ink: string) => {
   };
 };
 
-/** The page glow in each shape, from `share`% of the accent at the top. */
 /** The glow's colours: its centre, and the wider haze of the beam. */
 const GLOW_TONES = {
   orange: ['primary', 'primary-red'],
@@ -249,6 +251,7 @@ const GLOW_TONES = {
   green: ['field-green', 'field-green'],
 } as const;
 
+/** The page glow in each shape, from `share`% of the accent at the top. */
 const glows = (share: number, reach: number, tone: Depth['glowTone']) => {
   const [centre, haze] = GLOW_TONES[tone];
   return {
@@ -301,16 +304,21 @@ export const depthTokens = (
   const halo = (alpha: number) =>
     `oklch(var(--primary) / ${fixed(alpha * depth.glow)})`;
   const block = depth.tabs === 'block';
+  const cardShadow = [
+    `inset 0 0 0 1px oklch(${edge} / ${depth.hairline})`,
+    `inset 0 1px 0 0 oklch(1 0 0 / ${fixed(depth.lift * liftScale)})`,
+    `0 1px 2px 0 oklch(${drop} / ${fixed(shadow * 0.5)})`,
+    `0 12px 32px -12px oklch(${drop} / ${fixed(shadow)})`,
+  ].join(', ');
+  const glow = `0 0 0 1px ${halo(0.5)}, 0 0 20px 0 ${halo(0.45)}`;
+  const well = theme === 'dark' ? depth.well : depth.well / 4;
 
   return {
     radius: `${depth.radius}px`,
     hairline: `oklch(${edge} / ${depth.hairline})`,
-    'card-shadow': [
-      `inset 0 0 0 1px oklch(${edge} / ${depth.hairline})`,
-      `inset 0 1px 0 0 oklch(1 0 0 / ${fixed(depth.lift * liftScale)})`,
-      `0 1px 2px 0 oklch(${drop} / ${fixed(shadow * 0.5)})`,
-      `0 12px 32px -12px oklch(${drop} / ${fixed(shadow)})`,
-    ].join(', '),
+    'card-shadow': cardShadow,
+    // A card that asks for the glow keeps its own edge under it.
+    'card-glow': `${cardShadow}, ${glow}`,
     'header-bg': depth.headerBand ? 'oklch(var(--secondary))' : 'transparent',
     'header-fill': depth.headerBand
       ? `linear-gradient(90deg, oklch(var(--secondary)) 40%, ${mix(
@@ -340,6 +348,11 @@ export const depthTokens = (
     'primary-fill': depth.gradientButton
       ? 'linear-gradient(180deg, oklch(var(--primary)), oklch(var(--primary-red)))'
       : 'none',
+    // Hover lifts the top of the gradient to primary-hover, which the
+    // palette tests text against; flat, the colour underneath does it.
+    'primary-fill-hover': depth.gradientButton
+      ? 'linear-gradient(180deg, oklch(var(--primary-hover)), oklch(var(--primary-red)))'
+      : 'none',
     'press-drop': `${depth.pressDrop}px`,
     'secondary-bg': depth.outlineSecondary
       ? 'transparent'
@@ -347,7 +360,7 @@ export const depthTokens = (
     'secondary-edge': depth.outlineSecondary
       ? `oklch(${edge} / ${fixed(Math.max(depth.hairline * 1.6, 0.16))})`
       : 'transparent',
-    glow: `0 0 0 1px ${halo(0.5)}, 0 0 20px 0 ${halo(0.45)}`,
+    glow,
     'page-glow': glows(
       fixed(depth.pageGlow * glowScale),
       depth.pageGlowReach,
@@ -359,10 +372,12 @@ export const depthTokens = (
     'page-texture-repeat': texture.repeat,
     'page-texture-reach': `${depth.textureReach}px`,
     'position-tint': String(depth.positionTint),
-    // A share of black, read by the table where it knows what it sits on.
-    'well-mix': `oklch(0 0 0) ${
-      theme === 'dark' ? depth.well : depth.well / 4
-    }%`,
+    // What the table mixes into the surface it sits on: a share of black
+    // for the well, or all transparent when there is none, so a table on
+    // the page lets the glow and texture show through. The header row is
+    // the surface itself, raised out of the well, and transparent with it.
+    'well-mix': well > 0 ? `oklch(0 0 0) ${well}%` : 'transparent 100%',
+    'well-head-mix': well > 0 ? 'transparent 0%' : 'transparent 100%',
     'label-case': depth.capitalLabels ? 'uppercase' : 'none',
     'label-tracking': depth.capitalLabels ? '0.05em' : 'normal',
     'label-width': `${depth.labelWidth}%`,

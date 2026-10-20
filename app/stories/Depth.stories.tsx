@@ -20,6 +20,9 @@ import {
 } from '~/styles/tokens/depth';
 import { leagues, neutralSteps, type Theme } from '~/styles/tokens/palette';
 
+/** The lightest neutral step: light mode counts its surfaces down from it. */
+const TOP = neutralSteps.length - 1;
+
 /**
  * Knobs the depth tokens do not have, because they change the palette:
  * how far a card sits above the ground, whether light cards are white on a
@@ -43,7 +46,7 @@ const surfaces = (
   const white = theme === 'light' && lightCards === 'white';
   const cardL = white
     ? 1
-    : neutralSteps[theme === 'dark' ? cardStep : 20 - cardStep].l;
+    : neutralSteps[theme === 'dark' ? cardStep : TOP - cardStep].l;
   // Each league's tint, at the card's lightness as the palette makes them.
   const tints = Object.fromEntries(
     Object.entries(leagues).map(([name, { h }]) => [
@@ -55,7 +58,9 @@ const surfaces = (
     ...(white
       ? { background: 'var(--neutral-19)', card: '1 0 0' }
       : {
-          card: `var(--neutral-${theme === 'dark' ? cardStep : 20 - cardStep})`,
+          card: `var(--neutral-${
+            theme === 'dark' ? cardStep : TOP - cardStep
+          })`,
         }),
     ...tints,
   };
@@ -115,7 +120,7 @@ const meta: Meta<Args> = {
       options: ['underline', 'block'],
       table: { category: 'Controls' },
     },
-    navBar: { ...range(0, 6, 1), table: { category: 'Controls' } },
+    navBar: { ...range(1, 6, 1), table: { category: 'Controls' } },
     glow: { ...range(0, 1.5, 0.05), table: { category: 'Glow' } },
     glowShape: {
       control: 'inline-radio',
@@ -278,7 +283,7 @@ function Playground(args: Args) {
               </CardContent>
             </Card>
             {/* A live game asks for the glow by name. */}
-            <Card className='shadow-glow'>
+            <Card glow>
               <CardHeader>
                 <CardTitle>Live now</CardTitle>
               </CardHeader>

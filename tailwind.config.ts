@@ -150,8 +150,21 @@ const config: Config = {
           neutralSteps.map((_, i) => [i, token(`neutral-${i}`)]),
         ),
         ...roleColors,
-        // Already a whole colour, with its own opacity, so no modifiers.
+        // Whole colours from the depth tokens, with their own opacity, so
+        // no modifiers. As colours rather than arbitrary properties, so a
+        // caller's own `bg-*` replaces them.
         hairline: 'var(--hairline)',
+        chrome: 'var(--chrome-bg)',
+        header: 'var(--header-bg)',
+        control: {
+          DEFAULT: 'var(--secondary-bg)',
+          edge: 'var(--secondary-edge)',
+        },
+        tab: {
+          DEFAULT: 'var(--tab-bg)',
+          foreground: 'var(--tab-fg)',
+          edge: 'var(--tab-edge)',
+        },
       },
       borderRadius: {
         none: '0',
@@ -176,12 +189,16 @@ const config: Config = {
           'destructive-shade',
         )}`,
         overlay: '0 8px 24px 0 rgb(0 0 0 / 0.4)',
-        card: 'var(--card-shadow)',
+        // Not `card`, which is also a colour: `shadow-card` would set the
+        // shadow colour as well.
+        'card-edge': 'var(--card-shadow)',
+        'card-glow': 'var(--card-glow)',
         glow: 'var(--glow)',
       },
       backgroundImage: {
         'accent-gradient': 'var(--accent-gradient)',
         'primary-fill': 'var(--primary-fill)',
+        'primary-fill-hover': 'var(--primary-fill-hover)',
         'header-fill': 'var(--header-fill)',
       },
       transitionDuration: {

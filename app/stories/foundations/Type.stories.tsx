@@ -42,9 +42,8 @@ const WEIGHTS = [
   {
     className: 'font-extrabold',
     name: 'Extra bold',
-    use: 'The largest steps.',
+    use: 'Page titles, the largest steps.',
   },
-  { className: 'font-black', name: 'Black', use: 'Page titles.' },
 ];
 
 /** A few made-up rows, to show figures lining up on equal-width digits. */

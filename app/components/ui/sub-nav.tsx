@@ -32,7 +32,7 @@ const itemClass = (current: boolean) =>
   cn(
     'whitespace-nowrap border px-3 py-1.5 font-semibold no-underline transition-colors duration-fast',
     current
-      ? 'border-[color:var(--tab-edge)] bg-accent-gradient bg-[length:100%_var(--tab-bar)] bg-bottom bg-no-repeat [background-color:var(--tab-bg)] [background-origin:border-box] [color:var(--tab-fg)]'
+      ? 'border-tab-edge bg-tab bg-accent-gradient bg-[length:100%_var(--tab-bar)] bg-bottom bg-no-repeat text-tab-foreground [background-origin:border-box]'
       : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-secondary-foreground',
     NAV_LABEL,
     FOCUS_RING,
