@@ -15,6 +15,11 @@ import { getD12SeasonByYear } from '~/models/d12season.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
 import { getUsersByIds } from '~/models/user.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `${params.year} ADP`,
+};
 
 type DraftBreakdownEntry = {
   leagueName: string;

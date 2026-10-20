@@ -34,6 +34,9 @@ import type {
 } from '~/models/profile/league.server';
 import { getLeagueProfile } from '~/models/profile/league.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'League' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -90,7 +93,7 @@ function Highlights({
           at most widths and gave the eye nowhere to start. */}
       <div className='grid gap-3 md:grid-cols-3'>
         <CareerCard
-          title='Regular Season'
+          title='Regular season'
           lead={
             <>
               <WinLoss
@@ -140,7 +143,7 @@ function Highlights({
             }
           />
           <MiniStat
-            label='Win Streak'
+            label='Win streak'
             value={highlights.longestWinStreak}
             unit='W'
             tone='text-positive'
@@ -173,13 +176,13 @@ function Highlights({
           }
         >
           <MiniStat
-            label='Worst Week'
+            label='Worst week'
             value={worstWeek ? worstWeek.points.toFixed(2) : '–'}
             tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
-            label='Best Week'
+            label='Best week'
             value={bestWeek ? bestWeek.points.toFixed(2) : '–'}
             tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
@@ -200,10 +203,10 @@ function Highlights({
           }
           meter={<SplitBar wins={playoffs.wins} losses={playoffs.losses} />}
         >
-          <MiniStat label='Playoff Berths' value={playoffs.appearances} />
+          <MiniStat label='Playoff berths' value={playoffs.appearances} />
           {showSacko && (
             <MiniStat
-              label='Sacko Bracket'
+              label='Sacko bracket'
               value={
                 <WinLoss
                   wins={playoffs.sackoWins}
@@ -357,7 +360,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
   );
 
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection title='By season'>
       <Table
         headers={columns}
         numericColumns={columns
@@ -503,7 +506,7 @@ function Finish({ season }: { season: SeasonRow }) {
       ? { tone: 'font-medium', medal: 'medal-gold' as const }
       : season.finish === 'Sacko'
       ? { tone: 'font-medium', medal: 'medal-sacko' as const }
-      : season.finish === 'Sacko Finalist'
+      : season.finish === 'Sacko finalist'
       ? { tone: TEXT.sacko, medal: null }
       : season.place !== null && season.place <= 6
       ? { tone: 'text-foreground', medal: null }
@@ -564,7 +567,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
   if (rows.length === 0) return null;
 
   return (
-    <ProfileSection title='Head to Head'>
+    <ProfileSection title='Head to head'>
       <Table
         headers={['Opponent', 'Record', 'Meetings', 'When']}
         numericColumns={[1, 2]}
@@ -648,7 +651,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
 
   return (
     <ProfileSection
-      title='Game Log'
+      title='Game log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

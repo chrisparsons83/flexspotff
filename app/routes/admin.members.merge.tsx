@@ -161,7 +161,7 @@ export default function MergeMembers() {
             name='duplicateId'
             members={members}
             defaultValue={preview?.duplicate.id}
-            placeholder='Select duplicate...'
+            placeholder='Select duplicate…'
           />
         </label>
         <label className='flex flex-col gap-1'>
@@ -173,7 +173,7 @@ export default function MergeMembers() {
             name='canonicalId'
             members={members}
             defaultValue={preview?.canonical.id}
-            placeholder='Select member to keep...'
+            placeholder='Select member to keep…'
           />
         </label>
         <Button type='submit' name='_action' value='preview' disabled={isBusy}>

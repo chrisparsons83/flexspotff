@@ -6,6 +6,9 @@ import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
 import { requireLeague } from '~/libs/leagues/page.server';
 import { getWaiverTransactionsByLeague } from '~/models/waiver.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Transactions' };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });

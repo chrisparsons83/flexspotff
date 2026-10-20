@@ -28,6 +28,9 @@ import {
 } from '~/models/poolweekmissed.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'My entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -177,7 +180,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!poolWeek) {
     return typedjson({
-      notOpenYet: 'Week has not been created yet.',
+      notOpenYet: 'This week is not set up yet.',
       poolWeek,
       poolGames: [],
       poolGamePicks: [],
@@ -188,7 +191,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   if (!poolWeek.isOpen) {
     return typedjson({
-      notOpenYet: 'Lines have not been set for this week yet.',
+      notOpenYet: 'The lines for this week are not set yet.',
       poolWeek,
       poolGames: [],
       poolGamePicks: [],

@@ -44,7 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
     return typedjson({
       success: true,
-      message: 'Draft slot created successfully!',
+      message: 'Draft slot created.',
     });
   } catch (error) {
     console.error('Draft slot creation error:', error);
@@ -98,7 +98,7 @@ export default function NewDraftSlot() {
     <>
       <h2>Create new draft slot</h2>
       <p>
-        <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
+        <Link to='/admin/draft-slots'>← Back to draft slots</Link>
       </p>
       {isSuccessWithMessage(actionData) && (
         <Alert message={actionData.message} />
@@ -131,7 +131,7 @@ export default function NewDraftSlot() {
                 ''
               }
             >
-              <option value=''>Select a season...</option>
+              <option value=''>Select a season…</option>
               {seasons.map((season: any) => (
                 <option key={season.id} value={season.id}>
                   {season.year} {season.isCurrent ? '(Current)' : ''}
@@ -149,7 +149,7 @@ export default function NewDraftSlot() {
         </div>
         <div>
           <label htmlFor='draftDateTimeLocal'>
-            Draft Date & Time (in your local timezone:{' '}
+            Draft date and time (in your local timezone:{' '}
             <span suppressHydrationWarning>
               {Intl.DateTimeFormat().resolvedOptions().timeZone}
             </span>

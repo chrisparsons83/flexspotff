@@ -1,7 +1,7 @@
 import { EmptyState } from '~/components/ui/empty-state';
 
 type Props = {
-  /** The game as it reads in a sentence: "the Spread Pool", "D12". */
+  /** The game as it reads in a sentence: "the spread pool", "D12". */
   contest: string;
   memberName: string;
 };

@@ -6,11 +6,16 @@ import {
   getFSquaredYears,
   getStandingsForYear,
 } from '~/models/fsquared.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `${params.year} standings`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
   if (!Number.isInteger(year)) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const [results, years] = await Promise.all([

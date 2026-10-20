@@ -24,7 +24,10 @@ import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = { title: 'My entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -224,7 +227,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!locksWeek) {
     return typedjson({
-      notOpenYet: 'Week has not been created yet.',
+      notOpenYet: 'This week is not set up yet.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],
@@ -234,7 +237,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   if (!locksWeek.isOpen) {
     return typedjson({
-      notOpenYet: 'Week is not open yet (Blame Chris)',
+      notOpenYet: 'This week is not open for picks yet. Blame Chris.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],

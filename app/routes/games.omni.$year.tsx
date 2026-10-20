@@ -5,6 +5,11 @@ import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { OMNI_RULES_YEARS } from '~/utils/constants';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Omni ${params.year}`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

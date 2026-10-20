@@ -5,8 +5,8 @@ changes (#195) start once it is agreed.
 
 ## Principles
 
-- Three sections, named by what they are to a member: **Leagues**, **Side
-  leagues** and **Games**.
+- Three sections, named by what they are to a member: **Leagues**, **Games** and
+  **Side leagues**.
 - URLs follow the sections. A page's address tells you where it sits in the nav.
 - Anything without a year in the URL means the current season. Years appear only
   when you are looking at a past one.
@@ -23,12 +23,16 @@ changes (#195) start once it is agreed.
 | -------- | ------------ | --------------- | ------------------------------------------------------ |
 | Left     | Logo         | `/`             | Home. There is no separate Home item.                  |
 | Main     | Leagues      | `/leagues`      |                                                        |
-| Main     | Side leagues | `/side-leagues` |                                                        |
 | Main     | Games        | `/games`        |                                                        |
+| Main     | Side leagues | `/side-leagues` |                                                        |
 | Right    | Account menu |                 | Signed in: Dashboard, Profile, Admin (admins), Log out |
 | Right    | Log in       | `/login`        | Signed out, in place of the account menu               |
 
-The theme toggle (System, Dark, Light) sits on the right side.
+Games sits between the two kinds of league, so the two labels that both say
+"leagues" are not side by side.
+
+The theme toggle sits on the right side: one button that flips dark and light.
+Until a visitor presses it, the site follows their OS.
 
 On mobile, the three sections and the account items collapse into one menu
 button. The menu lists the three sections first, then the account items.
@@ -169,8 +173,8 @@ How each game fits:
 - **QB streaming, spread pool, locks challenge, DFS survivor** fit as they are.
   Their landing pages today only point at the sub-navigation; they become the
   overview.
-- **F²** has no weekly standings and no rules page yet. The rules page is
-  written in the content pass (#196). `my-entry` becomes `entries`.
+- **F²** has no weekly standings. Its rules page was written in the content pass
+  (#196). `my-entry` becomes `entries`.
 - **Survivor** is organised by pool, not by week: the overview lists this
   season's pools, `/games/survivor/:poolId` is one pool, and History is the
   all-time table that is on today's index.
@@ -202,7 +206,7 @@ what they still need to do this week, across everything they play. Profiles are
 the long view of a member's history; the dashboard is now.
 
 It lists only what the member is in this season, in the same order as the nav:
-Leagues, Side leagues, then Games. Each row links to the page where the member
+Leagues, Games, then Side leagues. Each row links to the page where the member
 can see more or act.
 
 | Section      | Last week                                  | This week                                               |

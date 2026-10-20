@@ -53,14 +53,20 @@ export default function LeaguesOverview() {
   const { year, leagues, week } = useTypedLoaderData<typeof loader>();
 
   if (!year || leagues.length === 0) {
-    return <EmptyState title='No leagues set up for this season yet' />;
+    return (
+      <EmptyState title='No leagues set up for this season yet'>
+        This season’s leagues appear here once they are drafted on Sleeper.
+      </EmptyState>
+    );
   }
 
   return (
     <>
       <Section
         title={`${year} leagues`}
-        description='Five leagues in three tiers. Each table is best first.'
+        description={`${leagues.length} leagues in ${
+          new Set(leagues.map(league => league.tier)).size
+        } tiers. Each table is best first.`}
       >
         <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
           {leagues.map(league => (

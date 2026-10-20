@@ -27,9 +27,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   requireAdmin(user);
 
   const qbStreamingWeekId = params.id;
-  if (!qbStreamingWeekId) throw new Error(`Missing QB Streaming Week ID`);
+  if (!qbStreamingWeekId) throw new Error(`Missing QB streaming week ID`);
   const qbStreamingWeek = await getQBStreamingWeek(qbStreamingWeekId);
-  if (!qbStreamingWeek) throw new Error(`QB Streaming Week does not exist`);
+  if (!qbStreamingWeek) throw new Error(`QB streaming week does not exist`);
 
   const formData = await request.formData();
   const action = formData.get('_action');
@@ -173,7 +173,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   requireAdmin(user);
 
   const qbStreamingWeekId = params.id;
-  if (!qbStreamingWeekId) throw new Error(`Missing QB Streaming Week ID`);
+  if (!qbStreamingWeekId) throw new Error(`Missing QB streaming week ID`);
 
   const qbStreamingWeek = await getQBStreamingWeek(qbStreamingWeekId);
   if (!qbStreamingWeek) throw new Error(`QB Streaming week does not exist`);

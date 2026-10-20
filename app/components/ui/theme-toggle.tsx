@@ -1,26 +1,24 @@
 import { FOCUS_RING } from './styles';
+import { MoonIcon, SunIcon } from '@radix-ui/react-icons';
 import { Form, useLocation } from '@remix-run/react';
 import { cn } from '~/utils';
-import { THEME_PREFERENCES, type ThemePreference } from '~/utils/theme';
 
-const LABELS: Record<ThemePreference, string> = {
-  system: 'System',
-  dark: 'Dark',
-  light: 'Light',
-};
+type Props = { className?: string };
 
-type Props = {
-  /** The visitor's preference, from the root loader. */
-  value: ThemePreference;
-  className?: string;
-};
+const buttonClass = cn(
+  'size-8 items-center justify-center text-muted-foreground transition-colors duration-fast hover:text-foreground [&_svg]:size-4',
+  FOCUS_RING,
+);
 
 /**
- * Picks System, Dark or Light. Each is a submit button in one form that
- * posts to /resources/theme, which sets the cookie and sends the visitor back
- * here, so it works before the page has hydrated and without JavaScript.
+ * One button that flips between dark and light: a sun in the dark, a moon in
+ * the light. A visitor who has never pressed it follows their OS. Both
+ * buttons are in the page and the `dark` class picks which shows, so it is
+ * right before hydration, when `system` has resolved only in the browser.
+ * The form posts to /resources/theme, which sets the cookie and sends the
+ * visitor back here, so it works without JavaScript.
  */
-export function ThemeToggle({ value, className }: Props) {
+export function ThemeToggle({ className }: Props) {
   const { pathname, search } = useLocation();
 
   return (
@@ -31,24 +29,26 @@ export function ThemeToggle({ value, className }: Props) {
       aria-label='Theme'
     >
       <input type='hidden' name='redirectTo' value={pathname + search} />
-      {THEME_PREFERENCES.map(theme => (
-        <button
-          key={theme}
-          type='submit'
-          name='theme'
-          value={theme}
-          aria-pressed={theme === value}
-          className={cn(
-            'h-8 px-3 text-sm font-semibold transition-colors duration-fast',
-            theme === value
-              ? 'bg-secondary text-secondary-foreground'
-              : 'text-muted-foreground hover:text-foreground',
-            FOCUS_RING,
-          )}
-        >
-          {LABELS[theme]}
-        </button>
-      ))}
+      <button
+        type='submit'
+        name='theme'
+        value='light'
+        aria-label='Switch to light mode'
+        title='Switch to light mode'
+        className={cn('hidden dark:flex', buttonClass)}
+      >
+        <SunIcon aria-hidden />
+      </button>
+      <button
+        type='submit'
+        name='theme'
+        value='dark'
+        aria-label='Switch to dark mode'
+        title='Switch to dark mode'
+        className={cn('flex dark:hidden', buttonClass)}
+      >
+        <MoonIcon aria-hidden />
+      </button>
     </Form>
   );
 }

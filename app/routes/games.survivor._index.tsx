@@ -17,7 +17,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function SurvivorOverview() {
   const { current } = useTypedLoaderData<typeof loader>();
-  if (!current) return <EmptyState title='No survivor pools yet' />;
+  if (!current)
+    return (
+      <EmptyState title='No survivor pools yet'>
+        A pool appears here once it is set up on Sleeper.
+      </EmptyState>
+    );
 
   const open = current.pools.find(pool => pool.inviteUrl);
 

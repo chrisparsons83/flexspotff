@@ -174,7 +174,7 @@ export default function AdminBestBallIndex() {
           >
             {isSubmitting && navigation.formData?.get('_action') === 'addLeague'
               ? 'Adding…'
-              : 'Add League'}
+              : 'Add league'}
           </Button>
         </Form>
       </section>

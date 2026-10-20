@@ -1,10 +1,11 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Outlet, isRouteErrorResponse, useRouteError } from '@remix-run/react';
+import { Outlet, useRouteError } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import {
   AdminShell,
   type AdminRole,
   adminNavFor,
+  adminPageLabel,
 } from '~/components/ui/admin-shell';
 import { PageHeader } from '~/components/ui/page-header';
 import {
@@ -13,6 +14,16 @@ import {
   isPodcastEditor,
   requireEditor,
 } from '~/services/auth.server';
+import { errorPage } from '~/utils/error-page';
+import type { RouteHandle } from '~/utils/route-handle';
+
+/** Every admin page is named after its link in the admin navigation. */
+export const handle: RouteHandle = {
+  title: ({ pathname }) => {
+    const label = adminPageLabel(pathname);
+    return !label || label === 'Admin home' ? 'Admin' : `${label} - Admin`;
+  },
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -50,13 +61,12 @@ export default function Admin() {
 export function ErrorBoundary() {
   const error = useRouteError();
   console.error({ error });
-  const message = isRouteErrorResponse(error)
-    ? typeof error.data === 'string' && error.data
-      ? error.data
-      : `${error.status} ${error.statusText}`
-    : error instanceof Error
-    ? error.message
-    : 'Unknown error';
+  const { title, message, detail } = errorPage(error);
 
-  return <PageHeader title='Something went wrong' description={message} />;
+  return (
+    <>
+      <PageHeader title={title} description={message} />
+      {detail && <p className='font-mono text-sm'>{detail}</p>}
+    </>
+  );
 }

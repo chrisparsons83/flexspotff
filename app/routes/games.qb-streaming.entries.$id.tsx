@@ -19,6 +19,9 @@ import {
 } from '~/models/qbselection.server';
 import { getQBStreamingWeek } from '~/models/qbstreamingweek.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'My entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -136,7 +139,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   if (!id) throw new Error(`No QB streaming week ID found`);
 
   const qbStreamingWeek = await getQBStreamingWeek(id);
-  if (!qbStreamingWeek) throw new Error(`QB Streaming Week ID does not exist`);
+  if (!qbStreamingWeek) throw new Error(`QB streaming week ID does not exist`);
 
   const qbSelection = await getQBSelection(id, user.id);
 

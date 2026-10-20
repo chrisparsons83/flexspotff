@@ -4,12 +4,15 @@ import MemberName from '~/components/ui/MemberName';
 import { DISCORD_INVITE } from '~/components/ui/app-shell';
 import { Button } from '~/components/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/ui/card';
+import { EmptyState } from '~/components/ui/empty-state';
 import { leagueFill } from '~/components/ui/fills';
 import { Link } from '~/components/ui/link';
 import { PageHeader } from '~/components/ui/page-header';
 import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { WinLoss } from '~/components/ui/win-loss';
+import { getGamesThisWeek } from '~/libs/games/this-week.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -18,22 +21,35 @@ import { authenticator } from '~/services/auth.server';
 /** How many of each league's table the home page shows. */
 const LEADERS = 3;
 
+/** The league calendar from the rules: sections 9 and 13. */
+const LAST_REGULAR_SEASON_WEEK = 14;
+const LAST_PLAYOFF_WEEK = 17;
+
+/** Where the leagues are in their season, in a sentence. */
+const leagueWeek = (week: number) =>
+  week <= LAST_REGULAR_SEASON_WEEK
+    ? `Week ${week} of ${LAST_REGULAR_SEASON_WEEK} in the regular season.`
+    : week <= LAST_PLAYOFF_WEEK
+    ? `Playoffs, week ${week} of ${LAST_PLAYOFF_WEEK}.`
+    : 'The regular season and playoffs are over.';
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  const [leagues, week] = season
-    ? await Promise.all([
-        getLeaguesByYear(season.year),
-        getCurrentNflWeek(season.year, new Date()),
-      ])
-    : [[], null];
+  const [leagues, week, games] = await Promise.all([
+    season ? getLeaguesByYear(season.year) : [],
+    season ? getCurrentNflWeek(season.year, new Date()) : null,
+    season ? getGamesThisWeek(season) : [],
+  ]);
 
   return typedjson({
     year: season?.year ?? null,
     week,
     signedIn: Boolean(user),
+    // The Omni archive has no week to report.
+    games: games.filter(game => game.to !== '/games/omni'),
     leagues: leagues.map(league => ({
       id: league.id,
       name: league.name,
@@ -55,18 +71,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  const { year, week, signedIn, leagues } = useTypedLoaderData<typeof loader>();
+  const { year, week, signedIn, games, leagues } =
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>
       <PageHeader
-        title={year && week ? `${year}, week ${week}` : 'Flex Spot'}
+        title='Flex Spot'
         description={
           <>
-            We’re a fantasy football Discord community and have been around
-            since 2016. We run a small promotion and relegation set of leagues,
-            season-long side games, and make awful football takes when we
-            probably should be working.
+            A fantasy football Discord, around since 2016. We run promotion and
+            relegation leagues with a cup across all of them, a set of weekly
+            games and a few side leagues, and make awful football takes when we
+            should probably be working.
           </>
         }
         actions={
@@ -84,10 +101,22 @@ export default function Index() {
         }
       />
 
+      {!year && (
+        <EmptyState title='The new season has not started yet'>
+          Leagues, games and side leagues open here once it is set up.
+        </EmptyState>
+      )}
+
       {leagues.length > 0 && year && (
         <Section
-          title='League leaders'
-          description={`The top of each league’s table in ${year}.`}
+          title={
+            week && week <= LAST_PLAYOFF_WEEK
+              ? `${year}, week ${week}`
+              : `${year} leagues`
+          }
+          description={`${
+            week ? `${leagueWeek(week)} ` : ''
+          }The top of each league’s table.`}
           action={<Link to='/leagues/standings'>Full standings</Link>}
         >
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
@@ -137,6 +166,26 @@ export default function Index() {
               );
             })}
           </div>
+        </Section>
+      )}
+
+      {year && (
+        <Section
+          title='Games this week'
+          action={<Link to='/games'>All games</Link>}
+        >
+          <Table headers={['Game', 'This week']} primaryColumns={[1]}>
+            {games.map(game => (
+              <tr key={game.to}>
+                <td className='font-semibold'>
+                  <Link to={game.to} variant='quiet'>
+                    {game.name}
+                  </Link>
+                </td>
+                <td className='text-muted-foreground'>{game.status}</td>
+              </tr>
+            ))}
+          </Table>
         </Section>
       )}
     </>

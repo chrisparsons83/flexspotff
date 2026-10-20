@@ -5,6 +5,11 @@ import ProfileHero from '~/components/layout/profile/ProfileHero';
 import ProfileTabs from '~/components/layout/profile/ProfileTabs';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getProfileSummary } from '~/models/profile/summary.server';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data }) => dataOf<typeof loader>(data)?.summary?.user?.discordName,
+};
 
 /**
  * A member's profile. The hero and tab bar live here; each tab is a child route

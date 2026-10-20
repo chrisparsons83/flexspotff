@@ -23,9 +23,12 @@ import {
   getBestBallDraftPicks,
   getBestBallLeagueForPage,
 } from '~/models/bestball.server';
-import type { RouteHandle } from '~/utils/route-handle';
+import { type RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { width: 'full' };
+export const handle: RouteHandle = {
+  width: 'full',
+  title: 'Draft',
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireBestBallAccess(request);
@@ -77,7 +80,11 @@ export default function BestBallDraft() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   if (columns.length === 0 || rounds === 0) {
-    return <EmptyState title='The draft has not happened yet' />;
+    return (
+      <EmptyState title='The draft has not happened yet'>
+        The board fills in once the league drafts.
+      </EmptyState>
+    );
   }
 
   return (

@@ -49,7 +49,11 @@ export default function BestBallHistory() {
         }
       />
 
-      {leagues.length === 0 && <EmptyState title='No best ball leagues yet' />}
+      {leagues.length === 0 && (
+        <EmptyState title='No Autodraft BBM leagues yet'>
+          Each season’s league appears here once it is set up on Sleeper.
+        </EmptyState>
+      )}
 
       <div className='grid gap-6 md:grid-cols-2'>
         {leagues.map(league => (

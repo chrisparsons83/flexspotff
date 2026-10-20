@@ -6,6 +6,9 @@ import {
   getStandingsForYear,
 } from '~/models/fsquared.server';
 import { getCurrentSeason } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Standings' };
 
 /** This season's standings, which may have no entries yet. */
 export const loader = async () => {

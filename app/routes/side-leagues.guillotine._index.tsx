@@ -74,7 +74,11 @@ export default function GuillotineHistory() {
         }
       />
 
-      {seasons.length === 0 && <EmptyState title='No guillotine leagues yet' />}
+      {seasons.length === 0 && (
+        <EmptyState title='No guillotine leagues yet'>
+          Each season’s leagues appear here once they are set up on Sleeper.
+        </EmptyState>
+      )}
 
       {seasons.map(season => (
         <Section key={season.year} title={season.year}>

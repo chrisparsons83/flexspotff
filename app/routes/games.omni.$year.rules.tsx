@@ -1,6 +1,9 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Section } from '~/components/ui/section';
 import { OMNI_RULES_YEARS } from '~/utils/constants';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Rules' };
 
 export const loader = ({ params }: LoaderFunctionArgs) => {
   if (!OMNI_RULES_YEARS.includes(Number(params.year))) {

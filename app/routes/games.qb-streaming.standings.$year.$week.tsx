@@ -10,6 +10,11 @@ import {
   getQBStreamingYears,
 } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}, ${params.year} standings`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const currentSeason = await getCurrentSeason();

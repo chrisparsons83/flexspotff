@@ -8,6 +8,11 @@ import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import type { User } from '~/models/user.server';
 import { getUsersByIds } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}, ${params.year} standings`,
+};
 
 type LoaderData = {
   totalPoints: {

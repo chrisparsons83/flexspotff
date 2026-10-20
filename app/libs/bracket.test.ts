@@ -389,12 +389,12 @@ describe('finishLabelForPlace', () => {
 
   it('names the places that have names', () => {
     expect(label(1)).toBe('Champion');
-    expect(label(2)).toBe('Runner Up');
+    expect(label(2)).toBe('Runner-up');
     expect(label(3)).toBe('Semifinalist');
     expect(label(4)).toBe('Semifinalist');
     expect(label(5)).toBe('Quarterfinalist');
     expect(label(6)).toBe('Quarterfinalist');
-    expect(label(11)).toBe('Sacko Finalist');
+    expect(label(11)).toBe('Sacko finalist');
     expect(label(12)).toBe('Sacko');
   });
 
@@ -410,7 +410,7 @@ describe('finishLabelForPlace', () => {
   // no sacko.
   it('prefers the sacko names when a small league overlaps', () => {
     expect(finishLabelForPlace(4, 4)).toBe('Sacko');
-    expect(finishLabelForPlace(3, 4)).toBe('Sacko Finalist');
+    expect(finishLabelForPlace(3, 4)).toBe('Sacko finalist');
   });
 });
 

@@ -10,6 +10,14 @@ import { prisma } from '~/db.server';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
 import { GUILLOTINE_FINAL_WEEK } from '~/libs/guillotine/chops';
 import { getAllGuillotineLeagues } from '~/models/guillotine.server';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data }) => {
+    const league = dataOf<typeof loader>(data)?.league;
+    return league && `${league.year} ${league.name}`;
+  },
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);

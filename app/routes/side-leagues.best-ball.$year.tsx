@@ -11,6 +11,9 @@ import {
   getAllBestBallLeagues,
   getBestBallLeagueByYear,
 } from '~/models/bestball.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: ({ params }) => params.year };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireBestBallAccess(request);

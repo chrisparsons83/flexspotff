@@ -14,6 +14,14 @@ import { getLeagueYearsByName, getLeaguesByYear } from '~/models/league.server';
 import { countPlayoffGamesByLeague } from '~/models/playoffgame.server';
 import { getTeamGameWeeksByLeague } from '~/models/teamgame.server';
 import { countWaiverTransactionsByLeague } from '~/models/waiver.server';
+import { type RouteHandle, dataOf } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ data, params }) => {
+    const name = dataOf<typeof loader>(data)?.league?.name;
+    return name && `${name} ${params.year}`;
+  },
+};
 
 export const ROUTE_ID = 'routes/leagues_.$year.$league';
 
@@ -65,33 +73,32 @@ export default function LeaguePage() {
   return (
     <>
       <PageHeader
-        title={league.name}
-        description={`The ${league.year} season, tier ${league.tier}.`}
-        actions={
-          years.length > 1 && (
-            <GoBox
-              buttonText='Season'
-              options={years.map(year => ({
-                label: `${year}`,
-                url: `/leagues/${year}/${league.name.toLowerCase()}`,
-              }))}
-            />
-          )
-        }
+        title={`${league.name} ${league.year}`}
         nav={
           <SubNav
             label={league.name}
             items={items}
             picker={
-              sameYear.length > 1 && (
-                <GoBox
-                  buttonText={`${league.year} leagues`}
-                  options={sameYear.map(name => ({
-                    label: name,
-                    url: `/leagues/${league.year}/${name.toLowerCase()}`,
-                  }))}
-                />
-              )
+              <div className='flex gap-3'>
+                {sameYear.length > 1 && (
+                  <GoBox
+                    buttonText={`${league.year} leagues`}
+                    options={sameYear.map(name => ({
+                      label: name,
+                      url: `/leagues/${league.year}/${name.toLowerCase()}`,
+                    }))}
+                  />
+                )}
+                {years.length > 1 && (
+                  <GoBox
+                    buttonText='Season'
+                    options={years.map(year => ({
+                      label: `${year}`,
+                      url: `/leagues/${year}/${league.name.toLowerCase()}`,
+                    }))}
+                  />
+                )}
+              </div>
             }
           />
         }

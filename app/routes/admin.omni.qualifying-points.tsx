@@ -197,7 +197,7 @@ const AdminOmniScoring = () => {
             className='form-select mt-1 block w-full '
             onChange={handleSportChange}
           >
-            <option value=''>Choose sport...</option>
+            <option value=''>Choose sport…</option>
             {sports.map(({ id, name }) => (
               <option key={id} value={id}>
                 {name}
@@ -212,7 +212,7 @@ const AdminOmniScoring = () => {
               className='form-select mt-1 block w-full '
               onChange={handleSportEventChange}
             >
-              <option value=''>Choose event...</option>
+              <option value=''>Choose event…</option>
               {sportEvents
                 .filter(sportEvent => sportEvent.sportId === activeSport)
                 .map(({ id, name }) => (
@@ -232,7 +232,7 @@ const AdminOmniScoring = () => {
                 onClick={toggleAllCheckboxes}
                 variant='secondary'
               >
-                {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
+                {allChecked ? 'Clear checkboxes' : 'Select all players'}
               </Button>
             </div>
             <table>

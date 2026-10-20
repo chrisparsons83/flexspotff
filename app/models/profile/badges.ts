@@ -76,14 +76,14 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
   },
   leagueChampion: {
     key: 'league-champion',
-    label: 'League Champion',
+    label: 'League champion',
     scale: 'tally',
     fill: 'medal-gold',
     description: 'Won a league championship',
   },
   cupChampion: {
     key: 'cup-champion',
-    label: 'Cup Champion',
+    label: 'Cup champion',
     scale: 'tally',
     fill: 'medal-gold',
     description: 'Won the Cup',
@@ -104,21 +104,21 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
   },
   seasonsPlayed: {
     key: 'seasons',
-    label: 'Seasons Played',
+    label: 'Seasons played',
     scale: [1, 5, 10],
     fill: 'sequence',
     description: 'Seasons in the redraft league',
   },
   highScoringWeek: {
     key: 'high-scoring-week',
-    label: 'High Scoring Week',
+    label: 'High-scoring week',
     scale: [150, 175, 200],
     fill: 'sequence',
     description: 'Highest score in a single week',
   },
   winStreak: {
     key: 'win-streak',
-    label: 'Win Streak',
+    label: 'Win streak',
     scale: [5, 10, 15, 20],
     fill: 'sequence',
     description: 'Longest run of consecutive wins',
@@ -135,23 +135,23 @@ export const SIDE_GAME_BADGES = {
     fill: 'medal-silver',
   },
   qbStreaming: {
-    label: 'QB Streaming Champion',
+    label: 'QB streaming champion',
     fill: 'medal-silver',
   },
   spreadPool: {
-    label: 'Spread Pool Champion',
+    label: 'Spread pool champion',
     fill: 'medal-silver',
   },
   locks: {
-    label: 'Locks Champion',
+    label: 'Locks champion',
     fill: 'medal-silver',
   },
   dfsSurvivor: {
-    label: 'DFS Survivor Champion',
+    label: 'DFS survivor champion',
     fill: 'medal-silver',
   },
   guillotine: {
-    label: 'Guillotine Champion',
+    label: 'Guillotine champion',
     fill: 'medal-silver',
   },
   bestBall: {
@@ -159,7 +159,7 @@ export const SIDE_GAME_BADGES = {
     fill: 'medal-silver',
   },
   survivor: {
-    label: 'Survivor Champion',
+    label: 'Survivor champion',
     fill: 'medal-silver',
   },
   fSquared: {

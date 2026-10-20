@@ -265,8 +265,8 @@ export default function SeasonIndex() {
                           value='setRegistration'
                         >
                           {isOpenForRegistration
-                            ? 'Close Registration'
-                            : 'Open Registration'}
+                            ? 'Close registration'
+                            : 'Open registration'}
                         </Button>
                       </Form>
                       <Form method='POST'>

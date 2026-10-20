@@ -68,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       const qbStreamingWeek = await getQBStreamingWeek(id);
-      if (!qbStreamingWeek) throw new Error('QB Streaming Week not found');
+      if (!qbStreamingWeek) throw new Error('QB streaming week not found');
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
@@ -165,7 +165,7 @@ export default function AdminQBStreaming() {
               <td>{qbStreamingWeek.isOpen ? 'Yes' : 'No'}</td>
               <td>{qbStreamingWeek.isScored ? 'Yes' : 'No'}</td>
               <td>
-                <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
+                <Link to={`./${qbStreamingWeek.id}`}>Edit week</Link>
               </td>
               <td>
                 <Form method='POST'>

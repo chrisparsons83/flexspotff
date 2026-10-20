@@ -65,7 +65,7 @@ export type MemberWeekFacts = {
   registration: { isOpen: boolean; isRegistered: boolean };
 };
 
-const ORDER: DashboardSection[] = ['Leagues', 'Side leagues', 'Games'];
+const ORDER: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
 
 const result = (points: number, opponentPoints: number) =>
   points > opponentPoints ? 'Won' : points < opponentPoints ? 'Lost' : 'Tied';

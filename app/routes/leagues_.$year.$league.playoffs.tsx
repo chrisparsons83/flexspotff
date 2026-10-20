@@ -6,6 +6,9 @@ import { ordinal } from '~/libs/guillotine/display';
 import { requireLeague } from '~/libs/leagues/page.server';
 import { getPlayoffGamesByLeague } from '~/models/playoffgame.server';
 import { cn } from '~/utils';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Playoffs' };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });

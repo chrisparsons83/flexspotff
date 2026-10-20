@@ -30,6 +30,9 @@ import type {
   SurvivalWeek,
 } from '~/models/profile/guillotineProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Guillotine' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -65,7 +68,7 @@ export default function MemberGuillotine() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Guillotine'
+        contest='guillotine'
         memberName={summary.user.discordName}
       />
     );
@@ -121,14 +124,14 @@ function Career({
           meter={<PlaceBar finishes={finishes} />}
         >
           <MiniStat
-            label='Longest Run'
+            label='Longest run'
             value={career.longestRun?.weeks ?? '–'}
             unit={career.longestRun ? 'weeks' : undefined}
             tone='text-positive'
             hint='Most weeks played in a season, the chop week included'
           />
           <MiniStat
-            label='Shortest Run'
+            label='Shortest run'
             value={career.shortestRun?.weeks ?? '–'}
             unit={career.shortestRun ? 'weeks' : undefined}
             tone='text-negative'
@@ -142,7 +145,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Weekly Finish'
+          title='Weekly finish'
           lead={
             career.averagePercentile === null ? (
               '–'
@@ -161,12 +164,12 @@ function Career({
           }
         >
           <MiniStat
-            label='Best Week'
+            label='Best week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-positive'
           />
           <MiniStat
-            label='Closest Escape'
+            label='Closest escape'
             value={
               career.closestEscape
                 ? `+${pts(career.closestEscape.margin)}`
@@ -176,7 +179,7 @@ function Career({
             hint='The fewest points they ever survived the chop by'
           />
           <MiniStat
-            label='Top Score'
+            label='Top score'
             value={career.topScoreWeeks}
             unit='weeks'
             hint='Weeks they outscored everyone left'
@@ -184,7 +187,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Waiver Bids Won'
+          title='Waiver bids won'
           lead={
             <>
               {career.claimsWon}
@@ -199,11 +202,11 @@ function Career({
         >
           <MiniStat label='Total FAAB Spent' value={`$${career.faabSpent}`} />
           <MiniStat
-            label='Biggest Bid'
+            label='Biggest bid'
             value={career.biggestBid ? `$${career.biggestBid.bid}` : '–'}
           />
           <MiniStat
-            label='Average Winning Bid'
+            label='Average winning bid'
             value={
               career.averageWinningBid === null
                 ? '–'
@@ -322,7 +325,7 @@ const survivalTitle = (week: SurvivalWeek) => {
 function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
   return (
     <ProfileSection
-      title='Week by Week'
+      title='Week by week'
       info={
         <KeyList>
           {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
@@ -445,19 +448,19 @@ function BySeason({
   players: Players;
 }) {
   return (
-    <ProfileSection title='By Season'>
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Season',
           'Finish',
           'Chopped',
           'Average',
-          'Best Week',
-          'Closest Escape',
+          'Best week',
+          'Closest escape',
           'Claims',
           'FAAB Spent',
           'FAAB Left',
-          'Biggest Claim',
+          'Biggest claim',
         ]}
         primaryColumns={[1, 2]}
         numericColumns={[3, 4, 5, 6, 7, 8]}
@@ -599,7 +602,7 @@ function WaiverClaims({
 
   return (
     <ProfileSection
-      title='Waiver Claims'
+      title='Waiver claims'
       action={
         <div className='flex flex-wrap items-center gap-3'>
           <div className='flex items-center gap-2'>
@@ -676,7 +679,7 @@ function DraftPicks({
 
   return (
     <ProfileSection
-      title='Draft Picks'
+      title='Draft picks'
       action={
         <div className='flex flex-wrap items-center gap-3'>
           {years.length > 1 && (

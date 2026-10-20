@@ -28,6 +28,9 @@ import type {
   BestBallSeason,
 } from '~/models/profile/bestBallProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Autodraft BBM' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -45,7 +48,7 @@ export default function MemberBestBall() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Best Ball'
+        contest='Autodraft BBM'
         memberName={summary.user.discordName}
       />
     );
@@ -93,7 +96,7 @@ function Career({ career }: { career: BestBallCareer }) {
             tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat
-            label='Average Finish'
+            label='Average finish'
             value={pts(career.averageFinish, 1)}
             hint='Across finished seasons'
           />
@@ -105,12 +108,12 @@ function Career({ career }: { career: BestBallCareer }) {
         </CareerCard>
 
         <CareerCard
-          title='Average Week'
+          title='Average week'
           lead={pts(career.averagePointsPerWeek, 1)}
         >
-          <MiniStat label='Total Points' value={pts(career.totalPoints, 1)} />
+          <MiniStat label='Total points' value={pts(career.totalPoints, 1)} />
           <MiniStat
-            label='Best Week'
+            label='Best week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-positive'
             detail={career.bestWeek && weekLabel(career.bestWeek)}
@@ -124,18 +127,18 @@ function Career({ career }: { career: BestBallCareer }) {
 function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
   return (
     <ProfileSection
-      title='By Season'
+      title='By season'
       description='Ranked on points for through week 17.'
     >
       <Table
         headers={[
           'Year',
           'Finish',
-          'Points For',
+          'Points for',
           'Behind 1st',
-          'Best Week',
-          'Top Weeks',
-          'Draft Slot',
+          'Best week',
+          'Top weeks',
+          'Draft slot',
         ]}
         primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6]}
@@ -207,7 +210,7 @@ function PositionsDrafted({
 
   return (
     <ProfileSection
-      title='Positions Drafted'
+      title='Positions drafted'
       description="What the autodraft gave them each season, against the league's average roster."
     >
       <div className='space-y-4'>
@@ -256,7 +259,7 @@ const pickLabel = (pick: BestBallSeason['picks'][number], teamCount: number) =>
 
 function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection title='Draft Picks'>
+    <ProfileSection title='Draft picks'>
       <div className='space-y-4'>
         {seasons
           .filter(season => season.picks.length > 0)

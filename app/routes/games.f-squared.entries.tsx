@@ -22,6 +22,9 @@ import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
 import { authenticator } from '~/services/auth.server';
 import { shuffleArray } from '~/utils/helpers';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'My entry' };
 
 const formEntry = z.string().array().length(2);
 type FormEntry = z.infer<typeof formEntry>;
@@ -56,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const leagues = await getLeaguesByYear(currentSeason.year);
@@ -122,7 +125,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   let currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   // Get teams
@@ -178,7 +181,7 @@ export default function FSquaredMyEntry() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Submitting...'
+      ? 'Submitting…'
       : navigation.state === 'loading'
       ? 'Submitted'
       : 'Submit';

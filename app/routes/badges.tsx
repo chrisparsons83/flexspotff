@@ -10,6 +10,9 @@ import {
   type Badge,
 } from '~/models/profile/badges';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Badges' };
 
 /**
  * What every badge is, and what each of its stars costs.
@@ -24,8 +27,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   return null;
 };
-
-export const meta = () => [{ title: 'Badges - FlexSpot FF' }];
 
 /**
  * Each badge at its top star, so the page shows what one looks like when it is
@@ -82,7 +83,7 @@ export default function Badges() {
 
         <ProfileSection
           title='Side games'
-          description='Every side game runs on the same scale, so winning the Spread Pool reads exactly like winning DFS Survivor.'
+          description='Every side game runs on the same scale, so winning the spread pool reads exactly like winning DFS survivor.'
         >
           <ul className='m-0 grid gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3'>
             {SIDE_GAME_KEYS.map(game => {

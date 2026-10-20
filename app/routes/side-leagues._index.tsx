@@ -5,6 +5,9 @@ import { PageHeader } from '~/components/ui/page-header';
 import { getLatestBestBallLeague } from '~/models/bestball.server';
 import { getLatestD12Season } from '~/models/d12season.server';
 import { getLatestGuillotineLeagues } from '~/models/guillotine.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Side leagues' };
 
 export const loader = async () => {
   const [guillotine, d12, bestBall] = await Promise.all([
@@ -40,7 +43,8 @@ export default function SideLeagues() {
     {
       title: 'D12',
       to: '/side-leagues/d12',
-      description: null,
+      description:
+        'Twelve best-ball leagues with the same twelve managers, each drafting once from every slot.',
       current: d12
         ? [
             {

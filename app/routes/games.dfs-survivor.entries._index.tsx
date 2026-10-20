@@ -32,7 +32,10 @@ import {
 import { getCurrentNflWeek, getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = { title: 'My entries' };
 
 export type { PickerPlayer } from '~/libs/dfs-survivor/picker';
 

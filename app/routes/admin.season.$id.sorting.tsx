@@ -671,7 +671,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     return typedjson({
-      success: `Draft group assignments announced to Discord and all ${roleTargets.length} roles assigned!`,
+      success: `Draft group assignments announced to Discord and all ${roleTargets.length} roles assigned.`,
       ...preservedState,
     });
   }
@@ -1386,7 +1386,7 @@ export default function LeagueSorting() {
   // Helper function to render player name with preferences popover
   const renderPlayerWithPopover = (player: any) => {
     if (!player || !player.id || !player.discordName) {
-      return <span className='text-foreground'>Unknown Player</span>;
+      return <span className='text-foreground'>Unknown player</span>;
     }
 
     const preferences =
@@ -1415,7 +1415,7 @@ export default function LeagueSorting() {
         <PopoverContent className='w-80 bg-card border border-border text-foreground'>
           <div className='space-y-2'>
             <p className='text-sm font-semibold text-foreground mb-2'>
-              Draft Time Preferences:
+              Draft time preferences:
             </p>
             <div className='space-y-1'>
               {sortedPreferences.map(pref => (
@@ -1457,7 +1457,7 @@ export default function LeagueSorting() {
       <div>
         <div className='mb-4'>
           <h3 className='text-lg leading-6 font-medium text-foreground mb-4'>
-            Registered Players ({registrations.length})
+            Registered players ({registrations.length})
           </h3>
 
           {registrations.length > 0 && (
@@ -1637,7 +1637,7 @@ export default function LeagueSorting() {
                 <div className='mb-8'>
                   <div className='flex justify-between items-center mb-4'>
                     <h3 className='text-lg font-medium text-foreground'>
-                      Completed Draft Slots (
+                      Completed draft slots (
                       {sortingData.completedGroups.length})
                     </h3>
                     <div className='flex gap-2 items-center'>
@@ -1691,7 +1691,7 @@ export default function LeagueSorting() {
                         >
                           <div className='flex justify-between items-center mb-3'>
                             <h4 className='text-lg font-medium text-foreground'>
-                              Draft Slot:{' '}
+                              Draft slot:{' '}
                               <LocalDateTime
                                 value={
                                   group.draftSlot?.draftDateTime || new Date()
@@ -1723,7 +1723,7 @@ export default function LeagueSorting() {
                               }
                               className='bg-secondary text-foreground border border-border px-3 py-1 text-sm'
                             >
-                              <option value=''>Select League</option>
+                              <option value=''>Select league</option>
                               {assignableLeagues.map(league => {
                                 const takenByAnotherGroup =
                                   assignedLeagueIds.some(
@@ -1905,19 +1905,19 @@ export default function LeagueSorting() {
                             />
                           </h4>
                           <p className='text-foreground text-sm mb-2'>
-                            Available Players:{' '}
+                            Available players:{' '}
                             {analysis.availablePlayerCount || 0}
                           </p>
                           {Array.isArray(analysis.unavailablePlayers) &&
                             analysis.unavailablePlayers.length > 0 && (
                               <div>
                                 <p className='text-negative text-sm mb-1'>
-                                  Unavailable Players:
+                                  Unavailable players:
                                 </p>
                                 <div className='text-negative text-sm space-y-1'>
                                   {analysis.unavailablePlayers.map(player => (
                                     <div key={player.id || Math.random()}>
-                                      {player.discordName || 'Unknown Player'}
+                                      {player.discordName || 'Unknown player'}
                                     </div>
                                   ))}
                                 </div>
@@ -1940,7 +1940,7 @@ export default function LeagueSorting() {
                   <p className='text-positive'>
                     Sorted all {sortingData.completedGroups.length * GROUP_SIZE}{' '}
                     players into {sortingData.completedGroups.length} complete
-                    draft slots!
+                    draft slots.
                   </p>
                 </div>
               )}

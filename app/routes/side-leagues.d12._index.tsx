@@ -36,7 +36,12 @@ export const loader = async () => {
 export default function D12History() {
   const { seasons } = useTypedLoaderData<typeof loader>();
 
-  if (seasons.length === 0) return <EmptyState title='No D12 seasons yet' />;
+  if (seasons.length === 0)
+    return (
+      <EmptyState title='No D12 seasons yet'>
+        Each season appears here once its leagues are set up on Sleeper.
+      </EmptyState>
+    );
 
   return (
     <Section title='History' description='The top three of every season.'>

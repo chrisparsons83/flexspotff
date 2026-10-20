@@ -42,7 +42,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const fieldErrors = {
     sleeperOwnerID:
       sleeperOwnerID.length === 0
-        ? 'Sleeper Owner ID has no content'
+        ? 'Sleeper owner ID has no content'
         : undefined,
   };
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -113,14 +113,14 @@ export default function EditUser() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Adding...'
+      ? 'Adding…'
       : navigation.state === 'loading'
-      ? 'Added!'
+      ? 'Added'
       : 'Add';
 
   return (
     <>
-      <h2>Edit User {user.discordName}</h2>
+      <h2>Edit member {user.discordName}</h2>
       {actionData?.message && <Alert message={actionData.message} />}
       <h3>Existing account IDs</h3>
       <table>

@@ -4,6 +4,9 @@ import { ExternalLink, Link } from '~/components/ui/link';
 import { PageHeader } from '~/components/ui/page-header';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { BRACKT_URL } from '~/utils/brackt';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Omni' };
 
 export const loader = async () => {
   const seasons = await getAllOmniSeasons();

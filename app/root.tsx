@@ -7,16 +7,19 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  isRouteErrorResponse,
+  useMatches,
   useRouteError,
 } from '@remix-run/react';
 import clsx from 'clsx';
+import { Fragment } from 'react';
 import {
   typedjson,
   useTypedLoaderData,
   useTypedRouteLoaderData,
 } from 'remix-typedjson';
 import { AppShell } from '~/components/ui/app-shell';
+import { Link } from '~/components/ui/link';
+import { NAV_SECTIONS } from '~/components/ui/nav-bar';
 import { PageHeader } from '~/components/ui/page-header';
 import {
   canViewProfiles,
@@ -24,7 +27,8 @@ import {
 } from '~/models/profile/access.server';
 import { authenticator, isEditor } from '~/services/auth.server';
 import { getThemePreference } from '~/services/theme.server';
-import { usePageWidth } from '~/utils/route-handle';
+import { errorPage } from '~/utils/error-page';
+import { SITE_NAME, pageTitle, usePageWidth } from '~/utils/route-handle';
 import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
@@ -41,10 +45,6 @@ export const links: LinksFunction = () => [
   { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
 ];
-
-export const meta = () => {
-  return [{ title: 'Flex Spot FF' }];
-};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const themePreference = getThemePreference(request);
@@ -84,6 +84,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <PageTitle />
         {themePreference === 'system' && (
           <script dangerouslySetInnerHTML={{ __html: SYSTEM_THEME_SCRIPT }} />
         )}
@@ -100,6 +101,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+/**
+ * The tab's title, from every route's `handle.title`. Read here rather than
+ * in a `meta` export: Remix runs the root's `meta` before it has the child
+ * routes.
+ */
+function PageTitle() {
+  const matches = useMatches();
+  const error = useRouteError();
+  return (
+    <title>
+      {error ? `${errorPage(error).title} - ${SITE_NAME}` : pageTitle(matches)}
+    </title>
   );
 }
 
@@ -132,24 +148,7 @@ export function ErrorBoundary() {
   const error = useRouteError();
   // Missing when the root loader itself failed.
   const root = useTypedRouteLoaderData<typeof loader>('root');
-
-  let title = 'Something went wrong';
-  let message = 'Unknown error';
-  if (isRouteErrorResponse(error)) {
-    // Remix's own 404 data names the router; a loader's says what is missing.
-    const data =
-      typeof error.data === 'string' && !error.data.startsWith('Error: ')
-        ? error.data
-        : null;
-    if (error.status === 404) {
-      title = 'Page not found';
-      message = data ?? 'There is no page at this address.';
-    } else {
-      message = data ?? `${error.status} ${error.statusText}`;
-    }
-  } else if (error instanceof Error) {
-    message = error.message;
-  }
+  const { title, message, detail } = errorPage(error);
 
   // Layout wraps this, so it renders the page body only.
   return (
@@ -160,6 +159,19 @@ export function ErrorBoundary() {
       theme={root?.themePreference}
     >
       <PageHeader title={title} description={message} />
+      {detail && import.meta.env.DEV && (
+        <p className='mb-6 font-mono text-sm text-muted-foreground'>{detail}</p>
+      )}
+      <p className='max-w-prose'>
+        Start again from the <Link to='/'>home page</Link>, or from{' '}
+        {NAV_SECTIONS.map((section, index) => (
+          <Fragment key={section.to}>
+            {index > 0 && (index === NAV_SECTIONS.length - 1 ? ' or ' : ', ')}
+            <Link to={section.to}>{section.label.toLowerCase()}</Link>
+          </Fragment>
+        ))}
+        .
+      </p>
     </AppShell>
   );
 }

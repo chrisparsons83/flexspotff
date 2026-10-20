@@ -19,6 +19,9 @@ import type {
   SurvivorPoolResult,
   SurvivorTeamRow,
 } from '~/models/profile/survivorProfile';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Survivor' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -58,7 +61,7 @@ export default function MemberSurvivor() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Survivor'
+        contest='survivor'
         memberName={summary.user.discordName}
       />
     );
@@ -80,9 +83,9 @@ function Career({ career }: { career: SurvivorCareer }) {
   return (
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
-        <CareerCard title='Pool Wins' lead={career.wins}>
+        <CareerCard title='Pool wins' lead={career.wins}>
           <MiniStat
-            label='Best Finish'
+            label='Best finish'
             value={career.bestPlace ? ordinal(career.bestPlace.place) : '–'}
             tone={career.bestPlace?.place === 1 ? TEXT.champion : undefined}
           />
@@ -92,23 +95,23 @@ function Career({ career }: { career: SurvivorCareer }) {
             hint='Share of the field they lasted longer than, on average'
           />
           <MiniStat
-            label='Longest Run'
+            label='Longest run'
             value={career.longestRun ? career.longestRun.weeks : '–'}
             unit={career.longestRun ? 'wk' : undefined}
           />
         </CareerCard>
 
         <CareerCard
-          title='Pick Success'
+          title='Pick success'
           lead={settled > 0 ? pct(career.pickWins / settled) : '–'}
         >
           <MiniStat
-            label='With the Crowd'
+            label='With the crowd'
             value={pct(career.withCrowd)}
             hint="How often they took the week's most popular team"
           />
           <MiniStat
-            label='Missed Picks'
+            label='Missed picks'
             value={career.missedPicks}
             tone={career.missedPicks > 0 ? TEXT.bad : undefined}
             hint='Pools they went out of by not picking'
@@ -127,9 +130,9 @@ function Career({ career }: { career: SurvivorCareer }) {
 
 function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
-    <ProfileSection title='By Pool'>
+    <ProfileSection title='By pool'>
       <Table
-        headers={['Pool', 'Finish', 'Weeks Won', 'Went Out', 'Outlasted']}
+        headers={['Pool', 'Finish', 'Weeks won', 'Went out', 'Outlasted']}
         primaryColumns={[1, 2]}
         numericColumns={[2, 4]}
       >
@@ -213,7 +216,7 @@ function PickLog({ pools }: { pools: SurvivorPoolResult[] }) {
 
 function Teams({ teams }: { teams: SurvivorTeamRow[] }) {
   return (
-    <ProfileSection title='Teams Picked'>
+    <ProfileSection title='Teams picked'>
       <ul className='m-0 grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-4 lg:grid-cols-8'>
         {teams.map(team => (
           <li
