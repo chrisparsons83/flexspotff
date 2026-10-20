@@ -42,8 +42,9 @@ const WEIGHTS = [
   {
     className: 'font-extrabold',
     name: 'Extra bold',
-    use: 'Page titles, the largest steps.',
+    use: 'The largest steps.',
   },
+  { className: 'font-black', name: 'Black', use: 'Page titles.' },
 ];
 
 /** A few made-up rows, to show figures lining up on equal-width digits. */
@@ -58,7 +59,7 @@ export const Scale: Story = {
   render: () => (
     <FoundationPage
       title='Type'
-      intro={`Hanken Grotesk, self-hosted. Seven steps on a ${TYPE_RATIO} ratio from a ${TYPE_BASE}px base. Every line height is a whole number of ${GRID_UNIT}px grid units.`}
+      intro={`Archivo, self-hosted as one variable file that carries every weight to Black and every width from Narrow to Expanded. Seven steps on a ${TYPE_RATIO} ratio from a ${TYPE_BASE}px base. Every line height is a whole number of ${GRID_UNIT}px grid units.`}
     >
       <FoundationSection
         title='Scale'
@@ -106,6 +107,35 @@ export const Scale: Story = {
               ]}
             />
           ))}
+        </TokenTable>
+      </FoundationSection>
+      <FoundationSection
+        title='Widths'
+        about='Normal width everywhere, and font-narrow where columns are tight, such as the draft board. The narrow width is a depth token, so the Review/Depth playground can try it.'
+      >
+        <TokenTable columns={['Sample', 'Class', 'Use']}>
+          <TokenRow
+            cells={[
+              <span key='s' className='text-xl font-semibold'>
+                Amon-Ra St. Brown
+              </span>,
+              <Name key='c'>font-sans</Name>,
+              <span key='u' className='text-muted-foreground'>
+                Everything.
+              </span>,
+            ]}
+          />
+          <TokenRow
+            cells={[
+              <span key='s' className='font-narrow text-xl font-semibold'>
+                Amon-Ra St. Brown
+              </span>,
+              <Name key='c'>font-narrow</Name>,
+              <span key='u' className='text-muted-foreground'>
+                Dense views: the draft board.
+              </span>,
+            ]}
+          />
         </TokenTable>
       </FoundationSection>
       <FoundationSection

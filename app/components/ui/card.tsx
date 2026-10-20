@@ -36,7 +36,8 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 
 /**
- * A panel: a flat, solid area one step up from the page. No edge, no shadow.
+ * A panel: a solid area one step up from the page, set off by a hairline
+ * edge (the depth tokens, which can add a top line and a shadow).
  * Use one where a block needs to stand apart, not around every block; space
  * and the grid separate the rest. Cards do not go inside cards.
  */
@@ -56,7 +57,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           className={cn(
             // --surface tells what sits on the card, such as a table's
             // sticky header, which colour it is on.
-            'bg-card text-card-foreground [--surface:var(--card)]',
+            'bg-card text-card-foreground shadow-card [--surface:var(--card)]',
             league && TINTS[league],
             className,
           )}
@@ -69,8 +70,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 Card.displayName = 'Card';
 
 /**
- * A band across the top of the card: the secondary surface, or the league's
- * own colour on a league card.
+ * The card's title row. On a league card it is a band of the league's
+ * colour; otherwise it sits on the card, or on a band of the secondary
+ * surface if the depth tokens say so.
  */
 const CardHeader = React.forwardRef<
   HTMLDivElement,
@@ -81,8 +83,10 @@ const CardHeader = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        'flex items-center justify-between gap-4 px-5 py-3',
-        league ? BANDS[league] : 'bg-secondary text-secondary-foreground',
+        'flex items-center justify-between gap-4 px-5',
+        league
+          ? cn('py-3', BANDS[league])
+          : 'bg-header-fill pb-[var(--header-pad-bottom)] pt-[var(--header-pad-top)] text-secondary-foreground [background-color:var(--header-bg)]',
         className,
       )}
       {...props}

@@ -33,6 +33,34 @@ function findPatterns() {
   /** @param {string} rule @param {Element} el */
   const add = (rule, el) => findings.push(`${rule}: ${describe(el)}`);
 
+  /**
+   * Whether the element's value for `property` is exactly one of the depth
+   * tokens, worked out where the element is so it reads the same theme. A
+   * probe inside it takes each token in turn and the computed values are
+   * compared, so `var(--glow)` passes and a hand-written halo does not.
+   * @param {Element} el @param {'boxShadow' | 'backgroundImage'} property
+   * @param {string[]} tokens
+   */
+  const fromToken = (el, property, tokens) => {
+    // Tailwind pads a shadow with empty ring layers; they draw nothing.
+    /** @param {string} value */
+    const drawn = value =>
+      value
+        .split(/,(?![^(]*\))/)
+        .map(layer => layer.trim())
+        .filter(layer => !/^rgba\(0, 0, 0, 0\) 0px 0px( 0px)*$/.test(layer))
+        .join(', ');
+    const probe = document.createElement('span');
+    el.appendChild(probe);
+    const actual = drawn(getComputedStyle(el)[property]);
+    const match = tokens.some(token => {
+      probe.style[property] = `var(--${token})`;
+      return drawn(getComputedStyle(probe)[property]) === actual;
+    });
+    probe.remove();
+    return match;
+  };
+
   // Copy: separators, emoji, em dashes, exclamation marks, stock phrases.
   /** @type {[string, RegExp][]} */
   const COPY = [
@@ -69,18 +97,26 @@ function findPatterns() {
       add('rounded corner', el);
     }
 
-    // Shadows only on buttons (their drop) and overlays.
+    // Shadows on buttons (their drop) and overlays, and otherwise only the
+    // depth tokens' card shadow and glow.
     if (style.boxShadow !== 'none') {
-      const allowed = el.closest(
-        'button, [data-slot="button"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [data-radix-popper-content-wrapper]',
-      );
+      const allowed =
+        el.closest(
+          'button, [data-slot="button"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [data-radix-popper-content-wrapper]',
+        ) || fromToken(el, 'boxShadow', ['card-shadow', 'glow']);
       if (!allowed) add('shadow', el);
     }
 
-    // One gradient: the page glow.
+    // Gradients only from the depth tokens: the page glow, the accent bar,
+    // the primary button's fill, and the warmth in card headers.
     if (
       style.backgroundImage.includes('gradient') &&
-      !el.hasAttribute('data-page-glow')
+      !el.hasAttribute('data-page-glow') &&
+      !fromToken(el, 'backgroundImage', [
+        'accent-gradient',
+        'primary-fill',
+        'header-fill',
+      ])
     ) {
       add('gradient', el);
     }
@@ -90,10 +126,12 @@ function findPatterns() {
       add('backdrop blur', el);
     }
 
-    // Eyebrows: small uppercase text with wide tracking.
+    // Eyebrows: small uppercase text with wide tracking. Tracked capitals
+    // are for the labels on controls only.
     if (
       style.textTransform === 'uppercase' &&
-      parseFloat(style.letterSpacing) > 0
+      parseFloat(style.letterSpacing) > 0 &&
+      !el.closest('nav, button, [data-slot="button"], thead, [role="tab"]')
     ) {
       add('uppercase eyebrow', el);
     }

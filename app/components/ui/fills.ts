@@ -86,15 +86,15 @@ export const SEQUENCE: Fill[] = [
 
 /**
  * Each position's colour faded to a tint, for a large area like a draft
- * board cell, where the full fill would drown out the text on it. Text on a
- * tint is the foreground, not the fill's own.
+ * board cell, where the full fill would drown out the text on it. How faded
+ * is a depth token. Text on a tint is the foreground, not the fill's own.
  */
 const POSITION_TINTS: Record<PositionFill, string> = {
-  'position-qb': 'bg-position-qb/30',
-  'position-rb': 'bg-position-rb/30',
-  'position-wr': 'bg-position-wr/30',
-  'position-te': 'bg-position-te/30',
-  'position-def': 'bg-position-def/30',
+  'position-qb': 'bg-position-qb/[var(--position-tint)]',
+  'position-rb': 'bg-position-rb/[var(--position-tint)]',
+  'position-wr': 'bg-position-wr/[var(--position-tint)]',
+  'position-te': 'bg-position-te/[var(--position-tint)]',
+  'position-def': 'bg-position-def/[var(--position-tint)]',
 };
 
 /** A position's tint, or the secondary surface for K and the like. */

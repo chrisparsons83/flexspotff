@@ -1,4 +1,4 @@
-import { FOCUS_RING } from './styles';
+import { FOCUS_RING, NAV_LABEL } from './styles';
 import { Link, NavLink, useLocation } from '@remix-run/react';
 import type { ReactNode } from 'react';
 import { cn } from '~/utils';
@@ -32,14 +32,16 @@ const itemClass = (current: boolean) =>
   cn(
     'whitespace-nowrap border px-3 py-1.5 font-semibold no-underline transition-colors duration-fast',
     current
-      ? 'border-primary-edge bg-primary text-primary-foreground'
+      ? 'border-[color:var(--tab-edge)] bg-accent-gradient bg-[length:100%_var(--tab-bar)] bg-bottom bg-no-repeat [background-color:var(--tab-bg)] [background-origin:border-box] [color:var(--tab-fg)]'
       : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-secondary-foreground',
+    NAV_LABEL,
     FOCUS_RING,
   );
 
 /**
  * Moves between the pages of a section, league or game. The current page is
- * an accent block. Scrolls sideways on a phone rather than wrapping, so the
+ * underlined with the accent gradient, or an accent block, as the depth
+ * tokens say. Scrolls sideways on a phone rather than wrapping, so the
  * row keeps its shape. Tabs a game does not have are left out, not shown
  * empty.
  */

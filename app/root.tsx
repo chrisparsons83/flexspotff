@@ -1,5 +1,5 @@
 import stylesheet from './styles/tailwind.css?url';
-import fontLatin from '@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url';
+import fontLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
 import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Links,

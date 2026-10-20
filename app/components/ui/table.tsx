@@ -1,4 +1,4 @@
-import { FOCUS_RING } from './styles';
+import { FOCUS_RING, LABEL } from './styles';
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -221,6 +221,9 @@ export function Table({
           // Relative, so screen-reader-only text inside is placed within
           // the scroller rather than stretching the page on a phone.
           'not-prose relative max-lg:overflow-x-auto',
+          // A well a little darker than what the table sits on, with the
+          // header row raised back up to the surface.
+          'bg-[color-mix(in_oklab,oklch(var(--surface,var(--background))),var(--well-mix))]',
           !stickyHeader && 'overflow-x-auto',
           CELLS,
           folded.map(index => HIDE_ON_PHONE[index + 1]),
@@ -231,7 +234,12 @@ export function Table({
         <table className='w-full border-collapse text-left text-base tabular-nums'>
           {caption && <caption className='sr-only'>{caption}</caption>}
           <thead>
-            <tr className='border-b border-border text-sm text-muted-foreground'>
+            <tr
+              className={cn(
+                'border-b border-border bg-[oklch(var(--surface,var(--background)))] text-sm text-muted-foreground',
+                LABEL,
+              )}
+            >
               {headers.map((header, index) => {
                 const sortKey = sortKeys[index];
                 const sorted = sort && sortKey && sort.key === sortKey;

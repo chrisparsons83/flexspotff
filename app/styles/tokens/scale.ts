@@ -1,5 +1,6 @@
 /**
- * Tokens that are not colours. Corners are near-square and set once here.
+ * Tokens that are not colours. Corners are square, set with the depth
+ * tokens so the playground can try others.
  * Motion is for state changes only, so there are two short durations and
  * one easing curve.
  *
@@ -63,13 +64,12 @@ export const STEP_DOWN_EM = `${Number((1 / TYPE_RATIO).toFixed(4))}em`;
 const rem = (px: number) => `${Number((px / 16).toFixed(4))}rem`;
 
 export const scaleTokens: Record<string, string> = {
-  /** Square. */
-  radius: '0px',
   'duration-fast': '100ms',
   'duration-base': '150ms',
   'ease-standard': 'cubic-bezier(0.2, 0, 0, 1)',
-  'font-sans':
-    "'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif",
+  // One variable file carries every weight and width, so Narrow and Black
+  // are Archivo at a width or a weight, not separate families.
+  'font-sans': "'Archivo Variable', ui-sans-serif, system-ui, sans-serif",
   ...Object.fromEntries(
     TYPE_STEPS.flatMap(name => [
       [`text-${name}`, rem(typeScale[name].size)],

@@ -27,7 +27,7 @@ import { LEAGUE_EMBED_COLORS } from '~/utils/constants';
  * show. These are the ones that get an edge.
  */
 const OUTLINED: Record<(typeof THEMES)[number], string[]> = {
-  dark: ['position-def'],
+  dark: [],
   light: [
     'league-admiral',
     'league-champions',
@@ -35,7 +35,6 @@ const OUTLINED: Record<(typeof THEMES)[number], string[]> = {
     'medal-gold',
     'medal-silver',
     'medal-bronze',
-    'medal-sacko',
   ],
 };
 

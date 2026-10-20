@@ -10,6 +10,7 @@ import {
   type TypeStep,
 } from './app/styles/tokens/scale';
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 
 /** A token as a Tailwind colour that takes opacity modifiers. */
 const token = (name: string) => `oklch(var(--${name}) / <alpha-value>)`;
@@ -149,6 +150,8 @@ const config: Config = {
           neutralSteps.map((_, i) => [i, token(`neutral-${i}`)]),
         ),
         ...roleColors,
+        // Already a whole colour, with its own opacity, so no modifiers.
+        hairline: 'var(--hairline)',
       },
       borderRadius: {
         none: '0',
@@ -161,13 +164,25 @@ const config: Config = {
         '3xl': 'var(--radius)',
         full: '9999px',
       },
-      // A button sits on a short drop in a darker shade of itself. Overlays
-      // (dialogs, menus, popovers) are the only other things with a shadow.
+      // A button can sit on a short drop in a darker shade of itself, as
+      // tall as the depth tokens say (none, by default). Cards stand off the
+      // page on the depth tokens' edge, and overlays float above everything.
       boxShadow: {
-        press: `0 3px 0 0 ${color('primary-shade')}`,
-        'press-secondary': `0 3px 0 0 ${color('secondary-shade')}`,
-        'press-destructive': `0 3px 0 0 ${color('destructive-shade')}`,
+        press: `0 var(--press-drop) 0 0 ${color('primary-shade')}`,
+        'press-secondary': `0 var(--press-drop) 0 0 ${color(
+          'secondary-shade',
+        )}`,
+        'press-destructive': `0 var(--press-drop) 0 0 ${color(
+          'destructive-shade',
+        )}`,
         overlay: '0 8px 24px 0 rgb(0 0 0 / 0.4)',
+        card: 'var(--card-shadow)',
+        glow: 'var(--glow)',
+      },
+      backgroundImage: {
+        'accent-gradient': 'var(--accent-gradient)',
+        'primary-fill': 'var(--primary-fill)',
+        'header-fill': 'var(--header-fill)',
       },
       transitionDuration: {
         DEFAULT: 'var(--duration-base)',
@@ -201,6 +216,11 @@ const config: Config = {
     },
   },
   plugins: [
+    // Archivo's width axis: `font-narrow` for dense views like the draft
+    // board. Tailwind 3 has no font-stretch utilities of its own.
+    plugin(({ addUtilities }) =>
+      addUtilities({ '.font-narrow': { fontStretch: 'var(--width-narrow)' } }),
+    ),
     require('tailwindcss-animate'),
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
