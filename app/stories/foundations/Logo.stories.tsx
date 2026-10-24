@@ -7,6 +7,8 @@ import {
 } from './parts';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Logo, MARK_PATH } from '~/components/brand/Logo';
+import { PAGE_GLOW, PageTexture } from '~/components/ui/app-shell';
+import { SOCIAL_IMAGE } from '~/utils/route-handle';
 
 const meta: Meta = {
   title: 'Foundations/Logo',
@@ -122,5 +124,32 @@ export const Usage: Story = {
         </TokenTable>
       </FoundationSection>
     </FoundationPage>
+  ),
+};
+
+/**
+ * The image every link preview shows: the lockup on the page ground, under
+ * the same glow and field marks as the top of the site. Dark only, as a
+ * preview does not follow the viewer's theme. With Storybook running,
+ * `npm run render:social-preview` saves it to public/social-preview.png.
+ */
+export const SocialPreview: Story = {
+  globals: { theme: 'dark' },
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div
+      id='social-preview'
+      // Marks the page glow for the Storybook pattern check.
+      data-page-glow
+      className='dark relative isolate flex items-center justify-center bg-background text-foreground'
+      style={{
+        ...PAGE_GLOW,
+        width: SOCIAL_IMAGE.width,
+        height: SOCIAL_IMAGE.height,
+      }}
+    >
+      <PageTexture />
+      <Logo className='h-[180px] w-auto' />
+    </div>
   ),
 };

@@ -12,7 +12,7 @@
  * - The current section is marked by the accent, not by a block.
  * - The nav and tab labels are Archivo Narrow, in sentence case.
  * - Glow only where something asks for it by name, such as a live game.
- * - Some interest behind the top of the page: a deep field-green glow and
+ * - Some interest behind the top of the page: a field-green glow and
  *   faint hash marks and yard lines, both fading out before the content
  *   gets busy.
  *

@@ -179,8 +179,14 @@ const accentRed = make({
  */
 const deepRed = make({ l: 0.42, c: 0.16, h: 25 });
 
-/** The same depth in a field green, for trying the glow in green. */
-const deepGreen = make({ l: 0.42, c: 0.12, h: 152 });
+/**
+ * The field green behind the top of the page. A dark green mixed into a light
+ * page greys it to sage, so the light page takes a lighter, clearer one.
+ */
+const FIELD_GREEN = {
+  dark: make({ l: 0.5, c: 0.16, h: 148 }),
+  light: make({ l: 0.72, c: 0.19, h: 148 }),
+};
 
 /** Hover lifts the accent; lighter also raises its contrast with its text. */
 const PRIMARY_HOVER_LIFT = 0.05;
@@ -345,7 +351,7 @@ const buildRoles = (theme: Theme) => {
     'primary-shade': make({ ...accent, l: accent.l - SHADE_DROP }),
     'primary-red': accentRed,
     'primary-deep': deepRed,
-    'field-green': deepGreen,
+    'field-green': FIELD_GREEN[theme],
     brand: clearing(
       BRAND_START[theme],
       theme,

@@ -45,11 +45,8 @@ type TitleMatch = {
   data: unknown;
 };
 
-/**
- * The browser tab's title: every route's name from the deepest out, then the
- * site's, skipping a name its parent already gave.
- */
-export const pageTitle = (matches: TitleMatch[]): string => {
+/** Every route's name from the deepest out, skipping one its parent gave. */
+const pageNames = (matches: TitleMatch[]): string[] => {
   const names: string[] = [];
   // A match's own pathname is only the part of the URL it matched.
   const pathname = matches.at(-1)?.pathname ?? '/';
@@ -65,8 +62,54 @@ export const pageTitle = (matches: TitleMatch[]): string => {
     }
     if (name && name !== names[names.length - 1]) names.push(name);
   }
-  return [...names, SITE_NAME].join(' - ');
+  return names;
 };
+
+/** The browser tab's title: the page's names, then the site's. */
+export const pageTitle = (matches: TitleMatch[]): string =>
+  [...pageNames(matches), SITE_NAME].join(' - ');
+
+/** What every link preview says the site is, from the home page. */
+const SITE_DESCRIPTION =
+  'A fantasy football Discord, around since 2016. Promotion and relegation leagues with a cup across all of them, weekly games and a few side leagues.';
+
+/** The one image every link preview shows, in public/. */
+export const SOCIAL_IMAGE = {
+  path: '/social-preview.png',
+  width: 1200,
+  height: 630,
+};
+
+type SocialTag =
+  | { property: string; content: string }
+  | { name: string; content: string };
+
+/**
+ * The tags a link preview reads, in Discord and elsewhere. The site's name
+ * has a tag of its own, so the title is the page's alone.
+ */
+export const socialMeta = (
+  matches: TitleMatch[],
+  origin: string,
+): SocialTag[] => [
+  {
+    property: 'og:title',
+    content: pageNames(matches).join(' - ') || SITE_NAME,
+  },
+  { property: 'og:site_name', content: SITE_NAME },
+  { property: 'og:description', content: SITE_DESCRIPTION },
+  {
+    property: 'og:url',
+    content: new URL(matches.at(-1)?.pathname ?? '/', origin).href,
+  },
+  {
+    property: 'og:image',
+    content: new URL(SOCIAL_IMAGE.path, origin).href,
+  },
+  { property: 'og:image:width', content: String(SOCIAL_IMAGE.width) },
+  { property: 'og:image:height', content: String(SOCIAL_IMAGE.height) },
+  { name: 'twitter:card', content: 'summary_large_image' },
+];
 
 /**
  * A title function's loader data, typed by the loader. Every field may be
