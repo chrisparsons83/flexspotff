@@ -28,7 +28,12 @@ import {
 import { authenticator, isEditor } from '~/services/auth.server';
 import { getThemePreference } from '~/services/theme.server';
 import { errorPage } from '~/utils/error-page';
-import { SITE_NAME, pageTitle, usePageWidth } from '~/utils/route-handle';
+import {
+  SITE_NAME,
+  pageTitle,
+  socialMeta,
+  usePageWidth,
+} from '~/utils/route-handle';
 import { SYSTEM_THEME_SCRIPT, useThemeClass } from '~/utils/theme';
 
 export const links: LinksFunction = () => [
@@ -62,6 +67,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // useProfileHref.
     profileHandles: profilesVisible ? await getProfileHandles() : {},
     themePreference: await themePreference,
+    // Link previews need full addresses.
+    origin: process.env.WEBSITE_URL,
     ENV: {
       NODE_ENV: process.env.NODE_ENV,
     },
@@ -85,6 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <PageTitle />
+        <SocialMeta />
         {themePreference === 'system' && (
           <script dangerouslySetInnerHTML={{ __html: SYSTEM_THEME_SCRIPT }} />
         )}
@@ -116,6 +124,21 @@ function PageTitle() {
     <title>
       {error ? `${errorPage(error).title} - ${SITE_NAME}` : pageTitle(matches)}
     </title>
+  );
+}
+
+/** The link preview's tags. An error page gets none. */
+function SocialMeta() {
+  const matches = useMatches();
+  const error = useRouteError();
+  const origin = useTypedRouteLoaderData<typeof loader>('root')?.origin;
+  if (error || !origin) return null;
+  return socialMeta(matches, origin).map(tag =>
+    'property' in tag ? (
+      <meta key={tag.property} property={tag.property} content={tag.content} />
+    ) : (
+      <meta key={tag.name} name={tag.name} content={tag.content} />
+    ),
   );
 }
 
