@@ -6,14 +6,17 @@
  *   npm run render:social-preview [storybook-url]
  */
 import { chromium } from 'playwright';
+import { SOCIAL_IMAGE } from '~/utils/route-handle';
 
-const storybook = process.argv[2] ?? 'http://localhost:6006';
-const OUT = 'public/social-preview.png';
+const STORYBOOK = process.argv[2] ?? 'http://localhost:6006';
+const OUT = `public${SOCIAL_IMAGE.path}`;
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+const page = await browser.newPage({
+  viewport: { width: SOCIAL_IMAGE.width, height: SOCIAL_IMAGE.height },
+});
 await page.goto(
-  `${storybook}/iframe.html?id=foundations-logo--social-preview&viewMode=story`,
+  `${STORYBOOK}/iframe.html?id=foundations-logo--social-preview&viewMode=story`,
   { waitUntil: 'networkidle' },
 );
 await page.evaluate(() => document.fonts.ready);

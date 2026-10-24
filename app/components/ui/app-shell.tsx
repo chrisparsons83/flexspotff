@@ -15,6 +15,22 @@ export const PAGE_GLOW = {
   backgroundRepeat: 'no-repeat',
 };
 
+/**
+ * The texture behind the top of the page, fading out downward and toward the
+ * sides. Behind everything, and never in the way. Goes inside an element
+ * with the page glow that is `relative isolate`.
+ */
+export function PageTexture() {
+  return (
+    <div
+      aria-hidden
+      // Marks the page glow for the Storybook pattern check.
+      data-page-glow
+      className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--page-texture-reach)] [background-image:var(--page-texture)] [background-position:var(--page-texture-position)] [background-repeat:var(--page-texture-repeat)] [background-size:var(--page-texture-size)] [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0,black,transparent)]'
+    />
+  );
+}
+
 type Props = ComponentProps<typeof NavBar> & {
   /**
    * `contained` sets the page on the 6xl grid. `full` gives it the whole
@@ -33,13 +49,7 @@ export function AppShell({ width = 'contained', children, ...nav }: Props) {
       className='relative isolate flex min-h-full flex-col bg-background text-foreground'
       style={PAGE_GLOW}
     >
-      {/* The texture behind the top of the page, fading out downward and
-          toward the sides. Behind everything, and never in the way. */}
-      <div
-        aria-hidden
-        data-page-glow
-        className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--page-texture-reach)] [background-image:var(--page-texture)] [background-position:var(--page-texture-position)] [background-repeat:var(--page-texture-repeat)] [background-size:var(--page-texture-size)] [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0,black,transparent)]'
-      />
+      <PageTexture />
       <a
         href='#main'
         className='sr-only z-50 bg-primary px-4 py-2 font-semibold text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4'

@@ -7,7 +7,8 @@ import {
 } from './parts';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Logo, MARK_PATH } from '~/components/brand/Logo';
-import { PAGE_GLOW } from '~/components/ui/app-shell';
+import { PAGE_GLOW, PageTexture } from '~/components/ui/app-shell';
+import { SOCIAL_IMAGE } from '~/utils/route-handle';
 
 const meta: Meta = {
   title: 'Foundations/Logo',
@@ -138,15 +139,16 @@ export const SocialPreview: Story = {
   render: () => (
     <div
       id='social-preview'
+      // Marks the page glow for the Storybook pattern check.
       data-page-glow
-      className='dark relative isolate flex h-[630px] w-[1200px] items-center justify-center bg-background text-foreground'
-      style={PAGE_GLOW}
+      className='dark relative isolate flex items-center justify-center bg-background text-foreground'
+      style={{
+        ...PAGE_GLOW,
+        width: SOCIAL_IMAGE.width,
+        height: SOCIAL_IMAGE.height,
+      }}
     >
-      <div
-        aria-hidden
-        data-page-glow
-        className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--page-texture-reach)] [background-image:var(--page-texture)] [background-position:var(--page-texture-position)] [background-repeat:var(--page-texture-repeat)] [background-size:var(--page-texture-size)] [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0,black,transparent)]'
-      />
+      <PageTexture />
       <Logo className='h-[180px] w-auto' />
     </div>
   ),

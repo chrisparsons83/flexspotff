@@ -74,7 +74,11 @@ const SITE_DESCRIPTION =
   'A fantasy football Discord, around since 2016. Promotion and relegation leagues with a cup across all of them, weekly games and a few side leagues.';
 
 /** The one image every link preview shows, in public/. */
-const SOCIAL_IMAGE = { path: '/social-preview.png', width: 1200, height: 630 };
+export const SOCIAL_IMAGE = {
+  path: '/social-preview.png',
+  width: 1200,
+  height: 630,
+};
 
 type SocialTag =
   | { property: string; content: string }
