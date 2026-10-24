@@ -29,6 +29,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "check-storybook": "tsx scripts/check-storybook.ts",
+    "render:social-preview": "tsx scripts/render-social-preview.ts",
     "check:patterns": "tsx scripts/check-patterns.ts",
     "start": "remix-serve ./build/server/index.js",
     "start:bot": "node ./build/bot/server.cjs",
