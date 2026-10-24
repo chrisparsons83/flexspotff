@@ -1,8 +1,8 @@
 /**
  * The colour system, built by rule rather than picked by hand (see #191).
  *
- * - Neutrals are equal lightness steps of grey with a faint blue-violet
- *   tinge, the way Discord's are. The tinge fades toward the light end. Each
+ * - Neutrals are equal lightness steps of grey with a faint slate-blue
+ *   tinge, dark and cool like the reference sites in #220. The tinge fades toward the light end. Each
  *   theme's roles are fixed offsets from its ground, so light is dark read
  *   from the other end.
  * - One vivid accent, the orange of the logo, marks buttons, links and the
@@ -41,10 +41,10 @@ const make = (color: Oklch) => round(toGamut(color));
 
 // Neutrals
 
-const NEUTRAL_DARKEST = 0.22;
+const NEUTRAL_DARKEST = 0.205;
 const NEUTRAL_LIGHTEST = 0.97;
 const NEUTRAL_STEP_COUNT = 21;
-const NEUTRAL_HUE = 285;
+const NEUTRAL_HUE = 268;
 /** Grey with a tinge at the dark end, barely tinted at the light end. */
 const NEUTRAL_CHROMA_DARKEST = 0.016;
 const NEUTRAL_CHROMA_LIGHTEST = 0.004;
@@ -90,9 +90,15 @@ const mean = (values: number[]) =>
 export const CATEGORY_CHROMA = mean(leagueColors.map(c => c.c));
 
 /** Steps from the ground for each layer; light mode counts from the top. */
-const SURFACE_OFFSET = 2;
-const RAISED_OFFSET = 4;
-const BORDER_OFFSET = 6;
+const SURFACE_OFFSET = 1;
+const RAISED_OFFSET = 2;
+const BORDER_OFFSET = 3;
+/**
+ * Muted and status text are picked to read on this step, not on the raised
+ * surface: the surfaces sit close to the ground, but text also lands on
+ * tinted fills (draft cells, pick chips) that run lighter than they do.
+ */
+const TEXT_GROUND_OFFSET = 4;
 
 const neutralStep = (theme: Theme, offset: number) =>
   neutralSteps[theme === 'dark' ? offset : NEUTRAL_STEP_COUNT - 1 - offset];
@@ -151,6 +157,30 @@ export const medals = Object.fromEntries(
 /** The logo orange, exactly. */
 const ACCENT_HEX = '#e65719';
 const accent = round(hexToOklch(ACCENT_HEX));
+
+/**
+ * The red at the other end of the accent gradient: the accent turned toward
+ * red, so the bar and the primary button run from the logo orange into red.
+ * Only a touch darker than the accent, because the button's dark text has to
+ * read on this end too. Fixed, like the accent. A fill, never text.
+ */
+const ACCENT_RED_HUE = 20;
+const ACCENT_RED_DROP = 0.01;
+const accentRed = make({
+  l: accent.l - ACCENT_RED_DROP,
+  c: accent.c,
+  h: ACCENT_RED_HUE,
+});
+
+/**
+ * A deep red for the page glow: darker and a little less vivid than the
+ * gradient's red, so mixed into the dark ground it reads as a deep red
+ * glow rather than coral. Fixed, like the accent. Never text.
+ */
+const deepRed = make({ l: 0.42, c: 0.16, h: 25 });
+
+/** The same depth in a field green, for trying the glow in green. */
+const deepGreen = make({ l: 0.42, c: 0.12, h: 152 });
 
 /** Hover lifts the accent; lighter also raises its contrast with its text. */
 const PRIMARY_HOVER_LIFT = 0.05;
@@ -269,6 +299,7 @@ const buildRoles = (theme: Theme) => {
   const background = step(0);
   const surface = step(SURFACE_OFFSET);
   const raised = step(RAISED_OFFSET);
+  const textGround = step(TEXT_GROUND_OFFSET);
   const foreground = step(NEUTRAL_STEP_COUNT - 1);
 
   /** The first step away from the ground that clears `ratio` on `against`. */
@@ -293,7 +324,7 @@ const buildRoles = (theme: Theme) => {
   const semantic = Object.fromEntries(
     Object.entries(SEMANTIC_HUES).map(([name, h]) => [
       name,
-      semanticText(h, theme, raised),
+      semanticText(h, theme, textGround),
     ]),
   ) as Record<keyof typeof SEMANTIC_HUES, Oklch>;
 
@@ -312,6 +343,9 @@ const buildRoles = (theme: Theme) => {
     'primary-hover': make({ ...accent, l: accent.l + PRIMARY_HOVER_LIFT }),
     'primary-edge': accentShows ? accent : input,
     'primary-shade': make({ ...accent, l: accent.l - SHADE_DROP }),
+    'primary-red': accentRed,
+    'primary-deep': deepRed,
+    'field-green': deepGreen,
     brand: clearing(
       BRAND_START[theme],
       theme,
@@ -323,7 +357,7 @@ const buildRoles = (theme: Theme) => {
     // The drop under a secondary button, as primary-shade is for the accent.
     'secondary-shade': make({ ...raised, l: raised.l - SHADE_DROP }),
     muted: surface,
-    'muted-foreground': firstStepClearing(TEXT_CONTRAST, raised),
+    'muted-foreground': firstStepClearing(TEXT_CONTRAST, textGround),
     accent: raised,
     'accent-foreground': foreground,
     destructive: semantic.negative,
@@ -360,6 +394,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
   ['popover-foreground', 'popover'],
   ['primary-foreground', 'primary'],
   ['primary-foreground', 'primary-hover'],
+  // The foot of the primary button's gradient.
+  ['primary-foreground', 'primary-red'],
   ['secondary-foreground', 'secondary'],
   ['accent-foreground', 'accent'],
   ['muted-foreground', 'background'],
@@ -432,7 +468,9 @@ export const fillEdges = (theme: Theme) => {
 };
 
 /** Enough colour to name the league, quiet enough to read text on. */
-const TINT_CHROMA = 0.04;
+// Low: a league panel is a card with a hint of the league, and the colour
+// itself is the header band. Much more and a yellow turns to mud brown.
+const TINT_CHROMA = 0.014;
 
 /** Each league's tint for the theme, at the theme's card lightness. */
 export const leagueTints = (theme: Theme) => {

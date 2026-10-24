@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './dropdown-menu';
-import { FOCUS_RING } from './styles';
+import { FOCUS_RING, NAV_LABEL } from './styles';
 import { ThemeToggle } from './theme-toggle';
 import { Cross1Icon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { Form, Link, useLocation, useSubmit } from '@remix-run/react';
@@ -61,8 +61,9 @@ function accountLinks({ isEditor, canViewProfiles }: Props) {
 
 /**
  * The site's bar: the logo home, the three sections, and the account menu or
- * Log in. The section you are in is marked on every page inside it, by an
- * accent rule under its name. On a phone everything folds into one menu
+ * Log in. The section you are in is marked on every page inside it, by its
+ * name in the accent and the gradient's bar under it. The bar is what marks
+ * it for anyone who cannot tell the accent from the other names. On a phone everything folds into one menu
  * button: the sections first, then the account items.
  */
 export function NavBar(props: Props) {
@@ -76,7 +77,7 @@ export function NavBar(props: Props) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} asChild>
-      <header className='relative bg-card text-card-foreground'>
+      <header className='relative border-b border-hairline bg-chrome text-card-foreground'>
         <div className='mx-auto flex h-16 max-w-6xl items-stretch gap-8 px-4'>
           <Link
             to='/'
@@ -104,8 +105,9 @@ export function NavBar(props: Props) {
                       className={cn(
                         'flex items-center border-y-[3px] border-transparent px-3 font-semibold transition-colors duration-fast',
                         current
-                          ? 'border-b-primary text-foreground'
+                          ? 'bg-accent-gradient bg-[length:100%_var(--nav-bar)] bg-bottom bg-no-repeat text-brand [background-origin:border-box]'
                           : 'text-muted-foreground hover:text-foreground',
+                        NAV_LABEL,
                         FOCUS_RING,
                       )}
                     >

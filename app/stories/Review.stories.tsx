@@ -32,7 +32,7 @@ const RULES: { group: string; rules: Rule[] }[] = [
         checked: 'person',
       },
       {
-        rule: 'No small uppercase eyebrow labels with wide letter-spacing above headings.',
+        rule: 'No small uppercase eyebrow labels with wide letter-spacing above headings. Tracked capitals are for the labels on controls only: nav, tabs, buttons, table headers.',
         checked: 'script',
       },
       { rule: 'No coloured status dots in front of text.', checked: 'person' },
@@ -69,12 +69,16 @@ const RULES: { group: string; rules: Rule[] }[] = [
         checked: 'script',
       },
       {
-        rule: 'No gradients but the page glow: no gradient text or borders, no glows, no glassmorphism or backdrop blur.',
+        rule: 'No gradients but the depth tokens: the orange-to-red fill of the primary button, the same gradient as a bar under the current tab, the page glow, and the warmth in card headers. No gradient text or borders, no mesh or aurora, no glassmorphism or backdrop blur.',
         checked: 'script',
       },
       {
-        rule: 'No shadows but on overlays and on buttons, which sit on a solid drop in a darker shade of themselves.',
+        rule: 'No shadows but the depth tokens: the card edge and shadow, the glow, the drop under buttons, and overlays.',
         checked: 'script',
+      },
+      {
+        rule: 'The glow goes only on what asks for it by name, such as a league leader or a live game.',
+        checked: 'person',
       },
     ],
   },

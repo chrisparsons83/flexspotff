@@ -1,4 +1,5 @@
 import { type Oklch, round } from './color';
+import { depthTokens } from './depth';
 import {
   fillEdges,
   fills,
@@ -42,6 +43,10 @@ const themed = (theme: Theme) => [
   '',
   ...declarations(fillEdges(theme)),
   ...declarations(leagueTints(theme)),
+  '',
+  ...Object.entries(depthTokens(theme)).map(
+    ([name, value]) => `  --${name}: ${value};`,
+  ),
 ];
 
 export const renderTokensCss = () => {

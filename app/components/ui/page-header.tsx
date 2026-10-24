@@ -29,7 +29,9 @@ export function PageHeader({
     >
       <div className='grid grid-cols-12 items-end gap-x-6 gap-y-4'>
         <div className={cn('col-span-12', actions && 'md:col-span-8')}>
-          <h1 className='text-4xl font-extrabold tracking-tight'>{title}</h1>
+          <h1 className='text-4xl tracking-tight [font-stretch:var(--title-width)] [font-weight:var(--title-weight)]'>
+            {title}
+          </h1>
           {description && (
             <p className='mt-3 max-w-prose text-lg text-muted-foreground'>
               {description}

@@ -6,21 +6,12 @@ import { cn } from '~/utils';
 export const DISCORD_INVITE = 'https://discord.gg/VVsEXujWEY';
 
 /**
- * The accent mixed into the ground, as a share from 0 to 100. Mixed in
- * OKLab: OKLCH would turn the hue from the orange to the ground's violet on
- * the way, through pink.
- */
-const tinted = (share: number) =>
-  `color-mix(in oklab, oklch(var(--primary)) ${share}%, oklch(var(--background)))`;
-
-/**
- * The one sanctioned gradient: a glow of the accent from the top centre of
- * the page, fading out by mid-page.
+ * A glow of the accent from the top centre of the page, fading out by
+ * mid-page. Its strength and reach are depth tokens; the accent is mixed in
+ * OKLab, as OKLCH would turn the hue toward the ground's violet through pink.
  */
 export const PAGE_GLOW = {
-  backgroundImage: `radial-gradient(90% 680px at 50% 0, ${tinted(
-    32,
-  )}, transparent)`,
+  backgroundImage: 'var(--page-glow)',
   backgroundRepeat: 'no-repeat',
 };
 
@@ -37,11 +28,18 @@ type Props = ComponentProps<typeof NavBar> & {
 export function AppShell({ width = 'contained', children, ...nav }: Props) {
   return (
     <div
-      // Marks the one sanctioned gradient for the Storybook pattern check.
+      // Marks the page glow for the Storybook pattern check.
       data-page-glow
-      className='flex min-h-full flex-col bg-background text-foreground'
+      className='relative isolate flex min-h-full flex-col bg-background text-foreground'
       style={PAGE_GLOW}
     >
+      {/* The texture behind the top of the page, fading out downward and
+          toward the sides. Behind everything, and never in the way. */}
+      <div
+        aria-hidden
+        data-page-glow
+        className='pointer-events-none absolute inset-x-0 top-0 -z-10 h-[var(--page-texture-reach)] [background-image:var(--page-texture)] [background-position:var(--page-texture-position)] [background-repeat:var(--page-texture-repeat)] [background-size:var(--page-texture-size)] [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0,black,transparent)]'
+      />
       <a
         href='#main'
         className='sr-only z-50 bg-primary px-4 py-2 font-semibold text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4'
@@ -66,7 +64,7 @@ export function AppShell({ width = 'contained', children, ...nav }: Props) {
 /** The Discord invite and the podcast archive. */
 export function Footer() {
   return (
-    <footer className='bg-card text-card-foreground'>
+    <footer className='border-t border-hairline bg-chrome text-card-foreground'>
       <ul className='mx-auto flex max-w-6xl flex-wrap gap-x-8 gap-y-2 px-4 py-8 text-sm'>
         <li>
           <ExternalLink href={DISCORD_INVITE} variant='quiet'>

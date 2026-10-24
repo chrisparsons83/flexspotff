@@ -33,15 +33,21 @@ const CardContext = React.createContext<{
 type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   /** Wears the league's tint, and its colour on the header. */
   league?: LeagueFill;
+  /**
+   * The orange halo, for the one card that asks for it by name, such as a
+   * live game. The card keeps its edge under the glow.
+   */
+  glow?: boolean;
 };
 
 /**
- * A panel: a flat, solid area one step up from the page. No edge, no shadow.
+ * A panel: a solid area one step up from the page, set off by a hairline
+ * edge (the depth tokens, which can add a top line and a shadow).
  * Use one where a block needs to stand apart, not around every block; space
  * and the grid separate the rest. Cards do not go inside cards.
  */
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, league, ...props }, ref) => {
+  ({ className, league, glow = false, ...props }, ref) => {
     const { inCard } = React.useContext(CardContext);
     // Once per card, when it mounts, rather than on every render.
     React.useEffect(() => {
@@ -57,6 +63,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             // --surface tells what sits on the card, such as a table's
             // sticky header, which colour it is on.
             'bg-card text-card-foreground [--surface:var(--card)]',
+            glow ? 'shadow-card-glow' : 'shadow-card-edge',
             league && TINTS[league],
             className,
           )}
@@ -69,8 +76,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 Card.displayName = 'Card';
 
 /**
- * A band across the top of the card: the secondary surface, or the league's
- * own colour on a league card.
+ * The card's title row. On a league card it is a band of the league's
+ * colour; otherwise it sits on the card, or on a band of the secondary
+ * surface if the depth tokens say so.
  */
 const CardHeader = React.forwardRef<
   HTMLDivElement,
@@ -81,8 +89,10 @@ const CardHeader = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        'flex items-center justify-between gap-4 px-5 py-3',
-        league ? BANDS[league] : 'bg-secondary text-secondary-foreground',
+        'flex items-center justify-between gap-4 px-5',
+        league
+          ? cn('py-3', BANDS[league])
+          : 'bg-header bg-header-fill pb-[var(--header-pad-bottom)] pt-[var(--header-pad-top)] text-secondary-foreground',
         className,
       )}
       {...props}

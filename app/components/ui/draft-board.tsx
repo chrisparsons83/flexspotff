@@ -36,7 +36,8 @@ export function DraftBoard<Column>({
   return (
     <div className='not-prose overflow-x-auto'>
       <div
-        className='grid gap-1 text-sm'
+        // Narrow Archivo fits a name in a column a phone's width can hold.
+        className='grid gap-1 font-narrow text-sm'
         style={{
           gridTemplateColumns: `auto repeat(${columns.length}, minmax(${minColumnWidth}, 1fr))`,
         }}
