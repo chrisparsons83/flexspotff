@@ -200,19 +200,14 @@ export async function getGamesOverview(
     {
       name: 'Survivor',
       to: '/games/survivor',
-      status:
-        survivor.length > 0 ? `${survivor[0]!.year} pools` : 'No pools yet',
+      ...survivorSummary(survivor, leaders * 2),
       entries: false,
-      rows: survivor.map(pool => ({
-        key: pool.id,
-        label: poolTitle(pool),
-        value: survivorStanding(pool),
-      })),
       empty: 'No pools yet.',
     },
     {
       name: 'Omni',
-      to: '/games/omni',
+      // Straight to the season while there is only one.
+      to: omni?.onlySeason ? `/games/omni/${omni.year}` : '/games/omni',
       status: omni ? `Final ${omni.year} standings.` : '',
       statusLink: { label: 'Omni now runs on Brackt', href: BRACKT_URL },
       entries: false,
@@ -228,10 +223,49 @@ export async function getGamesOverview(
   ];
 }
 
+type SurvivorPool = Awaited<ReturnType<typeof getLatestSurvivorPools>>[number];
+
+/**
+ * The season's pools, one row each. While one pool is running and few enough
+ * are left in it, the card is about that pool instead: who is still alive.
+ */
+function survivorSummary(pools: SurvivorPool[], maxNames: number) {
+  const live = pools.filter(pool => !pool.isComplete);
+  const alive =
+    live.length === 1
+      ? live[0]!.entries.filter(entry => entry.eliminatedWeek === null)
+      : [];
+
+  if (alive.length > 0 && alive.length <= maxNames) {
+    const pool = live[0]!;
+    return {
+      status: `${poolTitle(pool)}: ${alive.length} of ${
+        pool.entries.length
+      } alive.`,
+      rows: alive
+        .map(entry => ({ entry, name: entryLabel(entry) }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(({ entry, name }) => ({
+          key: entry.user?.id ?? name,
+          user: entry.user,
+          label: name,
+          value: '',
+        })),
+    };
+  }
+
+  return {
+    status: pools.length > 0 ? `${pools[0]!.year} pools` : 'No pools yet',
+    rows: pools.map(pool => ({
+      key: pool.id,
+      label: poolTitle(pool),
+      value: survivorStanding(pool),
+    })),
+  };
+}
+
 /** Who won a finished pool, or how many are still in. */
-function survivorStanding(
-  pool: Awaited<ReturnType<typeof getLatestSurvivorPools>>[number],
-) {
+function survivorStanding(pool: SurvivorPool) {
   if (pool.isComplete) {
     const winners = pool.entries.filter(entry => entry.finish === 1);
     return winners.length > 0
@@ -244,11 +278,12 @@ function survivorStanding(
 
 /** The last Omni season played here and its top three. */
 async function getLatestOmniPodium() {
-  const [latest] = await getAllOmniSeasons();
-  const season = latest ? await getOmniSeason(latest.year) : null;
+  const seasons = await getAllOmniSeasons();
+  const season = seasons[0] ? await getOmniSeason(seasons[0].year) : null;
   if (!season) return null;
   return {
     year: season.year,
+    onlySeason: seasons.length === 1,
     leaders: getOmniStandings(season).filter(row => row.rank <= HISTORY_PODIUM),
   };
 }
