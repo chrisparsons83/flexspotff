@@ -82,7 +82,11 @@ export default function DfsSurvivorWeekRail({
             <div
               className={clsx(
                 'text-sm tabular-nums',
-                week.isScored
+                // On the selected chip the line takes the chip's own text
+                // colour: grey or green on the accent fails contrast.
+                isSelected
+                  ? undefined
+                  : week.isScored
                   ? 'text-foreground'
                   : isComplete
                   ? 'text-positive'

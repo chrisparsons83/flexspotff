@@ -246,34 +246,37 @@ export default function DfsSurvivorPlayerTable({
                   )}
                 >
                   <td className='px-2 py-1.5'>
-                    <span className='font-medium'>{player.name}</span>
-                    {showPosition && (
-                      <span className='ml-1.5 text-sm text-muted-foreground'>
-                        {player.position}
-                      </span>
-                    )}
-                    {(inLineup || usedElsewhere || player.isLocked) && (
+                    <div className='flex flex-wrap items-center gap-x-2'>
+                      <span className='font-medium'>{player.name}</span>
+                      {showPosition && (
+                        <span className='text-sm text-muted-foreground'>
+                          {player.position}
+                        </span>
+                      )}
+                      {usedElsewhere && (
+                        <span
+                          className='text-sm text-muted-foreground'
+                          title={
+                            player.usedPoints != null
+                              ? `Used in week ${
+                                  player.usedInWeek
+                                }: ${player.usedPoints.toFixed(1)} pts`
+                              : `Used in week ${player.usedInWeek}`
+                          }
+                        >
+                          <Badge
+                            size='sm'
+                            fill='medal-bronze'
+                            label={`Week ${player.usedInWeek}`}
+                          />
+                        </span>
+                      )}
+                    </div>
+                    {(inLineup || player.isLocked) && (
                       <div className='text-sm text-muted-foreground'>
                         {inLineup && (
                           <span className='font-semibold text-foreground'>
                             In your lineup
-                          </span>
-                        )}
-                        {usedElsewhere && (
-                          <span
-                            title={
-                              player.usedPoints != null
-                                ? `${player.usedPoints.toFixed(
-                                    1,
-                                  )} pts in week ${player.usedInWeek}`
-                                : undefined
-                            }
-                          >
-                            <Badge
-                              size='sm'
-                              fill='medal-bronze'
-                              label={`Used week ${player.usedInWeek}`}
-                            />
                           </span>
                         )}
                         {player.isLocked && (
