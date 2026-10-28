@@ -1,7 +1,7 @@
 /**
- * A member's week on the dashboard: one row per thing they are in this
- * season, in the nav's order, each saying how last week went and what this
- * week needs. Anything they still have to do comes first.
+ * A member's week on the dashboard: what they still have to enter, then one
+ * row per thing they are in this season, in the nav's order. League rows say
+ * how last week went and who is next; game rows say where they stand.
  *
  * Built from facts the server has already gathered, so the rules can be
  * tested without a database.
@@ -13,11 +13,17 @@ export type DashboardRow = {
   section: DashboardSection;
   label: string;
   lastWeek: string | null;
+  /** Leagues and side leagues: this week's matchup or status. */
   thisWeek: string | null;
-  /** Something the member still has to do this week. */
-  todo: boolean;
+  /** Games: their place in this season's table, "3rd of 24". */
+  standing: string | null;
+  /** Games: their season total, "1240 bank". */
+  season: string | null;
   href: string;
 };
+
+/** Something the member has not entered for this week, and where to. */
+export type TodoItem = { label: string; href: string };
 
 /** A weekly pick'em game's week, as the member stands in it. */
 export type PickWeek = {
@@ -28,6 +34,24 @@ export type PickWeek = {
   /** How many picks the member has in. */
   picks: number;
 };
+
+/** Where the member stands in one game this season. */
+export type GameStanding = {
+  rank: number;
+  /** How many are ranked. */
+  of: number;
+  /** The season total, formatted with its unit. */
+  total: string;
+  /** Their result in the game's newest scored week. */
+  lastWeek: string | null;
+};
+
+export type StandingGame =
+  | 'qbStreaming'
+  | 'spreadPool'
+  | 'locks'
+  | 'dfsSurvivor'
+  | 'fSquared';
 
 export type MemberWeekFacts = {
   year: number;
@@ -54,8 +78,9 @@ export type MemberWeekFacts = {
     week: number;
     entries: number;
     isLocked: boolean;
-    lastScored: { week: number; points: number } | null;
   } | null;
+  /** Only the games the member has a scored week in this season. */
+  standings: Partial<Record<StandingGame, GameStanding>>;
   survivor: { poolId: string; name: string; alive: boolean }[];
   fSquared: { isOpen: boolean; hasEntry: boolean };
   registration: { isOpen: boolean; isRegistered: boolean };
@@ -66,39 +91,81 @@ const ORDER: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
 const result = (points: number, opponentPoints: number) =>
   points > opponentPoints ? 'Won' : points < opponentPoints ? 'Lost' : 'Tied';
 
-/** A pick'em game's row, or none when it has no week this season. */
-function pickRow(
-  label: string,
-  href: string,
-  week: PickWeek | null,
-  noun: string,
-): DashboardRow | null {
-  if (!week) return null;
-  const open = week.isOpen && !week.isScored;
-  return {
-    section: 'Games',
-    label,
-    lastWeek: null,
-    thisWeek: week.isScored
-      ? `Week ${week.week} scored`
-      : open
-      ? week.picks > 0
-        ? `Week ${week.week}: ${week.picks} ${noun}${
-            week.picks === 1 ? '' : 's'
-          } in`
-        : `Week ${week.week}: no ${noun}s yet`
-      : `Week ${week.week} not open yet`,
-    todo: open && week.picks === 0,
-    href: open ? `${href}/entries/${week.id}` : href,
-  };
+const ordinal = (n: number) => {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+};
+
+const blank = { lastWeek: null, thisWeek: null, standing: null, season: null };
+
+/** The Games section's games, in the sitemap's order. */
+const GAMES: { key: StandingGame; label: string; href: string }[] = [
+  { key: 'qbStreaming', label: 'QB streaming', href: '/games/qb-streaming' },
+  { key: 'spreadPool', label: 'Spread pool', href: '/games/spread-pool' },
+  { key: 'locks', label: 'Locks challenge', href: '/games/locks-challenge' },
+  { key: 'dfsSurvivor', label: 'DFS survivor', href: '/games/dfs-survivor' },
+  { key: 'fSquared', label: 'F²', href: '/games/f-squared' },
+];
+
+/** A pick'em week the member could enter now and has not. */
+const pickTodo = (week: PickWeek | null) =>
+  !!week && week.isOpen && !week.isScored && week.picks === 0;
+
+/** Everything the member has not entered for this week. */
+function todos(facts: MemberWeekFacts): TodoItem[] {
+  const items: (TodoItem | null)[] = [
+    facts.registration.isOpen && !facts.registration.isRegistered
+      ? {
+          label: `${facts.year} registration`,
+          href: '/dashboard/registration',
+        }
+      : null,
+    ...(
+      [
+        ['QB streaming', '/games/qb-streaming', facts.qbStreaming],
+        ['Spread pool', '/games/spread-pool', facts.spreadPool],
+        ['Locks challenge', '/games/locks-challenge', facts.locks],
+      ] as const
+    ).map(([label, href, week]) =>
+      pickTodo(week) ? { label, href: `${href}/entries/${week!.id}` } : null,
+    ),
+    facts.dfsSurvivor &&
+    !facts.dfsSurvivor.isLocked &&
+    facts.dfsSurvivor.entries === 0
+      ? { label: 'DFS survivor', href: '/games/dfs-survivor/entries' }
+      : null,
+    facts.fSquared.isOpen && !facts.fSquared.hasEntry
+      ? { label: 'F²', href: '/games/f-squared/entries' }
+      : null,
+  ];
+  return items.filter((item): item is TodoItem => item !== null);
 }
 
-export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
-  const rows: (DashboardRow | null)[] = [];
+/** Whether the member has anything in for the game this week. */
+function enteredThisWeek(facts: MemberWeekFacts, game: StandingGame) {
+  switch (game) {
+    case 'qbStreaming':
+    case 'spreadPool':
+    case 'locks':
+      return (facts[game]?.picks ?? 0) > 0;
+    case 'dfsSurvivor':
+      return (facts.dfsSurvivor?.entries ?? 0) > 0;
+    case 'fSquared':
+      return facts.fSquared.hasEntry;
+  }
+}
+
+export function buildMemberWeek(facts: MemberWeekFacts): {
+  todo: TodoItem[];
+  rows: DashboardRow[];
+} {
+  const rows: DashboardRow[] = [];
 
   if (facts.league) {
     const { lastWeek, thisWeek, name } = facts.league;
     rows.push({
+      ...blank,
       section: 'Leagues',
       label: name,
       lastWeek: lastWeek
@@ -112,96 +179,72 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
       thisWeek: thisWeek
         ? `Week ${thisWeek.week} against ${thisWeek.opponent}`
         : null,
-      todo: false,
       href: `/leagues/${facts.year}/${name.toLowerCase()}/matchups`,
+    });
+  }
+
+  if (facts.registration.isOpen) {
+    rows.push({
+      ...blank,
+      section: 'Leagues',
+      label: `${facts.year} registration`,
+      thisWeek: facts.registration.isRegistered
+        ? 'Registered'
+        : 'Not registered yet',
+      href: '/dashboard/registration',
     });
   }
 
   for (const team of facts.guillotine) {
     rows.push({
+      ...blank,
       section: 'Side leagues',
       label: team.name,
-      lastWeek: null,
       thisWeek:
         team.finish === 1
           ? 'Champion'
           : team.choppedWeek
           ? `Chopped in week ${team.choppedWeek}`
           : 'Still alive',
-      todo: false,
       href: `/side-leagues/guillotine/${team.leagueId}`,
     });
   }
 
-  rows.push(
-    pickRow('QB streaming', '/games/qb-streaming', facts.qbStreaming, 'pick'),
-    pickRow('Spread pool', '/games/spread-pool', facts.spreadPool, 'bet'),
-    pickRow('Locks challenge', '/games/locks-challenge', facts.locks, 'pick'),
-  );
-
-  if (facts.dfsSurvivor) {
-    const dfs = facts.dfsSurvivor;
+  // A game the member has played this season, or has entered this week
+  // before any week is scored.
+  for (const game of GAMES) {
+    const standing = facts.standings[game.key];
+    if (!standing && !enteredThisWeek(facts, game.key)) continue;
     rows.push({
+      ...blank,
       section: 'Games',
-      label: 'DFS survivor',
-      lastWeek: dfs.lastScored
-        ? `${dfs.lastScored.points.toFixed(2)} points in week ${
-            dfs.lastScored.week
-          }`
-        : null,
-      thisWeek: dfs.isLocked
-        ? `Week ${dfs.week} locked`
-        : dfs.entries > 0
-        ? `Week ${dfs.week}: ${dfs.entries} of 11 players in`
-        : `Week ${dfs.week}: no lineup yet`,
-      todo: !dfs.isLocked && dfs.entries === 0,
-      href: '/games/dfs-survivor/entries',
+      label: game.label,
+      standing: standing ? `${ordinal(standing.rank)} of ${standing.of}` : null,
+      season: standing?.total ?? null,
+      lastWeek: standing?.lastWeek ?? null,
+      href: game.href,
     });
   }
 
   for (const entry of facts.survivor) {
     rows.push({
+      ...blank,
       section: 'Games',
       label: entry.name,
-      lastWeek: null,
-      thisWeek: entry.alive ? 'Still alive' : 'Out',
-      todo: false,
+      standing: entry.alive ? 'Still alive' : 'Out',
       href: `/games/survivor/${entry.poolId}`,
     });
   }
 
-  if (facts.fSquared.isOpen) {
-    rows.push({
-      section: 'Games',
-      label: 'F²',
-      lastWeek: null,
-      thisWeek: facts.fSquared.hasEntry ? 'Entry in' : 'No entry yet',
-      todo: !facts.fSquared.hasEntry,
-      href: '/games/f-squared/entries',
-    });
-  }
-
-  if (facts.registration.isOpen) {
-    rows.push({
-      section: 'Leagues',
-      label: `${facts.year} registration`,
-      lastWeek: null,
-      thisWeek: facts.registration.isRegistered
-        ? 'Registered'
-        : 'Not registered yet',
-      todo: !facts.registration.isRegistered,
-      href: '/dashboard/registration',
-    });
-  }
-
-  return rows
-    .filter((row): row is DashboardRow => row !== null)
-    .map((row, index) => ({ row, index }))
-    .sort(
-      (a, b) =>
-        Number(b.row.todo) - Number(a.row.todo) ||
-        ORDER.indexOf(a.row.section) - ORDER.indexOf(b.row.section) ||
-        a.index - b.index,
-    )
-    .map(({ row }) => row);
+  return {
+    todo: todos(facts),
+    rows: rows
+      .map((row, index) => ({ row, index }))
+      .sort(
+        (a, b) =>
+          ORDER.indexOf(a.row.section) - ORDER.indexOf(b.row.section) ||
+          a.index - b.index,
+      )
+      .map(({ row }) => row),
+  };
 }
