@@ -86,10 +86,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     week: week && {
       id: week.id,
       number: week.weekNumber,
+      // A member's own saved-picks line says the week is open; the status
+      // is for everyone else.
       status: week.isWeekScored
         ? 'Scored.'
         : week.isOpen
-        ? 'Lines are set: picks are open until each game kicks off.'
+        ? user
+          ? ''
+          : 'Lines are set: picks are open until each game kicks off.'
         : 'Lines are not set yet.',
       canEnter: !!user && week.isOpen && !week.isWeekScored,
     },

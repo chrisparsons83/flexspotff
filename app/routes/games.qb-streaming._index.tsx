@@ -79,7 +79,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: week.isScored
         ? 'Scored.'
         : week.isOpen
-        ? 'The options are set: picks are open.'
+        ? user
+          ? ''
+          : 'The options are set: picks are open.'
         : 'The options are not set yet.',
       canEnter: !!user && week.isOpen && !week.isScored,
     },
