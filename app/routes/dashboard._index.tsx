@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LocalDateTime from '~/components/ui/LocalDateTime';
+import RelativeTime from '~/components/ui/RelativeTime';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
@@ -38,25 +38,15 @@ export default function YourWeek() {
   return (
     <>
       {todo.length > 0 && (
-        <Section
-          title='Still to do'
-          description='Everything you have not picked or entered for this week.'
-        >
-          <Table headers={['Game', 'This week', 'Locks']} primaryColumns={[1]}>
+        <Section title='Still to do'>
+          <Table headers={['Game', 'Due']}>
             {todo.map(row => (
               <tr key={row.href}>
                 <td className='font-semibold'>
                   <Link to={row.href}>{row.label}</Link>
                 </td>
-                <td>{row.thisWeek}</td>
                 <td className='text-muted-foreground'>
-                  {row.deadline ? (
-                    <>
-                      From <LocalDateTime value={row.deadline} />
-                    </>
-                  ) : (
-                    '–'
-                  )}
+                  {row.deadline ? <RelativeTime value={row.deadline} /> : '–'}
                 </td>
               </tr>
             ))}
