@@ -40,15 +40,6 @@ export default function SeasonLeaders({
   return (
     <Section
       title={`${year} leaders`}
-      description={
-        withWeek
-          ? `The top ten this season, with week ${week} beside them.${
-              leaders.some(leader => leader.details)
-                ? ' Open a row for that week’s picks once their games kick off.'
-                : ''
-            }`
-          : 'The top ten this season.'
-      }
       action={<Link to={standingsPath}>Full standings</Link>}
     >
       <LeaderboardTable
