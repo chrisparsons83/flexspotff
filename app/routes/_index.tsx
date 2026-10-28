@@ -10,15 +10,16 @@ import { Link } from '~/components/ui/link';
 import { PageHeader } from '~/components/ui/page-header';
 import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
-import { Table } from '~/components/ui/table';
+import { SummaryCard } from '~/components/ui/summary-card';
 import { WinLoss } from '~/components/ui/win-loss';
 import { getGamesOverview } from '~/libs/games/overview.server';
+import { getSideLeaguesOverview } from '~/libs/side-leagues/overview.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
-/** How many of each league's table the home page shows. */
+/** How many of each table the home page shows. */
 const LEADERS = 3;
 
 /** The league calendar from the rules: sections 9 and 13. */
@@ -38,20 +39,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  const [leagues, week, games] = await Promise.all([
+  const signedIn = Boolean(user);
+  const [leagues, week, games, sideLeagues] = await Promise.all([
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
-    season
-      ? getGamesOverview(season, { signedIn: !!user, leaders: LEADERS })
-      : [],
+    season ? getGamesOverview(season, { signedIn, leaders: LEADERS }) : [],
+    season ? getSideLeaguesOverview({ signedIn, leaders: LEADERS }) : null,
   ]);
 
   return typedjson({
     year: season?.year ?? null,
     week,
-    signedIn: Boolean(user),
+    signedIn,
     // The Omni archive has no week to report.
     games: games.filter(game => game.to !== '/games/omni'),
+    // Named for the home page, where the section is not in the title.
+    sideLeagues: sideLeagues && [
+      ...(sideLeagues.guillotine?.leagues ?? []),
+      ...(sideLeagues.d12 ? [{ ...sideLeagues.d12, title: 'D12' }] : []),
+      ...(sideLeagues.bestBall
+        ? [{ ...sideLeagues.bestBall, title: 'Autodraft BBM' }]
+        : []),
+    ],
     leagues: leagues.map(league => ({
       id: league.id,
       name: league.name,
@@ -73,7 +82,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  const { year, week, signedIn, games, leagues } =
+  const { year, week, signedIn, games, leagues, sideLeagues } =
     useTypedLoaderData<typeof loader>();
 
   return (
@@ -174,20 +183,41 @@ export default function Index() {
       {year && (
         <Section
           title='Games this week'
+          description='Where each game’s week stands, and the top of its table.'
           action={<Link to='/games'>All games</Link>}
         >
-          <Table headers={['Game', 'This week']} primaryColumns={[1]}>
+          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {games.map(game => (
-              <tr key={game.to}>
-                <td className='font-semibold'>
-                  <Link to={game.to} variant='quiet'>
-                    {game.name}
-                  </Link>
-                </td>
-                <td className='text-muted-foreground'>{game.status}</td>
-              </tr>
+              <SummaryCard
+                key={game.to}
+                title={game.name}
+                to={game.to}
+                status={game.status}
+                rows={game.rows}
+                empty={game.empty}
+              />
             ))}
-          </Table>
+          </div>
+        </Section>
+      )}
+
+      {sideLeagues && sideLeagues.length > 0 && (
+        <Section
+          title='Side leagues'
+          action={<Link to='/side-leagues'>All side leagues</Link>}
+        >
+          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+            {sideLeagues.map(summary => (
+              <SummaryCard
+                key={summary.to}
+                title={summary.title}
+                to={summary.to}
+                status={summary.status || undefined}
+                rows={summary.rows}
+                empty={summary.empty}
+              />
+            ))}
+          </div>
         </Section>
       )}
     </>
