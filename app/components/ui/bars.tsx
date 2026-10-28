@@ -5,7 +5,9 @@
  * repeats it.
  */
 import { type Fill, FILLS, positionFill } from './fills';
-import type { ReactNode } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { FOCUS_RING } from './styles';
+import { type ReactNode, useState } from 'react';
 import { cn } from '~/utils';
 
 const TRACK = 'relative h-2 bg-secondary';
@@ -307,7 +309,52 @@ export type Tally = {
   count: number;
   /** A second fact written after the count, such as the points it scored. */
   detail?: string;
+  /** Who made up the count, listed from it on hover or tap. */
+  who?: string[];
 };
+
+/**
+ * A count that lists who it is made of: on hover with a mouse, or on a tap,
+ * since a hover alone never reaches a phone.
+ */
+function CountWithNames({ count, who }: { count: number; who: string[] }) {
+  const [open, setOpen] = useState(false);
+  const hover = (next: boolean) => (event: React.PointerEvent) => {
+    if (event.pointerType === 'mouse') setOpen(next);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        className={cn(
+          'justify-self-end font-semibold tabular-nums underline decoration-dotted underline-offset-4',
+          FOCUS_RING,
+        )}
+        onPointerEnter={hover(true)}
+        onPointerLeave={hover(false)}
+      >
+        {count}
+      </PopoverTrigger>
+      <PopoverContent
+        align='end'
+        className='w-56 px-3 py-2 text-sm'
+        onPointerEnter={hover(true)}
+        onPointerLeave={hover(false)}
+        onOpenAutoFocus={event => event.preventDefault()}
+      >
+        <ul className='grid gap-1'>
+          {[...who]
+            .sort((a, b) => a.localeCompare(b))
+            .map(name => (
+              <li key={name} className='truncate'>
+                {name}
+              </li>
+            ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 /**
  * How many times each thing was chosen, most first: a bar per row in
@@ -347,9 +394,13 @@ export function TallyBars({
               style={{ width: `${(tally.count / most) * 100}%` }}
             />
           </div>
-          <span className='text-right font-semibold tabular-nums'>
-            {tally.count}
-          </span>
+          {tally.who && tally.who.length > 0 ? (
+            <CountWithNames count={tally.count} who={tally.who} />
+          ) : (
+            <span className='text-right font-semibold tabular-nums'>
+              {tally.count}
+            </span>
+          )}
           {hasDetail && (
             <span className='text-right tabular-nums text-muted-foreground'>
               {tally.detail}

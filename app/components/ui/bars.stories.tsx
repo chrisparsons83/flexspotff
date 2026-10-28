@@ -115,9 +115,15 @@ export const Tallies: Story = {
     <div className='max-w-md'>
       <TallyBars
         tallies={[
-          { key: 'a', label: 'Bo Nix', count: 9, detail: '24.30 pts' },
-          { key: 'b', label: 'Caleb Williams', count: 6, detail: '17.12 pts' },
-          { key: 'c', label: 'Daniel Jones', count: 3, detail: '8.40 pts' },
+          {
+            key: 'a',
+            label: 'Bo Nix',
+            count: 3,
+            detail: '24.30 pts',
+            who: ['Panda', 'Snarky', 'Allen'],
+          },
+          { key: 'b', label: 'Caleb Williams', count: 2, detail: '17.12 pts' },
+          { key: 'c', label: 'Daniel Jones', count: 2, detail: '8.40 pts' },
           { key: 'd', label: 'Justin Fields', count: 1, detail: '21.86 pts' },
         ]}
       />

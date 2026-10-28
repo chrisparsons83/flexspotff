@@ -67,7 +67,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const tally = (side: 'standardPlayer' | 'deepPlayer') => {
     const byOption = new Map<
       string,
-      { key: string; label: string; count: number; points: number }
+      {
+        key: string;
+        label: string;
+        count: number;
+        points: number;
+        who: string[];
+      }
     >();
     let pending = 0;
     for (const selection of qbSelections) {
@@ -81,8 +87,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
         label: option.player.fullName,
         count: 0,
         points: option.pointsScored,
+        who: [],
       };
       row.count += 1;
+      row.who.push(selection.user.discordName);
       byOption.set(option.id, row);
     }
     return {
@@ -94,6 +102,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
           label: row.label,
           count: row.count,
           detail: `${row.points.toFixed(2)} pts`,
+          who: row.who,
         })),
       pending,
     };
@@ -140,8 +149,7 @@ export default function QBStreamingWeekStandings() {
       </StandingsSection>
       {qbSelections.length > 0 && (
         <Section
-          title='Who was picked'
-          description='Each quarterback by how many members picked them, with the points they scored.'
+          title='Pick distribution'
           footnote={
             pending > 0 &&
             `${pending} ${
