@@ -12,7 +12,7 @@ import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { WinLoss } from '~/components/ui/win-loss';
-import { getGamesThisWeek } from '~/libs/games/this-week.server';
+import { getGamesOverview } from '~/libs/games/overview.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -41,7 +41,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [leagues, week, games] = await Promise.all([
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
-    season ? getGamesThisWeek(season) : [],
+    season
+      ? getGamesOverview(season, { signedIn: !!user, leaders: LEADERS })
+      : [],
   ]);
 
   return typedjson({
