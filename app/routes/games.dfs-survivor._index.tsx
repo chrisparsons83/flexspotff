@@ -78,6 +78,7 @@ export default function DfsSurvivorOverview() {
         week={week}
         status={week ? `Scored through week ${week}.` : ''}
         entryHref={signedIn ? 'entries' : undefined}
+        entryLabel='Your lineups'
         standingsHref={week && year ? `standings/${year}/${week}` : undefined}
       />
       {year && (

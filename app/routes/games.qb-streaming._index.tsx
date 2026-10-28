@@ -35,7 +35,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  if (!season) return typedjson({ year: null, week: null, leaders: [] });
+  if (!season)
+    return typedjson({
+      year: null,
+      week: null,
+      leaders: [],
+      entry: null,
+      standingsWeek: null,
+    });
 
   const [weeks, totals] = await Promise.all([
     getQBStreamingWeeks(season.year),
@@ -48,8 +55,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     week ? getQBSelectionsByWeek(week.id) : [],
   ]);
 
+  // Your own picks, while the week is still open to you.
+  const mine = user
+    ? selections.find(selection => selection.userId === user.id)
+    : undefined;
+
   return typedjson({
     year: season.year,
+    entry:
+      user && week?.isOpen && !week.isScored
+        ? {
+            saved: !!mine,
+            summary:
+              mine &&
+              `${mine.standardPlayer.player.fullName} and ${mine.deepPlayer.player.fullName}.`,
+          }
+        : null,
+    // The newest week with results; this one until it is scored.
+    standingsWeek: weeks.find(qbWeek => qbWeek.isScored)?.week ?? null,
     week: week && {
       id: week.id,
       number: week.week,
@@ -81,7 +104,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function QBStreamingOverview() {
-  const { year, week, leaders } = useTypedLoaderData<typeof loader>();
+  const { year, week, leaders, entry, standingsWeek } =
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -89,9 +113,13 @@ export default function QBStreamingOverview() {
         week={week?.number ?? null}
         status={week?.status ?? ''}
         entryHref={week?.canEnter ? `entries/${week.id}` : undefined}
+        entry={entry ?? undefined}
         standingsHref={
-          week && year ? `standings/${year}/${week.number}` : undefined
+          standingsWeek && year
+            ? `standings/${year}/${standingsWeek}`
+            : undefined
         }
+        standingsWeek={standingsWeek ?? undefined}
       />
       {year && (
         <SeasonLeaders

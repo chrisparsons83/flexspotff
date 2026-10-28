@@ -26,7 +26,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  if (!season) return typedjson({ year: null, week: null, leaders: [] });
+  if (!season)
+    return typedjson({
+      year: null,
+      week: null,
+      leaders: [],
+      entry: null,
+      standingsWeek: null,
+    });
 
   const [weeks, totals] = await Promise.all([
     getPoolWeeksByYear(season.year),
@@ -56,8 +63,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     );
   }
 
+  // Your own bets, saved or not, while the week is still open to you.
+  const myBets = user
+    ? picks.filter(pick => pick.userId === user.id && pick.amountBet > 0)
+    : [];
+  const atStake = myBets.reduce((sum, pick) => sum + pick.amountBet, 0);
+
   return typedjson({
     year: season.year,
+    entry:
+      user && week?.isOpen && !week.isWeekScored
+        ? {
+            saved: myBets.length > 0,
+            summary: `${myBets.length} ${
+              myBets.length === 1 ? 'bet' : 'bets'
+            }, ${atStake} points on the line.`,
+          }
+        : null,
+    // The newest week with results; this one until it is scored.
+    standingsWeek:
+      weeks.find(poolWeek => poolWeek.isWeekScored)?.weekNumber ?? null,
     week: week && {
       id: week.id,
       number: week.weekNumber,
@@ -80,7 +105,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function SpreadPoolOverview() {
-  const { year, week, leaders } = useTypedLoaderData<typeof loader>();
+  const { year, week, leaders, entry, standingsWeek } =
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -88,9 +114,13 @@ export default function SpreadPoolOverview() {
         week={week?.number ?? null}
         status={week?.status ?? ''}
         entryHref={week?.canEnter ? `entries/${week.id}` : undefined}
+        entry={entry ?? undefined}
         standingsHref={
-          week && year ? `standings/${year}/${week.number}` : undefined
+          standingsWeek && year
+            ? `standings/${year}/${standingsWeek}`
+            : undefined
         }
+        standingsWeek={standingsWeek ?? undefined}
       />
       {year && (
         <SeasonLeaders
