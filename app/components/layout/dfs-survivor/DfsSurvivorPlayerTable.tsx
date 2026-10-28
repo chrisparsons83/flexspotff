@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
+import { Badge } from '~/components/ui/badge';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import { SLOT_POSITIONS } from '~/libs/dfs-survivor/slots';
 import type { PickerPlayer } from '~/routes/games.dfs-survivor.entries._index';
@@ -259,10 +260,20 @@ export default function DfsSurvivorPlayerTable({
                           </span>
                         )}
                         {usedElsewhere && (
-                          <span className='text-warning'>
-                            Used in week {player.usedInWeek}
-                            {player.usedPoints != null &&
-                              `, ${player.usedPoints.toFixed(1)} pts`}
+                          <span
+                            title={
+                              player.usedPoints != null
+                                ? `${player.usedPoints.toFixed(
+                                    1,
+                                  )} pts in week ${player.usedInWeek}`
+                                : undefined
+                            }
+                          >
+                            <Badge
+                              size='sm'
+                              fill='medal-bronze'
+                              label={`Used week ${player.usedInWeek}`}
+                            />
                           </span>
                         )}
                         {player.isLocked && (

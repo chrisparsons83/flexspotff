@@ -100,14 +100,13 @@ export default function DfsSurvivorLineup({
                   </span>
                 </span>
               ) : (
-                // A dashed rule reads as "slot waiting to be filled" without
-                // repeating the word "Empty" eleven times down the panel.
-                <span
-                  className={clsx(
-                    'h-px flex-1 border-t border-dashed',
-                    isActive ? 'border-primary' : 'border-border',
-                  )}
-                />
+                // An empty slot is left blank rather than saying "Empty"
+                // eleven times down the panel; the one being filled asks.
+                isActive && (
+                  <span className='text-sm text-muted-foreground'>
+                    Choose a player
+                  </span>
+                )
               )}
             </button>
 
