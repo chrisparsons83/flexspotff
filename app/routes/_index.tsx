@@ -44,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
     season ? getGamesOverview(season, { signedIn, leaders: LEADERS }) : [],
-    season ? getSideLeaguesOverview({ signedIn, leaders: LEADERS }) : null,
+    season ? getSideLeaguesOverview({ leaders: LEADERS }) : null,
   ]);
 
   return typedjson({
@@ -58,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       ...(sideLeagues.guillotine?.leagues ?? []),
       ...(sideLeagues.d12 ? [{ ...sideLeagues.d12, title: 'D12' }] : []),
       ...(sideLeagues.bestBall
-        ? [{ ...sideLeagues.bestBall, title: 'Autodraft BBM' }]
+        ? [{ ...sideLeagues.bestBall, title: 'Autodraft Best Ball Mania' }]
         : []),
     ],
     leagues: leagues.map(league => ({
@@ -184,7 +184,7 @@ export default function Index() {
         <Section
           title='Games this week'
           description='Where each game’s week stands, and the top of its table.'
-          action={<Link to='/games'>All games</Link>}
+          to='/games'
         >
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {games.map(game => (
@@ -204,10 +204,7 @@ export default function Index() {
       )}
 
       {sideLeagues && sideLeagues.length > 0 && (
-        <Section
-          title='Side leagues'
-          action={<Link to='/side-leagues'>All side leagues</Link>}
-        >
+        <Section title='Side leagues' to='/side-leagues'>
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
             {sideLeagues.map(summary => (
               <SummaryCard

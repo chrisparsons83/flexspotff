@@ -20,41 +20,24 @@ export type SideLeagueSummary = {
   empty: string;
 };
 
-/** Guillotine and Autodraft BBM are for members. */
-const MEMBERS_ONLY = 'Log in to see the standings.';
-
 const PLACES = ['Champion', 'Runner-up', 'Third'];
 
 /**
  * This season's side leagues at a glance: each guillotine league's survivors
  * and chop line, the D12 leaders and the Autodraft BBM leaders.
  */
-export async function getSideLeaguesOverview({
-  signedIn,
-  leaders,
-}: {
-  signedIn: boolean;
-  leaders: number;
-}) {
+export async function getSideLeaguesOverview({ leaders }: { leaders: number }) {
   const [guillotine, d12, bestBall] = await Promise.all([
     getLatestGuillotineLeagues(),
     getD12Summary(leaders),
-    getBestBallSummary(signedIn, leaders),
+    getBestBallSummary(leaders),
   ]);
 
   return {
     guillotine: guillotine && {
       year: guillotine.year,
       leagues: guillotine.leagues.map(league =>
-        signedIn
-          ? guillotineSummary(league, leaders)
-          : {
-              title: league.name,
-              to: `/side-leagues/guillotine/${league.id}`,
-              status: '',
-              rows: [],
-              empty: MEMBERS_ONLY,
-            },
+        guillotineSummary(league, leaders),
       ),
     },
     d12,
@@ -178,7 +161,6 @@ async function getD12Summary(count: number): Promise<SideLeagueSummary | null> {
 }
 
 async function getBestBallSummary(
-  signedIn: boolean,
   count: number,
 ): Promise<SideLeagueSummary | null> {
   const latest = await getLatestBestBallLeague();
@@ -187,7 +169,6 @@ async function getBestBallSummary(
     title: `${latest.season.year} standings`,
     to: `/side-leagues/best-ball/${latest.season.year}`,
   };
-  if (!signedIn) return { ...base, status: '', rows: [], empty: MEMBERS_ONLY };
 
   const league = await getBestBallLeagueForPage(latest.season.year);
   if (!league) return null;
