@@ -26,12 +26,14 @@ export function ScoreGrid<
   weeks,
   cell,
   weekHref,
+  nameHeading = 'Team',
 }: {
   rows: Row[];
   weeks: number;
   cell: (row: Row, week: number) => ScoreGridCell | null;
   /** Links each week's heading to its own page. */
   weekHref?: (week: number) => string;
+  nameHeading?: string;
 }) {
   const weekNumbers = Array.from({ length: weeks }, (_, i) => i + 1);
 
@@ -40,7 +42,9 @@ export function ScoreGrid<
       <table className='border-separate border-spacing-0.5 text-sm tabular-nums'>
         <thead>
           <tr className='text-muted-foreground'>
-            <th className={cn(PINNED, 'text-left font-semibold')}>Team</th>
+            <th className={cn(PINNED, 'text-left font-semibold')}>
+              {nameHeading}
+            </th>
             {weekNumbers.map(week => (
               <th key={week} className='min-w-[3.25rem] font-semibold'>
                 {weekHref ? (
