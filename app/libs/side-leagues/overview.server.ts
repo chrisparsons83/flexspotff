@@ -99,34 +99,58 @@ function guillotineSummary(
     })),
   );
   const line = cutLineForWeek(scores, week);
-  const chopped = league.teams.filter(team => team.choppedWeek === week);
   const alive = league.teams.filter(
     team => team.choppedWeek === null && team.finish !== 1,
   );
-  const closest = alive
-    .map(team => ({
-      team,
-      points: team.weekScores.find(score => score.week === week)?.points,
-    }))
-    .filter(
-      (row): row is typeof row & { points: number } => row.points !== undefined,
-    )
-    .sort((a, b) => a.points - b.points)
-    .slice(0, count);
+
+  // The week's table, best first: everyone who played it, the chopped last.
+  const table = league.teams
+    .filter(team => team.choppedWeek === null || team.choppedWeek >= week)
+    .flatMap(team => {
+      const points = team.weekScores.find(score => score.week === week)?.points;
+      return points === undefined
+        ? []
+        : [{ team, points, chopped: team.choppedWeek === week }];
+    })
+    .sort((a, b) =>
+      a.chopped !== b.chopped ? (a.chopped ? 1 : -1) : b.points - a.points,
+    );
+
+  // The top and bottom of it, split where they meet if there is a gap.
+  const each = Math.ceil(count / 2);
+  const shown =
+    table.length <= each * 2
+      ? table.map((row, index) => ({ ...row, rank: index + 1 }))
+      : [
+          ...table
+            .slice(0, each)
+            .map((row, index) => ({ ...row, rank: index + 1 })),
+          ...table.slice(-each).map((row, index) => ({
+            ...row,
+            rank: table.length - each + index + 1,
+          })),
+        ];
+  const firstChopped = shown.findIndex(row => row.chopped);
 
   return {
     ...base,
     status: `${alive.length} of ${
       league.teams.length
     } alive after week ${week}.${
-      chopped.length > 0 && line !== null
-        ? ` ${chopped.map(teamName).join(' and ')} went at ${pts(line)}.`
-        : ''
-    } Closest calls:`,
-    rows: closest.map(({ team, points }) => ({
-      key: String(team.rosterId),
-      ...member(team),
-      value: line === null ? pts(points) : `+${pts(points - line)}`,
+      line !== null ? ` The cut was ${pts(line)}.` : ''
+    }`,
+    rows: shown.map((row, index) => ({
+      key: String(row.team.rosterId),
+      rank: row.rank,
+      ...member(row.team),
+      value: pts(row.points),
+      divider:
+        index === firstChopped
+          ? ('cut' as const)
+          : index > 0 && row.rank !== shown[index - 1]!.rank + 1
+          ? ('gap' as const)
+          : undefined,
+      tone: row.chopped ? ('negative' as const) : undefined,
     })),
     empty: 'No scores for the week yet.',
   };

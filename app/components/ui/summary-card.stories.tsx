@@ -45,6 +45,38 @@ export const Leaders: Story = {
   },
 };
 
+/** The top and bottom of a guillotine week, with the cut marked. */
+export const WithACut: Story = {
+  name: 'With a cut',
+  args: {
+    title: 'Guillotine for the People',
+    to: '/side-leagues/guillotine/abc',
+    status: '14 of 18 alive after week 4. The cut was 47.94.',
+    rows: [
+      { key: '1', rank: 1, label: 'Fool', value: '138.20' },
+      { key: '2', rank: 2, label: 'TheDu', value: '131.06' },
+      { key: '3', rank: 3, label: 'Noro', value: '127.40' },
+      {
+        key: '13',
+        rank: 13,
+        label: 'eddieg0048',
+        value: '76.86',
+        divider: 'gap',
+      },
+      { key: '14', rank: 14, label: 'Ender', value: '64.18' },
+      {
+        key: '15',
+        rank: 15,
+        label: 'Fire Jerry into the Sun',
+        value: '47.94',
+        divider: 'cut',
+        tone: 'negative',
+      },
+    ],
+    empty: 'No scores for the week yet.',
+  },
+};
+
 /** Rows that are not a ranking, such as survivor pools. */
 export const Unranked: Story = {
   args: {

@@ -5,6 +5,7 @@ import { ExternalLink, Link } from './link';
 import { ProfileLink } from './profile-link';
 import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { ReactNode } from 'react';
+import { cn } from '~/utils';
 
 export type SummaryRow = {
   key: string;
@@ -19,6 +20,13 @@ export type SummaryRow = {
   /** Shown in place of a member: a team, pool or owner name. */
   label?: string;
   value: string;
+  /**
+   * A line above the row: `gap` where rows in between are left out, `cut`
+   * where a guillotine's chop line falls.
+   */
+  divider?: 'gap' | 'cut';
+  /** Colours the row, such as a team that was chopped. */
+  tone?: 'negative';
 };
 
 /**
@@ -91,11 +99,13 @@ export function SummaryCard({
           {rows.map(row => (
             <li
               key={row.key}
-              className={
-                ranked
-                  ? 'grid grid-cols-[1.5rem_1fr_auto] gap-2 py-1 text-sm'
-                  : 'grid grid-cols-[1fr_auto] gap-2 py-1 text-sm'
-              }
+              className={cn(
+                'grid gap-2 py-1 text-sm',
+                ranked ? 'grid-cols-[1.5rem_1fr_auto]' : 'grid-cols-[1fr_auto]',
+                row.divider === 'gap' && 'mt-1 border-t border-dashed pt-2',
+                row.divider === 'cut' && 'mt-1 border-t-2 border-negative pt-2',
+                row.tone === 'negative' && 'text-negative',
+              )}
             >
               {ranked && (
                 <span className='text-muted-foreground'>{row.rank}</span>
