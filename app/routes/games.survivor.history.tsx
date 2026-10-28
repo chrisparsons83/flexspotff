@@ -28,10 +28,7 @@ export default function SurvivorHistory() {
   return (
     <>
       {allTime.length > 0 && (
-        <Section
-          title='All time'
-          description='Members ranked by pools won, then by their longest run of winning picks.'
-        >
+        <Section title='All time'>
           <Table
             headers={[
               'Member',

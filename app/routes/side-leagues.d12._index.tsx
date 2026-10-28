@@ -44,7 +44,7 @@ export default function D12History() {
     );
 
   return (
-    <Section title='History' description='The top three of every season.'>
+    <Section title='History'>
       <Table
         headers={['Season', 'Rank', 'Manager', 'Points']}
         numericColumns={[1, 3]}

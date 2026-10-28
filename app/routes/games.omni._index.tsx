@@ -38,7 +38,7 @@ export default function OmniArchive() {
     <>
       <PageHeader
         title='Omni'
-        description='Omni now runs on Brackt. These are the seasons played here, with the top three of each.'
+        description='Omni now runs on Brackt. These are the seasons played here.'
         actions={
           <ExternalLink href={BRACKT_URL} target='_blank'>
             This season on Brackt
