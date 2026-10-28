@@ -11,6 +11,7 @@ import { buildLiveChopLine } from '~/libs/guillotine/live.server';
 import { buildChopGrid, buildStandings } from '~/libs/guillotine/views';
 import type { GridCell, StandingRow } from '~/libs/guillotine/views';
 import { getGuillotineLeagueForPage } from '~/models/guillotine.server';
+import { cn } from '~/utils';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await requireGuillotineAccess(request);
@@ -114,10 +115,7 @@ function Standings({
   const showFaab = rows.some(row => row.faabLeft !== null);
 
   return (
-    <Section
-      title='Standings'
-      description='Survivors first, then everyone else in the order they went.'
-    >
+    <Section title='Standings'>
       <Table
         headers={[
           'Place',
@@ -171,6 +169,27 @@ function Standings({
   );
 }
 
+/** What the chop tracker's cell colours mean, each beside its swatch. */
+const LEGEND = [
+  { label: 'Chopped', className: 'bg-destructive' },
+  { label: 'Under 5 above the cut', className: 'bg-warning/30' },
+  { label: '5 to 15 above', className: 'bg-secondary' },
+  { label: 'Top three that week', className: 'bg-positive/30' },
+];
+
+function ChopLegend() {
+  return (
+    <span className='flex flex-wrap gap-x-5 gap-y-1 text-sm'>
+      {LEGEND.map(item => (
+        <span key={item.label} className='inline-flex items-center gap-2'>
+          <span aria-hidden className={cn('size-3', item.className)} />
+          {item.label}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /** How safe a score was: the further above the chop line, the greener. */
 const cellTone = (cell: GridCell) => {
   if (cell.chopped)
@@ -196,10 +215,7 @@ function ChopGrid({
   leagueId: string;
 }) {
   return (
-    <Section
-      title='Chop tracker'
-      description='Every score, week by week. Red is the chop, amber survived by under 5 points, green was a top-three week.'
-    >
+    <Section title='Chop tracker' description={<ChopLegend />}>
       <ScoreGrid
         rows={rows.map(row => ({ ...row, key: row.rosterId }))}
         weeks={weeks}

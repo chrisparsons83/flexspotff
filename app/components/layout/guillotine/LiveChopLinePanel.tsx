@@ -48,7 +48,6 @@ export default function LiveChopLinePanel({
   return (
     <Section
       title={`Week ${week} chop line`}
-      description='Surviving teams ranked by projected total: what each starter has scored, plus the share of their projection still to be played. Tap a team for its lineup.'
       action={
         showWeekLink && (
           <Link to={`/side-leagues/guillotine/${leagueId}/week/${week}`}>
