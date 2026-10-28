@@ -29,10 +29,7 @@ export default function GameHistory({
 
   return (
     <>
-      <Section
-        title='Seasons'
-        description='The top three of every season, newest first.'
-      >
+      <Section title='Seasons'>
         <Table
           headers={['Season', 'Rank', 'Member', valueHeading]}
           numericColumns={[1, 3]}
@@ -66,10 +63,7 @@ export default function GameHistory({
       </Section>
 
       {history.titles.length > 0 && (
-        <Section
-          title='Titles'
-          description='Seasons won, counting only seasons that are over. A tie for first is a title for each.'
-        >
+        <Section title='Titles'>
           <Table headers={['Member', 'Titles']} numericColumns={[1]}>
             {history.titles.map(row => (
               <tr key={row.user.id}>

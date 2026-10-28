@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
+import { Badge } from '~/components/ui/badge';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import { SLOT_POSITIONS } from '~/libs/dfs-survivor/slots';
 import type { PickerPlayer } from '~/routes/games.dfs-survivor.entries._index';
@@ -245,24 +246,37 @@ export default function DfsSurvivorPlayerTable({
                   )}
                 >
                   <td className='px-2 py-1.5'>
-                    <span className='font-medium'>{player.name}</span>
-                    {showPosition && (
-                      <span className='ml-1.5 text-sm text-muted-foreground'>
-                        {player.position}
-                      </span>
-                    )}
-                    {(inLineup || usedElsewhere || player.isLocked) && (
+                    <div className='flex flex-wrap items-center gap-x-2'>
+                      <span className='font-medium'>{player.name}</span>
+                      {showPosition && (
+                        <span className='text-sm text-muted-foreground'>
+                          {player.position}
+                        </span>
+                      )}
+                      {usedElsewhere && (
+                        <span
+                          className='text-sm text-muted-foreground'
+                          title={
+                            player.usedPoints != null
+                              ? `Used in week ${
+                                  player.usedInWeek
+                                }: ${player.usedPoints.toFixed(1)} pts`
+                              : `Used in week ${player.usedInWeek}`
+                          }
+                        >
+                          <Badge
+                            size='sm'
+                            fill='medal-bronze'
+                            label={`Week ${player.usedInWeek}`}
+                          />
+                        </span>
+                      )}
+                    </div>
+                    {(inLineup || player.isLocked) && (
                       <div className='text-sm text-muted-foreground'>
                         {inLineup && (
                           <span className='font-semibold text-foreground'>
                             In your lineup
-                          </span>
-                        )}
-                        {usedElsewhere && (
-                          <span className='text-warning'>
-                            Used in week {player.usedInWeek}
-                            {player.usedPoints != null &&
-                              `, ${player.usedPoints.toFixed(1)} pts`}
                           </span>
                         )}
                         {player.isLocked && (

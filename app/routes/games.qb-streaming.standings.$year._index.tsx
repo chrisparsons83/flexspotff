@@ -216,7 +216,7 @@ export default function QBStreamingStandings() {
     weeks,
   } = useTypedLoaderData<typeof loader>();
 
-  const section = (children: ReactNode, description: string) => (
+  const section = (children: ReactNode, description?: string) => (
     <StandingsSection
       base='/games/qb-streaming/standings'
       year={Number(year)}
@@ -284,7 +284,7 @@ export default function QBStreamingStandings() {
           );
         })}
       </Table>,
-      'Each member’s best 12 weeks. Weeks struck through do not count.',
+      'Weeks struck through do not count.',
     );
   }
 
@@ -303,6 +303,5 @@ export default function QBStreamingStandings() {
       valueHeadings={['Points']}
       emptyMessage='No scores yet this season.'
     />,
-    'Every week counts.',
   );
 }

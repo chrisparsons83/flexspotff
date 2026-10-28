@@ -38,7 +38,6 @@ export default function FSquaredStandings() {
       year={year}
       years={years}
       weeks={[]}
-      description='The combined points for of the teams each member picked.'
     >
       <FSquaredStandingsTable results={results} />
     </StandingsSection>

@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LocalDateTime from '~/components/ui/LocalDateTime';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
@@ -15,19 +14,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
   const season = await getCurrentSeason();
-  return typedjson({
-    rows: season ? await getMemberWeek(user.id, season) : [],
-  });
+  return typedjson(
+    season ? await getMemberWeek(user.id, season) : { todo: [], rows: [] },
+  );
 };
 
 const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
 
 export default function YourWeek() {
-  const { rows } = useTypedLoaderData<typeof loader>();
-  const todo = rows.filter(row => row.todo);
-  const rest = rows.filter(row => !row.todo);
+  const { todo, rows } = useTypedLoaderData<typeof loader>();
 
-  if (rows.length === 0) {
+  if (todo.length === 0 && rows.length === 0) {
     return (
       <EmptyState title='Nothing on this week'>
         You are not in any leagues or games this season yet.
@@ -38,55 +35,63 @@ export default function YourWeek() {
   return (
     <>
       {todo.length > 0 && (
-        <Section
-          title='Still to do'
-          description='Everything you have not picked or entered for this week.'
-        >
-          <Table headers={['Game', 'This week', 'Locks']} primaryColumns={[1]}>
-            {todo.map(row => (
-              <tr key={row.href}>
-                <td className='font-semibold'>
-                  <Link to={row.href}>{row.label}</Link>
-                </td>
-                <td>{row.thisWeek}</td>
-                <td className='text-muted-foreground'>
-                  {row.deadline ? (
-                    <>
-                      From <LocalDateTime value={row.deadline} />
-                    </>
-                  ) : (
-                    '–'
-                  )}
-                </td>
-              </tr>
+        <Section title='Still to do'>
+          <ul className='grid gap-2'>
+            {todo.map(item => (
+              <li key={item.href} className='font-semibold'>
+                <Link to={item.href}>{item.label}</Link>
+              </li>
             ))}
-          </Table>
+          </ul>
         </Section>
       )}
 
       {SECTIONS.map(section => {
-        const inSection = rest.filter(row => row.section === section);
+        const inSection = rows.filter(row => row.section === section);
         if (inSection.length === 0) return null;
         return (
           <Section key={section} title={section}>
-            <Table
-              headers={['Game', 'Last week', 'This week']}
-              primaryColumns={[2]}
-            >
-              {inSection.map(row => (
-                <tr key={row.href}>
-                  <td className='font-semibold'>
-                    <Link to={row.href} variant='quiet'>
-                      {row.label}
-                    </Link>
-                  </td>
-                  <td className='text-muted-foreground'>
-                    {row.lastWeek ?? '–'}
-                  </td>
-                  <td>{row.thisWeek ?? '–'}</td>
-                </tr>
-              ))}
-            </Table>
+            {section === 'Games' ? (
+              <Table
+                headers={['Game', 'Standing', 'Season', 'Last week']}
+                numericColumns={[2]}
+                primaryColumns={[1]}
+              >
+                {inSection.map(row => (
+                  <tr key={row.href}>
+                    <td className='font-semibold'>
+                      <Link to={row.href} variant='quiet'>
+                        {row.label}
+                      </Link>
+                    </td>
+                    <td>{row.standing ?? '–'}</td>
+                    <td className='text-right'>{row.season ?? '–'}</td>
+                    <td className='text-muted-foreground'>
+                      {row.lastWeek ?? '–'}
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            ) : (
+              <Table
+                headers={['Game', 'Last week', 'This week']}
+                primaryColumns={[2]}
+              >
+                {inSection.map(row => (
+                  <tr key={row.href}>
+                    <td className='font-semibold'>
+                      <Link to={row.href} variant='quiet'>
+                        {row.label}
+                      </Link>
+                    </td>
+                    <td className='text-muted-foreground'>
+                      {row.lastWeek ?? '–'}
+                    </td>
+                    <td>{row.thisWeek ?? '–'}</td>
+                  </tr>
+                ))}
+              </Table>
+            )}
           </Section>
         );
       })}

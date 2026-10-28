@@ -31,6 +31,17 @@ export const WithActionAndFootnote: Story = {
   },
 };
 
+/** A section that summarises another page links its title there. */
+export const LinkedTitle: Story = {
+  name: 'Linked title',
+  args: {
+    title: 'D12',
+    to: '/side-leagues/d12',
+    description: 'The top five this season.',
+    children: <p>The summary goes here.</p>,
+  },
+};
+
 /** Two sections in a row, set apart by space alone. */
 export const Stacked: Story = {
   render: () => (

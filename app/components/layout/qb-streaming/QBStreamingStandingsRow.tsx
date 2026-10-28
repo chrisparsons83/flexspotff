@@ -2,24 +2,54 @@ import type { LeaderboardEntry } from '~/components/layout/leaderboard/Leaderboa
 import MemberName from '~/components/ui/MemberName';
 import { ProfileLink } from '~/components/ui/profile-link';
 
-type Pick = {
-  standardPlayer: {
-    nflGame: { gameStartTime: Date };
-    player: { fullName: string };
-  };
-  deepPlayer: {
-    nflGame: { gameStartTime: Date };
-    player: { fullName: string };
-  };
+type QBPickSide = {
+  nflGame: { gameStartTime: Date };
+  player: { fullName: string };
+  pointsScored: number;
 };
 
+export type QBPick = { standardPlayer: QBPickSide; deepPlayer: QBPickSide };
+
 /** A pick shows once its game has kicked off. */
-const shown = (pick: Pick | undefined, side: 'standardPlayer' | 'deepPlayer') =>
-  !pick
-    ? 'No pick'
-    : pick[side].nflGame.gameStartTime < new Date()
-    ? pick[side].player.fullName
-    : 'Pending';
+const started = (side: QBPickSide) => side.nflGame.gameStartTime < new Date();
+
+/**
+ * The week's two picks, each with what it scored once its game has kicked
+ * off. Side by side where there is room, one above the other on a phone.
+ */
+export function QBPicks({ pick }: { pick?: QBPick }) {
+  return (
+    <dl className='flex flex-wrap gap-x-12 gap-y-1'>
+      {(
+        [
+          ['Standard', 'standardPlayer'],
+          ['Deep', 'deepPlayer'],
+        ] as const
+      ).map(([label, key]) => {
+        const side = pick?.[key];
+        return (
+          <div key={key} className='flex gap-3'>
+            <dt className='w-16 text-muted-foreground'>{label}</dt>
+            <dd>
+              {!side ? (
+                'No pick'
+              ) : started(side) ? (
+                <>
+                  {side.player.fullName}{' '}
+                  <span className='ml-2 font-semibold tabular-nums'>
+                    {side.pointsScored.toFixed(2)}
+                  </span>
+                </>
+              ) : (
+                'Pending'
+              )}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
+}
 
 /**
  * A QB streaming standings row: rank, member and points, opening to the week's
@@ -38,7 +68,7 @@ export function qbStreamingStandingsEntry({
     discordUsername?: string | null;
   };
   pointsScored: number;
-  pick?: Pick;
+  pick?: QBPick;
 }): LeaderboardEntry {
   return {
     id: user.userId,
@@ -49,13 +79,6 @@ export function qbStreamingStandingsEntry({
       </ProfileLink>
     ),
     values: [pointsScored.toFixed(2)],
-    details: (
-      <dl className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1'>
-        <dt className='text-muted-foreground'>Standard</dt>
-        <dd>{shown(pick, 'standardPlayer')}</dd>
-        <dt className='text-muted-foreground'>Deep</dt>
-        <dd>{shown(pick, 'deepPlayer')}</dd>
-      </dl>
-    ),
+    details: <QBPicks pick={pick} />,
   };
 }

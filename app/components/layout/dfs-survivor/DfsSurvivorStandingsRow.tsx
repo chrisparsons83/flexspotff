@@ -67,17 +67,11 @@ const formatPoints = (points: number) => {
   return points.toFixed(2);
 };
 
-/**
- * A DFS survivor standings row: rank, member and points, opening to the
- * lineup behind them, by position and then points.
- */
-export function dfsSurvivorStandingsEntry({
-  rank,
-  user,
-  points,
+/** A lineup by position, then points, with what each player scored. */
+export function DfsLineup({
   entries,
   showFlexAsActualPosition = true,
-}: Props & { user: User }): LeaderboardEntry {
+}: Pick<Props, 'entries' | 'showFlexAsActualPosition'>) {
   const sortedEntries = [...entries].sort((a, b) => {
     let positionTypeA = getPositionType(a.position, showFlexAsActualPosition);
     let positionTypeB = getPositionType(b.position, showFlexAsActualPosition);
@@ -103,6 +97,40 @@ export function dfsSurvivorStandingsEntry({
     return b.points - a.points;
   });
 
+  if (sortedEntries.length === 0) {
+    return <p className='text-muted-foreground'>No entries.</p>;
+  }
+
+  return (
+    <Table headers={['Slot', 'Player', 'Points']} numericColumns={[2]}>
+      {sortedEntries.map(entry => (
+        <tr key={entry.id}>
+          <td>
+            {formatPosition(
+              entry.position,
+              entry.player.position,
+              showFlexAsActualPosition,
+            )}
+          </td>
+          <td>{entry.player.fullName}</td>
+          <td className='text-right'>{formatPoints(entry.points)}</td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+/**
+ * A DFS survivor standings row: rank, member and points, opening to the
+ * lineup behind them, by position and then points.
+ */
+export function dfsSurvivorStandingsEntry({
+  rank,
+  user,
+  points,
+  entries,
+  showFlexAsActualPosition = true,
+}: Props & { user: User }): LeaderboardEntry {
   return {
     id: user.id,
     rank: rank ?? 0,
@@ -112,25 +140,11 @@ export function dfsSurvivorStandingsEntry({
       </ProfileLink>
     ),
     values: [formatPoints(points)],
-    details:
-      sortedEntries.length === 0 ? (
-        <p className='text-muted-foreground'>No entries.</p>
-      ) : (
-        <Table headers={['Slot', 'Player', 'Points']} numericColumns={[2]}>
-          {sortedEntries.map(entry => (
-            <tr key={entry.id}>
-              <td>
-                {formatPosition(
-                  entry.position,
-                  entry.player.position,
-                  showFlexAsActualPosition,
-                )}
-              </td>
-              <td>{entry.player.fullName}</td>
-              <td className='text-right'>{formatPoints(entry.points)}</td>
-            </tr>
-          ))}
-        </Table>
-      ),
+    details: (
+      <DfsLineup
+        entries={entries}
+        showFlexAsActualPosition={showFlexAsActualPosition}
+      />
+    ),
   };
 }

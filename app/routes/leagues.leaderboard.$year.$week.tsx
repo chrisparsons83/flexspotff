@@ -16,7 +16,7 @@ import { assignCompetitionRanks } from '~/utils/rank';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `Week ${params.week}, ${params.year}`,
+  title: ({ params }) => `${params.year} week ${params.week}`,
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -73,11 +73,13 @@ export default function LeaderboardYearWeek() {
 
   return (
     <Section
-      title={`${year}, week ${week} leaderboard`}
+      title={`Week ${week} leaderboard`}
       description='Every team’s score for the week, across every league.'
       action={
         <div className='flex flex-wrap items-center gap-4'>
-          <Link to={`/leagues/leaderboard/${year}`}>Season</Link>
+          <Link to={`/leagues/leaderboard/${year}`}>
+            {year} season leaderboard
+          </Link>
           <GoBox options={weekOptions} buttonText='Week' />
         </div>
       }

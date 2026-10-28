@@ -11,15 +11,24 @@ export default function ThisWeek({
   week,
   status,
   entryHref,
+  entryLabel,
+  entry,
   standingsHref,
+  standingsWeek = week ?? undefined,
   children,
 }: {
   week: number | null;
   /** In a few words: "Open for picks", "Scored". */
   status: string;
   entryHref?: string;
-  /** The week's standings, once there are any. */
+  /** The entry button's words, where "your week's picks" does not fit. */
+  entryLabel?: string;
+  /** Whether the reader has saved picks for the week, and what they are. */
+  entry?: { saved: boolean; summary?: string };
+  /** The latest standings with results, which may be an earlier week. */
   standingsHref?: string;
+  /** The week those standings are for. Defaults to this week. */
+  standingsWeek?: number;
   children?: ReactNode;
 }) {
   if (week === null) {
@@ -35,14 +44,37 @@ export default function ThisWeek({
       title={`Week ${week}`}
       description={status}
       action={
-        standingsHref && <Link to={standingsHref}>Week {week} standings</Link>
+        standingsHref && (
+          <Link to={standingsHref}>Week {standingsWeek} standings</Link>
+        )
       }
     >
       {children}
+      {entry && (
+        <p className='mb-4'>
+          {entry.saved ? (
+            <>
+              <span className='font-semibold text-positive'>
+                Your picks are saved.
+              </span>
+              {entry.summary && (
+                <span className='text-muted-foreground'> {entry.summary}</span>
+              )}
+            </>
+          ) : (
+            <span className='text-muted-foreground'>
+              You have not saved any picks for week {week} yet.
+            </span>
+          )}
+        </p>
+      )}
       {entryHref && (
         <Button asChild>
           <Link to={entryHref} variant='quiet'>
-            Your week {week} entry
+            {entryLabel ??
+              (entry?.saved
+                ? `Change your week ${week} picks`
+                : `Make your week ${week} picks`)}
           </Link>
         </Button>
       )}

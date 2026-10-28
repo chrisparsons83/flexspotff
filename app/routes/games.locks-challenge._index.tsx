@@ -2,18 +2,37 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import ThisWeek from '~/components/layout/games/ThisWeek';
+import { LockedPicksList } from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import { getSeasonLeaders } from '~/libs/games/history.server';
+import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
+import {
+  getLocksGamePicksWonLossWeek,
+  getLocksGamesPicksByLocksWeek,
+} from '~/models/locksgamepicks.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
+import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import { locksSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import { getCurrentTime } from '~/utils/time';
+
+/** How many of this season's leaders the overview lists. */
+const LEADERS = 10;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  if (!season) return typedjson({ year: null, week: null, leaders: [] });
+  if (!season)
+    return typedjson({
+      year: null,
+      week: null,
+      leaders: [],
+      entry: null,
+      standingsWeek: null,
+    });
 
   const [weeks, totals] = await Promise.all([
     getLocksWeeksByYear(season.year),
@@ -22,8 +41,47 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Newest first; the open week if there is one.
   const week = weeks.find(locksWeek => locksWeek.isOpen) ?? weeks[0] ?? null;
 
+  const [leaders, picks, wonLoss, games] = await Promise.all([
+    getSeasonLeaders(totals, season.year, LEADERS),
+    week ? getLocksGamesPicksByLocksWeek(week) : [],
+    week ? getLocksGamePicksWonLossWeek(week) : [],
+    week ? getLocksGamesByYearAndWeek(season.year, week.weekNumber) : [],
+  ]);
+  // A pick is public once its game kicks off, or once the whole week locks;
+  // the week standings page has the same rule.
+  const now = getCurrentTime();
+  const weekLocked = isLocksWeekLocked(
+    getLocksWeekCutoff(games.map(({ game }) => game)),
+    now,
+  );
+  const lockedPicks = picks.filter(
+    pick =>
+      (pick.locksGame.game.gameStartTime < now || weekLocked) &&
+      pick.isActive !== 0,
+  );
+  const weekPoints = new Map(
+    wonLoss.map(row => [row.userId, locksWeekPoints(row._sum)]),
+  );
+
+  // Your own picks, while the week is still open to you.
+  const myPicks = user
+    ? picks.filter(pick => pick.userId === user.id && pick.isActive !== 0)
+    : [];
+
   return typedjson({
     year: season.year,
+    entry:
+      user && week?.isOpen && !week.isWeekScored
+        ? {
+            saved: myPicks.length > 0,
+            summary: `${myPicks.length} ${
+              myPicks.length === 1 ? 'pick' : 'picks'
+            }.`,
+          }
+        : null,
+    // The newest week with results; this one until it is scored.
+    standingsWeek:
+      weeks.find(locksWeek => locksWeek.isWeekScored)?.weekNumber ?? null,
     week: week && {
       id: week.id,
       number: week.weekNumber,
@@ -34,12 +92,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         : 'Not open yet.',
       canEnter: !!user && week.isOpen && !week.isWeekScored,
     },
-    leaders: await getSeasonLeaders(totals, season.year),
+    leaders: leaders.map(leader => ({
+      ...leader,
+      week: weekPoints.has(leader.user.id)
+        ? `${weekPoints.get(leader.user.id)}`
+        : undefined,
+      picks: lockedPicks.filter(pick => pick.userId === leader.user.id),
+    })),
   });
 };
 
 export default function LocksChallengeOverview() {
-  const { year, week, leaders } = useTypedLoaderData<typeof loader>();
+  const { year, week, leaders, entry, standingsWeek } =
+    useTypedLoaderData<typeof loader>();
 
   return (
     <>
@@ -47,14 +112,22 @@ export default function LocksChallengeOverview() {
         week={week?.number ?? null}
         status={week?.status ?? ''}
         entryHref={week?.canEnter ? `entries/${week.id}` : undefined}
+        entry={entry ?? undefined}
         standingsHref={
-          week && year ? `standings/${year}/${week.number}` : undefined
+          standingsWeek && year
+            ? `standings/${year}/${standingsWeek}`
+            : undefined
         }
+        standingsWeek={standingsWeek ?? undefined}
       />
       {year && (
         <SeasonLeaders
           year={year}
-          leaders={leaders}
+          week={week?.number}
+          leaders={leaders.map(leader => ({
+            ...leader,
+            details: <LockedPicksList picks={leader.picks} />,
+          }))}
           standingsPath='standings'
           valueHeading='Points'
           formatValue={points => `${points}`}

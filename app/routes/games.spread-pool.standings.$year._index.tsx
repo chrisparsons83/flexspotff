@@ -130,7 +130,6 @@ export default function SpreadPoolStandings() {
       year={year}
       years={years}
       weeks={weeks}
-      description='Everyone’s bank: 1000 to start, plus what they have won and lost, less 20 for each week missed.'
     >
       <LeaderboardTable
         entries={entries}

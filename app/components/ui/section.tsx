@@ -1,8 +1,12 @@
+import { Link } from './link';
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { ReactNode } from 'react';
 import { cn } from '~/utils';
 
 type Props = {
   title: ReactNode;
+  /** Links the title to the page the section summarises. */
+  to?: string;
   /** What the section counts or shows, in a sentence. Written once, here. */
   description?: ReactNode;
   /** Controls belonging to the section, such as a year filter. */
@@ -23,6 +27,7 @@ type Props = {
  */
 export function Section({
   title,
+  to,
   description,
   action,
   footnote,
@@ -42,7 +47,17 @@ export function Section({
               Heading === 'h2' ? 'text-2xl' : 'text-xl',
             )}
           >
-            {title}
+            {to ? (
+              <Link to={to} variant='quiet' className='inline-flex'>
+                {title}
+                <ChevronRightIcon
+                  aria-hidden
+                  className='ml-1 size-6 self-center text-primary'
+                />
+              </Link>
+            ) : (
+              title
+            )}
           </Heading>
           {description && (
             <p className='mt-1 max-w-prose text-muted-foreground'>

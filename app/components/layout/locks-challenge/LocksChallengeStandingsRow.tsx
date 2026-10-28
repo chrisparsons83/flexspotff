@@ -7,9 +7,12 @@ import type {
 } from '~/models/locksgamepicks.server';
 import type { User } from '~/models/user.server';
 
-type LockedPicks = Awaited<ReturnType<typeof getLocksGamesPicksByLocksWeek>>;
+export type LockedPicks = Awaited<
+  ReturnType<typeof getLocksGamesPicksByLocksWeek>
+>;
 
-function LockedPicksList({ picks }: { picks: LockedPicks }) {
+/** The picks a member has locked in this week, with how each went. */
+export function LockedPicksList({ picks }: { picks: LockedPicks }) {
   if (picks.length === 0) {
     return <p className='text-muted-foreground'>No locked picks.</p>;
   }

@@ -9,7 +9,7 @@ export default function SpreadPool() {
     <>
       <GameHeader
         title='Spread pool'
-        description='Start the season with 1000 points and bet them on NFL games against the spread, at even money. The biggest bank after the regular season wins.'
+        description='Start the season with 1000 points and bet them on NFL games against the spread. The biggest bank at the end of week 17 wins.'
         tabs={{ base: '/games/spread-pool' }}
       />
       <Outlet />
