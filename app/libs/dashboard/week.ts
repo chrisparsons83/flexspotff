@@ -16,8 +16,6 @@ export type DashboardRow = {
   thisWeek: string | null;
   /** Something the member still has to do this week. */
   todo: boolean;
-  /** When picks for this week lock, where the data says. */
-  deadline: Date | null;
   href: string;
 };
 
@@ -29,8 +27,6 @@ export type PickWeek = {
   isScored: boolean;
   /** How many picks the member has in. */
   picks: number;
-  /** The week's first kickoff, which is when the first picks lock. */
-  firstKickoff: Date | null;
 };
 
 export type MemberWeekFacts = {
@@ -93,7 +89,6 @@ function pickRow(
         : `Week ${week.week}: no ${noun}s yet`
       : `Week ${week.week} not open yet`,
     todo: open && week.picks === 0,
-    deadline: open ? week.firstKickoff : null,
     href: open ? `${href}/entries/${week.id}` : href,
   };
 }
@@ -118,7 +113,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
         ? `Week ${thisWeek.week} against ${thisWeek.opponent}`
         : null,
       todo: false,
-      deadline: null,
       href: `/leagues/${facts.year}/${name.toLowerCase()}/matchups`,
     });
   }
@@ -135,7 +129,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
           ? `Chopped in week ${team.choppedWeek}`
           : 'Still alive',
       todo: false,
-      deadline: null,
       href: `/side-leagues/guillotine/${team.leagueId}`,
     });
   }
@@ -162,7 +155,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
         ? `Week ${dfs.week}: ${dfs.entries} of 11 players in`
         : `Week ${dfs.week}: no lineup yet`,
       todo: !dfs.isLocked && dfs.entries === 0,
-      deadline: null,
       href: '/games/dfs-survivor/entries',
     });
   }
@@ -174,7 +166,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
       lastWeek: null,
       thisWeek: entry.alive ? 'Still alive' : 'Out',
       todo: false,
-      deadline: null,
       href: `/games/survivor/${entry.poolId}`,
     });
   }
@@ -186,7 +177,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
       lastWeek: null,
       thisWeek: facts.fSquared.hasEntry ? 'Entry in' : 'No entry yet',
       todo: !facts.fSquared.hasEntry,
-      deadline: null,
       href: '/games/f-squared/entries',
     });
   }
@@ -200,7 +190,6 @@ export function buildMemberWeek(facts: MemberWeekFacts): DashboardRow[] {
         ? 'Registered'
         : 'Not registered yet',
       todo: !facts.registration.isRegistered,
-      deadline: null,
       href: '/dashboard/registration',
     });
   }

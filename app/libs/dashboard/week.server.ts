@@ -3,7 +3,7 @@ import { prisma } from '~/db.server';
 import { poolTitle } from '~/libs/survivor/views';
 import { getEntryByUserAndYear } from '~/models/fsquared.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
-import { getCurrentNflWeek, getWeekNflGames } from '~/models/nflgame.server';
+import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { hasBeenPlayed, pairTeamGames } from '~/models/profile/shared.server';
 import { getQBSelection } from '~/models/qbselection.server';
@@ -14,13 +14,6 @@ import {
   getTeamGamesByLeagueAndWeek,
   getTeamGameWeeksByLeague,
 } from '~/models/teamgame.server';
-
-/** The week's first kickoff, or null when it has no games yet. */
-async function firstKickoff(year: number, week: number) {
-  const games = await getWeekNflGames(year, week);
-  const times = games.map(game => game.gameStartTime.getTime());
-  return times.length > 0 ? new Date(Math.min(...times)) : null;
-}
 
 /** The member's matchup in one week of their league, or null. */
 async function leagueMatchup(teamId: string, leagueId: string, week: number) {
@@ -71,17 +64,13 @@ async function qbStreamingFacts(
 ): Promise<PickWeek | null> {
   const week = (await getQBStreamingWeeks(year))[0];
   if (!week) return null;
-  const [selection, kickoff] = await Promise.all([
-    getQBSelection(week.id, userId),
-    firstKickoff(year, week.week),
-  ]);
+  const selection = await getQBSelection(week.id, userId);
   return {
     id: week.id,
     week: week.week,
     isOpen: week.isOpen,
     isScored: week.isScored,
     picks: selection ? 2 : 0,
-    firstKickoff: kickoff,
   };
 }
 
@@ -92,23 +81,19 @@ async function spreadPoolFacts(
   const weeks = await getPoolWeeksByYear(year);
   const week = weeks.find(poolWeek => poolWeek.isOpen) ?? weeks[0];
   if (!week) return null;
-  const [picks, kickoff] = await Promise.all([
-    prisma.poolGamePick.count({
-      where: {
-        userId,
-        amountBet: { gt: 0 },
-        poolGame: { poolWeekId: week.id },
-      },
-    }),
-    firstKickoff(year, week.weekNumber),
-  ]);
+  const picks = await prisma.poolGamePick.count({
+    where: {
+      userId,
+      amountBet: { gt: 0 },
+      poolGame: { poolWeekId: week.id },
+    },
+  });
   return {
     id: week.id,
     week: week.weekNumber,
     isOpen: week.isOpen,
     isScored: week.isWeekScored,
     picks,
-    firstKickoff: kickoff,
   };
 }
 
@@ -119,23 +104,19 @@ async function locksFacts(
   const weeks = await getLocksWeeksByYear(year);
   const week = weeks.find(locksWeek => locksWeek.isOpen) ?? weeks[0];
   if (!week) return null;
-  const [picks, kickoff] = await Promise.all([
-    prisma.locksGamePick.count({
-      where: {
-        userId,
-        isActive: { gt: 0 },
-        locksGame: { locksWeekId: week.id },
-      },
-    }),
-    firstKickoff(year, week.weekNumber),
-  ]);
+  const picks = await prisma.locksGamePick.count({
+    where: {
+      userId,
+      isActive: { gt: 0 },
+      locksGame: { locksWeekId: week.id },
+    },
+  });
   return {
     id: week.id,
     week: week.weekNumber,
     isOpen: week.isOpen,
     isScored: week.isWeekScored,
     picks,
-    firstKickoff: kickoff,
   };
 }
 

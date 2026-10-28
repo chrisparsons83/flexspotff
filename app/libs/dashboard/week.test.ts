@@ -20,7 +20,6 @@ const openWeek = (picks: number) => ({
   isOpen: true,
   isScored: false,
   picks,
-  firstKickoff: new Date('2026-10-08T00:15:00Z'),
 });
 
 describe('buildMemberWeek', () => {
@@ -51,14 +50,13 @@ describe('buildMemberWeek', () => {
     });
   });
 
-  it('makes an open week with no picks a to-do, with its deadline and entry', () => {
+  it('makes an open week with no picks a to-do, linking to its entry', () => {
     const [row] = buildMemberWeek({ ...nothing, spreadPool: openWeek(0) });
     expect(row).toMatchObject({
       todo: true,
       thisWeek: 'Week 5: no bets yet',
       href: '/games/spread-pool/entries/week-5',
     });
-    expect(row.deadline).toEqual(new Date('2026-10-08T00:15:00Z'));
   });
 
   it('is not a to-do once picks are in, or before the week opens', () => {
