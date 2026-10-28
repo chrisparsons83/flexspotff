@@ -3,6 +3,8 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import StandingsSection from '~/components/layout/games/StandingsSection';
 import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
 import { qbStreamingStandingsEntry } from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
+import { TallyBars } from '~/components/ui/bars';
+import { Section } from '~/components/ui/section';
 import { getQBSelectionsByWeek } from '~/models/qbselection.server';
 import type { QBStreamingStandingsRow } from '~/models/qbstreamingweek.server';
 import {
@@ -59,7 +61,46 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       ) + 1;
   }
 
+  // How many picked each quarterback on a list, counting a pick only once
+  // its game has kicked off, as the rows below do.
+  const now = new Date();
+  const tally = (side: 'standardPlayer' | 'deepPlayer') => {
+    const byOption = new Map<
+      string,
+      { key: string; label: string; count: number; points: number }
+    >();
+    let pending = 0;
+    for (const selection of qbSelections) {
+      const option = selection[side];
+      if (option.nflGame.gameStartTime >= now) {
+        pending += 1;
+        continue;
+      }
+      const row = byOption.get(option.id) ?? {
+        key: option.id,
+        label: option.player.fullName,
+        count: 0,
+        points: option.pointsScored,
+      };
+      row.count += 1;
+      byOption.set(option.id, row);
+    }
+    return {
+      // Ties in the count go to whoever scored more.
+      tallies: [...byOption.values()]
+        .sort((a, b) => b.points - a.points)
+        .map(row => ({
+          key: row.key,
+          label: row.label,
+          count: row.count,
+          detail: `${row.points.toFixed(2)} pts`,
+        })),
+      pending,
+    };
+  };
+
   return typedjson({
+    picks: { standard: tally('standardPlayer'), deep: tally('deepPlayer') },
     qbSelections,
     rankings,
     year,
@@ -70,30 +111,62 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export default function QBStreamingWeekStandings() {
-  const { qbSelections, rankings, year, week, weeks, years } =
+  const { picks, qbSelections, rankings, year, week, weeks, years } =
     useTypedLoaderData<typeof loader>();
+  const pending = picks.standard.pending + picks.deep.pending;
 
   return (
-    <StandingsSection
-      base='/games/qb-streaming/standings'
-      year={year}
-      week={week}
-      years={years}
-      weeks={weeks}
-    >
-      <LeaderboardTable
-        entries={rankings.map(result =>
-          qbStreamingStandingsEntry({
-            rank: result.rank,
-            user: result,
-            pointsScored: result.pointsScored,
-            pick: qbSelections.find(pick => pick.userId === result.userId),
-          }),
-        )}
-        nameHeading='Member'
-        valueHeadings={['Points']}
-        emptyMessage={`No scores yet for week ${week}.`}
-      />
-    </StandingsSection>
+    <>
+      <StandingsSection
+        base='/games/qb-streaming/standings'
+        year={year}
+        week={week}
+        years={years}
+        weeks={weeks}
+      >
+        <LeaderboardTable
+          entries={rankings.map(result =>
+            qbStreamingStandingsEntry({
+              rank: result.rank,
+              user: result,
+              pointsScored: result.pointsScored,
+              pick: qbSelections.find(pick => pick.userId === result.userId),
+            }),
+          )}
+          nameHeading='Member'
+          valueHeadings={['Points']}
+          emptyMessage={`No scores yet for week ${week}.`}
+        />
+      </StandingsSection>
+      {qbSelections.length > 0 && (
+        <Section
+          title='Who was picked'
+          description='Each quarterback by how many members picked them, with the points they scored.'
+          footnote={
+            pending > 0 &&
+            `${pending} ${
+              pending === 1 ? 'pick is' : 'picks are'
+            } hidden until their games kick off.`
+          }
+        >
+          <div className='grid gap-x-12 gap-y-10 md:grid-cols-2'>
+            {(['standard', 'deep'] as const).map(list => (
+              <section key={list}>
+                <h3 className='mb-4 text-xl font-extrabold tracking-tight'>
+                  {list === 'standard' ? 'Standard' : 'Deep'}
+                </h3>
+                {picks[list].tallies.length > 0 ? (
+                  <TallyBars tallies={picks[list].tallies} />
+                ) : (
+                  <p className='text-muted-foreground'>
+                    No games have kicked off yet.
+                  </p>
+                )}
+              </section>
+            ))}
+          </div>
+        </Section>
+      )}
+    </>
   );
 }

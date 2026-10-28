@@ -300,3 +300,63 @@ export function PositionBar({
     </div>
   );
 }
+
+export type Tally = {
+  key: string;
+  label: ReactNode;
+  count: number;
+  /** A second fact written after the count, such as the points it scored. */
+  detail?: string;
+};
+
+/**
+ * How many times each thing was chosen, most first: a bar per row in
+ * proportion to the most chosen, with the count written beside it.
+ */
+export function TallyBars({
+  tallies,
+  unit = ['pick', 'picks'],
+}: {
+  tallies: Tally[];
+  /** What a count is of, singular and plural, for the hover text. */
+  unit?: [string, string];
+}) {
+  const most = Math.max(1, ...tallies.map(tally => tally.count));
+  const sorted = [...tallies].sort((a, b) => b.count - a.count);
+  const hasDetail = sorted.some(tally => tally.detail);
+
+  return (
+    <ul className='grid gap-2'>
+      {sorted.map(tally => (
+        <li
+          key={tally.key}
+          className={cn(
+            'grid items-center gap-3 text-sm',
+            hasDetail
+              ? 'grid-cols-[minmax(0,9rem)_1fr_2rem_4.5rem]'
+              : 'grid-cols-[minmax(0,9rem)_1fr_2rem]',
+          )}
+        >
+          <span className='truncate'>{tally.label}</span>
+          <div
+            className={TRACK}
+            title={`${tally.count} ${unit[tally.count === 1 ? 0 : 1]}`}
+          >
+            <div
+              className='h-full bg-sequence-5'
+              style={{ width: `${(tally.count / most) * 100}%` }}
+            />
+          </div>
+          <span className='text-right font-semibold tabular-nums'>
+            {tally.count}
+          </span>
+          {hasDetail && (
+            <span className='text-right tabular-nums text-muted-foreground'>
+              {tally.detail}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}

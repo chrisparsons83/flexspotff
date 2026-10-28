@@ -6,6 +6,7 @@ import {
   RangeBar,
   RankBar,
   SplitBar,
+  TallyBars,
 } from './bars';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
@@ -104,6 +105,22 @@ export const Positions: Story = {
       <PositionBar counts={{ QB: 3, RB: 6, WR: 7, TE: 2 }} />
       <span>League</span>
       <PositionBar counts={{ QB: 2, RB: 6, WR: 8, TE: 2 }} size='small' />
+    </div>
+  ),
+};
+
+/** How many chose each option, with what it scored beside the count. */
+export const Tallies: Story = {
+  render: () => (
+    <div className='max-w-md'>
+      <TallyBars
+        tallies={[
+          { key: 'a', label: 'Bo Nix', count: 9, detail: '24.30 pts' },
+          { key: 'b', label: 'Caleb Williams', count: 6, detail: '17.12 pts' },
+          { key: 'c', label: 'Daniel Jones', count: 3, detail: '8.40 pts' },
+          { key: 'd', label: 'Justin Fields', count: 1, detail: '21.86 pts' },
+        ]}
+      />
     </div>
   ),
 };
