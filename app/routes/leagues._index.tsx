@@ -119,7 +119,7 @@ export default function LeaguesOverview() {
           description='The best scores of the week across every league.'
           action={
             <Link to={`/leagues/leaderboard/${year}/${week.number}`}>
-              Full week
+              Week {week.number} leaderboard
             </Link>
           }
         >

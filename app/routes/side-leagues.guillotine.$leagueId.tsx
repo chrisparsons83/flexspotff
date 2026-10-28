@@ -3,7 +3,6 @@ import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { guillotineTabs } from '~/components/layout/side-leagues/tabs';
 import GoBox from '~/components/ui/GoBox';
-import { ExternalLink } from '~/components/ui/link';
 import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { prisma } from '~/db.server';
@@ -41,9 +40,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       id: league.id,
       name: league.name,
       year: league.season.year,
-      isComplete: league.isComplete,
-      lastScoredWeek: league.lastScoredWeek,
-      sleeperLeagueId: league.sleeperLeagueId,
     },
     currentWeek,
     allLeagues: allLeagues.map(l => ({
@@ -61,21 +57,6 @@ export default function GuillotineLeagueLayout() {
     <>
       <PageHeader
         title={league.name}
-        description={`Guillotine, ${league.year}. ${
-          league.isComplete
-            ? 'Final.'
-            : league.lastScoredWeek > 0
-            ? `Live: scored through week ${league.lastScoredWeek}.`
-            : 'Live: no weeks scored yet.'
-        }`}
-        actions={
-          <ExternalLink
-            href={`https://sleeper.com/leagues/${league.sleeperLeagueId}`}
-            target='_blank'
-          >
-            Open in Sleeper
-          </ExternalLink>
-        }
         nav={
           <SubNav
             label={league.name}

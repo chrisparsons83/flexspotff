@@ -51,7 +51,7 @@ export default function LiveChopLinePanel({
       action={
         showWeekLink && (
           <Link to={`/side-leagues/guillotine/${leagueId}/week/${week}`}>
-            Full week
+            Week {week} scores
           </Link>
         )
       }
