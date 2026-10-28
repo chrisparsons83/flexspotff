@@ -40,11 +40,9 @@ export default function OmniArchive() {
         title='Omni'
         description='Omni now runs on Brackt. These are the seasons played here, with the top three of each.'
         actions={
-          BRACKT_URL && (
-            <ExternalLink href={BRACKT_URL} target='_blank'>
-              This season on Brackt
-            </ExternalLink>
-          )
+          <ExternalLink href={BRACKT_URL} target='_blank'>
+            This season on Brackt
+          </ExternalLink>
         }
       />
       {seasons.length === 0 ? (

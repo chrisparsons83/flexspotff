@@ -1,8 +1,9 @@
 import MemberName from './MemberName';
 import { Card, CardFooter, CardHeader, CardTitle } from './card';
 import type { LeagueFill } from './fills';
-import { Link } from './link';
+import { ExternalLink, Link } from './link';
 import { ProfileLink } from './profile-link';
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { ReactNode } from 'react';
 
 export type SummaryRow = {
@@ -29,6 +30,8 @@ export function SummaryCard({
   title,
   to,
   status,
+  statusHref,
+  statusLink,
   rows,
   empty,
   footer,
@@ -38,6 +41,10 @@ export function SummaryCard({
   to: string;
   /** Where the table stands, in a line: "Week 8 scored". */
   status?: string;
+  /** Makes the status a link, such as to the reader's entry for the week. */
+  statusHref?: string;
+  /** A link on another site, after the status. */
+  statusLink?: { label: string; href: string };
   rows: SummaryRow[];
   /** Shown when there are no rows yet. */
   empty: string;
@@ -51,13 +58,31 @@ export function SummaryCard({
     <Card league={league}>
       <CardHeader>
         <CardTitle>
-          <Link to={to} variant='quiet'>
+          <Link to={to} variant='quiet' className='inline-flex'>
             {title}
+            <ChevronRightIcon
+              aria-hidden
+              className='ml-1 size-5 self-center text-primary'
+            />
           </Link>
         </CardTitle>
       </CardHeader>
-      {status && (
-        <p className='px-5 pt-3 text-sm text-muted-foreground'>{status}</p>
+      {(status || statusLink) && (
+        <p className='px-5 pt-3 text-sm text-muted-foreground'>
+          {status && statusHref ? (
+            <Link to={statusHref}>{status}</Link>
+          ) : (
+            status
+          )}
+          {statusLink && (
+            <>
+              {status && ' '}
+              <ExternalLink href={statusLink.href} target='_blank'>
+                {statusLink.label}
+              </ExternalLink>
+            </>
+          )}
+        </p>
       )}
       {rows.length === 0 ? (
         <p className='px-5 py-3 text-sm text-muted-foreground'>{empty}</p>

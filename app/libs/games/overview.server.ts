@@ -20,6 +20,7 @@ import {
 import { STARTING_BANK } from '~/models/profile/spreadPoolProfile';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getLatestSurvivorPools } from '~/models/survivor.server';
+import { BRACKT_URL } from '~/utils/brackt';
 
 type WeekState = { week: number; isOpen: boolean; isScored: boolean };
 
@@ -37,6 +38,10 @@ export type GameOverview = {
   name: string;
   to: string;
   status: string;
+  /** The reader's entry for the week, while picks are open to them. */
+  statusHref?: string;
+  /** A link on another site, after the status. */
+  statusLink?: { label: string; href: string };
   /** Whether the game has a My entries page. */
   entries: boolean;
   /** The top of this season's table, or each pool for Survivor. */
@@ -52,7 +57,7 @@ const NO_SCORES = 'No scores yet this season.';
  * table this season, in the order the sitemap lists them. Shared by the games
  * overview and the home page.
  *
- * Survivor pools are for members, so signed-out readers get only their names.
+ * Entry links in the status are for signed-in readers.
  */
 export async function getGamesOverview(
   season: { year: number; isOpenForFSquared: boolean } | null,
@@ -105,6 +110,15 @@ export async function getGamesOverview(
   const poolWeek = pool.find(week => week.isOpen) ?? pool[0];
   const locksWeek = locks.find(week => week.isOpen) ?? locks[0];
 
+  /** The entry page for a week, if the reader can still enter it. */
+  const entryHref = (
+    game: string,
+    week: { id: string; isOpen: boolean; isScored: boolean } | undefined,
+  ) =>
+    signedIn && week?.isOpen && !week.isScored
+      ? `/games/${game}/entries/${week.id}`
+      : undefined;
+
   return [
     {
       name: 'QB streaming',
@@ -118,6 +132,7 @@ export async function getGamesOverview(
             }
           : null,
       ),
+      statusHref: entryHref('qb-streaming', qbWeek),
       entries: true,
       rows: leaderRows(qbLeaders, twoPlaces),
       empty: NO_SCORES,
@@ -133,6 +148,10 @@ export async function getGamesOverview(
               isScored: poolWeek.isWeekScored,
             }
           : null,
+      ),
+      statusHref: entryHref(
+        'spread-pool',
+        poolWeek && { ...poolWeek, isScored: poolWeek.isWeekScored },
       ),
       entries: true,
       rows: leaderRows(poolLeaders, net => `${STARTING_BANK + net}`),
@@ -150,6 +169,10 @@ export async function getGamesOverview(
             }
           : null,
       ),
+      statusHref: entryHref(
+        'locks-challenge',
+        locksWeek && { ...locksWeek, isScored: locksWeek.isWeekScored },
+      ),
       entries: true,
       rows: leaderRows(locksLeaders, points => `${points}`),
       empty: NO_SCORES,
@@ -166,6 +189,10 @@ export async function getGamesOverview(
       name: 'F²',
       to: '/games/f-squared',
       status: season?.isOpenForFSquared ? 'Entries open' : 'Entries closed',
+      statusHref:
+        signedIn && season?.isOpenForFSquared
+          ? '/games/f-squared/entries'
+          : undefined,
       entries: true,
       rows: leaderRows(fSquaredLeaders, twoPlaces),
       empty: NO_SCORES,
@@ -174,27 +201,20 @@ export async function getGamesOverview(
       name: 'Survivor',
       to: '/games/survivor',
       status:
-        survivor.length === 0
-          ? 'No pools yet'
-          : signedIn
-          ? `${survivor[0]!.year} pools`
-          : survivor.map(pool => poolTitle(pool)).join(', '),
+        survivor.length > 0 ? `${survivor[0]!.year} pools` : 'No pools yet',
       entries: false,
-      rows: signedIn
-        ? survivor.map(pool => ({
-            key: pool.id,
-            label: poolTitle(pool),
-            value: survivorStanding(pool),
-          }))
-        : [],
-      empty: signedIn ? 'No pools yet.' : 'Log in to see who is still in.',
+      rows: survivor.map(pool => ({
+        key: pool.id,
+        label: poolTitle(pool),
+        value: survivorStanding(pool),
+      })),
+      empty: 'No pools yet.',
     },
     {
       name: 'Omni',
       to: '/games/omni',
-      status: omni
-        ? `Final ${omni.year} standings. Omni now runs on Brackt.`
-        : 'Omni now runs on Brackt.',
+      status: omni ? `Final ${omni.year} standings.` : '',
+      statusLink: { label: 'Omni now runs on Brackt', href: BRACKT_URL },
       entries: false,
       rows:
         omni?.leaders.map(leader => ({

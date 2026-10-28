@@ -19,7 +19,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     authenticator.isAuthenticated(request),
   ]);
   return typedjson({
-    year: season?.year ?? null,
     signedIn: !!user,
     games: await getGamesOverview(season, {
       signedIn: !!user,
@@ -29,15 +28,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Games() {
-  const { year, signedIn, games } = useTypedLoaderData<typeof loader>();
+  const { signedIn, games } = useTypedLoaderData<typeof loader>();
 
   return (
     <>
       <PageHeader
         title='Games'
-        description={`Pick’em, streaming and survivor games, plus the Omni archive.${
-          year ? ` The top of each table in ${year}.` : ''
-        }`}
+        description='Pick’em, streaming and survivor games that run all season.'
       />
       <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
         {games.map(game => (
@@ -46,6 +43,8 @@ export default function Games() {
             title={game.name}
             to={game.to}
             status={game.status}
+            statusHref={game.statusHref}
+            statusLink={game.statusLink}
             rows={game.rows}
             empty={game.empty}
             footer={

@@ -32,6 +32,7 @@ export const Leaders: Story = {
     title: 'Spread pool',
     to: '/games/spread-pool',
     status: 'Week 8 open for picks',
+    statusHref: '/games/spread-pool/entries/week-8',
     rows: [
       { key: 'a', rank: 1, user: member('a', 'Panda'), value: '1240' },
       { key: 'b', rank: 2, user: member('b', 'Snarky'), value: '1185' },

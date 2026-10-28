@@ -193,6 +193,8 @@ export default function Index() {
                 title={game.name}
                 to={game.to}
                 status={game.status}
+                statusHref={game.statusHref}
+                statusLink={game.statusLink}
                 rows={game.rows}
                 empty={game.empty}
               />
