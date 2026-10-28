@@ -124,7 +124,6 @@ export default function DfsSurvivorStandings() {
       year={year}
       years={years}
       weeks={weeks}
-      description='Points from every scored week.'
     >
       <LeaderboardTable
         entries={entries}

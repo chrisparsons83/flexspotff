@@ -124,7 +124,6 @@ export default function SpreadPoolWeekStandings() {
       week={week}
       years={years}
       weeks={weeks}
-      description='What each member won or lost on the week.'
     >
       <LeaderboardTable
         entries={entries}

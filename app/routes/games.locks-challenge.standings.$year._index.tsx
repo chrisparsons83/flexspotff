@@ -191,7 +191,6 @@ export default function LocksStandings() {
       year={year}
       years={years}
       weeks={weeks}
-      description='One point for each winning pick in a week with no losses. A week with any loss scores nothing.'
     >
       <LeaderboardTable
         entries={entries}
