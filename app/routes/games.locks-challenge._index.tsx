@@ -2,11 +2,23 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import ThisWeek from '~/components/layout/games/ThisWeek';
+import { LockedPicksList } from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
 import { getSeasonLeaders } from '~/libs/games/history.server';
+import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
+import {
+  getLocksGamePicksWonLossWeek,
+  getLocksGamesPicksByLocksWeek,
+} from '~/models/locksgamepicks.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
+import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import { locksSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import { getCurrentTime } from '~/utils/time';
+
+/** How many of this season's leaders the overview lists. */
+const LEADERS = 10;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
@@ -22,6 +34,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Newest first; the open week if there is one.
   const week = weeks.find(locksWeek => locksWeek.isOpen) ?? weeks[0] ?? null;
 
+  const [leaders, picks, wonLoss, games] = await Promise.all([
+    getSeasonLeaders(totals, season.year, LEADERS),
+    week ? getLocksGamesPicksByLocksWeek(week) : [],
+    week ? getLocksGamePicksWonLossWeek(week) : [],
+    week ? getLocksGamesByYearAndWeek(season.year, week.weekNumber) : [],
+  ]);
+  // A pick is public once its game kicks off, or once the whole week locks;
+  // the week standings page has the same rule.
+  const now = getCurrentTime();
+  const weekLocked = isLocksWeekLocked(
+    getLocksWeekCutoff(games.map(({ game }) => game)),
+    now,
+  );
+  const lockedPicks = picks.filter(
+    pick =>
+      (pick.locksGame.game.gameStartTime < now || weekLocked) &&
+      pick.isActive !== 0,
+  );
+  const weekPoints = new Map(
+    wonLoss.map(row => [row.userId, locksWeekPoints(row._sum)]),
+  );
+
   return typedjson({
     year: season.year,
     week: week && {
@@ -34,7 +68,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         : 'Not open yet.',
       canEnter: !!user && week.isOpen && !week.isWeekScored,
     },
-    leaders: await getSeasonLeaders(totals, season.year),
+    leaders: leaders.map(leader => ({
+      ...leader,
+      week: weekPoints.has(leader.user.id)
+        ? `${weekPoints.get(leader.user.id)}`
+        : undefined,
+      picks: lockedPicks.filter(pick => pick.userId === leader.user.id),
+    })),
   });
 };
 
@@ -54,7 +94,11 @@ export default function LocksChallengeOverview() {
       {year && (
         <SeasonLeaders
           year={year}
-          leaders={leaders}
+          week={week?.number}
+          leaders={leaders.map(leader => ({
+            ...leader,
+            details: <LockedPicksList picks={leader.picks} />,
+          }))}
           standingsPath='standings'
           valueHeading='Points'
           formatValue={points => `${points}`}

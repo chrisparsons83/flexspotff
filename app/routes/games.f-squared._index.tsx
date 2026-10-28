@@ -10,6 +10,9 @@ import { fSquaredSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
+/** How many of this season's leaders the overview lists. */
+const LEADERS = 10;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
     getCurrentSeason(),
@@ -27,7 +30,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     isOpen: season.isOpenForFSquared,
     signedIn: !!user,
     hasEntry: !!existingEntry,
-    leaders: await getSeasonLeaders(totals, season.year),
+    leaders: await getSeasonLeaders(totals, season.year, LEADERS),
   });
 };
 

@@ -2,7 +2,7 @@ import type { LeaderboardEntry } from '~/components/layout/leaderboard/Leaderboa
 import MemberName from '~/components/ui/MemberName';
 import { ProfileLink } from '~/components/ui/profile-link';
 
-type Pick = {
+export type QBPick = {
   standardPlayer: {
     nflGame: { gameStartTime: Date };
     player: { fullName: string };
@@ -14,12 +14,27 @@ type Pick = {
 };
 
 /** A pick shows once its game has kicked off. */
-const shown = (pick: Pick | undefined, side: 'standardPlayer' | 'deepPlayer') =>
+const shown = (
+  pick: QBPick | undefined,
+  side: 'standardPlayer' | 'deepPlayer',
+) =>
   !pick
     ? 'No pick'
     : pick[side].nflGame.gameStartTime < new Date()
     ? pick[side].player.fullName
     : 'Pending';
+
+/** The week's two picks, each once its game has kicked off. */
+export function QBPicks({ pick }: { pick?: QBPick }) {
+  return (
+    <dl className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1'>
+      <dt className='text-muted-foreground'>Standard</dt>
+      <dd>{shown(pick, 'standardPlayer')}</dd>
+      <dt className='text-muted-foreground'>Deep</dt>
+      <dd>{shown(pick, 'deepPlayer')}</dd>
+    </dl>
+  );
+}
 
 /**
  * A QB streaming standings row: rank, member and points, opening to the week's
@@ -38,7 +53,7 @@ export function qbStreamingStandingsEntry({
     discordUsername?: string | null;
   };
   pointsScored: number;
-  pick?: Pick;
+  pick?: QBPick;
 }): LeaderboardEntry {
   return {
     id: user.userId,
@@ -49,13 +64,6 @@ export function qbStreamingStandingsEntry({
       </ProfileLink>
     ),
     values: [pointsScored.toFixed(2)],
-    details: (
-      <dl className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1'>
-        <dt className='text-muted-foreground'>Standard</dt>
-        <dd>{shown(pick, 'standardPlayer')}</dd>
-        <dt className='text-muted-foreground'>Deep</dt>
-        <dd>{shown(pick, 'deepPlayer')}</dd>
-      </dl>
-    ),
+    details: <QBPicks pick={pick} />,
   };
 }

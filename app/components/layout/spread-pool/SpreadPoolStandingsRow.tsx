@@ -7,10 +7,12 @@ import type {
 } from '~/models/poolgamepicks.server';
 import type { User } from '~/models/user.server';
 
-type LockedPicks = Awaited<ReturnType<typeof getPoolGamesPicksByPoolWeek>>;
+export type LockedPicks = Awaited<
+  ReturnType<typeof getPoolGamesPicksByPoolWeek>
+>;
 
 /** The bets a member has riding on games that have kicked off. */
-function LockedBets({ picks }: { picks: LockedPicks }) {
+export function LockedBets({ picks }: { picks: LockedPicks }) {
   if (picks.length === 0) {
     return <p className='text-muted-foreground'>No locked bets.</p>;
   }
