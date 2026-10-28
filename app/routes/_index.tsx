@@ -122,7 +122,7 @@ export default function Index() {
         <Section
           title={
             week && week <= LAST_PLAYOFF_WEEK
-              ? `${year}, week ${week}`
+              ? `Week ${week}`
               : `${year} leagues`
           }
           description={`${

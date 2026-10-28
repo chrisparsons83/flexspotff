@@ -20,8 +20,10 @@ const LEADERS = 10;
 const shownPlayer = (side: {
   nflGame: { gameStartTime: Date };
   player: { fullName: string };
+  pointsScored: number;
 }) => ({
   nflGame: { gameStartTime: side.nflGame.gameStartTime },
+  pointsScored: side.pointsScored,
   player: {
     fullName:
       side.nflGame.gameStartTime < new Date() ? side.player.fullName : '',

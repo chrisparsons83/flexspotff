@@ -73,11 +73,13 @@ export default function LeaderboardYearWeek() {
 
   return (
     <Section
-      title={`${year}, week ${week} leaderboard`}
+      title={`Week ${week} leaderboard`}
       description='Every team’s score for the week, across every league.'
       action={
         <div className='flex flex-wrap items-center gap-4'>
-          <Link to={`/leagues/leaderboard/${year}`}>Season</Link>
+          <Link to={`/leagues/leaderboard/${year}`}>
+            {year} season leaderboard
+          </Link>
           <GoBox options={weekOptions} buttonText='Week' />
         </div>
       }
