@@ -2,11 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import ThisWeek from '~/components/layout/games/ThisWeek';
-import {
-  DoubleTapBadge,
-  QBPicks,
-  isDoubleTap,
-} from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
+import { QBPicks } from '~/components/layout/qb-streaming/QBStreamingStandingsRow';
 import { getSeasonLeaders } from '~/libs/games/history.server';
 import { qbStreamingSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getQBSelectionsByWeek } from '~/models/qbselection.server';
@@ -104,7 +100,6 @@ export default function QBStreamingOverview() {
           leaders={leaders.map(leader => ({
             ...leader,
             details: <QBPicks pick={leader.pick} />,
-            tag: isDoubleTap(leader.pick) && <DoubleTapBadge />,
           }))}
           standingsPath='standings'
           valueHeading='Points'

@@ -13,8 +13,6 @@ export type SeasonLeader = {
   week?: string;
   /** This week's picks, opened from the row. */
   details?: ReactNode;
-  /** A mark after the name, such as a badge for something they did. */
-  tag?: ReactNode;
 };
 
 /**
@@ -52,12 +50,9 @@ export default function SeasonLeaders({
           id: leader.user.id,
           rank: leader.rank,
           name: (
-            <span className='inline-flex flex-wrap items-center gap-x-3'>
-              <ProfileLink userId={leader.user.id}>
-                <MemberName user={leader.user} />
-              </ProfileLink>
-              {leader.tag}
-            </span>
+            <ProfileLink userId={leader.user.id}>
+              <MemberName user={leader.user} />
+            </ProfileLink>
           ),
           values: [
             formatValue(leader.total),

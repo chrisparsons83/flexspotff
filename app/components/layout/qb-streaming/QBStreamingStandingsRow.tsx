@@ -1,6 +1,5 @@
 import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
-import { Badge } from '~/components/ui/badge';
 import { ProfileLink } from '~/components/ui/profile-link';
 
 type QBPickSide = {
@@ -13,28 +12,6 @@ export type QBPick = { standardPlayer: QBPickSide; deepPlayer: QBPickSide };
 
 /** A pick shows once its game has kicked off. */
 const started = (side: QBPickSide) => side.nflGame.gameStartTime < new Date();
-
-/**
- * The same quarterback on both lists, once their game has kicked off: before
- * then it would give the pick away.
- */
-export const isDoubleTap = (pick: QBPick | undefined) =>
-  !!pick &&
-  started(pick.standardPlayer) &&
-  started(pick.deepPlayer) &&
-  pick.standardPlayer.player.fullName === pick.deepPlayer.player.fullName;
-
-/** Marks a member who took one quarterback for both picks. */
-export function DoubleTapBadge() {
-  return (
-    <Badge
-      size='sm'
-      fill='position-qb'
-      label='Double tap'
-      className='text-sm text-muted-foreground'
-    />
-  );
-}
 
 /**
  * The week's two picks, each with what it scored once its game has kicked
@@ -97,12 +74,9 @@ export function qbStreamingStandingsEntry({
     id: user.userId,
     rank: rank ?? 0,
     name: (
-      <span className='inline-flex flex-wrap items-center gap-x-3'>
-        <ProfileLink userId={user.userId}>
-          <MemberName user={user} />
-        </ProfileLink>
-        {isDoubleTap(pick) && <DoubleTapBadge />}
-      </span>
+      <ProfileLink userId={user.userId}>
+        <MemberName user={user} />
+      </ProfileLink>
     ),
     values: [pointsScored.toFixed(2)],
     details: <QBPicks pick={pick} />,
