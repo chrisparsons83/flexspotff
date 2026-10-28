@@ -309,6 +309,8 @@ export type Tally = {
   count: number;
   /** A second fact written after the count, such as the points it scored. */
   detail?: string;
+  /** Colours the detail when it is a result, such as a win or a loss. */
+  detailTone?: 'positive' | 'negative';
   /** Who made up the count, listed from it on hover or tap. */
   who?: string[];
 };
@@ -402,7 +404,16 @@ export function TallyBars({
             </span>
           )}
           {hasDetail && (
-            <span className='text-right tabular-nums text-muted-foreground'>
+            <span
+              className={cn(
+                'text-right tabular-nums',
+                tally.detailTone === 'positive'
+                  ? 'text-positive'
+                  : tally.detailTone === 'negative'
+                  ? 'text-negative'
+                  : 'text-muted-foreground',
+              )}
+            >
               {tally.detail}
             </span>
           )}

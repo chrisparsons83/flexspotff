@@ -6,6 +6,8 @@ import {
   LOCKS_HEADINGS,
   locksStandingsEntry,
 } from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import { TallyBars } from '~/components/ui/bars';
+import { Section } from '~/components/ui/section';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import {
   getLocksGamePicksWonLossWeek,
@@ -46,10 +48,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     ),
     now,
   );
-  const weeklyPicks = (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
+  const activePicks = (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
+    locksGamePick => locksGamePick.isActive !== 0,
+  );
+  const weeklyPicks = activePicks.filter(
     locksGamePick =>
-      (locksGamePick.locksGame.game.gameStartTime < now || weekLocked) &&
-      locksGamePick.isActive !== 0,
+      locksGamePick.locksGame.game.gameStartTime < now || weekLocked,
   );
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
@@ -107,7 +111,49 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   ];
   const users = await getUsersByIds(userIds);
 
+  // How many picked each team, from the picks already public, and how the
+  // team did.
+  const pickers = await getUsersByIds([
+    ...new Set(weeklyPicks.map(pick => pick.userId)),
+  ]);
+  const byTeam = new Map<
+    string,
+    { label: string; who: string[]; pick: (typeof weeklyPicks)[number] }
+  >();
+  for (const pick of weeklyPicks) {
+    const row = byTeam.get(pick.teamBetId) ?? {
+      label: pick.teamBet.mascot,
+      who: [],
+      pick,
+    };
+    row.who.push(
+      pickers.find(user => user.id === pick.userId)?.discordName ??
+        'Former member',
+    );
+    byTeam.set(pick.teamBetId, row);
+  }
+  const distribution = {
+    // Ties in the count go alphabetically.
+    tallies: [...byTeam.entries()]
+      .sort(([, a], [, b]) => a.label.localeCompare(b.label))
+      .map(([key, { label, who, pick }]) => ({
+        key,
+        label,
+        count: who.length,
+        who,
+        ...(pick.isWin === 1
+          ? { detail: 'Won', detailTone: 'positive' as const }
+          : pick.isLoss === 1
+          ? { detail: 'Lost', detailTone: 'negative' as const }
+          : pick.isTie === 1
+          ? { detail: 'Tied' }
+          : { detail: 'Pending' }),
+      })),
+    hidden: activePicks.length - weeklyPicks.length,
+  };
+
   return typedjson({
+    distribution,
     totalPoints,
     users,
     userIdToRankMap,
@@ -124,6 +170,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 export default function LocksWeekStandings() {
   const {
+    distribution,
     totalPoints,
     users,
     userIdToRankMap,
@@ -153,19 +200,42 @@ export default function LocksWeekStandings() {
   });
 
   return (
-    <StandingsSection
-      base='/games/locks-challenge/standings'
-      year={year}
-      week={week}
-      years={years}
-      weeks={weeks}
-    >
-      <LeaderboardTable
-        entries={entries}
-        nameHeading='Member'
-        valueHeadings={LOCKS_HEADINGS}
-        emptyMessage={`No picks scored yet for week ${week}.`}
-      />
-    </StandingsSection>
+    <>
+      <StandingsSection
+        base='/games/locks-challenge/standings'
+        year={year}
+        week={week}
+        years={years}
+        weeks={weeks}
+      >
+        <LeaderboardTable
+          entries={entries}
+          nameHeading='Member'
+          valueHeadings={LOCKS_HEADINGS}
+          emptyMessage={`No picks scored yet for week ${week}.`}
+        />
+      </StandingsSection>
+      {(distribution.tallies.length > 0 || distribution.hidden > 0) && (
+        <Section
+          title='Pick distribution'
+          footnote={
+            distribution.hidden > 0 &&
+            `${distribution.hidden} ${
+              distribution.hidden === 1 ? 'pick is' : 'picks are'
+            } hidden until their games kick off or the week locks.`
+          }
+        >
+          {distribution.tallies.length > 0 ? (
+            <div className='max-w-2xl'>
+              <TallyBars tallies={distribution.tallies} />
+            </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No games have kicked off yet.
+            </p>
+          )}
+        </Section>
+      )}
+    </>
   );
 }
