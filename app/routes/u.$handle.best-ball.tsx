@@ -126,10 +126,7 @@ function Career({ career }: { career: BestBallCareer }) {
 
 function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection
-      title='By season'
-      description='Ranked on points for through week 17.'
-    >
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Year',

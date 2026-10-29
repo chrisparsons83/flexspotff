@@ -65,7 +65,6 @@ export default function SeasonLeaderboard({
   return (
     <Section
       title={`${year} season leaderboard`}
-      description='Regular-season points for, across every league.'
       action={
         <div className='flex flex-wrap items-center gap-4'>
           {newestWeek && (
