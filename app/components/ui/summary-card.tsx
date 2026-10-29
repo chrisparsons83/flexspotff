@@ -60,8 +60,6 @@ export function SummaryCard({
   footer?: ReactNode;
   league?: LeagueFill;
 }) {
-  const ranked = rows.some(row => row.rank !== undefined);
-
   return (
     <Card league={league}>
       <CardHeader>
@@ -95,38 +93,53 @@ export function SummaryCard({
       {rows.length === 0 ? (
         <p className='px-5 py-3 text-sm text-muted-foreground'>{empty}</p>
       ) : (
-        <ol className='px-5 py-2'>
-          {rows.map(row => (
-            <li
-              key={row.key}
-              className={cn(
-                'grid gap-2 py-1 text-sm',
-                ranked ? 'grid-cols-[1.5rem_1fr_auto]' : 'grid-cols-[1fr_auto]',
-                row.divider === 'gap' && 'mt-1 border-t border-dashed pt-2',
-                row.divider === 'cut' && 'mt-1 border-t-2 border-negative pt-2',
-                row.tone === 'negative' && 'text-negative',
-              )}
-            >
-              {ranked && (
-                <span className='text-muted-foreground'>{row.rank}</span>
-              )}
-              <span className='truncate'>
-                {row.user ? (
-                  <ProfileLink userId={row.user.id}>
-                    <MemberName user={row.user} />
-                  </ProfileLink>
-                ) : (
-                  row.label
-                )}
-              </span>
-              <span className='text-right font-semibold tabular-nums'>
-                {row.value}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <SummaryRows rows={rows} className='px-5 py-2' />
       )}
       {footer && <CardFooter className='pt-2'>{footer}</CardFooter>}
     </Card>
+  );
+}
+
+/**
+ * A few rows of a table: rank, member (or label) and value, with the gap and
+ * chop-line dividers. The body of a SummaryCard, and usable on its own.
+ */
+export function SummaryRows({
+  rows,
+  className,
+}: {
+  rows: SummaryRow[];
+  className?: string;
+}) {
+  const ranked = rows.some(row => row.rank !== undefined);
+  return (
+    <ol className={className}>
+      {rows.map(row => (
+        <li
+          key={row.key}
+          className={cn(
+            'grid gap-2 py-1 text-sm',
+            ranked ? 'grid-cols-[1.5rem_1fr_auto]' : 'grid-cols-[1fr_auto]',
+            row.divider === 'gap' && 'mt-1 border-t border-dashed pt-2',
+            row.divider === 'cut' && 'mt-1 border-t-2 border-negative pt-2',
+            row.tone === 'negative' && 'text-negative',
+          )}
+        >
+          {ranked && <span className='text-muted-foreground'>{row.rank}</span>}
+          <span className='truncate'>
+            {row.user ? (
+              <ProfileLink userId={row.user.id}>
+                <MemberName user={row.user} />
+              </ProfileLink>
+            ) : (
+              row.label
+            )}
+          </span>
+          <span className='text-right font-semibold tabular-nums'>
+            {row.value}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }

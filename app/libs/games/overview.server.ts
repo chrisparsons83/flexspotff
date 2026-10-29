@@ -1,6 +1,7 @@
 import type { SummaryRow } from '~/components/ui/summary-card';
 import { prisma } from '~/db.server';
 import { getSeasonLeaders, HISTORY_PODIUM } from '~/libs/games/history.server';
+import { getLastWeeks, type WeeklyGame } from '~/libs/games/last-week.server';
 import { entryLabel, poolTitle } from '~/libs/survivor/views';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import {
@@ -20,6 +21,7 @@ import {
 import { STARTING_BANK } from '~/models/profile/spreadPoolProfile';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getLatestSurvivorPools } from '~/models/survivor.server';
+import { getUsersByIds } from '~/models/user.server';
 import { BRACKT_URL } from '~/utils/brackt';
 
 type WeekState = { week: number; isOpen: boolean; isScored: boolean };
@@ -42,15 +44,18 @@ export type GameOverview = {
   statusHref?: string;
   /** A link on another site, after the status. */
   statusLink?: { label: string; href: string };
-  /** Whether the game has a My entries page. */
-  entries: boolean;
   /** The top of this season's table, or each pool for Survivor. */
   rows: SummaryRow[];
+  /** The top of the newest scored week, for the weekly games. */
+  lastWeek?: { week: number; rows: SummaryRow[] } | null;
   /** What to say when there are no rows. */
   empty: string;
 };
 
 const NO_SCORES = 'No scores yet this season.';
+
+/** The most rows a week's top can run to, ties and all. */
+const MAX_WEEK_ROWS = 5;
 
 /**
  * Every game in the Games section, where its week stands and the top of its
@@ -61,7 +66,16 @@ const NO_SCORES = 'No scores yet this season.';
  */
 export async function getGamesOverview(
   season: { year: number; isOpenForFSquared: boolean } | null,
-  { signedIn, leaders }: { signedIn: boolean; leaders: number },
+  {
+    signedIn,
+    leaders,
+    weekLeaders = 0,
+  }: {
+    signedIn: boolean;
+    leaders: number;
+    /** How many of each weekly game's newest week to list; none by default. */
+    weekLeaders?: number;
+  },
 ): Promise<GameOverview[]> {
   const year = season?.year;
   const years = year ? [year] : [];
@@ -106,6 +120,44 @@ export async function getGamesOverview(
     }));
   const twoPlaces = (total: number) => total.toFixed(2);
 
+  const lastWeeks = year && weekLeaders > 0 ? await getLastWeeks(year) : null;
+  const weekUsers = lastWeeks
+    ? await getUsersByIds(
+        Object.values(lastWeeks).flatMap(
+          week =>
+            week?.results
+              .filter(result => result.rank <= weekLeaders)
+              .map(result => result.userId) ?? [],
+        ),
+      )
+    : [];
+  /** The top of a weekly game's newest scored week, ties included. */
+  const weekTop = (game: WeeklyGame) => {
+    const week = lastWeeks?.[game];
+    if (!week) return null;
+    return {
+      week: week.week,
+      // Ties stay in, up to a few rows: a week everyone scored 0 in would
+      // otherwise list them all.
+      rows: week.results
+        .filter(result => result.rank <= weekLeaders)
+        .slice(0, MAX_WEEK_ROWS)
+        .map(result => {
+          const user = weekUsers.find(u => u.id === result.userId);
+          return {
+            key: result.userId,
+            rank: result.rank,
+            user: {
+              id: result.userId,
+              discordName: user?.discordName ?? 'Former member',
+              discordUsername: user?.discordUsername ?? null,
+            },
+            value: result.label,
+          };
+        }),
+    };
+  };
+
   const qbWeek = qb[0];
   const poolWeek = pool.find(week => week.isOpen) ?? pool[0];
   const locksWeek = locks.find(week => week.isOpen) ?? locks[0];
@@ -133,8 +185,8 @@ export async function getGamesOverview(
           : null,
       ),
       statusHref: entryHref('qb-streaming', qbWeek),
-      entries: true,
       rows: leaderRows(qbLeaders, twoPlaces),
+      lastWeek: weekTop('qbStreaming'),
       empty: NO_SCORES,
     },
     {
@@ -153,8 +205,8 @@ export async function getGamesOverview(
         'spread-pool',
         poolWeek && { ...poolWeek, isScored: poolWeek.isWeekScored },
       ),
-      entries: true,
       rows: leaderRows(poolLeaders, net => `${STARTING_BANK + net}`),
+      lastWeek: weekTop('spreadPool'),
       empty: NO_SCORES,
     },
     {
@@ -173,16 +225,16 @@ export async function getGamesOverview(
         'locks-challenge',
         locksWeek && { ...locksWeek, isScored: locksWeek.isWeekScored },
       ),
-      entries: true,
       rows: leaderRows(locksLeaders, points => `${points}`),
+      lastWeek: weekTop('locks'),
       empty: NO_SCORES,
     },
     {
       name: 'DFS Survivor',
       to: '/games/dfs-survivor',
       status: dfs ? `Scored through week ${dfs.week}` : 'No weeks scored yet',
-      entries: true,
       rows: leaderRows(dfsLeaders, twoPlaces),
+      lastWeek: weekTop('dfsSurvivor'),
       empty: NO_SCORES,
     },
     {
@@ -193,7 +245,6 @@ export async function getGamesOverview(
         signedIn && season?.isOpenForFSquared
           ? '/games/f-squared/entries'
           : undefined,
-      entries: true,
       rows: leaderRows(fSquaredLeaders, twoPlaces),
       empty: NO_SCORES,
     },
@@ -201,7 +252,6 @@ export async function getGamesOverview(
       name: 'Survivor',
       to: '/games/survivor',
       ...survivorSummary(survivor, leaders * 2),
-      entries: false,
       empty: 'No pools yet.',
     },
     {
@@ -210,7 +260,6 @@ export async function getGamesOverview(
       to: omni?.onlySeason ? `/games/omni/${omni.year}` : '/games/omni',
       status: omni ? `Final ${omni.year} standings.` : '',
       statusLink: { label: 'Omni now runs on Brackt', href: BRACKT_URL },
-      entries: false,
       rows:
         omni?.leaders.map(leader => ({
           key: leader.owner,

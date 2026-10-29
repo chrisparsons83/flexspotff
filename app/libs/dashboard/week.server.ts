@@ -9,14 +9,13 @@ import {
 } from './week';
 import { prisma } from '~/db.server';
 import { getCupBracket } from '~/libs/cup/bracket.server';
+import { getLastWeeks, type WeeklyGame } from '~/libs/games/last-week.server';
 import { poolTitle } from '~/libs/survivor/views';
 import { getEntryByUserAndYear } from '~/models/fsquared.server';
-import { getLocksGamePicksWonLossWeek } from '~/models/locksgamepicks.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { hasBeenPlayed, pairTeamGames } from '~/models/profile/shared.server';
-import { locksWeekPoints } from '~/models/profile/sideGameScoring';
 import {
   dfsSurvivorSeasonTotals,
   fSquaredSeasonTotals,
@@ -26,10 +25,7 @@ import {
   spreadPoolSeasonTotals,
 } from '~/models/profile/sideGameSeasons.server';
 import { STARTING_BANK } from '~/models/profile/spreadPoolProfile';
-import {
-  getQBSelection,
-  getQBSelectionsByWeek,
-} from '~/models/qbselection.server';
+import { getQBSelection } from '~/models/qbselection.server';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getRegistrationByUserAndYear } from '~/models/registration.server';
 import type { Season } from '~/models/season.server';
@@ -162,8 +158,6 @@ async function dfsSurvivorFacts(
   };
 }
 
-const signed = (net: number) => (net > 0 ? `+${net}` : `${net}`);
-
 /**
  * Where the member stands in each game they have a scored week in, ranked
  * the way the game's own standings rank it, with how their newest scored
@@ -205,142 +199,27 @@ async function standingsFacts(
   const dfs = place(dfsTotals, total => total.toFixed(2));
   const fSquared = place(fSquaredTotals, total => total.toFixed(2));
 
+  // How each game's newest scored week went for them. A game they have a
+  // standing in but no result that week shows they had no picks in.
+  const weeks = await getLastWeeks(year);
+  const lastWeek = (game: WeeklyGame, missing: string | null) => {
+    const week = weeks[game];
+    const mine = week?.results.find(result => result.userId === userId);
+    return {
+      lastWeek: mine?.label ?? (week ? missing : null),
+      lastWeekRank: mine?.rank ?? null,
+    };
+  };
   const none = { lastWeek: null, lastWeekRank: null };
-  const [qbLast, poolLast, locksLast, dfsLast] = await Promise.all([
-    qb ? qbLastWeek(userId, year) : none,
-    pool ? poolLastWeek(userId, year) : none,
-    locks ? locksLastWeek(userId, year) : none,
-    dfs ? dfsLastWeek(userId, year) : none,
-  ]);
 
   const standings: MemberWeekFacts['standings'] = {};
-  if (qb) standings.qbStreaming = { ...qb, ...qbLast };
-  if (pool) standings.spreadPool = { ...pool, ...poolLast };
-  if (locks) standings.locks = { ...locks, ...locksLast };
-  if (dfs) standings.dfsSurvivor = { ...dfs, ...dfsLast };
+  if (qb)
+    standings.qbStreaming = { ...qb, ...lastWeek('qbStreaming', 'No Picks') };
+  if (pool) standings.spreadPool = { ...pool, ...lastWeek('spreadPool', null) };
+  if (locks) standings.locks = { ...locks, ...lastWeek('locks', 'No Picks') };
+  if (dfs) standings.dfsSurvivor = { ...dfs, ...lastWeek('dfsSurvivor', null) };
   if (fSquared) standings.fSquared = { ...fSquared, ...none };
   return standings;
-}
-
-type LastWeek = Pick<GameStanding, 'lastWeek' | 'lastWeekRank'>;
-
-/** The member's place among a week's scores, best first, ties sharing. */
-const rankIn = (scores: Map<string, number>, userId: string) => {
-  if (!scores.has(userId)) return null;
-  return assignCompetitionRanks(
-    [...scores.entries()]
-      .map(([id, score]) => ({ id, score }))
-      .sort((a, b) => b.score - a.score),
-    row => row.score,
-  ).find(row => row.id === userId)!.rank;
-};
-
-/** The member's two quarterbacks' points in the newest scored week. */
-async function qbLastWeek(userId: string, year: number): Promise<LastWeek> {
-  const week = (await getQBStreamingWeeks(year)).find(
-    qbWeek => qbWeek.isScored,
-  );
-  if (!week) return { lastWeek: null, lastWeekRank: null };
-  const selections = await getQBSelectionsByWeek(week.id);
-  const totals = new Map(
-    selections.map(selection => [
-      selection.userId,
-      selection.standardPlayer.pointsScored + selection.deepPlayer.pointsScored,
-    ]),
-  );
-  const total = totals.get(userId);
-  return {
-    lastWeek: total === undefined ? 'No Picks' : total.toFixed(2),
-    lastWeekRank: rankIn(totals, userId),
-  };
-}
-
-/** What the member won or lost in the newest scored week, missed weeks too. */
-async function poolLastWeek(userId: string, year: number): Promise<LastWeek> {
-  const week = (await getPoolWeeksByYear(year)).find(
-    poolWeek => poolWeek.isWeekScored,
-  );
-  if (!week) return { lastWeek: null, lastWeekRank: null };
-  const [bets, missed] = await Promise.all([
-    prisma.poolGamePick.groupBy({
-      by: ['userId'],
-      where: { amountBet: { gt: 0 }, poolGame: { poolWeekId: week.id } },
-      _sum: { resultWonLoss: true },
-    }),
-    prisma.poolWeekMissed.groupBy({
-      by: ['userId'],
-      where: { poolWeekId: week.id },
-      _sum: { resultWonLoss: true },
-    }),
-  ]);
-  const nets = new Map<string, number>();
-  for (const row of [...bets, ...missed]) {
-    nets.set(
-      row.userId,
-      (nets.get(row.userId) ?? 0) + (row._sum.resultWonLoss ?? 0),
-    );
-  }
-  const net = nets.get(userId) ?? 0;
-  const bet = bets.some(row => row.userId === userId);
-  return {
-    lastWeek: `${signed(net)}${bet ? '' : ', missed'}`,
-    lastWeekRank: rankIn(nets, userId),
-  };
-}
-
-/** The member's points and record in the newest scored week. */
-async function locksLastWeek(userId: string, year: number): Promise<LastWeek> {
-  const week = (await getLocksWeeksByYear(year)).find(
-    locksWeek => locksWeek.isWeekScored,
-  );
-  if (!week) return { lastWeek: null, lastWeekRank: null };
-  const [mine, everyone] = await Promise.all([
-    prisma.locksGamePick.aggregate({
-      where: {
-        userId,
-        isActive: { gt: 0 },
-        locksGame: { locksWeekId: week.id },
-      },
-      _sum: { isWin: true, isLoss: true, isTie: true },
-      _count: true,
-    }),
-    getLocksGamePicksWonLossWeek(week),
-  ]);
-  if (mine._count === 0) return { lastWeek: 'No Picks', lastWeekRank: null };
-  const sum = mine._sum;
-  return {
-    lastWeek: `${locksWeekPoints(sum)} (${sum.isWin ?? 0}-${sum.isLoss ?? 0}-${
-      sum.isTie ?? 0
-    })`,
-    lastWeekRank: rankIn(
-      new Map(everyone.map(row => [row.userId, locksWeekPoints(row._sum)])),
-      userId,
-    ),
-  };
-}
-
-/** The member's lineup total in their newest scored DFS Survivor week. */
-async function dfsLastWeek(userId: string, year: number): Promise<LastWeek> {
-  const mine = await prisma.dFSSurvivorUserWeek.findFirst({
-    where: { userId, year, isScored: true },
-    orderBy: { week: 'desc' },
-    select: { week: true },
-  });
-  if (!mine) return { lastWeek: null, lastWeekRank: null };
-  const weeks = await prisma.dFSSurvivorUserWeek.findMany({
-    where: { year, week: mine.week, isScored: true },
-    select: { userId: true, entries: { select: { points: true } } },
-  });
-  const totals = new Map(
-    weeks.map(week => [
-      week.userId,
-      week.entries.reduce((sum, entry) => sum + entry.points, 0),
-    ]),
-  );
-  return {
-    lastWeek: totals.get(userId)?.toFixed(2) ?? null,
-    lastWeekRank: rankIn(totals, userId),
-  };
 }
 
 /** The member's place in this year's cup, from the bracket's own query. */
