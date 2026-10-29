@@ -1,10 +1,12 @@
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LeagueTable from '~/components/layout/standings/LeagueTable';
+import { Card, CardHeader, CardTitle } from '~/components/ui/card';
 import { EmptyState } from '~/components/ui/empty-state';
+import { leagueFill } from '~/components/ui/fills';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
-import { LeagueMark } from '~/components/ui/swatch';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { FIRST_YEAR } from '~/utils/constants';
@@ -38,23 +40,33 @@ export default function Standings() {
           Standings appear once the leagues are set up.
         </EmptyState>
       ) : (
-        leagues.map(league => (
-          <Section
-            key={league.id}
-            as='h3'
-            className='mt-12'
-            title={
-              <Link
-                to={`/leagues/${league.year}/${league.name.toLowerCase()}`}
-                variant='quiet'
-              >
-                <LeagueMark name={league.name} />
-              </Link>
-            }
-          >
-            <LeagueTable league={league} />
-          </Section>
-        ))
+        <div className='grid gap-8'>
+          {leagues.map(league => (
+            <Card
+              key={league.id}
+              league={leagueFill(league.name) ?? undefined}
+              className='min-w-0'
+            >
+              <CardHeader>
+                <CardTitle className='text-lg'>
+                  <Link
+                    to={`/leagues/${league.year}/${league.name.toLowerCase()}`}
+                    variant='quiet'
+                    className='inline-flex'
+                  >
+                    {league.name}
+                    <ChevronRightIcon
+                      aria-hidden
+                      className='ml-1 size-5 self-center'
+                    />
+                  </Link>
+                </CardTitle>
+                <span className='text-sm'>Tier {league.tier}</span>
+              </CardHeader>
+              <LeagueTable league={league} />
+            </Card>
+          ))}
+        </div>
       )}
     </Section>
   );

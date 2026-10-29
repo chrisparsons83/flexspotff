@@ -201,11 +201,11 @@ export async function getSingleSeasonRecords(
   return [
     {
       title: 'Most Wins in a Season',
-      headers: ['Player', 'Record', 'Year', 'League'],
+      headers: ['Player', 'Wins', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor)
         .slice(0, TOP_N)
-        .map(t => makeRow(t, `${t.wins}-${t.losses}-${t.ties}`)),
+        .map(t => makeRow(t, `${t.wins}`)),
     },
     {
       title: 'Best Win Percentage',
