@@ -10,9 +10,9 @@ import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 export type CupBracketData = Awaited<ReturnType<typeof getCupBracket>>;
 
 /**
- * A year's cup games and each team's score per round, or null when that year
- * has no cup. A round can span several weeks, so a team's score for it is
- * the sum of its weeks.
+ * A year's cup games, each team's score per round and the weeks each round
+ * is scored over, or null when that year has no cup. A round can span
+ * several weeks, so a team's score for it is the sum of its weeks.
  */
 export async function getCupBracket(year: number) {
   const cup = await getCupByYear(year);
@@ -47,7 +47,13 @@ export async function getCupBracket(year: number) {
     }
   }
 
-  return { cupGames, scoreArray };
+  // The NFL weeks each round is scored over, in order.
+  const weeksByRound: Record<string, number[]> = {};
+  for (const cupWeek of [...cupWeeks].sort((a, b) => a.week - b.week)) {
+    (weeksByRound[cupWeek.mapping] ??= []).push(cupWeek.week);
+  }
+
+  return { cupGames, scoreArray, weeksByRound };
 }
 
 /** A year's cup page, for /leagues/cup and /leagues/cup/:year. */

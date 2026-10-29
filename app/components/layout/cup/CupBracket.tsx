@@ -25,7 +25,11 @@ const LINE = 'border-border';
  * as one game's slot in the next round, so its middle lines up with that
  * game. On a phone the rounds stack, and each folds away under its name.
  */
-export default function CupBracket({ cupGames, scoreArray }: Bracket) {
+export default function CupBracket({
+  cupGames,
+  scoreArray,
+  weeksByRound,
+}: Bracket) {
   const rounds = roundNameMapping.map(round => ({
     ...round,
     games: cupGames.filter(game => game.round === round.key),
@@ -54,6 +58,7 @@ export default function CupBracket({ cupGames, scoreArray }: Bracket) {
           <Round
             key={round.key}
             label={round.label}
+            weeks={weeksLabel(weeksByRound[round.key] ?? [])}
             defaultOpen={index === Math.max(current, 0)}
           >
             {pairs.map(pair => (
@@ -130,10 +135,13 @@ export default function CupBracket({ cupGames, scoreArray }: Bracket) {
  */
 function Round({
   label,
+  weeks,
   defaultOpen,
   children,
 }: {
   label: string;
+  /** When it is scored, such as "Weeks 7–8". */
+  weeks: string | null;
   defaultOpen: boolean;
   children: ReactNode;
 }) {
@@ -145,9 +153,21 @@ function Round({
     <CollapsiblePrimitive.Root open={open} onOpenChange={setOpen} asChild>
       <section className='flex flex-col'>
         <h3 className='font-bold lg:hidden'>
-          <CollapsibleTrigger className='py-2'>{label}</CollapsibleTrigger>
+          <CollapsibleTrigger className='py-2'>
+            <span>
+              {label}
+              {weeks && (
+                <span className='ml-2 text-sm font-normal text-muted-foreground'>
+                  {weeks}
+                </span>
+              )}
+            </span>
+          </CollapsibleTrigger>
         </h3>
-        <h3 className='mb-3 hidden text-center font-bold lg:block'>{label}</h3>
+        <div className='mb-3 hidden text-center lg:block'>
+          <h3 className='font-bold'>{label}</h3>
+          {weeks && <p className='text-sm text-muted-foreground'>{weeks}</p>}
+        </div>
         <CollapsiblePrimitive.Content
           forceMount
           asChild
@@ -158,6 +178,21 @@ function Round({
       </section>
     </CollapsiblePrimitive.Root>
   );
+}
+
+/**
+ * A round's NFL weeks, so a two-week round reads as one: "Week 5",
+ * "Weeks 7–8".
+ */
+function weeksLabel(weeks: number[]) {
+  if (weeks.length === 0) return null;
+  if (weeks.length === 1) return `Week ${weeks[0]}`;
+  const consecutive = weeks.every(
+    (week, index) => index === 0 || week === weeks[index - 1]! + 1,
+  );
+  return consecutive
+    ? `Weeks ${weeks[0]}–${weeks[weeks.length - 1]}`
+    : `Weeks ${weeks.join(', ')}`;
 }
 
 function SideRow({

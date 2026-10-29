@@ -5,7 +5,6 @@ import GoBox from '~/components/ui/GoBox';
 import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
 import { getCups } from '~/models/cup.server';
-import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { RouteHandle } from '~/utils/route-handle';
 import { yearOptions } from '~/utils/years';
@@ -18,19 +17,15 @@ const yearParam = (params: LoaderFunctionArgs['params']) =>
 
 /**
  * One season for the whole section: the header's year picker moves the tab
- * you are on to another year, and the league picker lists that year's
- * leagues, so the two never disagree.
+ * you are on to another year.
  */
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const [season, cups] = await Promise.all([getCurrentSeason(), getCups()]);
-  const year = yearParam(params) ?? season?.year ?? null;
-  const leagues = year ? await getLeaguesByYear(year) : [];
 
   return typedjson({
-    year,
+    year: yearParam(params) ?? season?.year ?? null,
     currentYear: season?.year ?? null,
     cupYears: cups.map(cup => cup.year).sort((a, b) => b - a),
-    leagues: leagues.map(league => league.name),
   });
 };
 
@@ -52,8 +47,7 @@ const ITEMS = [
 const SEASON_TABS = ['standings', 'leaderboard', 'cup', 'adp'] as const;
 
 export default function Leagues() {
-  const { year, currentYear, cupYears, leagues } =
-    useTypedLoaderData<typeof loader>();
+  const { year, currentYear, cupYears } = useTypedLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const tab = SEASON_TABS.find(name => pathname.startsWith(`/leagues/${name}`));
   const years =
@@ -76,21 +70,9 @@ export default function Leagues() {
             label='Leagues'
             items={ITEMS}
             picker={
-              year && (
-                <div className='flex flex-wrap items-center gap-3'>
-                  {years.length > 0 && (
-                    <GoBox buttonText={`${year} Season`} options={years} />
-                  )}
-                  {leagues.length > 0 && (
-                    <GoBox
-                      buttonText={`${year} Leagues`}
-                      options={leagues.map(name => ({
-                        label: name,
-                        url: `/leagues/${year}/${name.toLowerCase()}`,
-                      }))}
-                    />
-                  )}
-                </div>
+              year &&
+              years.length > 0 && (
+                <GoBox buttonText={`${year} Season`} options={years} />
               )
             }
           />
