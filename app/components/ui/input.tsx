@@ -48,4 +48,25 @@ const NativeSelect = React.forwardRef<
 ));
 NativeSelect.displayName = 'NativeSelect';
 
-export { Input, NativeSelect, Textarea };
+/**
+ * The browser's own checkbox in the accent colour. Wrap it in a label with
+ * its text beside it, or give it an aria-label in a table row.
+ */
+const Checkbox = React.forwardRef<
+  HTMLInputElement,
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>
+>(({ className, ...props }, ref) => (
+  <input
+    ref={ref}
+    type='checkbox'
+    className={cn(
+      'size-4 shrink-0 cursor-pointer accent-[oklch(var(--primary))] disabled:cursor-not-allowed disabled:opacity-50',
+      FOCUS_RING,
+      className,
+    )}
+    {...props}
+  />
+));
+Checkbox.displayName = 'Checkbox';
+
+export { Checkbox, Input, NativeSelect, Textarea };

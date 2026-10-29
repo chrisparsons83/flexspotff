@@ -1,5 +1,5 @@
 import { Field } from './field';
-import { Input, NativeSelect, Textarea } from './input';
+import { Checkbox, Input, NativeSelect, Textarea } from './input';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof Input> = {
@@ -41,6 +41,10 @@ export const Default: Story = {
       <Field label='Locked'>
         <Input disabled defaultValue='2025' />
       </Field>
+      <label className='flex items-center gap-3'>
+        <Checkbox defaultChecked />
+        Mark as scored
+      </label>
     </div>
   ),
 };

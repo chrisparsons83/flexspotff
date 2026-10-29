@@ -9,6 +9,7 @@ import {
 import Alert from '~/components/ui/Alert';
 import LocalDateTime from '~/components/ui/LocalDateTime';
 import { Button } from '~/components/ui/button';
+import { Checkbox } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
 import { getDraftSlotsBySeason } from '~/models/draftSlot.server';
 import {
@@ -234,12 +235,10 @@ export default function RegistrationPage() {
       {draftSlots.map(slot => (
         <li key={slot.id}>
           <label className='flex cursor-pointer items-center gap-3 px-5 py-3'>
-            <input
-              type='checkbox'
+            <Checkbox
               value={slot.id}
               checked={selectedSlots.has(slot.id)}
               onChange={e => toggleSlot(slot.id, e.target.checked)}
-              className='size-4 cursor-pointer accent-[oklch(var(--primary))]'
             />
             <span>
               <LocalDateTime

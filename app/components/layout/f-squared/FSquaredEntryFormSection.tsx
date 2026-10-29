@@ -1,6 +1,7 @@
 import { LockClosedIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import MemberName from '~/components/ui/MemberName';
+import { Checkbox } from '~/components/ui/input';
 import { LeagueMark } from '~/components/ui/swatch';
 import type { League } from '~/models/league.server';
 import type { Team, getTeamsInSeason } from '~/models/team.server';
@@ -54,8 +55,7 @@ export default function FSquaredEntryFormSection({
         {teams.map(team => (
           <li key={team.id}>
             <label className='flex items-center gap-3 px-5 py-2'>
-              <input
-                type='checkbox'
+              <Checkbox
                 name={leagueName}
                 value={team.id}
                 onChange={handleChangeCheck}
@@ -63,7 +63,6 @@ export default function FSquaredEntryFormSection({
                   leagueLocked ||
                   (selected.length === 2 && !selected.includes(team.id))
                 }
-                className='size-4 accent-[oklch(var(--primary))] disabled:opacity-50'
                 defaultChecked={
                   existingPicks ? existingPicks.includes(team.id) : false
                 }
