@@ -1,5 +1,10 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import {
+  D12DraftBoard,
+  D12HeatKey,
+} from '~/components/layout/d12/D12DraftBoard';
+import { BoardWidthToggle } from '~/components/ui/draft-board';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
@@ -9,10 +14,12 @@ import { getD12DraftPicksByUserAndLeagues } from '~/models/d12draftpick.server';
 import { getD12SeasonByYear } from '~/models/d12season.server';
 import type { Player } from '~/models/players.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
+import { getD12Profile } from '~/models/profile/d12.server';
 import { getUserById } from '~/models/user.server';
 import { type RouteHandle, dataOf } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
+  width: 'expandable',
   title: ({ data }) => {
     const name = dataOf<typeof loader>(data)?.discordName;
     return name;
@@ -64,7 +71,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     if (player.sleeperId) playersMap.set(player.sleeperId, player);
   }
 
+  // The same combined board their profile shows, for this season.
+  const profile = await getD12Profile(userId);
+  const board = profile.hasPlayed
+    ? profile.boards.find(candidate => candidate.year === year) ?? null
+    : null;
+
   return typedjson({
+    board,
     ownership,
     playersMap,
     discordName: user.discordName,
@@ -74,7 +88,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export default function D12MemberRoster() {
-  const { ownership, playersMap, discordName, year, totalLeagues } =
+  const { board, ownership, playersMap, discordName, year, totalLeagues } =
     useTypedLoaderData<typeof loader>();
 
   const { rows, sort } = useTableSort(
@@ -89,41 +103,61 @@ export default function D12MemberRoster() {
   );
 
   return (
-    <Section
-      title={`${discordName}’s Roster`}
-      action={<Link to={`/side-leagues/d12/${year}`}>{year} Standings</Link>}
-    >
-      {ownership.length === 0 ? (
-        <EmptyState title='No picks for this member this season' />
-      ) : (
-        <Table
-          headers={['Player', 'Position', 'Leagues Owned', 'Average Pick']}
-          numericColumns={[2, 3]}
-          sortKeys={{
-            0: 'player',
-            1: 'position',
-            2: 'leagueCount',
-            3: 'avgPick',
-          }}
-          sort={sort}
+    <>
+      {board && (
+        <Section
+          title={`${discordName}’s Draft Board`}
+          action={
+            <div className='flex flex-wrap items-center gap-4'>
+              <Link to={`/side-leagues/d12/${year}`}>{year} Standings</Link>
+              <BoardWidthToggle />
+            </div>
+          }
+          footnote={<D12HeatKey />}
         >
-          {rows.map(item => {
-            const playerInfo = playersMap.get(item.sleeperId);
-            return (
-              <tr key={item.sleeperId}>
-                <td>{playerInfo?.fullName ?? item.sleeperId}</td>
-                <td>
-                  <PositionMark position={playerInfo?.position ?? null} />
-                </td>
-                <td className='text-right'>
-                  {item.leagueCount} of {totalLeagues}
-                </td>
-                <td className='text-right'>{item.avgPick.toFixed(1)}</td>
-              </tr>
-            );
-          })}
-        </Table>
+          <D12DraftBoard board={board} />
+        </Section>
       )}
-    </Section>
+      <Section
+        title={board ? 'Players Drafted' : `${discordName}’s Roster`}
+        action={
+          !board && (
+            <Link to={`/side-leagues/d12/${year}`}>{year} Standings</Link>
+          )
+        }
+      >
+        {ownership.length === 0 ? (
+          <EmptyState title='No picks for this member this season' />
+        ) : (
+          <Table
+            headers={['Player', 'Position', 'Leagues Owned', 'Average Pick']}
+            numericColumns={[2, 3]}
+            sortKeys={{
+              0: 'player',
+              1: 'position',
+              2: 'leagueCount',
+              3: 'avgPick',
+            }}
+            sort={sort}
+          >
+            {rows.map(item => {
+              const playerInfo = playersMap.get(item.sleeperId);
+              return (
+                <tr key={item.sleeperId}>
+                  <td>{playerInfo?.fullName ?? item.sleeperId}</td>
+                  <td>
+                    <PositionMark position={playerInfo?.position ?? null} />
+                  </td>
+                  <td className='text-right'>
+                    {item.leagueCount} of {totalLeagues}
+                  </td>
+                  <td className='text-right'>{item.avgPick.toFixed(1)}</td>
+                </tr>
+              );
+            })}
+          </Table>
+        )}
+      </Section>
+    </>
   );
 }
