@@ -1,11 +1,11 @@
-import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import type { ReactNode } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import { Button } from '~/components/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/ui/card';
 import { ExternalLink, Link } from '~/components/ui/link';
 import { PageHeader } from '~/components/ui/page-header';
+import { Section } from '~/components/ui/section';
 import { SummaryRows } from '~/components/ui/summary-card';
 import type { DashboardRow } from '~/libs/dashboard/week';
 import { getMemberWeek } from '~/libs/dashboard/week.server';
@@ -52,7 +52,7 @@ export default function Games() {
         title='Games'
         description='Weekly side games alongside the leagues: stream a quarterback, bet the spread, lock in winners, set a DFS lineup, pick a team from every league in F², and outlast everyone in Survivor.'
       />
-      <div className='grid gap-6'>
+      <div>
         {games.map(game => (
           <GameRow
             key={game.to}
@@ -69,9 +69,9 @@ export default function Games() {
 }
 
 /**
- * One game across the page: where its week stands and how to enter it, then
- * the top of its newest week, the top of its season, and how the reader is
- * doing.
+ * One game: a section with its week and how to enter it, then three panels
+ * side by side: the top of its newest week, the top of its season, and how
+ * the reader is doing.
  */
 function GameRow({
   game,
@@ -97,35 +97,29 @@ function GameRow({
   ) : null;
 
   return (
-    <Card className='min-w-0'>
-      <CardHeader>
-        <CardTitle>
-          <Link to={game.to} variant='quiet' className='inline-flex'>
-            {game.name}
-            <ChevronRightIcon
-              aria-hidden
-              className='ml-1 size-5 self-center text-primary'
-            />
-          </Link>
-        </CardTitle>
-        {action}
-      </CardHeader>
-      {(game.status || game.statusLink) && (
-        <p className='px-5 pt-3 text-sm text-muted-foreground'>
-          {game.status}
-          {game.statusLink && (
-            <>
-              {game.status && ' '}
-              <ExternalLink href={game.statusLink.href} target='_blank'>
-                {game.statusLink.label}
-              </ExternalLink>
-            </>
-          )}
-        </p>
-      )}
-      <div className='grid gap-6 px-5 pb-5 pt-4 md:grid-cols-3'>
+    <Section
+      title={game.name}
+      to={game.to}
+      action={action}
+      description={
+        (game.status || game.statusLink) && (
+          <>
+            {game.status}
+            {game.statusLink && (
+              <>
+                {game.status && ' '}
+                <ExternalLink href={game.statusLink.href} target='_blank'>
+                  {game.statusLink.label}
+                </ExternalLink>
+              </>
+            )}
+          </>
+        )
+      }
+    >
+      <div className='grid gap-3 md:grid-cols-3'>
         {game.lastWeek !== undefined && (
-          <Column
+          <Panel
             title={game.lastWeek ? `Week ${game.lastWeek.week}` : 'Last Week'}
           >
             {game.lastWeek && game.lastWeek.rows.length > 0 ? (
@@ -133,42 +127,40 @@ function GameRow({
             ) : (
               <Empty>No week scored yet.</Empty>
             )}
-          </Column>
+          </Panel>
         )}
-        <Column title='Season'>
+        <Panel title='Season'>
           {game.rows.length > 0 ? (
             <SummaryRows rows={game.rows} />
           ) : (
             <Empty>{game.empty}</Empty>
           )}
-        </Column>
+        </Panel>
         {mine && (
-          <Column title='You'>
-            <dl className='m-0 grid gap-2 text-sm'>
-              <Fact label='Standing' value={mine.standing} />
-              {mine.season && <Fact label='Season' value={mine.season} />}
-              {mine.lastWeek && (
-                <Fact
-                  label='Last Week'
-                  value={
-                    mine.lastWeekPlace
-                      ? `${mine.lastWeek}, ${mine.lastWeekPlace}`
-                      : mine.lastWeek
-                  }
-                />
-              )}
-            </dl>
-          </Column>
+          <CareerCard
+            title='You'
+            lead={mine.standing ?? '–'}
+            leadNote={mine.season ? `${mine.season} this season` : undefined}
+          >
+            {mine.lastWeek && (
+              <MiniStat
+                label='Last Week'
+                value={mine.lastWeek}
+                detail={mine.lastWeekPlace}
+              />
+            )}
+          </CareerCard>
         )}
       </div>
-    </Card>
+    </Section>
   );
 }
 
-function Column({ title, children }: { title: string; children: ReactNode }) {
+/** A lighter compartment of a game's section, as the career cards are. */
+function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className='min-w-0'>
-      <h4 className='mb-1 text-sm font-semibold text-muted-foreground'>
+    <section className='min-w-0 bg-secondary p-4 md:p-5'>
+      <h4 className='m-0 mb-2 text-sm font-semibold text-muted-foreground'>
         {title}
       </h4>
       {children}
@@ -178,13 +170,4 @@ function Column({ title, children }: { title: string; children: ReactNode }) {
 
 function Empty({ children }: { children: ReactNode }) {
   return <p className='py-1 text-sm text-muted-foreground'>{children}</p>;
-}
-
-function Fact({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className='flex justify-between gap-4'>
-      <dt className='text-muted-foreground'>{label}</dt>
-      <dd className='m-0 font-semibold tabular-nums'>{value ?? '–'}</dd>
-    </div>
-  );
 }
