@@ -2,7 +2,6 @@ import Honours from './Honours';
 import type { ReactNode } from 'react';
 import MemberAvatar from '~/components/ui/MemberAvatar';
 import { Link } from '~/components/ui/link';
-import { StatList } from '~/components/ui/stat-list';
 import type { ProfileSummary } from '~/models/profile/summary.server';
 
 type Props = {
@@ -33,9 +32,21 @@ export default function ProfileHero({ summary, tabs }: Props) {
           </div>
         </div>
 
-        <div className='mt-6'>
-          <StatList stats={headline} />
-        </div>
+        {/* The career at a glance, a tile each, as the profile has always
+            opened. */}
+        <dl className='m-0 mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6'>
+          {headline.map(stat => (
+            <div
+              key={stat.label}
+              className='bg-secondary px-4 py-3 text-center'
+            >
+              <dt className='text-sm text-muted-foreground'>{stat.label}</dt>
+              <dd className='m-0 mt-1 text-xl font-extrabold tabular-nums'>
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
 
         <Honours badges={badges} />
 

@@ -1,59 +1,94 @@
-import { Badge as BadgeBlock } from '~/components/ui/badge';
-import { type Fill, SEQUENCE } from '~/components/ui/fills';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
+import { FOCUS_RING } from '~/components/ui/styles';
 import type { Badge } from '~/models/profile/badges';
+import { RIBBONS } from '~/styles/tokens/ribbons';
+import { cn } from '~/utils';
 
-/**
- * A banded badge steps up the value sequence with its tier, from the middle
- * of the sequence to its lightest step, so the top tier is the brightest
- * block whatever the badge's number of tiers.
- */
-const fillFor = (badge: Badge): Fill => {
-  if (badge.fill !== 'sequence') return badge.fill;
-  const top = SEQUENCE.length - 1;
-  const bottom = Math.floor(top / 2);
-  const step = Math.round(
-    bottom + ((top - bottom) * badge.tier) / badge.tierCount,
-  );
-  return SEQUENCE[Math.min(step, top)];
-};
-
-/**
- * What the block's number counts. A tallied badge counts its wins; a banded
- * one shows its tier, with how many there are said underneath.
- */
-const detailFor = (badge: Badge) =>
+/** What the stars say, for the popover and for screen readers. */
+const starsMean = (badge: Badge) =>
   badge.scale === 'tally'
-    ? undefined
+    ? `${badge.tier} ${badge.tier === 1 ? 'time' : 'times'}`
     : `Tier ${badge.tier} of ${badge.tierCount}`;
 
-/** One award as the system draws it: a block of its colour, its name under. */
-export function Honour({
-  badge,
-  size = 'md',
-}: {
-  badge: Badge;
-  size?: 'md' | 'lg';
-}) {
+/**
+ * One award ribbon, as the site has always drawn it: a tile of the badge's
+ * own colour with a rule along the top and a notched tail, its emoji at the
+ * top and its name and stars at the foot. The emoji sits a fixed distance
+ * from the top and the name from the foot, with the slack between, so both
+ * line up across a shelf whether a name takes one line or three. The notch is
+ * a clip-path, so the tail keeps its shape at any width.
+ */
+export function Honour({ badge }: { badge: Badge }) {
+  const ribbon = RIBBONS[badge.key];
   return (
-    <BadgeBlock
-      fill={fillFor(badge)}
-      size={size}
-      mark={badge.tier}
-      label={badge.label}
-      detail={detailFor(badge)}
-    />
+    <span
+      className='flex h-full min-h-[7.75rem] w-full flex-col items-center border-t-4 px-0.5 text-center [clip-path:polygon(0_0,100%_0,100%_100%,50%_86%,0_100%)]'
+      style={{
+        borderTopColor: ribbon?.edge,
+        backgroundColor: ribbon?.wash,
+      }}
+    >
+      <span aria-hidden='true' className='pt-2.5 text-2xl leading-none'>
+        {ribbon?.emoji}
+      </span>
+      <span className='flex-1' />
+      <span className='flex flex-col items-center gap-1 pb-6'>
+        <span
+          // check:patterns allow: the ribbons keep the pre-redesign look, small capitals included
+          className='text-[9px] font-semibold uppercase leading-tight tracking-wide'
+          style={{ color: ribbon?.label }}
+        >
+          {badge.label}
+        </span>
+        <span
+          className='text-xs leading-none tracking-tighter'
+          style={{ color: ribbon?.star }}
+          aria-label={starsMean(badge)}
+        >
+          {/* check:patterns allow: a ribbon's stars, as the profile has always drawn them */}
+          {'★'.repeat(badge.tier)}
+        </span>
+      </span>
+    </span>
   );
 }
 
-/** A member's awards on the grid, in the catalog's order. */
+/**
+ * A member's awards as a shelf of ribbons, in the catalog's order. Each opens
+ * on a tap to say what it is for, so the explanation reaches a phone too.
+ */
 export default function Honours({ badges }: { badges: Badge[] }) {
   if (badges.length === 0) return null;
 
   return (
-    <ul className='not-prose mt-6 grid grid-cols-3 gap-x-6 gap-y-8 p-0 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8'>
+    // auto-rows-fr keeps every ribbon the height of the tallest, whatever
+    // its name does.
+    <ul className='not-prose mt-6 grid auto-rows-fr grid-cols-4 gap-1.5 p-0 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12'>
       {badges.map(badge => (
         <li key={badge.key} className='list-none'>
-          <Honour badge={badge} />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type='button'
+                className={cn(
+                  'block h-full w-full cursor-pointer transition-opacity duration-fast hover:opacity-90',
+                  FOCUS_RING,
+                )}
+              >
+                <Honour badge={badge} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className='w-64 text-sm'>
+              <p className='m-0 font-semibold'>{badge.label}</p>
+              <p className='m-0 mt-1 text-muted-foreground'>
+                {badge.description}. {starsMean(badge)}.
+              </p>
+            </PopoverContent>
+          </Popover>
         </li>
       ))}
     </ul>

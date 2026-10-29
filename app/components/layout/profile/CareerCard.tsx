@@ -1,12 +1,19 @@
 import type { ReactNode } from 'react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
+import { FOCUS_RING } from '~/components/ui/styles';
 import { cn } from '~/utils';
 
 /**
  * One topic of a tab's Career section, led by the number that sums it up
- * rather than a tile per number. The small stats go in as `MiniStat`s.
+ * rather than a tile per number. The small stats go in as `MiniStat`s, in
+ * one row.
  *
- * What a stat counts, where its label cannot say it all, is written under
- * the stat itself rather than behind a hover that a phone never shows.
+ * What a stat counts, where its label cannot say it all, opens from the
+ * label on a tap or a click, so it reaches a phone too.
  */
 export default function CareerCard({
   title,
@@ -57,14 +64,13 @@ export default function CareerCard({
           stats had a detail line and another's did not. */}
       <div className='mt-5'>
         {meter}
-        {/* As many equal columns as fit, so four small stats sit in a row on
-            a desktop and wrap to two rows on a phone rather than squeeze. */}
+        {/* One row, each column at least as wide as its value, so a value
+            never breaks. A detail goes under the value when it cannot fit
+            beside it. */}
         <dl
           className={cn(
-            'm-0 mt-4 grid',
-            compactStats
-              ? 'grid-cols-[repeat(auto-fit,minmax(3.5rem,1fr))] gap-3'
-              : 'grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-4',
+            'm-0 mt-4 grid auto-cols-[minmax(min-content,1fr)] grid-flow-col',
+            compactStats ? 'gap-3' : 'gap-4',
           )}
         >
           {children}
@@ -93,24 +99,44 @@ export function MiniStat({
   /** Trails the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
   /**
-   * What the stat counts, where its label cannot say it all, written in
-   * small print under the value.
+   * What the stat counts, where its label cannot say it all. It opens from
+   * the label, which is underlined with dots to say so.
    */
   hint?: string;
-  /** A fuller explanation, under the hint. */
+  /** A fuller explanation, after the hint. */
   info?: ReactNode;
   tone?: string;
 }) {
   return (
     <div className='flex flex-col'>
-      <dt className='text-sm text-muted-foreground'>{label}</dt>
+      <dt className='text-sm text-muted-foreground'>
+        {hint || info ? (
+          <Popover>
+            <PopoverTrigger
+              className={cn(
+                'cursor-help text-left underline decoration-dotted underline-offset-4',
+                FOCUS_RING,
+              )}
+            >
+              {label}
+            </PopoverTrigger>
+            <PopoverContent className='grid w-64 gap-1 text-sm'>
+              <p className='m-0 font-semibold text-foreground'>{label}</p>
+              {hint && <p className='m-0 text-muted-foreground'>{hint}</p>}
+              {info && <div className='text-muted-foreground'>{info}</div>}
+            </PopoverContent>
+          </Popover>
+        ) : (
+          label
+        )}
+      </dt>
       <dd
         className={cn(
           'm-0 mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xl font-bold tabular-nums',
           tone,
         )}
       >
-        <span>
+        <span className='whitespace-nowrap'>
           {value}
           {unit && (
             <span className='ml-0.5 text-sm font-semibold text-muted-foreground'>
@@ -118,22 +144,13 @@ export function MiniStat({
             </span>
           )}
         </span>
-        {/* Inline where it fits, so the small stats stay the same height and
-            the cards level; a detail too long for its column wraps under the
-            value, and then onto a second line, instead of running into the
-            next stat. */}
+        {/* Beside the value where it fits, under it where it does not. */}
         {detail && (
           <span className='min-w-0 text-sm font-normal text-muted-foreground'>
             {detail}
           </span>
         )}
       </dd>
-      {(hint || info) && (
-        <dd className='m-0 mt-1 grid gap-1 text-sm text-muted-foreground'>
-          {hint && <span>{hint}</span>}
-          {info && <span>{info}</span>}
-        </dd>
-      )}
     </div>
   );
 }
