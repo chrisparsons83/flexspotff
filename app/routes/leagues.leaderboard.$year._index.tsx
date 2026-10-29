@@ -8,9 +8,6 @@ import {
   getTeamGameYearlyTotals,
 } from '~/models/teamgame.server';
 import { FIRST_YEAR } from '~/utils/constants';
-import type { RouteHandle } from '~/utils/route-handle';
-
-export const handle: RouteHandle = { title: ({ params }) => params.year };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);

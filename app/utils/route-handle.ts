@@ -45,24 +45,59 @@ type TitleMatch = {
   data: unknown;
 };
 
+/** A route's name, given the page's path. Missing when it has none. */
+const routeName = (match: TitleMatch, pathname: string) => {
+  if (!isRouteHandle(match.handle) || !match.handle.title) return null;
+  const { title } = match.handle;
+  try {
+    return typeof title === 'string' ? title : title({ ...match, pathname });
+  } catch {
+    // A title read off data the loader never sent is no title at all.
+    return null;
+  }
+};
+
 /** Every route's name from the deepest out, skipping one its parent gave. */
 const pageNames = (matches: TitleMatch[]): string[] => {
   const names: string[] = [];
   // A match's own pathname is only the part of the URL it matched.
   const pathname = matches.at(-1)?.pathname ?? '/';
   for (const match of [...matches].reverse()) {
-    if (!isRouteHandle(match.handle) || !match.handle.title) continue;
-    const { title } = match.handle;
-    let name: string | null | undefined;
-    try {
-      name = typeof title === 'string' ? title : title({ ...match, pathname });
-    } catch {
-      // A title read off data the loader never sent is no title at all.
-      name = null;
-    }
+    const name = routeName(match, pathname);
     if (name && name !== names[names.length - 1]) names.push(name);
   }
   return names;
+};
+
+export type Crumb = { label: string; to: string };
+
+const withoutTrailingSlash = (path: string) =>
+  path.length > 1 ? path.replace(/\/+$/, '') : path;
+
+/**
+ * The way down to this page, outermost first: its section of the main nav,
+ * then every route that names itself, each linked to the page at its path.
+ * A route at the same path as the one above it adds nothing, so an index
+ * page is named by its layout. Empty outside the nav's sections.
+ */
+export const breadcrumbs = (
+  matches: TitleMatch[],
+  sections: readonly { label: string; to: string }[],
+): Crumb[] => {
+  const pathname = withoutTrailingSlash(matches.at(-1)?.pathname ?? '/');
+  const section = sections.find(
+    ({ to }) => pathname === to || pathname.startsWith(`${to}/`),
+  );
+  if (!section) return [];
+  const crumbs: Crumb[] = [{ label: section.label, to: section.to }];
+  for (const match of matches) {
+    const to = withoutTrailingSlash(match.pathname);
+    const last = crumbs[crumbs.length - 1];
+    if (to === last.to || !to.startsWith(`${section.to}/`)) continue;
+    const label = routeName(match, pathname);
+    if (label && label !== last.label) crumbs.push({ label, to });
+  }
+  return crumbs;
 };
 
 /** The browser tab's title: the page's names, then the site's. */

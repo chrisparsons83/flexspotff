@@ -13,9 +13,9 @@ import { getUserById } from '~/models/user.server';
 import { type RouteHandle, dataOf } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ data, params }) => {
+  title: ({ data }) => {
     const name = dataOf<typeof loader>(data)?.discordName;
-    return name && `${name}, ${params.year}`;
+    return name;
   },
 };
 
