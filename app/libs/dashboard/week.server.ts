@@ -1,6 +1,6 @@
 import {
   buildMemberWeek,
-  type CupSide,
+  type CupGameSide,
   type GameStanding,
   type MemberWeekFacts,
   type PickWeek,
@@ -300,7 +300,7 @@ async function memberCupFacts(userId: string, year: number) {
   if (!bracket) return null;
   const side = (
     cupTeam: (typeof bracket.cupGames)[number]['topTeam'],
-  ): CupSide | null =>
+  ): CupGameSide | null =>
     cupTeam && {
       cupTeamId: cupTeam.id,
       teamId: cupTeam.teamId,

@@ -6,6 +6,7 @@
  * Built from facts the server has already gathered, so the rules can be
  * tested without a database.
  */
+import { pts } from '~/libs/guillotine/display';
 import {
   CUP_ROUNDS,
   type CupRound,
@@ -82,6 +83,7 @@ export type CupGameFact = {
   opponent: string | null;
 };
 
+/** Where the member stands in this year's cup. */
 export type CupFacts = {
   /** Their newest decided game. */
   lastGame: CupGameFact | null;
@@ -204,8 +206,6 @@ export function pointsLeague(
   };
 }
 
-const pts = (points: number) => `${points.toFixed(2)} pts`;
-
 const pointsLeagueRow = (
   label: string,
   href: string,
@@ -215,7 +215,7 @@ const pointsLeagueRow = (
   section: 'Side leagues',
   label,
   lastWeek: lastWeek
-    ? `Week ${lastWeek.week}: ${pts(lastWeek.points)}, ${ordinal(
+    ? `Week ${lastWeek.week}: ${pts(lastWeek.points)} pts, ${ordinal(
         lastWeek.rank,
       )} of ${lastWeek.of}`
     : null,
@@ -226,7 +226,7 @@ const pointsLeagueRow = (
 });
 
 /** One side of a cup game, as the bracket stores it. */
-export type CupSide = {
+export type CupGameSide = {
   cupTeamId: string;
   /** The league team, which the round's scores are kept against. */
   teamId: string;
@@ -237,8 +237,8 @@ export type CupSide = {
 /** A cup game: its round, its sides, and its winner once decided. */
 export type CupGameRow = {
   round: string;
-  top: CupSide | null;
-  bottom: CupSide | null;
+  top: CupGameSide | null;
+  bottom: CupGameSide | null;
   winningTeamId: string | null;
 };
 
@@ -272,7 +272,7 @@ export function cupFacts(
   const rounds = games.flatMap(game =>
     isCupRound(game.round) ? [{ ...game, round: game.round }] : [],
   );
-  const points = (side: CupSide | null, round: CupRound) =>
+  const points = (side: CupGameSide | null, round: CupRound) =>
     scores.find(
       score => score.teamId === side?.teamId && score.mapping === round,
     )?.pointsScored ?? 0;
@@ -312,9 +312,9 @@ const cupLastWeek = ({ lastGame, latestRound }: CupFacts) => {
   if (!lastGame || lastGame.round !== latestRound) return null;
   const round = ROUND_LABEL[lastGame.round];
   if (!lastGame.opponent) return `${round}: bye`;
-  return `${round}: ${lastGame.won ? 'won' : 'lost'} ${lastGame.points.toFixed(
-    2,
-  )} to ${lastGame.opponentPoints.toFixed(2)} against ${lastGame.opponent}`;
+  return `${round}: ${lastGame.won ? 'won' : 'lost'} ${pts(
+    lastGame.points,
+  )} to ${pts(lastGame.opponentPoints)} against ${lastGame.opponent}`;
 };
 
 /** Their cup game now, or where their run ended. */

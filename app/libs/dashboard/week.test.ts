@@ -1,6 +1,6 @@
 import {
   type CupGameRow,
-  type CupSide,
+  type CupGameSide,
   buildMemberWeek,
   cupFacts,
   type MemberWeekFacts,
@@ -218,7 +218,7 @@ describe('pointsLeague', () => {
 });
 
 describe('cupFacts', () => {
-  const side = (name: string, userId: string | null = name): CupSide => ({
+  const side = (name: string, userId: string | null = name): CupGameSide => ({
     cupTeamId: `cup-${name}`,
     teamId: `team-${name}`,
     userId,
@@ -226,9 +226,9 @@ describe('cupFacts', () => {
   });
   const game = (
     round: string,
-    top: CupSide | null,
-    bottom: CupSide | null,
-    winner: CupSide | null = null,
+    top: CupGameSide | null,
+    bottom: CupGameSide | null,
+    winner: CupGameSide | null = null,
   ): CupGameRow => ({
     round,
     top,
@@ -238,7 +238,7 @@ describe('cupFacts', () => {
   const me = side('me');
   const you = side('you');
   const them = side('them');
-  const score = (who: CupSide, mapping: string, pointsScored: number) => ({
+  const score = (who: CupGameSide, mapping: string, pointsScored: number) => ({
     teamId: who.teamId,
     mapping,
     pointsScored,

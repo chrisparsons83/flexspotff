@@ -20,7 +20,10 @@ export const handle: RouteHandle = {
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });
   const picks = await getDraftBoardPicks(league.id);
-  const teams = league.teams.length;
+  // From the pick number, not the team's list: a traded pick leaves a team
+  // with two picks in one round and none in another.
+  const roundOf = (pickNumber: number) =>
+    Math.ceil(pickNumber / league.teams.length);
 
   const columns = league.teams
     .map(team => {
@@ -33,9 +36,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         picks: teamPicks.map(pick => ({
           id: pick.id,
           pickNumber: pick.pickNumber,
-          // From the pick number, not the team's list: a traded pick leaves
-          // a team with two picks in one round and none in another.
-          round: Math.ceil(pick.pickNumber / teams),
+          round: roundOf(pick.pickNumber),
           name: pick.Player.fullName,
           position: pick.Player.position,
           nflTeam: pick.Player.nflTeam,
@@ -46,10 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({
     columns,
-    rounds: Math.max(
-      0,
-      ...picks.map(pick => Math.ceil(pick.pickNumber / teams)),
-    ),
+    rounds: Math.max(0, ...picks.map(pick => roundOf(pick.pickNumber))),
   });
 };
 
