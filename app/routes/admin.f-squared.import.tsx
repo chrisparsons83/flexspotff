@@ -10,6 +10,10 @@ import SheetNamesTable from '~/components/layout/admin/SheetNamesTable';
 import Alert from '~/components/ui/Alert';
 import { toSelectableMember } from '~/components/ui/MemberSelect';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input, NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import type { HistoryPreview } from '~/libs/f-squared/history-import.server';
 import {
   FIRST_SITE_F_SQUARED_YEAR,
@@ -192,8 +196,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-const inputClass = 'border border-border bg-card px-3 py-2 text-foreground';
-
 export default function ImportFSquaredHistory() {
   const { source, preview, error, members } =
     useTypedLoaderData<typeof loader>();
@@ -202,25 +204,15 @@ export default function ImportFSquaredHistory() {
   const busy = navigation.state !== 'idle';
 
   return (
-    <>
-      <h2 className='mt-0'>Import F² history</h2>
-      <p>
-        Brings an F² season that was run in Google Sheets onto the site. The
-        sheet has to be viewable by anyone with the link. Two of its tabs are
-        read: the picks (one row per pick, with Manager, Pick and Points) and
-        the Fantasy Team Scores, whose weekly scores tell which site team each
-        pick means. Entries score their teams' points on the site, which can be
-        a few points off the sheet's where Sleeper corrected stats afterwards.
-        Importing a year replaces anything already imported for it.
-      </p>
-
-      <Form method='GET' className='not-prose flex flex-wrap items-end gap-2'>
-        <label className='flex flex-col text-sm'>
-          Year
-          <select
+    <Section
+      title='Import F² history'
+      description="Brings an F² season that was run in Google Sheets onto the site. The sheet has to be viewable by anyone with the link. Two of its tabs are read: the picks (one row per pick, with Manager, Pick and Points) and the Fantasy Team Scores, whose weekly scores tell which site team each pick means. Entries score their teams' points on the site, which can be a few points off the sheet's where Sleeper corrected stats afterwards. Importing a year replaces anything already imported for it."
+    >
+      <Form method='GET' className='mb-6 flex flex-wrap items-end gap-3'>
+        <Field label='Year' className='w-28'>
+          <NativeSelect
             name='year'
             defaultValue={source.year}
-            className={inputClass}
             onChange={event => {
               const form = event.currentTarget.form;
               const known = KNOWN_SHEETS[Number(event.currentTarget.value)];
@@ -238,45 +230,30 @@ export default function ImportFSquaredHistory() {
                 {year}
               </option>
             ))}
-          </select>
-        </label>
-        <label className='flex flex-grow flex-col text-sm'>
-          Sheet link
-          <input
-            type='url'
-            name='sheet'
-            defaultValue={source.sheet}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className='flex flex-col text-sm'>
-          Picks tab
-          <input
-            name='picksTab'
-            defaultValue={source.picksTab}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className='flex flex-col text-sm'>
-          Team scores tab
-          <input
-            name='teamsTab'
-            defaultValue={source.teamsTab}
-            required
-            className={inputClass}
-          />
-        </label>
+          </NativeSelect>
+        </Field>
+        <Field label='Sheet link' className='min-w-64 flex-grow'>
+          <Input type='url' name='sheet' defaultValue={source.sheet} required />
+        </Field>
+        <Field label='Picks tab'>
+          <Input name='picksTab' defaultValue={source.picksTab} required />
+        </Field>
+        <Field label='Team scores tab'>
+          <Input name='teamsTab' defaultValue={source.teamsTab} required />
+        </Field>
         <Button type='submit' disabled={busy}>
           Preview
         </Button>
       </Form>
 
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
-      {error && <Alert message={error} status='error' />}
+      {error && <Alert message={error} status='error' className='mb-6' />}
 
       {preview && (
         <>
@@ -284,9 +261,14 @@ export default function ImportFSquaredHistory() {
             <Alert
               message={`Not ready to import yet: ${preview.blocking.join(' ')}`}
               status='warning'
+              className='mb-6'
             />
           ) : (
-            <Alert message='Ready to import.' status='success' />
+            <Alert
+              message='Ready to import.'
+              status='success'
+              className='mb-6'
+            />
           )}
 
           <SheetNamesTable
@@ -296,82 +278,89 @@ export default function ImportFSquaredHistory() {
           />
 
           {preview.parseErrors.length > 0 && (
-            <>
-              <h3>Unreadable lines</h3>
-              <ul>
+            <Section as='h3' title='Unreadable lines'>
+              <ul className='grid gap-1 font-mono text-sm'>
                 {preview.parseErrors.map(parseError => (
                   <li key={parseError}>{parseError}</li>
                 ))}
               </ul>
-            </>
+            </Section>
           )}
 
           {(preview.teamErrors.length > 0 || preview.pickErrors.length > 0) && (
-            <>
-              <h3>Teams that could not be matched</h3>
+            <Section as='h3' title='Teams that could not be matched'>
               {preview.teamErrors.map(teamError => (
-                <Alert key={teamError} message={teamError} status='error' />
+                <Alert
+                  key={teamError}
+                  message={teamError}
+                  status='error'
+                  className='mb-6'
+                />
               ))}
               {preview.pickErrors.map(pickError => (
                 <Alert
                   key={pickError.line}
                   message={`Picks line ${pickError.line} (${pickError.manager}): ${pickError.error}`}
                   status='error'
+                  className='mb-6'
                 />
               ))}
-            </>
+            </Section>
           )}
 
           {preview.entryNotes.length > 0 && (
-            <>
-              <h3>Entries that need a look</h3>
-              <p>These are imported as the sheet had them.</p>
-              <ul>
+            <Section
+              as='h3'
+              title='Entries that need a look'
+              description='These are imported as the sheet had them.'
+            >
+              <ul className='grid gap-1'>
                 {preview.entryNotes.map(note => (
                   <li key={`${note.name}:${note.note}`}>
                     {note.name}: {note.note}
                   </li>
                 ))}
               </ul>
-            </>
+            </Section>
           )}
 
           {preview.teams.length > 0 && (
-            <details>
-              <summary>
+            <details className='mt-16'>
+              <summary className='cursor-pointer text-xl font-extrabold tracking-tight'>
                 Teams ({preview.teams.length}), matched by weekly scores
               </summary>
-              <p>
+              <p className='mb-6 mt-1 max-w-prose text-muted-foreground'>
                 Each sheet team and the site team whose weekly scores are
                 closest. Differences of a few points are stat corrections made
                 after the sheet was scored.
               </p>
-              <table>
-                <thead>
-                  <tr>
-                    <th>League</th>
-                    <th>Sheet name</th>
-                    <th>Site team</th>
-                    <th>Sheet points</th>
-                    <th>Site points</th>
+              <Table
+                headers={[
+                  'League',
+                  'Sheet name',
+                  'Site team',
+                  'Sheet points',
+                  'Site points',
+                ]}
+                numericColumns={[3, 4]}
+                primaryColumns={[2, 4]}
+              >
+                {preview.teams.map(team => (
+                  <tr key={`${team.league}:${team.sheetName}`}>
+                    <td>{team.league}</td>
+                    <td>{team.sheetName}</td>
+                    <td>{team.owner ?? 'Unowned'}</td>
+                    <td className='text-right'>
+                      {team.sheetPoints.toFixed(2)}
+                    </td>
+                    <td className='text-right'>{team.sitePoints.toFixed(2)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {preview.teams.map(team => (
-                    <tr key={`${team.league}:${team.sheetName}`}>
-                      <td>{team.league}</td>
-                      <td>{team.sheetName}</td>
-                      <td>{team.owner ?? 'Unowned'}</td>
-                      <td>{team.sheetPoints.toFixed(2)}</td>
-                      <td>{team.sitePoints.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </Table>
             </details>
           )}
 
-          <Form method='POST'>
+          <Form method='POST' className='mt-16'>
             <input type='hidden' name='year' value={source.year} />
             <input type='hidden' name='sheet' value={source.sheet} />
             <input type='hidden' name='picksTab' value={source.picksTab} />
@@ -387,36 +376,32 @@ export default function ImportFSquaredHistory() {
           </Form>
 
           {preview.entries.length > 0 && (
-            <>
-              <h3>Entries ({preview.entries.length})</h3>
-              <p>
-                What the standings will show, with the sheet's own total to
-                check against.
-              </p>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Member</th>
-                    <th>Teams</th>
-                    <th>Points</th>
-                    <th>Sheet</th>
+            <Section
+              as='h3'
+              title={`Entries (${preview.entries.length})`}
+              description="What the standings will show, with the sheet's own total to check against."
+            >
+              <Table
+                headers={['Member', 'Teams', 'Points', 'Sheet']}
+                numericColumns={[1, 2, 3]}
+              >
+                {preview.entries.map(entry => (
+                  <tr key={entry.userId}>
+                    <td>{entry.name}</td>
+                    <td className='text-right'>{entry.teamIds.length}</td>
+                    <td className='text-right'>
+                      {entry.sitePoints.toFixed(2)}
+                    </td>
+                    <td className='text-right'>
+                      {entry.sheetPoints.toFixed(2)}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {preview.entries.map(entry => (
-                    <tr key={entry.userId}>
-                      <td>{entry.name}</td>
-                      <td>{entry.teamIds.length}</td>
-                      <td>{entry.sitePoints.toFixed(2)}</td>
-                      <td>{entry.sheetPoints.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+                ))}
+              </Table>
+            </Section>
           )}
         </>
       )}
-    </>
+    </Section>
   );
 }

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -9,6 +9,11 @@ import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { suggestFromSleeperHandles } from '~/libs/survivor/suggest';
 import { syncSleeperSurvivorPool } from '~/libs/survivor/sync.server';
 import {
@@ -249,31 +254,36 @@ export default function AdminSurvivorPool() {
   const isYahoo = pool.source === 'YAHOO';
 
   return (
-    <div>
-      <p className='text-sm'>
-        <Link to='/admin/survivor'>← Survivor pools</Link>
-      </p>
-      <h2>
-        {pool.name} ({pool.year})
-      </h2>
-      <p className='text-sm'>
-        {isYahoo
-          ? 'Played on Yahoo; loaded from the history file that ships with the site.'
-          : `Sleeper league ${pool.externalId}.`}{' '}
-        Picks from week {pool.startWeek}.{' '}
-        {pool.isComplete ? 'The winner is decided.' : 'Still running.'}{' '}
-        {!isYahoo &&
-          `Last synced ${
-            pool.lastSyncedAt ? pool.lastSyncedAt.toLocaleString() : 'never'
-          }.`}
+    <Section
+      title={`${pool.name} (${pool.year})`}
+      description={
+        <>
+          {isYahoo
+            ? 'Played on Yahoo; loaded from the history file that ships with the site.'
+            : `Sleeper league ${pool.externalId}.`}{' '}
+          Picks from week {pool.startWeek}.{' '}
+          {pool.isComplete ? 'The winner is decided.' : 'Still running.'}{' '}
+          {!isYahoo &&
+            `Last synced ${
+              pool.lastSyncedAt ? pool.lastSyncedAt.toLocaleString() : 'never'
+            }.`}
+        </>
+      }
+    >
+      <p className='-mt-4 mb-6 text-sm'>
+        <Link to='/admin/survivor'>Back to survivor pools</Link>
       </p>
 
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
 
       {!isYahoo && (
-        <section className='mb-8'>
+        <div>
           <Form method='POST' className='mb-4'>
             <Button
               type='submit'
@@ -287,21 +297,19 @@ export default function AdminSurvivorPool() {
           <Form
             key={pool.inviteUrl ?? ''}
             method='POST'
-            className='flex flex-wrap items-end gap-2'
+            className='flex flex-wrap items-end gap-3'
           >
-            <div>
-              <label htmlFor='inviteUrl' className='block text-sm'>
-                Invite link
-              </label>
-              <input
-                id='inviteUrl'
+            <Field
+              label='Invite link'
+              description='Shown on the Survivor page while the pool is still running. Leave it empty to hide it.'
+              className='w-full sm:w-96'
+            >
+              <Input
                 name='inviteUrl'
-                type='text'
                 defaultValue={pool.inviteUrl ?? ''}
-                className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
                 placeholder='https://sleeper.com/i/…'
               />
-            </div>
+            </Field>
             <Button
               type='submit'
               name='_action'
@@ -311,152 +319,127 @@ export default function AdminSurvivorPool() {
               Save
             </Button>
           </Form>
-          <p className='text-sm opacity-75'>
-            Shown on the Survivor page while the pool is still running. Leave it
-            empty to hide it.
-          </p>
-        </section>
+        </div>
       )}
 
       {unmatched.length > 0 && (
-        <section className='mb-8'>
-          <h3>Unmatched entries</h3>
-          <p className='text-sm'>
-            Matching a {isYahoo ? 'Yahoo' : 'Sleeper'} account here links it
-            everywhere on the site, not just in this pool. An entry with no
-            account (its owner left, or Yahoo closed the account) is assigned to
-            a member for this pool only.
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th className='text-left'>Entry</th>
-                <th className='text-left'>Member</th>
-              </tr>
-            </thead>
-            <tbody>
-              {unmatched.map(entry => (
-                <tr key={entry.id}>
-                  <td>
-                    {entry.displayName ?? 'Unknown'}
-                    {entry.entryName && (
-                      <div className='text-sm opacity-75'>
-                        {entry.entryName}
-                      </div>
-                    )}
-                    <div className='font-mono text-sm opacity-60'>
-                      {entry.sleeperOwnerId ?? entry.yahooGuid ?? 'No account'}
-                    </div>
-                  </td>
-                  <td className='not-prose'>
-                    <Form method='POST' className='flex items-center gap-2'>
-                      {entry.sleeperOwnerId ? (
-                        <input
-                          type='hidden'
-                          name='sleeperOwnerID'
-                          value={entry.sleeperOwnerId}
-                        />
-                      ) : entry.yahooGuid ? (
-                        <input
-                          type='hidden'
-                          name='yahooGuid'
-                          value={entry.yahooGuid}
-                        />
-                      ) : (
-                        <input type='hidden' name='entryId' value={entry.id} />
-                      )}
-                      <MemberSelect
-                        name='userId'
-                        members={members}
-                        defaultValue={entry.suggestedMemberId}
-                      />
-                      <Button
-                        type='submit'
-                        name='_action'
-                        value={
-                          entry.sleeperOwnerId
-                            ? 'matchSleeper'
-                            : entry.yahooGuid
-                            ? 'matchYahoo'
-                            : 'assign'
-                        }
-                        disabled={isSubmitting}
-                      >
-                        {entry.sleeperOwnerId || entry.yahooGuid
-                          ? 'Match'
-                          : 'Assign'}
-                      </Button>
-                    </Form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      <section>
-        <h3>Entries</h3>
-        <table>
-          <thead>
-            <tr>
-              <th className='text-left'>Place</th>
-              <th className='text-left'>Entry</th>
-              <th className='text-left'>Out</th>
-              <th className='text-left'>Picks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(entry => (
+        <Section
+          as='h3'
+          title='Unmatched entries'
+          description={`Matching a ${
+            isYahoo ? 'Yahoo' : 'Sleeper'
+          } account here links it everywhere on the site, not just in this pool. An entry with no account (its owner left, or Yahoo closed the account) is assigned to a member for this pool only.`}
+        >
+          <Table headers={['Entry', 'Member']}>
+            {unmatched.map(entry => (
               <tr key={entry.id}>
                 <td>
-                  {entry.finish === 1
-                    ? 'Winner'
-                    : entry.finish
-                    ? entry.finish
-                    : entry.eliminatedWeek
-                    ? '–'
-                    : 'Alive'}
+                  {entry.displayName ?? 'Unknown'}
+                  {entry.entryName && (
+                    <div className='text-sm text-muted-foreground'>
+                      {entry.entryName}
+                    </div>
+                  )}
+                  <div className='font-mono text-sm text-muted-foreground'>
+                    {entry.sleeperOwnerId ?? entry.yahooGuid ?? 'No account'}
+                  </div>
                 </td>
                 <td>
-                  {entry.member?.discordName ?? entry.displayName ?? 'Unknown'}
-                  {entry.member &&
-                    entry.displayName &&
-                    entry.displayName !== entry.member.discordName && (
-                      <div className='text-sm opacity-75'>
-                        {entry.displayName} on {isYahoo ? 'Yahoo' : 'Sleeper'}
-                      </div>
+                  <Form method='POST' className='flex items-center gap-2'>
+                    {entry.sleeperOwnerId ? (
+                      <input
+                        type='hidden'
+                        name='sleeperOwnerID'
+                        value={entry.sleeperOwnerId}
+                      />
+                    ) : entry.yahooGuid ? (
+                      <input
+                        type='hidden'
+                        name='yahooGuid'
+                        value={entry.yahooGuid}
+                      />
+                    ) : (
+                      <input type='hidden' name='entryId' value={entry.id} />
                     )}
-                  {entry.member &&
-                    !entry.sleeperOwnerId &&
-                    !entry.yahooGuid && (
-                      <Form
-                        method='POST'
-                        className='not-prose flex items-center gap-2 text-sm opacity-75'
-                      >
-                        Assigned by hand
-                        <input type='hidden' name='entryId' value={entry.id} />
-                        <button
-                          type='submit'
-                          name='_action'
-                          value='unassign'
-                          disabled={isSubmitting}
-                          className='underline'
-                        >
-                          Unassign
-                        </button>
-                      </Form>
-                    )}
+                    <MemberSelect
+                      name='userId'
+                      members={members}
+                      defaultValue={entry.suggestedMemberId}
+                    />
+                    <Button
+                      type='submit'
+                      name='_action'
+                      value={
+                        entry.sleeperOwnerId
+                          ? 'matchSleeper'
+                          : entry.yahooGuid
+                          ? 'matchYahoo'
+                          : 'assign'
+                      }
+                      disabled={isSubmitting}
+                    >
+                      {entry.sleeperOwnerId || entry.yahooGuid
+                        ? 'Match'
+                        : 'Assign'}
+                    </Button>
+                  </Form>
                 </td>
-                <td>
-                  {entry.eliminatedWeek ? `Week ${entry.eliminatedWeek}` : '–'}
-                </td>
-                <td>{entry.picks}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+          </Table>
+        </Section>
+      )}
+
+      <Section as='h3' title='Entries'>
+        <Table headers={['Place', 'Entry', 'Out', 'Picks']}>
+          {entries.map(entry => (
+            <tr key={entry.id}>
+              <td>
+                {entry.finish === 1
+                  ? 'Winner'
+                  : entry.finish
+                  ? entry.finish
+                  : entry.eliminatedWeek
+                  ? '–'
+                  : 'Alive'}
+              </td>
+              <td>
+                {entry.member?.discordName ?? entry.displayName ?? 'Unknown'}
+                {entry.member &&
+                  entry.displayName &&
+                  entry.displayName !== entry.member.discordName && (
+                    <div className='text-sm text-muted-foreground'>
+                      {entry.displayName} on {isYahoo ? 'Yahoo' : 'Sleeper'}
+                    </div>
+                  )}
+                {entry.member && !entry.sleeperOwnerId && !entry.yahooGuid && (
+                  <Form
+                    method='POST'
+                    className='flex items-center gap-2 text-sm text-muted-foreground'
+                  >
+                    Assigned by hand
+                    <input type='hidden' name='entryId' value={entry.id} />
+                    <Button
+                      type='submit'
+                      variant='link'
+                      size='sm'
+                      name='_action'
+                      value='unassign'
+                      disabled={isSubmitting}
+                    >
+                      Unassign
+                    </Button>
+                  </Form>
+                )}
+              </td>
+              <td>
+                {entry.eliminatedWeek ? `Week ${entry.eliminatedWeek}` : '–'}
+              </td>
+              <td>{entry.picks}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+    </Section>
   );
 }
