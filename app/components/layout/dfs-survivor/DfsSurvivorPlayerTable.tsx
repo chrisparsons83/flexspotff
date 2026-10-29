@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
-import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import { SLOT_POSITIONS } from '~/libs/dfs-survivor/slots';
 import type { PickerPlayer } from '~/routes/games.dfs-survivor.entries._index';
@@ -29,34 +29,31 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'right' }[] = [
   { key: 'seasonPoints', label: 'Season', align: 'right' },
 ];
 
-/** A filter toggle styled to match the week rail, not the browser default. */
+/**
+ * Shows or hides a group of players. It says what pressing it will do,
+ * "Show Used" or "Hide Used", so it needs no on and off colours.
+ */
 function FilterToggle({
-  checked,
+  hidden,
   onChange,
+  noun,
   className,
-  children,
 }: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
+  hidden: boolean;
+  onChange: (hidden: boolean) => void;
+  /** What it shows and hides: "Used", "Byes". */
+  noun: string;
   className?: string;
-  children: React.ReactNode;
 }) {
   return (
-    <button
-      type='button'
-      role='switch'
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={clsx(
-        'border px-2 py-1 text-sm transition-colors',
-        className,
-        checked
-          ? 'border-primary-edge bg-primary text-primary-foreground'
-          : 'border-border bg-card text-muted-foreground hover:bg-secondary',
-      )}
+    <Button
+      variant='secondary'
+      size='sm'
+      onClick={() => onChange(!hidden)}
+      className={className}
     >
-      {children}
-    </button>
+      {hidden ? 'Show' : 'Hide'} {noun}
+    </Button>
   );
 }
 
@@ -75,7 +72,8 @@ export default function DfsSurvivorPlayerTable({
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('projection');
   const [sortDescending, setSortDescending] = useState(true);
-  const [hideUsed, setHideUsed] = useState(false);
+  // Burned players are out of the running, so they start hidden.
+  const [hideUsed, setHideUsed] = useState(true);
   const [hideByes, setHideByes] = useState(true);
 
   const eligiblePositions = SLOT_POSITIONS[activeSlot];
@@ -161,19 +159,17 @@ export default function DfsSurvivorPlayerTable({
         </label>
         <div className='flex gap-2 sm:ml-auto'>
           <FilterToggle
-            checked={hideUsed}
+            hidden={hideUsed}
             onChange={setHideUsed}
+            noun='Used'
             className='flex-1 sm:flex-none'
-          >
-            Hide Used
-          </FilterToggle>
+          />
           <FilterToggle
-            checked={hideByes}
+            hidden={hideByes}
             onChange={setHideByes}
+            noun='Byes'
             className='flex-1 sm:flex-none'
-          >
-            Hide Byes
-          </FilterToggle>
+          />
         </div>
       </header>
 
@@ -253,30 +249,21 @@ export default function DfsSurvivorPlayerTable({
                           {player.position}
                         </span>
                       )}
-                      {usedElsewhere && (
-                        <span
-                          className='text-sm text-muted-foreground'
-                          title={
-                            player.usedPoints != null
-                              ? `Used in week ${
-                                  player.usedInWeek
-                                }: ${player.usedPoints.toFixed(1)} pts`
-                              : `Used in week ${player.usedInWeek}`
-                          }
-                        >
-                          <Badge
-                            size='sm'
-                            fill='medal-bronze'
-                            label={`Week ${player.usedInWeek}`}
-                          />
-                        </span>
-                      )}
                     </div>
-                    {(inLineup || player.isLocked) && (
+                    {/* What stands in the way of a pick, or already made it,
+                        on the line under the name. */}
+                    {(inLineup || player.isLocked || usedElsewhere) && (
                       <div className='text-sm text-muted-foreground'>
                         {inLineup && (
                           <span className='font-semibold text-foreground'>
                             In your lineup
+                          </span>
+                        )}
+                        {usedElsewhere && (
+                          <span className='block'>
+                            Used in Week {player.usedInWeek}
+                            {player.usedPoints != null &&
+                              `, ${player.usedPoints.toFixed(1)} pts`}
                           </span>
                         )}
                         {player.isLocked && (
