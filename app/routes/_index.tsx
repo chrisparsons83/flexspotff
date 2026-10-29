@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
@@ -42,7 +43,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
     season ? getGamesOverview(season, { signedIn, leaders: LEADERS }) : [],
-    season ? getSideLeaguesOverview({ leaders: LEADERS }) : null,
+    season
+      ? getSideLeaguesOverview({ leaders: LEADERS, guillotineEach: LEADERS })
+      : null,
   ]);
 
   return typedjson({
@@ -135,23 +138,35 @@ export default function Index() {
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {leagues.map(league => {
               const fill = leagueFill(league.name) ?? undefined;
+              // Two rows tall beside the others, with its rows spread down it.
+              const tall = league.name === 'Champions';
               return (
                 <Card
                   key={league.id}
                   league={fill}
-                  className={cn(league.name === 'Champions' && 'sm:row-span-2')}
+                  className={cn(tall && 'sm:row-span-2 sm:flex sm:flex-col')}
                 >
                   <CardHeader>
                     <CardTitle>
                       <Link
                         to={`/leagues/${year}/${league.name.toLowerCase()}`}
                         variant='quiet'
+                        className='inline-flex'
                       >
                         {league.name}
+                        <ChevronRightIcon
+                          aria-hidden
+                          className='ml-1 size-5 self-center'
+                        />
                       </Link>
                     </CardTitle>
                   </CardHeader>
-                  <ol className='px-5 py-2'>
+                  <ol
+                    className={cn(
+                      'px-5 py-2',
+                      tall && 'sm:flex sm:flex-1 sm:flex-col sm:justify-around',
+                    )}
+                  >
                     {league.leaders.map((leader, index) => (
                       <li
                         key={leader.id}

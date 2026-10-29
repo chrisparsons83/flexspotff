@@ -26,7 +26,14 @@ const PLACES = ['Champion', 'Runner-up', 'Third'];
  * This season's side leagues at a glance: each guillotine league's survivors
  * and chop line, the D12 leaders and the Autodraft BBM leaders.
  */
-export async function getSideLeaguesOverview({ leaders }: { leaders: number }) {
+export async function getSideLeaguesOverview({
+  leaders,
+  guillotineEach = Math.ceil(leaders / 2),
+}: {
+  leaders: number;
+  /** How many rows from each end of a guillotine week. */
+  guillotineEach?: number;
+}) {
   const [guillotine, d12, bestBall] = await Promise.all([
     getLatestGuillotineLeagues(),
     getD12Summary(leaders),
@@ -37,7 +44,7 @@ export async function getSideLeaguesOverview({ leaders }: { leaders: number }) {
     guillotine: guillotine && {
       year: guillotine.year,
       leagues: guillotine.leagues.map(league =>
-        guillotineSummary(league, leaders),
+        guillotineSummary(league, guillotineEach),
       ),
     },
     d12,
@@ -55,7 +62,7 @@ type GuillotineLeague = NonNullable<
  */
 function guillotineSummary(
   league: GuillotineLeague,
-  count: number,
+  each: number,
 ): SideLeagueSummary {
   const base = {
     title: league.name,
@@ -117,7 +124,6 @@ function guillotineSummary(
     );
 
   // The top and bottom of it, split where they meet if there is a gap.
-  const each = Math.ceil(count / 2);
   const shown =
     table.length <= each * 2
       ? table.map((row, index) => ({ ...row, rank: index + 1 }))
