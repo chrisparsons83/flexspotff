@@ -95,3 +95,33 @@ export async function getSeasonLeaders(
     };
   });
 }
+
+/**
+ * Where one member stands in a season's table, for listing them under the
+ * leaders when they are not among them. Null when they have no total.
+ */
+export async function getMemberStanding(
+  totals: SeasonTotals,
+  year: number,
+  userId: string,
+) {
+  const byUser = totals.get(year);
+  if (!byUser?.has(userId)) return null;
+  const ranked = assignCompetitionRanks(
+    [...byUser.entries()]
+      .map(([id, total]) => ({ id, total }))
+      .sort((a, b) => b.total - a.total),
+    row => row.total,
+  );
+  const mine = ranked.find(row => row.id === userId)!;
+  const [user] = await getUsersByIds([userId]);
+  return {
+    rank: mine.rank,
+    total: mine.total,
+    user: {
+      id: userId,
+      discordName: user?.discordName ?? 'Former member',
+      discordUsername: user?.discordUsername ?? null,
+    },
+  };
+}

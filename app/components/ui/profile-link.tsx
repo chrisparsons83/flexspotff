@@ -37,13 +37,25 @@ type Props = {
 /**
  * A link to a member's profile that drops to plain text for anyone who cannot
  * open it, so standings and records never link to a 404.
+ *
+ * The signed-in member's own name carries `data-me`, so a table or list can
+ * pick out their row wherever they appear (see Table and SummaryRows).
  */
 export function ProfileLink({ userId, tab, className, children }: Props) {
   const profileHref = useProfileHref();
-  if (!useCanViewProfiles()) return <>{children}</>;
+  const data = useTypedRouteLoaderData<typeof rootLoader>('root');
+  const me = data?.user?.id === userId ? true : undefined;
+  if (!useCanViewProfiles()) {
+    return me ? <span data-me>{children}</span> : <>{children}</>;
+  }
 
   return (
-    <Link to={profileHref(userId, tab)} variant='quiet' className={className}>
+    <Link
+      to={profileHref(userId, tab)}
+      variant='quiet'
+      className={className}
+      data-me={me}
+    >
       {children}
     </Link>
   );

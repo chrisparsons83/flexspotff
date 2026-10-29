@@ -4,7 +4,10 @@ import { DfsLineup } from '~/components/layout/dfs-survivor/DfsSurvivorStandings
 import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import ThisWeek from '~/components/layout/games/ThisWeek';
 import { prisma } from '~/db.server';
-import { getSeasonLeaders } from '~/libs/games/history.server';
+import {
+  getMemberStanding,
+  getSeasonLeaders,
+} from '~/libs/games/history.server';
 import { dfsSurvivorSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -17,7 +20,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
-  if (!season) return typedjson({ year: null, week: null, leaders: [] });
+  if (!season)
+    return typedjson({ year: null, week: null, leaders: [], me: null });
 
   const [scored, totals] = await Promise.all([
     prisma.dFSSurvivorUserWeek.findFirst({
@@ -41,7 +45,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       })
     : [];
 
+  const me = user
+    ? await getMemberStanding(totals, season.year, user.id)
+    : null;
+
   return typedjson({
+    me,
     year: season.year,
     week: scored?.week ?? null,
     signedIn: !!user,
@@ -83,6 +92,7 @@ export default function DfsSurvivorOverview() {
       />
       {year && (
         <SeasonLeaders
+          me={data.me}
           year={year}
           week={week}
           leaders={leaders.map(leader => ({

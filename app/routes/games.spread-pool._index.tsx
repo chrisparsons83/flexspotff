@@ -3,7 +3,10 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import ThisWeek from '~/components/layout/games/ThisWeek';
 import { LockedBets } from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
-import { getSeasonLeaders } from '~/libs/games/history.server';
+import {
+  getMemberStanding,
+  getSeasonLeaders,
+} from '~/libs/games/history.server';
 import {
   getPoolGamePicksWonLossWeek,
   getPoolGamesPicksByPoolWeek,
@@ -31,6 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       year: null,
       week: null,
       leaders: [],
+      me: null,
       entry: null,
       standingsWeek: null,
     });
@@ -69,7 +73,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     : [];
   const atStake = myBets.reduce((sum, pick) => sum + pick.amountBet, 0);
 
+  const me = user
+    ? await getMemberStanding(totals, season.year, user.id)
+    : null;
+
   return typedjson({
+    me,
     year: season.year,
     entry:
       user && week?.isOpen && !week.isWeekScored
@@ -109,7 +118,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function SpreadPoolOverview() {
-  const { year, week, leaders, entry, standingsWeek } =
+  const { year, week, leaders, me, entry, standingsWeek } =
     useTypedLoaderData<typeof loader>();
 
   return (
@@ -128,6 +137,7 @@ export default function SpreadPoolOverview() {
       />
       {year && (
         <SeasonLeaders
+          me={me}
           year={year}
           week={week?.number}
           leaders={leaders.map(leader => ({

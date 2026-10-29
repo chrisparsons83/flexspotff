@@ -166,6 +166,9 @@ function flatten(children: ReactNode, prefix = ''): ReactNode[] {
 const CELLS = cn(
   '[&>table>*>tr>td]:px-3 [&>table>*>tr>td]:py-2.5 [&>table>*>tr>th]:px-3 [&>table>*>tr>th]:py-2.5',
   '[&>table>tbody>tr]:border-b [&>table>tbody>tr]:border-border',
+  // The signed-in member's own row, wherever they appear (ProfileLink marks
+  // their name).
+  '[&>table>tbody>tr:has([data-me])]:bg-primary/10',
   '[&>table>tfoot]:border-t-2 [&>table>tfoot]:border-border [&>table>tfoot]:font-semibold',
 );
 

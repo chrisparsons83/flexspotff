@@ -119,6 +119,8 @@ export function SummaryRows({
           key={row.key}
           className={cn(
             'grid gap-2 py-1 text-sm',
+            // Their own row, as in Table.
+            '[&:has([data-me])]:-mx-2 [&:has([data-me])]:bg-primary/10 [&:has([data-me])]:px-2',
             ranked ? 'grid-cols-[1.5rem_1fr_auto]' : 'grid-cols-[1fr_auto]',
             row.divider === 'gap' && 'mt-1 border-t border-dashed pt-2',
             row.divider === 'cut' && 'mt-1 border-t-2 border-negative pt-2',

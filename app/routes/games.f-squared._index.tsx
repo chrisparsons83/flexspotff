@@ -4,7 +4,10 @@ import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
 import { Button } from '~/components/ui/button';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
-import { getSeasonLeaders } from '~/libs/games/history.server';
+import {
+  getMemberStanding,
+  getSeasonLeaders,
+} from '~/libs/games/history.server';
 import { getEntryByUserAndYear } from '~/models/fsquared.server';
 import { fSquaredSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -25,7 +28,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     fSquaredSeasonTotals([season.year]),
   ]);
 
+  const me = user
+    ? await getMemberStanding(totals, season.year, user.id)
+    : null;
+
   return typedjson({
+    me,
     year: season.year,
     isOpen: season.isOpenForFSquared,
     signedIn: !!user,
@@ -35,33 +43,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function FSquaredOverview() {
-  const { year, isOpen, signedIn, hasEntry, leaders } =
+  const { year, isOpen, signedIn, hasEntry, leaders, me } =
     useTypedLoaderData<typeof loader>();
 
   return (
     <>
-      <Section
-        title='Your Entry'
-        description={
-          !signedIn
-            ? 'Log in to make an entry.'
-            : hasEntry
-            ? 'You have an entry in this season.'
-            : 'You have not entered this season.'
-        }
-      >
-        {signedIn && isOpen && (
-          <Button asChild>
-            <Link to='entries' variant='quiet'>
-              {hasEntry ? 'Change your entry' : 'Make your entry'}
-            </Link>
-          </Button>
-        )}
-        {!isOpen && (
-          <p className='text-muted-foreground'>Entries are closed.</p>
-        )}
-      </Section>
+      {/* Only while entries are open: once they close, the reader's place
+          is in the leaders below. */}
+      {isOpen && (
+        <Section
+          title='Your Entry'
+          description={
+            !signedIn
+              ? 'Log in to make an entry.'
+              : hasEntry
+              ? 'You have an entry in this season.'
+              : 'You have not entered this season.'
+          }
+        >
+          {signedIn && (
+            <Button asChild>
+              <Link to='entries' variant='quiet'>
+                {hasEntry ? 'Change Your Entry' : 'Make Your Entry'}
+              </Link>
+            </Button>
+          )}
+        </Section>
+      )}
       <SeasonLeaders
+        me={me}
         year={year}
         leaders={leaders}
         standingsPath='standings'

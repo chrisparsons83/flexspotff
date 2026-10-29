@@ -23,6 +23,7 @@ export default function SeasonLeaders({
   year,
   week,
   leaders,
+  me,
   standingsPath,
   valueHeading,
   formatValue = value => value.toFixed(2),
@@ -31,11 +32,20 @@ export default function SeasonLeaders({
   /** The week in the This week column. Leave it out for no column. */
   week?: number | null;
   leaders: SeasonLeader[];
+  /**
+   * The signed-in member, listed after the leaders when they are not among
+   * them, so they can see where they stand.
+   */
+  me?: SeasonLeader | null;
   standingsPath: string;
   valueHeading: string;
   formatValue?: (total: number) => string;
 }) {
   const withWeek = week !== undefined && week !== null;
+  const rows =
+    me && !leaders.some(leader => leader.user.id === me.user.id)
+      ? [...leaders, me]
+      : leaders;
 
   return (
     <Section
@@ -46,7 +56,7 @@ export default function SeasonLeaders({
         nameHeading='Member'
         valueHeadings={[valueHeading, ...(withWeek ? [`Week ${week}`] : [])]}
         emptyMessage='No scores yet this season.'
-        entries={leaders.map(leader => ({
+        entries={rows.map(leader => ({
           id: leader.user.id,
           rank: leader.rank,
           name: (

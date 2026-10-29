@@ -1,8 +1,9 @@
 import { LockClosedIcon } from '@radix-ui/react-icons';
 import { useState } from 'react';
 import MemberName from '~/components/ui/MemberName';
+import { Card, CardHeader, CardTitle } from '~/components/ui/card';
+import { leagueFill } from '~/components/ui/fills';
 import { Checkbox } from '~/components/ui/input';
-import { LeagueMark } from '~/components/ui/swatch';
 import type { League } from '~/models/league.server';
 import type { Team, getTeamsInSeason } from '~/models/team.server';
 
@@ -40,38 +41,41 @@ export default function FSquaredEntryFormSection({
   };
 
   return (
-    <fieldset className='bg-card'>
-      <legend className='sr-only'>{leagueName}</legend>
-      <div className='flex items-center justify-between gap-2 bg-secondary px-5 py-3 font-bold text-secondary-foreground'>
-        <LeagueMark name={leagueName} />
+    // The league's own colours, as its card has on the home page.
+    <Card league={leagueFill(leagueName) ?? undefined}>
+      <CardHeader>
+        <CardTitle>{leagueName}</CardTitle>
         {leagueLocked && (
-          <span className='inline-flex items-center gap-1 text-sm font-normal text-muted-foreground'>
+          <span className='inline-flex items-center gap-1 text-sm'>
             <LockClosedIcon aria-hidden />
             Drafted
           </span>
         )}
-      </div>
-      <ul className='divide-y divide-border'>
-        {teams.map(team => (
-          <li key={team.id}>
-            <label className='flex items-center gap-3 px-5 py-2'>
-              <Checkbox
-                name={leagueName}
-                value={team.id}
-                onChange={handleChangeCheck}
-                disabled={
-                  leagueLocked ||
-                  (selected.length === 2 && !selected.includes(team.id))
-                }
-                defaultChecked={
-                  existingPicks ? existingPicks.includes(team.id) : false
-                }
-              />
-              {team.user ? <MemberName user={team.user} /> : 'Unclaimed team'}
-            </label>
-          </li>
-        ))}
-      </ul>
-    </fieldset>
+      </CardHeader>
+      <fieldset>
+        <legend className='sr-only'>{leagueName}</legend>
+        <ul className='divide-y divide-border'>
+          {teams.map(team => (
+            <li key={team.id}>
+              <label className='flex items-center gap-3 px-5 py-2'>
+                <Checkbox
+                  name={leagueName}
+                  value={team.id}
+                  onChange={handleChangeCheck}
+                  disabled={
+                    leagueLocked ||
+                    (selected.length === 2 && !selected.includes(team.id))
+                  }
+                  defaultChecked={
+                    existingPicks ? existingPicks.includes(team.id) : false
+                  }
+                />
+                {team.user ? <MemberName user={team.user} /> : 'Unclaimed team'}
+              </label>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
+    </Card>
   );
 }
