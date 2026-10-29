@@ -97,10 +97,7 @@ export default function GuillotineDraft() {
   }
 
   return (
-    <Section
-      title='Draft board'
-      description='One column per team in draft order, with how far each team got.'
-    >
+    <Section title='Draft board'>
       <DraftBoard
         columns={columns}
         rounds={rounds}

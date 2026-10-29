@@ -125,9 +125,7 @@ export default function Index() {
               ? `Week ${week}`
               : `${year} leagues`
           }
-          description={`${
-            week ? `${leagueWeek(week)} ` : ''
-          }The top of each league’s table.`}
+          description={week ? leagueWeek(week) : undefined}
           action={<Link to='/leagues/standings'>Full standings</Link>}
         >
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
@@ -181,11 +179,7 @@ export default function Index() {
       )}
 
       {year && (
-        <Section
-          title='Games this week'
-          description='Where each game’s week stands, and the top of its table.'
-          to='/games'
-        >
+        <Section title='Games this week' to='/games'>
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {games.map(game => (
               <SummaryCard

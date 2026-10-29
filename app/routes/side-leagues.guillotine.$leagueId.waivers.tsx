@@ -189,10 +189,7 @@ export default function GuillotineWaivers() {
         ]}
       />
 
-      <Section
-        title='Budgets'
-        description='Every team’s season on the wire, biggest spenders first.'
-      >
+      <Section title='Budgets'>
         <Table
           headers={['Team', 'Won', 'Lost', 'Spent', 'Biggest', 'Left']}
           numericColumns={[1, 2, 3, 4, 5]}
@@ -241,7 +238,6 @@ export default function GuillotineWaivers() {
 
       <Section
         title='Every claim'
-        description='Each waiver run with every bid on every player. Pick all weeks to see the whole season.'
         action={
           <Form
             method='get'

@@ -31,10 +31,7 @@ export default function SideLeagues() {
 
   return (
     <>
-      <PageHeader
-        title='Side leagues'
-        description='Separate fantasy leagues with their own drafts and rosters, run alongside the main ones.'
-      />
+      <PageHeader title='Side leagues' />
       <Section
         title='Guillotine'
         to='/side-leagues/guillotine'

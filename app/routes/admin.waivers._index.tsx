@@ -147,10 +147,7 @@ export default function AdminWaiversIndex() {
     byLeague.length === 0 || unconfiguredLeagues.length === byLeague.length;
 
   return (
-    <Section
-      title='Waiver reports'
-      description='Inspect the stored waiver claims behind the weekly report each league gets in its own channel, and re-run a week without waiting for Wednesday.'
-    >
+    <Section title='Waiver reports'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}

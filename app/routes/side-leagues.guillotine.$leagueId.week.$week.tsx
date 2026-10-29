@@ -204,11 +204,7 @@ export default function GuillotineWeek() {
       ) : ranked.length === 0 ? (
         <EmptyState title={`No scores for week ${week}`} />
       ) : (
-        <Section
-          as='h3'
-          title='Scores'
-          description='Every surviving team, highest first. The line is the chop.'
-        >
+        <Section as='h3' title='Scores' description='The line is the chop.'>
           <div className='overflow-x-auto'>
             <table className='w-full text-left tabular-nums'>
               <thead>
@@ -295,11 +291,7 @@ export default function GuillotineWeek() {
       )}
 
       {nextRun && nextRun.claims.length > 0 && (
-        <Section
-          as='h3'
-          title={`Waivers for week ${nextRun.week}`}
-          description='Every claim that went through in the run after this week, biggest bids first.'
-        >
+        <Section as='h3' title={`Waivers for week ${nextRun.week}`}>
           <Table
             headers={['Player', 'Won by', 'Bid', 'Next best', 'Bids']}
             numericColumns={[2, 3, 4]}

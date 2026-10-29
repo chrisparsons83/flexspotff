@@ -4,10 +4,7 @@ import type { RouteHandle } from '~/utils/route-handle';
 export const handle: RouteHandle = { title: 'Rules' };
 export default function RulesPage() {
   return (
-    <Section
-      title='Rules'
-      description='The rules for every league and the cup, set by the commissioners.'
-    >
+    <Section title='Rules'>
       <div className='prose'>
         <h3 id='1-object'>1. Object</h3>
         <p>

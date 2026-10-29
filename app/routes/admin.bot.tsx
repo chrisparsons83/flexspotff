@@ -102,10 +102,7 @@ export default function AdminBotPage() {
     );
 
   return (
-    <Section
-      title='Bot commands'
-      description="You probably don't need to touch these ever, but they're here for new commands."
-    >
+    <Section title='Bot commands'>
       <Form method='post' className='flex flex-wrap gap-3'>
         <Button type='submit' name='_action' value='registerGuildCommands'>
           Register dev guild commands

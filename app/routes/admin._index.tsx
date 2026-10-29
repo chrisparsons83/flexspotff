@@ -33,10 +33,7 @@ export default function AdminHome() {
   }
 
   return (
-    <Section
-      title={week ? `Week ${week}` : 'This week'}
-      description='What needs doing, as far as the data can tell.'
-    >
+    <Section title={week ? `Week ${week}` : 'This week'}>
       {tasks.length === 0 ? (
         <EmptyState title='Nothing needs doing this week' />
       ) : (

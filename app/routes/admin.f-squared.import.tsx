@@ -376,11 +376,7 @@ export default function ImportFSquaredHistory() {
           </Form>
 
           {preview.entries.length > 0 && (
-            <Section
-              as='h3'
-              title={`Entries (${preview.entries.length})`}
-              description="What the standings will show, with the sheet's own total to check against."
-            >
+            <Section as='h3' title={`Entries (${preview.entries.length})`}>
               <Table
                 headers={['Member', 'Teams', 'Points', 'Sheet']}
                 numericColumns={[1, 2, 3]}

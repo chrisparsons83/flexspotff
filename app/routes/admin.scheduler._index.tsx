@@ -113,10 +113,7 @@ export default function AdminSchedulerIndex() {
   const isRunning = navigation.state !== 'idle';
 
   return (
-    <Section
-      title='Scheduler management'
-      description='Manage and monitor scheduled tasks.'
-    >
+    <Section title='Scheduler management'>
       {schedulerStale && (
         <Alert
           status='error'

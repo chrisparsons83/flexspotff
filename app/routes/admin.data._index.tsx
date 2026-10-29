@@ -263,10 +263,7 @@ export default function AdminDataIndex() {
   ).reverse();
 
   return (
-    <Section
-      title='Data updates'
-      description='This is a good list of things to eventually automate.'
-    >
+    <Section title='Data updates'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}

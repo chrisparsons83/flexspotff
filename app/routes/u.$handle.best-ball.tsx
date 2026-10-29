@@ -209,10 +209,7 @@ function PositionsDrafted({
   if (withPicks.length === 0) return null;
 
   return (
-    <ProfileSection
-      title='Positions drafted'
-      description="What the autodraft gave them each season, against the league's average roster."
-    >
+    <ProfileSection title='Positions drafted'>
       <div className='space-y-4'>
         {withPicks.map(season => (
           <div key={season.year}>

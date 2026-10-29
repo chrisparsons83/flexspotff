@@ -1457,10 +1457,7 @@ export default function LeagueSorting() {
   ] as const;
 
   return (
-    <Section
-      title={`League sorting, ${season.year}`}
-      description='Mark the twelve Champions, sort everyone else into draft slots, then give each slot a league.'
-    >
+    <Section title={`League sorting, ${season.year}`}>
       <Section
         as='h3'
         title={`Registered players (${registrations.length})`}
