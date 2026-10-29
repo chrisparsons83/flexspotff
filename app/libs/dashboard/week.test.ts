@@ -1,9 +1,17 @@
-import { buildMemberWeek, type MemberWeekFacts } from './week';
+import {
+  type CupGameRow,
+  type CupSide,
+  buildMemberWeek,
+  cupFacts,
+  type MemberWeekFacts,
+  pointsLeague,
+} from './week';
 import { describe, expect, it } from 'vitest';
 
 const nothing: MemberWeekFacts = {
   year: 2026,
   league: null,
+  cup: null,
   guillotine: [],
   qbStreaming: null,
   spreadPool: null,
@@ -11,6 +19,8 @@ const nothing: MemberWeekFacts = {
   dfsSurvivor: null,
   standings: {},
   survivor: [],
+  d12: null,
+  bestBall: null,
   fSquared: { isOpen: false, hasEntry: false },
   registration: { isOpen: false, isRegistered: false },
 };
@@ -158,5 +168,175 @@ describe('buildMemberWeek', () => {
         fSquared: { isOpen: true, hasEntry: false },
       }).todo,
     ).toEqual([{ label: 'F²', href: '/games/f-squared/entries' }]);
+  });
+});
+
+describe('pointsLeague', () => {
+  const scores = [
+    { entrant: 'me', week: 1, points: 100 },
+    { entrant: 'you', week: 1, points: 120 },
+    { entrant: 'them', week: 1, points: 90 },
+    { entrant: 'me', week: 2, points: 130 },
+    { entrant: 'you', week: 2, points: 80 },
+    { entrant: 'them', week: 2, points: 95 },
+    // Week 3 is still being played.
+    { entrant: 'me', week: 3, points: 10 },
+    { entrant: 'you', week: 3, points: 60 },
+  ];
+
+  it('places the season on every score, and last week on finished ones', () => {
+    expect(pointsLeague(scores, 'me', 3)).toEqual({
+      season: { rank: 2, of: 3 },
+      lastWeek: { rank: 1, of: 3, week: 2, points: 130 },
+    });
+  });
+
+  it('adds up an entrant’s teams in the same week, as D12 has twelve', () => {
+    expect(
+      pointsLeague(
+        [
+          { entrant: 'me', week: 1, points: 50 },
+          { entrant: 'me', week: 1, points: 60 },
+          { entrant: 'you', week: 1, points: 100 },
+        ],
+        'me',
+        2,
+      ).lastWeek,
+    ).toEqual({ rank: 1, of: 2, week: 1, points: 110 });
+  });
+
+  it('has no last week before one is finished', () => {
+    expect(pointsLeague(scores.slice(0, 3), 'me', 1)).toEqual({
+      season: { rank: 2, of: 3 },
+      lastWeek: null,
+    });
+  });
+
+  it('has no place for an entrant with no scores yet', () => {
+    expect(pointsLeague([], 'me', 1)).toEqual({ season: null, lastWeek: null });
+  });
+});
+
+describe('cupFacts', () => {
+  const side = (name: string, userId: string | null = name): CupSide => ({
+    cupTeamId: `cup-${name}`,
+    teamId: `team-${name}`,
+    userId,
+    name,
+  });
+  const game = (
+    round: string,
+    top: CupSide | null,
+    bottom: CupSide | null,
+    winner: CupSide | null = null,
+  ): CupGameRow => ({
+    round,
+    top,
+    bottom,
+    winningTeamId: winner?.cupTeamId ?? null,
+  });
+  const me = side('me');
+  const you = side('you');
+  const them = side('them');
+  const score = (who: CupSide, mapping: string, pointsScored: number) => ({
+    teamId: who.teamId,
+    mapping,
+    pointsScored,
+  });
+
+  it('is null before the bracket has a game for them', () => {
+    expect(cupFacts([game('ROUND_OF_64', you, them)], [], 'me')).toBeNull();
+  });
+
+  it('gives their newest result and their game now', () => {
+    expect(
+      cupFacts(
+        [game('ROUND_OF_64', me, you, me), game('ROUND_OF_32', me, them)],
+        [score(me, 'ROUND_OF_64', 120.5), score(you, 'ROUND_OF_64', 99.25)],
+        'me',
+      ),
+    ).toEqual({
+      lastGame: {
+        round: 'ROUND_OF_64',
+        won: true,
+        points: 120.5,
+        opponentPoints: 99.25,
+        opponent: 'you',
+      },
+      current: { round: 'ROUND_OF_32', opponent: 'them' },
+      latestRound: 'ROUND_OF_64',
+    });
+  });
+
+  it('reads a game with no opponent as a bye', () => {
+    expect(
+      cupFacts([game('ROUND_OF_64', me, null, me)], [], 'me')?.lastGame,
+    ).toMatchObject({ won: true, opponent: null });
+  });
+});
+
+describe('dashboard rows for the cup, D12 and Autodraft BBM', () => {
+  const cupRow = (cup: MemberWeekFacts['cup']) =>
+    buildMemberWeek({ ...nothing, cup }).rows[0];
+  const won = {
+    round: 'ROUND_OF_32' as const,
+    won: true,
+    points: 120.5,
+    opponentPoints: 99.25,
+    opponent: 'Herbal',
+  };
+
+  it('says how the last round went and who is next', () => {
+    expect(
+      cupRow({
+        lastGame: won,
+        current: { round: 'ROUND_OF_16', opponent: 'Jom' },
+        latestRound: 'ROUND_OF_32',
+      }),
+    ).toMatchObject({
+      section: 'Leagues',
+      label: 'Cup',
+      lastWeek: 'Round of 32: won 120.50 to 99.25 against Herbal',
+      thisWeek: 'Round of 16 against Jom',
+      href: '/leagues/cup',
+    });
+  });
+
+  it('keeps an old loss out of last week, and says where they went out', () => {
+    expect(
+      cupRow({
+        lastGame: { ...won, round: 'ROUND_OF_64', won: false },
+        current: null,
+        latestRound: 'ROUND_OF_16',
+      }),
+    ).toMatchObject({ lastWeek: null, thisWeek: 'Out in the round of 64' });
+  });
+
+  it('names the champion and the runner-up', () => {
+    const final = { ...won, round: 'ROUND_OF_2' as const };
+    const facts = { current: null, latestRound: 'ROUND_OF_2' as const };
+    expect(cupRow({ ...facts, lastGame: final }).thisWeek).toBe('Champion');
+    expect(
+      cupRow({ ...facts, lastGame: { ...final, won: false } }).thisWeek,
+    ).toBe('Runner-up');
+  });
+
+  it('gives D12 and Autodraft BBM their week and season, in nav order', () => {
+    const league = {
+      season: { rank: 3, of: 12 },
+      lastWeek: { rank: 2, of: 12, week: 7, points: 142.3 },
+    };
+    const { rows } = buildMemberWeek({
+      ...nothing,
+      bestBall: league,
+      d12: league,
+    });
+    expect(rows.map(row => row.label)).toEqual(['D12', 'Autodraft BBM']);
+    expect(rows[0]).toMatchObject({
+      section: 'Side leagues',
+      lastWeek: 'Week 7: 142.30 pts, 2nd of 12',
+      thisWeek: '3rd of 12 for the season',
+      href: '/side-leagues/d12',
+    });
   });
 });
