@@ -205,7 +205,7 @@ export default function GuillotineWeek() {
         <EmptyState title={`No scores for week ${week}`} />
       ) : (
         <Section as='h3' title='Scores'>
-          <div className='overflow-x-auto'>
+          <div className='relative overflow-x-auto'>
             <table className='w-full text-left tabular-nums'>
               <thead>
                 <tr className='border-b border-border text-sm text-muted-foreground'>

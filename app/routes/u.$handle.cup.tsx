@@ -288,7 +288,7 @@ function RunRow({ run }: { run: CupRun }) {
                   aria-hidden='true'
                   className='flex h-6 w-8 items-center justify-center text-muted-foreground sm:w-10'
                 >
-                  ·
+                  –
                 </span>
               )}
             </li>

@@ -70,7 +70,7 @@ export default function DfsSurvivorLineup({
               // `group` so the clear button can appear on hover rather than
               // leaving a permanent ragged gutter.
               'group flex h-10 items-center gap-2 border-b border-border px-3 last:border-b-0',
-              isActive && 'bg-primary/40',
+              isActive && 'bg-secondary',
               lockReason && 'opacity-60',
             )}
           >
@@ -84,7 +84,7 @@ export default function DfsSurvivorLineup({
               <span
                 className={clsx(
                   'w-11 shrink-0 text-right text-sm font-bold',
-                  isActive ? 'text-primary' : 'text-muted-foreground',
+                  isActive ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
                 {formatSlotName(slot)}

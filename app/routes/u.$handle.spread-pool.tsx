@@ -1008,9 +1008,11 @@ function ShareBar({
             <div
               key={bucket.key}
               className={clsx(
-                'flex items-center overflow-hidden whitespace-nowrap px-2 text-sm font-semibold text-muted-foreground',
+                'flex items-center overflow-hidden whitespace-nowrap px-2 text-sm font-semibold',
                 SIDE_TONE[bucket.key],
-                bucket.key === 'underdog' && 'justify-end',
+                bucket.key === 'underdog'
+                  ? 'justify-end text-primary-foreground'
+                  : 'text-muted-foreground',
               )}
               style={{ width: `${shareOf(bucket) * 100}%` }}
               title={`${bucket.label}: ${Math.round(shareOf(bucket) * 100)}%`}

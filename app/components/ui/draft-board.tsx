@@ -34,7 +34,7 @@ export function DraftBoard<Column>({
   const roundNumbers = Array.from({ length: rounds }, (_, index) => index + 1);
 
   return (
-    <div className='not-prose overflow-x-auto'>
+    <div className='not-prose relative overflow-x-auto'>
       <div
         // Narrow Archivo fits a name in a column a phone's width can hold.
         className='grid gap-1 font-narrow text-sm'

@@ -38,7 +38,7 @@ export function ScoreGrid<
   const weekNumbers = Array.from({ length: weeks }, (_, i) => i + 1);
 
   return (
-    <div className='overflow-x-auto'>
+    <div className='relative overflow-x-auto'>
       <table className='border-separate border-spacing-0.5 text-sm tabular-nums'>
         <thead>
           <tr className='text-muted-foreground'>

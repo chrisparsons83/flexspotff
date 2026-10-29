@@ -187,18 +187,18 @@ const teamDetail = (team: TeamSeasonMark) =>
 
 /**
  * The strip down the left of a board cell: starter points ranked against the
- * rest of the board, from dim to bright in one colour, or red stripes for a
- * pick that has never scored. One hue and a pattern rather than green against
+ * rest of the board, from dark to light in the blue value sequence, or red for
+ * a pick that has never scored. Blue against red rather than green against
  * red, so it reads the same with red-green colour blindness. The cell itself
  * is coloured by position.
  */
 const HEAT_BAR: Record<D12Heat, string | undefined> = {
-  5: 'bg-info/20',
-  4: 'bg-info/20',
-  3: 'bg-info/20',
-  2: 'bg-info/20',
-  1: 'bg-info/20',
-  bust: 'bg-[repeating-linear-gradient(180deg,theme(colors.rose.400)_0_3px,transparent_3px_6px)]',
+  5: 'bg-sequence-7',
+  4: 'bg-sequence-5',
+  3: 'bg-sequence-4',
+  2: 'bg-sequence-3',
+  1: 'bg-sequence-1',
+  bust: 'bg-negative',
   none: undefined,
 };
 

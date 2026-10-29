@@ -913,7 +913,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
             </li>
           ))}
       </ol>
-      <div className='hidden overflow-x-auto lg:block'>
+      <div className='relative hidden overflow-x-auto lg:block'>
         <div
           className='grid gap-1 text-sm'
           style={{

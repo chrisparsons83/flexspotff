@@ -61,6 +61,20 @@ function findPatterns() {
     return match;
   };
 
+  /**
+   * Whether every layer of a box-shadow is a ring: no offset or blur, only a
+   * spread, so it draws a hard line like a border.
+   * @param {string} value
+   */
+  const isRing = value =>
+    value
+      .split(/,(?![^(]*\))/)
+      .every(layer =>
+        /(?:^|\)\s)0px 0px 0px -?\d+(?:\.\d+)?px(?: inset)?$/.test(
+          layer.trim(),
+        ),
+      );
+
   // Copy: separators, emoji, em dashes, exclamation marks, stock phrases.
   /** @type {[string, RegExp][]} */
   const COPY = [
@@ -84,7 +98,9 @@ function findPatterns() {
   for (const el of Array.from(document.body.querySelectorAll('*'))) {
     if (!ours(el) || el.closest('svg')) continue;
     const style = getComputedStyle(el);
-    if (style.display === 'none') continue;
+    // Nothing drawn: hidden, or see-through like the native input Radix
+    // keeps behind a radio for forms.
+    if (style.display === 'none' || style.opacity === '0') continue;
 
     // Square corners everywhere.
     const radii = [
@@ -98,12 +114,15 @@ function findPatterns() {
     }
 
     // Shadows on buttons (their drop) and overlays, and otherwise only the
-    // depth tokens' card shadows and glow.
+    // depth tokens' card shadows and glow. A ring (a hard edge with no blur
+    // or offset) is an outline, not a shadow.
     if (style.boxShadow !== 'none') {
       const allowed =
+        isRing(style.boxShadow) ||
         el.closest(
           'button, [data-slot="button"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="tooltip"], [data-radix-popper-content-wrapper]',
-        ) || fromToken(el, 'boxShadow', ['card-shadow', 'card-glow', 'glow']);
+        ) ||
+        fromToken(el, 'boxShadow', ['card-shadow', 'card-glow', 'glow']);
       if (!allowed) add('shadow', el);
     }
 

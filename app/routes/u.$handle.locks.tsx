@@ -912,7 +912,7 @@ const WIN_RATE_KEY = <FieldKey>Field&rsquo;s performance</FieldKey>;
 const SIDE_TONE: Record<string, string> = {
   favorite: 'bg-warning/20',
   underdog: 'bg-primary',
-  pick: 'bg-secondary',
+  pick: 'bg-muted-foreground',
   none: 'bg-secondary',
 };
 

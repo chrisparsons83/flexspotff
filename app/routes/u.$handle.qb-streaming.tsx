@@ -530,13 +530,13 @@ const MOST_STREAMED_PREVIEW = 15;
 /** Stronger with every week that season, so a favourite stands out. */
 const yearCellTone = (count: number) =>
   count >= 5
-    ? 'bg-positive/40 text-positive'
+    ? 'bg-positive/60 text-foreground'
     : count === 4
-    ? 'bg-positive/40 text-positive'
+    ? 'bg-positive/50 text-foreground'
     : count === 3
     ? 'bg-positive/40 text-foreground'
     : count === 2
-    ? 'bg-positive/35 text-foreground'
+    ? 'bg-positive/30 text-foreground'
     : 'bg-positive/20 text-foreground';
 
 /** How a QB's weeks split between the two picks, most-used QB as full width. */
@@ -652,7 +652,7 @@ function MostStreamed({
                       aria-hidden='true'
                       className='flex h-6 min-w-[2.25rem] items-center justify-center text-muted-foreground'
                     >
-                      ·
+                      –
                     </span>
                   )}
                 </td>

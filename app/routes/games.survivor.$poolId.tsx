@@ -158,7 +158,7 @@ export default function SurvivorPool() {
           title='Every pick'
           description='A win is in bold, a loss struck through, and a game not played yet is muted. None is a week with no pick.'
         >
-          <div className='overflow-x-auto'>
+          <div className='relative overflow-x-auto'>
             <table className='text-sm'>
               <thead>
                 <tr className='border-b border-border text-left text-muted-foreground'>

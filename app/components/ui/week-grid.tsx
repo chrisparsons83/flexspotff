@@ -80,7 +80,7 @@ export function WeekGrid({
       {/* Focusable, so the weeks past the edge can be scrolled to from the
           keyboard. */}
       <div
-        className='hidden overflow-x-auto lg:block'
+        className='relative hidden overflow-x-auto lg:block'
         role='region'
         aria-label='Weeks by season'
         tabIndex={0}
