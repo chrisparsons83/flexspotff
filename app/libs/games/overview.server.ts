@@ -239,9 +239,8 @@ function survivorSummary(pools: SurvivorPool[], maxNames: number) {
   if (alive.length > 0 && alive.length <= maxNames) {
     const pool = live[0]!;
     return {
-      status: `${poolTitle(pool)}: ${alive.length} of ${
-        pool.entries.length
-      } alive.`,
+      // Only one pool runs at a time, so its name adds nothing.
+      status: `${alive.length} of ${pool.entries.length} alive.`,
       rows: alive
         .map(entry => ({ entry, name: entryLabel(entry) }))
         .sort((a, b) => a.name.localeCompare(b.name))

@@ -84,7 +84,7 @@ export function AppShell({
   );
 }
 
-/** The Discord invite and the podcast archive. */
+/** The Discord invite, the podcast archive and the copyright. */
 export function Footer() {
   return (
     <footer className='border-t border-hairline bg-chrome text-card-foreground'>
@@ -98,6 +98,9 @@ export function Footer() {
           <Link to='/podcast' variant='quiet'>
             Podcast archive
           </Link>
+        </li>
+        <li className='text-muted-foreground sm:ml-auto'>
+          &copy; 2016&ndash;{new Date().getFullYear()} Flex Spot
         </li>
       </ul>
     </footer>

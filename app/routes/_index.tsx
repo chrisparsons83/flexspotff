@@ -18,9 +18,16 @@ import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import { cn } from '~/utils';
 
 /** How many of each table the home page shows. */
 const LEADERS = 3;
+
+/**
+ * Champions gets a card twice as tall as the other leagues, so it shows down
+ * to the last playoff spot.
+ */
+const CHAMPIONS_LEADERS = 6;
 
 /** The last playoff week, from section 13 of the rules. */
 const LAST_PLAYOFF_WEEK = 17;
@@ -43,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     week,
     signedIn,
     // The Omni archive has no week to report.
-    games: games.filter(game => game.to !== '/games/omni'),
+    games: games.filter(game => !game.to.startsWith('/games/omni')),
     // Named for the home page, where the section is not in the title.
     sideLeagues: sideLeagues && [
       ...(sideLeagues.guillotine?.leagues ?? []),
@@ -55,19 +62,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     leagues: leagues.map(league => ({
       id: league.id,
       name: league.name,
-      leaders: league.teams.slice(0, LEADERS).map(team => ({
-        id: team.id,
-        user: team.user
-          ? {
-              id: team.user.id,
-              discordName: team.user.discordName,
-              discordUsername: team.user.discordUsername,
-            }
-          : null,
-        wins: team.wins,
-        losses: team.losses,
-        ties: team.ties,
-      })),
+      leaders: league.teams
+        .slice(0, league.name === 'Champions' ? CHAMPIONS_LEADERS : LEADERS)
+        .map(team => ({
+          id: team.id,
+          user: team.user
+            ? {
+                id: team.user.id,
+                discordName: team.user.discordName,
+                discordUsername: team.user.discordUsername,
+              }
+            : null,
+          wins: team.wins,
+          losses: team.losses,
+          ties: team.ties,
+        })),
     })),
   });
 };
@@ -92,7 +101,7 @@ export default function Index() {
           signedIn ? (
             <Button asChild>
               <Link to='/dashboard' variant='quiet'>
-                Your week
+                Your dashboard
               </Link>
             </Button>
           ) : (
@@ -116,13 +125,22 @@ export default function Index() {
               ? `Week ${week}`
               : `${year} leagues`
           }
+          to={
+            week && week <= LAST_PLAYOFF_WEEK
+              ? `/leagues/leaderboard/${year}/${week}`
+              : '/leagues'
+          }
           action={<Link to='/leagues/standings'>Full standings</Link>}
         >
-          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
+          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {leagues.map(league => {
               const fill = leagueFill(league.name) ?? undefined;
               return (
-                <Card key={league.id} league={fill}>
+                <Card
+                  key={league.id}
+                  league={fill}
+                  className={cn(league.name === 'Champions' && 'sm:row-span-2')}
+                >
                   <CardHeader>
                     <CardTitle>
                       <Link
@@ -189,7 +207,7 @@ export default function Index() {
 
       {sideLeagues && sideLeagues.length > 0 && (
         <Section title='Side leagues' to='/side-leagues'>
-          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+          <div className='grid gap-6 sm:grid-cols-2'>
             {sideLeagues.map(summary => (
               <SummaryCard
                 key={summary.to}
