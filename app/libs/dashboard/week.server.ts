@@ -56,9 +56,8 @@ async function leagueFacts(
   if (!team) return null;
   // Last week is the newest one with scores, which can trail the calendar
   // by a day or two while the sync catches up.
-  const scored = (await getTeamGameWeeksByLeague(team.leagueId)).filter(
-    scoredWeek => !week || scoredWeek < week,
-  );
+  const scoredWeeks = await getTeamGameWeeksByLeague(team.leagueId);
+  const scored = scoredWeeks.filter(scoredWeek => !week || scoredWeek < week);
   const lastScored = scored.at(-1);
   const [lastWeek, thisWeek] = await Promise.all([
     lastScored ? leagueMatchup(team.id, team.leagueId, lastScored) : null,
@@ -66,6 +65,7 @@ async function leagueFacts(
   ]);
   return {
     name: team.league.name,
+    hasScores: scoredWeeks.length > 0,
     lastWeek:
       lastWeek && hasBeenPlayed(lastWeek.points, lastWeek.opponentPoints)
         ? lastWeek

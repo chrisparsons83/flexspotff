@@ -57,6 +57,8 @@ export type MemberWeekFacts = {
   year: number;
   league: {
     name: string;
+    /** Whether any week has scores yet; the Matchups tab waits for one. */
+    hasScores: boolean;
     lastWeek: {
       week: number;
       points: number;
@@ -179,7 +181,9 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
       thisWeek: thisWeek
         ? `Week ${thisWeek.week} against ${thisWeek.opponent}`
         : null,
-      href: `/leagues/${facts.year}/${name.toLowerCase()}/matchups`,
+      href: `/leagues/${facts.year}/${name.toLowerCase()}${
+        facts.league.hasScores ? '/matchups' : ''
+      }`,
     });
   }
 

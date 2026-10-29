@@ -35,6 +35,7 @@ describe('buildMemberWeek', () => {
       ...nothing,
       league: {
         name: 'Admiral',
+        hasScores: true,
         lastWeek: {
           week: 4,
           points: 120.5,
@@ -50,6 +51,21 @@ describe('buildMemberWeek', () => {
       thisWeek: 'Week 5 against Jom',
       href: '/leagues/2026/admiral/matchups',
     });
+  });
+
+  it('links to the league, not its matchups, before any week is scored', () => {
+    const {
+      rows: [row],
+    } = buildMemberWeek({
+      ...nothing,
+      league: {
+        name: 'Admiral',
+        hasScores: false,
+        lastWeek: null,
+        thisWeek: { week: 1, opponent: 'Jom' },
+      },
+    });
+    expect(row.href).toBe('/leagues/2026/admiral');
   });
 
   it('lists an open week with no picks to do, linking to its entry', () => {
@@ -107,7 +123,12 @@ describe('buildMemberWeek', () => {
   it('keeps the nav order: leagues, games, side leagues', () => {
     const { todo, rows } = buildMemberWeek({
       ...nothing,
-      league: { name: 'Galaxy', lastWeek: null, thisWeek: null },
+      league: {
+        name: 'Galaxy',
+        hasScores: false,
+        lastWeek: null,
+        thisWeek: null,
+      },
       guillotine: [
         { leagueId: 'g1', name: 'Chop', choppedWeek: null, finish: null },
       ],
