@@ -122,9 +122,9 @@ function Standings({
           'Team',
           'Chopped',
           'Average',
-          'Best week',
-          'Closest escape',
-          ...(showFaab ? ['FAAB left'] : []),
+          'Best Week',
+          'Closest Escape',
+          ...(showFaab ? ['FAAB Left'] : []),
         ]}
         numericColumns={[3, 4, 5, 6]}
         primaryColumns={[1, 2]}
@@ -172,9 +172,9 @@ function Standings({
 /** What the chop tracker's cell colours mean, each beside its swatch. */
 const LEGEND = [
   { label: 'Chopped', className: 'bg-destructive' },
-  { label: 'Under 5 above the cut', className: 'bg-warning/30' },
-  { label: '5 to 15 above', className: 'bg-secondary' },
-  { label: 'Top three that week', className: 'bg-positive/30' },
+  { label: 'Under 5 Above the Cut', className: 'bg-warning/30' },
+  { label: '5 to 15 Above', className: 'bg-secondary' },
+  { label: 'Top Three That Week', className: 'bg-positive/30' },
 ];
 
 function ChopLegend() {
@@ -215,7 +215,7 @@ function ChopGrid({
   leagueId: string;
 }) {
   return (
-    <Section title='Chop tracker' description={<ChopLegend />}>
+    <Section title='Chop Tracker' description={<ChopLegend />}>
       <ScoreGrid
         rows={rows.map(row => ({ ...row, key: row.rosterId }))}
         weeks={weeks}

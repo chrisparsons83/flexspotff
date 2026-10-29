@@ -271,7 +271,7 @@ export default function AdminSurvivorPool() {
       }
     >
       <p className='-mt-4 mb-6 text-sm'>
-        <Link to='/admin/survivor'>Back to survivor pools</Link>
+        <Link to='/admin/survivor'>Back to Survivor Pools</Link>
       </p>
 
       {actionData?.message && (
@@ -291,7 +291,7 @@ export default function AdminSurvivorPool() {
               value='syncPool'
               disabled={isSubmitting}
             >
-              Resync from Sleeper
+              Resync From Sleeper
             </Button>
           </Form>
           <Form
@@ -300,7 +300,7 @@ export default function AdminSurvivorPool() {
             className='flex flex-wrap items-end gap-3'
           >
             <Field
-              label='Invite link'
+              label='Invite Link'
               description='Shown on the Survivor page while the pool is still running. Leave it empty to hide it.'
               className='w-full sm:w-96'
             >
@@ -325,7 +325,7 @@ export default function AdminSurvivorPool() {
       {unmatched.length > 0 && (
         <Section
           as='h3'
-          title='Unmatched entries'
+          title='Unmatched Entries'
           description={`Matching a ${
             isYahoo ? 'Yahoo' : 'Sleeper'
           } account here links it everywhere on the site, not just in this pool. An entry with no account (its owner left, or Yahoo closed the account) is assigned to a member for this pool only.`}

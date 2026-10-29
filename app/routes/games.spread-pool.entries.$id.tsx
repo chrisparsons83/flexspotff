@@ -30,7 +30,7 @@ import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'My entry' };
+export const handle: RouteHandle = { title: 'My Entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -278,7 +278,7 @@ export default function GamesSpreadPoolWeek() {
 
   return (
     <Section
-      title={poolWeek ? `Week ${poolWeek.weekNumber} entry` : 'Week entry'}
+      title={poolWeek ? `Week ${poolWeek.weekNumber} Entry` : 'Week Entry'}
     >
       <Form method='POST' reloadDocument>
         {notOpenYet ? (
@@ -289,8 +289,8 @@ export default function GamesSpreadPoolWeek() {
             <StatList
               className='mb-10 grid-cols-2'
               stats={[
-                { label: 'Available to bet', value: availableToBet },
-                { label: 'Currently bet', value: betAmount },
+                { label: 'Available to Bet', value: availableToBet },
+                { label: 'Currently Bet', value: betAmount },
               ]}
             />
             <div className='grid gap-6 md:grid-cols-2'>
@@ -332,7 +332,7 @@ export default function GamesSpreadPoolWeek() {
               />
               <div>
                 <Button type='submit' disabled={disableSubmit}>
-                  Update picks
+                  Update Picks
                 </Button>
               </div>
             </div>

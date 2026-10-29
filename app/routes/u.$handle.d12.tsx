@@ -75,7 +75,7 @@ function Career({ career }: { career: D12Career }) {
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
         <CareerCard
-          title='Average week'
+          title='Average Week'
           lead={pts(career.averageWeek, 1)}
           meter={
             bestWeek &&
@@ -90,13 +90,13 @@ function Career({ career }: { career: D12Career }) {
           }
         >
           <MiniStat
-            label='Worst week'
+            label='Worst Week'
             value={pts(worstWeek?.points)}
             tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
-            label='Best week'
+            label='Best Week'
             value={pts(bestWeek?.points)}
             tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
@@ -104,7 +104,7 @@ function Career({ career }: { career: D12Career }) {
         </CareerCard>
 
         <CareerCard
-          title='Average team'
+          title='Average Team'
           lead={
             <>
               {pts(career.averageTeam, 1)}
@@ -124,13 +124,13 @@ function Career({ career }: { career: D12Career }) {
           }
         >
           <MiniStat
-            label='Worst team'
+            label='Worst Team'
             value={pts(worstTeam?.points, 1)}
             tone='text-negative'
             detail={worstTeam && teamDetail(worstTeam)}
           />
           <MiniStat
-            label='Best team'
+            label='Best Team'
             value={pts(bestTeam?.points, 1)}
             tone='text-positive'
             detail={bestTeam && teamDetail(bestTeam)}
@@ -168,7 +168,7 @@ function Career({ career }: { career: D12Career }) {
             />
             <MiniStat label='Top 3' value={career.topThrees} />
             <MiniStat
-              label='Average finish'
+              label='Average Finish'
               value={
                 career.averageFinish === null
                   ? '–'
@@ -218,7 +218,7 @@ function CombinedDraftBoard({ boards }: { boards: D12Board[] }) {
 
   return (
     <ProfileSection
-      title='Draft board'
+      title='Draft Board'
       footnote={<HeatKey />}
       action={
         boards.length > 1 && (
@@ -349,7 +349,7 @@ function Exposure({ boards }: { boards: D12Board[] }) {
       }
     >
       <Table
-        headers={['Player', 'Teams', 'Average pick', 'Range', 'Starter points']}
+        headers={['Player', 'Teams', 'Average Pick', 'Range', 'Starter Points']}
         primaryColumns={[1, 4]}
         numericColumns={[2, 3, 4]}
       >
@@ -413,17 +413,17 @@ function Exposure({ boards }: { boards: D12Board[] }) {
 
 function BySeason({ seasons }: { seasons: D12Season[] }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
           'Finish',
           'Total',
-          'Best week',
-          'Worst week',
-          'Best team',
-          'Worst team',
-          'Average team',
+          'Best Week',
+          'Worst Week',
+          'Best Team',
+          'Worst Team',
+          'Average Team',
         ]}
         primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6, 7]}

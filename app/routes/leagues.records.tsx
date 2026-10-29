@@ -26,8 +26,8 @@ export const handle: RouteHandle = { title: 'Records' };
 
 const CATEGORIES = [
   { key: 'career', label: 'Career' },
-  { key: 'season', label: 'Single season' },
-  { key: 'game', label: 'Single game' },
+  { key: 'season', label: 'Single Season' },
+  { key: 'game', label: 'Single Game' },
   { key: 'playoffs', label: 'Playoffs' },
   { key: 'cup', label: 'Cup' },
   { key: 'streaks', label: 'Streaks' },
@@ -54,7 +54,7 @@ export default function Records() {
   const tables = useTypedLoaderData<typeof loader>();
 
   return (
-    <Section title='Record books'>
+    <Section title='Record Books'>
       <Tabs defaultValue='career'>
         <TabsList>
           {CATEGORIES.map(category => (

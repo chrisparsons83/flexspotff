@@ -7,7 +7,7 @@ import type { SideLeagueSummary } from '~/libs/side-leagues/overview.server';
 import { getSideLeaguesOverview } from '~/libs/side-leagues/overview.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'Side leagues' };
+export const handle: RouteHandle = { title: 'Side Leagues' };
 
 /** How many rows each table on the overview lists. */
 const LEADERS = 5;
@@ -31,7 +31,7 @@ export default function SideLeagues() {
 
   return (
     <>
-      <PageHeader title='Side leagues' />
+      <PageHeader title='Side Leagues' />
       <Section
         title='Guillotine'
         to='/side-leagues/guillotine'

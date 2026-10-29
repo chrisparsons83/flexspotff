@@ -12,7 +12,7 @@ type Story = StoryObj<typeof Section>;
 
 export const Default: Story = {
   args: {
-    title: 'Game log',
+    title: 'Game Log',
     description: 'Every matchup, newest first.',
     children: <p>The table goes here.</p>,
   },
@@ -21,7 +21,7 @@ export const Default: Story = {
 export const WithActionAndFootnote: Story = {
   name: 'With an action and a footnote',
   args: {
-    title: 'Game log',
+    title: 'Game Log',
     description: 'Every matchup, newest first.',
     action: (
       <YearFilter years={[2026, 2025, 2024]} value={2026} onChange={() => {}} />
@@ -46,10 +46,10 @@ export const LinkedTitle: Story = {
 export const Stacked: Story = {
   render: () => (
     <>
-      <Section title='This season'>
+      <Section title='This Season'>
         <p>Standings.</p>
       </Section>
-      <Section title='All time'>
+      <Section title='All Time'>
         <p>Records.</p>
       </Section>
     </>

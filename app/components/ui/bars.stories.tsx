@@ -10,7 +10,7 @@ import {
 } from './bars';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-const meta: Meta = { title: 'Data display/Bars' };
+const meta: Meta = { title: 'Data Display/Bars' };
 export default meta;
 
 type Story = StoryObj;
@@ -60,10 +60,10 @@ export const Percentile: Story = {
 export const Share: Story = {
   render: () => (
     <div className='grid max-w-md gap-6'>
-      <Row label='Career record'>
+      <Row label='Career Record'>
         <SplitBar wins={52} losses={38} ties={1} />
       </Row>
-      <Row label='How seasons ended'>
+      <Row label='How Seasons Ended'>
         <KeyedBar
           entries={[
             { label: 'Won', count: 2, tone: 'medal-gold' },
@@ -83,7 +83,7 @@ export const Range: Story = {
       <Row label='Average week, between the worst and the best'>
         <RangeBar low={62.4} high={171.8} mark={118.2} />
       </Row>
-      <Row label='Weekly points'>
+      <Row label='Weekly Points'>
         <LabelledRange
           low={62.4}
           high={171.8}

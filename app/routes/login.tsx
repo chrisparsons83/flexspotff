@@ -7,7 +7,7 @@ import { PageHeader } from '~/components/ui/page-header';
 import { authenticator } from '~/services/auth.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'Log in' };
+export const handle: RouteHandle = { title: 'Log In' };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
@@ -20,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Login() {
   return (
     <>
-      <PageHeader title='Log in' />
+      <PageHeader title='Log In' />
       <Form action={`/auth/${SocialsProvider.DISCORD}`} method='POST'>
         <Button type='submit' variant='discord'>
           <DiscordLogoIcon aria-hidden />

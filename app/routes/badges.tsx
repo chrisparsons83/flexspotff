@@ -76,8 +76,8 @@ export default function Badges() {
         </ProfileSection>
 
         <ProfileSection
-          title='Side games'
-          description='Every side game runs on the same scale, so winning the spread pool reads exactly like winning DFS survivor.'
+          title='Side Games'
+          description='Every side game runs on the same scale, so winning the Spread Pool reads exactly like winning DFS Survivor.'
         >
           <ul className='m-0 grid gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3'>
             {SIDE_GAME_KEYS.map(game => {

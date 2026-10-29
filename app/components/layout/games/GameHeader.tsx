@@ -27,7 +27,7 @@ export const gameTabs = ({
 }: Tabs): SubNavItem[] => [
   { label: 'Overview', to: base, end: true },
   ...(standings ? [{ label: 'Standings', to: `${base}/standings` }] : []),
-  ...(entries ? [{ label: 'My entries', to: `${base}/entries` }] : []),
+  ...(entries ? [{ label: 'My Entries', to: `${base}/entries` }] : []),
   ...(rules ? [{ label: 'Rules', to: `${base}/rules` }] : []),
   ...(history ? [{ label: 'History', to: `${base}/history` }] : []),
 ];

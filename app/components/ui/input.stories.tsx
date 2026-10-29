@@ -13,11 +13,11 @@ type Story = StoryObj<typeof Input>;
 export const Default: Story = {
   render: () => (
     <div className='grid max-w-sm gap-6'>
-      <Field label='Team name'>
+      <Field label='Team Name'>
         <Input defaultValue='Mahomes Alone' />
       </Field>
       <Field
-        label='Sleeper username'
+        label='Sleeper Username'
         description='The name you sign in to Sleeper with, not your display name.'
       >
         <Input placeholder='username' />
@@ -27,7 +27,7 @@ export const Default: Story = {
       </Field>
       <Field label='Week'>
         <NativeSelect defaultValue='3'>
-          <option value='all'>All weeks</option>
+          <option value='all'>All Weeks</option>
           <option value='3'>Week 3</option>
           <option value='2'>Week 2</option>
         </NativeSelect>
@@ -53,7 +53,7 @@ export const OnACard: Story = {
   name: 'On a card',
   render: () => (
     <div className='max-w-sm bg-card p-6'>
-      <Field label='Team name'>
+      <Field label='Team Name'>
         <Input defaultValue='Mahomes Alone' />
       </Field>
     </div>

@@ -77,7 +77,7 @@ export async function getAdminTasks(): Promise<{
   if (week) {
     if (!poolWeek?.isOpen) {
       tasks.push({
-        title: `Spread pool week ${week}`,
+        title: `Spread Pool week ${week}`,
         detail: poolWeek
           ? 'The lines are not published yet.'
           : 'The week is not set up yet.',
@@ -86,7 +86,7 @@ export async function getAdminTasks(): Promise<{
     }
     if (!qbWeek || qbWeek._count.QBStreamingWeekOptions === 0) {
       tasks.push({
-        title: `QB streaming week ${week}`,
+        title: `QB Streaming week ${week}`,
         detail: qbWeek
           ? 'The week has no options yet.'
           : 'The week is not set up yet.',
@@ -95,7 +95,7 @@ export async function getAdminTasks(): Promise<{
     }
     if (!locksWeek?.isOpen) {
       tasks.push({
-        title: `Locks challenge week ${week}`,
+        title: `Locks Challenge week ${week}`,
         detail: locksWeek
           ? 'The week is not open yet.'
           : 'The week is not set up yet.',

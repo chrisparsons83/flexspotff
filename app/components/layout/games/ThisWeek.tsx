@@ -33,7 +33,7 @@ export default function ThisWeek({
 }) {
   if (week === null) {
     return (
-      <Section title='This week'>
+      <Section title='This Week'>
         <p className='text-muted-foreground'>No weeks set up yet.</p>
       </Section>
     );
@@ -45,7 +45,7 @@ export default function ThisWeek({
       description={status}
       action={
         standingsHref && (
-          <Link to={standingsHref}>Week {standingsWeek} standings</Link>
+          <Link to={standingsHref}>Week {standingsWeek} Standings</Link>
         )
       }
     >
@@ -74,7 +74,7 @@ export default function ThisWeek({
             {entryLabel ??
               (entry?.saved
                 ? `Change your week ${week} picks`
-                : `Make your week ${week} picks`)}
+                : `Make Your Week ${week} Picks`)}
           </Link>
         </Button>
       )}

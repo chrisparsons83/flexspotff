@@ -144,7 +144,7 @@ export default function AdminGuillotineIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <Section title='Guillotine leagues'>
+    <Section title='Guillotine Leagues'>
       {actionData?.message && (
         <Alert
           message={actionData.message}
@@ -163,7 +163,7 @@ export default function AdminGuillotineIndex() {
 
       <Section
         as='h3'
-        title='Add league'
+        title='Add League'
         description="Paste any guillotine league's Sleeper URL, from any year. The season, name and format come from Sleeper, and the whole league is synced straight away. Leagues from the current season then keep themselves up to date."
       >
         <Form
@@ -171,7 +171,7 @@ export default function AdminGuillotineIndex() {
           method='POST'
           className='flex flex-wrap items-end gap-2'
         >
-          <Field label='Sleeper league URL' className='w-full sm:w-96'>
+          <Field label='Sleeper League URL' className='w-full sm:w-96'>
             <Input
               name='sleeperUrl'
               placeholder='https://sleeper.com/leagues/123456789'
@@ -185,7 +185,7 @@ export default function AdminGuillotineIndex() {
           >
             {isSubmitting && navigation.formData?.get('_action') === 'addLeague'
               ? 'Adding…'
-              : 'Add league'}
+              : 'Add League'}
           </Button>
         </Form>
       </Section>
@@ -204,7 +204,7 @@ export default function AdminGuillotineIndex() {
               'Format',
               'Status',
               'Members',
-              'Last synced',
+              'Last Synced',
               '',
             ]}
           >

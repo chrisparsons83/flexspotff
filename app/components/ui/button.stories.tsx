@@ -32,12 +32,12 @@ export const Variants: Story = {
     <div className='flex flex-wrap items-center gap-4'>
       <Button>Save</Button>
       <Button variant='secondary'>Cancel</Button>
-      <Button variant='destructive'>Delete entry</Button>
+      <Button variant='destructive'>Delete Entry</Button>
       <Button variant='discord'>
         <DiscordLogoIcon aria-hidden />
         Join the Discord
       </Button>
-      <Button variant='ghost'>Show more</Button>
+      <Button variant='ghost'>Show More</Button>
       <Button variant='link'>Rules</Button>
     </div>
   ),

@@ -177,7 +177,7 @@ async function getD12Summary(count: number): Promise<SideLeagueSummary | null> {
   const week = latest._max.week;
 
   return {
-    title: `${year} standings`,
+    title: `${year} Standings`,
     to: `/side-leagues/d12/${year}`,
     status: week ? `Points through week ${week}.` : 'No weeks scored yet.',
     rows: (await getSeasonLeaders(totals, year, count)).map(row => ({
@@ -196,7 +196,7 @@ async function getBestBallSummary(
   const latest = await getLatestBestBallLeague();
   if (!latest) return null;
   const base = {
-    title: `${latest.season.year} standings`,
+    title: `${latest.season.year} Standings`,
     to: `/side-leagues/best-ball/${latest.season.year}`,
   };
 

@@ -21,7 +21,7 @@ export default function Dashboard() {
           <SubNav
             label='Dashboard'
             items={[
-              { label: 'Your week', to: '/dashboard', end: true },
+              { label: 'Your Week', to: '/dashboard', end: true },
               { label: 'Registration', to: '/dashboard/registration' },
             ]}
           />

@@ -109,7 +109,7 @@ export default function DfsSurvivorStandings() {
       </StandingsSection>
       {weeks.length > 0 && (
         <Section
-          title='Week by week'
+          title='Week by Week'
           description={
             <span className='inline-flex items-center gap-2 text-sm'>
               <span aria-hidden className='size-3 bg-positive/30' />

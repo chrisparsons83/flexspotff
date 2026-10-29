@@ -46,7 +46,7 @@ export default function Games() {
             empty={game.empty}
             footer={
               signedIn &&
-              game.entries && <Link to={`${game.to}/entries`}>My entries</Link>
+              game.entries && <Link to={`${game.to}/entries`}>My Entries</Link>
             }
           />
         ))}

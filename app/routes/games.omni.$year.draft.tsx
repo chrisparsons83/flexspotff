@@ -8,7 +8,7 @@ import { type RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
   width: 'full',
-  title: 'Draft board',
+  title: 'Draft Board',
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -35,7 +35,7 @@ export default function OmniDraft() {
 
   return (
     <Section
-      title='Draft board'
+      title='Draft Board'
       description='Each pick shaded by the points it scored; red is a pick whose season ended with none.'
     >
       <OmniDraftBoard teams={season.omniTeams} />

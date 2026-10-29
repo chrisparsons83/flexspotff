@@ -56,7 +56,7 @@ export async function getCareerRecords(
 
   return [
     {
-      title: 'Most career wins',
+      title: 'Most Career Wins',
       headers: ['Player', 'Wins', 'Record', 'Seasons'],
       rows: [...careers]
         .sort((a, b) => b.wins - a.wins)
@@ -72,7 +72,7 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Highest career win percentage',
+      title: 'Highest Career Win Percentage',
       headers: ['Player', 'Win %', 'Record', 'Seasons'],
       rows: [...careers]
         .filter(c => finishedSeasons(c) >= MIN_SEASONS)
@@ -89,11 +89,11 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Most career points for',
+      title: 'Most Career Points For',
       // No average here: the total includes the season being played and the
       // average cannot, so the two would not agree. Highest Average Points For
       // per Season has it.
-      headers: ['Player', 'Points for', 'Seasons'],
+      headers: ['Player', 'Points For', 'Seasons'],
       rows: [...careers]
         .sort((a, b) => b.pointsFor - a.pointsFor)
         .slice(0, TOP_N)
@@ -103,8 +103,8 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Most career points against',
-      headers: ['Player', 'Points against', 'Seasons'],
+      title: 'Most Career Points Against',
+      headers: ['Player', 'Points Against', 'Seasons'],
       rows: [...careers]
         .sort((a, b) => b.pointsAgainst - a.pointsAgainst)
         .slice(0, TOP_N)
@@ -114,7 +114,7 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Highest average points for per season',
+      title: 'Highest Average Points For per Season',
       headers: ['Player', 'Avg PF/Season', 'Total PF', 'Seasons'],
       rows: [...finishedCareers.values()]
         .filter(c => c.seasons >= MIN_SEASONS)
@@ -131,8 +131,8 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Most career median wins',
-      headers: ['Player', 'Median wins', 'Median record', 'Seasons'],
+      title: 'Most Career Median Wins',
+      headers: ['Player', 'Median Wins', 'Median Record', 'Seasons'],
       rows: [...careers]
         .sort((a, b) => b.medianWins - a.medianWins)
         .slice(0, TOP_N)
@@ -147,8 +147,8 @@ export async function getCareerRecords(
         })),
     },
     {
-      title: 'Most seasons played',
-      headers: ['Player', 'Seasons', 'Career record'],
+      title: 'Most Seasons Played',
+      headers: ['Player', 'Seasons', 'Career Record'],
       rows: [...careers]
         .sort((a, b) => b.seasons - a.seasons || b.wins - a.wins)
         .slice(0, TOP_N)
@@ -200,7 +200,7 @@ export async function getSingleSeasonRecords(
 
   return [
     {
-      title: 'Most wins in a season',
+      title: 'Most Wins in a Season',
       headers: ['Player', 'Record', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor)
@@ -208,7 +208,7 @@ export async function getSingleSeasonRecords(
         .map(t => makeRow(t, `${t.wins}-${t.losses}-${t.ties}`)),
     },
     {
-      title: 'Best win percentage',
+      title: 'Best Win Percentage',
       headers: ['Player', 'Win %', 'Year', 'League'],
       rows: [...teams]
         .filter(t => totalGames(t) > 0)
@@ -217,23 +217,23 @@ export async function getSingleSeasonRecords(
         .map(t => makeRow(t, (winPct(t) * 100).toFixed(1) + '%')),
     },
     {
-      title: 'Most points for in a season',
-      headers: ['Player', 'Points for', 'Year', 'League'],
+      title: 'Most Points For in a Season',
+      headers: ['Player', 'Points For', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => b.pointsFor - a.pointsFor)
         .slice(0, TOP_N)
         .map(t => makeRow(t, t.pointsFor.toFixed(2))),
     },
     {
-      title: 'Most points against in a season',
-      headers: ['Player', 'Points against', 'Year', 'League'],
+      title: 'Most Points Against in a Season',
+      headers: ['Player', 'Points Against', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => b.pointsAgainst - a.pointsAgainst)
         .slice(0, TOP_N)
         .map(t => makeRow(t, t.pointsAgainst.toFixed(2))),
     },
     {
-      title: 'Largest points differential (PF - PA)',
+      title: 'Largest Points Differential (PF - PA)',
       headers: ['Player', 'Differential', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => differential(b) - differential(a))
@@ -248,8 +248,8 @@ export async function getSingleSeasonRecords(
         ),
     },
     {
-      title: 'Most median wins in a season',
-      headers: ['Player', 'Median record', 'Year', 'League'],
+      title: 'Most Median Wins in a Season',
+      headers: ['Player', 'Median Record', 'Year', 'League'],
       rows: [...teams]
         .sort((a, b) => b.medianWins - a.medianWins)
         .slice(0, TOP_N)
@@ -313,12 +313,12 @@ export async function getSingleGameRecords(): Promise<RecordTable[]> {
 
   return [
     {
-      title: 'Highest score in a single week',
+      title: 'Highest Score in a Single Week',
       headers: ['Player', 'Points', 'Week', 'Year', 'League'],
       rows: highestGames.map(makeRow),
     },
     {
-      title: 'Lowest score in a single week',
+      title: 'Lowest Score in a Single Week',
       headers: ['Player', 'Points', 'Week', 'Year', 'League'],
       rows: lowestGames.map(makeRow),
     },
@@ -365,8 +365,8 @@ export async function getCupRecords(): Promise<RecordTable[]> {
 
   return [
     {
-      title: 'Most cup championships',
-      headers: ['Player', 'Championships', 'Finals', 'Games won'],
+      title: 'Most Cup Championships',
+      headers: ['Player', 'Championships', 'Finals', 'Games Won'],
       rows: [...cupStats]
         .sort(
           (a, b) =>
@@ -386,8 +386,8 @@ export async function getCupRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most cup finals appearances',
-      headers: ['Player', 'Finals', 'Championships', 'Games won'],
+      title: 'Most Cup Finals Appearances',
+      headers: ['Player', 'Finals', 'Championships', 'Games Won'],
       rows: [...cupStats]
         .filter(c => c.finalsAppearances > 0)
         .sort(
@@ -407,8 +407,8 @@ export async function getCupRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most cup game wins',
-      headers: ['Player', 'Wins', 'Games played', 'Win %'],
+      title: 'Most Cup Game Wins',
+      headers: ['Player', 'Wins', 'Games Played', 'Win %'],
       rows: [...cupStats]
         .sort((a, b) => b.gameWins - a.gameWins)
         .slice(0, TOP_N)
@@ -536,17 +536,17 @@ export async function getStreakRecords(): Promise<RecordTable[]> {
 
   return [
     {
-      title: 'Longest win streak',
+      title: 'Longest Win Streak',
       headers: ['Player', 'Games', 'Span', 'League'],
       rows: makeStreakRows(winStreaks),
     },
     {
-      title: 'Longest losing streak',
+      title: 'Longest Losing Streak',
       headers: ['Player', 'Games', 'Span', 'League'],
       rows: makeStreakRows(lossStreaks),
     },
     {
-      title: 'Longest 100+ point streak',
+      title: 'Longest 100+ Point Streak',
       headers: ['Player', 'Games', 'Span', 'League'],
       rows: makeStreakRows(streak100),
     },
@@ -590,8 +590,8 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
 
   return [
     {
-      title: 'Most league championships',
-      headers: ['Player', 'Championships', 'Playoff record', 'Appearances'],
+      title: 'Most League Championships',
+      headers: ['Player', 'Championships', 'Playoff Record', 'Appearances'],
       rows: [...stats]
         .filter(s => s.championships > 0)
         .sort((a, b) => b.championships - a.championships || b.wins - a.wins)
@@ -607,8 +607,8 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most playoff appearances',
-      headers: ['Player', 'Appearances', 'Playoff record', 'Championships'],
+      title: 'Most Playoff Appearances',
+      headers: ['Player', 'Appearances', 'Playoff Record', 'Championships'],
       rows: [...stats]
         .filter(s => s.appearances > 0)
         .sort(
@@ -627,8 +627,8 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most playoff wins',
-      headers: ['Player', 'Wins', 'Playoff record', 'Win %'],
+      title: 'Most Playoff Wins',
+      headers: ['Player', 'Wins', 'Playoff Record', 'Win %'],
       rows: [...stats]
         .filter(s => s.wins > 0)
         .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
@@ -644,7 +644,7 @@ export async function getPlayoffRecords(): Promise<RecordTable[]> {
         })),
     },
     {
-      title: 'Most sackos',
+      title: 'Most Sackos',
       headers: ['Player', 'Sackos', 'Championships', 'Appearances'],
       rows: [...stats]
         .filter(s => s.sackos > 0)

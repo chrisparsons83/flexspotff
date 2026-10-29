@@ -165,14 +165,14 @@ export default function DfsSurvivorPlayerTable({
             onChange={setHideUsed}
             className='flex-1 sm:flex-none'
           >
-            Hide used
+            Hide Used
           </FilterToggle>
           <FilterToggle
             checked={hideByes}
             onChange={setHideByes}
             className='flex-1 sm:flex-none'
           >
-            Hide byes
+            Hide Byes
           </FilterToggle>
         </div>
       </header>

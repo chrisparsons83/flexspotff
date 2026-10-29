@@ -2,7 +2,7 @@ import { ChartKey, ChartKeys } from './chart';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ChartKeys> = {
-  title: 'Data display/ChartKey',
+  title: 'Data Display/ChartKey',
   component: ChartKeys,
 };
 export default meta;

@@ -54,7 +54,7 @@ const selectOptions: CupMappingOptions[] = [
     value: 'PENDING',
   },
   {
-    label: 'Seeding week',
+    label: 'Seeding Week',
     value: 'SEEDING',
   },
   {
@@ -284,7 +284,7 @@ export default function CupAdministerPage() {
   const { cup, cupWeeks, actionWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
-    <Section title={`Administer ${cup.year} cup`}>
+    <Section title={`Administer ${cup.year} Cup`}>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
@@ -296,7 +296,7 @@ export default function CupAdministerPage() {
                 ? cupWeek.mapping
                 : undefined;
             const buttonText =
-              action === 'SEEDING' ? 'Set seeds' : 'Score week';
+              action === 'SEEDING' ? 'Set Seeds' : 'Score Week';
 
             return (
               <tr key={cupWeek.id}>
@@ -332,24 +332,24 @@ export default function CupAdministerPage() {
         </Table>
         <div className='mt-6'>
           <Button type='submit' name='_action' value='updateCup'>
-            Update mapping
+            Update Mapping
           </Button>
         </div>
       </Form>
       <Section
         as='h3'
-        title='Import from Challonge'
+        title='Import From Challonge'
         description="For cups played on Challonge before the site ran them. Map the weeks above first. Importing replaces this cup's seeds and games with Challonge's."
       >
         <Form method='POST' className='flex flex-wrap items-end gap-3'>
           <Field
-            label='Challonge tournament'
+            label='Challonge Tournament'
             description='The part after challonge.com/'
           >
             <Input name='slug' defaultValue={`${cup.year}FSCup`} />
           </Field>
           <Button type='submit' name='_action' value='challongePreview'>
-            Preview import
+            Preview Import
           </Button>
           <Button type='submit' name='_action' value='challongeImport'>
             Import
@@ -408,8 +408,8 @@ function ChallongeReport({ report }: { report: ChallongeMatchReport }) {
           'Challonge',
           'Team',
           'League',
-          'Seed on site points',
-          'Score differences',
+          'Seed on Site Points',
+          'Score Differences',
         ]}
       >
         {report.assignments.map(({ participant, team, seedRank }) => (

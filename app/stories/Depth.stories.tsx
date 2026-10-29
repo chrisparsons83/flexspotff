@@ -235,7 +235,7 @@ function Playground(args: Args) {
           actions={
             <>
               <Button variant='secondary'>Export</Button>
-              <Button>Set lineup</Button>
+              <Button>Set Lineup</Button>
             </>
           }
           nav={
@@ -257,7 +257,7 @@ function Playground(args: Args) {
               <CardTitle>Admiral</CardTitle>
             </CardHeader>
             <Table
-              headers={['Team', 'Record', 'Points for']}
+              headers={['Team', 'Record', 'Points For']}
               numericColumns={[1, 2]}
               caption='Admiral standings'
             >
@@ -285,7 +285,7 @@ function Playground(args: Args) {
             {/* A live game asks for the glow by name. */}
             <Card glow>
               <CardHeader>
-                <CardTitle>Live now</CardTitle>
+                <CardTitle>Live Now</CardTitle>
               </CardHeader>
               <CardContent className='tabular-nums'>
                 Panda 98.4, Kat 91.2, fourth quarter.
@@ -308,7 +308,7 @@ function Playground(args: Args) {
           ))}
         </div>
 
-        <h2 className='mb-4 mt-12 text-2xl font-bold'>Draft board</h2>
+        <h2 className='mb-4 mt-12 text-2xl font-bold'>Draft Board</h2>
         <DraftBoard
           columns={TEAMS}
           rounds={2}

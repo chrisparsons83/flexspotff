@@ -15,7 +15,7 @@ import {
 } from '~/models/profile/cupProfile';
 import { assignCompetitionRanks } from '~/utils/rank';
 
-export type DashboardSection = 'Leagues' | 'Side leagues' | 'Games';
+export type DashboardSection = 'Leagues' | 'Side Leagues' | 'Games';
 
 export type DashboardRow = {
   section: DashboardSection;
@@ -134,7 +134,7 @@ export type MemberWeekFacts = {
   registration: { isOpen: boolean; isRegistered: boolean };
 };
 
-const ORDER: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
+const ORDER: DashboardSection[] = ['Leagues', 'Games', 'Side Leagues'];
 
 const result = (points: number, opponentPoints: number) =>
   points > opponentPoints ? 'Won' : points < opponentPoints ? 'Lost' : 'Tied';
@@ -212,7 +212,7 @@ const pointsLeagueRow = (
   { season, lastWeek }: PointsLeague,
 ): DashboardRow => ({
   ...blank,
-  section: 'Side leagues',
+  section: 'Side Leagues',
   label,
   lastWeek: lastWeek
     ? `Week ${lastWeek.week}: ${pts(lastWeek.points)} pts, ${ordinal(
@@ -336,10 +336,10 @@ const cupThisWeek = ({ lastGame, current }: CupFacts) => {
 
 /** The Games section's games, in the sitemap's order. */
 const GAMES: { key: StandingGame; label: string; href: string }[] = [
-  { key: 'qbStreaming', label: 'QB streaming', href: '/games/qb-streaming' },
-  { key: 'spreadPool', label: 'Spread pool', href: '/games/spread-pool' },
-  { key: 'locks', label: 'Locks challenge', href: '/games/locks-challenge' },
-  { key: 'dfsSurvivor', label: 'DFS survivor', href: '/games/dfs-survivor' },
+  { key: 'qbStreaming', label: 'QB Streaming', href: '/games/qb-streaming' },
+  { key: 'spreadPool', label: 'Spread Pool', href: '/games/spread-pool' },
+  { key: 'locks', label: 'Locks Challenge', href: '/games/locks-challenge' },
+  { key: 'dfsSurvivor', label: 'DFS Survivor', href: '/games/dfs-survivor' },
   { key: 'fSquared', label: 'F²', href: '/games/f-squared' },
 ];
 
@@ -358,9 +358,9 @@ function todos(facts: MemberWeekFacts): TodoItem[] {
       : null,
     ...(
       [
-        ['QB streaming', '/games/qb-streaming', facts.qbStreaming],
-        ['Spread pool', '/games/spread-pool', facts.spreadPool],
-        ['Locks challenge', '/games/locks-challenge', facts.locks],
+        ['QB Streaming', '/games/qb-streaming', facts.qbStreaming],
+        ['Spread Pool', '/games/spread-pool', facts.spreadPool],
+        ['Locks Challenge', '/games/locks-challenge', facts.locks],
       ] as const
     ).map(([label, href, week]) =>
       pickTodo(week) ? { label, href: `${href}/entries/${week!.id}` } : null,
@@ -368,7 +368,7 @@ function todos(facts: MemberWeekFacts): TodoItem[] {
     facts.dfsSurvivor &&
     !facts.dfsSurvivor.isLocked &&
     facts.dfsSurvivor.entries === 0
-      ? { label: 'DFS survivor', href: '/games/dfs-survivor/entries' }
+      ? { label: 'DFS Survivor', href: '/games/dfs-survivor/entries' }
       : null,
     facts.fSquared.isOpen && !facts.fSquared.hasEntry
       ? { label: 'F²', href: '/games/f-squared/entries' }
@@ -446,7 +446,7 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
   for (const team of facts.guillotine) {
     rows.push({
       ...blank,
-      section: 'Side leagues',
+      section: 'Side Leagues',
       label: team.name,
       thisWeek:
         team.finish === 1

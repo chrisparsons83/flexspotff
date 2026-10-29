@@ -135,7 +135,7 @@ export default function MergeMembers() {
 
   return (
     <Section
-      title='Merge duplicate members'
+      title='Merge Duplicate Members'
       description={
         <>
           When the same person exists twice - usually because they were{' '}
@@ -161,7 +161,7 @@ export default function MergeMembers() {
             keys remount it when a preview arrives - without them, previewing
             from the suggestions table would leave these two blank. */}
         <label className='grid gap-2'>
-          <span className='text-sm font-semibold'>Duplicate (goes away)</span>
+          <span className='text-sm font-semibold'>Duplicate (Goes Away)</span>
           <MemberSelect
             key={`duplicate-${preview?.duplicate.id ?? 'empty'}`}
             name='duplicateId'
@@ -172,7 +172,7 @@ export default function MergeMembers() {
         </label>
         <label className='grid gap-2'>
           <span className='text-sm font-semibold'>
-            Keep (receives everything)
+            Keep (Receives Everything)
           </span>
           <MemberSelect
             key={`canonical-${preview?.canonical.id ?? 'empty'}`}
@@ -190,7 +190,7 @@ export default function MergeMembers() {
       {preview && (
         <Section
           as='h3'
-          title={`Merge ${preview.duplicate.discordName} into ${preview.canonical.discordName}`}
+          title={`Merge ${preview.duplicate.discordName} Into ${preview.canonical.discordName}`}
         >
           {preview.warnings.map(warning => (
             <Alert
@@ -209,7 +209,7 @@ export default function MergeMembers() {
             </p>
           ) : (
             <Table
-              headers={['Data', 'Moving', 'Staying behind', 'Why']}
+              headers={['Data', 'Moving', 'Staying Behind', 'Why']}
               numericColumns={[1, 2]}
               className='mb-6'
             >
@@ -277,11 +277,11 @@ export default function MergeMembers() {
         </Section>
       )}
 
-      <Section as='h3' title='Possible duplicates'>
+      <Section as='h3' title='Possible Duplicates'>
         {suggestions.length === 0 ? (
           <p className='text-muted-foreground'>No likely duplicates found.</p>
         ) : (
-          <Table headers={['Duplicate', 'Keep', 'Why flagged', '']}>
+          <Table headers={['Duplicate', 'Keep', 'Why Flagged', '']}>
             {suggestions.map(suggestion => (
               <tr key={`${suggestion.left.id}:${suggestion.right.id}`}>
                 <td>
@@ -327,7 +327,7 @@ export default function MergeMembers() {
         )}
       </Section>
 
-      <Section as='h3' title='Already merged'>
+      <Section as='h3' title='Already Merged'>
         {alreadyMerged.length === 0 ? (
           <p className='text-muted-foreground'>
             No members have been merged yet.
@@ -341,7 +341,7 @@ export default function MergeMembers() {
               merge sweeps it up.
             </p>
             <Table
-              headers={['Merged member', 'Merged into', 'Rows left behind', '']}
+              headers={['Merged Member', 'Merged Into', 'Rows Left Behind', '']}
               numericColumns={[2]}
             >
               {alreadyMerged.map(user => (
@@ -368,7 +368,7 @@ export default function MergeMembers() {
                           value='preview'
                           disabled={isBusy}
                         >
-                          Preview re-merge
+                          Preview Re-merge
                         </Button>
                       </Form>
                     )}

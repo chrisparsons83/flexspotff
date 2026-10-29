@@ -96,9 +96,9 @@ export default function SurvivorPool() {
           </div>
         }
       >
-        <Section as='h3' title='Week by week' className='mt-0'>
+        <Section as='h3' title='Week by Week' className='mt-0'>
           <Table
-            headers={['Week', 'Alive', 'Out', 'Most picked', 'Did the damage']}
+            headers={['Week', 'Alive', 'Out', 'Most Picked', 'Did the Damage']}
             numericColumns={[1, 2]}
             primaryColumns={[1, 2]}
           >
@@ -155,7 +155,7 @@ export default function SurvivorPool() {
 
         <Section
           as='h3'
-          title='Every pick'
+          title='Every Pick'
           description='A win is in bold, a loss struck through, and a game not played yet is muted. None is a week with no pick.'
         >
           <div className='relative overflow-x-auto'>

@@ -94,14 +94,14 @@ export default function RulesPage() {
           <li>2 points for every 2-point conversion caught</li>
           <li>6 points for every receiving TD</li>
         </ul>
-        <h4 id='other-offense'>Other offense</h4>
+        <h4 id='other-offense'>Other Offense</h4>
         <ul>
           <li>−2 points for every fumble lost</li>
           <li>6 points for every offensive fumble recovery TD</li>
           <li>6 points for every punt return TD</li>
           <li>6 points for every kick return TD</li>
         </ul>
-        <h4 id='defensespecial-teams'>Defense/special teams</h4>
+        <h4 id='defensespecial-teams'>Defense/Special Teams</h4>
         <ul>
           <li>6 points for every defensive TD from an interception</li>
           <li>6 points for every defensive TD from a fumble recovery</li>
@@ -214,7 +214,7 @@ export default function RulesPage() {
         <p>
           8.7. There is no limit on the number of trades that can be performed.
         </p>
-        <h3 id='9-regular-season'>9. Regular season</h3>
+        <h3 id='9-regular-season'>9. Regular Season</h3>
         <p>
           9.1. The regular season will last through week 14 of the NFL regular
           season.
@@ -241,7 +241,7 @@ export default function RulesPage() {
           will earn an additional win, and the bottom six fantasy point scoring
           members of the league will earn an additional loss.
         </p>
-        <h3 id='10-valid-lineups'>10. Valid lineups</h3>
+        <h3 id='10-valid-lineups'>10. Valid Lineups</h3>
         <p>
           10.1. Lineups, both starting and bench players, lock individually at
           scheduled game time.
@@ -316,7 +316,7 @@ export default function RulesPage() {
           10.7. Members that fill a team mid-season will be given priority
           registration for the following season.
         </p>
-        <h3 id='11-the-cup'>11. The cup</h3>
+        <h3 id='11-the-cup'>11. The Cup</h3>
         <p>
           11.1. The cup is a single elimination tournament that takes place
           between all teams in all leagues.
@@ -371,7 +371,7 @@ export default function RulesPage() {
         </p>
         <p>13.3. The top two seeds will receive a bye in the first round.</p>
         <p>13.4. Playoff matches will be one-week playoff games.</p>
-        <h3 id='14-league-hierarchy'>14. League hierarchy</h3>
+        <h3 id='14-league-hierarchy'>14. League Hierarchy</h3>
         <p>
           14.1. The Flex Spot Football Club is distributed into two “tiers”:
           Tier One, and Tier Two. Tier One consists of a single 12-member
@@ -391,7 +391,7 @@ export default function RulesPage() {
           14.4. There is only one champion per league (i.e. no ties or
           co-champions).
         </p>
-        <h3 id='15-promotionrelegation'>15. Promotion and relegation</h3>
+        <h3 id='15-promotionrelegation'>15. Promotion and Relegation</h3>
         <p>
           15.1. At the end of each season, a certain number of top and bottom
           members in each league will be promoted or relegated to the next tier
@@ -434,7 +434,7 @@ export default function RulesPage() {
           season will contain the same members in each tier. Players within a
           tier will be reshuffled if there are multiple leagues within the tier.
         </p>
-        <h3 id='16-rookie-members'>16. Rookie members</h3>
+        <h3 id='16-rookie-members'>16. Rookie Members</h3>
         <p>
           16.1. New members to the Flex Spot Football Club will begin in Tier
           Two.
@@ -451,13 +451,13 @@ export default function RulesPage() {
           commissioners in order to be readmitted to the league.
         </p>
         <h3 id='18-league-growth-and-expansion'>
-          18. League growth and expansion
+          18. League Growth and Expansion
         </h3>
         <p>
           18.1. In future seasons, as the number of members increases, leagues
           will be added in Tier Two to accommodate the growth.
         </p>
-        <h3 id='19-player-conduct'>19. Player conduct</h3>
+        <h3 id='19-player-conduct'>19. Player Conduct</h3>
         <p>
           19.1. Don’t be a jerk, and be respectful to others. Abuse, disrespect,
           and assholishness are not tolerated. Don’t rage quit and drop all of

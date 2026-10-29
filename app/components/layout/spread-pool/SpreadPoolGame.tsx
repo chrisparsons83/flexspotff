@@ -158,7 +158,7 @@ export default function SpreadPoolGameComponent({
               onClick={resetBet}
               disabled={pickLocked}
             >
-              Reset bet
+              Reset Bet
             </Button>
           </div>
         </>
@@ -170,7 +170,7 @@ export default function SpreadPoolGameComponent({
           onClick={displayBetInput}
           disabled={pickLocked}
         >
-          {betAmount !== 0 ? 'Bet placed on game' : 'Place bet on game'}
+          {betAmount !== 0 ? 'Bet Placed on Game' : 'Place Bet on Game'}
         </Button>
       )}
     </div>

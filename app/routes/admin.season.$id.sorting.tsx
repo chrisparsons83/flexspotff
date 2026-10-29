@@ -1457,14 +1457,14 @@ export default function LeagueSorting() {
   ] as const;
 
   return (
-    <Section title={`League sorting, ${season.year}`}>
+    <Section title={`League Sorting, ${season.year}`}>
       <Section
         as='h3'
-        title={`Registered players (${registrations.length})`}
+        title={`Registered Players (${registrations.length})`}
         action={
           registrations.length > 0 && (
             <Button variant='secondary' size='sm' onClick={handleResetTiers}>
-              Reset all to tier 2
+              Reset All to Tier 2
             </Button>
           )
         }
@@ -1508,7 +1508,7 @@ export default function LeagueSorting() {
                     <td>{renderPlayerWithPopover(registration.user)}</td>
                     <td>
                       <SegmentedControl
-                        label={`${registration.user.discordName}'s league`}
+                        label={`${registration.user.discordName}'s League`}
                         options={tierOptions}
                         value={tierOf(registration.user.id)}
                         onChange={tier =>
@@ -1542,7 +1542,7 @@ export default function LeagueSorting() {
                 />
               ))}
               <Button type='submit' disabled={!isValidSelection}>
-                Sort into draft slots
+                Sort Into Draft Slots
               </Button>
               <p className='text-sm text-muted-foreground'>
                 {isValidSelection
@@ -1596,7 +1596,7 @@ export default function LeagueSorting() {
             sortingData.completedGroups.length > 0 && (
               <Section
                 as='h3'
-                title={`Completed draft slots (${sortingData.completedGroups.length})`}
+                title={`Completed Draft Slots (${sortingData.completedGroups.length})`}
                 description={
                   hasDuplicateLeagues
                     ? 'Each league can only be assigned to one group.'
@@ -1620,7 +1620,7 @@ export default function LeagueSorting() {
                         }
                       />
                       <Button type='submit'>
-                        Announce to Discord and assign roles
+                        Announce to Discord and Assign Roles
                       </Button>
                     </Form>
                   )
@@ -1664,7 +1664,7 @@ export default function LeagueSorting() {
                               handleLeagueAssignment(groupIndex, e.target.value)
                             }
                           >
-                            <option value=''>Select league</option>
+                            <option value=''>Select League</option>
                             {assignableLeagues.map(league => {
                               const takenByAnotherGroup =
                                 assignedLeagueIds.some(
@@ -1711,7 +1711,7 @@ export default function LeagueSorting() {
             sortingData.ungroupedPlayers.length > 0 && (
               <Section
                 as='h3'
-                title={`Unable to group (${sortingData.ungroupedPlayers.length} players)`}
+                title={`Unable to Group (${sortingData.ungroupedPlayers.length} Players)`}
               >
                 <ul className='grid gap-1 text-warning'>
                   {sortingData.ungroupedPlayers.map(player => (
@@ -1726,11 +1726,11 @@ export default function LeagueSorting() {
           {championsSlotOptions.length > 0 && (
             <Section
               as='h3'
-              title='Champions draft time options'
+              title='Champions Draft Time Options'
               description={`Ranked by how many of the ${announcedChampions.length} Champions can attend. Champions with no recorded preferences count as available for every slot.`}
             >
               <Table
-                headers={['Rank', 'Draft time', 'Available', "Can't make it"]}
+                headers={['Rank', 'Draft Time', 'Available', "Can't Make It"]}
                 numericColumns={[0, 2]}
                 primaryColumns={[1, 2]}
               >
@@ -1783,9 +1783,9 @@ export default function LeagueSorting() {
 
           {Array.isArray(sortingData.slotAvailabilityAnalysis) &&
             sortingData.slotAvailabilityAnalysis.length > 0 && (
-              <Section as='h3' title='Slot availability analysis'>
+              <Section as='h3' title='Slot Availability Analysis'>
                 <Table
-                  headers={['Draft slot', 'Available', 'Unavailable players']}
+                  headers={['Draft Slot', 'Available', 'Unavailable Players']}
                   numericColumns={[1]}
                   primaryColumns={[1]}
                 >

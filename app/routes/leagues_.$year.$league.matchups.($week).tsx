@@ -26,7 +26,7 @@ import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
   title: ({ params }) =>
-    params.week ? `Week ${params.week} matchups` : 'Matchups',
+    params.week ? `Week ${params.week} Matchups` : 'Matchups',
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -60,7 +60,7 @@ export default function LeagueMatchups() {
 
   return (
     <Section
-      title={`Week ${week} matchups`}
+      title={`Week ${week} Matchups`}
       action={
         <GoBox
           buttonText='Week'

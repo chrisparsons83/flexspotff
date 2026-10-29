@@ -102,19 +102,19 @@ export default function AdminBotPage() {
     );
 
   return (
-    <Section title='Bot commands'>
+    <Section title='Bot Commands'>
       <Form method='post' className='flex flex-wrap gap-3'>
         <Button type='submit' name='_action' value='registerGuildCommands'>
-          Register dev guild commands
+          Register Dev Guild Commands
         </Button>
         <Button type='submit' name='_action' value='registerGlobalCommands'>
-          Register global commands
+          Register Global Commands
         </Button>
       </Form>
-      <Section as='h3' title='Global commands'>
+      <Section as='h3' title='Global Commands'>
         {commandList(globalCommands)}
       </Section>
-      <Section as='h3' title='Dev guild commands'>
+      <Section as='h3' title='Dev Guild Commands'>
         {commandList(guildCommands, devGuildId)}
       </Section>
     </Section>

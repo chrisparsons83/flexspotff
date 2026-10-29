@@ -31,7 +31,7 @@ const MEMBERS = [
 
 export const Default: Story = {
   render: () => (
-    <Command className='max-w-sm' label='Go to'>
+    <Command className='max-w-sm' label='Go To'>
       <CommandInput placeholder='Go to' />
       <CommandList>
         <CommandEmpty>Nothing matches.</CommandEmpty>
@@ -41,8 +41,8 @@ export const Default: Story = {
           <CommandItem>Cup</CommandItem>
         </CommandGroup>
         <CommandGroup heading='Games'>
-          <CommandItem>Spread pool</CommandItem>
-          <CommandItem>QB streaming</CommandItem>
+          <CommandItem>Spread Pool</CommandItem>
+          <CommandItem>QB Streaming</CommandItem>
         </CommandGroup>
       </CommandList>
     </Command>

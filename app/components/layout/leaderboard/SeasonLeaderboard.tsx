@@ -64,12 +64,12 @@ export default function SeasonLeaderboard({
 
   return (
     <Section
-      title={`${year} season leaderboard`}
+      title={`${year} Season Leaderboard`}
       action={
         <div className='flex flex-wrap items-center gap-4'>
           {newestWeek && (
             <Link to={`/leagues/leaderboard/${year}/${newestWeek}`}>
-              By week
+              By Week
             </Link>
           )}
           <GoBox
@@ -79,7 +79,7 @@ export default function SeasonLeaderboard({
         </div>
       }
     >
-      <LeaderboardTable entries={entries} valueHeadings={['Points for']} />
+      <LeaderboardTable entries={entries} valueHeadings={['Points For']} />
     </Section>
   );
 }

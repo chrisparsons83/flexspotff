@@ -107,10 +107,10 @@ export default function QBStreamingStandingsYearIndex() {
             navigation.state !== 'idle' || availableSeasons.length === 0
           }
         >
-          Create cup
+          Create Cup
         </Button>
       </Form>
-      <Section as='h3' title='Cups by year'>
+      <Section as='h3' title='Cups by Year'>
         <Table headers={['Year', 'Actions']}>
           {cups.map(cup => (
             <tr key={cup.id}>

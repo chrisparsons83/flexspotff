@@ -11,7 +11,7 @@ const response = (status: number, data: unknown) => ({
 describe('errorPage', () => {
   it('uses a loader’s own message for a 404, as a sentence', () => {
     expect(errorPage(response(404, 'League not found'))).toEqual({
-      title: 'Page not found',
+      title: 'Page Not Found',
       message: 'League not found.',
     });
   });
@@ -26,12 +26,12 @@ describe('errorPage', () => {
   });
 
   it('explains a 403', () => {
-    expect(errorPage(response(403, 'Forbidden')).title).toBe('No access');
+    expect(errorPage(response(403, 'Forbidden')).title).toBe('No Access');
   });
 
   it('keeps a thrown error’s text as the detail', () => {
     const page = errorPage(new Error('Week missing'));
-    expect(page.title).toBe('Something went wrong');
+    expect(page.title).toBe('Something Went Wrong');
     expect(page.detail).toBe('Week missing');
   });
 });

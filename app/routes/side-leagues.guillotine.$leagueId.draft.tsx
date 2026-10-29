@@ -97,7 +97,7 @@ export default function GuillotineDraft() {
   }
 
   return (
-    <Section title='Draft board'>
+    <Section title='Draft Board'>
       <DraftBoard
         columns={columns}
         rounds={rounds}

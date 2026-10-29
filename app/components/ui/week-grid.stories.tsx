@@ -10,7 +10,7 @@ import {
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof WeekGrid> = {
-  title: 'Data display/WeekGrid',
+  title: 'Data Display/WeekGrid',
   component: WeekGrid,
 };
 export default meta;

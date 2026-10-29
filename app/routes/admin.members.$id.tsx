@@ -123,12 +123,12 @@ export default function EditUser() {
       : 'Add';
 
   return (
-    <Section title={`Edit member ${user.discordName}`}>
+    <Section title={`Edit Member ${user.discordName}`}>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
-      <Section as='h3' title='Sleeper accounts'>
-        <Table headers={['Sleeper owner ID', 'Action']}>
+      <Section as='h3' title='Sleeper Accounts'>
+        <Table headers={['Sleeper Owner ID', 'Action']}>
           {sleeperUsers.map(({ sleeperOwnerID }) => (
             <tr key={sleeperOwnerID}>
               <td className='font-mono'>{sleeperOwnerID}</td>
@@ -156,7 +156,7 @@ export default function EditUser() {
         </Table>
         <Form method='POST' className='mt-6 grid max-w-sm gap-6'>
           <Field
-            label='Sleeper owner ID'
+            label='Sleeper Owner ID'
             error={actionData?.fieldErrors?.sleeperOwnerID}
           >
             <Input required name='sleeperOwnerID' />

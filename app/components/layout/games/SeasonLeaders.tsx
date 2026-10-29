@@ -39,8 +39,8 @@ export default function SeasonLeaders({
 
   return (
     <Section
-      title={`${year} leaders`}
-      action={<Link to={standingsPath}>Full standings</Link>}
+      title={`${year} Leaders`}
+      action={<Link to={standingsPath}>Full Standings</Link>}
     >
       <LeaderboardTable
         nameHeading='Member'

@@ -73,11 +73,11 @@ export default function LeaderboardYearWeek() {
 
   return (
     <Section
-      title={`Week ${week} leaderboard`}
+      title={`Week ${week} Leaderboard`}
       action={
         <div className='flex flex-wrap items-center gap-4'>
           <Link to={`/leagues/leaderboard/${year}`}>
-            {year} season leaderboard
+            {year} Season Leaderboard
           </Link>
           <GoBox options={weekOptions} buttonText='Week' />
         </div>
@@ -85,7 +85,7 @@ export default function LeaderboardYearWeek() {
     >
       <LeaderboardTable
         entries={entries}
-        valueHeadings={['Points for']}
+        valueHeadings={['Points For']}
         emptyMessage={`No scores recorded yet for week ${week}.`}
       />
     </Section>

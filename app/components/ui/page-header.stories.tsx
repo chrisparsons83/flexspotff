@@ -22,7 +22,7 @@ type Story = StoryObj<typeof PageHeader>;
 const GAME_TABS = [
   { label: 'Overview', to: '/games/spread-pool', end: true },
   { label: 'Standings', to: '/games/spread-pool/standings' },
-  { label: 'My entries', to: '/games/spread-pool/entries' },
+  { label: 'My Entries', to: '/games/spread-pool/entries' },
   { label: 'Rules', to: '/games/spread-pool/rules' },
   { label: 'History', to: '/games/spread-pool/history' },
 ];
@@ -35,7 +35,7 @@ export const TitleOnly: Story = {
 export const WithDescription: Story = {
   name: 'With a description',
   args: {
-    title: 'Spread pool',
+    title: 'Spread Pool',
     description: 'Pick every game against the spread. One point a win.',
   },
 };
@@ -43,10 +43,10 @@ export const WithDescription: Story = {
 export const WithActionsAndNav: Story = {
   name: 'With actions and sub-navigation',
   args: {
-    title: 'Spread pool',
+    title: 'Spread Pool',
     description: 'Pick every game against the spread. One point a win.',
-    actions: <Button>Make your picks</Button>,
-    nav: <SubNav label='Spread pool' items={GAME_TABS} />,
+    actions: <Button>Make Your Picks</Button>,
+    nav: <SubNav label='Spread Pool' items={GAME_TABS} />,
   },
 };
 

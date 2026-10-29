@@ -31,13 +31,13 @@ export default function SheetNamesTable({ names, members, busy }: Props) {
           Match every name in the sheet to a member. A name that belongs to
           someone who never joined the site can get a stub member instead, which
           can be merged into their real account later from{' '}
-          <Link to='/admin/members/merge'>Merge members</Link>. Matches are
+          <Link to='/admin/members/merge'>Merge Members</Link>. Matches are
           saved as you go and reused by later imports.
         </>
       }
     >
       {unmatched.length > 0 && (
-        <Table headers={['Sheet name', 'Picks', 'Member']} numericColumns={[1]}>
+        <Table headers={['Sheet Name', 'Picks', 'Member']} numericColumns={[1]}>
           {unmatched.map(name => (
             <tr key={name.alias}>
               <td>{name.spellings.join(', ')}</td>
@@ -76,7 +76,7 @@ export default function SheetNamesTable({ names, members, busy }: Props) {
                       value='createStub'
                       disabled={busy}
                     >
-                      Create stub member
+                      Create Stub Member
                     </Button>
                   </Form>
                 </div>
@@ -91,7 +91,7 @@ export default function SheetNamesTable({ names, members, busy }: Props) {
             {matched.length} matched
           </summary>
           <Table
-            headers={['Sheet name', 'Picks', 'Member', '']}
+            headers={['Sheet Name', 'Picks', 'Member', '']}
             numericColumns={[1]}
           >
             {matched.map(name => (

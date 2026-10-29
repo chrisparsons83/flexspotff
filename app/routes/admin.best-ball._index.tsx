@@ -137,7 +137,7 @@ export default function AdminBestBallIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <Section title='Autodraft best ball mania leagues'>
+    <Section title='Autodraft Best Ball Mania Leagues'>
       {actionData?.message && (
         <Alert
           message={actionData.message}
@@ -156,7 +156,7 @@ export default function AdminBestBallIndex() {
 
       <Section
         as='h3'
-        title='Add league'
+        title='Add League'
         description="Paste the year's Best Ball Mania Sleeper URL, from any year. The season and name come from Sleeper, and the whole league - draft and weeks 1-17 - is synced straight away. There is one league a season; the current season's then keeps itself up to date."
       >
         <Form
@@ -164,7 +164,7 @@ export default function AdminBestBallIndex() {
           method='POST'
           className='flex flex-wrap items-end gap-2'
         >
-          <Field label='Sleeper league URL' className='w-full sm:w-96'>
+          <Field label='Sleeper League URL' className='w-full sm:w-96'>
             <Input
               name='sleeperUrl'
               placeholder='https://sleeper.com/leagues/123456789'
@@ -178,7 +178,7 @@ export default function AdminBestBallIndex() {
           >
             {isSubmitting && navigation.formData?.get('_action') === 'addLeague'
               ? 'Adding…'
-              : 'Add league'}
+              : 'Add League'}
           </Button>
         </Form>
       </Section>
@@ -191,7 +191,7 @@ export default function AdminBestBallIndex() {
         )}
         {leagues.length > 0 && (
           <Table
-            headers={['Year', 'League', 'Status', 'Members', 'Last synced', '']}
+            headers={['Year', 'League', 'Status', 'Members', 'Last Synced', '']}
           >
             {leagues.map(league => (
               <tr key={league.id}>

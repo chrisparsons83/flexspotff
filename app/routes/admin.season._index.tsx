@@ -195,7 +195,7 @@ export default function SeasonIndex() {
             value='createSeason'
             disabled={navigation.state !== 'idle'}
           >
-            Create season for current year
+            Create Season for Current Year
           </Button>
         </Form>
       }
@@ -208,9 +208,9 @@ export default function SeasonIndex() {
           'Year',
           'Leagues',
           'Active',
-          'Registration open',
-          'F² open',
-          'DFS survivor open',
+          'Registration Open',
+          'F² Open',
+          'DFS Survivor Open',
           'Actions',
         ]}
         numericColumns={[1]}
@@ -248,7 +248,7 @@ export default function SeasonIndex() {
                         variant='secondary'
                         size='sm'
                       >
-                        Set active
+                        Set Active
                       </Button>
                     </Form>
                   )}
@@ -290,8 +290,8 @@ export default function SeasonIndex() {
                           size='sm'
                         >
                           {isOpenForRegistration
-                            ? 'Close registration'
-                            : 'Open registration'}
+                            ? 'Close Registration'
+                            : 'Open Registration'}
                         </Button>
                       </Form>
                       <Form method='POST'>
@@ -334,8 +334,8 @@ export default function SeasonIndex() {
                           size='sm'
                         >
                           {isOpenForDFSSurvivor
-                            ? 'Close DFS survivor'
-                            : 'Open DFS survivor'}
+                            ? 'Close DFS Survivor'
+                            : 'Open DFS Survivor'}
                         </Button>
                       </Form>
                       <Button asChild>
@@ -343,7 +343,7 @@ export default function SeasonIndex() {
                           to={`/admin/season/${id}/sorting`}
                           variant='quiet'
                         >
-                          League sorting
+                          League Sorting
                         </Link>
                       </Button>
                     </>

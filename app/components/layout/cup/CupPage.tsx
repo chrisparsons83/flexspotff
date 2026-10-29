@@ -16,7 +16,7 @@ export default function CupPage({
 }) {
   return (
     <Section
-      title={`${year} cup`}
+      title={`${year} Cup`}
       action={
         years.length > 0 && (
           <GoBox

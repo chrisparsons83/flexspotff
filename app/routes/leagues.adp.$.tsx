@@ -66,7 +66,7 @@ export default function ADP() {
 
   return (
     <Section
-      title={`${year} server ADP`}
+      title={`${year} Server ADP`}
       description='Average draft position across every league that has drafted. A player one league left undrafted counts as pick 181 there.'
       action={
         <GoBox

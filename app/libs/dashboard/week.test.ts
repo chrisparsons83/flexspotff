@@ -82,13 +82,13 @@ describe('buildMemberWeek', () => {
     expect(
       buildMemberWeek({ ...nothing, spreadPool: openWeek(0) }).todo,
     ).toEqual([
-      { label: 'Spread pool', href: '/games/spread-pool/entries/week-5' },
+      { label: 'Spread Pool', href: '/games/spread-pool/entries/week-5' },
     ]);
   });
 
   it('lists a game to do even if the member has never played it', () => {
     const { todo, rows } = buildMemberWeek({ ...nothing, locks: openWeek(0) });
-    expect(todo.map(item => item.label)).toEqual(['Locks challenge']);
+    expect(todo.map(item => item.label)).toEqual(['Locks Challenge']);
     expect(rows).toEqual([]);
   });
 
@@ -118,15 +118,15 @@ describe('buildMemberWeek', () => {
     expect(
       rows.map(row => [row.label, row.standing, row.season, row.lastWeek]),
     ).toEqual([
-      ['Spread pool', '3rd of 24', '1240 bank', 'Week 7: +40'],
-      ['Locks challenge', '11th of 18', '4 pts', null],
+      ['Spread Pool', '3rd of 24', '1240 bank', 'Week 7: +40'],
+      ['Locks Challenge', '11th of 18', '4 pts', null],
     ]);
   });
 
   it('shows a game entered this week before any week is scored', () => {
     const { rows } = buildMemberWeek({ ...nothing, qbStreaming: openWeek(2) });
     expect(rows).toMatchObject([
-      { label: 'QB streaming', standing: null, href: '/games/qb-streaming' },
+      { label: 'QB Streaming', standing: null, href: '/games/qb-streaming' },
     ]);
   });
 
@@ -149,7 +149,7 @@ describe('buildMemberWeek', () => {
     expect(rows.map(row => row.label)).toEqual([
       'Galaxy',
       '2026 registration',
-      'Locks challenge',
+      'Locks Challenge',
       'Chop',
     ]);
   });
@@ -333,7 +333,7 @@ describe('dashboard rows for the cup, D12 and Autodraft BBM', () => {
     });
     expect(rows.map(row => row.label)).toEqual(['D12', 'Autodraft BBM']);
     expect(rows[0]).toMatchObject({
-      section: 'Side leagues',
+      section: 'Side Leagues',
       lastWeek: 'Week 7: 142.30 pts, 2nd of 12',
       thisWeek: '3rd of 12 for the season',
       href: '/side-leagues/d12',

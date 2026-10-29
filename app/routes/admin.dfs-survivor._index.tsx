@@ -262,13 +262,13 @@ export default function AdminDfsSurvivorIndex() {
   const actionData = useTypedActionData<typeof action>();
 
   return (
-    <Section title='DFS survivor'>
+    <Section title='DFS Survivor'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Form method='POST' className='mb-6'>
         <Button type='submit' name='_action' value='syncPlayerScores'>
-          Sync player scores and projections
+          Sync Player Scores and Projections
         </Button>
         <p className='mt-2 max-w-prose text-sm text-muted-foreground'>
           Refreshes every player's weekly points and projections from Sleeper.
@@ -286,7 +286,7 @@ export default function AdminDfsSurvivorIndex() {
                 <input type='hidden' name='year' value={week.year} />
                 <input type='hidden' name='id' value={week.id} />
                 <Button type='submit' name='_action' value='scoreWeek'>
-                  {week.isScored ? 'Revert scoring' : 'Score week'}
+                  {week.isScored ? 'Revert Scoring' : 'Score Week'}
                 </Button>
               </Form>
             </td>

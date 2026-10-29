@@ -26,7 +26,7 @@ import type { ThemePreference } from '~/utils/theme';
 export const NAV_SECTIONS = [
   { label: 'Leagues', to: '/leagues' },
   { label: 'Games', to: '/games' },
-  { label: 'Side leagues', to: '/side-leagues' },
+  { label: 'Side Leagues', to: '/side-leagues' },
 ] as const;
 
 export type NavUser = {
@@ -128,7 +128,7 @@ export function NavBar(props: Props) {
               <AccountMenu {...props} user={user} />
             ) : (
               <Button asChild variant='secondary' size='sm'>
-                <Link to='/login'>Log in</Link>
+                <Link to='/login'>Log In</Link>
               </Button>
             )}
           </div>
@@ -182,7 +182,7 @@ function AccountMenu(props: Props & { user: NavUser }) {
         <DropdownMenuItem
           onSelect={() => submit(null, { method: 'post', action: '/logout' })}
         >
-          Log out
+          Log Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -237,7 +237,7 @@ function MobileMenu(props: Props) {
                   type='submit'
                   className={cn(MOBILE_ITEM, 'font-normal', FOCUS_RING)}
                 >
-                  Log out
+                  Log Out
                 </button>
               </Form>
             </li>
@@ -245,7 +245,7 @@ function MobileMenu(props: Props) {
         ) : (
           <li>
             <Link to='/login' className={cn(MOBILE_ITEM, FOCUS_RING)}>
-              Log in
+              Log In
             </Link>
           </li>
         )}

@@ -19,7 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   );
 };
 
-const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side leagues'];
+const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side Leagues'];
 
 export default function YourWeek() {
   const { todo, rows } = useTypedLoaderData<typeof loader>();
@@ -35,7 +35,7 @@ export default function YourWeek() {
   return (
     <>
       {todo.length > 0 && (
-        <Section title='Still to do'>
+        <Section title='Still to Do'>
           <ul className='grid gap-2'>
             {todo.map(item => (
               <li key={item.href} className='font-semibold'>
@@ -53,7 +53,7 @@ export default function YourWeek() {
           <Section key={section} title={section}>
             {section === 'Games' ? (
               <Table
-                headers={['Game', 'Standing', 'Season', 'Last week']}
+                headers={['Game', 'Standing', 'Season', 'Last Week']}
                 numericColumns={[2]}
                 primaryColumns={[1]}
               >
@@ -74,7 +74,7 @@ export default function YourWeek() {
               </Table>
             ) : (
               <Table
-                headers={['Game', 'Last week', 'This week']}
+                headers={['Game', 'Last Week', 'This Week']}
                 primaryColumns={[2]}
               >
                 {inSection.map(row => (

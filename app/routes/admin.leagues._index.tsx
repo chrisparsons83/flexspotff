@@ -72,7 +72,7 @@ export default function LeaguesList() {
       action={
         <Button asChild>
           <Link to='/admin/leagues/new' variant='quiet'>
-            Add league
+            Add League
           </Link>
         </Button>
       }
@@ -85,8 +85,8 @@ export default function LeaguesList() {
           'Year',
           'Name',
           'Tier',
-          'Sleeper link',
-          'Draft link',
+          'Sleeper Link',
+          'Draft Link',
           'Actions',
         ]}
       >

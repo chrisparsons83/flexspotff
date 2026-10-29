@@ -147,7 +147,7 @@ export const Scale: Story = {
               <th className='pb-2 pr-8 font-normal'>Manager</th>
               <th className='pb-2 pr-8 text-right font-normal'>Won</th>
               <th className='pb-2 pr-8 text-right font-normal'>Lost</th>
-              <th className='pb-2 text-right font-normal'>Points for</th>
+              <th className='pb-2 text-right font-normal'>Points For</th>
             </tr>
           </thead>
           <tbody>

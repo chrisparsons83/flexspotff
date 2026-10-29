@@ -59,19 +59,19 @@ export const Columns: Story = {
         <div className='grid grid-cols-12 gap-x-6 gap-y-6'>
           <Span
             className='col-span-12 sm:col-span-6 lg:col-span-3'
-            label='12, 6 from sm, 3 from lg'
+            label='12, 6 From Sm, 3 From Lg'
           />
           <Span
             className='col-span-12 sm:col-span-6 lg:col-span-3'
-            label='12, 6 from sm, 3 from lg'
+            label='12, 6 From Sm, 3 From Lg'
           />
           <Span
             className='col-span-12 sm:col-span-6 lg:col-span-3'
-            label='12, 6 from sm, 3 from lg'
+            label='12, 6 From Sm, 3 From Lg'
           />
           <Span
             className='col-span-12 sm:col-span-6 lg:col-span-3'
-            label='12, 6 from sm, 3 from lg'
+            label='12, 6 From Sm, 3 From Lg'
           />
         </div>
       </FoundationSection>

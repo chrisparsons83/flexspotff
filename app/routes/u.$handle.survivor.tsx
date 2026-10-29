@@ -83,9 +83,9 @@ function Career({ career }: { career: SurvivorCareer }) {
   return (
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
-        <CareerCard title='Pool wins' lead={career.wins}>
+        <CareerCard title='Pool Wins' lead={career.wins}>
           <MiniStat
-            label='Best finish'
+            label='Best Finish'
             value={career.bestPlace ? ordinal(career.bestPlace.place) : '–'}
             tone={career.bestPlace?.place === 1 ? TEXT.champion : undefined}
           />
@@ -95,23 +95,23 @@ function Career({ career }: { career: SurvivorCareer }) {
             hint='Share of the field they lasted longer than, on average'
           />
           <MiniStat
-            label='Longest run'
+            label='Longest Run'
             value={career.longestRun ? career.longestRun.weeks : '–'}
             unit={career.longestRun ? 'wk' : undefined}
           />
         </CareerCard>
 
         <CareerCard
-          title='Pick success'
+          title='Pick Success'
           lead={settled > 0 ? pct(career.pickWins / settled) : '–'}
         >
           <MiniStat
-            label='With the crowd'
+            label='With the Crowd'
             value={pct(career.withCrowd)}
             hint="How often they took the week's most popular team"
           />
           <MiniStat
-            label='Missed picks'
+            label='Missed Picks'
             value={career.missedPicks}
             tone={career.missedPicks > 0 ? TEXT.bad : undefined}
             hint='Pools they went out of by not picking'
@@ -130,9 +130,9 @@ function Career({ career }: { career: SurvivorCareer }) {
 
 function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
-    <ProfileSection title='By pool'>
+    <ProfileSection title='By Pool'>
       <Table
-        headers={['Pool', 'Finish', 'Weeks won', 'Went out', 'Outlasted']}
+        headers={['Pool', 'Finish', 'Weeks Won', 'Went Out', 'Outlasted']}
         primaryColumns={[1, 2]}
         numericColumns={[2, 4]}
       >
@@ -186,7 +186,7 @@ function ByPool({ pools }: { pools: SurvivorPoolResult[] }) {
 function PickLog({ pools }: { pools: SurvivorPoolResult[] }) {
   return (
     <ProfileSection
-      title='Pick log'
+      title='Pick Log'
       info='A win is in bold, a loss struck through, and a game not played yet is muted.'
     >
       <div className='space-y-4'>
@@ -216,7 +216,7 @@ function PickLog({ pools }: { pools: SurvivorPoolResult[] }) {
 
 function Teams({ teams }: { teams: SurvivorTeamRow[] }) {
   return (
-    <ProfileSection title='Teams picked'>
+    <ProfileSection title='Teams Picked'>
       <ul className='m-0 grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-4 lg:grid-cols-8'>
         {teams.map(team => (
           <li

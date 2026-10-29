@@ -41,7 +41,7 @@ export default function FSquaredOverview() {
   return (
     <>
       <Section
-        title='Your entry'
+        title='Your Entry'
         description={
           !signedIn
             ? 'Log in to make an entry.'

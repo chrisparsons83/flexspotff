@@ -203,11 +203,11 @@ export default function AdminSpreadPoolYearWeek() {
   if (!qbStreamingWeek) throw new Error('No information found for week');
 
   return (
-    <Section title='Edit picks for week'>
+    <Section title='Edit Picks for Week'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
-      <Section as='h3' title='Add player' className='mt-0'>
+      <Section as='h3' title='Add Player' className='mt-0'>
         <Form method='POST' className='grid max-w-md gap-6'>
           <Field label='Player'>
             <NativeSelect name='playerId'>
@@ -220,7 +220,7 @@ export default function AdminSpreadPoolYearWeek() {
           </Field>
           <label className='flex items-center gap-3'>
             <Checkbox name='isDeep' defaultChecked={true} />
-            Available in both player pools
+            Available in Both Player Pools
           </label>
           <div className='flex flex-wrap gap-3'>
             <Button
@@ -229,7 +229,7 @@ export default function AdminSpreadPoolYearWeek() {
               value='addPlayer'
               disabled={navigation.state !== 'idle'}
             >
-              Add player
+              Add Player
             </Button>
             <Button
               type='submit'
@@ -238,14 +238,14 @@ export default function AdminSpreadPoolYearWeek() {
               value='importPlayers'
               disabled={navigation.state !== 'idle'}
             >
-              Import players
+              Import Players
             </Button>
           </div>
         </Form>
       </Section>
-      <Section as='h3' title='Available players'>
+      <Section as='h3' title='Available Players'>
         <Table
-          headers={['Player', 'Team', 'Both pools', 'Points', '']}
+          headers={['Player', 'Team', 'Both Pools', 'Points', '']}
           numericColumns={[3]}
           primaryColumns={[3]}
         >
@@ -280,11 +280,11 @@ export default function AdminSpreadPoolYearWeek() {
           ))}
         </Table>
       </Section>
-      <Section as='h3' title='Week settings'>
+      <Section as='h3' title='Week Settings'>
         <Form method='POST' className='grid gap-6'>
           <label className='flex items-center gap-3'>
             <Checkbox name='isOpen' defaultChecked={qbStreamingWeek.isOpen} />
-            Week is open for picks
+            Week Is Open for Picks
           </label>
           <div>
             <Button
@@ -293,7 +293,7 @@ export default function AdminSpreadPoolYearWeek() {
               value='updateWeek'
               disabled={navigation.state !== 'idle'}
             >
-              Update week
+              Update Week
             </Button>
           </div>
         </Form>

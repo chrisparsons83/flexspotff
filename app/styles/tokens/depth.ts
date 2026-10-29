@@ -10,7 +10,7 @@
  *   underlines the current tab. Never a large area, never text.
  * - Buttons are flat: the gradient primary, and an outlined secondary.
  * - The current section is marked by the accent, not by a block.
- * - The nav and tab labels are Archivo Narrow, in sentence case.
+ * - The nav and tab labels are Archivo Narrow, in title case.
  * - Glow only where something asks for it by name, such as a live game.
  * - Some interest behind the top of the page: a field-green glow and
  *   faint hash marks and yard lines, both fading out before the content
@@ -75,7 +75,7 @@ export type Depth = {
   positionTint: number;
   /** How much darker a table's well is than what it sits on, 0 to 100. */
   well: number;
-  /** Control labels in tracked capitals rather than sentence case. */
+  /** Control labels in tracked capitals rather than title case. */
   capitalLabels: boolean;
   /** Width of the nav and tab labels, as a percentage of normal. */
   labelWidth: number;

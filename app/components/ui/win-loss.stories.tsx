@@ -2,7 +2,7 @@ import { WinLoss } from './win-loss';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof WinLoss> = {
-  title: 'Data display/WinLoss',
+  title: 'Data Display/WinLoss',
   component: WinLoss,
   args: { wins: 9, losses: 4 },
 };

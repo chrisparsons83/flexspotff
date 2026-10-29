@@ -154,14 +154,14 @@ export default function DraftSlotsAdmin() {
 
   return (
     <Section
-      title='Draft slots'
+      title='Draft Slots'
       description={`${uniqueUsersCount} ${
         uniqueUsersCount === 1 ? 'member has' : 'members have'
       } entered their draft time preferences.`}
       action={
         <Button asChild>
           <Link to='/admin/draft-slots/new' variant='quiet'>
-            Add draft slot
+            Add Draft Slot
           </Link>
         </Button>
       }
@@ -180,7 +180,7 @@ export default function DraftSlotsAdmin() {
         />
       )}
       <Table
-        headers={['Season', 'Draft time', 'Available', 'Actions']}
+        headers={['Season', 'Draft Time', 'Available', 'Actions']}
         numericColumns={[2]}
       >
         {draftSlots.length === 0 ? (

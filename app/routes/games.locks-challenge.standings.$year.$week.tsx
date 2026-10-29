@@ -217,7 +217,7 @@ export default function LocksWeekStandings() {
       </StandingsSection>
       {(distribution.tallies.length > 0 || distribution.hidden > 0) && (
         <Section
-          title='Pick distribution'
+          title='Pick Distribution'
           footnote={
             distribution.hidden > 0 &&
             `${distribution.hidden} ${

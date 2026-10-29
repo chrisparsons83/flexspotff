@@ -256,15 +256,15 @@ export async function getProfileSummary(
     },
     headline: [
       { label: 'Seasons', value: teams.length.toString() },
-      { label: 'League championships', value: championships.toString() },
+      { label: 'League Championships', value: championships.toString() },
       {
-        label: 'Career record',
+        label: 'Career Record',
         value: `${career.wins}-${career.losses}-${career.ties}`,
       },
       { label: 'Win %', value: `${(winPct(career) * 100).toFixed(1)}%` },
-      { label: 'Points for', value: Math.round(career.pointsFor).toString() },
+      { label: 'Points For', value: Math.round(career.pointsFor).toString() },
       {
-        label: 'Points against',
+        label: 'Points Against',
         value: Math.round(career.pointsAgainst).toString(),
       },
     ],

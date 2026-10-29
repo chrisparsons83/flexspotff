@@ -27,13 +27,13 @@ export default function PodcastEpisodeList() {
       action={
         <Button asChild>
           <Link to='/admin/podcasts/new' variant='quiet'>
-            Add podcast
+            Add Podcast
           </Link>
         </Button>
       }
     >
       <Table
-        headers={['Season', 'Episode', 'Title', 'Publish date', 'Actions']}
+        headers={['Season', 'Episode', 'Title', 'Publish Date', 'Actions']}
       >
         {episodes.map(episode => (
           <tr key={episode.id}>

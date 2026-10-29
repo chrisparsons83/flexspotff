@@ -2,7 +2,7 @@ import LocalDateTime from './LocalDateTime';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof LocalDateTime> = {
-  title: 'Data display/LocalDateTime',
+  title: 'Data Display/LocalDateTime',
   component: LocalDateTime,
   args: { value: '2026-10-18T17:00:00Z' },
 };

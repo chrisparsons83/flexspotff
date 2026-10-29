@@ -191,7 +191,7 @@ export default function PodcastEpisodeCreate() {
       : 'Submit';
 
   return (
-    <Section title={episode ? 'Edit podcast episode' : 'Add podcast episode'}>
+    <Section title={episode ? 'Edit Podcast Episode' : 'Add Podcast Episode'}>
       <Form
         method='POST'
         className='grid max-w-2xl gap-6'
@@ -240,7 +240,7 @@ export default function PodcastEpisodeCreate() {
           />
         </Field>
         <Field
-          label='Long description'
+          label='Long Description'
           description='Can take HTML.'
           error={actionData?.fieldErrors?.showNotes}
         >
@@ -251,7 +251,7 @@ export default function PodcastEpisodeCreate() {
             rows={3}
           />
         </Field>
-        <Field label='Publish date' className='max-w-xs'>
+        <Field label='Publish Date' className='max-w-xs'>
           <Input
             type='date'
             defaultValue={
@@ -271,12 +271,12 @@ export default function PodcastEpisodeCreate() {
           </>
         )}
         <div className='grid gap-2'>
-          <Field label='Podcast file'>
+          <Field label='Podcast File'>
             <Input type='file' required={!episode} name='podcastFile' />
           </Field>
           {episode && (
             <ExternalLink href={episode.filepath} className='text-sm'>
-              Current file
+              Current File
             </ExternalLink>
           )}
         </div>

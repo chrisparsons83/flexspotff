@@ -97,10 +97,10 @@ export default function BestBallStandings() {
           headers={[
             'Place',
             'Team',
-            'Points for',
+            'Points For',
             'Back',
-            'Best week',
-            'Top weeks',
+            'Best Week',
+            'Top Weeks',
             'Slot',
             'Drafted',
           ]}
@@ -162,7 +162,7 @@ function WeeklyGrid({
 
   return (
     <Section
-      title='Week by week'
+      title='Week by Week'
       description='Each week’s best-ball score. Green was the top score that week, red the lowest.'
     >
       <ScoreGrid

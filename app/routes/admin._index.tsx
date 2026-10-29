@@ -33,11 +33,11 @@ export default function AdminHome() {
   }
 
   return (
-    <Section title={week ? `Week ${week}` : 'This week'}>
+    <Section title={week ? `Week ${week}` : 'This Week'}>
       {tasks.length === 0 ? (
         <EmptyState title='Nothing needs doing this week' />
       ) : (
-        <Table headers={['Task', 'Where it stands']} primaryColumns={[1]}>
+        <Table headers={['Task', 'Where It Stands']} primaryColumns={[1]}>
           {tasks.map(task => (
             <tr key={task.href + task.title}>
               <td className='font-semibold'>

@@ -113,7 +113,7 @@ export default function AdminSchedulerIndex() {
   const isRunning = navigation.state !== 'idle';
 
   return (
-    <Section title='Scheduler management'>
+    <Section title='Scheduler Management'>
       {schedulerStale && (
         <Alert
           status='error'
@@ -129,7 +129,7 @@ export default function AdminSchedulerIndex() {
         <Alert message={actionData.error} status='error' className='mb-6' />
       )}
 
-      <Section as='h3' title='Scheduled jobs'>
+      <Section as='h3' title='Scheduled Jobs'>
         <div className='grid gap-4'>
           {jobs.map(job => (
             <Card key={job.name}>
@@ -171,7 +171,7 @@ export default function AdminSchedulerIndex() {
                     value='runJob'
                     disabled={isRunning}
                   >
-                    Run now
+                    Run Now
                   </Button>
                 </Form>
               </CardContent>

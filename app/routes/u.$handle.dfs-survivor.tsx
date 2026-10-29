@@ -77,7 +77,7 @@ import {
 import type { ProfileSummary } from '~/models/profile/summary.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'DFS survivor' };
+export const handle: RouteHandle = { title: 'DFS Survivor' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -105,7 +105,7 @@ export default function MemberDfsSurvivor() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='DFS survivor'
+        contest='DFS Survivor'
         memberName={summary.user.discordName}
       />
     );
@@ -138,7 +138,7 @@ function Career({
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-3'>
         <CareerCard
-          title='Weekly lineup'
+          title='Weekly Lineup'
           lead={
             <>
               {pts(career.averageWeek)}
@@ -168,7 +168,7 @@ function Career({
           }
         >
           <RateStat
-            label='Weeks won'
+            label='Weeks Won'
             count={career.weeklyWins}
             of={career.weeks}
             hint={`${career.weeklyWins} of ${plural(
@@ -178,7 +178,7 @@ function Career({
             tone={career.weeklyWins > 0 ? TEXT.champion : undefined}
           />
           <RateStat
-            label='Above average'
+            label='Above Average'
             count={aboveAverage}
             of={career.weeks}
             info={
@@ -211,7 +211,7 @@ function TimingCard({ career }: { career: DfsCareer }) {
 
   return (
     <CareerCard
-      title='Timing edge'
+      title='Timing Edge'
       footnote='Each player can only be used once a season, so what matters is the week you use him. Every pick is compared with the other members who used the same player in a different week. A positive number means they got more out of their players, on average, than those members did.'
       lead={
         timing.edge === null ? (
@@ -275,7 +275,7 @@ function TimingCard({ career }: { career: DfsCareer }) {
       }
     >
       <RateStat
-        label='Best timing'
+        label='Best Timing'
         count={timing.bestTimingPicks}
         of={timing.compared}
         info={
@@ -288,7 +288,7 @@ function TimingCard({ career }: { career: DfsCareer }) {
         }
       />
       <MiniStat
-        label='Late season'
+        label='Late Season'
         value={
           timing.lateVsField === null ? (
             '–'
@@ -369,7 +369,7 @@ function FinishesCard({
           </>
         }
       >
-        <MiniStat label='Weeks played' value={career.weeks} />
+        <MiniStat label='Weeks Played' value={career.weeks} />
       </CareerCard>
     ) : null;
   }
@@ -393,7 +393,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Average finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -411,18 +411,18 @@ function FinishesCard({
 
 function BySeason({ seasons }: { seasons: DfsSeason[] }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
           'Finish',
           'Total',
           'Weeks',
-          'Average week',
+          'Average Week',
           'vs Average',
-          'Best week',
-          'Weeks won',
-          'Players used',
+          'Best Week',
+          'Weeks Won',
+          'Players Used',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7, 8]}
         primaryColumns={[1, 2]}
@@ -519,7 +519,7 @@ const NO_LINEUP_TONE =
 function WeekByWeek({ seasons }: { seasons: DfsSeason[] }) {
   return (
     <ProfileSection
-      title='Week by week'
+      title='Week by Week'
       info={
         <KeyList>
           <WonKey sample='140' />
@@ -652,7 +652,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
 
   return (
     <ProfileSection
-      title='Weekly scores'
+      title='Weekly Scores'
       action={
         years.length > 1 ? (
           <YearFilter
@@ -822,7 +822,7 @@ function PoolManagement({ pool }: { pool: DfsPoolSeason[] }) {
 
   return (
     <ProfileSection
-      title='Pool management'
+      title='Pool Management'
       info={
         <>
           Each player can be used once a season, so the pool thins as it goes
@@ -889,7 +889,7 @@ function StarTimeline({ season }: { season: DfsPoolSeason }) {
   return (
     <div className='mt-6'>
       <h4 className='m-0 mb-2 text-sm font-semibold text-foreground'>
-        When their best {STAR_PICKS} picks came
+        When Their Best {STAR_PICKS} Picks Came
       </h4>
       {/* On a phone, only the weeks that had one of them, as a list. */}
       <ol className='m-0 list-none space-y-1.5 p-0 text-sm lg:hidden'>
@@ -980,7 +980,7 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
 
   return (
     <ProfileSection
-      title='Timing by player'
+      title='Timing by Player'
       description='Best timing marks a pick nobody who used that player that season got more points from.'
       action={
         <div className='flex flex-wrap gap-3'>
@@ -989,8 +989,8 @@ function TimingByPlayer({ seasons }: { seasons: DfsSeason[] }) {
             value={order}
             onChange={setOrder}
             options={[
-              { value: 'best', label: 'Best calls' },
-              { value: 'worst', label: 'Worst calls' },
+              { value: 'best', label: 'Best Calls' },
+              { value: 'worst', label: 'Worst Calls' },
             ]}
           />
           <YearFilter years={years} value={year} onChange={setYear} />
@@ -1100,7 +1100,7 @@ const FLEX_TONES = {
  */
 function ByPosition({ positions }: { positions: DfsPositionRow[] }) {
   return (
-    <ProfileSection title='By position'>
+    <ProfileSection title='By Position'>
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
         {positions
           .filter(row => row.picks > 0)
@@ -1249,7 +1249,7 @@ function LineupLog({ seasons }: { seasons: DfsSeason[] }) {
 
   return (
     <ProfileSection
-      title='Lineup log'
+      title='Lineup Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

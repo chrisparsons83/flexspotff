@@ -173,7 +173,7 @@ export default function UnmatchedSleeperUsers() {
 
   return (
     <Section
-      title={`Unmatched Sleeper users (${year})`}
+      title={`Unmatched Sleeper Users (${year})`}
       description={
         <>
           Every team in this year's leagues whose Sleeper account isn't tied to
@@ -201,7 +201,7 @@ export default function UnmatchedSleeperUsers() {
         <Section
           key={league.id}
           as='h3'
-          title={`${league.name} (tier ${league.tier})`}
+          title={`${league.name} (Tier ${league.tier})`}
         >
           {league.lookupError && (
             <Alert
@@ -219,10 +219,10 @@ export default function UnmatchedSleeperUsers() {
           ) : (
             <Table
               headers={[
-                'Sleeper user',
-                'Team name',
-                'Sleeper owner ID',
-                'Discord member',
+                'Sleeper User',
+                'Team Name',
+                'Sleeper Owner ID',
+                'Discord Member',
               ]}
               primaryColumns={[3]}
             >

@@ -1,8 +1,11 @@
 import { Button } from './button';
 
+const titleCase = (words: string) =>
+  words.replace(/\b[a-z]/g, letter => letter.toUpperCase());
+
 /**
  * Opens a long list past its first few rows, and closes it again. `noun` is
- * what the list holds, plural: "Show all 40 opponents".
+ * what the list holds, plural: "Show All 40 Opponents".
  */
 export function ShowAllButton({
   total,
@@ -23,7 +26,7 @@ export function ShowAllButton({
       onClick={onToggle}
       className='mt-4'
     >
-      {showAll ? 'Show fewer' : `Show all ${total} ${noun}`}
+      {showAll ? 'Show Fewer' : `Show All ${total} ${titleCase(noun)}`}
     </Button>
   );
 }

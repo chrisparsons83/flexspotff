@@ -134,7 +134,7 @@ export default function AddOmniPlayerPage() {
       : undefined;
 
   return (
-    <Section title='Add Omni player'>
+    <Section title='Add Omni Player'>
       {actionData &&
         'successMessage' in actionData &&
         actionData.successMessage && (
@@ -149,13 +149,13 @@ export default function AddOmniPlayerPage() {
       )}
 
       <Form method='post' className='grid max-w-sm gap-6'>
-        <Field label='Display name' error={fieldError('displayName')}>
+        <Field label='Display Name' error={fieldError('displayName')}>
           <Input name='displayName' ref={displayNameInputRef} required />
         </Field>
 
         <Field label='Sport' error={fieldError('sportId')}>
           <NativeSelect name='sportId'>
-            <option value=''>Select sport</option>
+            <option value=''>Select Sport</option>
             {omniSports.map(sport => (
               <option key={sport.id} value={sport.id}>
                 {sport.name}
@@ -164,9 +164,9 @@ export default function AddOmniPlayerPage() {
           </NativeSelect>
         </Field>
 
-        <Field label='Omni season' error={fieldError('seasonId')}>
+        <Field label='Omni Season' error={fieldError('seasonId')}>
           <NativeSelect name='seasonId'>
-            <option value=''>Select Omni season</option>
+            <option value=''>Select Omni Season</option>
             {omniSeasons.map(season => (
               <option key={season.id} value={season.id}>
                 {season.year}
@@ -175,13 +175,13 @@ export default function AddOmniPlayerPage() {
           </NativeSelect>
         </Field>
 
-        <Field label='Relative sort' error={fieldError('relativeSort')}>
+        <Field label='Relative Sort' error={fieldError('relativeSort')}>
           <Input type='number' name='relativeSort' required defaultValue={99} />
         </Field>
 
         <div>
           <Button type='submit' disabled={isSubmitting}>
-            {isSubmitting ? 'Creating…' : 'Create Omni player'}
+            {isSubmitting ? 'Creating…' : 'Create Omni Player'}
           </Button>
         </div>
       </Form>

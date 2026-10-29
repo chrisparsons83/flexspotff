@@ -24,25 +24,25 @@ export function errorPage(error: unknown): {
         : null;
     if (error.status === 404) {
       return {
-        title: 'Page not found',
+        title: 'Page Not Found',
         message: data ?? 'There is no page at this address.',
       };
     }
     if (error.status === 403) {
       return {
-        title: 'No access',
+        title: 'No Access',
         message: data ?? 'Your account cannot open this page.',
       };
     }
     if (error.status < 500) {
       return {
-        title: 'That did not work',
+        title: 'That Did Not Work',
         message: data ?? 'The site could not handle that request.',
       };
     }
   }
   return {
-    title: 'Something went wrong',
+    title: 'Something Went Wrong',
     message:
       'The site hit an error loading this page. Try again in a minute, and if it keeps happening, say so in the Discord.',
     // Remix replaces a server error's text with its own in production.

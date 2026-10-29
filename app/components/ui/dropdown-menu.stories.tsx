@@ -27,7 +27,7 @@ const Items = () => (
       <Link to='/me'>Profile</Link>
     </DropdownMenuItem>
     <DropdownMenuSeparator />
-    <DropdownMenuItem>Log out</DropdownMenuItem>
+    <DropdownMenuItem>Log Out</DropdownMenuItem>
   </>
 );
 
@@ -64,7 +64,7 @@ export const PageList: Story = {
   name: 'Page list (GoBox)',
   render: () => (
     <GoBox
-      buttonText='Past seasons'
+      buttonText='Past Seasons'
       options={['2025', '2024', '2023'].map(year => ({
         label: year,
         url: `/leagues/standings/${year}`,

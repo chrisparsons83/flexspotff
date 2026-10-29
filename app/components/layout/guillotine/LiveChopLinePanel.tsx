@@ -47,11 +47,11 @@ export default function LiveChopLinePanel({
 
   return (
     <Section
-      title={`Week ${week} chop line`}
+      title={`Week ${week} Chop Line`}
       action={
         showWeekLink && (
           <Link to={`/side-leagues/guillotine/${leagueId}/week/${week}`}>
-            Week {week} scores
+            Week {week} Scores
           </Link>
         )
       }
@@ -72,7 +72,7 @@ export default function LiveChopLinePanel({
                 Projected
               </th>
               <th className='hidden px-2 py-2.5 text-right font-semibold sm:table-cell'>
-                Against the chop
+                Against the Chop
               </th>
             </tr>
           </thead>

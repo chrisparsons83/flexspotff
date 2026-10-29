@@ -54,7 +54,7 @@ export default function D12Season() {
     <Section title='Standings'>
       <LeaderboardTable
         entries={entries}
-        valueHeadings={['Total points', 'Best week', 'Best team']}
+        valueHeadings={['Total Points', 'Best Week', 'Best Team']}
         emptyMessage={`No scores recorded yet for ${year}.`}
       />
     </Section>

@@ -124,14 +124,14 @@ function Career({
           meter={<PlaceBar finishes={finishes} />}
         >
           <MiniStat
-            label='Longest run'
+            label='Longest Run'
             value={career.longestRun?.weeks ?? '–'}
             unit={career.longestRun ? 'weeks' : undefined}
             tone='text-positive'
             hint='Most weeks played in a season, the chop week included'
           />
           <MiniStat
-            label='Shortest run'
+            label='Shortest Run'
             value={career.shortestRun?.weeks ?? '–'}
             unit={career.shortestRun ? 'weeks' : undefined}
             tone='text-negative'
@@ -145,7 +145,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Weekly finish'
+          title='Weekly Finish'
           lead={
             career.averagePercentile === null ? (
               '–'
@@ -164,12 +164,12 @@ function Career({
           }
         >
           <MiniStat
-            label='Best week'
+            label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-positive'
           />
           <MiniStat
-            label='Closest escape'
+            label='Closest Escape'
             value={
               career.closestEscape
                 ? `+${pts(career.closestEscape.margin)}`
@@ -179,7 +179,7 @@ function Career({
             hint='The fewest points they ever survived the chop by'
           />
           <MiniStat
-            label='Top score'
+            label='Top Score'
             value={career.topScoreWeeks}
             unit='weeks'
             hint='Weeks they outscored everyone left'
@@ -187,7 +187,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Waiver bids won'
+          title='Waiver Bids Won'
           lead={
             <>
               {career.claimsWon}
@@ -202,11 +202,11 @@ function Career({
         >
           <MiniStat label='Total FAAB Spent' value={`$${career.faabSpent}`} />
           <MiniStat
-            label='Biggest bid'
+            label='Biggest Bid'
             value={career.biggestBid ? `$${career.biggestBid.bid}` : '–'}
           />
           <MiniStat
-            label='Average winning bid'
+            label='Average Winning Bid'
             value={
               career.averageWinningBid === null
                 ? '–'
@@ -325,7 +325,7 @@ const survivalTitle = (week: SurvivalWeek) => {
 function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
   return (
     <ProfileSection
-      title='Week by week'
+      title='Week by Week'
       info={
         <KeyList>
           {(Object.keys(SURVIVAL) as (keyof typeof SURVIVAL)[]).map(kind => (
@@ -448,19 +448,19 @@ function BySeason({
   players: Players;
 }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Season',
           'Finish',
           'Chopped',
           'Average',
-          'Best week',
-          'Closest escape',
+          'Best Week',
+          'Closest Escape',
           'Claims',
           'FAAB Spent',
           'FAAB Left',
-          'Biggest claim',
+          'Biggest Claim',
         ]}
         primaryColumns={[1, 2]}
         numericColumns={[3, 4, 5, 6, 7, 8]}
@@ -602,13 +602,13 @@ function WaiverClaims({
 
   return (
     <ProfileSection
-      title='Waiver claims'
+      title='Waiver Claims'
       action={
         <div className='flex flex-wrap items-center gap-3'>
           <div className='flex items-center gap-2'>
             <span className='text-sm text-muted-foreground'>Sort by</span>
             <SegmentedControl
-              label='Sort by'
+              label='Sort By'
               value={sort}
               onChange={setSort}
               options={(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(
@@ -679,7 +679,7 @@ function DraftPicks({
 
   return (
     <ProfileSection
-      title='Draft picks'
+      title='Draft Picks'
       action={
         <div className='flex flex-wrap items-center gap-3'>
           {years.length > 1 && (

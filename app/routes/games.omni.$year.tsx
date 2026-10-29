@@ -8,7 +8,7 @@ import { OMNI_RULES_YEARS } from '~/utils/constants';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `${params.year} season`,
+  title: ({ params }) => `${params.year} Season`,
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -33,12 +33,12 @@ export default function OmniSeason() {
             label={`Omni ${year}`}
             items={[
               { label: 'Standings', to: base, end: true },
-              { label: 'Draft board', to: `${base}/draft` },
-              { label: 'Qualifying points', to: `${base}/qualifying-points` },
+              { label: 'Draft Board', to: `${base}/draft` },
+              { label: 'Qualifying Points', to: `${base}/qualifying-points` },
               ...(OMNI_RULES_YEARS.includes(year)
                 ? [{ label: 'Rules', to: `${base}/rules` }]
                 : []),
-              { label: 'All seasons', to: '/games/omni', end: true },
+              { label: 'All Seasons', to: '/games/omni', end: true },
             ]}
           />
         }

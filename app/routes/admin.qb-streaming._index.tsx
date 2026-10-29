@@ -137,7 +137,7 @@ export default function AdminQBStreaming() {
 
   return (
     <Section
-      title='QB streaming'
+      title='QB Streaming'
       action={
         <Form method='POST'>
           <Button
@@ -146,7 +146,7 @@ export default function AdminQBStreaming() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create next week
+            Create Next Week
           </Button>
         </Form>
       }
@@ -164,7 +164,7 @@ export default function AdminQBStreaming() {
             <td>{qbStreamingWeek.isOpen ? 'Yes' : 'No'}</td>
             <td>{qbStreamingWeek.isScored ? 'Yes' : 'No'}</td>
             <td>
-              <Link to={`./${qbStreamingWeek.id}`}>Edit week</Link>
+              <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
             </td>
             <td>
               <Form method='POST'>
@@ -181,7 +181,7 @@ export default function AdminQBStreaming() {
                   value='scoreWeek'
                   disabled={navigation.state !== 'idle'}
                 >
-                  Score week
+                  Score Week
                 </Button>
               </Form>
             </td>

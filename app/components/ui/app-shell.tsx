@@ -66,7 +66,7 @@ export function AppShell({
         href='#main'
         className='sr-only z-50 bg-primary px-4 py-2 font-semibold text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4'
       >
-        Skip to content
+        Skip to Content
       </a>
       <NavBar {...nav} />
       <main
@@ -96,7 +96,7 @@ export function Footer() {
         </li>
         <li>
           <Link to='/podcast' variant='quiet'>
-            Podcast archive
+            Podcast Archive
           </Link>
         </li>
         <li className='text-muted-foreground sm:ml-auto'>

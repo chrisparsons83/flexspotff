@@ -28,14 +28,14 @@ export default function SurvivorHistory() {
   return (
     <>
       {allTime.length > 0 && (
-        <Section title='All time'>
+        <Section title='All Time'>
           <Table
             headers={[
               'Member',
               'Pools',
               'Wins',
-              'Longest run',
-              'Winning picks',
+              'Longest Run',
+              'Winning Picks',
             ]}
             numericColumns={[1, 2, 3, 4]}
             primaryColumns={[2]}

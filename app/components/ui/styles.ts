@@ -15,7 +15,7 @@ export const OVERLAY =
 
 /**
  * The words on a control (nav, tabs, buttons, table headers), in tracked
- * capitals or sentence case as the depth tokens say. Headings and copy keep
+ * capitals or title case as the depth tokens say. Headings and copy keep
  * their case.
  */
 export const LABEL =

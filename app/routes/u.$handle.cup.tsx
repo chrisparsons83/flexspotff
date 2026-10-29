@@ -94,7 +94,7 @@ function Career({ career }: { career: CupCareer }) {
     <ProfileSection title='Career'>
       <div className='grid gap-3 md:grid-cols-2'>
         <CareerCard
-          title='Best run'
+          title='Best Run'
           lead={
             career.bestRun?.depth === ROUNDS_TO_WIN ? (
               <span className='inline-flex items-center gap-1.5 font-medium'>
@@ -122,11 +122,11 @@ function Career({ career }: { career: CupCareer }) {
             tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat label='Finals' value={career.finals} />
-          <MiniStat label='Final fours' value={career.finalFours} />
+          <MiniStat label='Final Fours' value={career.finalFours} />
         </CareerCard>
 
         <CareerCard
-          title='Cup record'
+          title='Cup Record'
           lead={<WinLoss wins={career.wins} losses={career.losses} />}
           leadNote={
             games > 0
@@ -137,12 +137,12 @@ function Career({ career }: { career: CupCareer }) {
         >
           <MiniStat label='Byes' value={career.byes} />
           <MiniStat
-            label='Beat higher seed'
+            label='Beat Higher Seed'
             value={career.upsetsWon}
             tone='text-positive'
           />
           <MiniStat
-            label='Lost to lower seed'
+            label='Lost to Lower Seed'
             value={career.upsetsLost}
             tone='text-negative'
           />
@@ -233,7 +233,7 @@ function describeRound(result: RoundResult): string {
 function BracketRuns({ runs }: { runs: CupRun[] }) {
   return (
     <ProfileSection
-      title='Bracket runs'
+      title='Bracket Runs'
       info={
         <span className='flex flex-col items-start gap-1.5'>
           {RUN_KEY.map(([label, tone]) => (
@@ -354,13 +354,13 @@ function SeedingHistory({
   seeding: CupSeeding | null;
 }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
           'League',
           'Seed',
-          'Seeding points',
+          'Seeding Points',
           'Finish',
           'Field',
         ]}
@@ -451,7 +451,7 @@ function MatchLog({ games }: { games: MatchLogRow[] }) {
 
   return (
     <ProfileSection
-      title='Match log'
+      title='Match Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

@@ -149,7 +149,7 @@ export default function QBStreamingWeekStandings() {
       </StandingsSection>
       {qbSelections.length > 0 && (
         <Section
-          title='Pick distribution'
+          title='Pick Distribution'
           footnote={
             pending > 0 &&
             `${pending} ${

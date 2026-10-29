@@ -9,7 +9,7 @@ import { getOmniSeason } from '~/models/omniseason.server';
 import { getOmniSportEvents } from '~/models/omnisportevent.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'Qualifying points' };
+export const handle: RouteHandle = { title: 'Qualifying Points' };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const year = Number(params.year);
@@ -87,7 +87,7 @@ export default function OmniQualifyingPoints() {
 
   return (
     <Section
-      title={`Qualifying points: ${currentSport.name}`}
+      title={`Qualifying Points: ${currentSport.name}`}
       action={
         <GoBox
           buttonText='Sport'

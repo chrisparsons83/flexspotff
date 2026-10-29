@@ -43,7 +43,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     year,
     qbStreamingWeeks.length > 0,
     currentSeason.year,
-    'No QB streaming that year',
+    'No QB Streaming that year',
   );
 
   // The best-twelve rule only applies from 2025; qbStreamingUsesTopWeeks owns

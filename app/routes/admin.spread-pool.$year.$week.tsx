@@ -216,12 +216,12 @@ export default function AdminSpreadPoolYearWeek() {
   const navigation = useNavigation();
 
   return (
-    <Section title={`Edit picks for week ${nflGames[0].week}`}>
+    <Section title={`Edit Picks for Week ${nflGames[0].week}`}>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Form method='POST' reloadDocument>
-        <Table headers={['Date', 'Game', 'Home spread']}>
+        <Table headers={['Date', 'Game', 'Home Spread']}>
           {nflGames.map(game => {
             const gameStart = DateTime.fromJSDate(game.gameStartTime);
             return (
@@ -255,7 +255,7 @@ export default function AdminSpreadPoolYearWeek() {
         </Table>
         <label className='my-6 flex items-center gap-3'>
           <Checkbox name='isOpen' defaultChecked={poolWeek?.isOpen} />
-          Publish week to group
+          Publish Week to Group
         </label>
         <div className='flex flex-wrap gap-3'>
           <Button
@@ -264,7 +264,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='updateSpreads'
             disabled={navigation.state !== 'idle'}
           >
-            Update week
+            Update Week
           </Button>
           <Button
             variant='secondary'
@@ -273,7 +273,7 @@ export default function AdminSpreadPoolYearWeek() {
             value='getSpreads'
             disabled={navigation.state !== 'idle'}
           >
-            Get spreads
+            Get Spreads
           </Button>
         </div>
       </Form>

@@ -137,8 +137,8 @@ export default function EditDraftSlot() {
 
   return (
     <Section
-      title='Edit draft slot'
-      description={<Link to='/admin/draft-slots'>Back to draft slots</Link>}
+      title='Edit Draft Slot'
+      description={<Link to='/admin/draft-slots'>Back to Draft Slots</Link>}
     >
       {isSuccessWithMessage(actionData) && (
         <Alert
@@ -174,7 +174,7 @@ export default function EditDraftSlot() {
             required
             defaultValue={draftSlot.seasonId}
           >
-            <option value=''>Select a season…</option>
+            <option value=''>Select a Season…</option>
             {seasons.map((season: any) => (
               <option key={season.id} value={season.id}>
                 {season.year} {season.isCurrent ? '(current)' : ''}
@@ -183,7 +183,7 @@ export default function EditDraftSlot() {
           </NativeSelect>
         </Field>
         <Field
-          label='Draft date and time'
+          label='Draft Date and Time'
           description={
             <>
               Enter it in your local timezone,{' '}
@@ -209,7 +209,7 @@ export default function EditDraftSlot() {
         {/* Populated on submit with the UTC ISO string; see handleSubmit. */}
         <input type='hidden' name='draftDateTime' />
         <div>
-          <Button type='submit'>Update draft slot</Button>
+          <Button type='submit'>Update Draft Slot</Button>
         </div>
       </Form>
     </Section>

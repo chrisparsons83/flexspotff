@@ -9,7 +9,7 @@ import {
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `${params.year} standings`,
+  title: ({ params }) => `${params.year} Standings`,
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

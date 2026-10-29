@@ -215,7 +215,7 @@ export default function GuillotineWeek() {
                     Points
                   </th>
                   <th className='px-3 py-2.5 text-right font-semibold'>
-                    Above the chop
+                    Above the Chop
                   </th>
                 </tr>
               </thead>
@@ -260,13 +260,13 @@ export default function GuillotineWeek() {
       {chopped && (
         <Section
           as='h3'
-          title={`${chopped.name} released`}
+          title={`${chopped.name} Released`}
           description={`Chopped with ${pts(
             chopped.points,
           )} points. Where the roster went in the next waiver run.`}
         >
           <Table
-            headers={['Player', 'Claimed by', 'Winning bid', 'Bids']}
+            headers={['Player', 'Claimed By', 'Winning Bid', 'Bids']}
             numericColumns={[2, 3]}
             primaryColumns={[1]}
           >
@@ -291,9 +291,9 @@ export default function GuillotineWeek() {
       )}
 
       {nextRun && nextRun.claims.length > 0 && (
-        <Section as='h3' title={`Waivers for week ${nextRun.week}`}>
+        <Section as='h3' title={`Waivers for Week ${nextRun.week}`}>
           <Table
-            headers={['Player', 'Won by', 'Bid', 'Next best', 'Bids']}
+            headers={['Player', 'Won By', 'Bid', 'Next Best', 'Bids']}
             numericColumns={[2, 3, 4]}
             primaryColumns={[1, 2]}
           >

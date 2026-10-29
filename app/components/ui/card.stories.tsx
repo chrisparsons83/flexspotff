@@ -13,7 +13,7 @@ export const Default: Story = {
   render: () => (
     <Card className='max-w-sm'>
       <CardHeader>
-        <CardTitle>Your week</CardTitle>
+        <CardTitle>Your Week</CardTitle>
       </CardHeader>
       <CardContent>
         Spread pool picks lock Sunday at 1:00 pm Eastern.

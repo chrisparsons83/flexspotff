@@ -96,7 +96,7 @@ function Career({ career }: { career: BestBallCareer }) {
             tone={career.titles > 0 ? TEXT.champion : undefined}
           />
           <MiniStat
-            label='Average finish'
+            label='Average Finish'
             value={pts(career.averageFinish, 1)}
             hint='Across finished seasons'
           />
@@ -108,12 +108,12 @@ function Career({ career }: { career: BestBallCareer }) {
         </CareerCard>
 
         <CareerCard
-          title='Average week'
+          title='Average Week'
           lead={pts(career.averagePointsPerWeek, 1)}
         >
-          <MiniStat label='Total points' value={pts(career.totalPoints, 1)} />
+          <MiniStat label='Total Points' value={pts(career.totalPoints, 1)} />
           <MiniStat
-            label='Best week'
+            label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
             tone='text-positive'
             detail={career.bestWeek && weekLabel(career.bestWeek)}
@@ -126,16 +126,16 @@ function Career({ career }: { career: BestBallCareer }) {
 
 function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
           'Finish',
-          'Points for',
+          'Points For',
           'Behind 1st',
-          'Best week',
-          'Top weeks',
-          'Draft slot',
+          'Best Week',
+          'Top Weeks',
+          'Draft Slot',
         ]}
         primaryColumns={[1, 2]}
         numericColumns={[2, 3, 4, 5, 6]}
@@ -206,7 +206,7 @@ function PositionsDrafted({
   if (withPicks.length === 0) return null;
 
   return (
-    <ProfileSection title='Positions drafted'>
+    <ProfileSection title='Positions Drafted'>
       <div className='space-y-4'>
         {withPicks.map(season => (
           <div key={season.year}>
@@ -223,7 +223,7 @@ function PositionsDrafted({
               <PositionBar
                 counts={season.leagueAverage}
                 size='small'
-                label={`League average: ${(['QB', 'RB', 'WR', 'TE'] as const)
+                label={`League Average: ${(['QB', 'RB', 'WR', 'TE'] as const)
                   .map(group => `${season.leagueAverage[group]} ${group}`)
                   .join(', ')}`}
               />
@@ -253,7 +253,7 @@ const pickLabel = (pick: BestBallSeason['picks'][number], teamCount: number) =>
 
 function DraftPicks({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection title='Draft picks'>
+    <ProfileSection title='Draft Picks'>
       <div className='space-y-4'>
         {seasons
           .filter(season => season.picks.length > 0)

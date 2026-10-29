@@ -147,7 +147,7 @@ export default function AdminWaiversIndex() {
     byLeague.length === 0 || unconfiguredLeagues.length === byLeague.length;
 
   return (
-    <Section title='Waiver reports'>
+    <Section title='Waiver Reports'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
@@ -201,7 +201,7 @@ export default function AdminWaiversIndex() {
         <input type='hidden' name='year' value={year} />
         <input type='hidden' name='week' value={week} />
         <Button type='submit' name='_action' value='sync' disabled={isRunning}>
-          Sync from Sleeper
+          Sync From Sleeper
         </Button>
         <Button
           type='submit'
@@ -217,7 +217,7 @@ export default function AdminWaiversIndex() {
         <Section
           key={league.id}
           as='h3'
-          title={`${league.name}, week ${week}`}
+          title={`${league.name}, Week ${week}`}
           description={
             report
               ? `Posted ${new Date(report.postedAt).toLocaleString()}.`

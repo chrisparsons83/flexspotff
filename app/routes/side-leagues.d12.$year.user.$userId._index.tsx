@@ -90,14 +90,14 @@ export default function D12MemberRoster() {
 
   return (
     <Section
-      title={`${discordName}’s roster`}
-      action={<Link to={`/side-leagues/d12/${year}`}>{year} standings</Link>}
+      title={`${discordName}’s Roster`}
+      action={<Link to={`/side-leagues/d12/${year}`}>{year} Standings</Link>}
     >
       {ownership.length === 0 ? (
         <EmptyState title='No picks for this member this season' />
       ) : (
         <Table
-          headers={['Player', 'Position', 'Leagues owned', 'Average pick']}
+          headers={['Player', 'Position', 'Leagues Owned', 'Average Pick']}
           numericColumns={[2, 3]}
           sortKeys={{
             0: 'player',

@@ -34,7 +34,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     year,
     locksWeeks.length > 0,
     currentSeason?.year,
-    'No locks challenge that year',
+    'No Locks Challenge that year',
   );
 
   // Get the most active week

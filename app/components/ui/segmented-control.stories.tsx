@@ -15,7 +15,7 @@ export const Default: Story = {
     const [value, setValue] = useState('points');
     return (
       <SegmentedControl
-        label='Sort by'
+        label='Sort By'
         value={value}
         onChange={setValue}
         options={[

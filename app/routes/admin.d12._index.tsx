@@ -73,12 +73,12 @@ export default function AdminD12Index() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <Section title='D12 administration'>
+    <Section title='D12 Administration'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
 
-      <Section as='h3' title='Create season'>
+      <Section as='h3' title='Create Season'>
         <Form method='POST' className='flex items-end gap-3'>
           <Field label='Year'>
             <Input name='year' type='number' placeholder='2025' />
@@ -89,7 +89,7 @@ export default function AdminD12Index() {
             value='createSeason'
             disabled={isSubmitting}
           >
-            Create season
+            Create Season
           </Button>
         </Form>
       </Section>

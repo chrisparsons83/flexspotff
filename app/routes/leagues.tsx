@@ -36,7 +36,7 @@ export default function Leagues() {
     <>
       <PageHeader
         title='Leagues'
-        description='Twelve-team leagues in two tiers, with promotion and relegation between them every season and a cup across all of them.'
+        description='Twelve-team leagues in two tiers, with promotion and relegation between them every season and a cross-league cup between them all.'
         nav={
           <SubNav
             label='Leagues'
@@ -45,7 +45,7 @@ export default function Leagues() {
               year &&
               leagues.length > 0 && (
                 <GoBox
-                  buttonText={`${year} leagues`}
+                  buttonText={`${year} Leagues`}
                   options={leagues.map(name => ({
                     label: name,
                     url: `/leagues/${year}/${name.toLowerCase()}`,

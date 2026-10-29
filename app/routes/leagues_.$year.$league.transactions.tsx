@@ -25,7 +25,7 @@ export default function LeagueTransactions() {
       {weeks.map(week => (
         <Section
           key={week}
-          title={`Week ${week} waivers`}
+          title={`Week ${week} Waivers`}
           description='Highest bid first; on an equal bid, the better waiver priority.'
         >
           <Table

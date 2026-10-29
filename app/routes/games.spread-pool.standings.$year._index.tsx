@@ -28,7 +28,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     year,
     years.includes(year),
     currentSeason?.year,
-    'No spread pool that year',
+    'No Spread Pool that year',
   );
 
   // Get the most active week

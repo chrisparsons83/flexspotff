@@ -25,8 +25,8 @@ export default function OmniStandings() {
         headers={[
           'Rank',
           'Member',
-          'Picks remaining',
-          'Picks scored',
+          'Picks Remaining',
+          'Picks Scored',
           'Points',
         ]}
         numericColumns={[0, 2, 3, 4]}

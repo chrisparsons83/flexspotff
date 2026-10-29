@@ -85,13 +85,13 @@ describe('userMerge', () => {
     await makeTeam(pandabair.id, league2023.id, 8, 6);
 
     const before = await getCareerRecords(new Set());
-    const beforeWins = before.find(t => t.title === 'Most career wins')!;
+    const beforeWins = before.find(t => t.title === 'Most Career Wins')!;
     expect(beforeWins.rows).toHaveLength(2);
 
     await mergeUsers(panda.id, pandabair.id, admin.id);
 
     const after = await getCareerRecords(new Set());
-    const afterWins = after.find(t => t.title === 'Most career wins')!;
+    const afterWins = after.find(t => t.title === 'Most Career Wins')!;
 
     expect(afterWins.rows).toHaveLength(1);
     expect(afterWins.rows[0].cells).toEqual([

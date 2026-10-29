@@ -90,7 +90,7 @@ export default function LeaguePage() {
               <div className='flex gap-3'>
                 {sameYear.length > 1 && (
                   <GoBox
-                    buttonText={`${league.year} leagues`}
+                    buttonText={`${league.year} Leagues`}
                     options={sameYear.map(name => ({
                       label: name,
                       url: `/leagues/${league.year}/${name.toLowerCase()}`,

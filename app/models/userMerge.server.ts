@@ -114,7 +114,7 @@ const MERGE_TABLES = [
   },
   {
     table: 'poolGamePick',
-    label: 'Spread pool picks',
+    label: 'Spread Pool picks',
     select: { poolGameId: true, teamBetId: true },
     slotOf: (row: { poolGameId: string; teamBetId: string }) =>
       `${row.poolGameId}:${row.teamBetId}`,
@@ -122,14 +122,14 @@ const MERGE_TABLES = [
   },
   {
     table: 'poolWeekMissed',
-    label: 'Spread pool missed weeks',
+    label: 'Spread Pool missed weeks',
     select: { poolWeekId: true },
     slotOf: (row: { poolWeekId: string | null }) => row.poolWeekId ?? '',
     stayingReason: 'already marked missed that week',
   },
   {
     table: 'locksGamePick',
-    label: 'Locks challenge picks',
+    label: 'Locks Challenge picks',
     select: { locksGameId: true, teamBetId: true },
     slotOf: (row: { locksGameId: string; teamBetId: string }) =>
       `${row.locksGameId}:${row.teamBetId}`,
@@ -137,7 +137,7 @@ const MERGE_TABLES = [
   },
   {
     table: 'qBSelection',
-    label: 'QB streaming selections',
+    label: 'QB Streaming selections',
     select: { qbStreamingWeekId: true },
     // No database constraint, but two selections in one week would double the
     // person's score in the standings.

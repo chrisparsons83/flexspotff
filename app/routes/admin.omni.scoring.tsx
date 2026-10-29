@@ -294,7 +294,7 @@ const AdminOmniScoring = () => {
   };
 
   return (
-    <Section title='Adjust scoring'>
+    <Section title='Adjust Scoring'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
@@ -305,7 +305,7 @@ const AdminOmniScoring = () => {
           className='max-w-sm'
         >
           <NativeSelect name='sportId' onChange={handleChange}>
-            <option value=''>Choose sport…</option>
+            <option value=''>Choose Sport…</option>
             {sports.map(({ id, name }) => (
               <option key={id} value={id}>
                 {name}
@@ -317,7 +317,7 @@ const AdminOmniScoring = () => {
           <>
             <Section
               as='h3'
-              title='Active players'
+              title='Active Players'
               className='mt-10'
               action={
                 <div className='flex flex-wrap gap-2'>
@@ -343,8 +343,8 @@ const AdminOmniScoring = () => {
               <Table
                 headers={[
                   'Player',
-                  'Current points',
-                  'Points to add',
+                  'Current Points',
+                  'Points to Add',
                   'Eliminated',
                 ]}
                 numericColumns={[1]}
@@ -403,11 +403,11 @@ const AdminOmniScoring = () => {
                 value='updatePoints'
                 className='mt-6'
               >
-                Update scores
+                Update Scores
               </Button>
             </Section>
-            <Section as='h3' title='Completed players'>
-              <Table headers={['Player', 'Total points']} numericColumns={[1]}>
+            <Section as='h3' title='Completed Players'>
+              <Table headers={['Player', 'Total Points']} numericColumns={[1]}>
                 {players
                   .filter(
                     player =>

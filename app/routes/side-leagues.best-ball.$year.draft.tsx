@@ -89,7 +89,7 @@ export default function BestBallDraft() {
 
   return (
     <>
-      <Section title='What the CPU drafted'>
+      <Section title='What the CPU Drafted'>
         <Table
           headers={['Slot', 'Team', 'Positions', 'Notable']}
           numericColumns={[0]}
@@ -135,7 +135,7 @@ export default function BestBallDraft() {
         </Table>
       </Section>
 
-      <Section title='Draft board'>
+      <Section title='Draft Board'>
         <DraftBoard
           columns={columns}
           rounds={rounds}

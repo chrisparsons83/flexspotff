@@ -100,7 +100,7 @@ export default function GuillotineHistory() {
                     <dl className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1'>
                       <dt className='text-muted-foreground'>Champion</dt>
                       <dd className='font-semibold'>{league.champion}</dd>
-                      <dt className='text-muted-foreground'>Runner-up</dt>
+                      <dt className='text-muted-foreground'>Runner-Up</dt>
                       <dd>{league.runnerUp ?? '–'}</dd>
                       <dt className='text-muted-foreground'>Third</dt>
                       <dd>{league.third ?? '–'}</dd>

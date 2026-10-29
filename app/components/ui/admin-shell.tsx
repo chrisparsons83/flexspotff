@@ -29,57 +29,57 @@ const groups: {
   items: (Omit<AdminNavItem, 'role'> & { role?: AdminRole | null })[];
 }[] = [
   {
-    title: 'This week',
+    title: 'This Week',
     items: [
-      { label: 'Admin home', to: '/admin', role: null },
-      { label: 'Spread pool weeks', to: '/admin/spread-pool' },
-      { label: 'QB streaming weeks', to: '/admin/qb-streaming' },
-      { label: 'Locks challenge', to: '/admin/locks-challenge' },
-      { label: 'DFS survivor', to: '/admin/dfs-survivor' },
-      { label: 'Waiver reports', to: '/admin/waivers' },
+      { label: 'Admin Home', to: '/admin', role: null },
+      { label: 'Spread Pool Weeks', to: '/admin/spread-pool' },
+      { label: 'QB Streaming Weeks', to: '/admin/qb-streaming' },
+      { label: 'Locks Challenge', to: '/admin/locks-challenge' },
+      { label: 'DFS Survivor', to: '/admin/dfs-survivor' },
+      { label: 'Waiver Reports', to: '/admin/waivers' },
     ],
   },
   {
-    title: 'Season setup',
+    title: 'Season Setup',
     items: [
       { label: 'Seasons', to: '/admin/season' },
-      { label: 'Registration list', to: '/admin/registration-list' },
-      { label: 'Draft slots', to: '/admin/draft-slots' },
+      { label: 'Registration List', to: '/admin/registration-list' },
+      { label: 'Draft Slots', to: '/admin/draft-slots' },
       { label: 'Leagues', to: '/admin/leagues' },
       { label: 'Cups', to: '/admin/cups' },
       { label: 'D12', to: '/admin/d12' },
       { label: 'Guillotine', to: '/admin/guillotine' },
       { label: 'Autodraft BBM', to: '/admin/best-ball' },
-      { label: 'Survivor pools', to: '/admin/survivor' },
+      { label: 'Survivor Pools', to: '/admin/survivor' },
     ],
   },
   {
     title: 'Members',
     items: [
       { label: 'Members', to: '/admin/members' },
-      { label: 'Unmatched Sleeper users', to: '/admin/members/unmatched' },
-      { label: 'Merge duplicates', to: '/admin/members/merge' },
-      { label: 'Add members', to: '/admin/members/add' },
+      { label: 'Unmatched Sleeper Users', to: '/admin/members/unmatched' },
+      { label: 'Merge Duplicates', to: '/admin/members/merge' },
+      { label: 'Add Members', to: '/admin/members/add' },
     ],
   },
   {
-    title: 'Syncs and data',
+    title: 'Syncs and Data',
     items: [
       { label: 'Syncing', to: '/admin/data' },
       { label: 'Scheduler', to: '/admin/scheduler' },
-      { label: 'F² history import', to: '/admin/f-squared/import' },
-      { label: 'Bot commands', to: '/admin/bot' },
+      { label: 'F² History Import', to: '/admin/f-squared/import' },
+      { label: 'Bot Commands', to: '/admin/bot' },
     ],
   },
   {
     title: 'Archive',
     items: [
-      { label: 'Omni scoring', to: '/admin/omni/scoring' },
+      { label: 'Omni Scoring', to: '/admin/omni/scoring' },
       {
-        label: 'Omni qualifying points',
+        label: 'Omni Qualifying Points',
         to: '/admin/omni/qualifying-points',
       },
-      { label: 'Omni players', to: '/admin/omni/add-player' },
+      { label: 'Omni Players', to: '/admin/omni/add-player' },
       { label: 'Podcasts', to: '/admin/podcasts', role: 'podcast' },
     ],
   },
@@ -172,7 +172,7 @@ export function AdminShell({ groups, children }: Props) {
       <div className='col-span-12 lg:hidden'>
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleTrigger className='bg-card px-4'>
-            Admin pages
+            Admin Pages
           </CollapsibleTrigger>
           <CollapsibleContent className='bg-card py-4'>
             {nav}

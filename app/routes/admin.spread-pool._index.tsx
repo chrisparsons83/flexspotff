@@ -153,7 +153,7 @@ export default function SpreadPoolList() {
 
   return (
     <Section
-      title='Spread pool lines by week'
+      title='Spread Pool Lines by Week'
       action={
         <Form method='POST'>
           <Button
@@ -162,7 +162,7 @@ export default function SpreadPoolList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create next week
+            Create Next Week
           </Button>
         </Form>
       }
@@ -181,7 +181,7 @@ export default function SpreadPoolList() {
             <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
             <td>
               <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
-                Edit week
+                Edit Week
               </Link>
             </td>
             <td>
@@ -198,7 +198,7 @@ export default function SpreadPoolList() {
                   value='scoreWeek'
                   disabled={navigation.state !== 'idle'}
                 >
-                  Score week
+                  Score Week
                 </Button>
               </Form>
             </td>

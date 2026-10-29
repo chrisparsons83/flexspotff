@@ -29,7 +29,7 @@ const Body = () => (
     </DialogHeader>
     <DialogFooter>
       <DialogClose asChild>
-        <Button variant='secondary'>Keep it</Button>
+        <Button variant='secondary'>Keep It</Button>
       </DialogClose>
       <Button variant='destructive'>Delete</Button>
     </DialogFooter>
@@ -40,7 +40,7 @@ export const Default: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant='secondary'>Delete entry</Button>
+        <Button variant='secondary'>Delete Entry</Button>
       </DialogTrigger>
       <DialogContent>
         <Body />

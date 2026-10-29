@@ -278,7 +278,7 @@ export default function AdminGuillotineLeague() {
       }
     >
       <p className='-mt-4 mb-6 text-sm'>
-        <Link to='/admin/guillotine'>Back to guillotine leagues</Link>
+        <Link to='/admin/guillotine'>Back to Guillotine Leagues</Link>
       </p>
 
       {actionData?.message && (
@@ -304,17 +304,17 @@ export default function AdminGuillotineLeague() {
           value='syncLeague'
           disabled={isSubmitting}
         >
-          Resync from Sleeper
+          Resync From Sleeper
         </Button>
       </Form>
 
       {unmatched.length > 0 && (
         <Section
           as='h3'
-          title='Unmatched teams'
+          title='Unmatched Teams'
           description="These Sleeper accounts aren't tied to a member yet. Matching one here links it everywhere on the site, not just in this league. A roster Sleeper has no owner for is assigned to a member for this league only, and resyncing keeps it."
         >
-          <Table headers={['Sleeper user', 'Member']}>
+          <Table headers={['Sleeper User', 'Member']}>
             {unmatched.map(team => (
               <tr key={team.id}>
                 <td>
@@ -366,8 +366,8 @@ export default function AdminGuillotineLeague() {
         </Section>
       )}
 
-      <Section as='h3' title='Chop order'>
-        <Table headers={['Place', 'Team', 'Chopped', 'Draft slot']}>
+      <Section as='h3' title='Chop Order'>
+        <Table headers={['Place', 'Team', 'Chopped', 'Draft Slot']}>
           {teams.map(team => (
             <tr key={team.id}>
               <td>{placeLabel(team)}</td>

@@ -388,7 +388,7 @@ describe('buildPoolSplits', () => {
     ).toEqual([
       ['20', 1],
       ['30', 1],
-      ['50 (max)', 1],
+      ['50 (Max)', 1],
     ]);
   });
 });

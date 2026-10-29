@@ -35,7 +35,7 @@ import { authenticator } from '~/services/auth.server';
 import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
 
-export const handle: RouteHandle = { title: 'My entries' };
+export const handle: RouteHandle = { title: 'My Entries' };
 
 export type { PickerPlayer } from '~/libs/dfs-survivor/picker';
 
@@ -702,11 +702,11 @@ export default function GamesDfsSurvivorMyEntry() {
     return (
       <EmptyState
         title={
-          data.currentSeason ? 'DFS survivor is closed' : 'No season set up yet'
+          data.currentSeason ? 'DFS Survivor is closed' : 'No season set up yet'
         }
       >
         {data.currentSeason
-          ? 'DFS survivor is currently closed for the season.'
+          ? 'DFS Survivor is currently closed for the season.'
           : 'Season is currently not available.'}
       </EmptyState>
     );
@@ -717,7 +717,7 @@ export default function GamesDfsSurvivorMyEntry() {
   const isError = !!(fetcher.data?.error || notice);
 
   return (
-    <Section title='My entries'>
+    <Section title='My Entries'>
       <div>
         <DfsSurvivorWeekRail
           weeks={data.weekSummaries}
@@ -749,7 +749,7 @@ export default function GamesDfsSurvivorMyEntry() {
               {pendingMove.usedInWeek}. Move them to week {selectedWeek}?
             </span>
             <Button type='button' size='sm' onClick={confirmMove}>
-              Move here
+              Move Here
             </Button>
             <Button
               type='button'
@@ -773,7 +773,7 @@ export default function GamesDfsSurvivorMyEntry() {
                 start on the same baseline. */}
             <header className='flex h-12 items-center justify-between border-b border-border px-3'>
               <h3 className='m-0 text-sm font-semibold text-foreground'>
-                Week {selectedWeek} lineup
+                Week {selectedWeek} Lineup
               </h3>
               <span className='text-sm tabular-nums text-muted-foreground'>
                 {lineupPlayerIds.size}/11

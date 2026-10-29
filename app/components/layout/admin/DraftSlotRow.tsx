@@ -55,8 +55,8 @@ export default function DraftSlotRow({ slot }: Props) {
                 aria-expanded={showDetails}
                 aria-label={
                   showDetails
-                    ? 'Hide available members'
-                    : 'Show available members'
+                    ? 'Hide Available Members'
+                    : 'Show Available Members'
                 }
                 className={cn(
                   'inline-flex size-8 items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground',

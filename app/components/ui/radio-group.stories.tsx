@@ -26,8 +26,8 @@ function Option({ value, label }: { value: string; label: string }) {
 export const Default: Story = {
   render: () => (
     <RadioGroup name='pick' defaultValue='home' aria-label='Pick'>
-      <Option value='home' label='Bills, minus 3' />
-      <Option value='away' label='Chiefs, plus 3' />
+      <Option value='home' label='Bills, Minus 3' />
+      <Option value='away' label='Chiefs, Plus 3' />
     </RadioGroup>
   ),
 };
@@ -35,8 +35,8 @@ export const Default: Story = {
 export const Disabled: Story = {
   render: () => (
     <RadioGroup name='pick' defaultValue='home' aria-label='Pick' disabled>
-      <Option value='home' label='Bills, minus 3' />
-      <Option value='away' label='Chiefs, plus 3' />
+      <Option value='home' label='Bills, Minus 3' />
+      <Option value='away' label='Chiefs, Plus 3' />
     </RadioGroup>
   ),
 };

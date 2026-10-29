@@ -28,7 +28,7 @@ export default function SurvivorOverview() {
 
   return (
     <Section
-      title={`${current.year} pools`}
+      title={`${current.year} Pools`}
       description={open ? `${poolTitle(open)} is running.` : undefined}
       action={
         open?.inviteUrl && (

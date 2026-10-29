@@ -127,7 +127,7 @@ export default function RegistrationList() {
   const navigation = useNavigation();
 
   return (
-    <Section title='Registration list'>
+    <Section title='Registration List'>
       {actionData?.message && (
         <Alert
           message={actionData.message}
@@ -175,14 +175,14 @@ export default function RegistrationList() {
           </tr>
         ))}
       </Table>
-      <Section as='h3' title='Missing from last year'>
+      <Section as='h3' title='Missing From Last Year'>
         <ul className='grid gap-1 sm:grid-cols-2 lg:grid-cols-3'>
           {notYetSignedUp.map(registration => (
             <li key={registration.id}>{registration.user.discordName}</li>
           ))}
         </ul>
       </Section>
-      <Section as='h3' title='Missing from two years ago'>
+      <Section as='h3' title='Missing From Two Years Ago'>
         <ul className='grid gap-1 sm:grid-cols-2 lg:grid-cols-3'>
           {twoYearsAgoNotSignedUp.map(registration => (
             <li key={registration.id}>{registration.user.discordName}</li>

@@ -205,7 +205,7 @@ export default function ImportFSquaredHistory() {
 
   return (
     <Section
-      title='Import F² history'
+      title='Import F² History'
       description="Brings an F² season that was run in Google Sheets onto the site. The sheet has to be viewable by anyone with the link. Two of its tabs are read: the picks (one row per pick, with Manager, Pick and Points) and the Fantasy Team Scores, whose weekly scores tell which site team each pick means. Entries score their teams' points on the site, which can be a few points off the sheet's where Sleeper corrected stats afterwards. Importing a year replaces anything already imported for it."
     >
       <Form method='GET' className='mb-6 flex flex-wrap items-end gap-3'>
@@ -232,13 +232,13 @@ export default function ImportFSquaredHistory() {
             ))}
           </NativeSelect>
         </Field>
-        <Field label='Sheet link' className='min-w-64 flex-grow'>
+        <Field label='Sheet Link' className='min-w-64 flex-grow'>
           <Input type='url' name='sheet' defaultValue={source.sheet} required />
         </Field>
-        <Field label='Picks tab'>
+        <Field label='Picks Tab'>
           <Input name='picksTab' defaultValue={source.picksTab} required />
         </Field>
-        <Field label='Team scores tab'>
+        <Field label='Team Scores Tab'>
           <Input name='teamsTab' defaultValue={source.teamsTab} required />
         </Field>
         <Button type='submit' disabled={busy}>
@@ -278,7 +278,7 @@ export default function ImportFSquaredHistory() {
           />
 
           {preview.parseErrors.length > 0 && (
-            <Section as='h3' title='Unreadable lines'>
+            <Section as='h3' title='Unreadable Lines'>
               <ul className='grid gap-1 font-mono text-sm'>
                 {preview.parseErrors.map(parseError => (
                   <li key={parseError}>{parseError}</li>
@@ -288,7 +288,7 @@ export default function ImportFSquaredHistory() {
           )}
 
           {(preview.teamErrors.length > 0 || preview.pickErrors.length > 0) && (
-            <Section as='h3' title='Teams that could not be matched'>
+            <Section as='h3' title='Teams That Could Not Be Matched'>
               {preview.teamErrors.map(teamError => (
                 <Alert
                   key={teamError}
@@ -309,7 +309,7 @@ export default function ImportFSquaredHistory() {
           )}
 
           {preview.entryNotes.length > 0 && (
-            <Section as='h3' title='Entries that need a look'>
+            <Section as='h3' title='Entries That Need a Look'>
               <ul className='grid gap-1'>
                 {preview.entryNotes.map(note => (
                   <li key={`${note.name}:${note.note}`}>
@@ -333,10 +333,10 @@ export default function ImportFSquaredHistory() {
               <Table
                 headers={[
                   'League',
-                  'Sheet name',
-                  'Site team',
-                  'Sheet points',
-                  'Site points',
+                  'Sheet Name',
+                  'Site Team',
+                  'Sheet Points',
+                  'Site Points',
                 ]}
                 numericColumns={[3, 4]}
                 primaryColumns={[2, 4]}

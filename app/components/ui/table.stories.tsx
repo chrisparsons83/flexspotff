@@ -3,7 +3,7 @@ import { WinLoss } from './win-loss';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof Table> = {
-  title: 'Data display/Table',
+  title: 'Data Display/Table',
   component: Table,
 };
 export default meta;

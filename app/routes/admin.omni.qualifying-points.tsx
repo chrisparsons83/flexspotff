@@ -188,7 +188,7 @@ const AdminOmniScoring = () => {
   );
 
   return (
-    <Section title='Adjust qualifying points'>
+    <Section title='Adjust Qualifying Points'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
@@ -199,7 +199,7 @@ const AdminOmniScoring = () => {
             description='Only the sport chosen here has its points updated.'
           >
             <NativeSelect name='sportId' onChange={handleSportChange}>
-              <option value=''>Choose sport…</option>
+              <option value=''>Choose Sport…</option>
               {sports.map(({ id, name }) => (
                 <option key={id} value={id}>
                   {name}
@@ -213,7 +213,7 @@ const AdminOmniScoring = () => {
                 name='sportEventId'
                 onChange={handleSportEventChange}
               >
-                <option value=''>Choose event…</option>
+                <option value=''>Choose Event…</option>
                 {sportEvents
                   .filter(sportEvent => sportEvent.sportId === activeSport)
                   .map(({ id, name }) => (
@@ -229,7 +229,7 @@ const AdminOmniScoring = () => {
           <>
             <Section
               as='h3'
-              title='Active players'
+              title='Active Players'
               className='mt-10'
               action={
                 <Button
@@ -245,8 +245,8 @@ const AdminOmniScoring = () => {
               <Table
                 headers={[
                   'Player',
-                  'Current points',
-                  'Points to add',
+                  'Current Points',
+                  'Points to Add',
                   'Eliminated',
                 ]}
                 numericColumns={[1]}
@@ -301,11 +301,11 @@ const AdminOmniScoring = () => {
                 value='updatePoints'
                 className='mt-6'
               >
-                Update scores
+                Update Scores
               </Button>
             </Section>
-            <Section as='h3' title='Completed players'>
-              <Table headers={['Player', 'Total points']} numericColumns={[1]}>
+            <Section as='h3' title='Completed Players'>
+              <Table headers={['Player', 'Total Points']} numericColumns={[1]}>
                 {players
                   .filter(
                     player =>

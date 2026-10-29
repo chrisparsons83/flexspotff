@@ -41,7 +41,7 @@ export default function ProfileHero({ summary, tabs }: Props) {
 
         {badges.length > 0 && (
           <p className='m-0 mt-4 text-sm'>
-            <Link to='/badges'>What these mean</Link>
+            <Link to='/badges'>What These Mean</Link>
           </p>
         )}
       </div>

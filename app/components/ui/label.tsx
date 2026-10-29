@@ -2,7 +2,7 @@ import * as LabelPrimitive from '@radix-ui/react-label';
 import * as React from 'react';
 import { cn } from '~/utils';
 
-/** A control's name: a plain noun in sentence case, above the control. */
+/** A control's name: a plain noun in title case, above the control. */
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>

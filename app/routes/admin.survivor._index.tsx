@@ -256,7 +256,7 @@ export default function AdminSurvivorIndex() {
   const hasYahoo = pools.some(pool => pool.source === 'YAHOO');
 
   return (
-    <Section title='Survivor pools'>
+    <Section title='Survivor Pools'>
       {actionData?.message && (
         <Alert
           message={actionData.message}
@@ -267,7 +267,7 @@ export default function AdminSurvivorIndex() {
 
       <Section
         as='h3'
-        title='Add Sleeper pool'
+        title='Add Sleeper Pool'
         description="Paste the pool's Sleeper league URL or its invite link. The season and name come from Sleeper, and an invite link is kept to show on the Games page. Pools from the current season then sync every hour."
       >
         <Form
@@ -275,7 +275,7 @@ export default function AdminSurvivorIndex() {
           method='POST'
           className='flex flex-wrap items-end gap-3'
         >
-          <Field label='Sleeper URL or invite link' className='w-full sm:w-96'>
+          <Field label='Sleeper URL or Invite Link' className='w-full sm:w-96'>
             <Input
               name='sleeperUrl'
               placeholder='https://sleeper.com/i/0NLXm3e7a1Pk5'
@@ -287,14 +287,14 @@ export default function AdminSurvivorIndex() {
             value='addPool'
             disabled={isSubmitting}
           >
-            {submitting('addPool') ? 'Adding…' : 'Add pool'}
+            {submitting('addPool') ? 'Adding…' : 'Add Pool'}
           </Button>
         </Form>
       </Section>
 
       <Section
         as='h3'
-        title='Yahoo history'
+        title='Yahoo History'
         description='The five Yahoo Survival Football pools from 2022 and 2023 ship with the site. Loading them again rewrites them from that file and keeps every member already matched.'
       >
         <Form method='POST'>
@@ -307,8 +307,8 @@ export default function AdminSurvivorIndex() {
             {submitting('importYahoo')
               ? 'Loading…'
               : hasYahoo
-              ? 'Reload Yahoo pools'
-              : 'Load Yahoo pools'}
+              ? 'Reload Yahoo Pools'
+              : 'Load Yahoo Pools'}
           </Button>
         </Form>
       </Section>
@@ -316,10 +316,10 @@ export default function AdminSurvivorIndex() {
       {yahooAccounts.length > 0 && (
         <Section
           as='h3'
-          title='Unmatched Yahoo accounts'
+          title='Unmatched Yahoo Accounts'
           description="Matching an account gives the member every Yahoo pool it played. Yahoo nicknames are mostly first names, so the pick set names are often the better clue. A suggestion comes from a member's Sleeper handle turning up in one of them."
         >
-          <Table headers={['Yahoo account', 'Member']}>
+          <Table headers={['Yahoo Account', 'Member']}>
             {yahooAccounts.map(account => (
               <tr key={account.yahooGuid}>
                 <td>
@@ -367,7 +367,7 @@ export default function AdminSurvivorIndex() {
 
       {years.map(year => (
         <Section key={year} as='h3' title={year}>
-          <Table headers={['Pool', 'Status', 'Members', 'Last synced', '']}>
+          <Table headers={['Pool', 'Status', 'Members', 'Last Synced', '']}>
             {pools
               .filter(pool => pool.year === year)
               .map(pool => (

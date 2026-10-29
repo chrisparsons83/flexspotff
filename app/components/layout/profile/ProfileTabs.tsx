@@ -19,10 +19,10 @@ export const PROFILE_TABS = [
   { key: 'guillotine', label: 'Guillotine' },
   { key: 'best-ball', label: 'Autodraft BBM' },
   { key: 'survivor', label: 'Survivor' },
-  { key: 'qb-streaming', label: 'QB streaming' },
-  { key: 'spread-pool', label: 'Spread pool' },
+  { key: 'qb-streaming', label: 'QB Streaming' },
+  { key: 'spread-pool', label: 'Spread Pool' },
   { key: 'locks', label: 'Locks' },
-  { key: 'dfs-survivor', label: 'DFS survivor' },
+  { key: 'dfs-survivor', label: 'DFS Survivor' },
   { key: 'f-squared', label: 'F²' },
 ] as const;
 
@@ -47,7 +47,7 @@ export default function ProfileTabs({ handle, contestsPlayed }: Props) {
 
   return (
     <SubNav
-      label='Profile sections'
+      label='Profile Sections'
       className='not-prose px-4 pb-4 md:px-6 md:pb-6'
       items={visible.map(tab => ({
         label: tab.label,

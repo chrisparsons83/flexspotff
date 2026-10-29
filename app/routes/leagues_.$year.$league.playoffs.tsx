@@ -33,8 +33,8 @@ const gameLabel = (game: Game) => {
 };
 
 const BRACKETS = [
-  { key: 'WINNERS', title: 'Winners bracket' },
-  { key: 'LOSERS', title: 'Sacko bracket' },
+  { key: 'WINNERS', title: 'Winners Bracket' },
+  { key: 'LOSERS', title: 'Sacko Bracket' },
 ] as const;
 
 export default function LeaguePlayoffs() {

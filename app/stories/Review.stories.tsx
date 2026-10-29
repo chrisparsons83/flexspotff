@@ -2,7 +2,7 @@ import { FoundationPage, FoundationSection } from './foundations/parts';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta = {
-  title: 'Review/Patterns we do not use',
+  title: 'Review/Patterns We Do Not Use',
   // It quotes the phrases it bans, so the copy check would flag it.
   parameters: { patterns: { disable: true } },
   // One page is enough; the list reads the same in either theme.
@@ -111,7 +111,7 @@ const RULES: { group: string; rules: Rule[] }[] = [
         checked: 'script',
       },
       {
-        rule: 'Sentence case everywhere. Labels are plain nouns.',
+        rule: 'Labels are plain nouns in title case: headings, nav, tabs, menus, buttons, table headers and form labels. Running text is in sentence case.',
         checked: 'person',
       },
     ],
@@ -121,7 +121,7 @@ const RULES: { group: string; rules: Rule[] }[] = [
 export const Checklist: Story = {
   render: () => (
     <FoundationPage
-      title='Patterns we do not use'
+      title='Patterns We Do Not Use'
       intro='Every component is reviewed against this list from #189 in both themes. Lines marked Script are checked on every story in CI by npm run check-storybook, along with accessibility; the rest need a person.'
     >
       {RULES.map(({ group, rules }) => (
@@ -130,7 +130,7 @@ export const Checklist: Story = {
             <thead>
               <tr className='text-sm text-muted-foreground'>
                 <th className='pb-2 pr-6 font-normal'>Rule</th>
-                <th className='w-32 pb-2 font-normal'>Checked by</th>
+                <th className='w-32 pb-2 font-normal'>Checked By</th>
               </tr>
             </thead>
             <tbody>

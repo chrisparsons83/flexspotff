@@ -218,7 +218,7 @@ export default function AdminD12SeasonIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <Section title={`Administer ${season.year} D12 season`}>
+    <Section title={`Administer ${season.year} D12 Season`}>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
@@ -234,7 +234,7 @@ export default function AdminD12SeasonIndex() {
             value='syncAllScores'
             disabled={isSubmitting}
           >
-            Sync all scores
+            Sync All Scores
           </Button>
         </Form>
         <Form method='POST' className='flex items-end gap-3'>
@@ -244,7 +244,7 @@ export default function AdminD12SeasonIndex() {
             value='syncCurrentWeek'
             disabled={isSubmitting}
           >
-            Sync this week
+            Sync This Week
           </Button>
           <Field label='Week' className='w-20'>
             <Input name='week' type='number' min='1' max='17' />
@@ -256,7 +256,7 @@ export default function AdminD12SeasonIndex() {
         {season.leagues.length === 0 ? (
           <p className='text-muted-foreground'>No leagues added yet.</p>
         ) : (
-          <Table headers={['Name', 'Sleeper league ID', '']}>
+          <Table headers={['Name', 'Sleeper League ID', '']}>
             {season.leagues.map(league => (
               <tr key={league.id}>
                 <td>{league.name}</td>
@@ -304,13 +304,13 @@ export default function AdminD12SeasonIndex() {
         )}
       </Section>
 
-      <Section as='h3' title='Add league'>
+      <Section as='h3' title='Add League'>
         <Form
           key={actionData?.message}
           method='POST'
           className='flex flex-wrap items-end gap-3'
         >
-          <Field label='Sleeper league URL' className='w-full sm:w-96'>
+          <Field label='Sleeper League URL' className='w-full sm:w-96'>
             <Input
               name='sleeperUrl'
               placeholder='https://sleeper.com/leagues/123456789'
@@ -322,12 +322,12 @@ export default function AdminD12SeasonIndex() {
             value='addLeague'
             disabled={isSubmitting}
           >
-            Add league
+            Add League
           </Button>
         </Form>
       </Section>
 
-      <Section as='h3' title='Draft picks'>
+      <Section as='h3' title='Draft Picks'>
         <Form method='POST'>
           <Button
             type='submit'
@@ -335,7 +335,7 @@ export default function AdminD12SeasonIndex() {
             value='syncDraftPicks'
             disabled={isSubmitting}
           >
-            Sync draft picks
+            Sync Draft Picks
           </Button>
         </Form>
       </Section>

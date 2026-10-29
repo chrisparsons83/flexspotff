@@ -274,7 +274,7 @@ export default function RegistrationPage() {
     );
 
   return (
-    <Section title={`${currentSeason.year} league registration`}>
+    <Section title={`${currentSeason.year} League Registration`}>
       {actionData?.success && <Alert message='Draft preferences saved.' />}
       {actionData?.formError && (
         <Alert message={actionData.formError} status='error' />
@@ -287,7 +287,7 @@ export default function RegistrationPage() {
             <LocalDateTime value={registration.createdAt} />.
           </p>
           {hasDraftSlots && (
-            <Section as='h3' title='Draft time preferences' className='mt-10'>
+            <Section as='h3' title='Draft Time Preferences' className='mt-10'>
               <p>
                 Select all draft times that you can make. You must keep at least{' '}
                 {MINIMUM_DRAFT_TIMES} selected:
@@ -312,7 +312,7 @@ export default function RegistrationPage() {
                   type='submit'
                   disabled={!hasMinimumSelections || isSubmitting}
                 >
-                  Save draft preferences
+                  Save Draft Preferences
                 </Button>
               </Form>
             </Section>

@@ -93,7 +93,7 @@ export default function MemberLocks() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='the locks challenge'
+        contest='the Locks Challenge'
         memberName={summary.user.discordName}
       />
     );
@@ -171,7 +171,7 @@ function Career({
     <ProfileSection title='Career'>
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         <CareerCard
-          title='Points scored'
+          title='Points Scored'
           lead={career.points}
           compactStats
           meter={
@@ -194,7 +194,7 @@ function Career({
           }
         >
           <MiniStat
-            label='Weeks won'
+            label='Weeks Won'
             value={career.weeksWon}
             hint='Weeks with the most points of everyone who entered'
             tone={career.weeksWon > 0 ? TEXT.champion : undefined}
@@ -218,7 +218,7 @@ function Career({
         </CareerCard>
 
         <CareerCard
-          title='Scoring weeks'
+          title='Scoring Weeks'
           lead={career.cleanWeeks}
           compactStats
           meter={
@@ -244,7 +244,7 @@ function Career({
             hint='Fewest points in a week that scored'
           />
           <MiniStat
-            label='Longest streak'
+            label='Longest Streak'
             value={career.longestCleanStreak}
             unit={career.longestCleanStreak === 1 ? 'week' : 'weeks'}
             hint='Most scoring weeks in a row, counting only weeks entered'
@@ -264,14 +264,14 @@ function Career({
           meter={<KeyedBar entries={bustBands} />}
         >
           <WeekStat
-            label='Biggest miss'
+            label='Biggest Miss'
             week={career.worstBust}
             value={week => record(week.record)}
             hint='The bust that wiped out the most wins'
             tone='text-negative'
           />
           <WeekStat
-            label='Nearest miss'
+            label='Nearest Miss'
             week={career.nearMiss}
             value={week => record(week.record)}
             hint='The most wins a single loss wiped out'
@@ -313,7 +313,7 @@ function FinishesCard({
           </>
         }
       >
-        <MiniStat label='Weeks entered' value={career.weeksEntered} />
+        <MiniStat label='Weeks Entered' value={career.weeksEntered} />
       </CareerCard>
     ) : null;
   }
@@ -337,7 +337,7 @@ function FinishesCard({
       meter={<FinishMeter ranks={finished} />}
     >
       <MiniStat
-        label='Average finish'
+        label='Average Finish'
         value={ordinal(Math.round(career.averageFinish!))}
         hint={`${career.averageFinish!.toFixed(1)} across ${plural(
           finished.length,
@@ -355,7 +355,7 @@ function FinishesCard({
 
 function BySeason({ seasons }: { seasons: LocksSeason[] }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
@@ -363,9 +363,9 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
           'Points',
           'Record',
           'Win %',
-          'Scoring weeks',
-          'Best week',
-          'Lost to busts',
+          'Scoring Weeks',
+          'Best Week',
+          'Lost to Busts',
         ]}
         numericColumns={[2, 3, 4, 5, 6, 7]}
         primaryColumns={[1, 2]}
@@ -499,7 +499,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
 
   return (
     <ProfileSection
-      title='Points race'
+      title='Points Race'
       action={
         <YearFilter
           years={years}
@@ -687,7 +687,7 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
   );
 
   return (
-    <ProfileSection title='Week by week'>
+    <ProfileSection title='Week by Week'>
       <WeekGrid
         lastWeek={lastWeek}
         minColumn='2.5rem'
@@ -788,11 +788,11 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
 
   return (
     <ProfileSection
-      title='Risk profile'
-      footnote={<FieldKey>Field&rsquo;s performance</FieldKey>}
+      title='Risk Profile'
+      footnote={<FieldKey>Field&rsquo;s Performance</FieldKey>}
     >
       <Table
-        headers={['Picks', 'Weeks', 'Scoring % vs field', 'Average score']}
+        headers={['Picks', 'Weeks', 'Scoring % vs Field', 'Average Score']}
         numericColumns={[1, 3]}
         primaryColumns={[2, 3]}
       >
@@ -861,7 +861,7 @@ function SplitTable({
 
   return (
     <Table
-      headers={[heading, 'Picks', 'Record', 'Win % vs field']}
+      headers={[heading, 'Picks', 'Record', 'Win % vs Field']}
       numericColumns={[1, 2]}
       primaryColumns={[3]}
     >
@@ -907,7 +907,7 @@ function SplitTable({
   );
 }
 
-const WIN_RATE_KEY = <FieldKey>Field&rsquo;s performance</FieldKey>;
+const WIN_RATE_KEY = <FieldKey>Field&rsquo;s Performance</FieldKey>;
 
 const SIDE_TONE: Record<string, string> = {
   favorite: 'bg-warning/20',
@@ -975,7 +975,7 @@ function FavoritesAndUnderdogs({ splits }: { splits: LocksSplits }) {
   return (
     <ProfileSection
       title='Favorites & Underdogs'
-      description='By the spread pool’s line on the same game.'
+      description='By the Spread Pool’s line on the same game.'
       footnote={WIN_RATE_KEY}
     >
       <ShareBar
@@ -1025,7 +1025,7 @@ function Tendencies({ splits }: { splits: LocksSplits }) {
 type TeamSort = 'picks' | 'winRate' | 'busts';
 
 const TEAM_SORTS: { value: TeamSort; label: string }[] = [
-  { value: 'picks', label: 'Most picked' },
+  { value: 'picks', label: 'Most Picked' },
   { value: 'winRate', label: 'Win %' },
   { value: 'busts', label: 'Busts' },
 ];
@@ -1113,7 +1113,7 @@ function Teams({
       title='By NFL Team'
       action={
         <SegmentedControl
-          label='Sort by'
+          label='Sort By'
           value={sort}
           onChange={setSort}
           options={TEAM_SORTS}
@@ -1121,7 +1121,7 @@ function Teams({
       }
     >
       <div className='mb-5 grid gap-3 sm:grid-cols-3'>
-        <TeamCallout title='Most picked' row={mostPicked} names={names}>
+        <TeamCallout title='Most Picked' row={mostPicked} names={names}>
           {mostPicked && (
             <>
               {plural(mostPicked.backing.picks, 'pick')},{' '}
@@ -1129,7 +1129,7 @@ function Teams({
             </>
           )}
         </TeamCallout>
-        <TeamCallout title='Most reliable' row={reliable} names={names}>
+        <TeamCallout title='Most Reliable' row={reliable} names={names}>
           {reliable && (
             <>
               {pct(winRate(reliable.backing), 0)} won,{' '}
@@ -1137,7 +1137,7 @@ function Teams({
             </>
           )}
         </TeamCallout>
-        <TeamCallout title='Costliest loss' row={costliest} names={names}>
+        <TeamCallout title='Costliest Loss' row={costliest} names={names}>
           {costliest && (
             <>
               <span className='font-semibold text-negative'>
@@ -1151,7 +1151,7 @@ function Teams({
       </div>
 
       <Table
-        headers={['Team', 'Picked', 'Win %', 'Picked against', 'Busts']}
+        headers={['Team', 'Picked', 'Win %', 'Picked Against', 'Busts']}
         numericColumns={[1, 2, 3, 4]}
         primaryColumns={[1, 2]}
       >
@@ -1269,11 +1269,11 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
 
   return (
     <ProfileSection
-      title='Pick log'
+      title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table
-        headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week result']}
+        headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week Result']}
         mobileCards={
           <MobileCards>
             {weeks.map(week => (

@@ -29,11 +29,11 @@ export default function StandingsSection({
 }) {
   return (
     <Section
-      title={week ? `Week ${week}` : `${year} standings`}
+      title={week ? `Week ${week}` : `${year} Standings`}
       description={description}
       action={
         <div className='flex flex-wrap items-center gap-3'>
-          {week && <Link to={`${base}/${year}`}>{year} season standings</Link>}
+          {week && <Link to={`${base}/${year}`}>{year} Season Standings</Link>}
           {weeks.length > 0 && (
             <GoBox
               buttonText='Week'

@@ -9,8 +9,8 @@ const meta: Meta<typeof Breadcrumb> = {
   args: {
     items: [
       { label: 'Games', to: '/games' },
-      { label: 'QB streaming', to: '/games/qb-streaming' },
-      { label: '2026 standings', to: '/games/qb-streaming/standings/2026' },
+      { label: 'QB Streaming', to: '/games/qb-streaming' },
+      { label: '2026 Standings', to: '/games/qb-streaming/standings/2026' },
       { label: 'Week 7', to: '/games/qb-streaming/standings/2026/7' },
     ],
   },
@@ -39,7 +39,7 @@ export const Short: Story = {
   args: {
     items: [
       { label: 'Games', to: '/games' },
-      { label: 'QB streaming', to: '/games/qb-streaming' },
+      { label: 'QB Streaming', to: '/games/qb-streaming' },
     ],
   },
 };

@@ -175,7 +175,7 @@ export default function SpreadLocksList() {
 
   return (
     <Section
-      title='Locks challenge lines by week'
+      title='Locks Challenge Lines by Week'
       action={
         <Form method='POST'>
           <Button
@@ -184,7 +184,7 @@ export default function SpreadLocksList() {
             value='createNewWeek'
             disabled={navigation.state !== 'idle'}
           >
-            Create next week
+            Create Next Week
           </Button>
         </Form>
       }
@@ -215,7 +215,7 @@ export default function SpreadLocksList() {
                   value='publishWeek'
                   disabled={navigation.state !== 'idle'}
                 >
-                  Publish week
+                  Publish Week
                 </Button>
               </Form>
             </td>
@@ -233,7 +233,7 @@ export default function SpreadLocksList() {
                   value='scoreWeek'
                   disabled={navigation.state !== 'idle'}
                 >
-                  Score week
+                  Score Week
                 </Button>
               </Form>
             </td>

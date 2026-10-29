@@ -2,7 +2,7 @@ import { StatList } from './stat-list';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof StatList> = {
-  title: 'Data display/StatList',
+  title: 'Data Display/StatList',
   component: StatList,
 };
 export default meta;
@@ -15,9 +15,9 @@ export const Default: Story = {
       { label: 'Seasons', value: 8 },
       { label: 'Titles', value: 2 },
       { label: 'Record', value: '71–41' },
-      { label: 'Win rate', value: '63%' },
+      { label: 'Win Rate', value: '63%' },
       { label: 'Playoffs', value: 6 },
-      { label: 'Best finish', value: '1st' },
+      { label: 'Best Finish', value: '1st' },
     ],
   },
 };
@@ -27,10 +27,10 @@ export const FourAcross: Story = {
   args: {
     className: 'grid-cols-2 md:grid-cols-4',
     stats: [
-      { label: 'Claims won', value: 42 },
-      { label: 'Bids that lost', value: 17 },
-      { label: 'FAAB spent', value: '$612' },
-      { label: 'Budget each', value: '$100' },
+      { label: 'Claims Won', value: 42 },
+      { label: 'Bids That Lost', value: 17 },
+      { label: 'FAAB Spent', value: '$612' },
+      { label: 'Budget Each', value: '$100' },
     ],
   },
 };

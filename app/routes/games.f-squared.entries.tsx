@@ -24,7 +24,7 @@ import { authenticator } from '~/services/auth.server';
 import { shuffleArray } from '~/utils/helpers';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'My entry' };
+export const handle: RouteHandle = { title: 'My Entry' };
 
 const formEntry = z.string().array().length(2);
 type FormEntry = z.infer<typeof formEntry>;
@@ -188,7 +188,7 @@ export default function FSquaredMyEntry() {
 
   return (
     <Section
-      title='My entry'
+      title='My Entry'
       description='Pick two teams from each league. Teams are listed by their draft order.'
     >
       <div className='mb-10 grid max-w-prose gap-2 text-muted-foreground'>

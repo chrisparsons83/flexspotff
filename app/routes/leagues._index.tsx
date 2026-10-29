@@ -1,3 +1,4 @@
+import { ChevronRightIcon } from '@radix-ui/react-icons';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
 import { Card, CardHeader, CardTitle } from '~/components/ui/card';
@@ -15,6 +16,7 @@ import {
   getNewestWeekTeamGameByYear,
   getTeamGamesByYearAndWeek,
 } from '~/models/teamgame.server';
+import { cn } from '~/utils';
 
 /** How many of the week's best scores the overview lists. */
 const TOP_SCORES = 5;
@@ -51,6 +53,15 @@ export const loader = async () => {
 
 export default function LeaguesOverview() {
   const { year, leagues, week } = useTypedLoaderData<typeof loader>();
+  const tiers = [
+    ...leagues
+      .reduce(
+        (byTier, league) =>
+          byTier.set(league.tier, [...(byTier.get(league.tier) ?? []), league]),
+        new Map<number, typeof leagues>(),
+      )
+      .values(),
+  ];
 
   if (!year || leagues.length === 0) {
     return (
@@ -62,58 +73,37 @@ export default function LeaguesOverview() {
 
   return (
     <>
-      <Section title={`${year} leagues`}>
-        <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
-          {leagues.map(league => (
-            <Card key={league.id} league={leagueFill(league.name) ?? undefined}>
-              <CardHeader>
-                <CardTitle>
-                  <Link
-                    to={`/leagues/${year}/${league.name.toLowerCase()}`}
-                    variant='quiet'
-                  >
-                    {league.name}
-                  </Link>
-                </CardTitle>
-                <span className='text-sm'>Tier {league.tier}</span>
-              </CardHeader>
-              <ol className='px-5 py-2'>
-                {league.teams.map((team, index) => (
-                  <li
-                    key={team.id}
-                    className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-1 text-sm'
-                  >
-                    <span className='text-muted-foreground'>{index + 1}</span>
-                    <span className='truncate'>
-                      {team.user ? (
-                        <ProfileLink userId={team.user.id}>
-                          <MemberName user={team.user} />
-                        </ProfileLink>
-                      ) : (
-                        'Unclaimed team'
-                      )}
-                    </span>
-                    <span className='font-semibold'>
-                      <WinLoss
-                        wins={team.wins}
-                        losses={team.losses}
-                        ties={team.ties}
-                      />
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </Card>
+      <Section title={`${year} Leagues`}>
+        <div className='grid gap-6'>
+          {tiers.map(tier => (
+            <div
+              key={tier[0]!.tier}
+              className={cn(
+                'grid gap-6',
+                // A tier of one league (Champions) runs the full width, with
+                // its table in two columns; a tier of four sits four across.
+                tier.length > 1 && 'md:grid-cols-2 xl:grid-cols-4',
+              )}
+            >
+              {tier.map(league => (
+                <LeagueCard
+                  key={league.id}
+                  league={league}
+                  year={year}
+                  wide={tier.length === 1}
+                />
+              ))}
+            </div>
           ))}
         </div>
       </Section>
 
       {week && (
         <Section
-          title={`Week ${week.number}`}
+          title={`Week ${week.number} Leaderboard`}
           action={
             <Link to={`/leagues/leaderboard/${year}/${week.number}`}>
-              Week {week.number} leaderboard
+              Full Week {week.number} Leaderboard
             </Link>
           }
         >
@@ -145,5 +135,74 @@ export default function LeaguesOverview() {
         </Section>
       )}
     </>
+  );
+}
+
+type League = ReturnType<
+  typeof useTypedLoaderData<typeof loader>
+>['leagues'][number];
+
+/** One league's table. A wide card splits it into two columns. */
+function LeagueCard({
+  league,
+  year,
+  wide,
+}: {
+  league: League;
+  year: number;
+  wide: boolean;
+}) {
+  return (
+    <Card league={leagueFill(league.name) ?? undefined}>
+      <CardHeader>
+        <CardTitle>
+          <Link
+            to={`/leagues/${year}/${league.name.toLowerCase()}`}
+            variant='quiet'
+            className='inline-flex'
+          >
+            {league.name}
+            <ChevronRightIcon aria-hidden className='ml-1 size-5 self-center' />
+          </Link>
+        </CardTitle>
+        <span className='text-sm'>Tier {league.tier}</span>
+      </CardHeader>
+      <ol
+        className={cn(
+          'px-5 py-2',
+          wide && 'md:grid md:grid-flow-col md:gap-x-12',
+        )}
+        style={
+          wide
+            ? {
+                gridTemplateRows: `repeat(${Math.ceil(
+                  league.teams.length / 2,
+                )}, auto)`,
+              }
+            : undefined
+        }
+      >
+        {league.teams.map((team, index) => (
+          <li
+            key={team.id}
+            className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-1 text-sm'
+          >
+            <span className='text-muted-foreground'>{index + 1}</span>
+            <span className='truncate'>
+              {team.user ? (
+                <ProfileLink userId={team.user.id}>
+                  <MemberName user={team.user} />
+                </ProfileLink>
+              ) : (
+                'Unclaimed team'
+              )}
+            </span>
+            <span className='font-semibold'>
+              <WinLoss wins={team.wins} losses={team.losses} ties={team.ties} />
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Card>
   );
 }

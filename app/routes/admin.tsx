@@ -21,7 +21,7 @@ import type { RouteHandle } from '~/utils/route-handle';
 export const handle: RouteHandle = {
   title: ({ pathname }) => {
     const label = adminPageLabel(pathname);
-    return !label || label === 'Admin home' ? 'Admin' : `${label} - Admin`;
+    return !label || label === 'Admin Home' ? 'Admin' : `${label} - Admin`;
   },
 };
 

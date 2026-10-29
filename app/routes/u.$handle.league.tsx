@@ -93,7 +93,7 @@ function Highlights({
           at most widths and gave the eye nowhere to start. */}
       <div className='grid gap-3 md:grid-cols-3'>
         <CareerCard
-          title='Regular season'
+          title='Regular Season'
           lead={
             <>
               <WinLoss
@@ -143,7 +143,7 @@ function Highlights({
             }
           />
           <MiniStat
-            label='Win streak'
+            label='Win Streak'
             value={highlights.longestWinStreak}
             unit='W'
             tone='text-positive'
@@ -176,13 +176,13 @@ function Highlights({
           }
         >
           <MiniStat
-            label='Worst week'
+            label='Worst Week'
             value={worstWeek ? worstWeek.points.toFixed(2) : '–'}
             tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
-            label='Best week'
+            label='Best Week'
             value={bestWeek ? bestWeek.points.toFixed(2) : '–'}
             tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
@@ -203,10 +203,10 @@ function Highlights({
           }
           meter={<SplitBar wins={playoffs.wins} losses={playoffs.losses} />}
         >
-          <MiniStat label='Playoff berths' value={playoffs.appearances} />
+          <MiniStat label='Playoff Berths' value={playoffs.appearances} />
           {showSacko && (
             <MiniStat
-              label='Sacko bracket'
+              label='Sacko Bracket'
               value={
                 <WinLoss
                   wins={playoffs.sackoWins}
@@ -360,7 +360,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
   );
 
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={columns}
         numericColumns={columns
@@ -567,7 +567,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
   if (rows.length === 0) return null;
 
   return (
-    <ProfileSection title='Head to head'>
+    <ProfileSection title='Head to Head'>
       <Table
         headers={['Opponent', 'Record', 'Meetings', 'When']}
         numericColumns={[1, 2]}
@@ -651,7 +651,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
 
   return (
     <ProfileSection
-      title='Game log'
+      title='Game Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
       <Table

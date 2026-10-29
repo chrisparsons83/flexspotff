@@ -14,7 +14,7 @@ import { yearOptions } from '~/utils/years';
 
 export const handle: RouteHandle = {
   title: ({ params }) =>
-    params.year ? `${params.year} standings` : 'Standings',
+    params.year ? `${params.year} Standings` : 'Standings',
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -36,7 +36,7 @@ export default function Standings() {
 
   return (
     <Section
-      title={year ? `${year} standings` : 'Standings'}
+      title={year ? `${year} Standings` : 'Standings'}
       action={
         <GoBox
           options={yearOptions(maxYear, y => `/leagues/standings/${y}`)}

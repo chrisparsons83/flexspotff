@@ -10,7 +10,7 @@ const meta: Meta<typeof AdminShell> = {
   render: args => (
     <AdminShell {...args}>
       <PageHeader
-        title='Merge duplicates'
+        title='Merge Duplicates'
         description='Fold one member into another when Sleeper made two of them.'
       />
     </AdminShell>

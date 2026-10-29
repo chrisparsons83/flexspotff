@@ -75,7 +75,7 @@ export default function LocksChallengeGameComponent({
   const result = wonGame === 1 ? 'Won' : lostGame === 1 ? 'Lost' : null;
   const options = [
     { value: 'awayTeamPick', label: locksGame.game.awayTeam.mascot },
-    { value: 'noTeamPick', label: 'No pick' },
+    { value: 'noTeamPick', label: 'No Pick' },
     { value: 'homeTeamPick', label: locksGame.game.homeTeam.mascot },
   ];
 

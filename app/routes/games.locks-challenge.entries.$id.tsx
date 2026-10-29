@@ -27,7 +27,7 @@ import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
 import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
 
-export const handle: RouteHandle = { title: 'My entry' };
+export const handle: RouteHandle = { title: 'My Entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -310,7 +310,7 @@ export default function GamesLocksChallengeWeek() {
     navigation.state !== 'idle' || locksWeek?.isWeekScored || weekLocked;
   return (
     <Section
-      title={`Week ${weekNumber} entry`}
+      title={`Week ${weekNumber} Entry`}
       description={
         weekLocked
           ? 'This week has locked.'
@@ -327,7 +327,7 @@ export default function GamesLocksChallengeWeek() {
             )}
             <StatList
               className='mb-10 grid-cols-2'
-              stats={[{ label: 'Teams picked', value: gamesBetOn }]}
+              stats={[{ label: 'Teams Picked', value: gamesBetOn }]}
             />
             <div className='grid max-w-2xl gap-3'>
               {locksGames?.map(locksGame => {
@@ -360,7 +360,7 @@ export default function GamesLocksChallengeWeek() {
               disabled={disableSubmit || false}
               className='mt-10'
             >
-              Update picks
+              Update Picks
             </Button>
           </>
         )}

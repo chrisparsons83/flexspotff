@@ -9,7 +9,7 @@ const member = (id: string, discordName: string) => ({
 });
 
 const meta: Meta<typeof SummaryCard> = {
-  title: 'Data display/SummaryCard',
+  title: 'Data Display/SummaryCard',
   component: SummaryCard,
   decorators: [
     Story => (
@@ -29,7 +29,7 @@ type Story = StoryObj<typeof SummaryCard>;
 /** A game's leaders on the Games overview. */
 export const Leaders: Story = {
   args: {
-    title: 'Spread pool',
+    title: 'Spread Pool',
     to: '/games/spread-pool',
     status: 'Week 8 open for picks',
     statusHref: '/games/spread-pool/entries/week-8',
@@ -41,7 +41,7 @@ export const Leaders: Story = {
       { key: 'e', rank: 5, user: member('e', 'Mo'), value: '1095' },
     ],
     empty: 'No scores yet this season.',
-    footer: <Link to='/games/spread-pool/entries'>My entries</Link>,
+    footer: <Link to='/games/spread-pool/entries'>My Entries</Link>,
   },
 };
 
@@ -67,7 +67,7 @@ export const WithACut: Story = {
       {
         key: '15',
         rank: 15,
-        label: 'Fire Jerry into the Sun',
+        label: 'Fire Jerry Into the Sun',
         value: '47.94',
         divider: 'cut',
         tone: 'negative',
@@ -92,7 +92,7 @@ export const Unranked: Story = {
 
 export const Empty: Story = {
   args: {
-    title: 'DFS survivor',
+    title: 'DFS Survivor',
     to: '/games/dfs-survivor',
     status: 'No weeks scored yet',
     rows: [],

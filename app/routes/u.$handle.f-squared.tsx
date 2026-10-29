@@ -122,7 +122,7 @@ const whole = (value: number) => Math.round(value).toLocaleString('en-US');
  */
 function PointsCard({ career }: { career: FSquaredCareer }) {
   const { bestSeason, worstSeason, averageVsField, averageTotal } = career;
-  const title = 'Average score';
+  const title = 'Average Score';
 
   // Only a running season so far: nothing settled to measure yet.
   if (averageVsField === null || averageTotal === null) {
@@ -208,7 +208,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
       />
       <MiniStat label='Top 3' value={career.podiums} />
       <MiniStat
-        label='Top half'
+        label='Top Half'
         value={career.topHalves}
         unit={`/${career.completedSeasons}`}
         hint='Finished seasons in the top half of the field'
@@ -226,7 +226,7 @@ function FinishesCard({ career }: { career: FSquaredCareer }) {
 function PickQualityCard({ career }: { career: FSquaredCareer }) {
   return (
     <CareerCard
-      title='Picks that beat league average'
+      title='Picks That Beat League Average'
       lead={pct(career.beatAverageShare)}
       compactStats
     >
@@ -252,7 +252,7 @@ function PickedByCard({ pickedBy }: { pickedBy: FSquaredPickedBy }) {
 
   return (
     <CareerCard
-      title='Picked by others'
+      title='Picked by Others'
       lead={pct(pickedBy.averageShare)}
       compactStats
     >
@@ -305,17 +305,17 @@ function PickCell({ pick }: { pick: FSquaredPick | null }) {
 
 function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
   return (
-    <ProfileSection title='By season'>
+    <ProfileSection title='By Season'>
       <Table
         headers={[
           'Year',
           'Finish',
           'Score',
           'vs Field',
-          'Beat average',
-          'Best pick',
-          'Worst pick',
-          'Picked by',
+          'Beat Average',
+          'Best Pick',
+          'Worst Pick',
+          'Picked By',
         ]}
         primaryColumns={[1, 3]}
         numericColumns={[2, 3, 4, 7]}
@@ -375,8 +375,8 @@ function BySeason({ seasons }: { seasons: FSquaredSeason[] }) {
  * hue and still read apart with red-green colour blindness.
  */
 const HALVES = {
-  top: { tone: 'bg-positive/20 text-positive', label: 'Top half' },
-  bottom: { tone: 'bg-destructive/20 text-negative', label: 'Bottom half' },
+  top: { tone: 'bg-positive/20 text-positive', label: 'Top Half' },
+  bottom: { tone: 'bg-destructive/20 text-negative', label: 'Bottom Half' },
 } as const;
 
 function rankTone(rank: number, size: number): string {
@@ -461,9 +461,9 @@ function MostPickedManagers({
   const visible = showAll ? managers : managers.slice(0, LIST_PREVIEW);
 
   return (
-    <ProfileSection title='Most picked managers'>
+    <ProfileSection title='Most Picked Managers'>
       <Table
-        headers={['Manager', 'Picks', 'Years', 'Average finish', 'vs league']}
+        headers={['Manager', 'Picks', 'Years', 'Average Finish', 'vs League']}
         primaryColumns={[1, 4]}
         numericColumns={[1, 3, 4]}
       >
@@ -530,7 +530,7 @@ function WhoPickedThem({
   const visible = showAll ? pickers : pickers.slice(0, LIST_PREVIEW);
 
   return (
-    <ProfileSection title={`Who picked ${memberName}`}>
+    <ProfileSection title={`Who Picked ${memberName}`}>
       {pickers.length === 0 ? (
         <p className='m-0 text-sm text-muted-foreground'>Nobody yet.</p>
       ) : (

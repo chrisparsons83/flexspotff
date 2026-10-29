@@ -263,13 +263,13 @@ export default function AdminDataIndex() {
   ).reverse();
 
   return (
-    <Section title='Data updates'>
+    <Section title='Data Updates'>
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Section
         as='h3'
-        title='Feature flags'
+        title='Feature Flags'
         description='Switches for features that are built but not open to every member yet. Admins always see them either way.'
       >
         {Object.entries(FEATURE_FLAGS).map(([key, flag]) => {
@@ -302,7 +302,7 @@ export default function AdminDataIndex() {
       <Form method='POST' className='mt-16'>
         <Section
           as='h3'
-          title='Update NFL games'
+          title='Update NFL Games'
           description='This will resync all NFL games in the system. This should probably be run on Monday nights late or maybe Tuesday morning.'
         >
           {actionData?.formError ? (
@@ -316,12 +316,12 @@ export default function AdminDataIndex() {
             value='resyncNflGames'
             disabled={navigation.state !== 'idle'}
           >
-            Resync NFL games
+            Resync NFL Games
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Update current week scores'
+          title='Update Current Week Scores'
           description='This will resync NFL game state plus league, D12, guillotine and best ball scores for the current week. This can be run at any time safely. The scheduler already does this every 5 minutes while games are in progress.'
         >
           {actionData?.formError ? (
@@ -335,12 +335,12 @@ export default function AdminDataIndex() {
             value='resyncCurrentWeekScores'
             disabled={navigation.state !== 'idle'}
           >
-            Resync current week scores
+            Resync Current Week Scores
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Update current year scores'
+          title='Update Current Year Scores'
           description='This will resync all week scores in the system. Only do this once in a while, generally the resync current week score should be all you need.'
         >
           {actionData?.formError ? (
@@ -369,13 +369,13 @@ export default function AdminDataIndex() {
               value='resyncCurrentYearScores'
               disabled={navigation.state !== 'idle'}
             >
-              Resync current year scores
+              Resync Current Year Scores
             </Button>
           </div>
         </Section>
         <Section
           as='h3'
-          title='Update NFL players database'
+          title='Update NFL Players Database'
           description="This will resync all NFL players in the system. You only really need to do this if there's a player that's not showing up for some reason."
         >
           {actionData?.formError ? (
@@ -389,12 +389,12 @@ export default function AdminDataIndex() {
             value='resyncNflPlayers'
             disabled={navigation.state !== 'idle'}
           >
-            Resync NFL players
+            Resync NFL Players
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Resync league season structure'
+          title='Resync League Season Structure'
           description="Reads each league's playoff start week from Sleeper and works out whether it played median games, for every league in every year. Run this once to backfill seasons that predate those fields; the weekly league sync keeps them current afterwards."
         >
           <Button
@@ -403,12 +403,12 @@ export default function AdminDataIndex() {
             value='resyncLeagueSettings'
             disabled={navigation.state !== 'idle'}
           >
-            Resync league season structure
+            Resync League Season Structure
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Resync playoff brackets'
+          title='Resync Playoff Brackets'
           description='Reads the winners and losers brackets from Sleeper for every league in every year. This is what league championships, playoff records and sackos are built from. Leagues Sleeper no longer serves are skipped rather than failing the run.'
         >
           <Button
@@ -417,12 +417,12 @@ export default function AdminDataIndex() {
             value='resyncPlayoffBrackets'
             disabled={navigation.state !== 'idle'}
           >
-            Resync playoff brackets
+            Resync Playoff Brackets
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Backfill median records'
+          title='Backfill Median Records'
           description={
             <>
               Recomputes every team&rsquo;s record against the league median
@@ -439,12 +439,12 @@ export default function AdminDataIndex() {
             value='backfillMedianRecords'
             disabled={navigation.state !== 'idle'}
           >
-            Backfill median records
+            Backfill Median Records
           </Button>
         </Section>
         <Section
           as='h3'
-          title='Sync test database'
+          title='Sync Test Database'
           description={
             <>
               Copies the production database to <code>flexspotff_test</code> so
@@ -460,7 +460,7 @@ export default function AdminDataIndex() {
             value='syncTestDatabase'
             disabled={navigation.state !== 'idle'}
           >
-            Sync test database from production
+            Sync Test Database From Production
           </Button>
         </Section>
       </Form>

@@ -182,10 +182,10 @@ export default function GuillotineWaivers() {
       <StatList
         className='mb-16 grid-cols-2 md:grid-cols-4'
         stats={[
-          { label: 'Claims won', value: totalClaims },
-          { label: 'Bids that lost', value: totalLost },
-          { label: 'FAAB spent', value: `$${totalSpent}` },
-          { label: 'Budget each', value: budget ? `$${budget}` : '–' },
+          { label: 'Claims Won', value: totalClaims },
+          { label: 'Bids That Lost', value: totalLost },
+          { label: 'FAAB Spent', value: `$${totalSpent}` },
+          { label: 'Budget Each', value: budget ? `$${budget}` : '–' },
         ]}
       />
 
@@ -211,9 +211,9 @@ export default function GuillotineWaivers() {
       </Section>
 
       {biggest.length > 0 && (
-        <Section title='Biggest bids'>
+        <Section title='Biggest Bids'>
           <Table
-            headers={['Rank', 'Player', 'Team', 'Bid', 'For week']}
+            headers={['Rank', 'Player', 'Team', 'Bid', 'For Week']}
             numericColumns={[0, 3, 4]}
             primaryColumns={[1, 3]}
           >
@@ -237,7 +237,7 @@ export default function GuillotineWaivers() {
       )}
 
       <Section
-        title='Every claim'
+        title='Every Claim'
         action={
           <Form
             method='get'
@@ -250,7 +250,7 @@ export default function GuillotineWaivers() {
               aria-label='Week'
               className='w-auto'
             >
-              <option value='all'>All weeks</option>
+              <option value='all'>All Weeks</option>
               {weeks.map(week => (
                 <option key={week} value={week}>
                   Week {week}
@@ -263,7 +263,7 @@ export default function GuillotineWaivers() {
               aria-label='Team'
               className='w-auto'
             >
-              <option value=''>All teams</option>
+              <option value=''>All Teams</option>
               {teams.map(team => (
                 <option key={team.rosterId} value={team.rosterId}>
                   {team.name}
@@ -283,11 +283,11 @@ export default function GuillotineWaivers() {
           <Section
             key={run.week}
             as='h3'
-            title={`For week ${run.week}`}
+            title={`For Week ${run.week}`}
             className='mt-10'
           >
             <Table
-              headers={['Player', 'Winning bid', 'Losing bids']}
+              headers={['Player', 'Winning Bid', 'Losing Bids']}
               primaryColumns={[1]}
             >
               {run.claims.map(claim => (

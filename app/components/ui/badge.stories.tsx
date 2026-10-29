@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 const meta: Meta<typeof Badge> = {
   title: 'Primitives/Badge',
   component: Badge,
-  args: { fill: 'medal-gold', label: 'League champion', mark: '2024' },
+  args: { fill: 'medal-gold', label: 'League Champion', mark: '2024' },
   argTypes: {
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
   },
@@ -18,9 +18,9 @@ export const Default: Story = {};
 export const Sizes: Story = {
   render: () => (
     <div className='flex flex-wrap items-start gap-8'>
-      <Badge size='sm' fill='medal-gold' label='League champion' />
-      <Badge size='md' fill='medal-gold' label='League champion' mark='2024' />
-      <Badge size='lg' fill='medal-gold' label='League champion' mark='2024' />
+      <Badge size='sm' fill='medal-gold' label='League Champion' />
+      <Badge size='md' fill='medal-gold' label='League Champion' mark='2024' />
+      <Badge size='lg' fill='medal-gold' label='League Champion' mark='2024' />
     </div>
   ),
 };
@@ -44,13 +44,13 @@ export const Honours: Story = {
       <li>
         <Badge
           fill='medal-gold'
-          label='League champion'
+          label='League Champion'
           mark='3'
           detail='Titles'
         />
       </li>
       <li>
-        <Badge fill='medal-gold' label='Cup champion' mark='1' detail='2023' />
+        <Badge fill='medal-gold' label='Cup Champion' mark='1' detail='2023' />
       </li>
       <li>
         <Badge fill='medal-sacko' label='Sacko' mark='2' detail='Last places' />
@@ -58,7 +58,7 @@ export const Honours: Story = {
       <li>
         <Badge
           fill='sequence-5'
-          label='Seasons played'
+          label='Seasons Played'
           mark='8'
           detail='Tier 2 of 3'
         />
@@ -66,7 +66,7 @@ export const Honours: Story = {
       <li>
         <Badge
           fill='sequence-7'
-          label='Win streak'
+          label='Win Streak'
           mark='9'
           detail='Tier 3 of 3'
         />
@@ -79,8 +79,8 @@ export const Honours: Story = {
 export const Status: Story = {
   render: () => (
     <div className='grid gap-3'>
-      <Badge size='sm' fill='primary' label='Registration open' />
-      <Badge size='sm' fill='medal-sacko' label='Eliminated in week 9' />
+      <Badge size='sm' fill='primary' label='Registration Open' />
+      <Badge size='sm' fill='medal-sacko' label='Eliminated in Week 9' />
     </div>
   ),
 };

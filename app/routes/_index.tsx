@@ -104,7 +104,7 @@ export default function Index() {
           signedIn ? (
             <Button asChild>
               <Link to='/dashboard' variant='quiet'>
-                Your dashboard
+                Your Dashboard
               </Link>
             </Button>
           ) : (
@@ -129,14 +129,14 @@ export default function Index() {
           title={
             week && week <= LAST_PLAYOFF_WEEK
               ? `Week ${week}`
-              : `${year} leagues`
+              : `${year} Leagues`
           }
           to={
             week && week <= LAST_PLAYOFF_WEEK
               ? `/leagues/leaderboard/${year}/${week}`
               : '/leagues'
           }
-          action={<Link to='/leagues/standings'>Full standings</Link>}
+          action={<Link to='/leagues/standings'>Full Standings</Link>}
         >
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {leagues.map(league => {
@@ -205,7 +205,7 @@ export default function Index() {
       )}
 
       {year && (
-        <Section title='Games this week' to='/games'>
+        <Section title='Games This Week' to='/games'>
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {games.map(game => (
               <SummaryCard
@@ -224,7 +224,7 @@ export default function Index() {
       )}
 
       {sideLeagues && sideLeagues.length > 0 && (
-        <Section title='Side leagues' to='/side-leagues'>
+        <Section title='Side Leagues' to='/side-leagues'>
           <div className='grid gap-6 sm:grid-cols-2'>
             {sideLeagues.map(summary => (
               <SummaryCard

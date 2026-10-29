@@ -71,20 +71,20 @@ export default function MembersAdd() {
 
   return (
     <Section
-      title='Add member'
+      title='Add Member'
       description='Adds a member by hand. You almost never want this: a member who logs in with Discord is set up automatically. It is here for entering historical data.'
     >
       {actionData?.message && (
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Form method='POST' className='grid max-w-sm gap-6' ref={formRef}>
-        <Field label='Discord name'>
+        <Field label='Discord Name'>
           <Input required name='discordName' />
         </Field>
         <Field label='Discord ID'>
           <Input required name='discordId' />
         </Field>
-        <Field label='Sleeper owner ID'>
+        <Field label='Sleeper Owner ID'>
           <Input required name='sleeperOwnerId' />
         </Field>
         <div>

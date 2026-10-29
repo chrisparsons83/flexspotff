@@ -121,7 +121,7 @@ export async function getGamesOverview(
 
   return [
     {
-      name: 'QB streaming',
+      name: 'QB Streaming',
       to: '/games/qb-streaming',
       status: weekStatus(
         qbWeek
@@ -138,7 +138,7 @@ export async function getGamesOverview(
       empty: NO_SCORES,
     },
     {
-      name: 'Spread pool',
+      name: 'Spread Pool',
       to: '/games/spread-pool',
       status: weekStatus(
         poolWeek
@@ -158,7 +158,7 @@ export async function getGamesOverview(
       empty: NO_SCORES,
     },
     {
-      name: 'Locks challenge',
+      name: 'Locks Challenge',
       to: '/games/locks-challenge',
       status: weekStatus(
         locksWeek
@@ -178,7 +178,7 @@ export async function getGamesOverview(
       empty: NO_SCORES,
     },
     {
-      name: 'DFS survivor',
+      name: 'DFS Survivor',
       to: '/games/dfs-survivor',
       status: dfs ? `Scored through week ${dfs.week}` : 'No weeks scored yet',
       entries: true,

@@ -13,8 +13,8 @@ export const Default: Story = {
   render: () => (
     <Tabs defaultValue='winners'>
       <TabsList>
-        <TabsTrigger value='winners'>Winners bracket</TabsTrigger>
-        <TabsTrigger value='sacko'>Sacko bracket</TabsTrigger>
+        <TabsTrigger value='winners'>Winners Bracket</TabsTrigger>
+        <TabsTrigger value='sacko'>Sacko Bracket</TabsTrigger>
         <TabsTrigger value='seeds' disabled>
           Seeds
         </TabsTrigger>

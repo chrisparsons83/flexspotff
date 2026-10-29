@@ -83,7 +83,7 @@ export default function LeagueNew() {
       : 'Submit';
 
   return (
-    <Section title='Add new league'>
+    <Section title='Add New League'>
       <Form method='POST' className='grid max-w-md gap-6'>
         <Field label='League URL' error={actionData?.fieldErrors?.url}>
           <Input required defaultValue={actionData?.fields?.url} name='url' />

@@ -21,7 +21,7 @@ import { getQBStreamingWeek } from '~/models/qbstreamingweek.server';
 import { authenticator } from '~/services/auth.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
-export const handle: RouteHandle = { title: 'My entry' };
+export const handle: RouteHandle = { title: 'My Entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -177,7 +177,7 @@ export default function QBStreamingYearWeekEntry() {
     });
 
   return (
-    <Section title={`Week ${qbStreamingWeek?.week} picks`}>
+    <Section title={`Week ${qbStreamingWeek?.week} Picks`}>
       {actionData?.message && <Alert message={actionData.message} />}
       <Form method='POST' className='grid max-w-md gap-6'>
         {standardIsLocked && qbSelection?.standardPlayerId && (
@@ -188,7 +188,7 @@ export default function QBStreamingYearWeekEntry() {
           />
         )}
         <Field
-          label='Standard pick'
+          label='Standard Pick'
           description={
             standardIsLocked ? 'Locked: the game has started.' : undefined
           }
@@ -211,7 +211,7 @@ export default function QBStreamingYearWeekEntry() {
           />
         )}
         <Field
-          label='Deep pick'
+          label='Deep Pick'
           description={
             deepIsLocked ? 'Locked: the game has started.' : undefined
           }
@@ -233,7 +233,7 @@ export default function QBStreamingYearWeekEntry() {
             value='saveOptions'
             disabled={navigation.state !== 'idle'}
           >
-            Update entry
+            Update Entry
           </Button>
         </div>
       </Form>

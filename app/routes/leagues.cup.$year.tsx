@@ -5,7 +5,7 @@ import { loadCupPage } from '~/libs/cup/bracket.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `${params.year} cup`,
+  title: ({ params }) => `${params.year} Cup`,
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
