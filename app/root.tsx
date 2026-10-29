@@ -30,6 +30,7 @@ import { getThemePreference } from '~/services/theme.server';
 import { errorPage } from '~/utils/error-page';
 import {
   SITE_NAME,
+  breadcrumbs,
   pageTitle,
   socialMeta,
   usePageWidth,
@@ -142,10 +143,21 @@ function SocialMeta() {
   );
 }
 
+/**
+ * Where a breadcrumb shows: the main nav's sections, and the dashboard.
+ * Admin's side nav already marks the page and names it, and a profile keeps
+ * its own tabs, so neither has one.
+ */
+const BREADCRUMB_SECTIONS = [
+  ...NAV_SECTIONS,
+  { label: 'Dashboard', to: '/dashboard' },
+];
+
 export default function App() {
   const { user, userIsEditor, canViewProfiles, themePreference, ENV } =
     useTypedLoaderData<typeof loader>();
   const width = usePageWidth();
+  const matches = useMatches();
 
   return (
     <>
@@ -155,6 +167,7 @@ export default function App() {
         canViewProfiles={canViewProfiles}
         theme={themePreference}
         width={width}
+        breadcrumbs={breadcrumbs(matches, BREADCRUMB_SECTIONS)}
       >
         <Outlet />
       </AppShell>

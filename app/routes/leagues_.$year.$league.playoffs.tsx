@@ -3,7 +3,7 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
 import { Section } from '~/components/ui/section';
 import { ordinal } from '~/libs/guillotine/display';
-import { requireLeague } from '~/libs/leagues/page.server';
+import { bracketIsSet, requireLeague } from '~/libs/leagues/page.server';
 import { getPlayoffGamesByLeague } from '~/models/playoffgame.server';
 import { cn } from '~/utils';
 import type { RouteHandle } from '~/utils/route-handle';
@@ -12,6 +12,9 @@ export const handle: RouteHandle = { title: 'Playoffs' };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });
+  if (!(await bracketIsSet(league))) {
+    throw new Response('No playoffs yet', { status: 404 });
+  }
   const games = await getPlayoffGamesByLeague(league.id);
   return typedjson({ games });
 };

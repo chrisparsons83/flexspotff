@@ -10,9 +10,6 @@ import {
   getOmniStandings,
 } from '~/models/omniseason.server';
 import { BRACKT_URL } from '~/utils/brackt';
-import type { RouteHandle } from '~/utils/route-handle';
-
-export const handle: RouteHandle = { title: 'Omni' };
 
 /** Every season played here, newest first, with its final top three. */
 export const loader = async () => {

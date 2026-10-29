@@ -1,10 +1,14 @@
 import {
   buildMemberWeek,
+  type CupGameSide,
   type GameStanding,
   type MemberWeekFacts,
   type PickWeek,
+  cupFacts,
+  pointsLeague,
 } from './week';
 import { prisma } from '~/db.server';
+import { getCupBracket } from '~/libs/cup/bracket.server';
 import { poolTitle } from '~/libs/survivor/views';
 import { getEntryByUserAndYear } from '~/models/fsquared.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
@@ -56,9 +60,8 @@ async function leagueFacts(
   if (!team) return null;
   // Last week is the newest one with scores, which can trail the calendar
   // by a day or two while the sync catches up.
-  const scored = (await getTeamGameWeeksByLeague(team.leagueId)).filter(
-    scoredWeek => !week || scoredWeek < week,
-  );
+  const scoredWeeks = await getTeamGameWeeksByLeague(team.leagueId);
+  const scored = scoredWeeks.filter(scoredWeek => !week || scoredWeek < week);
   const lastScored = scored.at(-1);
   const [lastWeek, thisWeek] = await Promise.all([
     lastScored ? leagueMatchup(team.id, team.leagueId, lastScored) : null,
@@ -66,6 +69,7 @@ async function leagueFacts(
   ]);
   return {
     name: team.league.name,
+    hasScores: scoredWeeks.length > 0,
     lastWeek:
       lastWeek && hasBeenPlayed(lastWeek.points, lastWeek.opponentPoints)
         ? lastWeek
@@ -290,6 +294,81 @@ async function locksLastWeek(userId: string, year: number) {
   }-${sum.isLoss ?? 0}-${sum.isTie ?? 0})`;
 }
 
+/** The member's place in this year's cup, from the bracket's own query. */
+async function memberCupFacts(userId: string, year: number) {
+  const bracket = await getCupBracket(year);
+  if (!bracket) return null;
+  const side = (
+    cupTeam: (typeof bracket.cupGames)[number]['topTeam'],
+  ): CupGameSide | null =>
+    cupTeam && {
+      cupTeamId: cupTeam.id,
+      teamId: cupTeam.teamId,
+      userId: cupTeam.team.userId,
+      name: cupTeam.team.user?.discordName ?? 'an unclaimed team',
+    };
+  return cupFacts(
+    bracket.cupGames.map(game => ({
+      round: game.round,
+      top: side(game.topTeam),
+      bottom: side(game.bottomTeam),
+      winningTeamId: game.winningTeamId,
+    })),
+    bracket.scoreArray,
+    userId,
+  );
+}
+
+/** The member's D12 season, if they are in this year's. */
+async function d12Facts(userId: string, year: number, week: number | null) {
+  const where = { league: { season: { year } } };
+  const [scores, picks] = await Promise.all([
+    prisma.d12WeekScore.findMany({
+      where,
+      select: { userId: true, week: true, points: true },
+    }),
+    prisma.d12DraftPick.count({ where: { ...where, userId } }),
+  ]);
+  if (picks === 0 && !scores.some(score => score.userId === userId)) {
+    return null;
+  }
+  return pointsLeague(
+    scores.map(score => ({
+      entrant: score.userId,
+      week: score.week,
+      points: score.points ?? 0,
+    })),
+    userId,
+    week,
+  );
+}
+
+/** The member's Autodraft BBM season, ranked by team, if they have one. */
+async function bestBallFacts(
+  userId: string,
+  year: number,
+  week: number | null,
+) {
+  const team = await prisma.bestBallTeam.findFirst({
+    where: { userId, league: { season: { year } } },
+    select: { id: true, bestBallLeagueId: true },
+  });
+  if (!team) return null;
+  const scores = await prisma.bestBallWeekScore.findMany({
+    where: { team: { bestBallLeagueId: team.bestBallLeagueId } },
+    select: { bestBallTeamId: true, week: true, points: true },
+  });
+  return pointsLeague(
+    scores.map(score => ({
+      entrant: score.bestBallTeamId,
+      week: score.week,
+      points: score.points,
+    })),
+    team.id,
+    week,
+  );
+}
+
 /** The member's week, every row ready for the dashboard. */
 export async function getMemberWeek(userId: string, season: Season) {
   const { year } = season;
@@ -306,6 +385,9 @@ export async function getMemberWeek(userId: string, season: Season) {
     fSquaredEntry,
     registration,
     standings,
+    cup,
+    d12,
+    bestBall,
   ] = await Promise.all([
     leagueFacts(userId, year, week),
     prisma.guillotineTeam.findMany({
@@ -325,11 +407,15 @@ export async function getMemberWeek(userId: string, season: Season) {
       ? getRegistrationByUserAndYear(userId, year)
       : null,
     standingsFacts(userId, year),
+    memberCupFacts(userId, year),
+    d12Facts(userId, year, week),
+    bestBallFacts(userId, year, week),
   ]);
 
   return buildMemberWeek({
     year,
     league,
+    cup,
     guillotine: guillotine.map(team => ({
       leagueId: team.league.id,
       name: team.league.name,
@@ -346,6 +432,8 @@ export async function getMemberWeek(userId: string, season: Season) {
       name: poolTitle(entry.pool),
       alive: entry.eliminatedWeek === null,
     })),
+    d12,
+    bestBall,
     fSquared: {
       isOpen: season.isOpenForFSquared,
       hasEntry: !!fSquaredEntry,

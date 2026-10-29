@@ -1,6 +1,8 @@
 import { redirect, type LoaderFunctionArgs } from '@remix-run/node';
 import { getLeagueByYearAndName } from '~/models/league.server';
+import { getSeasonState } from '~/models/seasonState.server';
 import { FIRST_YEAR, isLeagueName } from '~/utils/constants';
+import { regularSeasonIsOver } from '~/utils/seasonStructure';
 
 /**
  * Finds the league a page is for from its URL: /leagues/:year/:league, with
@@ -25,4 +27,16 @@ export async function requireLeague({
   const league = await getLeagueByYearAndName(year, name);
   if (!league) throw new Response('League not found', { status: 404 });
   return league;
+}
+
+/**
+ * Whether the league's playoff bracket can be shown. Sleeper creates its
+ * games mid-season as placeholders, so it waits, as profiles do, until the
+ * regular season it seeds from is over.
+ */
+export async function bracketIsSet(league: {
+  year: number;
+  playoffWeekStart: number | null;
+}) {
+  return regularSeasonIsOver(league, await getSeasonState());
 }

@@ -694,9 +694,7 @@ function WeeklyScores({ seasons }: { seasons: DfsSeason[] }) {
                 y1={y(value)}
                 y2={y(value)}
                 className={
-                  value === 0
-                    ? 'stroke-muted-foreground'
-                    : 'stroke-muted-foreground'
+                  value === 0 ? 'stroke-muted-foreground' : 'stroke-border'
                 }
                 strokeWidth={1}
               />

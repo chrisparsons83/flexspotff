@@ -20,6 +20,10 @@ export const handle: RouteHandle = {
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });
   const picks = await getDraftBoardPicks(league.id);
+  // From the pick number, not the team's list: a traded pick leaves a team
+  // with two picks in one round and none in another.
+  const roundOf = (pickNumber: number) =>
+    Math.ceil(pickNumber / league.teams.length);
 
   const columns = league.teams
     .map(team => {
@@ -32,6 +36,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         picks: teamPicks.map(pick => ({
           id: pick.id,
           pickNumber: pick.pickNumber,
+          round: roundOf(pick.pickNumber),
           name: pick.Player.fullName,
           position: pick.Player.position,
           nflTeam: pick.Player.nflTeam,
@@ -42,7 +47,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return typedjson({
     columns,
-    rounds: Math.max(0, ...columns.map(column => column.picks.length)),
+    rounds: Math.max(0, ...picks.map(pick => roundOf(pick.pickNumber))),
   });
 };
 
@@ -62,17 +67,22 @@ export default function LeagueDraft() {
           columnKey={column => column.id}
           renderHeader={column => <DraftBoardHeader title={column.name} />}
           renderCell={(column, round) => {
-            const pick = column.picks[round - 1];
-            if (!pick) return null;
+            const inRound = column.picks.filter(pick => pick.round === round);
+            if (inRound.length === 0) return null;
             return (
-              <DraftBoardCell
-                title={pick.name}
-                subtitle={[pick.position, pick.nflTeam ?? 'FA']
-                  .filter(Boolean)
-                  .join(' ')}
-                corner={pick.pickNumber}
-                tone={positionTint(pick.position)}
-              />
+              <div className='grid gap-1'>
+                {inRound.map(pick => (
+                  <DraftBoardCell
+                    key={pick.id}
+                    title={pick.name}
+                    subtitle={[pick.position, pick.nflTeam ?? 'FA']
+                      .filter(Boolean)
+                      .join(' ')}
+                    corner={pick.pickNumber}
+                    tone={positionTint(pick.position)}
+                  />
+                ))}
+              </div>
             );
           }}
         />

@@ -8,7 +8,7 @@ import { OMNI_RULES_YEARS } from '~/utils/constants';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `Omni ${params.year}`,
+  title: ({ params }) => `${params.year} season`,
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

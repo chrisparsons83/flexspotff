@@ -11,11 +11,6 @@ import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getUsersByIds } from '~/models/user.server';
 import { authenticator } from '~/services/auth.server';
 import { assignCompetitionRanks } from '~/utils/rank';
-import type { RouteHandle } from '~/utils/route-handle';
-
-export const handle: RouteHandle = {
-  title: ({ params }) => `${params.year} standings`,
-};
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {

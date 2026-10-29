@@ -11,7 +11,7 @@ import { authenticator } from '~/services/auth.server';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => `${params.year} week ${params.week} standings`,
+  title: ({ params }) => `Week ${params.week}`,
 };
 
 type LoaderData = {
