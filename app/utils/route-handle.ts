@@ -1,5 +1,5 @@
 import type { Params } from '@remix-run/react';
-import { useMatches } from '@remix-run/react';
+import { useLocation, useMatches } from '@remix-run/react';
 import type { UseDataFunctionReturn } from 'remix-typedjson';
 
 /** What a title can be read from: the URL, and the route's own loader data. */
@@ -13,8 +13,12 @@ export type TitleArgs = {
 
 /** What a route can tell the shell about itself, through its `handle`. */
 export type RouteHandle = {
-  /** `full` gives the page the whole width, for the draft boards. */
-  width?: 'contained' | 'full';
+  /**
+   * `full` gives the page the whole width. `expandable` keeps it on the grid
+   * unless the address asks for the whole width (`?width=full`), for the
+   * draft boards, which scroll sideways either way.
+   */
+  width?: 'contained' | 'full' | 'expandable';
   /**
    * The route's name, in the browser tab and as its level of the breadcrumb.
    * A layout names its section and each page beneath it names itself, so the
@@ -32,9 +36,15 @@ const isRouteHandle = (handle: unknown): handle is RouteHandle =>
 /** The deepest route that sets a width decides it. */
 export const usePageWidth = (): 'contained' | 'full' => {
   const matches = useMatches();
+  const { search } = useLocation();
   for (let i = matches.length - 1; i >= 0; i--) {
     const { handle } = matches[i];
-    if (isRouteHandle(handle) && handle.width) return handle.width;
+    if (isRouteHandle(handle) && handle.width) {
+      if (handle.width !== 'expandable') return handle.width;
+      return new URLSearchParams(search).get('width') === 'full'
+        ? 'full'
+        : 'contained';
+    }
   }
   return 'contained';
 };

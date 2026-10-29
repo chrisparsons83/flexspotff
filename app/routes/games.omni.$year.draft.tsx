@@ -2,12 +2,13 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import OmniDraftBoard from '~/components/layout/omni/OmniDraftBoard';
+import { BoardWidthToggle } from '~/components/ui/draft-board';
 import { Section } from '~/components/ui/section';
 import { getOmniSeason } from '~/models/omniseason.server';
 import { type RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  width: 'full',
+  width: 'expandable',
   title: 'Draft Board',
 };
 
@@ -36,6 +37,7 @@ export default function OmniDraft() {
   return (
     <Section
       title='Draft Board'
+      action={<BoardWidthToggle />}
       description='Each pick shaded by the points it scored; red is a pick whose season ended with none.'
     >
       <OmniDraftBoard teams={season.omniTeams} />

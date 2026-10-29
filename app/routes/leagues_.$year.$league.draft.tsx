@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import {
+  BoardWidthToggle,
   DraftBoard,
   DraftBoardCell,
   DraftBoardHeader,
@@ -13,7 +14,7 @@ import { getDraftBoardPicks } from '~/models/draftpick.server';
 import { type RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  width: 'full',
+  width: 'expandable',
   title: 'Draft',
 };
 
@@ -55,7 +56,11 @@ export default function LeagueDraft() {
   const { columns, rounds } = useTypedLoaderData<typeof loader>();
 
   return (
-    <Section title='Draft' description='One column per team in draft order.'>
+    <Section
+      title='Draft'
+      description='One column per team in draft order.'
+      action={<BoardWidthToggle />}
+    >
       {rounds === 0 ? (
         <EmptyState title='The draft has not happened yet'>
           The board fills in once the league drafts.

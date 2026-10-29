@@ -1,3 +1,6 @@
+import { Button } from './button';
+import { Link } from './link';
+import { useLocation } from '@remix-run/react';
 import type { ReactNode } from 'react';
 import { cn } from '~/utils';
 
@@ -185,5 +188,31 @@ export function DraftBoardCell({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Lets a board on a page with `width: 'expandable'` take the whole width of
+ * the window, or go back to the grid. A link, so the choice is in the
+ * address and survives a reload or a share.
+ */
+export function BoardWidthToggle() {
+  const { pathname, search } = useLocation();
+  const params = new URLSearchParams(search);
+  const full = params.get('width') === 'full';
+  if (full) params.delete('width');
+  else params.set('width', 'full');
+  const query = params.toString();
+
+  return (
+    <Button asChild variant='secondary' size='sm'>
+      <Link
+        to={`${pathname}${query ? `?${query}` : ''}`}
+        variant='quiet'
+        preventScrollReset
+      >
+        {full ? 'Fit to Page' : 'Full Width'}
+      </Link>
+    </Button>
   );
 }

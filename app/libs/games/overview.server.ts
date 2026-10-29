@@ -250,7 +250,8 @@ export async function getGamesOverview(
     },
     {
       name: 'Survivor',
-      to: '/games/survivor',
+      // Straight to the pool while one is running: there is only ever one.
+      to: survivorLink(survivor),
       ...survivorSummary(survivor, leaders * 2),
       empty: 'No pools yet.',
     },
@@ -273,6 +274,14 @@ export async function getGamesOverview(
 }
 
 type SurvivorPool = Awaited<ReturnType<typeof getLatestSurvivorPools>>[number];
+
+/** The pool being played, or the Survivor page when none is. */
+function survivorLink(pools: SurvivorPool[]) {
+  const live = pools.filter(pool => !pool.isComplete);
+  return live.length === 1
+    ? `/games/survivor/${live[0]!.id}`
+    : '/games/survivor';
+}
 
 /**
  * The season's pools, one row each. While one pool is running and few enough

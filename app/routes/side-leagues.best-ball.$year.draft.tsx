@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { PositionTally } from '~/components/layout/best-ball/PositionCounts';
 import {
+  BoardWidthToggle,
   DraftBoard,
   DraftBoardCell,
   DraftBoardHeader,
@@ -26,7 +27,7 @@ import {
 import { type RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = {
-  width: 'full',
+  width: 'expandable',
   title: 'Draft',
 };
 
@@ -135,7 +136,7 @@ export default function BestBallDraft() {
         </Table>
       </Section>
 
-      <Section title='Draft Board'>
+      <Section title='Draft Board' action={<BoardWidthToggle />}>
         <DraftBoard
           columns={columns}
           rounds={rounds}

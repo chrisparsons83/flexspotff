@@ -47,7 +47,8 @@ export default function LiveChopLinePanel({
 
   return (
     <Section
-      title={`Week ${week} Chop Line`}
+      // On the week's own page the week goes without saying.
+      title={showWeekLink ? `Week ${week} Chop Line` : 'Chop Line'}
       action={
         showWeekLink && (
           <Link to={`/side-leagues/guillotine/${leagueId}/week/${week}`}>
