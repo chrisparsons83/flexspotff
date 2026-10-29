@@ -7,6 +7,10 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   syncD12LeagueWeek,
   syncD12Season,
@@ -214,14 +218,15 @@ export default function AdminD12SeasonIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <div>
-      <h2>Administer {season.year} D12 Season</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+    <Section title={`Administer ${season.year} D12 season`}>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
       {actionData?.errors?.map(err => (
-        <Alert key={err} message={err} status='error' />
+        <Alert key={err} message={err} status='error' className='mb-6' />
       ))}
 
-      <div className='flex flex-col gap-2 mb-8 items-start'>
+      <div className='flex flex-col items-start gap-6'>
         <Form method='POST'>
           <Button
             type='submit'
@@ -232,7 +237,7 @@ export default function AdminD12SeasonIndex() {
             Sync all scores
           </Button>
         </Form>
-        <Form method='POST' className='flex gap-2 items-end'>
+        <Form method='POST' className='flex items-end gap-3'>
           <Button
             type='submit'
             name='_action'
@@ -241,35 +246,17 @@ export default function AdminD12SeasonIndex() {
           >
             Sync this week
           </Button>
-          <div>
-            <label htmlFor='week' className='block text-sm'>
-              Week
-            </label>
-            <input
-              id='week'
-              name='week'
-              type='number'
-              min='1'
-              max='17'
-              className='border border-border bg-card px-2 py-1 text-foreground w-20'
-            />
-          </div>
+          <Field label='Week' className='w-20'>
+            <Input name='week' type='number' min='1' max='17' />
+          </Field>
         </Form>
       </div>
 
-      <h3>Leagues</h3>
-      {season.leagues.length === 0 ? (
-        <p className='text-muted-foreground mb-4'>No leagues added yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th className='text-left'>Name</th>
-              <th className='text-left'>Sleeper league ID</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
+      <Section as='h3' title='Leagues'>
+        {season.leagues.length === 0 ? (
+          <p className='text-muted-foreground'>No leagues added yet.</p>
+        ) : (
+          <Table headers={['Name', 'Sleeper league ID', '']}>
             {season.leagues.map(league => (
               <tr key={league.id}>
                 <td>{league.name}</td>
@@ -313,46 +300,45 @@ export default function AdminD12SeasonIndex() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      )}
+          </Table>
+        )}
+      </Section>
 
-      <h3>Add league</h3>
-      <Form
-        key={actionData?.message}
-        method='POST'
-        className='flex gap-2 items-end flex-wrap'
-      >
-        <div>
-          <label className='block text-sm'>Sleeper league URL</label>
-          <input
-            name='sleeperUrl'
-            type='text'
-            className='border border-border bg-card px-2 py-1 text-foreground w-96'
-            placeholder='https://sleeper.com/leagues/123456789'
-          />
-        </div>
-        <Button
-          type='submit'
-          name='_action'
-          value='addLeague'
-          disabled={isSubmitting}
+      <Section as='h3' title='Add league'>
+        <Form
+          key={actionData?.message}
+          method='POST'
+          className='flex flex-wrap items-end gap-3'
         >
-          Add league
-        </Button>
-      </Form>
+          <Field label='Sleeper league URL' className='w-full sm:w-96'>
+            <Input
+              name='sleeperUrl'
+              placeholder='https://sleeper.com/leagues/123456789'
+            />
+          </Field>
+          <Button
+            type='submit'
+            name='_action'
+            value='addLeague'
+            disabled={isSubmitting}
+          >
+            Add league
+          </Button>
+        </Form>
+      </Section>
 
-      <h3>Draft picks</h3>
-      <Form method='POST'>
-        <Button
-          type='submit'
-          name='_action'
-          value='syncDraftPicks'
-          disabled={isSubmitting}
-        >
-          Sync draft picks
-        </Button>
-      </Form>
-    </div>
+      <Section as='h3' title='Draft picks'>
+        <Form method='POST'>
+          <Button
+            type='submit'
+            name='_action'
+            value='syncDraftPicks'
+            disabled={isSubmitting}
+          >
+            Sync draft picks
+          </Button>
+        </Form>
+      </Section>
+    </Section>
   );
 }

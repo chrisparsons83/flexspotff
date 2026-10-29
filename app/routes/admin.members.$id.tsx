@@ -7,6 +7,10 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   createOrUpdateSleeperUser,
   deleteSleeperUser,
@@ -119,75 +123,56 @@ export default function EditUser() {
       : 'Add';
 
   return (
-    <>
-      <h2>Edit member {user.discordName}</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <h3>Existing account IDs</h3>
-      <table>
-        <tr>
-          <th>Sleeper owner ID</th>
-          <th>Action</th>
-        </tr>
-        {sleeperUsers.map(({ sleeperOwnerID }) => (
-          <tr key={sleeperOwnerID}>
-            <td>{sleeperOwnerID}</td>
-            <td>
-              <Form method='POST'>
-                <input
-                  type='hidden'
-                  name='sleeperOwnerID'
-                  value={sleeperOwnerID}
-                />
-                <Button
-                  type='submit'
-                  disabled={navigation.state !== 'idle'}
-                  name='_action'
-                  value={AdminMembersEditOptions.Remove}
-                >
-                  Remove
-                </Button>
-              </Form>
-            </td>
-          </tr>
-        ))}
-      </table>
-      <Form method='POST' className='grid grid-cols-1 gap-6'>
-        <div>
-          <label htmlFor='sleeperOwnerID'>
-            Add Sleeper Owner ID:
-            <input
-              type='text'
-              required
-              name='sleeperOwnerID'
-              id='sleeperOwnerID'
-              aria-invalid={
-                Boolean(actionData?.fieldErrors?.sleeperOwnerID) || undefined
-              }
-              aria-errormessage={
-                actionData?.fieldErrors?.sleeperOwnerID
-                  ? 'sleeperOwnerID-error'
-                  : undefined
-              }
-              className='mt-1 block w-full '
-            />
-          </label>
-          {actionData?.fieldErrors?.sleeperOwnerID ? (
-            <p className='text-negative' role='alert' id='sleeperOwnerID-error'>
-              {actionData.fieldErrors.sleeperOwnerID}
-            </p>
-          ) : null}
-        </div>
-        <div>
-          <Button
-            type='submit'
-            disabled={navigation.state !== 'idle'}
-            name='_action'
-            value={AdminMembersEditOptions.Add}
+    <Section title={`Edit member ${user.discordName}`}>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Section as='h3' title='Sleeper accounts'>
+        <Table headers={['Sleeper owner ID', 'Action']}>
+          {sleeperUsers.map(({ sleeperOwnerID }) => (
+            <tr key={sleeperOwnerID}>
+              <td className='font-mono'>{sleeperOwnerID}</td>
+              <td>
+                <Form method='POST'>
+                  <input
+                    type='hidden'
+                    name='sleeperOwnerID'
+                    value={sleeperOwnerID}
+                  />
+                  <Button
+                    type='submit'
+                    variant='secondary'
+                    size='sm'
+                    disabled={navigation.state !== 'idle'}
+                    name='_action'
+                    value={AdminMembersEditOptions.Remove}
+                  >
+                    Remove
+                  </Button>
+                </Form>
+              </td>
+            </tr>
+          ))}
+        </Table>
+        <Form method='POST' className='mt-6 grid max-w-sm gap-6'>
+          <Field
+            label='Sleeper owner ID'
+            error={actionData?.fieldErrors?.sleeperOwnerID}
           >
-            {buttonText}
-          </Button>
-        </div>
-      </Form>
-    </>
+            <Input required name='sleeperOwnerID' />
+          </Field>
+          <div>
+            <Button
+              type='submit'
+              disabled={navigation.state !== 'idle'}
+              name='_action'
+              value={AdminMembersEditOptions.Add}
+            >
+              {buttonText}
+            </Button>
+          </div>
+        </Form>
+      </Section>
+    </Section>
   );
 }

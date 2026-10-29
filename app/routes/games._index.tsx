@@ -32,10 +32,7 @@ export default function Games() {
 
   return (
     <>
-      <PageHeader
-        title='Games'
-        description='Pick’em, streaming and survivor games that run all season.'
-      />
+      <PageHeader title='Games' />
       <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
         {games.map(game => (
           <SummaryCard

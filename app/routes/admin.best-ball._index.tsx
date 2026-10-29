@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -7,6 +7,11 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   addBestBallLeague,
   syncBestBallLeague,
@@ -132,40 +137,39 @@ export default function AdminBestBallIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <div>
-      <h2>Autodraft best ball mania leagues</h2>
+    <Section title='Autodraft best ball mania leagues'>
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
       {actionData?.warnings?.map(warning => (
-        <Alert key={warning} message={warning} status='warning' />
+        <Alert
+          key={warning}
+          message={warning}
+          status='warning'
+          className='mb-6'
+        />
       ))}
 
-      <section className='mb-8'>
-        <h3>Add league</h3>
-        <p className='text-sm'>
-          Paste the year's Best Ball Mania Sleeper URL, from any year. The
-          season and name come from Sleeper, and the whole league - draft and
-          weeks 1-17 - is synced straight away. There is one league a season;
-          the current season's then keeps itself up to date.
-        </p>
+      <Section
+        as='h3'
+        title='Add league'
+        description="Paste the year's Best Ball Mania Sleeper URL, from any year. The season and name come from Sleeper, and the whole league - draft and weeks 1-17 - is synced straight away. There is one league a season; the current season's then keeps itself up to date."
+      >
         <Form
           key={actionData?.message}
           method='POST'
           className='flex flex-wrap items-end gap-2'
         >
-          <div>
-            <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper league URL
-            </label>
-            <input
-              id='sleeperUrl'
+          <Field label='Sleeper league URL' className='w-full sm:w-96'>
+            <Input
               name='sleeperUrl'
-              type='text'
-              className='w-full sm:w-96 border border-border bg-card px-2 py-1 text-foreground'
               placeholder='https://sleeper.com/leagues/123456789'
             />
-          </div>
+          </Field>
           <Button
             type='submit'
             name='_action'
@@ -177,29 +181,24 @@ export default function AdminBestBallIndex() {
               : 'Add league'}
           </Button>
         </Form>
-      </section>
+      </Section>
 
-      {leagues.length === 0 && <p>No best ball leagues added yet.</p>}
-
-      {leagues.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th className='text-left'>Year</th>
-              <th className='text-left'>League</th>
-              <th className='text-left'>Status</th>
-              <th className='text-left'>Members</th>
-              <th className='text-left'>Last synced</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
+      <Section as='h3' title='Leagues'>
+        {leagues.length === 0 && (
+          <p className='text-muted-foreground'>
+            No best ball leagues added yet.
+          </p>
+        )}
+        {leagues.length > 0 && (
+          <Table
+            headers={['Year', 'League', 'Status', 'Members', 'Last synced', '']}
+          >
             {leagues.map(league => (
               <tr key={league.id}>
                 <td>{league.year}</td>
                 <td>
                   <Link to={league.id}>{league.name}</Link>
-                  <div className='font-mono text-sm opacity-75'>
+                  <div className='font-mono text-sm text-muted-foreground'>
                     {league.sleeperLeagueId}
                   </div>
                 </td>
@@ -263,9 +262,9 @@ export default function AdminBestBallIndex() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+          </Table>
+        )}
+      </Section>
+    </Section>
   );
 }

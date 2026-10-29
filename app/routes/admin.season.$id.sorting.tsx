@@ -9,18 +9,27 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import { sendMessageToChannel, setUserRole } from '~/../bot/utils';
+import Alert from '~/components/ui/Alert';
 import LocalDateTime from '~/components/ui/LocalDateTime';
+import { Button } from '~/components/ui/button';
+import { Card, CardContent, CardHeader } from '~/components/ui/card';
+import { Field } from '~/components/ui/field';
+import { NativeSelect } from '~/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '~/components/ui/popover';
+import { Section } from '~/components/ui/section';
+import { SegmentedControl } from '~/components/ui/segmented-control';
+import { Table } from '~/components/ui/table';
 import { getDraftSlotsBySeason } from '~/models/draftSlot.server';
 import { getDraftSlotPreferencesByUser } from '~/models/draftSlotPreference.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getRegistrationsByYear } from '~/models/registration.server';
 import { getSeasonById } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
+import { cn } from '~/utils';
 import { SERVER_DISCORD_ID, leagueEmbedColor } from '~/utils/constants';
 import { envSchema, shuffleArray } from '~/utils/helpers';
 
@@ -1412,7 +1421,7 @@ export default function LeagueSorting() {
             {player.discordName}
           </button>
         </PopoverTrigger>
-        <PopoverContent className='w-80 bg-card border border-border text-foreground'>
+        <PopoverContent className='w-80'>
           <div className='space-y-2'>
             <p className='text-sm font-semibold text-foreground mb-2'>
               Draft time preferences:
@@ -1442,112 +1451,79 @@ export default function LeagueSorting() {
     );
   };
 
+  const tierOptions = [
+    { value: 'champions', label: 'Champions' },
+    { value: 'tier2', label: 'Tier 2' },
+  ] as const;
+
   return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-bold text-foreground'>
-          League Sorting - {season.year} Season
-        </h1>
-        <p className='mt-1 text-sm text-foreground'>
-          Manage league assignments for registered players
-        </p>
-      </div>
-
-      {/* Registered Players List */}
-      <div>
-        <div className='mb-4'>
-          <h3 className='text-lg leading-6 font-medium text-foreground mb-4'>
-            Registered players ({registrations.length})
-          </h3>
-
-          {registrations.length > 0 && (
-            <div className='flex items-center gap-4 mb-4'>
-              <button
-                type='button'
-                onClick={handleResetTiers}
-                className='px-3 py-1 bg-primary text-foreground text-sm hover:bg-primary'
-              >
-                Reset all to tier 2
-              </button>
-              <div className='text-sm'>
-                <span
-                  className={
-                    hasValidChampionsCount ? 'text-positive' : 'text-warning'
-                  }
-                >
-                  Champions: {championPlayers.length}/{GROUP_SIZE}
-                </span>
-                <span className='text-muted-foreground mx-2'>|</span>
-                <span
-                  className={
-                    hasValidTier2Count ? 'text-positive' : 'text-warning'
-                  }
-                >
-                  Tier 2: {tier2Players.length}
-                  {hasValidTier2Count
-                    ? ` (${
-                        tier2Players.length / GROUP_SIZE
-                      } groups of ${GROUP_SIZE})`
-                    : ` (need a multiple of ${GROUP_SIZE})`}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
+    <Section title={`League sorting, ${season.year}`}>
+      <Section
+        as='h3'
+        title={`Registered players (${registrations.length})`}
+        action={
+          registrations.length > 0 && (
+            <Button variant='secondary' size='sm' onClick={handleResetTiers}>
+              Reset all to tier 2
+            </Button>
+          )
+        }
+      >
         {registrations.length === 0 ? (
           <p className='text-muted-foreground'>
             No players registered for this season.
           </p>
         ) : (
-          <div>
-            {registrations
-              .sort((a, b) =>
-                a.user.discordName.localeCompare(b.user.discordName),
-              )
-              .map((registration, index) => (
-                <div
-                  key={registration.id}
-                  className={`p-2 ${
-                    index % 2 === 0 ? 'bg-background' : 'bg-card'
-                  }`}
-                >
-                  <div className='text-foreground flex items-center gap-3'>
-                    <div className='flex overflow-hidden text-sm shrink-0'>
-                      {(['champions', 'tier2'] as PlayerTier[]).map(tier => {
-                        const isActive = tierOf(registration.user.id) === tier;
-                        return (
-                          <button
-                            key={tier}
-                            type='button'
-                            aria-pressed={isActive}
-                            onClick={() =>
-                              handleTierChange(registration.user.id, tier)
-                            }
-                            className={`px-2 py-1 ${
-                              isActive
-                                ? tier === 'champions'
-                                  ? 'bg-warning/20 text-foreground'
-                                  : 'bg-primary text-foreground'
-                                : 'bg-secondary text-foreground hover:bg-secondary'
-                            }`}
-                          >
-                            {tier === 'champions' ? 'Champions' : 'Tier 2'}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {renderPlayerWithPopover(registration.user)}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
+          <>
+            <dl className='mb-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1'>
+              <dt className='font-semibold'>Champions</dt>
+              <dd
+                className={
+                  hasValidChampionsCount ? 'text-positive' : 'text-warning'
+                }
+              >
+                {championPlayers.length} of {GROUP_SIZE}
+              </dd>
+              <dt className='font-semibold'>Tier 2</dt>
+              <dd
+                className={
+                  hasValidTier2Count ? 'text-positive' : 'text-warning'
+                }
+              >
+                {tier2Players.length}
+                {hasValidTier2Count
+                  ? `, ${
+                      tier2Players.length / GROUP_SIZE
+                    } groups of ${GROUP_SIZE}`
+                  : `, needs a multiple of ${GROUP_SIZE}`}
+              </dd>
+            </dl>
+            <Table headers={['Member', 'League']}>
+              {registrations
+                .sort((a, b) =>
+                  a.user.discordName.localeCompare(b.user.discordName),
+                )
+                .map(registration => (
+                  <tr key={registration.id}>
+                    <td>{renderPlayerWithPopover(registration.user)}</td>
+                    <td>
+                      <SegmentedControl
+                        label={`${registration.user.discordName}'s league`}
+                        options={tierOptions}
+                        value={tierOf(registration.user.id)}
+                        onChange={tier =>
+                          handleTierChange(registration.user.id, tier)
+                        }
+                      />
+                    </td>
+                  </tr>
+                ))}
+            </Table>
 
-        {/* Sort into Draft Slots Form */}
-        {registrations.length > 0 && (
-          <div className='mt-6'>
-            <Form method='post'>
+            <Form
+              method='post'
+              className='mt-6 flex flex-wrap items-center gap-4'
+            >
               <input type='hidden' name='actionType' value='sortPlayers' />
               {tier2Players.map(playerId => (
                 <input
@@ -1565,388 +1541,310 @@ export default function LeagueSorting() {
                   value={playerId}
                 />
               ))}
-              <div className='flex items-center gap-4'>
-                <button
-                  type='submit'
-                  disabled={!isValidSelection}
-                  className={`px-6 py-2 rounded font-medium ${
-                    isValidSelection
-                      ? 'bg-positive/20 text-foreground hover:bg-positive/20'
-                      : 'bg-secondary text-muted-foreground cursor-not-allowed'
-                  }`}
-                >
-                  Sort into draft slots
-                </button>
-                <div className='text-sm text-foreground'>
-                  {isValidSelection
-                    ? `Ready: ${GROUP_SIZE} Champions + ${
-                        tier2Players.length / GROUP_SIZE
-                      } Tier 2 groups of ${GROUP_SIZE}`
-                    : !hasValidChampionsCount
-                    ? `Mark exactly ${GROUP_SIZE} players as Champions to enable sorting`
-                    : `Tier 2 count must be a multiple of ${GROUP_SIZE}`}
-                </div>
-              </div>
+              <Button type='submit' disabled={!isValidSelection}>
+                Sort into draft slots
+              </Button>
+              <p className='text-sm text-muted-foreground'>
+                {isValidSelection
+                  ? `Ready: ${GROUP_SIZE} Champions and ${
+                      tier2Players.length / GROUP_SIZE
+                    } tier 2 groups of ${GROUP_SIZE}.`
+                  : !hasValidChampionsCount
+                  ? `Mark exactly ${GROUP_SIZE} players as Champions to sort.`
+                  : `The tier 2 count has to be a multiple of ${GROUP_SIZE}.`}
+              </p>
             </Form>
-          </div>
+          </>
         )}
 
-        {/* Error Display */}
         {actionData && 'error' in actionData && (
-          <div className='mt-6 bg-destructive/20 bg-opacity-20 border border-destructive p-4'>
-            <p className='text-negative'>{String(actionData.error)}</p>
-          </div>
+          <Alert
+            status='error'
+            message={String(actionData.error)}
+            className='mt-6'
+          />
         )}
-
-        {/* Success Display */}
         {actionData && 'success' in actionData && (
-          <div className='mt-6 bg-positive/20 border border-positive p-4'>
-            <p className='text-positive'>{String(actionData.success)}</p>
-          </div>
+          <Alert message={String(actionData.success)} className='mt-6' />
         )}
 
-        {/* Role assignment failures -- the announcement still went out */}
+        {/* Role assignment failures: the announcement still went out */}
         {roleFailures.length > 0 && (
-          <div className='mt-6 bg-warning/20 bg-opacity-20 border border-warning p-4'>
-            <h4 className='font-medium text-warning mb-2'>
-              {roleFailures.length} role
-              {roleFailures.length === 1 ? '' : 's'} could not be assigned -
-              apply these by hand:
-            </h4>
-            <ul className='text-sm text-warning space-y-1'>
-              {roleFailures.map((failure, index) => (
-                <li key={`${failure.discordName}-${index}`}>
-                  <span className='font-medium'>{failure.discordName}</span> (
-                  {failure.leagueName}): {failure.reason}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card className='mt-6'>
+            <CardContent>
+              <p className='mb-2 font-semibold text-warning'>
+                {roleFailures.length} role
+                {roleFailures.length === 1 ? '' : 's'} could not be assigned.
+                Apply these by hand:
+              </p>
+              <ul className='grid gap-1 text-sm'>
+                {roleFailures.map((failure, index) => (
+                  <li key={`${failure.discordName}-${index}`}>
+                    <span className='font-semibold'>{failure.discordName}</span>{' '}
+                    ({failure.leagueName}): {failure.reason}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
+      </Section>
 
-        {/* Sorting Results */}
-        {sortingData && (
-          <div className='mt-8'>
-            <h2 className='text-xl font-bold text-foreground mb-6'>
-              Sorting results
-            </h2>
-
-            {/* Completed Groups */}
-            {Array.isArray(sortingData.completedGroups) &&
-              sortingData.completedGroups.length > 0 && (
-                <div className='mb-8'>
-                  <div className='flex justify-between items-center mb-4'>
-                    <h3 className='text-lg font-medium text-foreground'>
-                      Completed draft slots (
-                      {sortingData.completedGroups.length})
-                    </h3>
-                    <div className='flex gap-2 items-center'>
-                      {hasDuplicateLeagues && (
-                        <p className='text-sm text-warning'>
-                          Each league can only be assigned to one group.
-                        </p>
-                      )}
-                      {/* Discord Announcement Button */}
-                      {allGroupsAssigned && (
-                        <Form method='post'>
-                          <input
-                            type='hidden'
-                            name='actionType'
-                            value='sendAnnouncement'
+      {sortingData && (
+        <>
+          {Array.isArray(sortingData.completedGroups) &&
+            sortingData.completedGroups.length > 0 && (
+              <Section
+                as='h3'
+                title={`Completed draft slots (${sortingData.completedGroups.length})`}
+                description={
+                  hasDuplicateLeagues
+                    ? 'Each league can only be assigned to one group.'
+                    : undefined
+                }
+                action={
+                  allGroupsAssigned && (
+                    <Form method='post'>
+                      <input
+                        type='hidden'
+                        name='actionType'
+                        value='sendAnnouncement'
+                      />
+                      <input
+                        type='hidden'
+                        name='announcementData'
+                        value={
+                          announcementPayload
+                            ? JSON.stringify(announcementPayload)
+                            : ''
+                        }
+                      />
+                      <Button type='submit'>
+                        Announce to Discord and assign roles
+                      </Button>
+                    </Form>
+                  )
+                }
+                footnote={
+                  allGroupsAssigned &&
+                  announcementPayload &&
+                  `Posts the league embeds and assigns roles to ${
+                    announcementPayload.groups.reduce(
+                      (total, group) => total + group.players.length,
+                      0,
+                    ) + announcementPayload.champions.length
+                  } players. Champions get their role only.`
+                }
+              >
+                <div className='grid gap-6 md:grid-cols-2'>
+                  {sortingData.completedGroups.map((group, groupIndex) => (
+                    <Card key={groupIndex}>
+                      <CardHeader>
+                        <h4 className='font-bold'>
+                          <LocalDateTime
+                            value={group.draftSlot?.draftDateTime || new Date()}
+                            options={{
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric',
+                            }}
+                          />{' '}
+                          at{' '}
+                          <LocalDateTime
+                            value={group.draftSlot?.draftDateTime || new Date()}
+                            options={{ hour: '2-digit', minute: '2-digit' }}
                           />
-                          <input
-                            type='hidden'
-                            name='announcementData'
-                            value={
-                              announcementPayload
-                                ? JSON.stringify(announcementPayload)
-                                : ''
+                        </h4>
+                      </CardHeader>
+                      <CardContent className='grid gap-4'>
+                        <Field label='League'>
+                          <NativeSelect
+                            value={leagueAssignments[groupIndex] || ''}
+                            onChange={e =>
+                              handleLeagueAssignment(groupIndex, e.target.value)
                             }
-                          />
-                          <button
-                            type='submit'
-                            title={`Posts the league embeds and assigns roles to ${
-                              announcementPayload
-                                ? announcementPayload.groups.reduce(
-                                    (total, group) =>
-                                      total + group.players.length,
-                                    0,
-                                  ) + announcementPayload.champions.length
-                                : 0
-                            } players (Champions included, roles only).`}
-                            className='px-4 py-2 font-medium text-sm bg-positive/20 text-foreground hover:bg-positive/20 flex items-center gap-2'
                           >
-                            Announce to Discord and assign roles
-                          </button>
-                        </Form>
-                      )}
-                    </div>
-                  </div>
-                  <div className='space-y-6'>
-                    {Array.isArray(sortingData.completedGroups) &&
-                      sortingData.completedGroups.map((group, groupIndex) => (
-                        <div
-                          key={groupIndex}
-                          className='bg-card border border-border p-4'
-                        >
-                          <div className='flex justify-between items-center mb-3'>
-                            <h4 className='text-lg font-medium text-foreground'>
-                              Draft slot:{' '}
-                              <LocalDateTime
-                                value={
-                                  group.draftSlot?.draftDateTime || new Date()
-                                }
-                                options={{
-                                  year: 'numeric',
-                                  month: 'numeric',
-                                  day: 'numeric',
-                                }}
-                              />{' '}
-                              at{' '}
-                              <LocalDateTime
-                                value={
-                                  group.draftSlot?.draftDateTime || new Date()
-                                }
-                                options={{
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }}
-                              />
-                            </h4>
-                            <select
-                              value={leagueAssignments[groupIndex] || ''}
-                              onChange={e =>
-                                handleLeagueAssignment(
-                                  groupIndex,
-                                  e.target.value,
-                                )
-                              }
-                              className='bg-secondary text-foreground border border-border px-3 py-1 text-sm'
-                            >
-                              <option value=''>Select league</option>
-                              {assignableLeagues.map(league => {
-                                const takenByAnotherGroup =
-                                  assignedLeagueIds.some(
-                                    (assignedId, otherIndex) =>
-                                      assignedId === league.id &&
-                                      otherIndex !== groupIndex,
-                                  );
-                                return (
-                                  <option
-                                    key={league.id}
-                                    value={league.id}
-                                    disabled={takenByAnotherGroup}
-                                  >
-                                    {league.name}
-                                    {takenByAnotherGroup
-                                      ? ' (already assigned)'
-                                      : ''}
-                                  </option>
+                            <option value=''>Select league</option>
+                            {assignableLeagues.map(league => {
+                              const takenByAnotherGroup =
+                                assignedLeagueIds.some(
+                                  (assignedId, otherIndex) =>
+                                    assignedId === league.id &&
+                                    otherIndex !== groupIndex,
                                 );
-                              })}
-                            </select>
-                          </div>
-                          <div className='space-y-2'>
-                            {(group.players || [])
-                              .sort((a, b) =>
-                                (a.discordName || '').localeCompare(
-                                  b.discordName || '',
-                                ),
-                              )
-                              .map(player => (
-                                <div
-                                  key={player.id}
-                                  className='flex items-center justify-between'
+                              return (
+                                <option
+                                  key={league.id}
+                                  value={league.id}
+                                  disabled={takenByAnotherGroup}
                                 >
-                                  <span className='text-foreground'>
-                                    {renderPlayerWithPopover(player)}
-                                  </span>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
+                                  {league.name}
+                                  {takenByAnotherGroup
+                                    ? ' (already assigned)'
+                                    : ''}
+                                </option>
+                              );
+                            })}
+                          </NativeSelect>
+                        </Field>
+                        <ul className='grid gap-1'>
+                          {(group.players || [])
+                            .sort((a, b) =>
+                              (a.discordName || '').localeCompare(
+                                b.discordName || '',
+                              ),
+                            )
+                            .map(player => (
+                              <li key={player.id}>
+                                {renderPlayerWithPopover(player)}
+                              </li>
+                            ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
-
-            {/* Ungrouped Players */}
-            {Array.isArray(sortingData.ungroupedPlayers) &&
-              sortingData.ungroupedPlayers.length > 0 && (
-                <div className='mb-8'>
-                  <h3 className='text-lg font-medium text-warning mb-4'>
-                    Unable to Group ({sortingData.ungroupedPlayers.length}{' '}
-                    players)
-                  </h3>
-                  <div className='bg-warning/20 border border-warning p-4'>
-                    <div className='space-y-2'>
-                      {sortingData.ungroupedPlayers.map(player => (
-                        <div
-                          key={player.id || Math.random()}
-                          className='text-warning'
-                        >
-                          {renderPlayerWithPopover(player)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            {/* Best draft times for the Champions league */}
-            {championsSlotOptions.length > 0 && (
-              <div className='mt-8'>
-                <h3 className='text-lg font-medium text-foreground mb-1'>
-                  Champions draft time options
-                </h3>
-                <p className='text-sm text-muted-foreground mb-4'>
-                  Ranked by how many of the {announcedChampions.length}{' '}
-                  Champions can attend. Champions with no recorded preferences
-                  count as available for every slot.
-                </p>
-                <div className='space-y-2'>
-                  {championsSlotOptions.map((option, index) => {
-                    const isBest =
-                      option.availableCount ===
-                      championsSlotOptions[0].availableCount;
-                    return (
-                      <div
-                        key={option.draftSlot.id}
-                        className={`rounded-lg p-3 border ${
-                          isBest
-                            ? 'bg-positive/20 bg-opacity-20 border-positive'
-                            : 'bg-card border-border'
-                        }`}
-                      >
-                        <div className='flex items-center justify-between gap-4 flex-wrap'>
-                          <div className='flex items-center gap-2'>
-                            <span className='text-muted-foreground text-sm'>
-                              #{index + 1}
-                            </span>
-                            <span className='text-foreground'>
-                              <LocalDateTime
-                                value={option.draftSlot.draftDateTime}
-                                locale='en-US'
-                                options={{
-                                  weekday: 'short',
-                                  month: 'numeric',
-                                  day: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                  timeZoneName: 'short',
-                                }}
-                              />
-                            </span>
-                            {option.usedByGroup && (
-                              <span className='text-sm text-warning border border-warning px-1.5 py-0.5'>
-                                also a Tier 2 group slot
-                              </span>
-                            )}
-                          </div>
-                          <span
-                            className={
-                              isBest ? 'text-positive' : 'text-foreground'
-                            }
-                          >
-                            {option.availableCount}/{announcedChampions.length}{' '}
-                            available
-                          </span>
-                        </div>
-                        {option.unavailablePlayers.length > 0 && (
-                          <p className='text-sm text-negative mt-2'>
-                            Can&apos;t make it:{' '}
-                            {option.unavailablePlayers
-                              .map(player => player.discordName)
-                              .join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              </Section>
             )}
 
-            {/* Slot Availability Analysis */}
-            {Array.isArray(sortingData.slotAvailabilityAnalysis) &&
-              sortingData.slotAvailabilityAnalysis.length > 0 && (
-                <div className='mt-8'>
-                  <h3 className='text-lg font-medium text-foreground mb-4'>
-                    Slot availability analysis
-                  </h3>
-                  <div className='space-y-4'>
-                    {sortingData.slotAvailabilityAnalysis.map(
-                      (analysis, index) => (
-                        <div
-                          key={index}
-                          className='bg-card border border-border p-4'
-                        >
-                          <h4 className='text-foreground font-medium mb-2'>
-                            <LocalDateTime
-                              value={
-                                analysis.draftSlot?.draftDateTime || new Date()
-                              }
-                              options={{
-                                year: 'numeric',
-                                month: 'numeric',
-                                day: 'numeric',
-                              }}
-                            />{' '}
-                            at{' '}
-                            <LocalDateTime
-                              value={
-                                analysis.draftSlot?.draftDateTime || new Date()
-                              }
-                              options={{
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              }}
-                            />
-                          </h4>
-                          <p className='text-foreground text-sm mb-2'>
-                            Available players:{' '}
-                            {analysis.availablePlayerCount || 0}
-                          </p>
-                          {Array.isArray(analysis.unavailablePlayers) &&
-                            analysis.unavailablePlayers.length > 0 && (
-                              <div>
-                                <p className='text-negative text-sm mb-1'>
-                                  Unavailable players:
-                                </p>
-                                <div className='text-negative text-sm space-y-1'>
-                                  {analysis.unavailablePlayers.map(player => (
-                                    <div key={player.id || Math.random()}>
-                                      {player.discordName || 'Unknown player'}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
+          {Array.isArray(sortingData.ungroupedPlayers) &&
+            sortingData.ungroupedPlayers.length > 0 && (
+              <Section
+                as='h3'
+                title={`Unable to group (${sortingData.ungroupedPlayers.length} players)`}
+              >
+                <ul className='grid gap-1 text-warning'>
+                  {sortingData.ungroupedPlayers.map(player => (
+                    <li key={player.id || Math.random()}>
+                      {renderPlayerWithPopover(player)}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
 
-            {/* Success Message */}
-            {sortingData &&
-              Array.isArray(sortingData.completedGroups) &&
-              sortingData.completedGroups.length > 0 &&
-              Array.isArray(sortingData.ungroupedPlayers) &&
-              sortingData.ungroupedPlayers.length === 0 && (
-                <div className='bg-positive/20 border border-positive p-4'>
-                  <p className='text-positive'>
-                    Sorted all {sortingData.completedGroups.length * GROUP_SIZE}{' '}
-                    players into {sortingData.completedGroups.length} complete
-                    draft slots.
-                  </p>
-                </div>
-              )}
-          </div>
-        )}
-      </div>
-    </div>
+          {championsSlotOptions.length > 0 && (
+            <Section
+              as='h3'
+              title='Champions draft time options'
+              description={`Ranked by how many of the ${announcedChampions.length} Champions can attend. Champions with no recorded preferences count as available for every slot.`}
+            >
+              <Table
+                headers={['Rank', 'Draft time', 'Available', "Can't make it"]}
+                numericColumns={[0, 2]}
+                primaryColumns={[1, 2]}
+              >
+                {championsSlotOptions.map((option, index) => {
+                  const isBest =
+                    option.availableCount ===
+                    championsSlotOptions[0].availableCount;
+                  return (
+                    <tr key={option.draftSlot.id}>
+                      <td className='text-right'>{index + 1}</td>
+                      <td>
+                        <LocalDateTime
+                          value={option.draftSlot.draftDateTime}
+                          locale='en-US'
+                          options={{
+                            weekday: 'short',
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                            timeZoneName: 'short',
+                          }}
+                        />
+                        {option.usedByGroup && (
+                          <div className='text-sm text-warning'>
+                            Also a tier 2 group slot
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className={cn(
+                          'text-right',
+                          isBest && 'font-semibold text-positive',
+                        )}
+                      >
+                        {option.availableCount} of {announcedChampions.length}
+                      </td>
+                      <td className='text-negative'>
+                        {option.unavailablePlayers
+                          .map(player => player.discordName)
+                          .join(', ')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </Table>
+            </Section>
+          )}
+
+          {Array.isArray(sortingData.slotAvailabilityAnalysis) &&
+            sortingData.slotAvailabilityAnalysis.length > 0 && (
+              <Section as='h3' title='Slot availability analysis'>
+                <Table
+                  headers={['Draft slot', 'Available', 'Unavailable players']}
+                  numericColumns={[1]}
+                  primaryColumns={[1]}
+                >
+                  {sortingData.slotAvailabilityAnalysis.map(
+                    (analysis, index) => (
+                      <tr key={index}>
+                        <td>
+                          <LocalDateTime
+                            value={
+                              analysis.draftSlot?.draftDateTime || new Date()
+                            }
+                            options={{
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric',
+                            }}
+                          />{' '}
+                          at{' '}
+                          <LocalDateTime
+                            value={
+                              analysis.draftSlot?.draftDateTime || new Date()
+                            }
+                            options={{ hour: '2-digit', minute: '2-digit' }}
+                          />
+                        </td>
+                        <td className='text-right'>
+                          {analysis.availablePlayerCount || 0}
+                        </td>
+                        <td className='text-negative'>
+                          {Array.isArray(analysis.unavailablePlayers) &&
+                            analysis.unavailablePlayers
+                              .map(
+                                player =>
+                                  player.discordName || 'Unknown player',
+                              )
+                              .join(', ')}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </Table>
+              </Section>
+            )}
+
+          {Array.isArray(sortingData.completedGroups) &&
+            sortingData.completedGroups.length > 0 &&
+            Array.isArray(sortingData.ungroupedPlayers) &&
+            sortingData.ungroupedPlayers.length === 0 && (
+              <Alert
+                className='mt-16'
+                message={`Sorted all ${
+                  sortingData.completedGroups.length * GROUP_SIZE
+                } players into ${
+                  sortingData.completedGroups.length
+                } complete draft slots.`}
+              />
+            )}
+        </>
+      )}
+    </Section>
   );
 }

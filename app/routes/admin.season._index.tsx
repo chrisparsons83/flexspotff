@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -7,6 +7,9 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   getLeagueCountForYear,
   getLeagueCountsByYear,
@@ -182,64 +185,84 @@ export default function SeasonIndex() {
   const navigation = useNavigation();
 
   return (
-    <>
-      <h2 className='mt-0'>Season list</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <table>
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>Leagues</th>
-            <th>Active?</th>
-            <th>Open registration?</th>
-            <th>Open F²?</th>
-            <th>Open DFS survivor?</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {seasons.map(season => {
-            const {
-              id,
-              year,
-              isCurrent,
-              isOpenForRegistration,
-              isOpenForFSquared,
-              isOpenForDFSSurvivor,
-            } = season;
+    <Section
+      title='Seasons'
+      action={
+        <Form method='POST'>
+          <Button
+            type='submit'
+            name='_action'
+            value='createSeason'
+            disabled={navigation.state !== 'idle'}
+          >
+            Create season for current year
+          </Button>
+        </Form>
+      }
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Table
+        headers={[
+          'Year',
+          'Leagues',
+          'Active',
+          'Registration open',
+          'F² open',
+          'DFS survivor open',
+          'Actions',
+        ]}
+        numericColumns={[1]}
+        primaryColumns={[2, 6]}
+      >
+        {seasons.map(season => {
+          const {
+            id,
+            year,
+            isCurrent,
+            isOpenForRegistration,
+            isOpenForFSquared,
+            isOpenForDFSSurvivor,
+          } = season;
 
-            const leagueCount = leagueCountsByYear[year] ?? 0;
+          const leagueCount = leagueCountsByYear[year] ?? 0;
 
-            return (
-              <tr key={id}>
-                <td>{year}</td>
-                <td>{leagueCount}</td>
-                <td>{isCurrent ? 'Yes' : 'No'}</td>
-                <td>{isOpenForRegistration ? 'Yes' : 'No'}</td>
-                <td>{isOpenForFSquared ? 'Yes' : 'No'}</td>
-                <td>{isOpenForDFSSurvivor ? 'Yes' : 'No'}</td>
-                <td className='not-prose'>
+          return (
+            <tr key={id}>
+              <td>{year}</td>
+              <td className='text-right'>{leagueCount}</td>
+              <td>{isCurrent ? 'Yes' : 'No'}</td>
+              <td>{isOpenForRegistration ? 'Yes' : 'No'}</td>
+              <td>{isOpenForFSquared ? 'Yes' : 'No'}</td>
+              <td>{isOpenForDFSSurvivor ? 'Yes' : 'No'}</td>
+              <td>
+                <div className='flex flex-wrap gap-2'>
                   {!isCurrent && (
                     <Form method='POST'>
                       <input type='hidden' name='seasonId' value={id} />
-                      <Button type='submit' name='_action' value='setActive'>
+                      <Button
+                        type='submit'
+                        name='_action'
+                        value='setActive'
+                        variant='secondary'
+                        size='sm'
+                      >
                         Set active
                       </Button>
                     </Form>
                   )}
                   {!isCurrent && leagueCount === 0 && (
-                    <Form method='POST' style={{ display: 'inline' }}>
+                    <Form method='POST'>
                       <input type='hidden' name='seasonId' value={id} />
                       <Button
                         type='submit'
                         name='_action'
                         value='deleteSeason'
+                        variant='secondary'
+                        size='sm'
                         onClick={e => {
-                          if (
-                            !confirm(
-                              'Are you sure you want to delete this season?',
-                            )
-                          ) {
+                          if (!confirm('Delete this season?')) {
                             e.preventDefault();
                           }
                         }}
@@ -263,6 +286,8 @@ export default function SeasonIndex() {
                           type='submit'
                           name='_action'
                           value='setRegistration'
+                          variant='secondary'
+                          size='sm'
                         >
                           {isOpenForRegistration
                             ? 'Close registration'
@@ -284,6 +309,8 @@ export default function SeasonIndex() {
                           type='submit'
                           name='_action'
                           value='setFSquared'
+                          variant='secondary'
+                          size='sm'
                         >
                           {isOpenForFSquared ? 'Close F²' : 'Open F²'}
                         </Button>
@@ -303,38 +330,30 @@ export default function SeasonIndex() {
                           type='submit'
                           name='_action'
                           value='setDFSSurvivor'
+                          variant='secondary'
+                          size='sm'
                         >
                           {isOpenForDFSSurvivor
-                            ? 'Close DFS Survivor'
-                            : 'Open DFS Survivor'}
+                            ? 'Close DFS survivor'
+                            : 'Open DFS survivor'}
                         </Button>
                       </Form>
-                      <Link
-                        to={`/admin/season/${id}/sorting`}
-                        className='inline-block'
-                      >
-                        <Button type='button'>League sorting</Button>
-                      </Link>
+                      <Button asChild>
+                        <Link
+                          to={`/admin/season/${id}/sorting`}
+                          variant='quiet'
+                        >
+                          League sorting
+                        </Link>
+                      </Button>
                     </>
                   )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <Form method='POST'>
-        <div>
-          <Button
-            type='submit'
-            name='_action'
-            value='createSeason'
-            disabled={navigation.state !== 'idle'}
-          >
-            Create season for current year
-          </Button>
-        </div>
-      </Form>
-    </>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </Table>
+    </Section>
   );
 }

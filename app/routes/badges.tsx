@@ -55,16 +55,10 @@ export default function Badges() {
 
   return (
     <>
-      <PageHeader
-        title='Badges'
-        description='Every badge a profile can show, at its highest tier.'
-      />
+      <PageHeader title='Badges' />
 
       <div className='grid gap-6'>
-        <ProfileSection
-          title='League'
-          description='Earned in the redraft leagues and the Cup.'
-        >
+        <ProfileSection title='League'>
           <ul className='m-0 grid gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3'>
             {leagueDefinitions.map(definition => {
               const badge = atFullStrength(definition);

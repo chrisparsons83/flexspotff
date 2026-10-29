@@ -22,17 +22,8 @@ import { authenticator } from '~/services/auth.server';
 /** How many of each table the home page shows. */
 const LEADERS = 3;
 
-/** The league calendar from the rules: sections 9 and 13. */
-const LAST_REGULAR_SEASON_WEEK = 14;
+/** The last playoff week, from section 13 of the rules. */
 const LAST_PLAYOFF_WEEK = 17;
-
-/** Where the leagues are in their season, in a sentence. */
-const leagueWeek = (week: number) =>
-  week <= LAST_REGULAR_SEASON_WEEK
-    ? `Week ${week} of ${LAST_REGULAR_SEASON_WEEK} in the regular season.`
-    : week <= LAST_PLAYOFF_WEEK
-    ? `Playoffs, week ${week} of ${LAST_PLAYOFF_WEEK}.`
-    : 'The regular season and playoffs are over.';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
@@ -125,9 +116,6 @@ export default function Index() {
               ? `Week ${week}`
               : `${year} leagues`
           }
-          description={`${
-            week ? `${leagueWeek(week)} ` : ''
-          }The top of each league’s table.`}
           action={<Link to='/leagues/standings'>Full standings</Link>}
         >
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5'>
@@ -181,11 +169,7 @@ export default function Index() {
       )}
 
       {year && (
-        <Section
-          title='Games this week'
-          description='Where each game’s week stands, and the top of its table.'
-          to='/games'
-        >
+        <Section title='Games this week' to='/games'>
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {games.map(game => (
               <SummaryCard

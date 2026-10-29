@@ -7,6 +7,8 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
 import {
@@ -172,11 +174,10 @@ export default function SpreadLocksList() {
   const navigation = useNavigation();
 
   return (
-    <div>
-      <h2>Locks challenge lines by week</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <div>
+    <Section
+      title='Locks challenge lines by week'
+      action={
+        <Form method='POST'>
           <Button
             type='submit'
             name='_action'
@@ -185,64 +186,60 @@ export default function SpreadLocksList() {
           >
             Create next week
           </Button>
-        </div>
-      </Form>
-      <table>
-        <thead>
-          <tr>
-            <th>Week</th>
-            <th>Published?</th>
-            <th>Scored?</th>
-            <th>Publish week?</th>
-            <th>Score</th>
+        </Form>
+      }
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Table
+        headers={['Week', 'Published', 'Scored', 'Publish', 'Score']}
+        primaryColumns={[3, 4]}
+      >
+        {locksWeeks.map(locksWeek => (
+          <tr key={locksWeek.id}>
+            <td>{locksWeek.weekNumber}</td>
+            <td>{locksWeek.isOpen ? 'Yes' : 'No'}</td>
+            <td>{locksWeek.isWeekScored ? 'Yes' : 'No'}</td>
+            <td>
+              <Form method='POST'>
+                <input
+                  type='hidden'
+                  name='weekNumber'
+                  value={locksWeek.weekNumber}
+                />
+                <input type='hidden' name='year' value={locksWeek.year} />
+                <Button
+                  type='submit'
+                  name='_action'
+                  value='publishWeek'
+                  disabled={navigation.state !== 'idle'}
+                >
+                  Publish week
+                </Button>
+              </Form>
+            </td>
+            <td>
+              <Form method='POST'>
+                <input
+                  type='hidden'
+                  name='weekNumber'
+                  value={locksWeek.weekNumber}
+                />
+                <input type='hidden' name='year' value={locksWeek.year} />
+                <Button
+                  type='submit'
+                  name='_action'
+                  value='scoreWeek'
+                  disabled={navigation.state !== 'idle'}
+                >
+                  Score week
+                </Button>
+              </Form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {locksWeeks.map(locksWeek => (
-            <tr key={locksWeek.id}>
-              <td>{locksWeek.weekNumber}</td>
-              <td>{locksWeek.isOpen ? 'Yes' : 'No'}</td>
-              <td>{locksWeek.isWeekScored ? 'Yes' : 'No'}</td>
-              <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='weekNumber'
-                    value={locksWeek.weekNumber}
-                  />
-                  <input type='hidden' name='year' value={locksWeek.year} />
-                  <Button
-                    type='submit'
-                    name='_action'
-                    value='publishWeek'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Publish week
-                  </Button>
-                </Form>
-              </td>
-              <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='weekNumber'
-                    value={locksWeek.weekNumber}
-                  />
-                  <input type='hidden' name='year' value={locksWeek.year} />
-                  <Button
-                    type='submit'
-                    name='_action'
-                    value='scoreWeek'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Score week
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </Table>
+    </Section>
   );
 }

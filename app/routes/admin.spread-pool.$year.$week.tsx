@@ -9,6 +9,9 @@ import {
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Checkbox, Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { PoolGame, PoolGameCreate } from '~/models/poolgame.server';
 import {
@@ -213,64 +216,48 @@ export default function AdminSpreadPoolYearWeek() {
   const navigation = useNavigation();
 
   return (
-    <div>
-      <h2>Edit picks for week {nflGames[0].week}</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+    <Section title={`Edit picks for week ${nflGames[0].week}`}>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
       <Form method='POST' reloadDocument>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Game</th>
-              <th>Home spread</th>
-            </tr>
-          </thead>
-          <tbody>
-            {nflGames.map(game => {
-              const gameStart = DateTime.fromJSDate(game.gameStartTime);
-              return (
-                <tr key={game.id}>
-                  <td>
-                    {gameStart.weekdayShort}{' '}
-                    {gameStart.toLocaleString(DateTime.TIME_SIMPLE)}
-                  </td>
-                  <td>
-                    {game.awayTeam.mascot} at {game.homeTeam.mascot}
-                  </td>
-                  <td>
-                    <input
-                      type='number'
-                      step='0.5'
-                      name={`homeSpread[${game.id}]`}
-                      className=''
-                      defaultValue={
-                        actionData?.updatedNflGames?.get(game.homeTeam.name)
-                          ? actionData?.updatedNflGames?.get(game.homeTeam.name)
-                          : poolGames.find(
-                              poolGame => poolGame.gameId === game.id,
-                            )?.homeSpread
-                      }
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-            <tr>
-              <td colSpan={3}>
-                <label htmlFor='isOpen'>
-                  <input
-                    type='checkbox'
-                    name='isOpen'
-                    id='isOpen'
-                    defaultChecked={poolWeek?.isOpen}
-                  />{' '}
-                  Publish week to group
-                </label>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div>
+        <Table headers={['Date', 'Game', 'Home spread']}>
+          {nflGames.map(game => {
+            const gameStart = DateTime.fromJSDate(game.gameStartTime);
+            return (
+              <tr key={game.id}>
+                <td>
+                  {gameStart.weekdayShort}{' '}
+                  {gameStart.toLocaleString(DateTime.TIME_SIMPLE)}
+                </td>
+                <td>
+                  {game.awayTeam.mascot} at {game.homeTeam.mascot}
+                </td>
+                <td>
+                  <Input
+                    type='number'
+                    step='0.5'
+                    name={`homeSpread[${game.id}]`}
+                    aria-label={`${game.homeTeam.mascot} spread`}
+                    className='w-24'
+                    defaultValue={
+                      actionData?.updatedNflGames?.get(game.homeTeam.name)
+                        ? actionData?.updatedNflGames?.get(game.homeTeam.name)
+                        : poolGames.find(
+                            poolGame => poolGame.gameId === game.id,
+                          )?.homeSpread
+                    }
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </Table>
+        <label className='my-6 flex items-center gap-3'>
+          <Checkbox name='isOpen' defaultChecked={poolWeek?.isOpen} />
+          Publish week to group
+        </label>
+        <div className='flex flex-wrap gap-3'>
           <Button
             type='submit'
             name='_action'
@@ -279,8 +266,8 @@ export default function AdminSpreadPoolYearWeek() {
           >
             Update week
           </Button>
-          <span style={{ marginRight: '10px' }}></span>
           <Button
+            variant='secondary'
             type='submit'
             name='_action'
             value='getSpreads'
@@ -290,6 +277,6 @@ export default function AdminSpreadPoolYearWeek() {
           </Button>
         </div>
       </Form>
-    </div>
+    </Section>
   );
 }

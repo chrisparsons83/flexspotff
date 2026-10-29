@@ -9,12 +9,7 @@ import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
 import { CurrentSeason } from '~/components/layout/profile/StatusText';
-import {
-  ordinal,
-  plural,
-  pts,
-  weekLabel,
-} from '~/components/layout/profile/format';
+import { ordinal, pts, weekLabel } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
 import { RangeBar } from '~/components/ui/bars';
 import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
@@ -342,10 +337,6 @@ function Exposure({ boards }: { boards: D12Board[] }) {
   return (
     <ProfileSection
       title='Exposure'
-      description={`${plural(players.length, 'player')} across ${plural(
-        teams,
-        'team',
-      )}.`}
       action={
         boards.length > 1 && (
           <YearFilter

@@ -8,6 +8,7 @@ import {
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Section } from '~/components/ui/section';
 import {
   Select,
   SelectContent,
@@ -262,28 +263,27 @@ export default function AdminDataIndex() {
   ).reverse();
 
   return (
-    <>
-      <h2>Data updates</h2>
-      <p>This is a good list of things to eventually automate.</p>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <section>
-        <h3>Feature flags</h3>
-        <p>
-          Switches for features that are built but not open to every member yet.
-          Admins always see them either way.
-        </p>
+    <Section title='Data updates'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Section
+        as='h3'
+        title='Feature flags'
+        description='Switches for features that are built but not open to every member yet. Admins always see them either way.'
+      >
         {Object.entries(FEATURE_FLAGS).map(([key, flag]) => {
           const enabled = featureFlags[key as keyof typeof FEATURE_FLAGS];
 
           return (
-            <Form method='POST' key={key} className='mb-4'>
+            <Form method='POST' key={key} className='mb-6'>
               <input type='hidden' name='flag' value={key} />
               <input type='hidden' name='enabled' value={String(!enabled)} />
               <p className='mb-2'>
                 <strong>{flag.label}</strong>:{' '}
                 {enabled ? 'on for everyone' : 'admins only'}
                 <br />
-                <span className='text-base text-foreground'>
+                <span className='text-muted-foreground'>
                   {flag.description}
                 </span>
               </p>
@@ -298,16 +298,15 @@ export default function AdminDataIndex() {
             </Form>
           );
         })}
-      </section>
-      <Form method='POST'>
-        <section>
-          <h3>Update NFL games</h3>
-          <p>
-            This will resync all NFL games in the system. This should probably
-            be run on Monday nights late or maybe Tuesday morning.
-          </p>
+      </Section>
+      <Form method='POST' className='mt-16'>
+        <Section
+          as='h3'
+          title='Update NFL games'
+          description='This will resync all NFL games in the system. This should probably be run on Monday nights late or maybe Tuesday morning.'
+        >
           {actionData?.formError ? (
-            <p className='text-negative' role='alert'>
+            <p className='mb-3 text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -319,17 +318,14 @@ export default function AdminDataIndex() {
           >
             Resync NFL games
           </Button>
-        </section>
-        <section>
-          <h3>Update current week scores</h3>
-          <p>
-            This will resync NFL game state plus league, D12, guillotine and
-            best ball scores for the current week. This can be run at any time
-            safely. The scheduler already does this every 5 minutes while games
-            are in progress.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Update current week scores'
+          description='This will resync NFL game state plus league, D12, guillotine and best ball scores for the current week. This can be run at any time safely. The scheduler already does this every 5 minutes while games are in progress.'
+        >
           {actionData?.formError ? (
-            <p className='text-negative' role='alert'>
+            <p className='mb-3 text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -341,23 +337,21 @@ export default function AdminDataIndex() {
           >
             Resync current week scores
           </Button>
-        </section>
-        <section>
-          <h3>Update current year scores</h3>
-          <p>
-            This will resync all week scores in the system. Only do this once in
-            a while, generally the resync current week score should be all you
-            need.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Update current year scores'
+          description='This will resync all week scores in the system. Only do this once in a while, generally the resync current week score should be all you need.'
+        >
           {actionData?.formError ? (
-            <p className='text-negative' role='alert'>
+            <p className='mb-3 text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
-          <div className='flex flex-wrap gap-4'>
-            <div>
+          <div className='flex flex-wrap gap-3'>
+            <div className='w-40'>
               <Select name='year'>
-                <SelectTrigger>
+                <SelectTrigger aria-label='Year'>
                   <SelectValue placeholder='Select a year' />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,16 +372,14 @@ export default function AdminDataIndex() {
               Resync current year scores
             </Button>
           </div>
-        </section>
-        <section>
-          <h3>Update NFL players database</h3>
-          <p>
-            This will resync all NFL players in the system. You only really need
-            to do this if there's a player that's not showing up for some
-            reason.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Update NFL players database'
+          description="This will resync all NFL players in the system. You only really need to do this if there's a player that's not showing up for some reason."
+        >
           {actionData?.formError ? (
-            <p className='text-negative' role='alert'>
+            <p className='mb-3 text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -399,15 +391,12 @@ export default function AdminDataIndex() {
           >
             Resync NFL players
           </Button>
-        </section>
-        <section>
-          <h3>Resync league season structure</h3>
-          <p>
-            Reads each league's playoff start week from Sleeper and works out
-            whether it played median games, for every league in every year. Run
-            this once to backfill seasons that predate those fields; the weekly
-            league sync keeps them current afterwards.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Resync league season structure'
+          description="Reads each league's playoff start week from Sleeper and works out whether it played median games, for every league in every year. Run this once to backfill seasons that predate those fields; the weekly league sync keeps them current afterwards."
+        >
           <Button
             type='submit'
             name='_action'
@@ -416,15 +405,12 @@ export default function AdminDataIndex() {
           >
             Resync league season structure
           </Button>
-        </section>
-        <section>
-          <h3>Resync playoff brackets</h3>
-          <p>
-            Reads the winners and losers brackets from Sleeper for every league
-            in every year. This is what league championships, playoff records
-            and sackos are built from. Leagues Sleeper no longer serves are
-            skipped rather than failing the run.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Resync playoff brackets'
+          description='Reads the winners and losers brackets from Sleeper for every league in every year. This is what league championships, playoff records and sackos are built from. Leagues Sleeper no longer serves are skipped rather than failing the run.'
+        >
           <Button
             type='submit'
             name='_action'
@@ -433,16 +419,20 @@ export default function AdminDataIndex() {
           >
             Resync playoff brackets
           </Button>
-        </section>
-        <section>
-          <h3>Backfill median records</h3>
-          <p>
-            Recomputes every team&rsquo;s record against the league median from
-            the scores already on file. Sleeper only describes median games for
-            recent seasons, so the stored columns are empty for 2018&ndash;2023
-            even where the games were played. Safe to re-run; a league that
-            never played medians has its columns cleared.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Backfill median records'
+          description={
+            <>
+              Recomputes every team&rsquo;s record against the league median
+              from the scores already on file. Sleeper only describes median
+              games for recent seasons, so the stored columns are empty for
+              2018&ndash;2023 even where the games were played. Safe to re-run;
+              a league that never played medians has its columns cleared.
+            </>
+          }
+        >
           <Button
             type='submit'
             name='_action'
@@ -451,15 +441,19 @@ export default function AdminDataIndex() {
           >
             Backfill median records
           </Button>
-        </section>
-        <section>
-          <h3>Sync test database</h3>
-          <p>
-            Copies the production database to <code>flexspotff_test</code> so
-            developers can point their local apps at the shared test database
-            instead of running Docker. This will overwrite all existing data in
-            the test database.
-          </p>
+        </Section>
+        <Section
+          as='h3'
+          title='Sync test database'
+          description={
+            <>
+              Copies the production database to <code>flexspotff_test</code> so
+              developers can point their local apps at the shared test database
+              instead of running Docker. This will overwrite all existing data
+              in the test database.
+            </>
+          }
+        >
           <Button
             type='submit'
             name='_action'
@@ -468,8 +462,8 @@ export default function AdminDataIndex() {
           >
             Sync test database from production
           </Button>
-        </section>
+        </Section>
       </Form>
-    </>
+    </Section>
   );
 }

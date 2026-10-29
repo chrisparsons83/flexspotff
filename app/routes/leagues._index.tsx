@@ -62,12 +62,7 @@ export default function LeaguesOverview() {
 
   return (
     <>
-      <Section
-        title={`${year} leagues`}
-        description={`${leagues.length} leagues in ${
-          new Set(leagues.map(league => league.tier)).size
-        } tiers. Each table is best first.`}
-      >
+      <Section title={`${year} leagues`}>
         <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
           {leagues.map(league => (
             <Card key={league.id} league={leagueFill(league.name) ?? undefined}>
@@ -116,7 +111,6 @@ export default function LeaguesOverview() {
       {week && (
         <Section
           title={`Week ${week.number}`}
-          description='The best scores of the week across every league.'
           action={
             <Link to={`/leagues/leaderboard/${year}/${week.number}`}>
               Week {week.number} leaderboard

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -7,6 +7,11 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { NativeSelect } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { createCup, getCups } from '~/models/cup.server';
 import type { CupWeek } from '~/models/cupweek.server';
 import { createCupWeek } from '~/models/cupweek.server';
@@ -75,45 +80,38 @@ export default function QBStreamingStandingsYearIndex() {
   const navigation = useNavigation();
 
   return (
-    <>
-      <h2>Cups</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <div className='flex items-center gap-2'>
-          <select
+    <Section title='Cups'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Form method='POST' className='flex items-end gap-3'>
+        <Field label='Year' className='w-32'>
+          <NativeSelect
             name='year'
-            aria-label='Year'
             defaultValue={
               availableSeasons.find(season => season.isCurrent)?.year
             }
-            className='form-select '
           >
             {availableSeasons.map(season => (
               <option value={season.year} key={season.id}>
                 {season.year}
               </option>
             ))}
-          </select>
-          <Button
-            type='submit'
-            name='_action'
-            value='createCup'
-            disabled={
-              navigation.state !== 'idle' || availableSeasons.length === 0
-            }
-          >
-            Create cup
-          </Button>
-        </div>
+          </NativeSelect>
+        </Field>
+        <Button
+          type='submit'
+          name='_action'
+          value='createCup'
+          disabled={
+            navigation.state !== 'idle' || availableSeasons.length === 0
+          }
+        >
+          Create cup
+        </Button>
       </Form>
-      <table>
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Section as='h3' title='Cups by year'>
+        <Table headers={['Year', 'Actions']}>
           {cups.map(cup => (
             <tr key={cup.id}>
               <td>{cup.year}</td>
@@ -122,8 +120,8 @@ export default function QBStreamingStandingsYearIndex() {
               </td>
             </tr>
           ))}
-        </tbody>
-      </table>
-    </>
+        </Table>
+      </Section>
+    </Section>
   );
 }

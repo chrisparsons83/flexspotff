@@ -7,6 +7,10 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Checkbox, NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { getProjections, getRostership } from '~/libs/sleeper/api.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
@@ -199,43 +203,37 @@ export default function AdminSpreadPoolYearWeek() {
   if (!qbStreamingWeek) throw new Error('No information found for week');
 
   return (
-    <div>
-      <h2>Edit picks for week</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <h3>Add player</h3>
-        <div>
-          <select name='playerId' className='form-select mt-1 block w-full '>
-            {filteredQBs.map(qb => (
-              <option key={qb.id} value={qb.id}>
-                {qb.lastName}, {qb.firstName}: {qb.nflTeam}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor='isDeep'>
-            <input
-              type='checkbox'
-              name='isDeep'
-              id='isDeep'
-              defaultChecked={true}
-            />{' '}
+    <Section title='Edit picks for week'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Section as='h3' title='Add player' className='mt-0'>
+        <Form method='POST' className='grid max-w-md gap-6'>
+          <Field label='Player'>
+            <NativeSelect name='playerId'>
+              {filteredQBs.map(qb => (
+                <option key={qb.id} value={qb.id}>
+                  {qb.lastName}, {qb.firstName}: {qb.nflTeam}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <label className='flex items-center gap-3'>
+            <Checkbox name='isDeep' defaultChecked={true} />
             Available in both player pools
           </label>
-        </div>
-        <div className='pt-4'>
-          <Button
-            type='submit'
-            name='_action'
-            value='addPlayer'
-            disabled={navigation.state !== 'idle'}
-          >
-            Add player
-          </Button>
-          <div className='pt-4'>
+          <div className='flex flex-wrap gap-3'>
             <Button
               type='submit'
+              name='_action'
+              value='addPlayer'
+              disabled={navigation.state !== 'idle'}
+            >
+              Add player
+            </Button>
+            <Button
+              type='submit'
+              variant='secondary'
               name='_action'
               value='importPlayers'
               disabled={navigation.state !== 'idle'}
@@ -243,26 +241,22 @@ export default function AdminSpreadPoolYearWeek() {
               Import players
             </Button>
           </div>
-        </div>
-      </Form>
-      <h3>Available players</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Team</th>
-            <th>Both pools?</th>
-            <th>Points</th>
-            <th>Remove</th>
-          </tr>
-        </thead>
-        <tbody>
+        </Form>
+      </Section>
+      <Section as='h3' title='Available players'>
+        <Table
+          headers={['Player', 'Team', 'Both pools', 'Points', '']}
+          numericColumns={[3]}
+          primaryColumns={[3]}
+        >
           {qbStreamingWeek.QBStreamingWeekOptions.map(qbStreamingWeekOption => (
             <tr key={qbStreamingWeekOption.id}>
               <td>{qbStreamingWeekOption.player.fullName}</td>
               <td>{qbStreamingWeekOption.player.nflTeam}</td>
               <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
-              <td>{qbStreamingWeekOption.pointsScored}</td>
+              <td className='text-right'>
+                {qbStreamingWeekOption.pointsScored}
+              </td>
               <td>
                 <Form method='POST'>
                   <input
@@ -272,6 +266,8 @@ export default function AdminSpreadPoolYearWeek() {
                   />
                   <Button
                     type='submit'
+                    variant='secondary'
+                    size='sm'
                     name='_action'
                     value='removePlayer'
                     disabled={navigation.state !== 'idle'}
@@ -282,30 +278,26 @@ export default function AdminSpreadPoolYearWeek() {
               </td>
             </tr>
           ))}
-        </tbody>
-      </table>
-      <h3>Week settings</h3>
-      <Form method='POST'>
-        <label htmlFor='isOpen'>
-          <input
-            type='checkbox'
-            name='isOpen'
-            id='isOpen'
-            defaultChecked={qbStreamingWeek.isOpen}
-          />{' '}
-          Week is active for selections
-        </label>
-        <div>
-          <Button
-            type='submit'
-            name='_action'
-            value='updateWeek'
-            disabled={navigation.state !== 'idle'}
-          >
-            Update week
-          </Button>
-        </div>
-      </Form>
-    </div>
+        </Table>
+      </Section>
+      <Section as='h3' title='Week settings'>
+        <Form method='POST' className='grid gap-6'>
+          <label className='flex items-center gap-3'>
+            <Checkbox name='isOpen' defaultChecked={qbStreamingWeek.isOpen} />
+            Week is open for picks
+          </label>
+          <div>
+            <Button
+              type='submit'
+              name='_action'
+              value='updateWeek'
+              disabled={navigation.state !== 'idle'}
+            >
+              Update week
+            </Button>
+          </div>
+        </Form>
+      </Section>
+    </Section>
   );
 }

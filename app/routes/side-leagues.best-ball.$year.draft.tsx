@@ -89,10 +89,7 @@ export default function BestBallDraft() {
 
   return (
     <>
-      <Section
-        title='What the CPU drafted'
-        description='Every roster by position, with the oddities the autodraft left behind.'
-      >
+      <Section title='What the CPU drafted'>
         <Table
           headers={['Slot', 'Team', 'Positions', 'Notable']}
           numericColumns={[0]}
@@ -138,10 +135,7 @@ export default function BestBallDraft() {
         </Table>
       </Section>
 
-      <Section
-        title='Draft board'
-        description='One column per team in draft order.'
-      >
+      <Section title='Draft board'>
         <DraftBoard
           columns={columns}
           rounds={rounds}

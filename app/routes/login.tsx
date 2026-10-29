@@ -19,10 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Login() {
   return (
     <>
-      <PageHeader
-        title='Log in'
-        description='Members sign in with the Discord account they use on the server.'
-      />
+      <PageHeader title='Log in' />
       <Form action={`/auth/${SocialsProvider.DISCORD}`} method='POST'>
         <Button type='submit'>Log in with Discord</Button>
       </Form>

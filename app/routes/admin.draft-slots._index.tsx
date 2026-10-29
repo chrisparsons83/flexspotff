@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -9,6 +8,9 @@ import z from 'zod';
 import DraftSlotRow from '~/components/layout/admin/DraftSlotRow';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   createDraftSlot,
   deleteDraftSlot,
@@ -151,53 +153,48 @@ export default function DraftSlotsAdmin() {
   const actionData = useTypedActionData<typeof action>();
 
   return (
-    <>
-      <h2>Draft slots management</h2>
-      <p>
-        <Link to='/admin/draft-slots/new'>
-          <Button type='button'>Add new draft slot</Button>
-        </Link>
-      </p>
-      <p>
-        {uniqueUsersCount} unique{' '}
-        {uniqueUsersCount === 1 ? 'person has' : 'people have'} entered their
-        draft time preferences.
-      </p>
+    <Section
+      title='Draft slots'
+      description={`${uniqueUsersCount} ${
+        uniqueUsersCount === 1 ? 'member has' : 'members have'
+      } entered their draft time preferences.`}
+      action={
+        <Button asChild>
+          <Link to='/admin/draft-slots/new' variant='quiet'>
+            Add draft slot
+          </Link>
+        </Button>
+      }
+    >
       {isSuccessWithMessage(actionData) && (
-        <Alert message={actionData.message} />
+        <Alert message={actionData.message} className='mb-6' />
       )}
       {isErrorResponse(actionData) && (
         <Alert
           message={
             ('general' in actionData.error && actionData.error.general?.[0]) ||
-            'An error occurred. Please try again.'
+            'Something went wrong. Try again.'
           }
+          status='error'
+          className='mb-6'
         />
       )}
-      <table>
-        <thead>
+      <Table
+        headers={['Season', 'Draft time', 'Available', 'Actions']}
+        numericColumns={[2]}
+      >
+        {draftSlots.length === 0 ? (
           <tr>
-            <th>Season</th>
-            <th>Draft date & time</th>
-            <th>Available people</th>
-            <th>Actions</th>
+            <td colSpan={4} className='text-muted-foreground'>
+              No draft slots yet.
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {draftSlots.length === 0 ? (
-            <tr>
-              <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
-                No draft slots found. Create your first draft slot to get
-                started.
-              </td>
-            </tr>
-          ) : (
-            draftSlots.map((slot: any) => (
-              <DraftSlotRow key={slot.id} slot={slot} />
-            ))
-          )}
-        </tbody>
-      </table>
-    </>
+        ) : (
+          draftSlots.map((slot: any) => (
+            <DraftSlotRow key={slot.id} slot={slot} />
+          ))
+        )}
+      </Table>
+    </Section>
   );
 }

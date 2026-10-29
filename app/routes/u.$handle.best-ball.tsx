@@ -126,10 +126,7 @@ function Career({ career }: { career: BestBallCareer }) {
 
 function BySeason({ seasons }: { seasons: BestBallSeason[] }) {
   return (
-    <ProfileSection
-      title='By season'
-      description='Ranked on points for through week 17.'
-    >
+    <ProfileSection title='By season'>
       <Table
         headers={[
           'Year',
@@ -209,10 +206,7 @@ function PositionsDrafted({
   if (withPicks.length === 0) return null;
 
   return (
-    <ProfileSection
-      title='Positions drafted'
-      description="What the autodraft gave them each season, against the league's average roster."
-    >
+    <ProfileSection title='Positions drafted'>
       <div className='space-y-4'>
         {withPicks.map(season => (
           <div key={season.year}>

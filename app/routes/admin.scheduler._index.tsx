@@ -8,6 +8,8 @@ import {
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
+import { Section } from '~/components/ui/section';
 import { getScheduledJobRuns } from '~/models/scheduledJobRun.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { getScheduler } from '~/services/scheduler.server';
@@ -111,73 +113,72 @@ export default function AdminSchedulerIndex() {
   const isRunning = navigation.state !== 'idle';
 
   return (
-    <>
-      <h2>Scheduler management</h2>
-      <p>Manage and monitor scheduled tasks.</p>
-
+    <Section title='Scheduler management'>
       {schedulerStale && (
         <Alert
           status='error'
           message={`The scheduler looks down - no job has started since ${schedulerLastActive}, and live scores are not updating. Restart the container.`}
+          className='mb-6'
         />
       )}
 
-      {actionData?.message && <Alert message={actionData.message} />}
-      {actionData?.error && <Alert message={actionData.error} />}
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      {actionData?.error && (
+        <Alert message={actionData.error} status='error' className='mb-6' />
+      )}
 
-      <div className='space-y-6'>
-        <section>
-          <h3>Scheduled jobs</h3>
-          <div className='space-y-4'>
-            {jobs.map(job => (
-              <div key={job.name} className='border p-4 bg-foreground '>
-                <div className='flex justify-between items-start'>
-                  <div>
-                    <h4 className='font-semibold text-lg'>{job.name}</h4>
-                    <p className='text-sm text-muted-foreground '>
-                      Schedule: {cronToHuman(job.cron, job.timezone)}
+      <Section as='h3' title='Scheduled jobs'>
+        <div className='grid gap-4'>
+          {jobs.map(job => (
+            <Card key={job.name}>
+              <CardContent className='flex flex-wrap items-start justify-between gap-4'>
+                <div>
+                  <h4 className='text-lg font-bold'>{job.name}</h4>
+                  <p className='text-sm text-muted-foreground '>
+                    Schedule: {cronToHuman(job.cron, job.timezone)}
+                  </p>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    Cron: {job.cron || 'Not scheduled'}
+                  </p>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    {job.description}
+                  </p>
+                  <p className='text-sm text-muted-foreground mt-2'>
+                    {job.lastStarted
+                      ? [
+                          `Last started ${job.lastStarted}`,
+                          job.lastSucceeded &&
+                            `last succeeded ${job.lastSucceeded}`,
+                          job.lastFailed && `last failed ${job.lastFailed}`,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')
+                      : 'No runs recorded yet'}
+                  </p>
+                  {job.lastError && (
+                    <p className='text-sm text-negative mt-1'>
+                      {job.lastError}
                     </p>
-                    <p className='text-sm text-muted-foreground mt-1'>
-                      Cron: {job.cron || 'Not scheduled'}
-                    </p>
-                    <p className='text-sm text-muted-foreground mt-1'>
-                      {job.description}
-                    </p>
-                    <p className='text-sm text-muted-foreground mt-2'>
-                      {job.lastStarted
-                        ? [
-                            `Last started ${job.lastStarted}`,
-                            job.lastSucceeded &&
-                              `last succeeded ${job.lastSucceeded}`,
-                            job.lastFailed && `last failed ${job.lastFailed}`,
-                          ]
-                            .filter(Boolean)
-                            .join(', ')
-                        : 'No runs recorded yet'}
-                    </p>
-                    {job.lastError && (
-                      <p className='text-sm text-negative mt-1'>
-                        {job.lastError}
-                      </p>
-                    )}
-                  </div>
-                  <Form method='POST' className='inline'>
-                    <input type='hidden' name='jobName' value={job.name} />
-                    <Button
-                      type='submit'
-                      name='_action'
-                      value='runJob'
-                      disabled={isRunning}
-                    >
-                      Run now
-                    </Button>
-                  </Form>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </>
+                <Form method='POST' className='inline'>
+                  <input type='hidden' name='jobName' value={job.name} />
+                  <Button
+                    type='submit'
+                    name='_action'
+                    value='runJob'
+                    disabled={isRunning}
+                  >
+                    Run now
+                  </Button>
+                </Form>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </Section>
+    </Section>
   );
 }

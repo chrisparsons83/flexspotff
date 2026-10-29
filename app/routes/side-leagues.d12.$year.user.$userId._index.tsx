@@ -91,7 +91,6 @@ export default function D12MemberRoster() {
   return (
     <Section
       title={`${discordName}’s roster`}
-      description={`Every player they drafted across ${totalLeagues} leagues.`}
       action={<Link to={`/side-leagues/d12/${year}`}>{year} standings</Link>}
     >
       {ownership.length === 0 ? (

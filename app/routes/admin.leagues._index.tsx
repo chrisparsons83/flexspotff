@@ -7,7 +7,9 @@ import {
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
-import { Link } from '~/components/ui/link';
+import { ExternalLink, Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { syncLeague } from '~/libs/league-sync.server';
 import { getLeague, getLeagues } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -65,59 +67,61 @@ export default function LeaguesList() {
   const actionData = useTypedActionData<typeof action>();
 
   return (
-    <>
-      <h2>League list</h2>
-      <Button asChild className='mb-6'>
-        <Link to='/admin/leagues/new' variant='quiet'>
-          Add league
-        </Link>
-      </Button>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <table>
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>Name</th>
-            <th>Tier</th>
-            <th>Sleeper link</th>
-            <th>Draft link</th>
-            <th>Actions</th>
+    <Section
+      title='Leagues'
+      action={
+        <Button asChild>
+          <Link to='/admin/leagues/new' variant='quiet'>
+            Add league
+          </Link>
+        </Button>
+      }
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Table
+        headers={[
+          'Year',
+          'Name',
+          'Tier',
+          'Sleeper link',
+          'Draft link',
+          'Actions',
+        ]}
+      >
+        {leagues.map(league => (
+          <tr key={league.id}>
+            <td>{league.year}</td>
+            <td>{league.name}</td>
+            <td>{league.tier}</td>
+            <td>
+              <ExternalLink
+                href={`https://sleeper.com/leagues/${league.sleeperLeagueId}`}
+              >
+                Sleeper
+              </ExternalLink>
+            </td>
+            <td>
+              <ExternalLink
+                href={`https://sleeper.com/draft/nfl/${league.sleeperDraftId}`}
+              >
+                Draft ({league.teams.length} / 12)
+              </ExternalLink>
+              <br />
+              {league.draftDateTime?.toLocaleString() || ''}
+            </td>
+            <td>
+              <Form method='POST'>
+                <input type='hidden' name='leagueId' value={league.id} />
+                <Button type='submit' name='action' value='sync'>
+                  Sync
+                </Button>
+              </Form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {leagues.map(league => (
-            <tr key={league.id}>
-              <td>{league.year}</td>
-              <td>{league.name}</td>
-              <td>{league.tier}</td>
-              <td>
-                <a
-                  href={`https://sleeper.com/leagues/${league.sleeperLeagueId}`}
-                >
-                  Sleeper
-                </a>
-              </td>
-              <td>
-                <a
-                  href={`https://sleeper.com/draft/nfl/${league.sleeperDraftId}`}
-                >
-                  Draft ({league.teams.length} / 12)
-                </a>
-                <br />
-                {league.draftDateTime?.toLocaleString() || ''}
-              </td>
-              <td className='not-prose'>
-                <Form method='POST'>
-                  <input type='hidden' name='leagueId' value={league.id} />
-                  <Button type='submit' name='action' value='sync'>
-                    Sync
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+        ))}
+      </Table>
+    </Section>
   );
 }

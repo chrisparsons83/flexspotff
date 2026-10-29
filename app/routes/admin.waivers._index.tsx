@@ -9,6 +9,10 @@ import {
 } from '@remix-run/react';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   leagueWaiverChannelIds,
   postWaiverReports,
@@ -143,16 +147,13 @@ export default function AdminWaiversIndex() {
     byLeague.length === 0 || unconfiguredLeagues.length === byLeague.length;
 
   return (
-    <>
-      <h2>Waiver reports</h2>
-      <p>
-        Inspect the stored waiver claims behind the weekly report each league
-        gets in its own channel, and re-run a week without waiting for
-        Wednesday.
-      </p>
-
-      {actionData?.message && <Alert message={actionData.message} />}
-      {actionData?.error && <Alert message={actionData.error} />}
+    <Section title='Waiver reports'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      {actionData?.error && (
+        <Alert message={actionData.error} status='error' className='mb-6' />
+      )}
       {unconfiguredLeagues.length > 0 && (
         <Alert
           message={`No waiver channel is configured for ${unconfiguredLeagues.join(
@@ -160,12 +161,14 @@ export default function AdminWaiversIndex() {
           )}, so posting is disabled for ${
             unconfiguredLeagues.length === 1 ? 'that league' : 'those leagues'
           }.`}
+          status='warning'
+          className='mb-6'
         />
       )}
 
       <Form
         method='GET'
-        className='my-4 flex flex-wrap items-end gap-4'
+        className='mb-6 flex flex-wrap items-end gap-3'
         onChange={event =>
           // Explicit pairs, not the FormData itself: createSearchParams falls
           // through to Object.keys for anything it does not special-case, and a
@@ -179,36 +182,22 @@ export default function AdminWaiversIndex() {
           )
         }
       >
-        <div>
-          <label htmlFor='year' className='block text-sm'>
-            Year
-          </label>
-          <input
+        <Field label='Year' className='w-24'>
+          <Input type='number' name='year' defaultValue={year} />
+        </Field>
+        <Field label='Week' className='w-24'>
+          <Input
             type='number'
-            id='year'
-            name='year'
-            defaultValue={year}
-            className='w-24'
-          />
-        </div>
-        <div>
-          <label htmlFor='week' className='block text-sm'>
-            Week
-          </label>
-          <input
-            type='number'
-            id='week'
             name='week'
             min={1}
             max={18}
             defaultValue={week}
-            className='w-24'
           />
-        </div>
+        </Field>
         <Button type='submit'>Show</Button>
       </Form>
 
-      <Form method='POST' className='my-4 flex flex-wrap gap-2'>
+      <Form method='POST' className='flex flex-wrap gap-3'>
         <input type='hidden' name='year' value={year} />
         <input type='hidden' name='week' value={week} />
         <Button type='submit' name='_action' value='sync' disabled={isRunning}>
@@ -225,53 +214,44 @@ export default function AdminWaiversIndex() {
       </Form>
 
       {byLeague.map(({ league, report, transactions }) => (
-        <section key={league.id} className='my-6'>
-          <h3>
-            {league.name}, week {week}{' '}
-            <span className='text-sm font-normal text-muted-foreground'>
-              {report
-                ? `posted ${new Date(report.postedAt).toLocaleString()}`
-                : 'not posted'}
-            </span>
-          </h3>
+        <Section
+          key={league.id}
+          as='h3'
+          title={`${league.name}, week ${week}`}
+          description={
+            report
+              ? `Posted ${new Date(report.postedAt).toLocaleString()}.`
+              : 'Not posted.'
+          }
+        >
           {transactions.length === 0 ? (
             <p className='text-sm text-muted-foreground'>No stored claims.</p>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th className='text-left'>Player</th>
-                  <th className='text-left'>Manager</th>
-                  <th className='text-right'>Bid</th>
-                  <th className='text-right'>Seq</th>
-                  <th className='text-left'>Status</th>
-                  <th className='text-left'>Notes</th>
+            <Table
+              headers={['Player', 'Manager', 'Bid', 'Seq', 'Status', 'Notes']}
+            >
+              {transactions.map(transaction => (
+                <tr key={transaction.id}>
+                  <td>
+                    {transaction.addPlayer?.fullName ??
+                      `(${transaction.addSleeperId})`}
+                  </td>
+                  <td>
+                    {transaction.user?.discordName ??
+                      `unlinked ${transaction.sleeperOwnerId}`}
+                  </td>
+                  <td className='text-right'>${transaction.bid}</td>
+                  <td className='text-right'>{transaction.seq}</td>
+                  <td>{transaction.status}</td>
+                  <td className='text-sm text-muted-foreground'>
+                    {transaction.notes}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {transactions.map(transaction => (
-                  <tr key={transaction.id}>
-                    <td>
-                      {transaction.addPlayer?.fullName ??
-                        `(${transaction.addSleeperId})`}
-                    </td>
-                    <td>
-                      {transaction.user?.discordName ??
-                        `unlinked ${transaction.sleeperOwnerId}`}
-                    </td>
-                    <td className='text-right'>${transaction.bid}</td>
-                    <td className='text-right'>{transaction.seq}</td>
-                    <td>{transaction.status}</td>
-                    <td className='text-sm text-muted-foreground'>
-                      {transaction.notes}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </Table>
           )}
-        </section>
+        </Section>
       ))}
-    </>
+    </Section>
   );
 }

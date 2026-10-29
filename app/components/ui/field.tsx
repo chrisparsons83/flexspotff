@@ -1,11 +1,11 @@
 import { Label } from './label';
-import { cloneElement, type ReactElement, useId } from 'react';
+import { cloneElement, type ReactElement, type ReactNode, useId } from 'react';
 import { cn } from '~/utils';
 
 type Props = {
   label: string;
   /** Written under the control, once, in place of a tooltip. */
-  description?: string;
+  description?: ReactNode;
   /** Replaces the description while the value is wrong. */
   error?: string;
   className?: string;
@@ -28,7 +28,7 @@ export function Field({
   const id = useId();
   const controlId = children.props.id ?? `${id}-control`;
   const helpId = `${id}-help`;
-  const help = error ?? description;
+  const help = error || description;
   // Added to any description the control already has, not in place of it.
   const describedBy =
     [children.props['aria-describedby'], help && helpId]

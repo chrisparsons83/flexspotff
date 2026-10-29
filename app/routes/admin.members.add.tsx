@@ -5,6 +5,9 @@ import { typedjson, useTypedActionData } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
 import { createOrUpdateSleeperUser } from '~/models/sleeperUser.server';
 import { createUser } from '~/models/user.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -67,52 +70,23 @@ export default function MembersAdd() {
       : 'Add';
 
   return (
-    <article>
-      <h2>Add member</h2>
-      <p>
-        This is to add a member manually to the system. You almost never want to
-        do this, you would much rather them log in via Discord so that this is
-        all handled automatically. This is only really here so Chris can enter
-        in historical data much easier and get things all synced up.
-      </p>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST' className='grid grid-cols-1 gap-6' ref={formRef}>
-        <div>
-          <label htmlFor='discordName'>
-            Discord name
-            <input
-              type='text'
-              required
-              name='discordName'
-              id='discordName'
-              className='mt-1 block w-full '
-            />
-          </label>
-        </div>
-        <div>
-          <label htmlFor='discordId'>
-            Discord ID
-            <input
-              type='text'
-              required
-              name='discordId'
-              id='discordId'
-              className='mt-1 block w-full '
-            />
-          </label>
-        </div>
-        <div>
-          <label htmlFor='discordId'>
-            Sleeper owner ID
-            <input
-              type='text'
-              required
-              name='sleeperOwnerId'
-              id='sleeperOwnerId'
-              className='mt-1 block w-full '
-            />
-          </label>
-        </div>
+    <Section
+      title='Add member'
+      description='Adds a member by hand. You almost never want this: a member who logs in with Discord is set up automatically. It is here for entering historical data.'
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Form method='POST' className='grid max-w-sm gap-6' ref={formRef}>
+        <Field label='Discord name'>
+          <Input required name='discordName' />
+        </Field>
+        <Field label='Discord ID'>
+          <Input required name='discordId' />
+        </Field>
+        <Field label='Sleeper owner ID'>
+          <Input required name='sleeperOwnerId' />
+        </Field>
         <div>
           <Button
             type='submit'
@@ -124,6 +98,6 @@ export default function MembersAdd() {
           </Button>
         </div>
       </Form>
-    </article>
+    </Section>
   );
 }
