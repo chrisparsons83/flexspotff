@@ -2,15 +2,18 @@ import { FOCUS_RING } from './styles';
 import { cn } from '~/utils';
 
 /**
- * A row of buttons that picks one view of a section: a year, a sort, a
- * league. The chosen one is a solid block; the rest sit flat on the
- * secondary surface. Wraps onto a second line rather than scrolling.
+ * A row of buttons that picks one of a few: a year, a sort, a league, a
+ * pick. The chosen one is marked as the current tab is, with the accent bar;
+ * the rest sit flat on the secondary surface. Wraps onto a second line
+ * rather than scrolling.
  */
 export function SegmentedControl<T extends string | number>({
   options,
   value,
   onChange,
   label,
+  size = 'sm',
+  disabled = false,
   className,
 }: {
   options: readonly { value: T; label: string }[];
@@ -18,6 +21,10 @@ export function SegmentedControl<T extends string | number>({
   onChange: (value: T) => void;
   /** Read by screen readers, e.g. "Season" or "Sort by". */
   label: string;
+  /** md for a choice made by tapping, such as a pick, rather than a view. */
+  size?: 'sm' | 'md';
+  /** Shows the choice but no longer takes a new one, as a locked pick. */
+  disabled?: boolean;
   className?: string;
 }) {
   return (
@@ -33,12 +40,16 @@ export function SegmentedControl<T extends string | number>({
             key={option.value}
             type='button'
             aria-pressed={selected}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              'h-8 px-3 text-sm tabular-nums transition-colors duration-fast',
+              'border px-3 tabular-nums transition-colors duration-fast disabled:cursor-not-allowed',
+              size === 'md' ? 'h-10 text-base' : 'h-8 text-sm',
+              // Chosen the way the current tab is: the tab surface with the
+              // accent bar along its foot.
               selected
-                ? 'bg-foreground font-semibold text-background'
-                : 'bg-secondary text-secondary-foreground hover:bg-accent',
+                ? 'border-tab-edge bg-tab bg-accent-gradient bg-[length:100%_var(--tab-bar)] bg-bottom bg-no-repeat font-semibold text-tab-foreground [background-origin:border-box]'
+                : 'border-transparent bg-secondary text-secondary-foreground enabled:hover:bg-accent disabled:text-muted-foreground',
               FOCUS_RING,
             )}
           >

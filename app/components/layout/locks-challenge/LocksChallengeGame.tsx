@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
+import { SegmentedControl } from '~/components/ui/segmented-control';
 import type {
   LocksGameByYearAndWeekElement,
   TeamPick,
@@ -30,11 +30,10 @@ export default function LocksChallengeGameComponent({
   const [pickedTeam, setPickedTeam] = useState<NFLTeam | null>(
     existingTeamPick,
   );
-
-  const defaultTabValue =
-    existingTeamPick === locksGame.game.homeTeam
+  const pick =
+    pickedTeam?.id === locksGame.game.homeTeam.id
       ? 'homeTeamPick'
-      : existingTeamPick === locksGame.game.awayTeam
+      : pickedTeam?.id === locksGame.game.awayTeam.id
       ? 'awayTeamPick'
       : 'noTeamPick';
 
@@ -77,7 +76,7 @@ export default function LocksChallengeGameComponent({
     { value: 'awayTeamPick', label: locksGame.game.awayTeam.mascot },
     { value: 'noTeamPick', label: 'No Pick' },
     { value: 'homeTeamPick', label: locksGame.game.homeTeam.mascot },
-  ];
+  ] as const;
 
   return (
     <fieldset
@@ -95,27 +94,15 @@ export default function LocksChallengeGameComponent({
         name={`${locksGame.id}-${pickedTeam?.id}`}
         value={pickedTeam?.id ? 1 : 0}
       />
-      <RadioGroup
-        defaultValue={defaultTabValue}
-        onValueChange={handleTabTriggerPress}
-        disabled={pickLocked || false}
-        className='grid-cols-3'
-      >
-        {options.map(option => (
-          <label
-            key={option.value}
-            className={cn(
-              'flex items-center gap-2',
-              option.value === 'homeTeamPick' && 'justify-end',
-              option.value === 'noTeamPick' &&
-                'justify-center text-muted-foreground',
-            )}
-          >
-            <RadioGroupItem value={option.value} />
-            {option.label}
-          </label>
-        ))}
-      </RadioGroup>
+      <SegmentedControl
+        label={`${locksGame.game.awayTeam.mascot} at ${locksGame.game.homeTeam.mascot}`}
+        options={options}
+        value={pick}
+        onChange={handleTabTriggerPress}
+        disabled={!!pickLocked}
+        size='md'
+        className='grid grid-cols-3'
+      />
       {result && (
         <p
           className={cn(
