@@ -1,3 +1,4 @@
+import { DiscordLogoIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { SocialsProvider } from 'remix-auth-socials';
@@ -21,7 +22,10 @@ export default function Login() {
     <>
       <PageHeader title='Log in' />
       <Form action={`/auth/${SocialsProvider.DISCORD}`} method='POST'>
-        <Button type='submit'>Log in with Discord</Button>
+        <Button type='submit' variant='discord'>
+          <DiscordLogoIcon aria-hidden />
+          Log in with Discord
+        </Button>
       </Form>
     </>
   );

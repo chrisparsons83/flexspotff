@@ -1,5 +1,5 @@
 import { Button } from './button';
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { Cross2Icon, DiscordLogoIcon } from '@radix-ui/react-icons';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof Button> = {
@@ -9,7 +9,14 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: 'inline-radio',
-      options: ['primary', 'secondary', 'destructive', 'ghost', 'link'],
+      options: [
+        'primary',
+        'secondary',
+        'destructive',
+        'discord',
+        'ghost',
+        'link',
+      ],
     },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg', 'icon'] },
   },
@@ -26,6 +33,10 @@ export const Variants: Story = {
       <Button>Save</Button>
       <Button variant='secondary'>Cancel</Button>
       <Button variant='destructive'>Delete entry</Button>
+      <Button variant='discord'>
+        <DiscordLogoIcon aria-hidden />
+        Join the Discord
+      </Button>
       <Button variant='ghost'>Show more</Button>
       <Button variant='link'>Rules</Button>
     </div>

@@ -188,6 +188,13 @@ const FIELD_GREEN = {
   light: make({ l: 0.72, c: 0.19, h: 148 }),
 };
 
+/**
+ * Discord's Blurple, exactly, for the buttons that go to Discord: joining the
+ * server and logging in. Fixed, like the accent. A fill, never text.
+ */
+const DISCORD_HEX = '#5865f2';
+const discord = round(hexToOklch(DISCORD_HEX));
+
 /** Hover lifts the accent; lighter also raises its contrast with its text. */
 const PRIMARY_HOVER_LIFT = 0.05;
 /** How much darker a button's shadow is than the button, for every button. */
@@ -352,6 +359,11 @@ const buildRoles = (theme: Theme) => {
     'primary-red': accentRed,
     'primary-deep': deepRed,
     'field-green': FIELD_GREEN[theme],
+    discord,
+    'discord-foreground': textOn(discord),
+    // Its text is white, so hover darkens where the accent's lightens.
+    'discord-hover': make({ ...discord, l: discord.l - PRIMARY_HOVER_LIFT }),
+    'discord-shade': make({ ...discord, l: discord.l - SHADE_DROP }),
     brand: clearing(
       BRAND_START[theme],
       theme,
@@ -408,6 +420,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
   ['muted-foreground', 'muted'],
   ['muted-foreground', 'secondary'],
   ['destructive-foreground', 'destructive'],
+  ['discord-foreground', 'discord'],
+  ['discord-foreground', 'discord-hover'],
   // Accent text is for the page and cards; controls on the secondary
   // surface use neutral text.
   ['brand', 'background'],
@@ -424,6 +438,8 @@ export const TEXT_PAIRS: [Role, Role][] = [
 export const EDGE_PAIRS: [Role, Role][] = [
   ['primary-edge', 'background'],
   ['primary-edge', 'card'],
+  ['discord', 'background'],
+  ['discord', 'card'],
   ['input', 'background'],
   ['input', 'card'],
   ['ring', 'background'],

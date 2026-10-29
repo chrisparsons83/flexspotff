@@ -79,7 +79,8 @@ function findPatterns() {
   /** @type {[string, RegExp][]} */
   const COPY = [
     ['dot, bullet or pipe as a separator', /\s[·•|]\s|^[·•|]$/],
-    ['emoji', /\p{Extended_Pictographic}/u],
+    // ©, ® and ™ count as pictographic but are text symbols, not emoji.
+    ['emoji', /(?![©®™])\p{Extended_Pictographic}/u],
     ['em dash', /—/],
     ['exclamation mark', /!(\s|$)/],
     ['stock phrase', /\b(Oops|Welcome back|Let['’]s|Nothing to see here)\b/i],

@@ -44,7 +44,8 @@ const CLASS_RULES: [string, RegExp][] = [
 
 /** Rules read off the whole line. */
 const LINE_RULES: [string, RegExp][] = [
-  ['emoji', /\p{Extended_Pictographic}/u],
+  // ©, ® and ™ count as pictographic but are text symbols, not emoji.
+  ['emoji', /(?![©®™])\p{Extended_Pictographic}/u],
   ['tick, cross or star mark', /[✓✔✗✘✕★☆]/],
   ['dot or bullet as a separator', /\s[·•]\s|['">{]\s*[·•]\s*['"<}]/],
   ['em dash', /—/],

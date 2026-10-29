@@ -188,6 +188,7 @@ const config: Config = {
         'press-destructive': `0 var(--press-drop) 0 0 ${color(
           'destructive-shade',
         )}`,
+        'press-discord': `0 var(--press-drop) 0 0 ${color('discord-shade')}`,
         overlay: '0 8px 24px 0 rgb(0 0 0 / 0.4)',
         // Not `card`, which is also a colour: `shadow-card` would set the
         // shadow colour as well.

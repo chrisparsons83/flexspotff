@@ -1,4 +1,4 @@
-import { ChevronRightIcon } from '@radix-ui/react-icons';
+import { ChevronRightIcon, DiscordLogoIcon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
@@ -108,8 +108,11 @@ export default function Index() {
               </Link>
             </Button>
           ) : (
-            <Button asChild>
-              <a href={DISCORD_INVITE}>Join the Discord</a>
+            <Button asChild variant='discord'>
+              <a href={DISCORD_INVITE}>
+                <DiscordLogoIcon aria-hidden />
+                Join the Discord
+              </a>
             </Button>
           )
         }

@@ -28,6 +28,10 @@ const buttonVariants = cva(
           'border-control-edge bg-control text-secondary-foreground shadow-press-secondary hover:bg-accent active:translate-y-[var(--press-drop)] active:shadow-none',
         destructive:
           'border-transparent bg-destructive text-destructive-foreground shadow-press-destructive active:translate-y-[var(--press-drop)] active:shadow-none',
+        // Discord's own colour, for the buttons that go there. Pair it with
+        // DiscordLogoIcon.
+        discord:
+          'border-discord bg-discord text-discord-foreground shadow-press-discord hover:bg-discord-hover active:translate-y-[var(--press-drop)] active:shadow-none',
         ghost:
           'border-transparent text-foreground hover:bg-secondary hover:text-secondary-foreground',
         link: 'border-transparent px-0 text-brand underline underline-offset-4 hover:decoration-2',
