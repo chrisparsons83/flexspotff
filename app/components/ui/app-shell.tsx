@@ -39,7 +39,10 @@ type Props = ComponentProps<typeof NavBar> & {
    * width, for the draft boards.
    */
   width?: 'contained' | 'full';
-  /** The way down to this page, shown above it when it is two levels deep. */
+  /**
+   * The way down to this page, shown above it once it is a level below a
+   * section.
+   */
   breadcrumbs?: Crumb[];
   children: ReactNode;
 };

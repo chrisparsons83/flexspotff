@@ -16,9 +16,10 @@ export type RouteHandle = {
   /** `full` gives the page the whole width, for the draft boards. */
   width?: 'contained' | 'full';
   /**
-   * The route's name in the browser tab. A layout names its section and each
-   * page beneath it names itself, so the tab reads "Standings - Leagues". A
-   * function that returns nothing leaves the route out.
+   * The route's name, in the browser tab and as its level of the breadcrumb.
+   * A layout names its section and each page beneath it names itself, so the
+   * tab reads "Standings - Leagues". Keep it short enough to read in a trail.
+   * A function that returns nothing leaves the route out.
    */
   title?: string | ((args: TitleArgs) => string | null | undefined);
 };
@@ -57,11 +58,16 @@ const routeName = (match: TitleMatch, pathname: string) => {
   }
 };
 
+/**
+ * The page's path. A match's own pathname is only the part of the URL it
+ * matched, so the deepest match has the whole of it.
+ */
+const pagePath = (matches: TitleMatch[]) => matches.at(-1)?.pathname ?? '/';
+
 /** Every route's name from the deepest out, skipping one its parent gave. */
 const pageNames = (matches: TitleMatch[]): string[] => {
   const names: string[] = [];
-  // A match's own pathname is only the part of the URL it matched.
-  const pathname = matches.at(-1)?.pathname ?? '/';
+  const pathname = pagePath(matches);
   for (const match of [...matches].reverse()) {
     const name = routeName(match, pathname);
     if (name && name !== names[names.length - 1]) names.push(name);
@@ -69,6 +75,7 @@ const pageNames = (matches: TitleMatch[]): string[] => {
   return names;
 };
 
+/** One level of the breadcrumb, or a section of the main nav. */
 export type Crumb = { label: string; to: string };
 
 const withoutTrailingSlash = (path: string) =>
@@ -78,13 +85,13 @@ const withoutTrailingSlash = (path: string) =>
  * The way down to this page, outermost first: its section of the main nav,
  * then every route that names itself, each linked to the page at its path.
  * A route at the same path as the one above it adds nothing, so an index
- * page is named by its layout. Empty outside the nav's sections.
+ * page is named by its layout. Empty outside the given sections.
  */
 export const breadcrumbs = (
   matches: TitleMatch[],
-  sections: readonly { label: string; to: string }[],
+  sections: readonly Crumb[],
 ): Crumb[] => {
-  const pathname = withoutTrailingSlash(matches.at(-1)?.pathname ?? '/');
+  const pathname = withoutTrailingSlash(pagePath(matches));
   const section = sections.find(
     ({ to }) => pathname === to || pathname.startsWith(`${to}/`),
   );
@@ -135,7 +142,7 @@ export const socialMeta = (
   { property: 'og:description', content: SITE_DESCRIPTION },
   {
     property: 'og:url',
-    content: new URL(matches.at(-1)?.pathname ?? '/', origin).href,
+    content: new URL(pagePath(matches), origin).href,
   },
   {
     property: 'og:image',

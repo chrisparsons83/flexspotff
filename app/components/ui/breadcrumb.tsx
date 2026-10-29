@@ -12,12 +12,14 @@ type Props = {
 /**
  * Where a deep page sits, above its title: the section, then each level
  * down, linked. The chevron between them stands for "in". On a phone only
- * the level above shows, as a way back up; screen readers hear the whole
- * trail there too. A trail of one level is no trail, so it shows nothing.
+ * the level above shows, as a way back up; the rest is hidden from sight
+ * but not from screen readers, which hear the whole trail, and shows
+ * again when a keyboard reaches it. A trail of one
+ * level is no trail, so it shows nothing.
  */
 export function Breadcrumb({ items, className }: Props) {
   if (items.length < 2) return null;
-  const parent = items.length - 2;
+  const parentIndex = items.length - 2;
   return (
     <nav aria-label='Breadcrumb' className={cn('mb-4 text-sm', className)}>
       <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1 text-muted-foreground'>
@@ -28,7 +30,8 @@ export function Breadcrumb({ items, className }: Props) {
               key={item.to}
               className={cn(
                 'flex min-w-0 items-center gap-x-1.5',
-                index < parent && 'max-sm:hidden',
+                index < parentIndex &&
+                  'max-sm:sr-only max-sm:focus-within:not-sr-only',
                 current && 'max-sm:sr-only',
               )}
             >
@@ -49,7 +52,7 @@ export function Breadcrumb({ items, className }: Props) {
                   variant='quiet'
                   className='flex items-center gap-x-1 hover:text-foreground'
                 >
-                  {index === parent && (
+                  {index === parentIndex && (
                     <ChevronLeftIcon
                       aria-hidden
                       className='shrink-0 sm:hidden'

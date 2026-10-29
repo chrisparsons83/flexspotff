@@ -47,10 +47,5 @@ export const Short: Story = {
 /** On a phone only the level above shows, as the way back up. */
 export const Phone: Story = {
   globals: { viewport: { value: 'mobile2' }, theme: 'dark' },
-  render: args => (
-    <>
-      <Breadcrumb {...args} />
-      <PageHeader title='Week 7' />
-    </>
-  ),
+  render: AbovePageHeader.render,
 };
