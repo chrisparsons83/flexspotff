@@ -1,6 +1,6 @@
 import { typedjson } from 'remix-typedjson';
 import type { ScoreArray } from '~/models/cup.server';
-import { getCupByYear, getCups } from '~/models/cup.server';
+import { getCupByYear } from '~/models/cup.server';
 import { getCupGamesByCup } from '~/models/cupgame.server';
 import { getCupWeeks } from '~/models/cupweek.server';
 import { getCurrentSeason } from '~/models/season.server';
@@ -52,10 +52,9 @@ export async function getCupBracket(year: number) {
 
 /** A year's cup page, for /leagues/cup and /leagues/cup/:year. */
 export async function loadCupPage(year: number) {
-  const [currentSeason, bracket, cups] = await Promise.all([
+  const [currentSeason, bracket] = await Promise.all([
     getCurrentSeason(),
     getCupBracket(year),
-    getCups(),
   ]);
   assertSeasonHasDataOrIsCurrent(
     year,
@@ -66,6 +65,5 @@ export async function loadCupPage(year: number) {
   return typedjson({
     year,
     bracket,
-    years: cups.map(cup => cup.year).sort((a, b) => b - a),
   });
 }

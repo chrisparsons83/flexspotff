@@ -87,22 +87,22 @@ export default function LeaguePage() {
             label={league.name}
             items={items}
             picker={
-              <div className='flex gap-3'>
+              <div className='flex flex-wrap items-center gap-3'>
+                {years.length > 1 && (
+                  <GoBox
+                    buttonText={`${league.year} Season`}
+                    options={years.map(year => ({
+                      label: `${year}`,
+                      url: `/leagues/${year}/${league.name.toLowerCase()}`,
+                    }))}
+                  />
+                )}
                 {sameYear.length > 1 && (
                   <GoBox
                     buttonText={`${league.year} Leagues`}
                     options={sameYear.map(name => ({
                       label: name,
                       url: `/leagues/${league.year}/${name.toLowerCase()}`,
-                    }))}
-                  />
-                )}
-                {years.length > 1 && (
-                  <GoBox
-                    buttonText='Season'
-                    options={years.map(year => ({
-                      label: `${year}`,
-                      url: `/leagues/${year}/${league.name.toLowerCase()}`,
                     }))}
                   />
                 )}

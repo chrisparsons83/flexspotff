@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import LeagueTable from '~/components/layout/standings/LeagueTable';
-import GoBox from '~/components/ui/GoBox';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
@@ -10,7 +9,6 @@ import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { FIRST_YEAR } from '~/utils/constants';
 import type { RouteHandle } from '~/utils/route-handle';
-import { yearOptions } from '~/utils/years';
 
 export const handle: RouteHandle = {
   title: ({ params }) =>
@@ -19,7 +17,6 @@ export const handle: RouteHandle = {
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const currentSeason = await getCurrentSeason();
-  const maxYear = currentSeason?.year || new Date().getFullYear();
 
   const year = params.year ? Number(params.year) : currentSeason?.year;
   if (params.year && (!Number.isInteger(year) || year! < FIRST_YEAR)) {
@@ -28,22 +25,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
   const leagues = year ? await getLeaguesByYear(year) : [];
 
-  return typedjson({ leagues, year: year ?? null, maxYear });
+  return typedjson({ leagues, year: year ?? null });
 };
 
 export default function Standings() {
-  const { leagues, year, maxYear } = useTypedLoaderData<typeof loader>();
+  const { leagues, year } = useTypedLoaderData<typeof loader>();
 
   return (
-    <Section
-      title={year ? `${year} Standings` : 'Standings'}
-      action={
-        <GoBox
-          options={yearOptions(maxYear, y => `/leagues/standings/${y}`)}
-          buttonText='Season'
-        />
-      }
-    >
+    <Section title={year ? `${year} Standings` : 'Standings'}>
       {leagues.length === 0 ? (
         <EmptyState title='No leagues for this season yet'>
           Standings appear once the leagues are set up.

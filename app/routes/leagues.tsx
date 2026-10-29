@@ -1,28 +1,35 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Outlet } from '@remix-run/react';
+import { Outlet, useLocation } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
 import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
+import { getCups } from '~/models/cup.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { RouteHandle } from '~/utils/route-handle';
+import { yearOptions } from '~/utils/years';
 
 export const handle: RouteHandle = { title: 'Leagues' };
 
+/** The year in the URL, on the tabs that have one. */
+const yearParam = (params: LoaderFunctionArgs['params']) =>
+  params.year && /^\d+$/.test(params.year) ? Number(params.year) : null;
+
 /**
- * The picker lists the leagues of the year the page is showing, such as a
- * past cup's, so it never offers another season's leagues beside it.
+ * One season for the whole section: the header's year picker moves the tab
+ * you are on to another year, and the league picker lists that year's
+ * leagues, so the two never disagree.
  */
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const season = await getCurrentSeason();
-  const year = /^\d+$/.test(params.year ?? '')
-    ? Number(params.year)
-    : season?.year ?? null;
+  const [season, cups] = await Promise.all([getCurrentSeason(), getCups()]);
+  const year = yearParam(params) ?? season?.year ?? null;
   const leagues = year ? await getLeaguesByYear(year) : [];
 
   return typedjson({
     year,
+    currentYear: season?.year ?? null,
+    cupYears: cups.map(cup => cup.year).sort((a, b) => b - a),
     leagues: leagues.map(league => league.name),
   });
 };
@@ -37,8 +44,27 @@ const ITEMS = [
   { label: 'Rules', to: '/leagues/rules' },
 ];
 
+/**
+ * The tabs that show one season, and where each keeps it. Read from the
+ * location rather than the loader: moving between two of them changes no
+ * params, so the layout's loader does not run again.
+ */
+const SEASON_TABS = ['standings', 'leaderboard', 'cup', 'adp'] as const;
+
 export default function Leagues() {
-  const { year, leagues } = useTypedLoaderData<typeof loader>();
+  const { year, currentYear, cupYears, leagues } =
+    useTypedLoaderData<typeof loader>();
+  const { pathname } = useLocation();
+  const tab = SEASON_TABS.find(name => pathname.startsWith(`/leagues/${name}`));
+  const years =
+    tab === 'cup'
+      ? cupYears.map(cupYear => ({
+          label: `${cupYear}`,
+          url: `/leagues/cup/${cupYear}`,
+        }))
+      : tab && currentYear
+      ? yearOptions(currentYear, option => `/leagues/${tab}/${option}`)
+      : [];
 
   return (
     <>
@@ -50,15 +76,21 @@ export default function Leagues() {
             label='Leagues'
             items={ITEMS}
             picker={
-              year &&
-              leagues.length > 0 && (
-                <GoBox
-                  buttonText={`${year} Leagues`}
-                  options={leagues.map(name => ({
-                    label: name,
-                    url: `/leagues/${year}/${name.toLowerCase()}`,
-                  }))}
-                />
+              year && (
+                <div className='flex flex-wrap items-center gap-3'>
+                  {years.length > 0 && (
+                    <GoBox buttonText={`${year} Season`} options={years} />
+                  )}
+                  {leagues.length > 0 && (
+                    <GoBox
+                      buttonText={`${year} Leagues`}
+                      options={leagues.map(name => ({
+                        label: name,
+                        url: `/leagues/${year}/${name.toLowerCase()}`,
+                      }))}
+                    />
+                  )}
+                </div>
               )
             }
           />

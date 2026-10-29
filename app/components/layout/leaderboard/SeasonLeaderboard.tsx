@@ -1,11 +1,9 @@
 import type { LeaderboardEntry } from './LeaderboardTable';
 import LeaderboardTable from './LeaderboardTable';
-import GoBox from '~/components/ui/GoBox';
 import MemberName from '~/components/ui/MemberName';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { assignCompetitionRanks } from '~/utils/rank';
-import { yearOptions } from '~/utils/years';
 
 // Described structurally rather than off the model return types, so the
 // JSON-serialised shapes the loaders hand back still satisfy it.
@@ -25,8 +23,6 @@ type Props = {
   /** Per-team season totals, best first. */
   leaderboard: SeasonTotal[];
   teams: SeasonTeam[];
-  /** Newest year offered in the year picker. */
-  maxYear: number;
   /** The newest week with scores, for the link to the weekly board. */
   newestWeek: number | null;
 };
@@ -41,7 +37,6 @@ export default function SeasonLeaderboard({
   year,
   leaderboard,
   teams,
-  maxYear,
   newestWeek,
 }: Props) {
   const entries: LeaderboardEntry[] = assignCompetitionRanks(
@@ -66,17 +61,9 @@ export default function SeasonLeaderboard({
     <Section
       title={`${year} Season Leaderboard`}
       action={
-        <div className='flex flex-wrap items-center gap-4'>
-          {newestWeek && (
-            <Link to={`/leagues/leaderboard/${year}/${newestWeek}`}>
-              By Week
-            </Link>
-          )}
-          <GoBox
-            options={yearOptions(maxYear, y => `/leagues/leaderboard/${y}`)}
-            buttonText='Season'
-          />
-        </div>
+        newestWeek && (
+          <Link to={`/leagues/leaderboard/${year}/${newestWeek}`}>By Week</Link>
+        )
       }
     >
       <LeaderboardTable entries={entries} valueHeadings={['Points For']} />

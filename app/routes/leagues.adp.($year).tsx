@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import GoBox from '~/components/ui/GoBox';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Section } from '~/components/ui/section';
 import { PositionMark } from '~/components/ui/swatch';
@@ -11,10 +10,9 @@ import type { Player } from '~/models/players.server';
 import { getPlayersByIDs } from '~/models/players.server';
 import { getCurrentSeason } from '~/models/season.server';
 import type { RouteHandle } from '~/utils/route-handle';
-import { yearOptions } from '~/utils/years';
 
 export const handle: RouteHandle = {
-  title: ({ params }) => (params['*'] ? `${params['*']} ADP` : 'ADP'),
+  title: ({ params }) => (params.year ? `${params.year} ADP` : 'ADP'),
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -23,7 +21,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Response('No season set up yet', { status: 404 });
   }
 
-  const yearParam = params['*'];
+  const yearParam = params.year;
   const year = !yearParam ? currentSeason.year : Number.parseInt(yearParam);
 
   if (isNaN(year)) {
@@ -57,23 +55,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     }
   }
   adp.sort((a, b) => a._avg.pickNumber! - b._avg.pickNumber!);
-  return typedjson({ adp, playersMap, year, maxYear: currentSeason.year });
+  return typedjson({ adp, playersMap, year });
 };
 
 export default function ADP() {
-  const { adp, playersMap, year, maxYear } =
-    useTypedLoaderData<typeof loader>();
+  const { adp, playersMap, year } = useTypedLoaderData<typeof loader>();
 
   return (
     <Section
       title={`${year} Server ADP`}
       description='Average draft position across every league that has drafted. A player one league left undrafted counts as pick 181 there.'
-      action={
-        <GoBox
-          options={yearOptions(maxYear, y => `/leagues/adp/${y}`)}
-          buttonText='Season'
-        />
-      }
     >
       {adp.length === 0 ? (
         <EmptyState title='No drafts yet'>

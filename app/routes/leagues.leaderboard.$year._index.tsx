@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaderboard from '~/components/layout/leaderboard/SeasonLeaderboard';
-import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
 import {
   getNewestWeekTeamGameByYear,
@@ -15,8 +14,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Response('Season not found', { status: 404 });
   }
 
-  const [currentSeason, leaderboard, teams, newest] = await Promise.all([
-    getCurrentSeason(),
+  const [leaderboard, teams, newest] = await Promise.all([
     getTeamGameYearlyTotals(year),
     getTeamsInSeason(year),
     getNewestWeekTeamGameByYear(year),
@@ -27,7 +25,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     leaderboard,
     teams,
     newestWeek: newest._max.week,
-    maxYear: currentSeason?.year ?? year,
   });
 };
 

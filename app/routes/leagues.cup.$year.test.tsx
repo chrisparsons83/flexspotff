@@ -34,7 +34,7 @@ describe('leagues.cup.$year', () => {
     const response = await loader(loaderArgs('2026'));
     const data = await response.json();
 
-    expect(data).toMatchObject({ bracket: null, year: 2026, years: [] });
+    expect(data).toMatchObject({ bracket: null, year: 2026 });
   });
 
   it('is a 404 for a year that is not a number', async () => {

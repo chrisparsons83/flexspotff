@@ -28,5 +28,5 @@ export default function LeaderboardIndex() {
   const { season } = useTypedLoaderData<typeof loader>();
   if (!season) return <EmptyState title='No season set up yet' />;
 
-  return <SeasonLeaderboard {...season} maxYear={season.year} />;
+  return <SeasonLeaderboard {...season} />;
 }
