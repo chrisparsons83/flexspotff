@@ -13,8 +13,11 @@ const isPending = (draftDate: Date | null) =>
 /** Each entry, best first, opening to the teams it picked. */
 export default function FSquaredStandingsTable({
   results,
+  year,
 }: {
   results: currentResultsBase[];
+  /** The season, so each league links to its page. */
+  year: number;
 }) {
   const entries: LeaderboardEntry[] = results.map((result, index) => ({
     id: result.id,
@@ -32,12 +35,16 @@ export default function FSquaredStandingsTable({
           return (
             <tr key={team.id}>
               <td>
-                <LeagueMark name={team.league.name} />
+                <LeagueMark name={team.league.name} year={year} />
               </td>
               <td className={pending ? 'text-muted-foreground' : undefined}>
                 {pending
                   ? 'Pending the draft'
-                  : team.user && <MemberName user={team.user} />}
+                  : team.user && (
+                      <ProfileLink userId={team.user.id}>
+                        <MemberName user={team.user} />
+                      </ProfileLink>
+                    )}
               </td>
               <td className='text-right'>{pending ? '–' : team.pointsFor}</td>
             </tr>

@@ -372,7 +372,7 @@ function SeedingHistory({
           <tr key={run.year} className='border-b border-border'>
             <td className='px-2 py-2'>{run.year}</td>
             <td className='px-2 py-2'>
-              <LeagueMark name={run.leagueName} />
+              <LeagueMark name={run.leagueName} year={run.year} />
             </td>
             <td className='px-2 py-2 text-right font-medium tabular-nums'>
               {run.rounds[0]?.status === 'BYE' && (
@@ -403,7 +403,7 @@ function SeedingRow({ seeding }: { seeding: CupSeeding }) {
     <tr className='border-b border-border'>
       <td className='px-2 py-2'>{seeding.year}</td>
       <td className='px-2 py-2'>
-        <LeagueMark name={seeding.leagueName} />
+        <LeagueMark name={seeding.leagueName} year={seeding.year} />
       </td>
       <td className='px-2 py-2 text-right font-medium tabular-nums'>
         #{seeding.rank}

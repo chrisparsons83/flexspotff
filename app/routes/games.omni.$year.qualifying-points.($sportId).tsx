@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { getPlayersAndAssociatedPick } from '~/models/omniplayer.server';
@@ -111,7 +112,9 @@ export default function OmniQualifyingPoints() {
             <td>{position.player.displayName}</td>
             <td>
               {position.player.draftPick?.team.user && (
-                <MemberName user={position.player.draftPick.team.user} />
+                <ProfileLink userId={position.player.draftPick.team.user.id}>
+                  <MemberName user={position.player.draftPick.team.user} />
+                </ProfileLink>
               )}
             </td>
             <td className='text-right'>{position.points.toFixed(2)}</td>

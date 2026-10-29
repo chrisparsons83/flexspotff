@@ -1,6 +1,7 @@
 import MemberAvatar from '~/components/ui/MemberAvatar';
 import MemberName from '~/components/ui/MemberName';
 import { DraftBoard, DraftBoardCell } from '~/components/ui/draft-board';
+import { ProfileLink } from '~/components/ui/profile-link';
 import type { DraftBoardColumnProps } from '~/models/omniseason.server';
 
 type OmniTeam = DraftBoardColumnProps['omniTeam'];
@@ -50,7 +51,11 @@ function TeamHeader({ team }: { team: OmniTeam }) {
         <div className='mx-auto size-8 bg-muted' />
       )}
       <div className='line-clamp-1 w-full text-center'>
-        {team.user && <MemberName user={team.user} />}
+        {team.user && (
+          <ProfileLink userId={team.user.id}>
+            <MemberName user={team.user} />
+          </ProfileLink>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ export type LeaderboardEntry = {
   name: ReactNode;
   /** The entry's league, shown in its own column when any entry has one. */
   league?: string;
+  /** The season of that league, so its name links to the league's page. */
+  leagueYear?: number;
   /** Trailing cells, one per heading in `valueHeadings`. */
   values: ReactNode[];
   /** Rendered in an expandable row beneath. Omit for a non-expandable row. */
@@ -112,7 +114,11 @@ export default function LeaderboardTable({
                 </div>
               </td>
               {withLeague && (
-                <td>{entry.league && <LeagueMark name={entry.league} />}</td>
+                <td>
+                  {entry.league && (
+                    <LeagueMark name={entry.league} year={entry.leagueYear} />
+                  )}
+                </td>
               )}
               {entry.values.map((value, valueIndex) => (
                 <td

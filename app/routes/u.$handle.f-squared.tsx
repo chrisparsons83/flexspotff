@@ -411,7 +411,7 @@ function PickBoard({ seasons }: { seasons: FSquaredSeason[] }) {
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-5'>
         {Array.from(leagues.entries()).map(([leagueName, picks]) => (
           <div key={leagueName} className='bg-background/50 p-3'>
-            <LeagueMark name={leagueName} />
+            <LeagueMark name={leagueName} year={season.year} />
             <ul className='m-0 mt-3 space-y-2 p-0'>
               {picks.map(pick => (
                 <li key={pick.teamId} className='flex list-none gap-2'>

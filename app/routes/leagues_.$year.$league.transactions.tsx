@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
 import { PositionMark } from '~/components/ui/swatch';
 import { Table } from '~/components/ui/table';
@@ -39,7 +40,9 @@ export default function LeagueTransactions() {
                 <tr key={claim.id}>
                   <td>
                     {claim.user ? (
-                      <MemberName user={claim.user} />
+                      <ProfileLink userId={claim.user.id}>
+                        <MemberName user={claim.user} />
+                      </ProfileLink>
                     ) : (
                       'Unknown manager'
                     )}

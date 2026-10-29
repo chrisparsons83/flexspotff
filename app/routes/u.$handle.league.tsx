@@ -416,7 +416,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
               {season.inProgress && <CurrentSeason />}
             </td>
             <td className='px-2 py-2'>
-              <LeagueMark name={season.leagueName} />
+              <LeagueMark name={season.leagueName} year={season.year} />
             </td>
             <td className='px-2 py-2'>
               <Finish season={season} />
@@ -679,7 +679,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
                 subtitle={
                   <span className='inline-flex flex-wrap items-center gap-1.5'>
                     {weekLabel(game)}
-                    <LeagueMark name={game.leagueName} />
+                    <LeagueMark name={game.leagueName} year={game.year} />
                     <PostseasonStatus game={game} />
                   </span>
                 }
@@ -715,7 +715,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
               <PostseasonStatus game={game} />
             </td>
             <td className='px-2 py-2'>
-              <LeagueMark name={game.leagueName} />
+              <LeagueMark name={game.leagueName} year={game.year} />
             </td>
             <td className='px-2 py-2'>
               {game.opponentUserId ? (

@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
 import { ordinal } from '~/libs/guillotine/display';
 import { bracketIsSet, requireLeague } from '~/libs/leagues/page.server';
@@ -76,7 +77,9 @@ export default function LeaguePlayoffs() {
                               )}
                             >
                               {team?.user ? (
-                                <MemberName user={team.user} />
+                                <ProfileLink userId={team.user.id}>
+                                  <MemberName user={team.user} />
+                                </ProfileLink>
                               ) : (
                                 'To be decided'
                               )}

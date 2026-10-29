@@ -61,6 +61,7 @@ export default function LeaderboardYearWeek() {
       'Unclaimed team'
     ),
     league: position.team.league.name,
+    leagueYear: year,
     values: [position.pointsScored?.toFixed(2)],
     details: (
       <StarterGrid

@@ -1,4 +1,5 @@
 import { type Fill, FILLS, leagueFill, positionFill } from './fills';
+import { Link } from './link';
 import type { ReactNode } from 'react';
 import { cn } from '~/utils';
 
@@ -45,18 +46,30 @@ function Mark({
   );
 }
 
-/** A league by name, with its colour. One we do not know gets no colour. */
+/**
+ * A league by name, with its colour. One we do not know gets no colour.
+ * Given the season, it links to that season's league page.
+ */
 export function LeagueMark({
   name,
+  year,
   className,
 }: {
   name: string;
+  year?: number | string;
   className?: string;
 }) {
-  return (
+  const mark = (
     <Mark fill={leagueFill(name)} className={className}>
       {name}
     </Mark>
+  );
+  return year ? (
+    <Link to={`/leagues/${year}/${name.toLowerCase()}`} variant='quiet'>
+      {mark}
+    </Link>
+  ) : (
+    mark
   );
 }
 

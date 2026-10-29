@@ -2,6 +2,7 @@ import type { LeaderboardEntry } from './LeaderboardTable';
 import LeaderboardTable from './LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
 import { Link } from '~/components/ui/link';
+import { ProfileLink } from '~/components/ui/profile-link';
 import { Section } from '~/components/ui/section';
 import { assignCompetitionRanks } from '~/utils/rank';
 
@@ -15,7 +16,11 @@ type SeasonTotal = {
 type SeasonTeam = {
   id: string;
   league: { name: string };
-  user: { discordName: string; discordUsername?: string | null } | null;
+  user: {
+    id: string;
+    discordName: string;
+    discordUsername?: string | null;
+  } | null;
 };
 
 type Props = {
@@ -50,8 +55,15 @@ export default function SeasonLeaderboard({
       return {
         id: position.teamId,
         rank: position.rank,
-        name: team.user ? <MemberName user={team.user} /> : 'Unclaimed team',
+        name: team.user ? (
+          <ProfileLink userId={team.user.id}>
+            <MemberName user={team.user} />
+          </ProfileLink>
+        ) : (
+          'Unclaimed team'
+        ),
         league: team.league.name,
+        leagueYear: year,
         values: [position._sum.pointsScored?.toFixed(2)],
       };
     })

@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react';
 import MemberName from '~/components/ui/MemberName';
 import { CollapsibleTrigger } from '~/components/ui/collapsible';
 import { FILLS, leagueFill } from '~/components/ui/fills';
+import { ProfileLink } from '~/components/ui/profile-link';
 import type { CupBracketData } from '~/libs/cup/bracket.server';
 import { cn } from '~/utils';
 import { roundNameMapping } from '~/utils/constants';
@@ -230,7 +231,13 @@ function SideRow({
         <span />
       )}
       <span className='truncate'>
-        {bye ? 'Bye' : side?.team.user && <MemberName user={side.team.user} />}
+        {bye
+          ? 'Bye'
+          : side?.team.user && (
+              <ProfileLink userId={side.team.user.id}>
+                <MemberName user={side.team.user} />
+              </ProfileLink>
+            )}
       </span>
       <span className='tabular-nums'>{score ? score.toFixed(2) : ''}</span>
     </div>

@@ -37,6 +37,7 @@ const MEDALS = ['medal-gold', 'medal-silver', 'medal-bronze'] as const;
  */
 export default function RecordsTable({ title, headers, rows }: Props) {
   const league = headers.indexOf('League');
+  const season = headers.indexOf('Year');
   const [page, setPage] = useState(0);
   const pages = Math.ceil(rows.length / PAGE_SIZE);
   const first = page * PAGE_SIZE;
@@ -86,7 +87,10 @@ export default function RecordsTable({ title, headers, rows }: Props) {
                   {i === 0 && row.playerUserId ? (
                     <ProfileLink userId={row.playerUserId}>{cell}</ProfileLink>
                   ) : i === league && cell ? (
-                    <LeagueMark name={String(cell)} />
+                    <LeagueMark
+                      name={String(cell)}
+                      year={season >= 0 ? row.cells[season] : undefined}
+                    />
                   ) : (
                     cell
                   )}

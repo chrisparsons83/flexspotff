@@ -126,7 +126,7 @@ export default function LeaguesOverview() {
                   )}
                 </td>
                 <td>
-                  <LeagueMark name={score.league} />
+                  <LeagueMark name={score.league} year={year} />
                 </td>
                 <td className='text-right'>{score.points.toFixed(2)}</td>
               </tr>

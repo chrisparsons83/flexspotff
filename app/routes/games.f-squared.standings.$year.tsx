@@ -39,7 +39,7 @@ export default function FSquaredStandings() {
       years={years}
       weeks={[]}
     >
-      <FSquaredStandingsTable results={results} />
+      <FSquaredStandingsTable results={results} year={year} />
     </StandingsSection>
   );
 }
