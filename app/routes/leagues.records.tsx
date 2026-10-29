@@ -99,6 +99,7 @@ function Category({ tables }: { tables: RecordTable[] }) {
         </Select>
       )}
       <RecordsTable
+        key={table.title}
         title={table.title}
         headers={table.headers}
         rows={table.rows}

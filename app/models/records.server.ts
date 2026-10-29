@@ -10,7 +10,7 @@ import {
   type CareerStats,
 } from '~/models/profile/shared.server';
 
-const TOP_N = 50;
+const TOP_N = 100;
 const MIN_SEASONS = 2;
 
 export type RecordRow = {

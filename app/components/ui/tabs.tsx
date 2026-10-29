@@ -9,7 +9,11 @@ import { cn } from '~/utils';
  */
 const Tabs = TabsPrimitive.Root;
 
-/** A strip along a rule; scrolls sideways on a phone rather than wrapping. */
+/**
+ * A strip along a rule; scrolls sideways on a phone rather than wrapping.
+ * Never up and down: the current tab's bar sits inside the strip, on the
+ * rule, so nothing spills out to scroll to.
+ */
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
@@ -17,7 +21,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'relative flex overflow-x-auto border-b border-border text-muted-foreground',
+      'relative flex overflow-x-auto overflow-y-hidden border-b border-border text-muted-foreground',
       className,
     )}
     {...props}
@@ -33,7 +37,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      '-mb-px whitespace-nowrap border-b-[3px] border-transparent px-4 py-2.5 text-base font-semibold transition-colors duration-fast hover:text-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-primary data-[state=active]:text-foreground',
+      'whitespace-nowrap border-b-[3px] border-transparent px-4 py-2.5 text-base font-semibold transition-colors duration-fast hover:text-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-primary data-[state=active]:text-foreground',
       FOCUS_RING,
       className,
     )}
