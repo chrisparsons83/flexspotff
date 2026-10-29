@@ -1,4 +1,4 @@
-import { pageTitle, socialMeta } from './route-handle';
+import { breadcrumbs, pageTitle, socialMeta } from './route-handle';
 import { describe, expect, it } from 'vitest';
 
 const match = (handle: unknown, data: unknown = null) => ({
@@ -117,5 +117,81 @@ describe('socialMeta', () => {
     expect(content(meta, 'og:description')).toBe(
       'A fantasy football Discord, around since 2016. Promotion and relegation leagues with a cup across all of them, weekly games and a few side leagues.',
     );
+  });
+});
+
+describe('breadcrumbs', () => {
+  const sections = [
+    { label: 'Leagues', to: '/leagues' },
+    { label: 'Games', to: '/games' },
+  ];
+  const at = (pathname: string, handle?: unknown, data: unknown = null) => ({
+    handle,
+    data,
+    params: { year: '2026', week: '7' },
+    pathname,
+  });
+
+  it('starts at the section and links each named level', () => {
+    expect(
+      breadcrumbs(
+        [
+          at('/'),
+          at('/games/qb-streaming', { title: 'QB streaming' }),
+          at('/games/qb-streaming/standings/2026', {
+            title: ({ params }: { params: { year: string } }) =>
+              `${params.year} standings`,
+          }),
+          at('/games/qb-streaming/standings/2026/7', {
+            title: ({ params }: { params: { week: string } }) =>
+              `Week ${params.week}`,
+          }),
+        ],
+        sections,
+      ),
+    ).toEqual([
+      { label: 'Games', to: '/games' },
+      { label: 'QB streaming', to: '/games/qb-streaming' },
+      { label: '2026 standings', to: '/games/qb-streaming/standings/2026' },
+      { label: 'Week 7', to: '/games/qb-streaming/standings/2026/7' },
+    ]);
+  });
+
+  it('lets a layout name its index page', () => {
+    expect(
+      breadcrumbs(
+        [
+          at('/'),
+          at('/leagues', { title: 'Leagues' }),
+          at('/leagues/', undefined),
+        ],
+        sections,
+      ),
+    ).toEqual([{ label: 'Leagues', to: '/leagues' }]);
+  });
+
+  it('skips a level whose name cannot be read', () => {
+    expect(
+      breadcrumbs(
+        [
+          at('/'),
+          at('/leagues/2026/premier', {
+            title: ({ data }: { data: { league: { name: string } } }) =>
+              data.league.name,
+          }),
+          at('/leagues/2026/premier/draft', { title: 'Draft' }),
+        ],
+        sections,
+      ),
+    ).toEqual([
+      { label: 'Leagues', to: '/leagues' },
+      { label: 'Draft', to: '/leagues/2026/premier/draft' },
+    ]);
+  });
+
+  it('is empty outside the sections', () => {
+    expect(
+      breadcrumbs([at('/'), at('/u/someone', { title: 'Someone' })], sections),
+    ).toEqual([]);
   });
 });
