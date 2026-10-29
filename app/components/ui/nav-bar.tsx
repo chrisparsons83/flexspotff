@@ -84,7 +84,10 @@ export function NavBar(props: Props) {
             aria-label='Flex Spot, home'
             className={cn('flex shrink-0 items-center', FOCUS_RING)}
           >
-            <Logo className='h-7 w-auto' />
+            {/* Centring the box would lift the name, since the box
+                includes the bubble's tail; down 2px sits it on the nav
+                labels' baseline. */}
+            <Logo className='h-7 w-auto translate-y-0.5' />
           </Link>
 
           <nav aria-label='Main' className='hidden md:block'>
