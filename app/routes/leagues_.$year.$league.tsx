@@ -8,7 +8,7 @@ import {
 import GoBox from '~/components/ui/GoBox';
 import { PageHeader } from '~/components/ui/page-header';
 import { SubNav } from '~/components/ui/sub-nav';
-import { requireLeague } from '~/libs/leagues/page.server';
+import { bracketIsSet, requireLeague } from '~/libs/leagues/page.server';
 import { countDraftPicksByLeague } from '~/models/draftpick.server';
 import { getLeagueYearsByName, getLeaguesByYear } from '~/models/league.server';
 import { countPlayoffGamesByLeague } from '~/models/playoffgame.server';
@@ -28,15 +28,23 @@ export const ROUTE_ID = 'routes/leagues_.$year.$league';
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const league = await requireLeague({ params, request });
 
-  const [years, sameYear, weeks, playoffGames, draftPicks, waivers] =
-    await Promise.all([
-      getLeagueYearsByName(league.name),
-      getLeaguesByYear(league.year),
-      getTeamGameWeeksByLeague(league.id),
-      countPlayoffGamesByLeague(league.id),
-      countDraftPicksByLeague(league.id),
-      countWaiverTransactionsByLeague(league.id),
-    ]);
+  const [
+    years,
+    sameYear,
+    weeks,
+    playoffGames,
+    bracketSet,
+    draftPicks,
+    waivers,
+  ] = await Promise.all([
+    getLeagueYearsByName(league.name),
+    getLeaguesByYear(league.year),
+    getTeamGameWeeksByLeague(league.id),
+    countPlayoffGamesByLeague(league.id),
+    bracketIsSet(league),
+    countDraftPicksByLeague(league.id),
+    countWaiverTransactionsByLeague(league.id),
+  ]);
 
   return typedjson({
     league,
@@ -45,7 +53,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     // A tab shows only when there is something on it.
     has: {
       matchups: weeks.length > 0,
-      playoffs: playoffGames > 0,
+      playoffs: playoffGames > 0 && bracketSet,
       draft: draftPicks > 0,
       transactions: waivers > 0,
     },
