@@ -329,7 +329,7 @@ and `/me`.
 | `/in-a-dingy-corner-of-the-internet-is-a-message-board` | Anyone  | Unchanged, unlinked                                                 |
 | `/login`, `/logout`, `/auth/:provider/*`                | Anyone  | Unchanged                                                           |
 | `/resources/theme`                                      | Anyone  | Unchanged (theme toggle action)                                     |
-| `/api/sync-week-scores`, `/healthcheck`                 | Machine | Unchanged                                                           |
+| `/api/sync-week-scores`                                 | Machine | Unchanged (`/healthcheck` was removed with the fly.io config)       |
 
 ### Admin
 
