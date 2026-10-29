@@ -1,3 +1,4 @@
+import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Outlet } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import GoBox from '~/components/ui/GoBox';
@@ -9,12 +10,19 @@ import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { title: 'Leagues' };
 
-export const loader = async () => {
+/**
+ * The picker lists the leagues of the year the page is showing, such as a
+ * past cup's, so it never offers another season's leagues beside it.
+ */
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const season = await getCurrentSeason();
-  const leagues = season ? await getLeaguesByYear(season.year) : [];
+  const year = /^\d+$/.test(params.year ?? '')
+    ? Number(params.year)
+    : season?.year ?? null;
+  const leagues = year ? await getLeaguesByYear(year) : [];
 
   return typedjson({
-    year: season?.year ?? null,
+    year,
     leagues: leagues.map(league => league.name),
   });
 };
