@@ -83,9 +83,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       user && week?.isOpen && !week.isWeekScored
         ? {
             saved: myPicks.length > 0,
-            summary: `${myPicks.length} ${
-              myPicks.length === 1 ? 'pick' : 'picks'
-            }.`,
+            stats: [{ label: 'Picks', value: `${myPicks.length}` }],
           }
         : null,
     // The newest week with results; this one until it is scored.

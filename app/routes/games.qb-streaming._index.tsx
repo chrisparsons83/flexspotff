@@ -75,9 +75,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       user && week?.isOpen && !week.isScored
         ? {
             saved: !!mine,
-            summary:
-              mine &&
-              `${mine.standardPlayer.player.fullName} and ${mine.deepPlayer.player.fullName}.`,
+            stats: mine
+              ? [
+                  {
+                    label: 'Standard',
+                    value: mine.standardPlayer.player.fullName,
+                  },
+                  { label: 'Deep', value: mine.deepPlayer.player.fullName },
+                ]
+              : [],
           }
         : null,
     // The newest week with results; this one until it is scored.

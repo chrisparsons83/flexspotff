@@ -5,7 +5,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 const meta: Meta<typeof Button> = {
   title: 'Primitives/Button',
   component: Button,
-  args: { children: 'Make your pick' },
+  args: { children: 'Make Your Pick' },
   argTypes: {
     variant: {
       control: 'inline-radio',
