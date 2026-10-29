@@ -46,9 +46,9 @@ export default function CareerCard({
   children: ReactNode;
 }) {
   return (
-    // No panel of its own: these sit inside a ProfileSection, which is the
-    // panel. A rule over each sets them apart on the grid instead.
-    <div className={cn('min-w-0 border-t border-border pt-4', className)}>
+    // A lighter panel inside the ProfileSection, which sets each apart with
+    // room around it, rather than a rule over the top.
+    <div className={cn('min-w-0 bg-secondary p-4 md:p-5', className)}>
       <h4 className='m-0 text-sm font-semibold text-muted-foreground'>
         {title}
       </h4>
@@ -65,8 +65,7 @@ export default function CareerCard({
       <div className='mt-5'>
         {meter}
         {/* One row, each column at least as wide as its value, so a value
-            never breaks. A detail goes under the value when it cannot fit
-            beside it. */}
+            never breaks. */}
         <dl
           className={cn(
             'm-0 mt-4 grid auto-cols-[minmax(min-content,1fr)] grid-flow-col',
@@ -96,7 +95,7 @@ export function MiniStat({
   value: ReactNode;
   /** Trails the value in small type, e.g. the W on a streak. */
   unit?: string;
-  /** Trails the value in muted type, e.g. which week a best score came in. */
+  /** Under the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
   /**
    * What the stat counts, where its label cannot say it all. It opens from
@@ -144,13 +143,12 @@ export function MiniStat({
             </span>
           )}
         </span>
-        {/* Beside the value where it fits, under it where it does not. */}
-        {detail && (
-          <span className='min-w-0 text-sm font-normal text-muted-foreground'>
-            {detail}
-          </span>
-        )}
       </dd>
+      {/* Always its own line under the value, so every stat with one has
+          the same shape. */}
+      {detail && (
+        <dd className='m-0 mt-0.5 text-sm text-muted-foreground'>{detail}</dd>
+      )}
     </div>
   );
 }

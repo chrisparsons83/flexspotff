@@ -15,16 +15,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
   const season = await getCurrentSeason();
   return typedjson(
-    season ? await getMemberWeek(user.id, season) : { todo: [], rows: [] },
+    season ? await getMemberWeek(user.id, season) : { rows: [] },
   );
 };
 
 const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side Leagues'];
 
 export default function YourWeek() {
-  const { todo, rows } = useTypedLoaderData<typeof loader>();
+  const { rows } = useTypedLoaderData<typeof loader>();
 
-  if (todo.length === 0 && rows.length === 0) {
+  if (rows.length === 0) {
     return (
       <EmptyState title='Nothing on this week'>
         You are not in any leagues or games this season yet.
@@ -34,18 +34,6 @@ export default function YourWeek() {
 
   return (
     <>
-      {todo.length > 0 && (
-        <Section title='Still to Do'>
-          <ul className='grid gap-2'>
-            {todo.map(item => (
-              <li key={item.href} className='font-semibold'>
-                <Link to={item.href}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
       {SECTIONS.map(section => {
         const inSection = rows.filter(row => row.section === section);
         if (inSection.length === 0) return null;
@@ -53,9 +41,16 @@ export default function YourWeek() {
           <Section key={section} title={section}>
             {section === 'Games' ? (
               <Table
-                headers={['Game', 'Standing', 'Season', 'Last Week']}
-                numericColumns={[2]}
-                primaryColumns={[1]}
+                headers={[
+                  'Game',
+                  'This Week',
+                  'Standing',
+                  'Season',
+                  'Last Week',
+                  'Last Week Place',
+                ]}
+                numericColumns={[3, 4]}
+                primaryColumns={[1, 2]}
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
@@ -64,11 +59,24 @@ export default function YourWeek() {
                         {row.label}
                       </Link>
                     </td>
+                    <td>
+                      {/* The same rule as a week still to enter: open,
+                          and nothing in from them yet. */}
+                      {row.enterHref ? (
+                        <Link
+                          to={row.enterHref}
+                          className='font-semibold text-warning'
+                        >
+                          Not Entered
+                        </Link>
+                      ) : (
+                        <span className='text-muted-foreground'>–</span>
+                      )}
+                    </td>
                     <td>{row.standing ?? '–'}</td>
                     <td className='text-right'>{row.season ?? '–'}</td>
-                    <td className='text-muted-foreground'>
-                      {row.lastWeek ?? '–'}
-                    </td>
+                    <td className='text-right'>{row.lastWeek ?? '–'}</td>
+                    <td>{row.lastWeekPlace ?? '–'}</td>
                   </tr>
                 ))}
               </Table>

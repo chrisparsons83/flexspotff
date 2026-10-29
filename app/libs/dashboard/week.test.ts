@@ -35,7 +35,7 @@ const openWeek = (picks: number) => ({
 
 describe('buildMemberWeek', () => {
   it('lists nothing for a member in nothing', () => {
-    expect(buildMemberWeek(nothing)).toEqual({ todo: [], rows: [] });
+    expect(buildMemberWeek(nothing)).toEqual({ rows: [] });
   });
 
   it('says how last week went and who is next in the league', () => {
@@ -78,28 +78,32 @@ describe('buildMemberWeek', () => {
     expect(row.href).toBe('/leagues/2026/admiral');
   });
 
-  it('lists an open week with no picks to do, linking to its entry', () => {
-    expect(
-      buildMemberWeek({ ...nothing, spreadPool: openWeek(0) }).todo,
-    ).toEqual([
-      { label: 'Spread Pool', href: '/games/spread-pool/entries/week-5' },
+  it('flags an open week with no picks, linking to its entry', () => {
+    const { rows } = buildMemberWeek({ ...nothing, spreadPool: openWeek(0) });
+    expect(rows).toMatchObject([
+      {
+        label: 'Spread Pool',
+        enterHref: '/games/spread-pool/entries/week-5',
+      },
     ]);
   });
 
-  it('lists a game to do even if the member has never played it', () => {
-    const { todo, rows } = buildMemberWeek({ ...nothing, locks: openWeek(0) });
-    expect(todo.map(item => item.label)).toEqual(['Locks Challenge']);
-    expect(rows).toEqual([]);
+  it('lists a game to enter even if the member has never played it', () => {
+    const { rows } = buildMemberWeek({ ...nothing, locks: openWeek(0) });
+    expect(rows.map(row => [row.label, row.standing])).toEqual([
+      ['Locks Challenge', null],
+    ]);
   });
 
-  it('has nothing to do once picks are in, or before the week opens', () => {
-    expect(
-      buildMemberWeek({
-        ...nothing,
-        qbStreaming: openWeek(2),
-        locks: { ...openWeek(0), isOpen: false },
-      }).todo,
-    ).toEqual([]);
+  it('flags nothing once picks are in, or before the week opens', () => {
+    const { rows } = buildMemberWeek({
+      ...nothing,
+      qbStreaming: openWeek(2),
+      locks: { ...openWeek(0), isOpen: false },
+    });
+    expect(rows.map(row => [row.label, row.enterHref])).toEqual([
+      ['QB Streaming', null],
+    ]);
   });
 
   it('shows where the member stands in each game they have played', () => {
@@ -110,16 +114,29 @@ describe('buildMemberWeek', () => {
           rank: 3,
           of: 24,
           total: '1240 bank',
-          lastWeek: 'Week 7: +40',
+          lastWeek: '+40',
+          lastWeekRank: 5,
         },
-        locks: { rank: 11, of: 18, total: '4 pts', lastWeek: null },
+        locks: {
+          rank: 11,
+          of: 18,
+          total: '4',
+          lastWeek: null,
+          lastWeekRank: null,
+        },
       },
     });
     expect(
-      rows.map(row => [row.label, row.standing, row.season, row.lastWeek]),
+      rows.map(row => [
+        row.label,
+        row.standing,
+        row.season,
+        row.lastWeek,
+        row.lastWeekPlace,
+      ]),
     ).toEqual([
-      ['Spread Pool', '3rd of 24', '1240 bank', 'Week 7: +40'],
-      ['Locks Challenge', '11th of 18', '4 pts', null],
+      ['Spread Pool', '3rd', '1240 bank', '+40', '5th'],
+      ['Locks Challenge', '11th', '4', null, null],
     ]);
   });
 
@@ -131,7 +148,7 @@ describe('buildMemberWeek', () => {
   });
 
   it('keeps the nav order: leagues, games, side leagues', () => {
-    const { todo, rows } = buildMemberWeek({
+    const { rows } = buildMemberWeek({
       ...nothing,
       league: {
         name: 'Galaxy',
@@ -142,10 +159,17 @@ describe('buildMemberWeek', () => {
       guillotine: [
         { leagueId: 'g1', name: 'Chop', choppedWeek: null, finish: null },
       ],
-      standings: { locks: { rank: 1, of: 2, total: '6 pts', lastWeek: null } },
+      standings: {
+        locks: {
+          rank: 1,
+          of: 2,
+          total: '6',
+          lastWeek: null,
+          lastWeekRank: null,
+        },
+      },
       registration: { isOpen: true, isRegistered: false },
     });
-    expect(todo.map(item => item.label)).toEqual(['2026 registration']);
     expect(rows.map(row => row.label)).toEqual([
       'Galaxy',
       '2026 registration',
@@ -154,20 +178,25 @@ describe('buildMemberWeek', () => {
     ]);
   });
 
-  it('shows F² and registration to do only while they are open', () => {
-    expect(
+  it('flags F² only while entries are open', () => {
+    const enter = (isOpen: boolean) =>
       buildMemberWeek({
         ...nothing,
-        fSquared: { isOpen: false, hasEntry: false },
-        registration: { isOpen: false, isRegistered: false },
-      }).todo,
-    ).toEqual([]);
-    expect(
-      buildMemberWeek({
-        ...nothing,
-        fSquared: { isOpen: true, hasEntry: false },
-      }).todo,
-    ).toEqual([{ label: 'F²', href: '/games/f-squared/entries' }]);
+        fSquared: { isOpen, hasEntry: false },
+      }).rows.map(row => [row.label, row.enterHref]);
+    expect(enter(false)).toEqual([]);
+    expect(enter(true)).toEqual([['F²', '/games/f-squared/entries']]);
+  });
+
+  it('puts the side leagues they are out of under the ones still going', () => {
+    const { rows } = buildMemberWeek({
+      ...nothing,
+      guillotine: [
+        { leagueId: 'g1', name: 'Chopped', choppedWeek: 3, finish: null },
+        { leagueId: 'g2', name: 'Alive', choppedWeek: null, finish: null },
+      ],
+    });
+    expect(rows.map(row => row.label)).toEqual(['Alive', 'Chopped']);
   });
 });
 

@@ -234,7 +234,7 @@ function PositionsDrafted({
         {withPicks.length > 1 && (
           <div className='border-t border-border pt-4'>
             <div className='mb-1 text-sm font-semibold text-foreground'>
-              All seasons
+              All Seasons
             </div>
             <PositionBar counts={career.positions} />
           </div>

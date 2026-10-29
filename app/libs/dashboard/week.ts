@@ -1,7 +1,8 @@
 /**
- * A member's week on the dashboard: what they still have to enter, then one
- * row per thing they are in this season, in the nav's order. League rows say
- * how last week went and who is next; game rows say where they stand.
+ * A member's week on the dashboard: one row per thing they are in this
+ * season, in the nav's order. League rows say how last week went and who is
+ * next; game rows say where they stand, and flag a week they could enter and
+ * have not.
  *
  * Built from facts the server has already gathered, so the rules can be
  * tested without a database.
@@ -23,15 +24,21 @@ export type DashboardRow = {
   lastWeek: string | null;
   /** Leagues and side leagues: this week's matchup or status. */
   thisWeek: string | null;
-  /** Games: their place in this season's table, "3rd of 24". */
+  /** Games: their place in this season's table, "3rd". */
   standing: string | null;
-  /** Games: their season total, "1240 bank". */
+  /** Games: their season total, "261.60" or "1240 bank". */
   season: string | null;
+  /** Games: their place in the newest scored week, "5th". */
+  lastWeekPlace: string | null;
+  /** Games: where to enter this week, while it is open and they have not. */
+  enterHref: string | null;
+  /**
+   * Side leagues: they are out (chopped) or it is over for them, so the row
+   * sits under the ones still being played.
+   */
+  done: boolean;
   href: string;
 };
-
-/** Something the member has not entered for this week, and where to. */
-export type TodoItem = { label: string; href: string };
 
 /** A weekly pick'em game's week, as the member stands in it. */
 export type PickWeek = {
@@ -48,10 +55,12 @@ export type GameStanding = {
   rank: number;
   /** How many are ranked. */
   of: number;
-  /** The season total, formatted with its unit. */
+  /** The season total, formatted: points bare, a bank with its unit. */
   total: string;
-  /** Their result in the game's newest scored week. */
+  /** Their result in the game's newest scored week, without the week. */
   lastWeek: string | null;
+  /** Their place among everyone in that week. */
+  lastWeekRank: number | null;
 };
 
 export type StandingGame =
@@ -145,7 +154,15 @@ const ordinal = (n: number) => {
   return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 };
 
-const blank = { lastWeek: null, thisWeek: null, standing: null, season: null };
+const blank = {
+  lastWeek: null,
+  thisWeek: null,
+  standing: null,
+  season: null,
+  lastWeekPlace: null,
+  enterHref: null,
+  done: false,
+};
 
 /**
  * One score in a points league: an entrant's points for one week. D12
@@ -347,34 +364,27 @@ const GAMES: { key: StandingGame; label: string; href: string }[] = [
 const pickTodo = (week: PickWeek | null) =>
   !!week && week.isOpen && !week.isScored && week.picks === 0;
 
-/** Everything the member has not entered for this week. */
-function todos(facts: MemberWeekFacts): TodoItem[] {
-  const items: (TodoItem | null)[] = [
-    facts.registration.isOpen && !facts.registration.isRegistered
-      ? {
-          label: `${facts.year} registration`,
-          href: '/dashboard/registration',
-        }
-      : null,
-    ...(
-      [
-        ['QB Streaming', '/games/qb-streaming', facts.qbStreaming],
-        ['Spread Pool', '/games/spread-pool', facts.spreadPool],
-        ['Locks Challenge', '/games/locks-challenge', facts.locks],
-      ] as const
-    ).map(([label, href, week]) =>
-      pickTodo(week) ? { label, href: `${href}/entries/${week!.id}` } : null,
-    ),
-    facts.dfsSurvivor &&
-    !facts.dfsSurvivor.isLocked &&
-    facts.dfsSurvivor.entries === 0
-      ? { label: 'DFS Survivor', href: '/games/dfs-survivor/entries' }
-      : null,
-    facts.fSquared.isOpen && !facts.fSquared.hasEntry
-      ? { label: 'F²', href: '/games/f-squared/entries' }
-      : null,
-  ];
-  return items.filter((item): item is TodoItem => item !== null);
+/** Where to enter a game this week, while it is open and they have not. */
+function enterHref(facts: MemberWeekFacts, game: StandingGame) {
+  switch (game) {
+    case 'qbStreaming':
+    case 'spreadPool':
+    case 'locks': {
+      const week = facts[game];
+      const href = GAMES.find(entry => entry.key === game)!.href;
+      return pickTodo(week) ? `${href}/entries/${week!.id}` : null;
+    }
+    case 'dfsSurvivor':
+      return facts.dfsSurvivor &&
+        !facts.dfsSurvivor.isLocked &&
+        facts.dfsSurvivor.entries === 0
+        ? '/games/dfs-survivor/entries'
+        : null;
+    case 'fSquared':
+      return facts.fSquared.isOpen && !facts.fSquared.hasEntry
+        ? '/games/f-squared/entries'
+        : null;
+  }
 }
 
 /** Whether the member has anything in for the game this week. */
@@ -392,7 +402,6 @@ function enteredThisWeek(facts: MemberWeekFacts, game: StandingGame) {
 }
 
 export function buildMemberWeek(facts: MemberWeekFacts): {
-  todo: TodoItem[];
   rows: DashboardRow[];
 } {
   const rows: DashboardRow[] = [];
@@ -447,6 +456,7 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
     rows.push({
       ...blank,
       section: 'Side Leagues',
+      done: team.finish !== null || team.choppedWeek !== null,
       label: team.name,
       thisWeek:
         team.finish === 1
@@ -471,18 +481,23 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
     );
   }
 
-  // A game the member has played this season, or has entered this week
-  // before any week is scored.
+  // A game the member has played this season, has entered this week, or
+  // could enter this week and has not.
   for (const game of GAMES) {
     const standing = facts.standings[game.key];
-    if (!standing && !enteredThisWeek(facts, game.key)) continue;
+    const enter = enterHref(facts, game.key);
+    if (!standing && !enteredThisWeek(facts, game.key) && !enter) continue;
     rows.push({
       ...blank,
       section: 'Games',
       label: game.label,
-      standing: standing ? `${ordinal(standing.rank)} of ${standing.of}` : null,
+      standing: standing ? ordinal(standing.rank) : null,
       season: standing?.total ?? null,
       lastWeek: standing?.lastWeek ?? null,
+      lastWeekPlace: standing?.lastWeekRank
+        ? ordinal(standing.lastWeekRank)
+        : null,
+      enterHref: enter,
       href: game.href,
     });
   }
@@ -498,12 +513,12 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
   }
 
   return {
-    todo: todos(facts),
     rows: rows
       .map((row, index) => ({ row, index }))
       .sort(
         (a, b) =>
           ORDER.indexOf(a.row.section) - ORDER.indexOf(b.row.section) ||
+          Number(a.row.done) - Number(b.row.done) ||
           a.index - b.index,
       )
       .map(({ row }) => row),
