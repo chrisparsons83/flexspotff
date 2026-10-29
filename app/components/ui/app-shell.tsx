@@ -1,7 +1,9 @@
+import { Breadcrumb } from './breadcrumb';
 import { ExternalLink, Link } from './link';
 import { NavBar } from './nav-bar';
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '~/utils';
+import type { Crumb } from '~/utils/route-handle';
 
 export const DISCORD_INVITE = 'https://discord.gg/VVsEXujWEY';
 
@@ -37,11 +39,18 @@ type Props = ComponentProps<typeof NavBar> & {
    * width, for the draft boards.
    */
   width?: 'contained' | 'full';
+  /** The way down to this page, shown above it when it is two levels deep. */
+  breadcrumbs?: Crumb[];
   children: ReactNode;
 };
 
 /** Every public page: the nav, the page on the grid, and the footer. */
-export function AppShell({ width = 'contained', children, ...nav }: Props) {
+export function AppShell({
+  width = 'contained',
+  breadcrumbs = [],
+  children,
+  ...nav
+}: Props) {
   return (
     <div
       // Marks the page glow for the Storybook pattern check.
@@ -64,6 +73,7 @@ export function AppShell({ width = 'contained', children, ...nav }: Props) {
           width === 'contained' && 'mx-auto max-w-6xl',
         )}
       >
+        <Breadcrumb items={breadcrumbs} />
         {children}
       </main>
       <Footer />

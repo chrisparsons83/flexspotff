@@ -30,6 +30,7 @@ import { getThemePreference } from '~/services/theme.server';
 import { errorPage } from '~/utils/error-page';
 import {
   SITE_NAME,
+  breadcrumbs,
   pageTitle,
   socialMeta,
   usePageWidth,
@@ -146,6 +147,7 @@ export default function App() {
   const { user, userIsEditor, canViewProfiles, themePreference, ENV } =
     useTypedLoaderData<typeof loader>();
   const width = usePageWidth();
+  const matches = useMatches();
 
   return (
     <>
@@ -155,6 +157,7 @@ export default function App() {
         canViewProfiles={canViewProfiles}
         theme={themePreference}
         width={width}
+        breadcrumbs={breadcrumbs(matches, NAV_SECTIONS)}
       >
         <Outlet />
       </AppShell>
