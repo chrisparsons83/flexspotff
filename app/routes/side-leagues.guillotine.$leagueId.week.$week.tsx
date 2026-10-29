@@ -204,7 +204,7 @@ export default function GuillotineWeek() {
       ) : ranked.length === 0 ? (
         <EmptyState title={`No scores for week ${week}`} />
       ) : (
-        <Section as='h3' title='Scores' description='The line is the chop.'>
+        <Section as='h3' title='Scores'>
           <div className='overflow-x-auto'>
             <table className='w-full text-left tabular-nums'>
               <thead>

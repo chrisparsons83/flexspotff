@@ -309,11 +309,7 @@ export default function ImportFSquaredHistory() {
           )}
 
           {preview.entryNotes.length > 0 && (
-            <Section
-              as='h3'
-              title='Entries that need a look'
-              description='These are imported as the sheet had them.'
-            >
+            <Section as='h3' title='Entries that need a look'>
               <ul className='grid gap-1'>
                 {preview.entryNotes.map(note => (
                   <li key={`${note.name}:${note.note}`}>

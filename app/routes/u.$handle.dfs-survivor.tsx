@@ -1102,10 +1102,7 @@ const FLEX_TONES = {
  */
 function ByPosition({ positions }: { positions: DfsPositionRow[] }) {
   return (
-    <ProfileSection
-      title='By position'
-      description='Their average pick in each slot, against the field’s in the weeks they played.'
-    >
+    <ProfileSection title='By position'>
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
         {positions
           .filter(row => row.picks > 0)
