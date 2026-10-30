@@ -26,6 +26,7 @@ export function Honour({ badge }: { badge: Badge }) {
   const ribbon = RIBBONS[badge.key];
   return (
     <span
+      // check:patterns allow: the ribbons keep the old site's dark-page wash, which has no token
       className='flex h-full min-h-[7.75rem] w-full flex-col items-center border-t-4 bg-[var(--ribbon-solid)] px-0.5 text-center [clip-path:polygon(0_0,100%_0,100%_100%,50%_86%,0_100%)] dark:bg-[var(--ribbon-wash)]'
       style={{
         borderTopColor: ribbon?.edge,
