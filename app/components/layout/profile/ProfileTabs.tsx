@@ -1,5 +1,4 @@
-import { Link, useLocation } from '@remix-run/react';
-import clsx from 'clsx';
+import { SubNav } from '~/components/ui/sub-nav';
 
 /**
  * The profile tab bar.
@@ -35,46 +34,25 @@ type Props = {
   contestsPlayed: string[];
 };
 
+/**
+ * Set along the foot of the hero, so the member's header and the way around
+ * their profile read as one unit. Scrolls sideways on a phone rather than
+ * wrapping into a second row.
+ */
 export default function ProfileTabs({ handle, contestsPlayed }: Props) {
-  const { pathname } = useLocation();
   const played = new Set(contestsPlayed);
   const visible = PROFILE_TABS.filter(
     tab => tab.key === ALWAYS_SHOWN || played.has(tab.key),
   );
 
-  // Drawn as a strip along the bottom of the hero, so the member's header and
-  // the way around their profile read as one unit. The active tab is marked
-  // with an underline sitting on the strip's edge, like a page header. It
-  // scrolls sideways on a phone instead of wrapping into a second row.
   return (
-    <nav
-      aria-label='Profile sections'
-      className='not-prose overflow-x-auto border-t border-slate-600/40 bg-slate-900/50 px-2 md:px-4'
-    >
-      <ul className='m-0 flex min-w-max gap-1 p-0'>
-        {visible.map(tab => {
-          const to = `/u/${handle}/${tab.key}`;
-          const isActive = pathname === to;
-
-          return (
-            <li key={tab.key} className='list-none'>
-              <Link
-                to={to}
-                prefetch='intent'
-                aria-current={isActive ? 'page' : undefined}
-                className={clsx(
-                  'block whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold no-underline transition-colors',
-                  isActive
-                    ? 'border-blue-400 text-white'
-                    : 'border-transparent text-slate-400 hover:border-slate-500 hover:text-white',
-                )}
-              >
-                {tab.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <SubNav
+      label='Profile Sections'
+      className='not-prose px-4 pb-4 md:px-6 md:pb-6'
+      items={visible.map(tab => ({
+        label: tab.label,
+        to: `/u/${handle}/${tab.key}`,
+      }))}
+    />
   );
 }

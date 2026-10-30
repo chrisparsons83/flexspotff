@@ -1,59 +1,82 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import FSquaredStandingsTable from '~/components/layout/f-squared/FSquaredStandingsTable';
-import FSquaredYearPicker from '~/components/layout/f-squared/FSquaredYearPicker';
+import SeasonLeaders from '~/components/layout/games/SeasonLeaders';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
 import {
-  getEntryByUserAndYear,
-  getFSquaredYears,
-  getStandingsForYear,
-} from '~/models/fsquared.server';
+  getMemberStanding,
+  getSeasonLeaders,
+} from '~/libs/games/history.server';
+import { getEntryByUserAndYear } from '~/models/fsquared.server';
+import { fSquaredSeasonTotals } from '~/models/profile/sideGameSeasons.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 
+/** How many of this season's leaders the overview lists. */
+const LEADERS = 10;
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request);
+  const [season, user] = await Promise.all([
+    getCurrentSeason(),
+    authenticator.isAuthenticated(request),
+  ]);
+  if (!season) throw new Response('No season set up yet', { status: 404 });
 
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
-
-  const [existingEntry, currentResults, years] = await Promise.all([
-    user ? getEntryByUserAndYear(user.id, currentSeason.year) : null,
-    getStandingsForYear(currentSeason.year),
-    getFSquaredYears(),
+  const [existingEntry, totals] = await Promise.all([
+    user ? getEntryByUserAndYear(user.id, season.year) : null,
+    fSquaredSeasonTotals([season.year]),
   ]);
 
-  return typedjson({ currentResults, existingEntry, currentSeason, years });
+  const me = user
+    ? await getMemberStanding(totals, season.year, user.id)
+    : null;
+
+  return typedjson({
+    me,
+    year: season.year,
+    isOpen: season.isOpenForFSquared,
+    signedIn: !!user,
+    hasEntry: !!existingEntry,
+    leaders: await getSeasonLeaders(totals, season.year, LEADERS),
+  });
 };
 
-export default function FSquaredIndex() {
-  const { currentResults, existingEntry, currentSeason, years } =
+export default function FSquaredOverview() {
+  const { year, isOpen, signedIn, hasEntry, leaders, me } =
     useTypedLoaderData<typeof loader>();
 
   return (
     <>
-      <h2>F²</h2>
-      <p>
-        Pick two teams from each league before they draft. Get points based on
-        how many fantasy points they earn during the season. Most combined
-        points wins.
-      </p>
-      <div>
-        <h3>My entry</h3>
-        <p>Status: {existingEntry ? `Submitted` : `Not Submitted`}</p>
-        <p>
-          {currentSeason.isOpenForFSquared && (
-            <Link to='my-entry'>View/Edit My Entry</Link>
+      {/* Only while entries are open: once they close, the reader's place
+          is in the leaders below. */}
+      {isOpen && (
+        <Section
+          title='Your Entry'
+          description={
+            !signedIn
+              ? 'Log in to make an entry.'
+              : hasEntry
+              ? 'You have an entry in this season.'
+              : 'You have not entered this season.'
+          }
+        >
+          {signedIn && (
+            <Button asChild>
+              <Link to='entries' variant='quiet'>
+                {hasEntry ? 'Change Your Entry' : 'Make Your Entry'}
+              </Link>
+            </Button>
           )}
-        </p>
-      </div>
-      <section>
-        <FSquaredYearPicker years={years} />
-        <h3>Standings</h3>
-        <FSquaredStandingsTable results={currentResults} />
-      </section>
+        </Section>
+      )}
+      <SeasonLeaders
+        me={me}
+        year={year}
+        leaders={leaders}
+        standingsPath='standings'
+        valueHeading='Points'
+      />
     </>
   );
 }

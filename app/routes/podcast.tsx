@@ -1,30 +1,37 @@
 //podcasts.apple.com/ph/podcast/trash-turtle-football/id1586577488
-import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import LocalDateTime from '~/components/ui/LocalDateTime';
+import { PageHeader } from '~/components/ui/page-header';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { getEpisodes } from '~/models/episode.server';
+import type { RouteHandle } from '~/utils/route-handle';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const handle: RouteHandle = { title: 'Trash Turtle Football' };
+
+export const loader = async () => {
   const episodes = await getEpisodes();
 
   return typedjson({ episodes });
 };
 
-export default function Records() {
+export default function Podcast() {
   const { episodes } = useTypedLoaderData<typeof loader>();
   return (
-    <div className='text-center md:text-left'>
-      <h2 id='Title'>Trash Turtle Football</h2>
+    <>
+      <PageHeader
+        title='Trash Turtle Football'
+        description='DrTrashdad and Bootzfantasy. The archive: no new episodes are being made.'
+        actions={
+          <img
+            alt='Trash Turtle Football logo'
+            src='/ttflogowords.jpg'
+            className='size-36'
+          />
+        }
+      />
 
-      <img
-        alt='Trash Turtle Football logo'
-        src='/ttflogowords.jpg'
-        className='h-36 w-36 lg:w-56 lg:h-56 mx-auto md:ml-4 mb-4 float-none md:float-right'
-      ></img>
-      <p className='my-1 font-semibold' id='Hosts'>
-        DrTrashdad and Bootzfantasy
-      </p>
-
-      <p id='Decription'>
+      <p className='max-w-prose'>
         Unleashed from the iconic Flexspot Fantasy Football Discord server, Dr.
         Trashdad and Bootz bring the next generation of a fantasy football
         podcast. A conversation between a numbers and spreadsheets analyst and a
@@ -35,12 +42,21 @@ export default function Records() {
         the fluff.
       </p>
 
-      {episodes.map(episode => (
-        <div key={episode.id}>
-          <h3 className='mb-0'>{episode.title}</h3>
-          <p className='mt-1'>{episode.publishDate.toLocaleDateString()}</p>
-        </div>
-      ))}
-    </div>
+      <Section title='Episodes'>
+        <Table headers={['Episode', 'Published']}>
+          {episodes.map(episode => (
+            <tr key={episode.id}>
+              <td>{episode.title}</td>
+              <td className='whitespace-nowrap text-muted-foreground'>
+                <LocalDateTime
+                  value={episode.publishDate}
+                  options={{ year: 'numeric', month: 'long', day: 'numeric' }}
+                />
+              </td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+    </>
   );
 }

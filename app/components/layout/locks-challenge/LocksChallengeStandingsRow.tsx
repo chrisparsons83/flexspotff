@@ -1,112 +1,79 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
-import clsx from 'clsx';
-import { useState } from 'react';
+import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 import type {
   LocksGamePicksWonLoss,
   getLocksGamesPicksByLocksWeek,
 } from '~/models/locksgamepicks.server';
 import type { User } from '~/models/user.server';
 
-type Props = {
-  rank: number | undefined;
-  user?: User;
-  points?: number;
-  locksChallengeWonLoss: LocksGamePicksWonLoss;
-  picksLocked?: Awaited<ReturnType<typeof getLocksGamesPicksByLocksWeek>>;
-};
+export type LockedPicks = Awaited<
+  ReturnType<typeof getLocksGamesPicksByLocksWeek>
+>;
 
-export default function LocksChallengeStandingsRow({
+/** The picks a member has locked in this week, with how each went. */
+export function LockedPicksList({ picks }: { picks: LockedPicks }) {
+  if (picks.length === 0) {
+    return <p className='text-muted-foreground'>No locked picks.</p>;
+  }
+  return (
+    <ul className='grid gap-1'>
+      {picks.map(pick => {
+        const result =
+          pick.isWin === 1
+            ? { label: 'Won', tone: 'text-positive' }
+            : pick.isLoss === 1
+            ? { label: 'Lost', tone: 'text-negative' }
+            : pick.isTie === 1
+            ? { label: 'Tied', tone: 'text-muted-foreground' }
+            : { label: 'Picked', tone: 'text-muted-foreground' };
+        return (
+          <li key={pick.id}>
+            <span className={result.tone}>{result.label}</span>{' '}
+            {pick.teamBet.mascot}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export const LOCKS_HEADINGS = ['Points', 'W-L-T', 'Percent'];
+
+/**
+ * A locks challenge standings row: rank, member, points, record and win
+ * share, opening to the picks they have locked in this week.
+ */
+export function locksStandingsEntry({
   rank,
   user,
   points,
   locksChallengeWonLoss,
   picksLocked,
-}: Props) {
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleAccordion = () => {
-    setShowDetails(prevState => !prevState);
-  };
-
-  if (!user) return null;
-
+}: {
+  rank: number | undefined;
+  user: User;
+  points?: number;
+  locksChallengeWonLoss: LocksGamePicksWonLoss;
+  picksLocked?: LockedPicks;
+}): LeaderboardEntry {
   const wins = locksChallengeWonLoss._sum?.isWin || 0;
   const losses = locksChallengeWonLoss._sum?.isLoss || 0;
   const ties = locksChallengeWonLoss._sum?.isTie || 0;
-
-  const wlPercentage =
-    locksChallengeWonLoss._sum && (wins > 0 || losses > 0 || ties > 0)
+  const percent =
+    wins > 0 || losses > 0 || ties > 0
       ? `${((wins / (wins + losses + ties)) * 100).toFixed(2)}%`
-      : 'No bets';
+      : 'No picks';
 
-  return (
-    <>
-      <tr>
-        <td>{rank}</td>
-        <td className='flex items-center gap-3'>
-          <MemberName user={user} />{' '}
-          {showDetails ? (
-            <ChevronUpIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Hide Details'
-            />
-          ) : (
-            <ChevronDownIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Show Details'
-            />
-          )}
-        </td>
-        <td>{points}</td>
-        <td>
-          {locksChallengeWonLoss._sum.isWin}-{locksChallengeWonLoss._sum.isLoss}
-          -{locksChallengeWonLoss._sum.isTie}
-        </td>
-        <td>{wlPercentage}</td>
-      </tr>
-      {showDetails && (
-        <tr className='border-b-1 bg-gray-800'>
-          <td></td>
-          <td>
-            {picksLocked && picksLocked.length === 0 && (
-              <div>No locked picks</div>
-            )}
-            {picksLocked &&
-              picksLocked.map(pick => {
-                const resultAction =
-                  pick.isWin === 1
-                    ? 'Won'
-                    : pick.isLoss === 1
-                    ? 'Lost'
-                    : pick.isTie === 1
-                    ? 'Pushed'
-                    : 'Bet';
-
-                return (
-                  <div
-                    key={pick.id}
-                    className={clsx(
-                      'mb-1 border-l-8 pl-4 border-gray-500',
-                      pick.isWin === 1 && 'border-green-500',
-                      pick.isLoss === 1 && 'border-red-500',
-                    )}
-                  >
-                    {resultAction} on {pick.teamBet.mascot}{' '}
-                  </div>
-                );
-              })}
-          </td>
-          <td></td>
-          <td></td>
-        </tr>
-      )}
-    </>
-  );
+  return {
+    id: user.id,
+    rank: rank ?? 0,
+    name: (
+      <ProfileLink userId={user.id}>
+        <MemberName user={user} />
+      </ProfileLink>
+    ),
+    values: [points ?? 0, `${wins}-${losses}-${ties}`, percent],
+    details: picksLocked && <LockedPicksList picks={picksLocked} />,
+  };
 }

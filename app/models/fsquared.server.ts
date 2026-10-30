@@ -69,6 +69,7 @@ export async function getResultsForYear(year: FSquaredEntry['year']) {
           pointsFor: true,
           user: {
             select: {
+              id: true,
               discordName: true,
               discordUsername: true,
             },

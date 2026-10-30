@@ -4,7 +4,9 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import { z } from 'zod';
 import type { DeleteCommandsProps } from '~/../bot/utils';
 import { deleteCommand, deployCommands, getCommands } from '~/../bot/utils';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { envSchema } from '~/utils/helpers';
 
@@ -69,52 +71,52 @@ export default function AdminBotPage() {
   const { devGuildId, guildCommands, globalCommands } =
     useTypedLoaderData<typeof loader>();
 
+  const commandList = (commands: typeof globalCommands, guildId?: string) =>
+    commands && commands.length > 0 ? (
+      <Table headers={['Command', '']}>
+        {commands.map(command => (
+          <tr key={command.id}>
+            <td className='font-mono'>{command.name}</td>
+            <td className='text-right'>
+              <Form method='post'>
+                <input type='hidden' name='commandId' value={command.id} />
+                {guildId && (
+                  <input type='hidden' name='guildId' value={guildId} />
+                )}
+                <Button
+                  type='submit'
+                  variant='secondary'
+                  size='sm'
+                  name='_action'
+                  value='deleteCommand'
+                >
+                  Delete
+                </Button>
+              </Form>
+            </td>
+          </tr>
+        ))}
+      </Table>
+    ) : (
+      <p className='text-muted-foreground'>No commands registered.</p>
+    );
+
   return (
-    <div>
-      <h1>Bot Admin</h1>
-      <p>
-        You probably don't need to touch these ever, but they're here for new
-        commands.
-      </p>
-      <Form method='post'>
-        <div>
-          <Button type='submit' name='_action' value='registerGuildCommands'>
-            Register Dev Guild Commands
-          </Button>
-        </div>
-        <div>
-          <Button type='submit' name='_action' value='registerGlobalCommands'>
-            Register Global Commands
-          </Button>
-        </div>
+    <Section title='Bot Commands'>
+      <Form method='post' className='flex flex-wrap gap-3'>
+        <Button type='submit' name='_action' value='registerGuildCommands'>
+          Register Dev Guild Commands
+        </Button>
+        <Button type='submit' name='_action' value='registerGlobalCommands'>
+          Register Global Commands
+        </Button>
       </Form>
-      <hr />
-      <h2>Commands</h2>
-      <h3>Global Commands</h3>
-      {globalCommands?.map(command => (
-        <li key={command.id}>
-          {command.name}
-          <Form method='post'>
-            <input type='hidden' name='commandId' value={command.id} />
-            <button type='submit' name='_action' value='deleteCommand'>
-              Delete
-            </button>
-          </Form>
-        </li>
-      ))}
-      <h3>Dev Guild Commands</h3>
-      {guildCommands?.map(command => (
-        <li key={command.id}>
-          {command.name}
-          <Form method='post'>
-            <input type='hidden' name='commandId' value={command.id} />
-            <input type='hidden' name='guildId' value={devGuildId} />
-            <button type='submit' name='_action' value='deleteCommand'>
-              Delete
-            </button>
-          </Form>
-        </li>
-      ))}
-    </div>
+      <Section as='h3' title='Global Commands'>
+        {commandList(globalCommands)}
+      </Section>
+      <Section as='h3' title='Dev Guild Commands'>
+        {commandList(guildCommands, devGuildId)}
+      </Section>
+    </Section>
   );
 }

@@ -6,7 +6,9 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   deleteRegistrationWithDraftPreferences,
   getRegistrationById,
@@ -125,19 +127,24 @@ export default function RegistrationList() {
   const navigation = useNavigation();
 
   return (
-    <>
-      <h2 className='mt-0'>Registration List</h2>
+    <Section title='Registration List'>
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
-      <ol>
-        {registrations.map(registration => (
-          <li key={registration.id}>
-            {registration.user.discordName}
-            <span className='not-prose ml-2'>
+      <Table headers={['', 'Member', '']} numericColumns={[0]}>
+        {registrations.map((registration, index) => (
+          <tr key={registration.id}>
+            <td className='w-12 text-right text-muted-foreground'>
+              {index + 1}
+            </td>
+            <td>{registration.user.discordName}</td>
+            <td className='text-right'>
               <Form
                 method='POST'
-                style={{ display: 'inline' }}
                 onSubmit={e => {
                   if (
                     !window.confirm(
@@ -158,27 +165,30 @@ export default function RegistrationList() {
                   name='_action'
                   value='deleteRegistration'
                   disabled={navigation.state !== 'idle'}
-                  className='bg-red-100 text-red-900 hover:bg-red-200'
+                  variant='destructive'
+                  size='sm'
                 >
                   Remove
                 </Button>
               </Form>
-            </span>
-          </li>
+            </td>
+          </tr>
         ))}
-      </ol>
-      <h3>Missing from last year</h3>
-      <ul>
-        {notYetSignedUp.map(registration => (
-          <li key={registration.id}>{registration.user.discordName}</li>
-        ))}
-      </ul>
-      <h3>Missing from two years ago</h3>
-      <ul>
-        {twoYearsAgoNotSignedUp.map(registration => (
-          <li key={registration.id}>{registration.user.discordName}</li>
-        ))}
-      </ul>
-    </>
+      </Table>
+      <Section as='h3' title='Missing From Last Year'>
+        <ul className='grid gap-1 sm:grid-cols-2 lg:grid-cols-3'>
+          {notYetSignedUp.map(registration => (
+            <li key={registration.id}>{registration.user.discordName}</li>
+          ))}
+        </ul>
+      </Section>
+      <Section as='h3' title='Missing From Two Years Ago'>
+        <ul className='grid gap-1 sm:grid-cols-2 lg:grid-cols-3'>
+          {twoYearsAgoNotSignedUp.map(registration => (
+            <li key={registration.id}>{registration.user.discordName}</li>
+          ))}
+        </ul>
+      </Section>
+    </Section>
   );
 }

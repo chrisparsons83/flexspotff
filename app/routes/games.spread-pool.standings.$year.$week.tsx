@@ -1,7 +1,8 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
-import GoBox from '~/components/ui/GoBox';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import { spreadPoolStandingsEntry } from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import {
   getPoolGamePicksWonLossWeek,
   getPoolGamesPicksByPoolWeek,
@@ -11,16 +12,17 @@ import {
   getPoolWeeksByYear,
 } from '~/models/poolweek.server';
 import { getPoolWeekMissedTotalByUserAndYearAndWeek } from '~/models/poolweekmissed.server';
-import type { User } from '~/models/user.server';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getUsersByIds } from '~/models/user.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}`,
+};
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  const weekParam = params.week;
-  if (!yearParam) throw new Error('No year existing');
-  if (!weekParam) throw new Error('No week existing');
-  const year = +yearParam;
-  const week = +weekParam;
+  const year = Number(params.year);
+  const week = Number(params.week);
 
   // Get this week
   const currentWeek = await getPoolWeekByYearAndWeek(year, week);
@@ -69,21 +71,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   ];
   const users = await getUsersByIds(userIds);
 
-  // Get maximum week
-  const maxWeek = (await getPoolWeeksByYear(year))[0].weekNumber;
+  const [poolWeeks, years] = await Promise.all([
+    getPoolWeeksByYear(year),
+    sideGameYears('spreadPool'),
+  ]);
 
   return typedjson({
     amountWonLoss,
     users,
     userIdToRankMap,
     weeklyPicks,
-    maxWeek,
+    weeks: poolWeeks.map(poolWeek => poolWeek.weekNumber),
+    years,
     year,
     week,
   });
 };
 
-export default function SpreadPoolStandingsYearWeekIndex() {
+export default function SpreadPoolWeekStandings() {
   const {
     amountWonLoss,
     users,
@@ -91,54 +96,41 @@ export default function SpreadPoolStandingsYearWeekIndex() {
     weeklyPicks,
     year,
     week,
-    maxWeek,
+    weeks,
+    years,
   } = useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
-
-  const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
-    .reverse()
-    .map(weekNumber => ({
-      label: `Week ${weekNumber}`,
-      url: `/games/spread-pool/standings/${year}/${weekNumber}`,
-    }));
+  const entries = amountWonLoss.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          spreadPoolStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            poolGameWonLoss: result,
+            initialBudget: 0,
+            picksLocked: weeklyPicks?.filter(
+              pick => pick.userId === result.userId,
+            ),
+          }),
+        ]
+      : [];
+  });
 
   return (
-    <>
-      <h2>
-        {year} Standings for Week {week}
-      </h2>
-      <div className='float-right mb-4'>
-        <GoBox options={weekArray} buttonText='Choose Week' />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Bank</th>
-            <th>W-L-T</th>
-            <th>ROE</th>
-          </tr>
-        </thead>
-        <tbody>
-          {amountWonLoss.map(result => (
-            <SpreadPoolStandingsRow
-              initialBudget={0}
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              poolGameWonLoss={result}
-              picksLocked={weeklyPicks?.filter(
-                pick => pick.userId === result.userId,
-              )}
-            />
-          ))}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/spread-pool/standings'
+      year={year}
+      week={week}
+      years={years}
+      weeks={weeks}
+    >
+      <LeaderboardTable
+        entries={entries}
+        nameHeading='Member'
+        valueHeadings={['Net', 'W-L-T', 'Return']}
+        emptyMessage={`No bets scored yet for week ${week}.`}
+      />
+    </StandingsSection>
   );
 }

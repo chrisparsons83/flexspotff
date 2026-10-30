@@ -6,30 +6,14 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  KeyList,
-  LegendItem,
-  ScaleKey,
-  Swatch,
-  WEEK_SCALE,
-  WonKey,
-  rankTone,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   plural,
@@ -38,6 +22,21 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { signedTone, TEXT } from '~/components/layout/profile/tones';
+import { LabelledRange } from '~/components/ui/bars';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  KeyList,
+  LegendItem,
+  LegendSwatch,
+  rankTone,
+  ScaleKey,
+  WEEK_SCALE,
+  WeekGrid,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getQbStreamingProfile } from '~/models/profile/qbStreaming.server';
 import type {
@@ -53,6 +52,9 @@ import {
   QB_STREAMING_TOP_WEEKS_FROM_YEAR,
 } from '~/models/profile/sideGameScoring';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'QB Streaming' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -69,8 +71,8 @@ const signed = (value: number) => signedBy(value, 2);
  * cards.
  */
 const SIDE = {
-  standard: { label: 'Standard', dot: 'bg-sky-400' },
-  deep: { label: 'Deep', dot: 'bg-violet-400' },
+  standard: { label: 'Standard', dot: 'bg-info/20' },
+  deep: { label: 'Deep', dot: 'bg-primary' },
 } as const;
 
 type Side = keyof typeof SIDE;
@@ -79,7 +81,7 @@ function SideDot({ side }: { side: Side }) {
   return (
     <span
       aria-hidden='true'
-      className={clsx('inline-block h-2 w-2 rounded-full', SIDE[side].dot)}
+      className={clsx('inline-block h-2 w-2', SIDE[side].dot)}
     />
   );
 }
@@ -192,7 +194,7 @@ function RateStat({
   return (
     <MiniStat
       label={label}
-      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '—'}
+      value={of > 0 ? `${Math.round((count / of) * 100)}%` : '–'}
       hint={`${hint}: ${plural(count, 'week')}`}
       tone={tone}
     />
@@ -266,13 +268,10 @@ function VsFieldLead({
       {pts(value)}
       {vsField !== null && (
         <LeadContext>
-          <InfoText
-            label={signed(vsField)}
-            className={clsx('tabular-nums', signedTone(vsField))}
-            tip={`${signed(vsField)} a week against the field`}
-          >
+          <span className={clsx('tabular-nums', signedTone(vsField))}>
             {signed(vsField)}
-          </InfoText>
+          </span>{' '}
+          a week against the field
         </LeadContext>
       )}
     </>
@@ -339,7 +338,7 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
   if (value === null) return null;
   return (
     <span
-      className={clsx('ml-1.5 cursor-help text-xs', signedTone(value))}
+      className={clsx('ml-1.5 cursor-help text-sm', signedTone(value))}
       title={`${signed(
         value,
       )} a week against the average ${side} pick of everyone who played`}
@@ -352,7 +351,7 @@ function VsField({ value, side }: { value: number | null; side: Side }) {
 function BySeason({ seasons }: { seasons: QbSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -373,12 +372,12 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
             {!season.usesTopWeeks && seasons[index - 1]?.usesTopWeeks && (
               <ScoringRuleDivider />
             )}
-            <tr className='border-b border-slate-700/70'>
+            <tr className='border-b border-border'>
               <td className='px-2 py-2'>
                 <Link to={`/games/qb-streaming/standings/${season.year}`}>
                   {season.year}
                 </Link>
-                {season.inProgress && <CurrentTag />}
+                {season.inProgress && <CurrentSeason />}
               </td>
               <td className='whitespace-nowrap px-2 py-2'>
                 <SeasonFinish
@@ -403,21 +402,23 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
               <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
                 {season.bestWeek ? (
                   <>
-                    <span className='text-emerald-300'>
+                    <span className='text-positive'>
                       {season.bestWeek.total.toFixed(2)}
                     </span>
-                    <span className='ml-1.5 text-xs text-slate-400'>
+                    <span className='ml-1.5 text-sm text-muted-foreground'>
                       Week {season.bestWeek.week}
                     </span>
                   </>
                 ) : (
-                  '—'
+                  '–'
                 )}
               </td>
               <td
                 className={clsx(
                   'px-2 py-2 text-right tabular-nums',
-                  season.weeklyWins > 0 ? TEXT.champion : 'text-slate-400',
+                  season.weeklyWins > 0
+                    ? TEXT.champion
+                    : 'text-muted-foreground',
                 )}
               >
                 {season.weeklyWins}
@@ -425,7 +426,7 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
             </tr>
           </Fragment>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -433,10 +434,10 @@ function BySeason({ seasons }: { seasons: QbSeason[] }) {
 /** Marks where totals switch from every week to the best twelve. */
 function ScoringRuleDivider() {
   return (
-    <tr className='border-b border-slate-700/70'>
+    <tr className='border-b border-border'>
       <td
         colSpan={8}
-        className='bg-slate-900/40 px-2 py-1 text-center text-xs text-slate-400'
+        className='bg-background/40 px-2 py-1 text-center text-sm text-muted-foreground'
       >
         ↑ Best {QB_STREAMING_COUNTING_WEEKS} weeks count from{' '}
         {QB_STREAMING_TOP_WEEKS_FROM_YEAR}; every week counted before ↓
@@ -451,7 +452,7 @@ function ScoringRuleDivider() {
  * score in a week when everyone scored well. Seasons that counted every week
  * get no outlines at all, since there is nothing to tell apart.
  */
-const COUNTED_RING = 'ring-1 ring-white/90 ring-offset-1 ring-offset-slate-900';
+const COUNTED_RING = 'ring-1 ring-border ring-offset-1 ring-offset-background';
 
 const describePicks = (week: QbWeek) =>
   week.doubled
@@ -488,7 +489,9 @@ function WeekByWeek({ seasons }: { seasons: QbSeason[] }) {
           <ScaleKey />
           {seasons.some(season => season.usesTopWeeks) && (
             <LegendItem
-              swatch={<Swatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />}
+              swatch={
+                <LegendSwatch tone={clsx(WEEK_SCALE[2].tone, COUNTED_RING)} />
+              }
             >
               Counted toward the best {QB_STREAMING_COUNTING_WEEKS} (from{' '}
               {QB_STREAMING_TOP_WEEKS_FROM_YEAR})
@@ -527,14 +530,14 @@ const MOST_STREAMED_PREVIEW = 15;
 /** Stronger with every week that season, so a favourite stands out. */
 const yearCellTone = (count: number) =>
   count >= 5
-    ? 'bg-emerald-400/80 text-emerald-950'
+    ? 'bg-positive/60 text-foreground'
     : count === 4
-    ? 'bg-emerald-400/65 text-emerald-950'
+    ? 'bg-positive/50 text-foreground'
     : count === 3
-    ? 'bg-emerald-400/50 text-white'
+    ? 'bg-positive/40 text-foreground'
     : count === 2
-    ? 'bg-emerald-400/35 text-white'
-    : 'bg-emerald-400/20 text-white';
+    ? 'bg-positive/30 text-foreground'
+    : 'bg-positive/20 text-foreground';
 
 /** How a QB's weeks split between the two picks, most-used QB as full width. */
 function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
@@ -548,7 +551,7 @@ function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
   return (
     <div
       aria-hidden='true'
-      className='hidden h-1.5 w-20 gap-0.5 overflow-hidden rounded-full bg-slate-700 sm:flex'
+      className='hidden h-1.5 w-20 gap-0.5 overflow-hidden bg-secondary sm:flex'
     >
       {segments
         .filter(segment => segment.value > 0)
@@ -563,7 +566,7 @@ function PickSplitBar({ row, widest }: { row: QbExposureRow; widest: number }) {
   );
 }
 
-const DOUBLED_TONE = 'bg-slate-200';
+const DOUBLED_TONE = 'bg-foreground';
 
 /** A legend entry drawn as a piece of the split bar it explains. */
 function BarKey({ tone, children }: { tone: string; children: string }) {
@@ -571,7 +574,7 @@ function BarKey({ tone, children }: { tone: string; children: string }) {
     <span className='inline-flex items-center gap-1.5'>
       <span
         aria-hidden='true'
-        className={clsx('inline-block h-1.5 w-4 rounded-full', tone)}
+        className={clsx('inline-block h-1.5 w-4', tone)}
       />
       {children}
     </span>
@@ -606,13 +609,13 @@ function MostStreamed({
       title='Most Streamed'
       info={
         <KeyList>
-          <BarKey tone={SIDE.standard.dot}>Standard pick</BarKey>
-          <BarKey tone={SIDE.deep.dot}>Deep pick</BarKey>
-          <BarKey tone={DOUBLED_TONE}>Doubled up (both picks)</BarKey>
+          <BarKey tone={SIDE.standard.dot}>Standard Pick</BarKey>
+          <BarKey tone={SIDE.deep.dot}>Deep Pick</BarKey>
+          <BarKey tone={DOUBLED_TONE}>Doubled Up (Both Picks)</BarKey>
         </KeyList>
       }
     >
-      <ProfileTable
+      <Table
         headers={[
           'QB',
           ...years.map(String),
@@ -626,8 +629,8 @@ function MostStreamed({
         primaryColumns={[firstNumeric, firstNumeric + 1]}
       >
         {visible.map(row => (
-          <tr key={row.playerId} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2 font-medium text-slate-100'>
+          <tr key={row.playerId} className='border-b border-border'>
+            <td className='whitespace-nowrap px-2 py-2 font-medium text-foreground'>
               {row.name}
             </td>
             {years.map(year => {
@@ -638,7 +641,7 @@ function MostStreamed({
                     <span
                       title={`${plural(count, 'pick')} in ${year}`}
                       className={clsx(
-                        'flex h-6 min-w-[2.25rem] items-center justify-center rounded text-xs font-semibold tabular-nums',
+                        'flex h-6 min-w-[2.25rem] items-center justify-center text-sm font-semibold tabular-nums',
                         yearCellTone(count),
                       )}
                     >
@@ -647,9 +650,9 @@ function MostStreamed({
                   ) : (
                     <span
                       aria-hidden='true'
-                      className='flex h-6 min-w-[2.25rem] items-center justify-center text-slate-600'
+                      className='flex h-6 min-w-[2.25rem] items-center justify-center text-muted-foreground'
                     >
-                      ·
+                      –
                     </span>
                   )}
                 </td>
@@ -669,15 +672,15 @@ function MostStreamed({
             <td className='px-2 py-2 text-right tabular-nums'>
               {pts(row.averagePoints)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {pts(row.bestPoints)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-400'>
+            <td className='px-2 py-2 text-right tabular-nums text-muted-foreground'>
               {pts(row.worstPoints)}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > MOST_STREAMED_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -694,11 +697,11 @@ function MostStreamed({
 function PickSummary({ pick }: { pick: QbPick }) {
   return (
     <>
-      <span className='text-slate-100'>{pick.name}</span>
+      <span className='text-foreground'>{pick.name}</span>
       <span className='ml-2 tabular-nums'>{pick.points.toFixed(2)}</span>
       <span
         className={clsx(
-          'ml-1.5 text-xs tabular-nums',
+          'ml-1.5 text-sm tabular-nums',
           signedTone(pick.vsField),
         )}
         title={`${signed(pick.vsField)} against the field's average pick`}
@@ -721,9 +724,11 @@ function PickCell({ pick }: { pick: QbPick }) {
 function WeekTags({ week }: { week: QbWeek }) {
   return (
     <>
-      {week.rank === 1 && <Tag tone='win'>Won week</Tag>}
-      {week.doubled && <Tag tone='accent'>Doubled up</Tag>}
-      {!week.counts && <Tag tone='neutral'>Didn&rsquo;t count</Tag>}
+      {week.rank === 1 && <StatusText tone='win'>Won week</StatusText>}
+      {week.doubled && <StatusText tone='accent'>Doubled up</StatusText>}
+      {!week.counts && (
+        <StatusText tone='neutral'>Didn&rsquo;t count</StatusText>
+      )}
     </>
   );
 }
@@ -740,7 +745,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', 'Standard', 'Deep', 'Total', 'Rank', '']}
         numericColumns={[4, 5]}
         mobileCards={
@@ -749,7 +754,9 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               <MobileCard
                 key={`${week.year}-${week.week}`}
                 title={
-                  <span className={clsx(!week.counts && 'text-slate-400')}>
+                  <span
+                    className={clsx(!week.counts && 'text-muted-foreground')}
+                  >
                     {year === 'all' ? weekLabel(week) : `Week ${week.week}`}
                   </span>
                 }
@@ -759,13 +766,15 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
               >
                 <ul className='m-0 list-none space-y-0.5 p-0 text-sm'>
                   <li>
-                    <span className='mr-1.5 text-xs text-slate-400'>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
                       Standard
                     </span>
                     <PickSummary pick={week.standard} />
                   </li>
                   <li>
-                    <span className='mr-1.5 text-xs text-slate-400'>Deep</span>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
+                      Deep
+                    </span>
                     <PickSummary pick={week.deep} />
                   </li>
                 </ul>
@@ -778,8 +787,8 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
           <tr
             key={`${week.year}-${week.week}`}
             className={clsx(
-              'border-b border-slate-700/70',
-              !week.counts && 'text-slate-400',
+              'border-b border-border',
+              !week.counts && 'text-muted-foreground',
             )}
           >
             <td className='px-2 py-2'>{week.year}</td>
@@ -791,7 +800,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {ordinal(week.rank)}
-              <span className='text-slate-400'> / {week.fieldSize}</span>
+              <span className='text-muted-foreground'> / {week.fieldSize}</span>
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <span className='inline-flex gap-1'>
@@ -800,7 +809,7 @@ function PickLog({ seasons }: { seasons: QbSeason[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

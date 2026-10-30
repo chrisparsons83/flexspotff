@@ -1,12 +1,15 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { syncNflGameWeek } from '~/libs/syncs.server';
 import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
 import {
@@ -149,11 +152,10 @@ export default function SpreadPoolList() {
   const navigation = useNavigation();
 
   return (
-    <div>
-      <h2>Spread Pool Lines by Week</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <div>
+    <Section
+      title='Spread Pool Lines by Week'
+      action={
+        <Form method='POST'>
           <Button
             type='submit'
             name='_action'
@@ -162,51 +164,47 @@ export default function SpreadPoolList() {
           >
             Create Next Week
           </Button>
-        </div>
-      </Form>
-      <table className='w-full'>
-        <thead>
-          <tr>
-            <th>Week</th>
-            <th>Published?</th>
-            <th>Scored?</th>
-            <th>Edit</th>
-            <th>Score</th>
+        </Form>
+      }
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Table
+        headers={['Week', 'Published', 'Scored', 'Edit', 'Score']}
+        primaryColumns={[3, 4]}
+      >
+        {poolWeeks.map(poolWeek => (
+          <tr key={poolWeek.id}>
+            <td>{poolWeek.weekNumber}</td>
+            <td>{poolWeek.isOpen ? 'Yes' : 'No'}</td>
+            <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
+            <td>
+              <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
+                Edit Week
+              </Link>
+            </td>
+            <td>
+              <Form method='POST'>
+                <input
+                  type='hidden'
+                  name='weekNumber'
+                  value={poolWeek.weekNumber}
+                />
+                <input type='hidden' name='year' value={poolWeek.year} />
+                <Button
+                  type='submit'
+                  name='_action'
+                  value='scoreWeek'
+                  disabled={navigation.state !== 'idle'}
+                >
+                  Score Week
+                </Button>
+              </Form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {poolWeeks.map(poolWeek => (
-            <tr key={poolWeek.id}>
-              <td>{poolWeek.weekNumber}</td>
-              <td>{poolWeek.isOpen ? 'Yes' : 'No'}</td>
-              <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
-              <td>
-                <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
-                  Edit Week
-                </Link>
-              </td>
-              <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='weekNumber'
-                    value={poolWeek.weekNumber}
-                  />
-                  <input type='hidden' name='year' value={poolWeek.year} />
-                  <Button
-                    type='submit'
-                    name='_action'
-                    value='scoreWeek'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Score Week
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </Table>
+    </Section>
   );
 }

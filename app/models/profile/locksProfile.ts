@@ -629,7 +629,7 @@ const SIDE_BUCKETS: SplitDefinition[] = [
     matches: p => p.spread !== null && p.spread > 0,
   },
   { key: 'pick', label: 'Pick’em', matches: p => p.spread === 0 },
-  { key: 'none', label: 'No line', matches: p => p.spread === null },
+  { key: 'none', label: 'No Line', matches: p => p.spread === null },
 ];
 
 /**
@@ -683,7 +683,7 @@ const CROWD_BUCKETS: SplitDefinition[] = [
   },
   {
     key: 'split',
-    label: 'Split field',
+    label: 'Split Field',
     matches: p =>
       p.fieldShare !== null &&
       p.fieldShare < CHALK_SHARE &&
@@ -696,7 +696,7 @@ const CROWD_BUCKETS: SplitDefinition[] = [
   },
   {
     key: 'alone',
-    label: 'Only one on the game',
+    label: 'Only One on the Game',
     matches: p => p.fieldShare === null,
   },
 ];

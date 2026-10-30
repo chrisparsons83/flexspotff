@@ -80,6 +80,23 @@ export async function getWaiverTransactions(
   });
 }
 
+/** Every waiver claim in one league, newest week first. */
+export async function getWaiverTransactionsByLeague(
+  leagueId: WaiverTransaction['leagueId'],
+) {
+  return prisma.waiverTransaction.findMany({
+    where: { leagueId },
+    include: { user: true, addPlayer: true, dropPlayer: true },
+    orderBy: [{ week: 'desc' }, { bid: 'desc' }, { seq: 'asc' }],
+  });
+}
+
+export async function countWaiverTransactionsByLeague(
+  leagueId: WaiverTransaction['leagueId'],
+) {
+  return prisma.waiverTransaction.count({ where: { leagueId } });
+}
+
 export async function getWaiverTransactionsByYear(year: number) {
   return prisma.waiverTransaction.findMany({
     where: {

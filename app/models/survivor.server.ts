@@ -63,7 +63,10 @@ export async function getAllSurvivorPools() {
   });
 }
 
-/** The newest season's pools, in the order they ran, for the Games sidebar. */
+/**
+ * The newest season's pools, in the order they ran, with who is still in, for
+ * the Games overview.
+ */
 export async function getLatestSurvivorPools() {
   const latest = await prisma.survivorPool.findFirst({
     orderBy: { year: 'desc' },
@@ -73,7 +76,20 @@ export async function getLatestSurvivorPools() {
   return prisma.survivorPool.findMany({
     where: { year: latest.year },
     orderBy: { startWeek: 'asc' },
-    select: { id: true, name: true, year: true },
+    select: {
+      id: true,
+      name: true,
+      year: true,
+      isComplete: true,
+      entries: {
+        select: {
+          finish: true,
+          eliminatedWeek: true,
+          displayName: true,
+          user: entryMember,
+        },
+      },
+    },
   });
 }
 

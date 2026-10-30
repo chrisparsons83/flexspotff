@@ -6,7 +6,11 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   createOrUpdateSleeperUser,
   deleteSleeperUser,
@@ -42,7 +46,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const fieldErrors = {
     sleeperOwnerID:
       sleeperOwnerID.length === 0
-        ? 'Sleeper Owner ID has no content'
+        ? 'Sleeper owner ID has no content'
         : undefined,
   };
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -113,85 +117,62 @@ export default function EditUser() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Adding...'
+      ? 'Adding…'
       : navigation.state === 'loading'
-      ? 'Added!'
+      ? 'Added'
       : 'Add';
 
   return (
-    <>
-      <h2>Edit User {user.discordName}</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <h3>Existing Account IDs</h3>
-      <table>
-        <tr>
-          <th>Sleeper Owner ID</th>
-          <th>Action</th>
-        </tr>
-        {sleeperUsers.map(({ sleeperOwnerID }) => (
-          <tr key={sleeperOwnerID}>
-            <td>{sleeperOwnerID}</td>
-            <td>
-              <Form method='POST'>
-                <input
-                  type='hidden'
-                  name='sleeperOwnerID'
-                  value={sleeperOwnerID}
-                />
-                <Button
-                  type='submit'
-                  disabled={navigation.state !== 'idle'}
-                  name='_action'
-                  value={AdminMembersEditOptions.Remove}
-                >
-                  Remove
-                </Button>
-              </Form>
-            </td>
-          </tr>
-        ))}
-      </table>
-      <Form method='POST' className='grid grid-cols-1 gap-6'>
-        <div>
-          <label htmlFor='sleeperOwnerID'>
-            Add Sleeper Owner ID:
-            <input
-              type='text'
-              required
-              name='sleeperOwnerID'
-              id='sleeperOwnerID'
-              aria-invalid={
-                Boolean(actionData?.fieldErrors?.sleeperOwnerID) || undefined
-              }
-              aria-errormessage={
-                actionData?.fieldErrors?.sleeperOwnerID
-                  ? 'sleeperOwnerID-error'
-                  : undefined
-              }
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-            />
-          </label>
-          {actionData?.fieldErrors?.sleeperOwnerID ? (
-            <p
-              className='form-validation-error'
-              role='alert'
-              id='sleeperOwnerID-error'
-            >
-              {actionData.fieldErrors.sleeperOwnerID}
-            </p>
-          ) : null}
-        </div>
-        <div>
-          <Button
-            type='submit'
-            disabled={navigation.state !== 'idle'}
-            name='_action'
-            value={AdminMembersEditOptions.Add}
+    <Section title={`Edit Member ${user.discordName}`}>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Section as='h3' title='Sleeper Accounts'>
+        <Table headers={['Sleeper Owner ID', 'Action']}>
+          {sleeperUsers.map(({ sleeperOwnerID }) => (
+            <tr key={sleeperOwnerID}>
+              <td className='font-mono'>{sleeperOwnerID}</td>
+              <td>
+                <Form method='POST'>
+                  <input
+                    type='hidden'
+                    name='sleeperOwnerID'
+                    value={sleeperOwnerID}
+                  />
+                  <Button
+                    type='submit'
+                    variant='secondary'
+                    size='sm'
+                    disabled={navigation.state !== 'idle'}
+                    name='_action'
+                    value={AdminMembersEditOptions.Remove}
+                  >
+                    Remove
+                  </Button>
+                </Form>
+              </td>
+            </tr>
+          ))}
+        </Table>
+        <Form method='POST' className='mt-6 grid max-w-sm gap-6'>
+          <Field
+            label='Sleeper Owner ID'
+            error={actionData?.fieldErrors?.sleeperOwnerID}
           >
-            {buttonText}
-          </Button>
-        </div>
-      </Form>
-    </>
+            <Input required name='sleeperOwnerID' />
+          </Field>
+          <div>
+            <Button
+              type='submit'
+              disabled={navigation.state !== 'idle'}
+              name='_action'
+              value={AdminMembersEditOptions.Add}
+            >
+              {buttonText}
+            </Button>
+          </div>
+        </Form>
+      </Section>
+    </Section>
   );
 }

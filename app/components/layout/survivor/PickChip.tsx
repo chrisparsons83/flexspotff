@@ -1,23 +1,28 @@
-import clsx from 'clsx';
 import type { BoardCell } from '~/libs/survivor/views';
+import { cn } from '~/utils';
 
 /**
- * One week of a survivor entry: the team picked and how it went. A mark
- * beside the team says the result as well as the colour does, since red and
- * green alone are lost on anyone who cannot tell them apart.
+ * One week of a survivor entry: the team picked and how it went. The result
+ * is in the shape as well as the colour, so it reads without telling red from
+ * green: a win is bold, a loss struck through, a game not played yet muted.
  */
 export default function PickChip({ cell }: { cell: BoardCell }) {
   if (cell.kind === 'none') {
-    return <span className='text-slate-600'>·</span>;
+    return (
+      <span className='text-muted-foreground'>
+        <span aria-hidden>–</span>
+        <span className='sr-only'>No entry this week</span>
+      </span>
+    );
   }
   if (cell.kind === 'missed') {
     return (
       <span
         title='No pick: out'
-        className='relative inline-block w-14 rounded bg-rose-400/15 px-1 py-0.5 text-center text-xs font-semibold text-rose-200'
+        className='inline-block w-14 bg-destructive/20 px-1 py-0.5 text-center text-sm text-negative line-through'
       >
-        <span aria-hidden>✗ none</span>
-        <span className='sr-only'>No pick, out</span>
+        None
+        <span className='sr-only'>, no pick, out</span>
       </span>
     );
   }
@@ -31,18 +36,16 @@ export default function PickChip({ cell }: { cell: BoardCell }) {
   return (
     <span
       title={`${cell.team}: ${label}`}
-      className={clsx(
-        'relative inline-block w-14 rounded px-1 py-0.5 text-center text-xs font-semibold tabular-nums',
-        cell.result === 'WIN' && 'bg-emerald-400/15 text-emerald-200',
-        cell.result === 'LOSS' && 'bg-rose-400/15 text-rose-200',
-        cell.result === 'PENDING' && 'bg-amber-400/15 text-amber-200',
+      className={cn(
+        'inline-block w-14 px-1 py-0.5 text-center text-sm tabular-nums',
+        cell.result === 'WIN' && 'bg-positive/20 font-bold',
+        cell.result === 'LOSS' &&
+          'bg-destructive/20 text-negative line-through',
+        cell.result === 'PENDING' && 'bg-secondary text-muted-foreground',
       )}
     >
       {cell.team}
-      <span aria-hidden className='ml-0.5 opacity-80'>
-        {cell.result === 'WIN' ? '✓' : cell.result === 'LOSS' ? '✗' : '…'}
-      </span>
-      <span className='sr-only'> {label}</span>
+      <span className='sr-only'>, {label}</span>
     </span>
   );
 }

@@ -1,65 +1,63 @@
-import clsx from 'clsx';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { Table } from '~/components/ui/table';
+import { WinLoss } from '~/components/ui/win-loss';
 import type { GetLeaguesByYearElement } from '~/models/league.server';
-import { RANK_COLORS, isLeagueName } from '~/utils/constants';
 
 type Props = {
-  league: GetLeaguesByYearElement;
+  league: Pick<GetLeaguesByYearElement, 'name' | 'hasMedianScoring'> & {
+    teams: GetLeaguesByYearElement['teams'];
+  };
 };
 
+/** One league's table, best first, as the league sync left it. */
 export default function LeagueTable({ league }: Props) {
-  const leagueName = league.name.toLocaleLowerCase();
+  const median = league.hasMedianScoring;
+  const headers = [
+    'Rank',
+    'Manager',
+    'Record',
+    ...(median ? ['Median'] : []),
+    'PF',
+    'PA',
+  ];
+  const pf = headers.indexOf('PF');
 
   return (
-    <section>
-      <h3>{league.name} League</h3>
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Record</th>
-            <th>Median</th>
-            <th>PF</th>
-            <th>PA</th>
-          </tr>
-        </thead>
-        <tbody>
-          {league.teams.map((team, index) => (
-            <tr
-              key={team.id}
-              className={clsx(index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800')}
-            >
-              <td>
-                <div
-                  className={clsx(
-                    isLeagueName(leagueName) && RANK_COLORS[leagueName],
-                    'mx-auto w-8 h-8 flex justify-center items-center font-bold text-sm',
-                  )}
-                >
-                  {index + 1}
-                </div>
-              </td>
-              <td>
-                {team.user ? (
-                  <ProfileLink userId={team.user.id}>
-                    <MemberName user={team.user} />
-                  </ProfileLink>
-                ) : null}
-              </td>
-              <td>
-                {team.wins}-{team.losses}-{team.ties}
-              </td>
-              <td>
-                {team.medianWins}-{team.medianLosses}-{team.medianTies}
-              </td>
-              <td>{team.pointsFor}</td>
-              <td>{team.pointsAgainst}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
+    <Table
+      headers={headers}
+      numericColumns={[0, pf, pf + 1]}
+      primaryColumns={[1, 2]}
+      caption={`${league.name} standings`}
+    >
+      {league.teams.map((team, index) => (
+        <tr key={team.id}>
+          <td className='text-right text-muted-foreground'>{index + 1}</td>
+          <td>
+            {team.user ? (
+              <ProfileLink userId={team.user.id}>
+                <MemberName user={team.user} />
+              </ProfileLink>
+            ) : (
+              'Unclaimed team'
+            )}
+          </td>
+          <td>
+            <WinLoss wins={team.wins} losses={team.losses} ties={team.ties} />
+          </td>
+          {median && (
+            <td>
+              <WinLoss
+                wins={team.medianWins}
+                losses={team.medianLosses}
+                ties={team.medianTies}
+              />
+            </td>
+          )}
+          <td className='text-right'>{team.pointsFor.toFixed(2)}</td>
+          <td className='text-right'>{team.pointsAgainst.toFixed(2)}</td>
+        </tr>
+      ))}
+    </Table>
   );
 }

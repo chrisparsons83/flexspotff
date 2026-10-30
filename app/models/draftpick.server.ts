@@ -36,6 +36,19 @@ export async function getDraftPicks(id: League['id']) {
   });
 }
 
+/** A league's draft for its board: every pick, the player and the team. */
+export async function getDraftBoardPicks(leagueId: League['id']) {
+  return prisma.draftPick.findMany({
+    where: { team: { leagueId } },
+    orderBy: { pickNumber: 'asc' },
+    include: { Player: true, team: { include: { user: true } } },
+  });
+}
+
+export async function countDraftPicksByLeague(leagueId: League['id']) {
+  return prisma.draftPick.count({ where: { team: { leagueId } } });
+}
+
 export async function getAverageDraftPositionByYear(year: League['year']) {
   return prisma.draftPick.groupBy({
     by: ['playerId'],

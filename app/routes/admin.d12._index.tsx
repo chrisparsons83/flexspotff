@@ -1,12 +1,17 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   createD12Season,
   deleteD12Season,
@@ -68,25 +73,16 @@ export default function AdminD12Index() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <div>
-      <h2>D12 Administration</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+    <Section title='D12 Administration'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
 
-      <section className='mb-8'>
-        <h3>Create Season</h3>
-        <Form method='POST' className='flex gap-2 items-end'>
-          <div>
-            <label htmlFor='year' className='block text-sm'>
-              Year
-            </label>
-            <input
-              id='year'
-              name='year'
-              type='number'
-              className='rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
-              placeholder='2025'
-            />
-          </div>
+      <Section as='h3' title='Create Season'>
+        <Form method='POST' className='flex items-end gap-3'>
+          <Field label='Year'>
+            <Input name='year' type='number' placeholder='2025' />
+          </Field>
           <Button
             type='submit'
             name='_action'
@@ -96,17 +92,10 @@ export default function AdminD12Index() {
             Create Season
           </Button>
         </Form>
-      </section>
+      </Section>
 
-      <table className='w-full'>
-        <thead>
-          <tr>
-            <th className='text-left'>Year</th>
-            <th className='text-left'>Leagues</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+      <Section as='h3' title='Seasons'>
+        <Table headers={['Year', 'Leagues', '']}>
           {seasons.map(season => (
             <tr key={season.id}>
               <td>{season.year}</td>
@@ -140,8 +129,8 @@ export default function AdminD12Index() {
               </td>
             </tr>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </Table>
+      </Section>
+    </Section>
   );
 }

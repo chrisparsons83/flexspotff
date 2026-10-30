@@ -7,7 +7,9 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import DfsSurvivorLineup from '~/components/layout/dfs-survivor/DfsSurvivorLineup';
 import DfsSurvivorPlayerTable from '~/components/layout/dfs-survivor/DfsSurvivorPlayerTable';
 import DfsSurvivorWeekRail from '~/components/layout/dfs-survivor/DfsSurvivorWeekRail';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { Section } from '~/components/ui/section';
 import { prisma } from '~/db.server';
 import type { PickerPlayer, PlayerUsage } from '~/libs/dfs-survivor/picker';
 import { decoratePickerPlayers } from '~/libs/dfs-survivor/picker';
@@ -30,7 +32,10 @@ import {
 import { getCurrentNflWeek, getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = { title: 'My Entries' };
 
 export type { PickerPlayer } from '~/libs/dfs-survivor/picker';
 
@@ -695,16 +700,15 @@ export default function GamesDfsSurvivorMyEntry() {
 
   if (!data.isOpen) {
     return (
-      <div>
-        <h2>
-          {data.currentSeason ? 'DFS Survivor Closed' : 'Season Not Available'}
-        </h2>
-        <p>
-          {data.currentSeason
-            ? 'DFS survivor is currently closed for the season.'
-            : 'Season is currently not available.'}
-        </p>
-      </div>
+      <EmptyState
+        title={
+          data.currentSeason ? 'DFS Survivor is closed' : 'No season set up yet'
+        }
+      >
+        {data.currentSeason
+          ? 'DFS Survivor is currently closed for the season.'
+          : 'Season is currently not available.'}
+      </EmptyState>
     );
   }
 
@@ -713,12 +717,8 @@ export default function GamesDfsSurvivorMyEntry() {
   const isError = !!(fetcher.data?.error || notice);
 
   return (
-    // The app shell wraps every page in `prose lg:prose-xl` (root.tsx), which
-    // sets a 20px base and styles bare tables. Both wreck a dense data view, so
-    // this one opts out and sets its own scale.
-    <>
-      <h2>My DFS Survivor Entries</h2>
-      <div className='not-prose text-slate-200'>
+    <Section title='My Entries'>
+      <div>
         <DfsSurvivorWeekRail
           weeks={data.weekSummaries}
           selectedWeek={selectedWeek}
@@ -732,10 +732,10 @@ export default function GamesDfsSurvivorMyEntry() {
           <div
             role={isError ? 'alert' : 'status'}
             className={clsx(
-              'mb-3 rounded-md px-3 py-2 text-sm',
+              'mb-3 px-3 py-2 text-sm',
               isError
-                ? 'bg-red-900/50 text-red-100'
-                : 'bg-green-900/50 text-green-100',
+                ? 'bg-destructive/20 text-negative'
+                : 'bg-positive/20 text-positive',
             )}
           >
             {message}
@@ -743,15 +743,20 @@ export default function GamesDfsSurvivorMyEntry() {
         )}
 
         {pendingMove && (
-          <div className='mb-3 flex flex-wrap items-center gap-3 rounded-md bg-amber-900/50 px-3 py-2 text-sm text-amber-100'>
+          <div className='mb-3 flex flex-wrap items-center gap-3 bg-warning/20 px-3 py-2'>
             <span>
               {pendingMove.name} is already used in week{' '}
               {pendingMove.usedInWeek}. Move them to week {selectedWeek}?
             </span>
-            <Button type='button' onClick={confirmMove}>
-              Move here
+            <Button type='button' size='sm' onClick={confirmMove}>
+              Move Here
             </Button>
-            <Button type='button' onClick={() => setPendingMove(null)}>
+            <Button
+              type='button'
+              size='sm'
+              variant='secondary'
+              onClick={() => setPendingMove(null)}
+            >
               Cancel
             </Button>
           </div>
@@ -760,17 +765,17 @@ export default function GamesDfsSurvivorMyEntry() {
         <div className='grid items-start gap-4 lg:grid-cols-[minmax(19rem,22rem)_1fr]'>
           <section
             className={clsx(
-              'overflow-hidden rounded-md border bg-slate-800/40 transition-colors',
-              isDirty ? 'border-amber-500/70' : 'border-slate-700',
+              'overflow-hidden border bg-card transition-colors',
+              isDirty ? 'border-warning' : 'border-border',
             )}
           >
             {/* Matches the player panel's control-bar height so the two columns
                 start on the same baseline. */}
-            <header className='flex h-12 items-center justify-between border-b border-slate-700 px-3'>
-              <h3 className='m-0 text-sm font-semibold text-white'>
-                Week {selectedWeek} lineup
+            <header className='flex h-12 items-center justify-between border-b border-border px-3'>
+              <h3 className='m-0 text-sm font-semibold text-foreground'>
+                Week {selectedWeek} Lineup
               </h3>
-              <span className='text-xs tabular-nums text-slate-400'>
+              <span className='text-sm tabular-nums text-muted-foreground'>
                 {lineupPlayerIds.size}/11
               </span>
             </header>
@@ -786,16 +791,17 @@ export default function GamesDfsSurvivorMyEntry() {
               isWeekScored={data.isWeekScored}
             />
 
-            <div className='sticky bottom-0 flex items-center justify-between gap-3 border-t border-slate-700 bg-slate-800/95 px-3 py-2 backdrop-blur'>
-              <span className='text-xs text-amber-300'>
+            <div className='sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-card px-3 py-2'>
+              <span className='text-sm text-warning'>
                 {isDirty && !isSaving ? 'Unsaved changes' : '\u00a0'}
               </span>
               <span className='flex shrink-0 items-center gap-2'>
                 {isDirty && !isSaving && (
                   <Button
                     type='button'
+                    size='sm'
+                    variant='ghost'
                     onClick={handleDiscard}
-                    className='bg-transparent text-slate-300 hover:bg-slate-700'
                     data-testid='discard-week-button'
                   >
                     Discard
@@ -803,6 +809,7 @@ export default function GamesDfsSurvivorMyEntry() {
                 )}
                 <Button
                   type='button'
+                  size='sm'
                   onClick={handleSave}
                   disabled={isSaving || !isDirty || data.isWeekScored}
                   data-testid='save-week-button'
@@ -822,6 +829,6 @@ export default function GamesDfsSurvivorMyEntry() {
           />
         </div>
       </div>
-    </>
+    </Section>
   );
 }

@@ -1,12 +1,17 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   addGuillotineLeague,
   syncGuillotineLeague,
@@ -139,40 +144,39 @@ export default function AdminGuillotineIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <div>
-      <h2>Guillotine Leagues</h2>
+    <Section title='Guillotine Leagues'>
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
       {actionData?.warnings?.map(warning => (
-        <Alert key={warning} message={warning} status='warning' />
+        <Alert
+          key={warning}
+          message={warning}
+          status='warning'
+          className='mb-6'
+        />
       ))}
 
-      <section className='mb-8'>
-        <h3>Add League</h3>
-        <p className='text-sm'>
-          Paste any guillotine league's Sleeper URL, from any year. The season,
-          name and format come from Sleeper, and the whole league is synced
-          straight away. Leagues from the current season then keep themselves up
-          to date.
-        </p>
+      <Section
+        as='h3'
+        title='Add League'
+        description="Paste any guillotine league's Sleeper URL, from any year. The season, name and format come from Sleeper, and the whole league is synced straight away. Leagues from the current season then keep themselves up to date."
+      >
         <Form
           key={actionData?.message}
           method='POST'
           className='flex flex-wrap items-end gap-2'
         >
-          <div>
-            <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper League URL
-            </label>
-            <input
-              id='sleeperUrl'
+          <Field label='Sleeper League URL' className='w-full sm:w-96'>
+            <Input
               name='sleeperUrl'
-              type='text'
-              className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
               placeholder='https://sleeper.com/leagues/123456789'
             />
-          </div>
+          </Field>
           <Button
             type='submit'
             name='_action'
@@ -184,106 +188,98 @@ export default function AdminGuillotineIndex() {
               : 'Add League'}
           </Button>
         </Form>
-      </section>
+      </Section>
 
-      {seasons.length === 0 && <p>No guillotine leagues added yet.</p>}
+      {seasons.length === 0 && (
+        <p className='mt-16 text-muted-foreground'>
+          No guillotine leagues added yet.
+        </p>
+      )}
 
       {seasons.map(season => (
-        <section key={season.year} className='mb-8'>
-          <h3>{season.year}</h3>
-          <table className='w-full'>
-            <thead>
-              <tr>
-                <th className='text-left'>League</th>
-                <th className='text-left'>Format</th>
-                <th className='text-left'>Status</th>
-                <th className='text-left'>Members</th>
-                <th className='text-left'>Last Synced</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {season.leagues.map(league => (
-                <tr key={league.id}>
-                  <td>
-                    <Link to={league.id}>{league.name}</Link>
-                    <div className='font-mono text-xs opacity-75'>
-                      {league.sleeperLeagueId}
-                    </div>
-                  </td>
-                  <td>{FORMAT_LABEL[league.format]}</td>
-                  <td>
-                    {league.isComplete
-                      ? 'Complete'
-                      : league.lastScoredWeek > 0
-                      ? `Through week ${league.lastScoredWeek}`
-                      : 'Not started'}
-                  </td>
-                  <td>
-                    {league.unmatchedTeams > 0 ? (
-                      <Link to={league.id} className='text-yellow-400'>
-                        {league.unmatchedTeams} of {league.teamCount} unmatched
-                      </Link>
-                    ) : (
-                      `All ${league.teamCount} matched`
-                    )}
-                  </td>
-                  <td className='text-sm'>
-                    {league.lastSyncedAt
-                      ? league.lastSyncedAt.toLocaleString()
-                      : 'Never'}
-                  </td>
-                  <td>
-                    <div className='flex gap-2'>
-                      <Form method='POST'>
-                        <input
-                          type='hidden'
-                          name='leagueId'
-                          value={league.id}
-                        />
-                        <Button
-                          type='submit'
-                          name='_action'
-                          value='syncLeague'
-                          disabled={isSubmitting}
-                        >
-                          Sync
-                        </Button>
-                      </Form>
-                      <Form
-                        method='POST'
-                        onSubmit={e => {
-                          if (
-                            !window.confirm(
-                              `Delete "${league.name}" (${season.year})? It can be added again from its Sleeper URL.`,
-                            )
-                          ) {
-                            e.preventDefault();
-                          }
-                        }}
+        <Section key={season.year} as='h3' title={season.year}>
+          <Table
+            headers={[
+              'League',
+              'Format',
+              'Status',
+              'Members',
+              'Last Synced',
+              '',
+            ]}
+          >
+            {season.leagues.map(league => (
+              <tr key={league.id}>
+                <td>
+                  <Link to={league.id}>{league.name}</Link>
+                  <div className='font-mono text-sm text-muted-foreground'>
+                    {league.sleeperLeagueId}
+                  </div>
+                </td>
+                <td>{FORMAT_LABEL[league.format]}</td>
+                <td>
+                  {league.isComplete
+                    ? 'Complete'
+                    : league.lastScoredWeek > 0
+                    ? `Through week ${league.lastScoredWeek}`
+                    : 'Not started'}
+                </td>
+                <td>
+                  {league.unmatchedTeams > 0 ? (
+                    <Link to={league.id} className='text-warning'>
+                      {league.unmatchedTeams} of {league.teamCount} unmatched
+                    </Link>
+                  ) : (
+                    `All ${league.teamCount} matched`
+                  )}
+                </td>
+                <td className='text-sm'>
+                  {league.lastSyncedAt
+                    ? league.lastSyncedAt.toLocaleString()
+                    : 'Never'}
+                </td>
+                <td>
+                  <div className='flex gap-2'>
+                    <Form method='POST'>
+                      <input type='hidden' name='leagueId' value={league.id} />
+                      <Button
+                        type='submit'
+                        name='_action'
+                        value='syncLeague'
+                        disabled={isSubmitting}
                       >
-                        <input
-                          type='hidden'
-                          name='leagueId'
-                          value={league.id}
-                        />
-                        <Button
-                          type='submit'
-                          name='_action'
-                          value='deleteLeague'
-                          disabled={isSubmitting}
-                        >
-                          Delete
-                        </Button>
-                      </Form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+                        Sync
+                      </Button>
+                    </Form>
+                    <Form
+                      method='POST'
+                      onSubmit={e => {
+                        if (
+                          !window.confirm(
+                            `Delete "${league.name}" (${season.year})? It can be added again from its Sleeper URL.`,
+                          )
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <input type='hidden' name='leagueId' value={league.id} />
+                      <Button
+                        type='submit'
+                        name='_action'
+                        value='deleteLeague'
+                        disabled={isSubmitting}
+                      >
+                        Delete
+                      </Button>
+                    </Form>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        </Section>
       ))}
-    </div>
+    </Section>
   );
 }

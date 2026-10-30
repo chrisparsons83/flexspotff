@@ -7,7 +7,11 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input, NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import type { ChallongeMatchReport } from '~/libs/challonge-cup';
 import { importChallongeCup } from '~/libs/challonge-cup-import.server';
 import { decideCupGame } from '~/libs/cup-bracket';
@@ -280,90 +284,80 @@ export default function CupAdministerPage() {
   const { cup, cupWeeks, actionWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
-    <>
-      <h2>Administer {cup.year} Cup</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+    <Section title={`Administer ${cup.year} Cup`}>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
       <Form method='POST' reloadDocument>
-        <table>
-          <thead>
-            <tr>
-              <th>Week</th>
-              <th>Map</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cupWeeks.map(cupWeek => {
-              const action =
-                actionWeeks.get(cupWeek.mapping) === cupWeek.week
-                  ? cupWeek.mapping
-                  : undefined;
-              const buttonText =
-                action === 'SEEDING' ? 'Set Seeds' : 'Score Week';
+        <Table headers={['Week', 'Map', 'Action']}>
+          {cupWeeks.map(cupWeek => {
+            const action =
+              actionWeeks.get(cupWeek.mapping) === cupWeek.week
+                ? cupWeek.mapping
+                : undefined;
+            const buttonText =
+              action === 'SEEDING' ? 'Set Seeds' : 'Score Week';
 
-              return (
-                <tr key={cupWeek.id}>
-                  <td>{cupWeek.week}</td>
-                  <td>
-                    <select
-                      name={`week-${cupWeek.id}`}
-                      id={`week-${cupWeek.id}`}
-                      defaultValue={cupWeek.mapping}
-                      className='form-select dark:border-0 dark:bg-slate-800'
+            return (
+              <tr key={cupWeek.id}>
+                <td>{cupWeek.week}</td>
+                <td>
+                  <NativeSelect
+                    name={`week-${cupWeek.id}`}
+                    aria-label={`Week ${cupWeek.week} map`}
+                    defaultValue={cupWeek.mapping}
+                    className='w-auto'
+                  >
+                    {selectOptions.map(option => (
+                      <option value={option.value} key={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </td>
+                <td>
+                  {action && (
+                    <Button
+                      type='submit'
+                      name='_action'
+                      value={cupWeek.mapping}
                     >
-                      {selectOptions.map(option => (
-                        <option value={option.value} key={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    {action && (
-                      <Button
-                        type='submit'
-                        name='_action'
-                        value={cupWeek.mapping}
-                      >
-                        {buttonText}
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div>
+                      {buttonText}
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </Table>
+        <div className='mt-6'>
           <Button type='submit' name='_action' value='updateCup'>
             Update Mapping
           </Button>
         </div>
       </Form>
-      <h3>Import from Challonge</h3>
-      <p>
-        For cups played on Challonge before the site ran them. Map the weeks
-        above first. Importing replaces this cup's seeds and games with
-        Challonge's.
-      </p>
-      <Form method='POST' className='flex flex-wrap items-center gap-2'>
-        <label htmlFor='slug'>challonge.com/</label>
-        <input
-          type='text'
-          name='slug'
-          id='slug'
-          defaultValue={`${cup.year}FSCup`}
-          className='form-input dark:border-0 dark:bg-slate-800'
-        />
-        <Button type='submit' name='_action' value='challongePreview'>
-          Preview Import
-        </Button>
-        <Button type='submit' name='_action' value='challongeImport'>
-          Import
-        </Button>
-      </Form>
-      {actionData?.report && <ChallongeReport report={actionData.report} />}
-    </>
+      <Section
+        as='h3'
+        title='Import From Challonge'
+        description="For cups played on Challonge before the site ran them. Map the weeks above first. Importing replaces this cup's seeds and games with Challonge's."
+      >
+        <Form method='POST' className='flex flex-wrap items-end gap-3'>
+          <Field
+            label='Challonge Tournament'
+            description='The part after challonge.com/'
+          >
+            <Input name='slug' defaultValue={`${cup.year}FSCup`} />
+          </Field>
+          <Button type='submit' name='_action' value='challongePreview'>
+            Preview Import
+          </Button>
+          <Button type='submit' name='_action' value='challongeImport'>
+            Import
+          </Button>
+        </Form>
+        {actionData?.report && <ChallongeReport report={actionData.report} />}
+      </Section>
+    </Section>
   );
 }
 
@@ -372,8 +366,8 @@ function ChallongeReport({ report }: { report: ChallongeMatchReport }) {
     <>
       {report.errors.length > 0 && (
         <>
-          <h4>Errors</h4>
-          <ul>
+          <h4 className='mb-2 mt-10 font-bold text-negative'>Errors</h4>
+          <ul className='grid gap-1'>
             {report.errors.map(error => (
               <li key={error}>{error}</li>
             ))}
@@ -382,9 +376,13 @@ function ChallongeReport({ report }: { report: ChallongeMatchReport }) {
       )}
       {report.winnerDisagreements.length > 0 && (
         <>
-          <h4>Results the site's scores would have decided differently</h4>
-          <p>Challonge's result is kept.</p>
-          <ul>
+          <h4 className='mt-10 font-bold'>
+            Results the site's scores would have decided differently
+          </h4>
+          <p className='mb-2 text-muted-foreground'>
+            Challonge's result is kept.
+          </p>
+          <ul className='grid gap-1'>
             {report.winnerDisagreements.map(disagreement => (
               <li key={`${disagreement.round}-${disagreement.challongeWinner}`}>
                 Round {disagreement.round}: {disagreement.challongeWinner} beat{' '}
@@ -399,45 +397,42 @@ function ChallongeReport({ report }: { report: ChallongeMatchReport }) {
           </ul>
         </>
       )}
-      <h4>
+      <h4 className='mb-3 mt-10 font-bold'>
         Participants ({report.assignments.length} matched,{' '}
         {report.seedDifferences.length} seeded differently,{' '}
         {report.scoreDeltas.length} scores differ)
       </h4>
-      <table>
-        <thead>
-          <tr>
-            <th>Seed</th>
-            <th>Challonge</th>
-            <th>Team</th>
-            <th>League</th>
-            <th>Seed on site points</th>
-            <th>Score differences</th>
+      <Table
+        headers={[
+          'Seed',
+          'Challonge',
+          'Team',
+          'League',
+          'Seed on Site Points',
+          'Score Differences',
+        ]}
+      >
+        {report.assignments.map(({ participant, team, seedRank }) => (
+          <tr key={participant.id}>
+            <td>{participant.seed}</td>
+            <td>{participant.name}</td>
+            <td>{team.name}</td>
+            <td>{team.league}</td>
+            <td>{seedRank === participant.seed ? '' : seedRank}</td>
+            <td>
+              {report.scoreDeltas
+                .filter(delta => delta.participantName === participant.name)
+                .map(
+                  delta =>
+                    `R${delta.round}: ${
+                      delta.challongeScore
+                    } vs ${delta.sitePoints.toFixed(2)}`,
+                )
+                .join(', ')}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {report.assignments.map(({ participant, team, seedRank }) => (
-            <tr key={participant.id}>
-              <td>{participant.seed}</td>
-              <td>{participant.name}</td>
-              <td>{team.name}</td>
-              <td>{team.league}</td>
-              <td>{seedRank === participant.seed ? '' : seedRank}</td>
-              <td>
-                {report.scoreDeltas
-                  .filter(delta => delta.participantName === participant.name)
-                  .map(
-                    delta =>
-                      `R${delta.round}: ${
-                        delta.challongeScore
-                      } vs ${delta.sitePoints.toFixed(2)}`,
-                  )
-                  .join(', ')}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))}
+      </Table>
     </>
   );
 }

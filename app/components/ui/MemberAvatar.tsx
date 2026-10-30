@@ -1,5 +1,5 @@
-import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '~/utils';
 import { avatarCandidates } from '~/utils/discord';
 
 type Props = {
@@ -19,7 +19,8 @@ const cdnSize = (size: number) =>
   Math.min(4096, 2 ** Math.ceil(Math.log2(Math.max(16, size * 2))));
 
 /**
- * A member's avatar as the Discord server shows it.
+ * A member's avatar as the Discord server shows it, cut square like every
+ * other shape on the site. The ground behind it shows while it loads.
  *
  * A stored avatar stops loading as soon as the member uploads a new one, and
  * stays broken until the next sync notices. Rather than show a broken image,
@@ -64,7 +65,7 @@ export default function MemberAvatar({
       height={size}
       loading='lazy'
       onError={next}
-      className={clsx('rounded-full bg-slate-700 object-cover', className)}
+      className={cn('shrink-0 bg-secondary object-cover', className)}
       style={{ width: size, height: size }}
     />
   );

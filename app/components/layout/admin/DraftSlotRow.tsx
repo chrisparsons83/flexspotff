@@ -1,8 +1,11 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
-import { Form, Link } from '@remix-run/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { Form } from '@remix-run/react';
 import { useState } from 'react';
-import Button from '~/components/ui/FlexSpotButton';
 import LocalDateTime from '~/components/ui/LocalDateTime';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { FOCUS_RING } from '~/components/ui/styles';
+import { cn } from '~/utils';
 
 type User = {
   id: string;
@@ -32,94 +35,87 @@ export default function DraftSlotRow({ slot }: Props) {
     <>
       <tr>
         <td>{slot.season.year}</td>
-        <td className='flex items-center gap-3'>
-          <LocalDateTime
-            value={slot.draftDateTime}
-            options={{
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              timeZoneName: 'short',
-            }}
-          />
-          {slot.availableCount > 0 && (
-            <>
-              {' '}
-              {showDetails ? (
-                <ChevronUpIcon
-                  width={20}
-                  height={20}
-                  onClick={handleAccordion}
-                  className='cursor-pointer'
-                  aria-label='Hide Available Users'
-                />
-              ) : (
-                <ChevronDownIcon
-                  width={20}
-                  height={20}
-                  onClick={handleAccordion}
-                  className='cursor-pointer'
-                  aria-label='Show Available Users'
-                />
-              )}
-            </>
-          )}
-        </td>
-        <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-          {slot.availableCount}
-        </td>
-        <td className='not-prose'>
-          <Link to={`/admin/draft-slots/${slot.id}/edit`}>
-            <Button type='button'>Edit</Button>
-          </Link>{' '}
-          <Form method='post' style={{ display: 'inline' }}>
-            <input type='hidden' name='id' value={slot.id} />
-            <input type='hidden' name='action' value='delete' />
-            <Button
-              type='submit'
-              onClick={e => {
-                if (
-                  !confirm('Are you sure you want to delete this draft slot?')
-                ) {
-                  e.preventDefault();
-                }
+        <td>
+          <div className='flex items-center gap-3'>
+            <LocalDateTime
+              value={slot.draftDateTime}
+              options={{
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                timeZoneName: 'short',
               }}
-            >
-              Delete
+            />
+            {slot.availableCount > 0 && (
+              <button
+                type='button'
+                onClick={handleAccordion}
+                aria-expanded={showDetails}
+                aria-label={
+                  showDetails
+                    ? 'Hide Available Members'
+                    : 'Show Available Members'
+                }
+                className={cn(
+                  'inline-flex size-8 items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground',
+                  FOCUS_RING,
+                )}
+              >
+                {showDetails ? (
+                  <ChevronUpIcon aria-hidden />
+                ) : (
+                  <ChevronDownIcon aria-hidden />
+                )}
+              </button>
+            )}
+          </div>
+        </td>
+        <td className='text-right font-semibold'>{slot.availableCount}</td>
+        <td>
+          <div className='flex flex-wrap gap-2'>
+            <Button asChild variant='secondary' size='sm'>
+              <Link to={`/admin/draft-slots/${slot.id}/edit`} variant='quiet'>
+                Edit
+              </Link>
             </Button>
-          </Form>
+            <Form method='post'>
+              <input type='hidden' name='id' value={slot.id} />
+              <input type='hidden' name='action' value='delete' />
+              <Button
+                type='submit'
+                variant='secondary'
+                size='sm'
+                onClick={e => {
+                  if (!confirm('Delete this draft slot?')) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                Delete
+              </Button>
+            </Form>
+          </div>
         </td>
       </tr>
       {showDetails && (
-        <tr className='bg-gray-800'>
+        <tr className='bg-muted'>
           <td></td>
           <td colSpan={3}>
-            <div style={{ padding: '1rem' }}>
-              {slot.availableUsers.length === 0 ? (
-                <div style={{ fontStyle: 'italic', color: '#666' }}>
-                  No users have selected this time slot yet.
-                </div>
-              ) : (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                    gap: '0.5rem',
-                    maxWidth: '100%',
-                  }}
-                >
-                  {slot.availableUsers
-                    .sort((a, b) => a.discordName.localeCompare(b.discordName))
-                    .map(user => (
-                      <div key={user.id} style={{ padding: '0.25rem 0' }}>
-                        {user.discordName}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
+            {slot.availableUsers.length === 0 ? (
+              <p className='text-muted-foreground'>
+                No members have picked this slot yet.
+              </p>
+            ) : (
+              <ul className='grid gap-1 sm:grid-cols-2 lg:grid-cols-3'>
+                {slot.availableUsers
+                  .sort((a, b) => a.discordName.localeCompare(b.discordName))
+                  .map(user => (
+                    <li key={user.id}>{user.discordName}</li>
+                  ))}
+              </ul>
+            )}
           </td>
         </tr>
       )}

@@ -1,7 +1,6 @@
 import type { OmniPlayer } from '@prisma/client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useNavigation } from '@remix-run/react';
-import clsx from 'clsx';
 import type { APIEmbedField, RestOrArray } from 'discord.js';
 import { EmbedBuilder } from 'discord.js';
 import type { ChangeEvent } from 'react';
@@ -13,7 +12,11 @@ import {
 } from 'remix-typedjson';
 import { sendMessageToChannel } from '~/../bot/utils';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Checkbox, Input, NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   getPlayersAndAssociatedPick,
   updateOmniPlayer,
@@ -146,7 +149,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
         if (teamsCompleted.length > 0) {
           fields.push({
-            name: 'Teams Completed',
+            name: 'Teams completed',
             value: teamsCompleted
               .map(update => {
                 const player = players.find(p => p.id === update.id);
@@ -160,7 +163,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
 
         const embed = new EmbedBuilder()
-          .setTitle(`${sport.emoji} Scores Updated`)
+          .setTitle(`${sport.emoji} scores updated`)
           .setDescription(
             `The following scores have been updated in ${sport.name}`,
           )
@@ -291,55 +294,61 @@ const AdminOmniScoring = () => {
   };
 
   return (
-    <div>
-      <h2>Adjust Scoring</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
+    <Section title='Adjust Scoring'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
       <Form method='POST' ref={formRef} preventScrollReset={true}>
-        <h3>Choose Sport</h3>
-        <p>Note: only the sport selected here will have its data updated.</p>
-        <div>
-          <select
-            name='sportId'
-            className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-            onChange={handleChange}
-          >
-            <option value=''>Choose sport...</option>
+        <Field
+          label='Sport'
+          description='Only the sport chosen here has its scores updated.'
+          className='max-w-sm'
+        >
+          <NativeSelect name='sportId' onChange={handleChange}>
+            <option value=''>Choose Sport…</option>
             {sports.map(({ id, name }) => (
               <option key={id} value={id}>
                 {name}
               </option>
             ))}
-          </select>
-        </div>
+          </NativeSelect>
+        </Field>
         {activeSport !== '' && (
           <>
-            <h3>Active Players</h3>
-            <div className='mb-4 flex gap-2'>
-              <Button
-                type='button'
-                onClick={toggleAllCheckboxes}
-                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
+            <Section
+              as='h3'
+              title='Active Players'
+              className='mt-10'
+              action={
+                <div className='flex flex-wrap gap-2'>
+                  <Button
+                    type='button'
+                    onClick={toggleAllCheckboxes}
+                    variant='secondary'
+                    size='sm'
+                  >
+                    {allChecked ? 'Clear checkboxes' : 'Select all players'}
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={toggleInputMode}
+                    variant='secondary'
+                    size='sm'
+                  >
+                    {useInputField ? 'Use dropdown' : 'Use custom values'}
+                  </Button>
+                </div>
+              }
+            >
+              <Table
+                headers={[
+                  'Player',
+                  'Current Points',
+                  'Points to Add',
+                  'Eliminated',
+                ]}
+                numericColumns={[1]}
               >
-                {allChecked ? 'Clear Checkboxes' : 'Select All Players'}
-              </Button>
-              <Button
-                type='button'
-                onClick={toggleInputMode}
-                className='bg-gray-100 text-gray-900 hover:bg-gray-200'
-              >
-                {useInputField ? 'Use Dropdown' : 'Use Custom Values'}
-              </Button>
-            </div>
-            <table>
-              <thead>
-                <tr className='text-left'>
-                  <th className='not-prose px-4'>Player</th>
-                  <th>Current Points</th>
-                  <th>Points to Add</th>
-                  <th className='px-4'>Player Eliminated</th>
-                </tr>
-              </thead>
-              <tbody className='align-middle'>
                 {players
                   .filter(
                     player =>
@@ -347,68 +356,58 @@ const AdminOmniScoring = () => {
                       player.sportId === activeSport &&
                       !player.isComplete,
                   )
-                  .map((player, index) => {
+                  .map(player => {
                     if (!player) return null;
 
                     return (
-                      <tr
-                        key={player.id}
-                        className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-                          'p-2',
-                        )}
-                      >
-                        <td className='not-prose px-4'>
-                          <div>{player.displayName}</div>
-                        </td>
-                        <td>{player.pointsScored}</td>
+                      <tr key={player.id}>
+                        <td>{player.displayName}</td>
+                        <td className='text-right'>{player.pointsScored}</td>
                         <td>
                           {useInputField ? (
-                            <input
+                            <Input
                               type='number'
                               name={`${player.id}--pointsAdded`}
+                              aria-label={`Points to add for ${player.displayName}`}
                               defaultValue='0'
                               min='0'
-                              className='form-input block w-full dark:border-0 dark:bg-slate-600'
+                              className='w-24'
                             />
                           ) : (
-                            <select
+                            <NativeSelect
                               name={`${player.id}--pointsAdded`}
-                              className='form-select block w-full dark:border-0 dark:bg-slate-600'
+                              aria-label={`Points to add for ${player.displayName}`}
+                              className='w-24'
                             >
                               <option value='0'>0</option>
                               <option value='10'>10</option>
                               <option value='20'>20</option>
                               <option value='30'>30</option>
-                            </select>
+                            </NativeSelect>
                           )}
                         </td>
                         <td>
-                          <input
-                            type='checkbox'
+                          <Checkbox
                             name={`${player.id}--isEliminated`}
+                            aria-label={`${player.displayName} eliminated`}
                             defaultChecked={player.isComplete}
                           />
                         </td>
                       </tr>
                     );
                   })}
-              </tbody>
-            </table>
-            <div className='pt-4'>
-              <Button type='submit' name='_action' value='updatePoints'>
+              </Table>
+              <Button
+                type='submit'
+                name='_action'
+                value='updatePoints'
+                className='mt-6'
+              >
                 Update Scores
               </Button>
-            </div>
-            <h3>Completed Players</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th className='not-prose px-4 text-left'>Player</th>
-                  <th>Total Points</th>
-                </tr>
-              </thead>
-              <tbody>
+            </Section>
+            <Section as='h3' title='Completed Players'>
+              <Table headers={['Player', 'Total Points']} numericColumns={[1]}>
                 {players
                   .filter(
                     player =>
@@ -416,28 +415,22 @@ const AdminOmniScoring = () => {
                       player.sportId === activeSport &&
                       player.isComplete,
                   )
-                  .map((player, index) => {
+                  .map(player => {
                     if (!player) return null;
 
                     return (
-                      <tr
-                        key={player.id}
-                        className={clsx(
-                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800',
-                          'p-2',
-                        )}
-                      >
-                        <td className='not-prose px-4'>{player.displayName}</td>
-                        <td>{player.pointsScored}</td>
+                      <tr key={player.id}>
+                        <td>{player.displayName}</td>
+                        <td className='text-right'>{player.pointsScored}</td>
                       </tr>
                     );
                   })}
-              </tbody>
-            </table>
+              </Table>
+            </Section>
           </>
         )}
       </Form>
-    </div>
+    </Section>
   );
 };
 

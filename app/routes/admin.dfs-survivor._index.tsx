@@ -12,7 +12,9 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { prisma } from '~/db.server';
 import { syncPlayerWeekScores } from '~/libs/dfs-survivor/player-week-scores.server';
 import { scoreDfsSurvivorPlayer } from '~/libs/dfs-survivor/scoring';
@@ -80,7 +82,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
 
     if (allWeekRecords.length === 0) {
-      throw new Error('No DFS Survivor Week records found for this week');
+      throw new Error('No DFS survivor week records found for this week');
     }
 
     // Check if the week is already scored
@@ -168,7 +170,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         console.error('Player score sync after scoring failed:', error);
         return typedjson({
           message:
-            'Week has been scored, but refreshing player scores failed. Use Sync Player Scores to retry.',
+            'Week has been scored, but refreshing player scores failed. Use Sync player scores to retry.',
         });
       }
 
@@ -260,45 +262,37 @@ export default function AdminDfsSurvivorIndex() {
   const actionData = useTypedActionData<typeof action>();
 
   return (
-    <>
-      <h2>DFS Survivor</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST' className='mb-4'>
+    <Section title='DFS Survivor'>
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Form method='POST' className='mb-6'>
         <Button type='submit' name='_action' value='syncPlayerScores'>
-          Sync Player Scores &amp; Projections
+          Sync Player Scores and Projections
         </Button>
-        <p className='mt-1 text-sm'>
+        <p className='mt-2 max-w-prose text-sm text-muted-foreground'>
           Refreshes every player's weekly points and projections from Sleeper.
           Runs hourly on its own; this is for backfilling.
         </p>
       </Form>
-      <table className='w-full'>
-        <thead>
-          <tr>
-            <th>Week</th>
-            <th>Scored</th>
-            <th>Actions</th>
+      <Table headers={['Week', 'Scored', 'Actions']}>
+        {dfsSurvivorWeeks.map((week: WeekWithEntries) => (
+          <tr key={week.id}>
+            <td>{week.week}</td>
+            <td>{week.isScored ? 'Yes' : 'No'}</td>
+            <td>
+              <Form method='POST'>
+                <input type='hidden' name='weekNumber' value={week.week} />
+                <input type='hidden' name='year' value={week.year} />
+                <input type='hidden' name='id' value={week.id} />
+                <Button type='submit' name='_action' value='scoreWeek'>
+                  {week.isScored ? 'Revert Scoring' : 'Score Week'}
+                </Button>
+              </Form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {dfsSurvivorWeeks.map((week: WeekWithEntries) => (
-            <tr key={week.id}>
-              <td>{week.week}</td>
-              <td>{week.isScored ? 'Yes' : 'No'}</td>
-              <td>
-                <Form method='POST'>
-                  <input type='hidden' name='weekNumber' value={week.week} />
-                  <input type='hidden' name='year' value={week.year} />
-                  <input type='hidden' name='id' value={week.id} />
-                  <Button type='submit' name='_action' value='scoreWeek'>
-                    {week.isScored ? 'Revert Scoring' : 'Score Week'}
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+        ))}
+      </Table>
+    </Section>
   );
 }

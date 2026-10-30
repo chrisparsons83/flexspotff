@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -7,8 +7,11 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { syncBestBallLeague } from '~/libs/best-ball/sync.server';
 import {
   assignOwnerlessBestBallTeam,
@@ -244,29 +247,40 @@ export default function AdminBestBallLeague() {
   const unmatched = teams.filter(team => !team.member);
 
   return (
-    <div>
-      <p className='text-sm'>
-        <Link to='/admin/best-ball'>← Best ball leagues</Link>
-      </p>
-      <h2>
-        {league.name} ({league.year})
-      </h2>
-      <p className='text-sm'>
-        Ranked on best-ball points for, weeks 1-17.{' '}
-        {league.isComplete
-          ? 'The season is complete and the champion is settled.'
-          : league.lastScoredWeek > 0
-          ? `Scored through week ${league.lastScoredWeek}.`
-          : 'No weeks scored yet.'}{' '}
-        Last synced{' '}
-        {league.lastSyncedAt ? league.lastSyncedAt.toLocaleString() : 'never'}.
+    <Section
+      title={`${league.name} (${league.year})`}
+      description={
+        <>
+          Ranked on best-ball points for, weeks 1-17.{' '}
+          {league.isComplete
+            ? 'The season is complete and the champion is settled.'
+            : league.lastScoredWeek > 0
+            ? `Scored through week ${league.lastScoredWeek}.`
+            : 'No weeks scored yet.'}{' '}
+          Last synced{' '}
+          {league.lastSyncedAt ? league.lastSyncedAt.toLocaleString() : 'never'}
+          .
+        </>
+      }
+    >
+      <p className='-mt-4 mb-6 text-sm'>
+        <Link to='/admin/best-ball'>Back to Best Ball Leagues</Link>
       </p>
 
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
       {actionData?.warnings?.map(warning => (
-        <Alert key={warning} message={warning} status='warning' />
+        <Alert
+          key={warning}
+          message={warning}
+          status='warning'
+          className='mb-6'
+        />
       ))}
 
       <Form method='POST' className='mb-6'>
@@ -281,131 +295,109 @@ export default function AdminBestBallLeague() {
       </Form>
 
       {unmatched.length > 0 && (
-        <section className='mb-8'>
-          <h3>Unmatched Teams</h3>
-          <p className='text-sm'>
-            These Sleeper accounts aren't tied to a member yet. Matching one
-            here links it everywhere on the site, not just in this league. A
-            roster Sleeper has no owner for is assigned to a member for this
-            league only, and resyncing keeps it.
-          </p>
-          <table className='w-full'>
-            <thead>
-              <tr>
-                <th className='text-left'>Sleeper User</th>
-                <th className='text-left'>Member</th>
-              </tr>
-            </thead>
-            <tbody>
-              {unmatched.map(team => (
-                <tr key={team.id}>
-                  <td>
-                    {team.sleeperDisplayName ?? 'Unknown'}
-                    <div className='font-mono text-xs opacity-75'>
-                      {team.sleeperOwnerId ??
-                        `Roster ${team.rosterId}, no owner`}
-                    </div>
-                  </td>
-                  <td className='not-prose'>
-                    {team.sleeperOwnerId ? (
-                      <Form method='POST' className='flex items-center gap-2'>
-                        <input
-                          type='hidden'
-                          name='sleeperOwnerID'
-                          value={team.sleeperOwnerId}
-                        />
-                        <MemberSelect
-                          name='userId'
-                          members={members}
-                          defaultValue={team.suggestedMemberId}
-                        />
-                        <Button
-                          type='submit'
-                          name='_action'
-                          value='match'
-                          disabled={isSubmitting}
-                        >
-                          Match
-                        </Button>
-                      </Form>
-                    ) : (
-                      <Form method='POST' className='flex items-center gap-2'>
-                        <input type='hidden' name='teamId' value={team.id} />
-                        <MemberSelect name='userId' members={members} />
-                        <Button
-                          type='submit'
-                          name='_action'
-                          value='assign'
-                          disabled={isSubmitting}
-                        >
-                          Assign
-                        </Button>
-                      </Form>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      <section>
-        <h3>Standings</h3>
-        <table className='w-full'>
-          <thead>
-            <tr>
-              <th className='text-left'>Place</th>
-              <th className='text-left'>Team</th>
-              <th className='text-left'>Points For</th>
-              <th className='text-left'>Draft Slot</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.map((team, index) => (
+        <Section
+          as='h3'
+          title='Unmatched Teams'
+          description="These Sleeper accounts aren't tied to a member yet. Matching one here links it everywhere on the site, not just in this league. A roster Sleeper has no owner for is assigned to a member for this league only, and resyncing keeps it."
+        >
+          <Table headers={['Sleeper User', 'Member']}>
+            {unmatched.map(team => (
               <tr key={team.id}>
                 <td>
-                  {team.finish === 1
-                    ? 'Champion'
-                    : team.finish ?? `${index + 1} (live)`}
+                  {team.sleeperDisplayName ?? 'Unknown'}
+                  <div className='font-mono text-sm text-muted-foreground'>
+                    {team.sleeperOwnerId ?? `Roster ${team.rosterId}, no owner`}
+                  </div>
                 </td>
                 <td>
-                  {team.member?.discordName ??
-                    team.sleeperDisplayName ??
-                    `Roster ${team.rosterId}`}
-                  {team.member &&
-                    team.sleeperDisplayName &&
-                    team.sleeperDisplayName !== team.member.discordName && (
-                      <div className='text-xs opacity-75'>
-                        {team.sleeperDisplayName} on Sleeper
-                      </div>
-                    )}
-                  {team.member && !team.sleeperOwnerId && (
-                    <Form
-                      method='POST'
-                      className='not-prose flex items-center gap-2 text-xs opacity-75'
-                    >
-                      Assigned by hand
-                      <input type='hidden' name='teamId' value={team.id} />
-                      <button
+                  {team.sleeperOwnerId ? (
+                    <Form method='POST' className='flex items-center gap-2'>
+                      <input
+                        type='hidden'
+                        name='sleeperOwnerID'
+                        value={team.sleeperOwnerId}
+                      />
+                      <MemberSelect
+                        name='userId'
+                        members={members}
+                        defaultValue={team.suggestedMemberId}
+                      />
+                      <Button
                         type='submit'
                         name='_action'
-                        value='unassign'
+                        value='match'
                         disabled={isSubmitting}
-                        className='underline'
                       >
-                        Unassign
-                      </button>
+                        Match
+                      </Button>
+                    </Form>
+                  ) : (
+                    <Form method='POST' className='flex items-center gap-2'>
+                      <input type='hidden' name='teamId' value={team.id} />
+                      <MemberSelect name='userId' members={members} />
+                      <Button
+                        type='submit'
+                        name='_action'
+                        value='assign'
+                        disabled={isSubmitting}
+                      >
+                        Assign
+                      </Button>
                     </Form>
                   )}
                 </td>
-                <td className='tabular-nums'>{team.pointsFor.toFixed(2)}</td>
-                <td>{team.draftSlot ?? '—'}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+          </Table>
+        </Section>
+      )}
+
+      <Section as='h3' title='Standings'>
+        <Table headers={['Place', 'Team', 'Points For', 'Draft Slot']}>
+          {teams.map((team, index) => (
+            <tr key={team.id}>
+              <td>
+                {team.finish === 1
+                  ? 'Champion'
+                  : team.finish ?? `${index + 1} (live)`}
+              </td>
+              <td>
+                {team.member?.discordName ??
+                  team.sleeperDisplayName ??
+                  `Roster ${team.rosterId}`}
+                {team.member &&
+                  team.sleeperDisplayName &&
+                  team.sleeperDisplayName !== team.member.discordName && (
+                    <div className='text-sm text-muted-foreground'>
+                      {team.sleeperDisplayName} on Sleeper
+                    </div>
+                  )}
+                {team.member && !team.sleeperOwnerId && (
+                  <Form
+                    method='POST'
+                    className='flex items-center gap-2 text-sm text-muted-foreground'
+                  >
+                    Assigned by hand
+                    <input type='hidden' name='teamId' value={team.id} />
+                    <Button
+                      type='submit'
+                      variant='link'
+                      size='sm'
+                      name='_action'
+                      value='unassign'
+                      disabled={isSubmitting}
+                    >
+                      Unassign
+                    </Button>
+                  </Form>
+                )}
+              </td>
+              <td className='text-right'>{team.pointsFor.toFixed(2)}</td>
+              <td>{team.draftSlot ?? '–'}</td>
+            </tr>
+          ))}
+        </Table>
+      </Section>
+    </Section>
   );
 }

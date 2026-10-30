@@ -1,10 +1,19 @@
-import InfoTip, { InfoText } from './InfoTip';
-import clsx from 'clsx';
 import type { ReactNode } from 'react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
+import { FOCUS_RING } from '~/components/ui/styles';
+import { cn } from '~/utils';
 
 /**
  * One topic of a tab's Career section, led by the number that sums it up
- * rather than a tile per number. The small stats go in as `MiniStat`s.
+ * rather than a tile per number. The small stats go in as `MiniStat`s, in
+ * one row.
+ *
+ * What a stat counts, where its label cannot say it all, opens from the
+ * label on a tap or a click, so it reaches a phone too.
  */
 export default function CareerCard({
   title,
@@ -12,6 +21,7 @@ export default function CareerCard({
   leadNote,
   meter,
   compactStats = false,
+  footnote,
   className,
   children,
 }: {
@@ -29,18 +39,24 @@ export default function CareerCard({
    * fit in a row on a quarter-width card.
    */
   compactStats?: boolean;
+  /** How the headline is worked out, where the title cannot say. */
+  footnote?: ReactNode;
   /** Placement in the parent grid, e.g. a card two rows tall. */
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className={clsx('rounded-md bg-slate-900/50 p-3 sm:p-4', className)}>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
-      <div className='mt-2 text-3xl font-bold leading-none text-white tabular-nums'>
+    // A lighter panel inside the ProfileSection, which sets each apart with
+    // room around it, rather than a rule over the top.
+    <div className={cn('min-w-0 bg-secondary p-4 md:p-5', className)}>
+      <h4 className='m-0 text-sm font-semibold text-muted-foreground'>
+        {title}
+      </h4>
+      <div className='mt-2 text-3xl font-extrabold leading-none tabular-nums'>
         {lead}
       </div>
       {leadNote !== undefined && (
-        <div className='mt-1.5 text-sm text-slate-400'>{leadNote}</div>
+        <div className='mt-1.5 text-sm text-muted-foreground'>{leadNote}</div>
       )}
       {/* Flowed from the top rather than pinned to the bottom. The headlines
           are all the same height, so the bars and stat labels line up across
@@ -48,19 +64,20 @@ export default function CareerCard({
           stats had a detail line and another's did not. */}
       <div className='mt-5'>
         {meter}
-        {/* As many equal columns as fit, so four small stats sit in a row on
-            a desktop and wrap to two rows on a phone rather than squeeze. */}
+        {/* One row, each column at least as wide as its value, so a value
+            never breaks. */}
         <dl
-          className={clsx(
-            'm-0 mt-4 grid',
-            compactStats
-              ? 'grid-cols-[repeat(auto-fit,minmax(3.5rem,1fr))] gap-3'
-              : 'grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-4',
+          className={cn(
+            'm-0 mt-4 grid auto-cols-[minmax(min-content,1fr)] grid-flow-col',
+            compactStats ? 'gap-3' : 'gap-4',
           )}
         >
           {children}
         </dl>
       </div>
+      {footnote && (
+        <p className='m-0 mt-5 text-sm text-muted-foreground'>{footnote}</p>
+      )}
     </div>
   );
 }
@@ -72,62 +89,66 @@ export function MiniStat({
   detail,
   hint,
   info,
-  tone = 'text-slate-100',
+  tone = 'text-foreground',
 }: {
   label: string;
   value: ReactNode;
   /** Trails the value in small type, e.g. the W on a streak. */
   unit?: string;
-  /** Trails the value in muted type, e.g. which week a best score came in. */
+  /** Under the value in muted type, e.g. which week a best score came in. */
   detail?: string | null;
   /**
-   * More about a stat whose label cannot say everything it counts, opened
-   * from the label itself on hover or a tap.
+   * What the stat counts, where its label cannot say it all. It opens from
+   * the label, which is underlined with dots to say so.
    */
   hint?: string;
-  /**
-   * A fuller explanation behind an ⓘ beside the label, for a stat that needs
-   * more than a line of hover text to make sense.
-   */
+  /** A fuller explanation, after the hint. */
   info?: ReactNode;
   tone?: string;
 }) {
   return (
     <div className='flex flex-col'>
-      <dt className='flex items-center gap-1 text-xs text-slate-400'>
-        {hint ? (
-          <InfoText label={label} tip={hint}>
-            {label}
-          </InfoText>
+      <dt className='text-sm text-muted-foreground'>
+        {hint || info ? (
+          <Popover>
+            <PopoverTrigger
+              className={cn(
+                'cursor-help text-left underline decoration-dotted underline-offset-4',
+                FOCUS_RING,
+              )}
+            >
+              {label}
+            </PopoverTrigger>
+            <PopoverContent className='grid w-64 gap-1 text-sm'>
+              <p className='m-0 font-semibold text-foreground'>{label}</p>
+              {hint && <p className='m-0 text-muted-foreground'>{hint}</p>}
+              {info && <div className='text-muted-foreground'>{info}</div>}
+            </PopoverContent>
+          </Popover>
         ) : (
           label
         )}
-        {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
       </dt>
       <dd
-        className={clsx(
+        className={cn(
           'm-0 mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xl font-bold tabular-nums',
           tone,
         )}
       >
-        <span>
+        <span className='whitespace-nowrap'>
           {value}
           {unit && (
-            <span className='ml-0.5 text-xs font-semibold text-slate-400'>
+            <span className='ml-0.5 text-sm font-semibold text-muted-foreground'>
               {unit}
             </span>
           )}
         </span>
-        {/* Inline where it fits, so the small stats stay the same height and
-            the cards level; a detail too long for its column wraps under the
-            value, and then onto a second line, instead of running into the
-            next stat. */}
-        {detail && (
-          <span className='min-w-0 text-xs font-normal text-slate-400'>
-            {detail}
-          </span>
-        )}
       </dd>
+      {/* Always its own line under the value, so every stat with one has
+          the same shape. */}
+      {detail && (
+        <dd className='m-0 mt-0.5 text-sm text-muted-foreground'>{detail}</dd>
+      )}
     </div>
   );
 }

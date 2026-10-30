@@ -1,12 +1,15 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { scoreQbStats } from '~/libs/qb-streaming/scoring';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
 import { syncNflGameWeek } from '~/libs/syncs.server';
@@ -68,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       const qbStreamingWeek = await getQBStreamingWeek(id);
-      if (!qbStreamingWeek) throw new Error('QB Streaming Week not found');
+      if (!qbStreamingWeek) throw new Error('QB streaming week not found');
 
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
@@ -133,11 +136,10 @@ export default function AdminQBStreaming() {
   const navigation = useNavigation();
 
   return (
-    <>
-      <h2>QB Streaming</h2>
-      {actionData?.message && <Alert message={actionData.message} />}
-      <Form method='POST'>
-        <div>
+    <Section
+      title='QB Streaming'
+      action={
+        <Form method='POST'>
           <Button
             type='submit'
             name='_action'
@@ -146,54 +148,46 @@ export default function AdminQBStreaming() {
           >
             Create Next Week
           </Button>
-        </div>
-      </Form>
-      <table className='w-full'>
-        <thead>
-          <tr>
-            <th>Week</th>
-            <th>Published?</th>
-            <th>Scored?</th>
-            <th>Edit</th>
-            <th>Score</th>
+        </Form>
+      }
+    >
+      {actionData?.message && (
+        <Alert message={actionData.message} className='mb-6' />
+      )}
+      <Table
+        headers={['Week', 'Published', 'Scored', 'Edit', 'Score']}
+        primaryColumns={[3, 4]}
+      >
+        {qbStreamingWeeks.map(qbStreamingWeek => (
+          <tr key={qbStreamingWeek.id}>
+            <td>{qbStreamingWeek.week}</td>
+            <td>{qbStreamingWeek.isOpen ? 'Yes' : 'No'}</td>
+            <td>{qbStreamingWeek.isScored ? 'Yes' : 'No'}</td>
+            <td>
+              <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
+            </td>
+            <td>
+              <Form method='POST'>
+                <input
+                  type='hidden'
+                  name='weekNumber'
+                  value={qbStreamingWeek.week}
+                />
+                <input type='hidden' name='year' value={qbStreamingWeek.year} />
+                <input type='hidden' name='id' value={qbStreamingWeek.id} />
+                <Button
+                  type='submit'
+                  name='_action'
+                  value='scoreWeek'
+                  disabled={navigation.state !== 'idle'}
+                >
+                  Score Week
+                </Button>
+              </Form>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {qbStreamingWeeks.map(qbStreamingWeek => (
-            <tr key={qbStreamingWeek.id}>
-              <td>{qbStreamingWeek.week}</td>
-              <td>{qbStreamingWeek.isOpen ? 'Yes' : 'No'}</td>
-              <td>{qbStreamingWeek.isScored ? 'Yes' : 'No'}</td>
-              <td>
-                <Link to={`./${qbStreamingWeek.id}`}>Edit Week</Link>
-              </td>
-              <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='weekNumber'
-                    value={qbStreamingWeek.week}
-                  />
-                  <input
-                    type='hidden'
-                    name='year'
-                    value={qbStreamingWeek.year}
-                  />
-                  <input type='hidden' name='id' value={qbStreamingWeek.id} />
-                  <Button
-                    type='submit'
-                    name='_action'
-                    value='scoreWeek'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Score Week
-                  </Button>
-                </Form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+        ))}
+      </Table>
+    </Section>
   );
 }

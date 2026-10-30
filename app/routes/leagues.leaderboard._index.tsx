@@ -1,30 +1,32 @@
-import { useLoaderData } from '@remix-run/react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaderboard from '~/components/layout/leaderboard/SeasonLeaderboard';
+import { EmptyState } from '~/components/ui/empty-state';
 import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
-import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
+import {
+  getNewestWeekTeamGameByYear,
+  getTeamGameYearlyTotals,
+} from '~/models/teamgame.server';
 
 export const loader = async () => {
-  let currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('No active season currently');
-  }
+  const currentSeason = await getCurrentSeason();
+  if (!currentSeason) return typedjson({ season: null });
 
-  const leaderboard = await getTeamGameYearlyTotals(currentSeason.year);
-  const teams = await getTeamsInSeason(currentSeason.year);
+  const year = currentSeason.year;
+  const [leaderboard, teams, newest] = await Promise.all([
+    getTeamGameYearlyTotals(year),
+    getTeamsInSeason(year),
+    getNewestWeekTeamGameByYear(year),
+  ]);
 
-  return { leaderboard, teams, maxYear: currentSeason.year };
+  return typedjson({
+    season: { year, leaderboard, teams, newestWeek: newest._max.week },
+  });
 };
 
 export default function LeaderboardIndex() {
-  const { leaderboard, teams, maxYear } = useLoaderData<typeof loader>();
+  const { season } = useTypedLoaderData<typeof loader>();
+  if (!season) return <EmptyState title='No season set up yet' />;
 
-  return (
-    <SeasonLeaderboard
-      heading='Season Leaderboard'
-      leaderboard={leaderboard}
-      teams={teams}
-      maxYear={maxYear}
-    />
-  );
+  return <SeasonLeaderboard {...season} />;
 }

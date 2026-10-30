@@ -1,7 +1,10 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
 import { redirect } from 'remix-typedjson';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
 import { getLeagueInfo } from '~/libs/sleeper/api.server';
 import { createLeague } from '~/models/league.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -74,40 +77,20 @@ export default function LeagueNew() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Submitting...'
+      ? 'Submitting…'
       : navigation.state === 'loading'
-      ? 'Submitted!'
+      ? 'Submitted'
       : 'Submit';
 
   return (
-    <>
-      <h2>Add New League</h2>
-      <Form method='POST' className='grid grid-cols-1 gap-6'>
-        <div>
-          <label htmlFor='url'>
-            League URL:
-            <input
-              type='text'
-              required
-              defaultValue={actionData?.fields?.url}
-              name='url'
-              id='url'
-              aria-invalid={Boolean(actionData?.fieldErrors?.url) || undefined}
-              aria-errormessage={
-                actionData?.fieldErrors?.url ? 'url-error' : undefined
-              }
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-            />
-          </label>
-          {actionData?.fieldErrors?.url ? (
-            <p className='form-validation-error' role='alert' id='url-error'>
-              {actionData.fieldErrors.url}
-            </p>
-          ) : null}
-        </div>
+    <Section title='Add New League'>
+      <Form method='POST' className='grid max-w-md gap-6'>
+        <Field label='League URL' error={actionData?.fieldErrors?.url}>
+          <Input required defaultValue={actionData?.fields?.url} name='url' />
+        </Field>
         <div>
           {actionData?.formError ? (
-            <p className='form-validation-error' role='alert'>
+            <p className='text-negative' role='alert'>
               {actionData.formError}
             </p>
           ) : null}
@@ -116,6 +99,6 @@ export default function LeagueNew() {
           </Button>
         </div>
       </Form>
-    </>
+    </Section>
   );
 }

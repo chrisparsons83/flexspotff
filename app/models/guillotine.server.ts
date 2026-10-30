@@ -112,12 +112,33 @@ export async function getGuillotineHistory() {
   });
 }
 
-/** The newest season's leagues, for the Games sidebar. */
+/**
+ * The newest season's leagues with every team and week it played, for the
+ * Side leagues overview.
+ */
 export async function getLatestGuillotineLeagues() {
   const season = await prisma.guillotineSeason.findFirst({
     orderBy: { year: 'desc' },
     include: {
-      leagues: { orderBy: { name: 'asc' }, select: { id: true, name: true } },
+      leagues: {
+        orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          isComplete: true,
+          lastScoredWeek: true,
+          teams: {
+            select: {
+              rosterId: true,
+              finish: true,
+              choppedWeek: true,
+              sleeperDisplayName: true,
+              user: teamMember,
+              weekScores: { select: { week: true, points: true } },
+            },
+          },
+        },
+      },
     },
   });
   return season ? { year: season.year, leagues: season.leagues } : null;

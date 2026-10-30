@@ -27,18 +27,14 @@ describe('leagues.cup.$year', () => {
       year: 2026,
     } as Awaited<ReturnType<typeof seasonModel.getCurrentSeason>>);
     vi.mocked(cupModel.getCupByYear).mockResolvedValue(null);
+    vi.mocked(cupModel.getCups).mockResolvedValue([]);
   });
 
   it('shows a placeholder for the current season before its Cup exists', async () => {
     const response = await loader(loaderArgs('2026'));
     const data = await response.json();
 
-    expect(data).toMatchObject({
-      hasCup: false,
-      cupGames: [],
-      scoreArray: [],
-      year: '2026',
-    });
+    expect(data).toMatchObject({ bracket: null, year: 2026 });
   });
 
   it('is a 404 for a year that is not a number', async () => {
