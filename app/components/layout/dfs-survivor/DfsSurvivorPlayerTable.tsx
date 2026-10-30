@@ -242,28 +242,36 @@ export default function DfsSurvivorPlayerTable({
                   )}
                 >
                   <td className='px-2 py-1.5'>
-                    <div className='flex flex-wrap items-center gap-x-2'>
+                    <div className='flex flex-wrap items-baseline gap-x-2'>
                       <span className='font-medium'>{player.name}</span>
                       {showPosition && (
                         <span className='text-sm text-muted-foreground'>
                           {player.position}
                         </span>
                       )}
+                      {/* Marked like a highlighter: the week they were
+                          used, on the name's line, with the points they
+                          scored on hover. */}
+                      {usedElsewhere && (
+                        <span
+                          className='bg-warning/25 px-1.5 text-sm font-semibold text-foreground'
+                          title={
+                            player.usedPoints != null
+                              ? `Used in week ${
+                                  player.usedInWeek
+                                }: ${player.usedPoints.toFixed(1)} pts`
+                              : `Used in week ${player.usedInWeek}`
+                          }
+                        >
+                          Week {player.usedInWeek}
+                        </span>
+                      )}
                     </div>
-                    {/* What stands in the way of a pick, or already made it,
-                        on the line under the name. */}
-                    {(inLineup || player.isLocked || usedElsewhere) && (
+                    {(inLineup || player.isLocked) && (
                       <div className='text-sm text-muted-foreground'>
                         {inLineup && (
                           <span className='font-semibold text-foreground'>
                             In your lineup
-                          </span>
-                        )}
-                        {usedElsewhere && (
-                          <span className='block'>
-                            Used in Week {player.usedInWeek}
-                            {player.usedPoints != null &&
-                              `, ${player.usedPoints.toFixed(1)} pts`}
                           </span>
                         )}
                         {player.isLocked && (
