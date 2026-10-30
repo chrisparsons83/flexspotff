@@ -4,6 +4,7 @@ import { Button } from '~/components/ui/button';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import { SLOT_POSITIONS } from '~/libs/dfs-survivor/slots';
 import type { PickerPlayer } from '~/routes/games.dfs-survivor.entries._index';
+import { cn } from '~/utils';
 
 type SortKey =
   | 'name'
@@ -31,7 +32,8 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'right' }[] = [
 
 /**
  * Shows or hides a group of players. It says what pressing it will do,
- * "Show Used" or "Hide Used", so it needs no on and off colours.
+ * "Show Used" or "Hide Used", and while the group is showing it is marked
+ * as a chosen segment is, with the accent bar.
  */
 function FilterToggle({
   hidden,
@@ -49,8 +51,13 @@ function FilterToggle({
     <Button
       variant='secondary'
       size='sm'
+      aria-pressed={!hidden}
       onClick={() => onChange(!hidden)}
-      className={className}
+      className={cn(
+        !hidden &&
+          'border-tab-edge bg-tab bg-accent-gradient bg-[length:100%_var(--tab-bar)] bg-bottom bg-no-repeat text-tab-foreground [background-origin:border-box]',
+        className,
+      )}
     >
       {hidden ? 'Show' : 'Hide'} {noun}
     </Button>
