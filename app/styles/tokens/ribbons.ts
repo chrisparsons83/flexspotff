@@ -14,6 +14,12 @@ export type Ribbon = {
   /** The stars. */
   star: string;
   wash: string;
+  /**
+   * The ribbon in the light theme. The old site was dark only, and a 60%
+   * wash over a light card left the light name unreadable, so the light
+   * theme gets the same colour solid.
+   */
+  solid: string;
   /** The name: dark on the two gold ribbons, light on the rest. */
   label: string;
 };
@@ -29,7 +35,14 @@ const ribbon = (
   edge: string,
   star: string,
   darkest: string,
-): Ribbon => ({ emoji, edge, star, wash: wash(darkest), label: LIGHT_LABEL });
+): Ribbon => ({
+  emoji,
+  edge,
+  star,
+  wash: wash(darkest),
+  solid: darkest,
+  label: LIGHT_LABEL,
+});
 
 /** Keyed by badge key. */
 export const RIBBONS: Record<string, Ribbon> = {
@@ -38,6 +51,7 @@ export const RIBBONS: Record<string, Ribbon> = {
     edge: '#d97706',
     star: '#92400e',
     wash: '#fcd34d',
+    solid: '#fcd34d',
     label: DARK_LABEL,
   },
   'league-champion': {
@@ -45,6 +59,7 @@ export const RIBBONS: Record<string, Ribbon> = {
     edge: '#f59e0b',
     star: '#b45309',
     wash: '#fde68a',
+    solid: '#fde68a',
     label: DARK_LABEL,
   },
   'cup-champion': ribbon('🥇', '#38bdf8', '#7dd3fc', '#082f49'),

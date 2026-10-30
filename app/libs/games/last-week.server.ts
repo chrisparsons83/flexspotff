@@ -1,5 +1,4 @@
 import { prisma } from '~/db.server';
-import { getLocksGamePicksWonLossWeek } from '~/models/locksgamepicks.server';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
@@ -93,7 +92,17 @@ async function locks(year: number) {
     locksWeek => locksWeek.isWeekScored,
   );
   if (!week) return null;
-  const rows = await getLocksGamePicksWonLossWeek(week);
+  // Only the picks that count: a pick switched to the other side, or to no
+  // pick, stays in the table as inactive until the week is cleaned up.
+  const rows = await prisma.locksGamePick.groupBy({
+    by: ['userId'],
+    where: {
+      isActive: { gt: 0 },
+      isScored: true,
+      locksGame: { locksWeekId: week.id },
+    },
+    _sum: { isWin: true, isLoss: true, isTie: true },
+  });
   return ranked(
     week.weekNumber,
     rows.map(({ userId, _sum: sum }) => {

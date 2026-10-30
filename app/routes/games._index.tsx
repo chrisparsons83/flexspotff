@@ -9,12 +9,14 @@ import { Section } from '~/components/ui/section';
 import { SummaryRows } from '~/components/ui/summary-card';
 import type { DashboardRow } from '~/libs/dashboard/week';
 import { getMemberWeek } from '~/libs/dashboard/week.server';
+import { getLastWeeks } from '~/libs/games/last-week.server';
 import {
   type GameOverview,
   getGamesOverview,
 } from '~/libs/games/overview.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
+import { cn } from '~/utils';
 import type { RouteHandle } from '~/utils/route-handle';
 
 export const handle: RouteHandle = { title: 'Games' };
@@ -28,13 +30,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     getCurrentSeason(),
     authenticator.isAuthenticated(request),
   ]);
+  // Loaded once for both the leaders and the reader's own row.
+  const lastWeeks = season ? await getLastWeeks(season.year) : undefined;
   const [games, member] = await Promise.all([
     getGamesOverview(season, {
       signedIn: !!user,
       leaders: LEADERS,
       weekLeaders: WEEK_LEADERS,
+      lastWeeks,
     }),
-    user && season ? getMemberWeek(user.id, season) : null,
+    user && season ? getMemberWeek(user.id, season, { lastWeeks }) : null,
   ]);
   return typedjson({
     games,
@@ -95,6 +100,8 @@ function GameRow({
       </Link>
     </Button>
   ) : null;
+  // As many columns as panels, so a signed-out reader has no empty one.
+  const panels = (game.lastWeek !== undefined ? 1 : 0) + 1 + (mine ? 1 : 0);
 
   return (
     <Section
@@ -117,7 +124,7 @@ function GameRow({
         )
       }
     >
-      <div className='grid gap-3 md:grid-cols-3'>
+      <div className={cn('grid gap-3', PANEL_COLUMNS[panels])}>
         {game.lastWeek !== undefined && (
           <Panel
             title={game.lastWeek ? `Week ${game.lastWeek.week}` : 'Last Week'}
@@ -155,6 +162,12 @@ function GameRow({
     </Section>
   );
 }
+
+const PANEL_COLUMNS: Record<number, string> = {
+  1: 'md:grid-cols-1',
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+};
 
 /** A lighter compartment of a game's section, as the career cards are. */
 function Panel({ title, children }: { title: string; children: ReactNode }) {

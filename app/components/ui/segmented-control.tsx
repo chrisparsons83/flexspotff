@@ -44,7 +44,11 @@ export function SegmentedControl<T extends string | number>({
             onClick={() => onChange(option.value)}
             className={cn(
               'border px-3 tabular-nums transition-colors duration-fast disabled:cursor-not-allowed',
-              size === 'md' ? 'h-10 text-base' : 'h-8 text-sm',
+              // md wraps a long label onto two lines on a phone rather than
+              // spilling out of its segment.
+              size === 'md'
+                ? 'min-h-10 py-1 text-sm leading-tight sm:text-base'
+                : 'h-8 text-sm',
               // Chosen the way the current tab is: the tab surface with the
               // accent bar along its foot.
               selected

@@ -18,6 +18,7 @@ import { getSideLeaguesOverview } from '~/libs/side-leagues/overview.server';
 import { getLeaguesByYear } from '~/models/league.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
 import { authenticator } from '~/services/auth.server';
 import { cn } from '~/utils';
 
@@ -39,9 +40,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     authenticator.isAuthenticated(request),
   ]);
   const signedIn = Boolean(user);
-  const [leagues, week, games, sideLeagues] = await Promise.all([
+  const [leagues, week, scored, games, sideLeagues] = await Promise.all([
     season ? getLeaguesByYear(season.year) : [],
     season ? getCurrentNflWeek(season.year, new Date()) : null,
+    season ? getNewestWeekTeamGameByYear(season.year) : null,
     season ? getGamesOverview(season, { signedIn, leaders: LEADERS }) : [],
     season
       ? getSideLeaguesOverview({ leaders: LEADERS, guillotineEach: LEADERS })
@@ -51,6 +53,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return typedjson({
     year: season?.year ?? null,
     week,
+    // The week the heading links to: the newest with scores, since the
+    // current week's board is empty until its games are played.
+    scoredWeek: scored?._max.week ?? null,
     signedIn,
     // The Omni archive has no week to report.
     games: games.filter(game => !game.to.startsWith('/games/omni')),
@@ -85,7 +90,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  const { year, week, signedIn, games, leagues, sideLeagues } =
+  const { year, week, scoredWeek, signedIn, games, leagues, sideLeagues } =
     useTypedLoaderData<typeof loader>();
 
   return (
@@ -132,8 +137,8 @@ export default function Index() {
               : `${year} Leagues`
           }
           to={
-            week && week <= LAST_PLAYOFF_WEEK
-              ? `/leagues/leaderboard/${year}/${week}`
+            week && week <= LAST_PLAYOFF_WEEK && scoredWeek
+              ? `/leagues/leaderboard/${year}/${scoredWeek}`
               : '/leagues'
           }
           action={<Link to='/leagues/standings'>Full Standings</Link>}
@@ -173,7 +178,7 @@ export default function Index() {
                     {league.leaders.map((leader, index) => (
                       <li
                         key={leader.id}
-                        className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-2 text-sm'
+                        className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-2 text-sm [&:has([data-me])]:-mx-2 [&:has([data-me])]:bg-primary/10 [&:has([data-me])]:px-2'
                       >
                         <span className='text-muted-foreground'>
                           {index + 1}

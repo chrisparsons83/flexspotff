@@ -185,7 +185,7 @@ function LeagueCard({
         {league.teams.map((team, index) => (
           <li
             key={team.id}
-            className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-1 text-sm'
+            className='grid grid-cols-[1.5rem_1fr_auto] gap-2 py-1 text-sm [&:has([data-me])]:-mx-2 [&:has([data-me])]:bg-primary/10 [&:has([data-me])]:px-2'
           >
             <span className='text-muted-foreground'>{index + 1}</span>
             <span className='truncate'>

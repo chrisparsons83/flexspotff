@@ -166,6 +166,7 @@ async function dfsSurvivorFacts(
 async function standingsFacts(
   userId: string,
   year: number,
+  lastWeeks?: Awaited<ReturnType<typeof getLastWeeks>>,
 ): Promise<MemberWeekFacts['standings']> {
   const years = [year];
   const [qbTotals, poolTotals, locksTotals, dfsTotals, fSquaredTotals] =
@@ -201,7 +202,7 @@ async function standingsFacts(
 
   // How each game's newest scored week went for them. A game they have a
   // standing in but no result that week shows they had no picks in.
-  const weeks = await getLastWeeks(year);
+  const weeks = lastWeeks ?? (await getLastWeeks(year));
   const lastWeek = (game: WeeklyGame, missing: string | null) => {
     const week = weeks[game];
     const mine = week?.results.find(result => result.userId === userId);
@@ -298,7 +299,12 @@ async function bestBallFacts(
 }
 
 /** The member's week, every row ready for the dashboard. */
-export async function getMemberWeek(userId: string, season: Season) {
+export async function getMemberWeek(
+  userId: string,
+  season: Season,
+  /** Each game's newest scored week, when the caller has already loaded it. */
+  options: { lastWeeks?: Awaited<ReturnType<typeof getLastWeeks>> } = {},
+) {
   const { year } = season;
   const week = await getCurrentNflWeek(year, new Date());
 
@@ -334,7 +340,7 @@ export async function getMemberWeek(userId: string, season: Season) {
     season.isOpenForRegistration
       ? getRegistrationByUserAndYear(userId, year)
       : null,
-    standingsFacts(userId, year),
+    standingsFacts(userId, year, options.lastWeeks),
     memberCupFacts(userId, year),
     d12Facts(userId, year, week),
     bestBallFacts(userId, year, week),

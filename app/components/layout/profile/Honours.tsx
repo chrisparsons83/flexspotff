@@ -26,10 +26,11 @@ export function Honour({ badge }: { badge: Badge }) {
   const ribbon = RIBBONS[badge.key];
   return (
     <span
-      className='flex h-full min-h-[7.75rem] w-full flex-col items-center border-t-4 px-0.5 text-center [clip-path:polygon(0_0,100%_0,100%_100%,50%_86%,0_100%)]'
+      className='flex h-full min-h-[7.75rem] w-full flex-col items-center border-t-4 bg-[var(--ribbon-solid)] px-0.5 text-center [clip-path:polygon(0_0,100%_0,100%_100%,50%_86%,0_100%)] dark:bg-[var(--ribbon-wash)]'
       style={{
         borderTopColor: ribbon?.edge,
-        backgroundColor: ribbon?.wash,
+        ['--ribbon-wash' as string]: ribbon?.wash,
+        ['--ribbon-solid' as string]: ribbon?.solid,
       }}
     >
       <span aria-hidden='true' className='pt-2.5 text-2xl leading-none'>

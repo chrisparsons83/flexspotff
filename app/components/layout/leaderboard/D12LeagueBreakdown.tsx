@@ -32,13 +32,14 @@ export default function D12LeagueBreakdown({
   );
 
   return (
-    // As wide as its two columns need, not the whole row it opens in.
+    // As wide as its two columns need, not the whole row it opens in; with
+    // lineups under each league it takes the room the lineups need.
     <Table
       headers={['League', 'Points']}
       numericColumns={[1]}
       sortKeys={{ 0: 'league', 1: 'points' }}
       sort={sort}
-      className='max-w-md'
+      className={showLineups ? undefined : 'max-w-md'}
     >
       {rows.map(league => (
         <Fragment key={league.leagueId}>

@@ -65,16 +65,23 @@ const MAX_WEEK_ROWS = 5;
  * Entry links in the status are for signed-in readers.
  */
 export async function getGamesOverview(
-  season: { year: number; isOpenForFSquared: boolean } | null,
+  season: {
+    year: number;
+    isOpenForFSquared: boolean;
+    isOpenForDFSSurvivor: boolean;
+  } | null,
   {
     signedIn,
     leaders,
     weekLeaders = 0,
+    lastWeeks: preloaded,
   }: {
     signedIn: boolean;
     leaders: number;
     /** How many of each weekly game's newest week to list; none by default. */
     weekLeaders?: number;
+    /** Each game's newest scored week, when the caller has already loaded it. */
+    lastWeeks?: Awaited<ReturnType<typeof getLastWeeks>>;
   },
 ): Promise<GameOverview[]> {
   const year = season?.year;
@@ -120,7 +127,8 @@ export async function getGamesOverview(
     }));
   const twoPlaces = (total: number) => total.toFixed(2);
 
-  const lastWeeks = year && weekLeaders > 0 ? await getLastWeeks(year) : null;
+  const lastWeeks =
+    year && weekLeaders > 0 ? preloaded ?? (await getLastWeeks(year)) : null;
   const weekUsers = lastWeeks
     ? await getUsersByIds(
         Object.values(lastWeeks).flatMap(
@@ -233,6 +241,10 @@ export async function getGamesOverview(
       name: 'DFS Survivor',
       to: '/games/dfs-survivor',
       status: dfs ? `Scored through week ${dfs.week}` : 'No weeks scored yet',
+      statusHref:
+        signedIn && season?.isOpenForDFSSurvivor
+          ? '/games/dfs-survivor/entries'
+          : undefined,
       rows: leaderRows(dfsLeaders, twoPlaces),
       lastWeek: weekTop('dfsSurvivor'),
       empty: NO_SCORES,
