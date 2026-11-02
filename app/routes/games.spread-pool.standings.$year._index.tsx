@@ -1,21 +1,35 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import SpreadPoolStandingsRow from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import {
+  SPREAD_POOL_HEADINGS,
+  spreadPoolStandingsEntry,
+} from '~/components/layout/spread-pool/SpreadPoolStandingsRow';
 import {
   getPoolGamePicksWonLoss,
   getPoolGamesPicksByPoolWeek,
 } from '~/models/poolgamepicks.server';
 import { getPoolWeeksByYear } from '~/models/poolweek.server';
 import { getPoolWeekMissedTotalByUserAndYear } from '~/models/poolweekmissed.server';
-import type { User } from '~/models/user.server';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
+import { getCurrentSeason } from '~/models/season.server';
 import { getUsersByIds } from '~/models/user.server';
+import { assertSeasonHasDataOrIsCurrent } from '~/utils/standings';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  if (!yearParam) throw new Error('No year existing');
-  const year = +yearParam;
-
-  const poolWeeks = await getPoolWeeksByYear(year);
+  const year = Number(params.year);
+  const [poolWeeks, years, currentSeason] = await Promise.all([
+    getPoolWeeksByYear(year),
+    sideGameYears('spreadPool'),
+    getCurrentSeason(),
+  ]);
+  assertSeasonHasDataOrIsCurrent(
+    year,
+    years.includes(year),
+    currentSeason?.year,
+    'No Spread Pool that year',
+  );
 
   // Get the most active week
   const currentWeek = poolWeeks.find(poolWeek => poolWeek.isOpen === true);
@@ -67,45 +81,57 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   ];
   const users = await getUsersByIds(userIds);
 
-  return typedjson({ amountWonLoss, users, userIdToRankMap, weeklyPicks });
+  return typedjson({
+    amountWonLoss,
+    users,
+    userIdToRankMap,
+    weeklyPicks,
+    year,
+    years,
+    weeks: poolWeeks.map(poolWeek => poolWeek.weekNumber),
+  });
 };
 
-export default function QBStreamingStandingsYearIndex() {
-  const { amountWonLoss, users, userIdToRankMap, weeklyPicks } =
-    useTypedLoaderData<typeof loader>();
+export default function SpreadPoolStandings() {
+  const {
+    amountWonLoss,
+    users,
+    userIdToRankMap,
+    weeklyPicks,
+    year,
+    years,
+    weeks,
+  } = useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
+  const entries = amountWonLoss.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          spreadPoolStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            poolGameWonLoss: result,
+            picksLocked: weeklyPicks?.filter(
+              pick => pick.userId === result.userId,
+            ),
+          }),
+        ]
+      : [];
+  });
 
   return (
-    <>
-      <h2>Overall Standings</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Bank</th>
-            <th>W-L-T</th>
-            <th>ROE</th>
-          </tr>
-        </thead>
-        <tbody>
-          {amountWonLoss.map(result => (
-            <SpreadPoolStandingsRow
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              poolGameWonLoss={result}
-              picksLocked={weeklyPicks?.filter(
-                pick => pick.userId === result.userId,
-              )}
-            />
-          ))}
-        </tbody>
-      </table>
-    </>
+    <StandingsSection
+      base='/games/spread-pool/standings'
+      year={year}
+      years={years}
+      weeks={weeks}
+    >
+      <LeaderboardTable
+        entries={entries}
+        nameHeading='Member'
+        valueHeadings={SPREAD_POOL_HEADINGS}
+        emptyMessage='No bets scored yet this season.'
+      />
+    </StandingsSection>
   );
 }

@@ -22,7 +22,7 @@ export const ordinal = (n: number) => {
 };
 
 export const pts = (value: number | null | undefined, digits = 2) =>
-  value === null || value === undefined ? '—' : value.toFixed(digits);
+  value === null || value === undefined ? '–' : value.toFixed(digits);
 
 /**
  * Which of the two guillotine leagues this is. The buy-in league has always had

@@ -78,10 +78,12 @@ describe('admin.members.$id loader', () => {
 
   it('does not read the member when authorization fails', async () => {
     vi.mocked(auth.requireAdmin).mockImplementation(() => {
-      throw new Error('You do not have access to this page.');
+      throw new Response('This page is for the site’s admins.', {
+        status: 403,
+      });
     });
 
-    await expect(runLoader()).rejects.toThrow('You do not have access');
+    await expect(runLoader()).rejects.toMatchObject({ status: 403 });
     expect(userModel.getUser).not.toHaveBeenCalled();
   });
 });

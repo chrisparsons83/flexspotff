@@ -688,7 +688,7 @@ const SIDE_BUCKETS: SplitDefinition[] = [
 const SIZE_BUCKETS: SplitDefinition[] = [10, 20, 30, 40, MAX_BET].map(
   (amount, index, all) => ({
     key: String(amount),
-    label: amount === MAX_BET ? `${amount} (max)` : String(amount),
+    label: amount === MAX_BET ? `${amount} (Max)` : String(amount),
     // Anything off the steps rounds up into the next one.
     matches: b => b.amount <= amount && b.amount > (all[index - 1] ?? 0),
   }),
@@ -702,17 +702,17 @@ const VENUE_BUCKETS: SplitDefinition[] = [
 const CROWD_BUCKETS: SplitDefinition[] = [
   {
     key: 'with',
-    label: 'With the crowd',
+    label: 'With the Crowd',
     matches: b => b.fieldShare != null && b.fieldShare > 0.5,
   },
   {
     key: 'split',
-    label: 'Split field',
+    label: 'Split Field',
     matches: b => b.fieldShare === 0.5,
   },
   {
     key: 'against',
-    label: 'Against the crowd',
+    label: 'Against the Crowd',
     matches: b => b.fieldShare != null && b.fieldShare < 0.5,
   },
 ];
@@ -732,17 +732,17 @@ const SLOT_BUCKETS: SplitDefinition[] = [
   { key: 'saturday', label: 'Saturday', matches: b => b.slot === 'saturday' },
   {
     key: 'sundayEarly',
-    label: 'Sunday early',
+    label: 'Sunday Early',
     matches: b => b.slot === 'sundayEarly',
   },
   {
     key: 'sundayLate',
-    label: 'Sunday late',
+    label: 'Sunday Late',
     matches: b => b.slot === 'sundayLate',
   },
   {
     key: 'sundayNight',
-    label: 'Sunday night',
+    label: 'Sunday Night',
     matches: b => b.slot === 'sundayNight',
   },
   { key: 'monday', label: 'Monday', matches: b => b.slot === 'monday' },

@@ -1,6 +1,5 @@
-import clsx from 'clsx';
+import { PositionMark } from '~/components/ui/swatch';
 import type { Player } from '~/models/players.server';
-import { POSITION_BORDER_COLORS } from '~/utils/constants';
 
 type Props = {
   /** Sleeper player IDs in starting-slot order. '0' marks an empty slot. */
@@ -18,31 +17,27 @@ export default function StarterGrid({
   startingPlayerPoints,
 }: Props) {
   return (
-    <div className='grid md:grid-cols-2 lg:grid-cols-3 px-4'>
+    <ul className='grid gap-x-6 gap-y-1 md:grid-cols-2 lg:grid-cols-3'>
       {starters.map((starterId, index) => {
         const player = startingPlayers.find(
           starter => starter.sleeperId === starterId,
         );
 
-        const playerPosition = player?.position?.toLocaleLowerCase() || 'empty';
-
         return (
-          <div
-            className={clsx(
-              POSITION_BORDER_COLORS[playerPosition],
-              'mb-1 border-l-8 pl-4',
-            )}
+          <li
+            className='flex items-baseline gap-2'
             key={`${starterId}-${index}`}
           >
-            <div className='flex items-baseline gap-2'>
-              <div>{player?.fullName || 'Empty'}</div>
-              <div className='text-sm italic text-gray-400'>
-                {(startingPlayerPoints[index] ?? 0).toFixed(2)} pts
-              </div>
-            </div>
-          </div>
+            <PositionMark position={player?.position ?? null} />
+            <span className='min-w-0 flex-1 truncate'>
+              {player?.fullName || 'Empty'}
+            </span>
+            <span className='text-sm tabular-nums text-muted-foreground'>
+              {(startingPlayerPoints[index] ?? 0).toFixed(2)} pts
+            </span>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

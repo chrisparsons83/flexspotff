@@ -1,3 +1,4 @@
+import { Cross2Icon } from '@radix-ui/react-icons';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { Link, useOutletContext } from '@remix-run/react';
 import clsx from 'clsx';
@@ -6,22 +7,19 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import PercentileStrip from '~/components/layout/profile/PercentileStrip';
-import PositionChip from '~/components/layout/profile/PositionChip';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable from '~/components/layout/profile/ProfileTable';
 import { Trophies } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import SplitBar from '~/components/layout/profile/SplitBar';
-import {
-  KeyList,
-  LegendItem,
-  Swatch,
-} from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
 import { ordinal, plural, pts } from '~/components/layout/profile/format';
 import { TEXT } from '~/components/layout/profile/tones';
+import { PercentileStrip, SplitBar } from '~/components/ui/bars';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { PositionMark } from '~/components/ui/swatch';
+import { Table } from '~/components/ui/table';
+import { KeyList, LegendItem, LegendSwatch } from '~/components/ui/week-grid';
 import { leagueKind } from '~/libs/guillotine/display';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getGuillotineProfile } from '~/models/profile/guillotine.server';
@@ -32,6 +30,9 @@ import type {
   SurvivalWeek,
 } from '~/models/profile/guillotineProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Guillotine' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -55,9 +56,9 @@ const seasonLabel = (season: { year: number; leagueName: string }) =>
   `${season.year} ${leagueKind(season.leagueName)}`;
 
 const finishLabel = (season: GuillotineSeason) => {
-  if (season.place === 1) return '🏆 1st';
+  if (season.place === 1) return 'Champion';
   if (season.alive) return 'Alive';
-  return season.place ? ordinal(season.place) : '—';
+  return season.place ? ordinal(season.place) : '–';
 };
 
 export default function MemberGuillotine() {
@@ -67,7 +68,7 @@ export default function MemberGuillotine() {
   if (!profile.hasPlayed) {
     return (
       <ContestEmptyState
-        contest='Guillotine'
+        contest='guillotine'
         memberName={summary.user.discordName}
       />
     );
@@ -117,23 +118,23 @@ function Career({
                 <LeadContext>{seasonLabel(best)}</LeadContext>
               </>
             ) : (
-              '—'
+              '–'
             )
           }
           meter={<PlaceBar finishes={finishes} />}
         >
           <MiniStat
             label='Longest Run'
-            value={career.longestRun?.weeks ?? '—'}
+            value={career.longestRun?.weeks ?? '–'}
             unit={career.longestRun ? 'weeks' : undefined}
-            tone='text-emerald-300'
+            tone='text-positive'
             hint='Most weeks played in a season, the chop week included'
           />
           <MiniStat
             label='Shortest Run'
-            value={career.shortestRun?.weeks ?? '—'}
+            value={career.shortestRun?.weeks ?? '–'}
             unit={career.shortestRun ? 'weeks' : undefined}
-            tone='text-rose-300'
+            tone='text-negative'
             hint='Fewest weeks played in a season that is over for them'
           />
           <MiniStat
@@ -147,7 +148,7 @@ function Career({
           title='Weekly Finish'
           lead={
             career.averagePercentile === null ? (
-              '—'
+              '–'
             ) : (
               <>
                 {ordinal(Math.round(career.averagePercentile * 100))}
@@ -165,16 +166,16 @@ function Career({
           <MiniStat
             label='Best Week'
             value={pts(career.bestWeek?.points, 1)}
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Closest Escape'
             value={
               career.closestEscape
                 ? `+${pts(career.closestEscape.margin)}`
-                : '—'
+                : '–'
             }
-            tone='text-amber-300'
+            tone='text-warning'
             hint='The fewest points they ever survived the chop by'
           />
           <MiniStat
@@ -202,13 +203,13 @@ function Career({
           <MiniStat label='Total FAAB Spent' value={`$${career.faabSpent}`} />
           <MiniStat
             label='Biggest Bid'
-            value={career.biggestBid ? `$${career.biggestBid.bid}` : '—'}
+            value={career.biggestBid ? `$${career.biggestBid.bid}` : '–'}
           />
           <MiniStat
             label='Average Winning Bid'
             value={
               career.averageWinningBid === null
-                ? '—'
+                ? '–'
                 : `$${Math.round(career.averageWinningBid)}`
             }
           />
@@ -247,14 +248,14 @@ function PlaceBar({
                 : undefined
             }
             className={clsx(
-              'flex-1 first:rounded-l-full last:rounded-r-full',
+              'flex-1',
               here.length === 0
-                ? 'bg-slate-700'
+                ? 'bg-secondary'
                 : place === 1
-                ? 'bg-gold'
+                ? 'bg-medal-gold'
                 : here.length > 1
-                ? 'bg-sky-200'
-                : 'bg-sky-400/70',
+                ? 'bg-info/20'
+                : 'bg-info/40',
             )}
           />
         );
@@ -270,12 +271,12 @@ function PlaceBar({
  * apart with red-green colour blindness too.
  */
 const SURVIVAL = {
-  top: 'bg-emerald-300 text-emerald-950',
-  survived: 'bg-slate-500 text-white',
-  close: 'bg-slate-500 text-white ring-2 ring-inset ring-amber-300',
-  chopped: 'bg-rose-800 text-rose-50',
-  gone: 'bg-slate-800',
-  future: 'border border-dashed border-slate-500',
+  top: 'bg-positive/20 text-positive',
+  survived: 'bg-secondary text-foreground',
+  close: 'bg-secondary text-foreground ring-2 ring-inset ring-warning',
+  chopped: 'bg-destructive/20 text-negative',
+  gone: 'bg-card',
+  future: 'border border-dashed border-border',
 } as const;
 
 const SURVIVAL_LABEL: Record<keyof typeof SURVIVAL, string> = {
@@ -331,9 +332,9 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
             <LegendItem
               key={kind}
               swatch={
-                <Swatch tone={clsx(SURVIVAL[kind], 'text-[0.6rem]')}>
-                  {kind === 'chopped' && '✕'}
-                </Swatch>
+                <LegendSwatch tone={clsx(SURVIVAL[kind], 'text-sm')}>
+                  {kind === 'chopped' && <Cross2Icon aria-hidden />}
+                </LegendSwatch>
               }
             >
               {SURVIVAL_LABEL[kind]}
@@ -349,9 +350,9 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
             className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 md:grid-cols-[6.5rem_1fr_5rem]'
           >
             <Link
-              to={`/games/guillotine/${season.leagueId}`}
+              to={`/side-leagues/guillotine/${season.leagueId}`}
               title={season.leagueName}
-              className='truncate text-sm text-slate-200 no-underline hover:underline'
+              className='truncate text-sm text-foreground no-underline hover:underline'
             >
               {seasonLabel(season)}
             </Link>
@@ -362,7 +363,7 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                   ? TEXT.champion
                   : season.alive
                   ? TEXT.good
-                  : 'text-slate-300',
+                  : 'text-foreground',
               )}
             >
               {finishLabel(season)}
@@ -382,7 +383,7 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                     key={week.week}
                     title={survivalTitle(week)}
                     className={clsx(
-                      'relative flex h-5 min-w-0 items-center justify-center overflow-hidden rounded-sm text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-xs',
+                      'relative flex h-5 min-w-0 items-center justify-center overflow-hidden text-[10px] font-semibold leading-none tabular-nums md:h-6 lg:text-sm',
                       SURVIVAL[kind],
                     )}
                   >
@@ -390,7 +391,7 @@ function Survival({ seasons }: { seasons: GuillotineSeason[] }) {
                         to read on a phone, and decimals wait until the squares
                         are wide; the hover text always has them. */}
                     {kind === 'chopped' ? (
-                      <span aria-hidden='true'>✕</span>
+                      <Cross2Icon aria-hidden='true' className='mx-auto' />
                     ) : (
                       'points' in week && (
                         <span aria-hidden='true'>
@@ -426,11 +427,13 @@ function WeekMark({
   return (
     <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
       {week === undefined ? (
-        '—'
+        '–'
       ) : (
         <>
           {value}
-          <span className='ml-1.5 text-xs text-slate-400'>Week {week}</span>
+          <span className='ml-1.5 text-sm text-muted-foreground'>
+            Week {week}
+          </span>
         </>
       )}
     </td>
@@ -446,7 +449,7 @@ function BySeason({
 }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Season',
           'Finish',
@@ -463,12 +466,12 @@ function BySeason({
         numericColumns={[3, 4, 5, 6, 7, 8]}
       >
         {seasons.map(season => (
-          <tr key={season.leagueId} className='border-b border-slate-700/60'>
+          <tr key={season.leagueId} className='border-b border-border'>
             <td className='px-2 py-2'>
               <Link
-                to={`/games/guillotine/${season.leagueId}`}
+                to={`/side-leagues/guillotine/${season.leagueId}`}
                 title={season.leagueName}
-                className='whitespace-nowrap text-white no-underline hover:underline'
+                className='whitespace-nowrap text-foreground no-underline hover:underline'
               >
                 {seasonLabel(season)}
               </Link>
@@ -480,13 +483,13 @@ function BySeason({
                   ? TEXT.champion
                   : season.alive
                   ? TEXT.good
-                  : 'text-slate-200',
+                  : 'text-foreground',
               )}
             >
               {finishLabel(season)}
             </td>
             <td className='px-2 py-2'>
-              {season.choppedWeek ? `Week ${season.choppedWeek}` : '—'}
+              {season.choppedWeek ? `Week ${season.choppedWeek}` : '–'}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
               {pts(season.averagePoints)}
@@ -501,7 +504,7 @@ function BySeason({
             />
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.claimsWon}
-              <span className='ml-1 text-slate-400'>
+              <span className='ml-1 text-muted-foreground'>
                 / {season.claimsWon + season.bidsLost}
               </span>
             </td>
@@ -519,17 +522,17 @@ function BySeason({
                 <>
                   {players[season.biggestClaim.sleeperId]?.name ??
                     season.biggestClaim.sleeperId}
-                  <span className='ml-1.5 text-slate-400'>
+                  <span className='ml-1.5 text-muted-foreground'>
                     ${season.biggestClaim.bid}
                   </span>
                 </>
               ) : (
-                '—'
+                '–'
               )}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -545,11 +548,13 @@ function PlayerCell({
   const player = players[sleeperId];
   return (
     <span className='inline-flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-      <PositionChip position={player?.position ?? null} />
-      <span className='font-medium text-slate-100'>
+      <PositionMark position={player?.position ?? null} />
+      <span className='font-medium text-foreground'>
         {player?.name ?? sleeperId}
       </span>
-      <span className='text-xs text-slate-400'>{player?.nflTeam ?? 'FA'}</span>
+      <span className='text-sm text-muted-foreground'>
+        {player?.nflTeam ?? 'FA'}
+      </span>
     </span>
   );
 }
@@ -601,9 +606,9 @@ function WaiverClaims({
       action={
         <div className='flex flex-wrap items-center gap-3'>
           <div className='flex items-center gap-2'>
-            <span className='text-sm text-slate-400'>Sort by</span>
+            <span className='text-sm text-muted-foreground'>Sort by</span>
             <SegmentedControl
-              label='Sort by'
+              label='Sort By'
               value={sort}
               onChange={setSort}
               options={(Object.keys(CLAIM_SORTS) as ClaimSort[]).map(
@@ -617,7 +622,7 @@ function WaiverClaims({
         </div>
       }
     >
-      <ProfileTable
+      <Table
         headers={['Player', 'Bid', 'Season', 'Week']}
         primaryColumns={[1]}
         numericColumns={[1, 3]}
@@ -625,23 +630,23 @@ function WaiverClaims({
         {visible.map(claim => (
           <tr
             key={`${claim.year}-${claim.leagueName}-${claim.sleeperId}-${claim.week}`}
-            className='border-b border-slate-700/60'
+            className='border-b border-border'
           >
             <td className='px-2 py-2 sm:whitespace-nowrap'>
               <PlayerCell sleeperId={claim.sleeperId} players={players} />
             </td>
-            <td className='px-2 py-2 text-right font-semibold tabular-nums text-white'>
+            <td className='px-2 py-2 text-right font-semibold tabular-nums text-foreground'>
               ${claim.bid}
             </td>
-            <td className='whitespace-nowrap px-2 py-2 text-slate-300'>
+            <td className='whitespace-nowrap px-2 py-2 text-foreground'>
               {seasonLabel(claim)}
             </td>
-            <td className='px-2 py-2 text-right tabular-nums text-slate-300'>
+            <td className='px-2 py-2 text-right tabular-nums text-foreground'>
               {claim.week}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {filtered.length > CLAIMS_PREVIEW && (
         <ShowAllButton
           total={filtered.length}
@@ -700,17 +705,17 @@ function DraftPicks({
         </div>
       }
     >
-      <ProfileTable
+      <Table
         headers={['Round', 'Pick', 'Player', 'Teams']}
         primaryColumns={[2, 3]}
         numericColumns={[0, 1, 3]}
       >
         {season.picks.map(pick => (
-          <tr key={pick.pickNo} className='border-b border-slate-700/60'>
-            <td className='w-12 px-2 py-1.5 text-right tabular-nums text-slate-400'>
+          <tr key={pick.pickNo} className='border-b border-border'>
+            <td className='w-12 px-2 py-1.5 text-right tabular-nums text-muted-foreground'>
               {pick.round}
             </td>
-            <td className='w-12 px-2 py-1.5 text-right tabular-nums text-slate-400'>
+            <td className='w-12 px-2 py-1.5 text-right tabular-nums text-muted-foreground'>
               {pick.pickNo}
             </td>
             <td className='px-2 py-1.5 sm:whitespace-nowrap'>
@@ -720,14 +725,14 @@ function DraftPicks({
               title={`On ${plural(pick.teams, 'team')} over the season`}
               className={clsx(
                 'w-16 px-2 py-1.5 text-right tabular-nums',
-                pick.teams > 1 ? 'text-white' : 'text-slate-400',
+                pick.teams > 1 ? 'text-foreground' : 'text-muted-foreground',
               )}
             >
               {pick.teams}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

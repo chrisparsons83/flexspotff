@@ -8,7 +8,10 @@ import {
 } from 'remix-typedjson';
 import LocksChallengeGameComponent from '~/components/layout/locks-challenge/LocksChallengeGame';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { Section } from '~/components/ui/section';
+import { StatList } from '~/components/ui/stat-list';
 import type { TeamPick } from '~/models/locksgame.server';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import type { LocksGamePickCreate } from '~/models/locksgamepicks.server';
@@ -21,7 +24,10 @@ import { getLocksWeek } from '~/models/locksweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
+
+export const handle: RouteHandle = { title: 'My Entry' };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -221,7 +227,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   if (!locksWeek) {
     return typedjson({
-      notOpenYet: 'Week has not been created yet.',
+      notOpenYet: 'This week is not set up yet.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],
@@ -231,7 +237,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   if (!locksWeek.isOpen) {
     return typedjson({
-      notOpenYet: 'Week is not open yet (Blame Chris)',
+      notOpenYet: 'This week is not open for picks yet. Blame Chris.',
       locksWeek,
       locksGames: [],
       locksGamePicks: [],
@@ -303,18 +309,27 @@ export default function GamesLocksChallengeWeek() {
   const disableSubmit =
     navigation.state !== 'idle' || locksWeek?.isWeekScored || weekLocked;
   return (
-    <>
-      <h2>Week {weekNumber} Entry</h2>
+    <Section
+      title={`Week ${weekNumber} Entry`}
+      description={
+        weekLocked
+          ? 'This week has locked.'
+          : 'Picks lock as each game kicks off, and all of them at 1:00 pm Eastern on Sunday.'
+      }
+    >
       <Form method='POST' reloadDocument>
-        {notOpenYet || (
+        {notOpenYet ? (
+          <EmptyState title={notOpenYet} />
+        ) : (
           <>
             {actionData?.message && (
               <Alert message={actionData.message} status={actionData.status} />
             )}
-            <div className='mb-4'>
-              <div>Teams Picked: {gamesBetOn}</div>
-            </div>
-            <div className='md:w-1/2'>
+            <StatList
+              className='mb-10 grid-cols-2'
+              stats={[{ label: 'Teams Picked', value: gamesBetOn }]}
+            />
+            <div className='grid max-w-2xl gap-3'>
               {locksGames?.map(locksGame => {
                 const existingPick = existingPicks.find(
                   existingPick =>
@@ -340,17 +355,16 @@ export default function GamesLocksChallengeWeek() {
                 );
               })}
             </div>
-            <div style={{ height: '1em' }}></div>
             <Button
               type='submit'
               disabled={disableSubmit || false}
-              className='!ml-0'
+              className='mt-10'
             >
               Update Picks
             </Button>
           </>
         )}
       </Form>
-    </>
+    </Section>
   );
 }

@@ -1,12 +1,17 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import {
   addBestBallLeague,
   syncBestBallLeague,
@@ -132,40 +137,39 @@ export default function AdminBestBallIndex() {
   const isSubmitting = navigation.state !== 'idle';
 
   return (
-    <div>
-      <h2>Autodraft Best Ball Mania Leagues</h2>
+    <Section title='Autodraft Best Ball Mania Leagues'>
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
       {actionData?.warnings?.map(warning => (
-        <Alert key={warning} message={warning} status='warning' />
+        <Alert
+          key={warning}
+          message={warning}
+          status='warning'
+          className='mb-6'
+        />
       ))}
 
-      <section className='mb-8'>
-        <h3>Add League</h3>
-        <p className='text-sm'>
-          Paste the year's Best Ball Mania Sleeper URL, from any year. The
-          season and name come from Sleeper, and the whole league - draft and
-          weeks 1-17 - is synced straight away. There is one league a season;
-          the current season's then keeps itself up to date.
-        </p>
+      <Section
+        as='h3'
+        title='Add League'
+        description="Paste the year's Best Ball Mania Sleeper URL, from any year. The season and name come from Sleeper, and the whole league - draft and weeks 1-17 - is synced straight away. There is one league a season; the current season's then keeps itself up to date."
+      >
         <Form
           key={actionData?.message}
           method='POST'
           className='flex flex-wrap items-end gap-2'
         >
-          <div>
-            <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper League URL
-            </label>
-            <input
-              id='sleeperUrl'
+          <Field label='Sleeper League URL' className='w-full sm:w-96'>
+            <Input
               name='sleeperUrl'
-              type='text'
-              className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
               placeholder='https://sleeper.com/leagues/123456789'
             />
-          </div>
+          </Field>
           <Button
             type='submit'
             name='_action'
@@ -177,29 +181,24 @@ export default function AdminBestBallIndex() {
               : 'Add League'}
           </Button>
         </Form>
-      </section>
+      </Section>
 
-      {leagues.length === 0 && <p>No best ball leagues added yet.</p>}
-
-      {leagues.length > 0 && (
-        <table className='w-full'>
-          <thead>
-            <tr>
-              <th className='text-left'>Year</th>
-              <th className='text-left'>League</th>
-              <th className='text-left'>Status</th>
-              <th className='text-left'>Members</th>
-              <th className='text-left'>Last Synced</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
+      <Section as='h3' title='Leagues'>
+        {leagues.length === 0 && (
+          <p className='text-muted-foreground'>
+            No best ball leagues added yet.
+          </p>
+        )}
+        {leagues.length > 0 && (
+          <Table
+            headers={['Year', 'League', 'Status', 'Members', 'Last Synced', '']}
+          >
             {leagues.map(league => (
               <tr key={league.id}>
                 <td>{league.year}</td>
                 <td>
                   <Link to={league.id}>{league.name}</Link>
-                  <div className='font-mono text-xs opacity-75'>
+                  <div className='font-mono text-sm text-muted-foreground'>
                     {league.sleeperLeagueId}
                   </div>
                 </td>
@@ -212,7 +211,7 @@ export default function AdminBestBallIndex() {
                 </td>
                 <td>
                   {league.unmatchedTeams > 0 ? (
-                    <Link to={league.id} className='text-yellow-400'>
+                    <Link to={league.id} className='text-warning'>
                       {league.unmatchedTeams} of {league.teamCount} unmatched
                     </Link>
                   ) : (
@@ -263,9 +262,9 @@ export default function AdminBestBallIndex() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+          </Table>
+        )}
+      </Section>
+    </Section>
   );
 }

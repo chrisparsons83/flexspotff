@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { Link } from '@remix-run/react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
+import EntryWeeks from '~/components/layout/games/EntryWeeks';
 import { getQBStreamingWeeks } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -10,9 +10,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: '/login',
   });
 
-  let currentSeason = await getCurrentSeason();
+  const currentSeason = await getCurrentSeason();
   if (!currentSeason) {
-    throw new Error('No active season currently');
+    throw new Response('No season set up yet', { status: 404 });
   }
 
   const qbStreamingWeeks = await getQBStreamingWeeks(currentSeason.year);
@@ -22,29 +22,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-export default function GamesQBStreamingMyEntries() {
+export default function QBStreamingEntries() {
   const { qbStreamingWeeks } = useTypedLoaderData<typeof loader>();
 
   return (
-    <>
-      <h2>My Entries</h2>
-      <ul>
-        {qbStreamingWeeks.map(qbStreamingWeek => {
-          const suffix = qbStreamingWeek.isScored
-            ? '- Week Scored'
-            : !qbStreamingWeek.isOpen
-            ? '- Not Open'
-            : '';
-
-          return (
-            <li key={qbStreamingWeek.id}>
-              <Link to={`./${qbStreamingWeek.id}`}>
-                Week {qbStreamingWeek.week} {suffix}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+    <EntryWeeks
+      weeks={qbStreamingWeeks.map(week => ({
+        id: week.id,
+        week: week.week,
+        status: week.isScored
+          ? 'Scored'
+          : week.isOpen
+          ? 'Open'
+          : 'Not open yet',
+      }))}
+    />
   );
 }

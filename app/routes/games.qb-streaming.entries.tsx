@@ -1,5 +1,9 @@
 import { Outlet } from '@remix-run/react';
+import type { RouteHandle } from '~/utils/route-handle';
 
-export default function GamesQBStreamingMyEntries() {
+/** Names the entries once, for the list and each entry under it. */
+export const handle: RouteHandle = { title: 'My Entries' };
+
+export default function QBStreamingEntries() {
   return <Outlet />;
 }

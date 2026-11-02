@@ -1,3 +1,4 @@
+import { Cross2Icon } from '@radix-ui/react-icons';
 import clsx from 'clsx';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import { DFS_SURVIVOR_SLOTS, formatSlotName } from '~/libs/dfs-survivor/slots';
@@ -68,8 +69,8 @@ export default function DfsSurvivorLineup({
             className={clsx(
               // `group` so the clear button can appear on hover rather than
               // leaving a permanent ragged gutter.
-              'group flex h-10 items-center gap-2 border-b border-slate-700/50 px-3 last:border-b-0',
-              isActive && 'bg-blue-900/40',
+              'group flex h-10 items-center gap-2 border-b border-border px-3 last:border-b-0',
+              isActive && 'bg-secondary',
               lockReason && 'opacity-60',
             )}
           >
@@ -82,8 +83,8 @@ export default function DfsSurvivorLineup({
             >
               <span
                 className={clsx(
-                  'w-11 shrink-0 text-right text-[0.7rem] font-bold uppercase tracking-wide',
-                  isActive ? 'text-blue-300' : 'text-slate-500',
+                  'w-11 shrink-0 text-right text-sm font-bold',
+                  isActive ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
                 {formatSlotName(slot)}
@@ -91,39 +92,38 @@ export default function DfsSurvivorLineup({
 
               {player ? (
                 <span className='min-w-0 flex-1 truncate'>
-                  <span className='text-sm font-medium text-white'>
+                  <span className='text-sm font-medium text-foreground'>
                     {player.name}
                   </span>
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {player.teamAbbr} {matchupLabel(player)}
                   </span>
                 </span>
               ) : (
-                // A dashed rule reads as "slot waiting to be filled" without
-                // repeating the word "Empty" eleven times down the panel.
-                <span
-                  className={clsx(
-                    'h-px flex-1 border-t border-dashed',
-                    isActive ? 'border-blue-400/70' : 'border-slate-600/70',
-                  )}
-                />
+                // An empty slot is left blank rather than saying "Empty"
+                // eleven times down the panel; the one being filled asks.
+                isActive && (
+                  <span className='text-sm text-muted-foreground'>
+                    Choose a player
+                  </span>
+                )
               )}
             </button>
 
-            <span className='w-12 shrink-0 text-right text-xs tabular-nums'>
+            <span className='w-12 shrink-0 text-right text-sm tabular-nums'>
               {/* Final points are white and bold, projections grey, so a
                   half-played week reads at a glance. */}
               {isWeekScored ? (
-                <span title='Final' className='font-semibold text-white'>
+                <span title='Final' className='font-semibold text-foreground'>
                   {(saved?.points ?? 0).toFixed(2)}
                 </span>
               ) : saved?.playerId === playerId && saved.actualPoints != null ? (
-                <span title='Final' className='font-semibold text-white'>
+                <span title='Final' className='font-semibold text-foreground'>
                   {saved.actualPoints.toFixed(2)}
                 </span>
               ) : (
                 player?.projection != null && (
-                  <span title='Projected' className='text-slate-400'>
+                  <span title='Projected' className='text-muted-foreground'>
                     {player.projection.toFixed(1)}
                   </span>
                 )
@@ -137,13 +137,13 @@ export default function DfsSurvivorLineup({
               data-testid={`clear-${slot}`}
               disabled={!player || !!lockReason}
               className={clsx(
-                'w-4 shrink-0 text-xs text-slate-500 hover:text-red-400 disabled:invisible',
+                'shrink-0 text-muted-foreground hover:text-negative disabled:invisible',
                 // Visible on hover, or on keyboard focus so it stays reachable.
                 'opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100',
               )}
               onClick={() => onClearSlot(slot)}
             >
-              ✕
+              <Cross2Icon aria-hidden className='size-4' />
             </button>
           </div>
         );

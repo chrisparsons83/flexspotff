@@ -1,6 +1,5 @@
 import {
   BADGE_DEFINITIONS,
-  describeTier,
   makeBadge,
   makeSideGameBadge,
   tierFor,
@@ -99,33 +98,6 @@ describe('makeSideGameBadge', () => {
   });
 });
 
-describe('describeTier', () => {
-  it('says what the stars are worth and what the next one costs', () => {
-    // seasonsPlayed bands at 1 / 5 / 10.
-    const badge = makeBadge(BADGE_DEFINITIONS.seasonsPlayed, 8)!;
-
-    expect(describeTier(badge)).toBe(
-      'Seasons in the redraft league (8). 2 of 3 stars. 10 earns the next star.',
-    );
-  });
-
-  it('says so when there is nothing left to earn', () => {
-    const badge = makeBadge(BADGE_DEFINITIONS.seasonsPlayed, 12)!;
-
-    expect(describeTier(badge)).toContain('3 of 3 stars.');
-    expect(describeTier(badge)).toContain('This is the top band.');
-  });
-
-  // The win streak badge is the only four-band one, so its third star is not
-  // the last.
-  it('handles a badge with four bands', () => {
-    const badge = makeBadge(BADGE_DEFINITIONS.winStreak, 15)!;
-
-    expect(describeTier(badge)).toContain('3 of 4 stars.');
-    expect(describeTier(badge)).toContain('20 earns the next star.');
-  });
-});
-
 describe('a tallied badge', () => {
   const championOfChampions = BADGE_DEFINITIONS.championOfChampions;
 
@@ -147,13 +119,5 @@ describe('a tallied badge', () => {
 
   it('is absent for a member who has never won it', () => {
     expect(makeBadge(championOfChampions, 0)).toBeNull();
-  });
-
-  it('says there is no next band to reach', () => {
-    const description = describeTier(makeBadge(championOfChampions, 2)!);
-
-    expect(description).toContain('Won the Champions League title (2)');
-    expect(description).toContain('no cap');
-    expect(description).not.toContain('of 2 stars');
   });
 });

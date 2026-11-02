@@ -1,4 +1,6 @@
 import StarterGrid from './StarterGrid';
+import { Fragment } from 'react';
+import { Table, useTableSort } from '~/components/ui/table';
 import type { D12LeagueTotal } from '~/models/d12weekscore.server';
 import type { Player } from '~/models/players.server';
 
@@ -20,41 +22,44 @@ export default function D12LeagueBreakdown({
   showLineups = false,
   players = [],
 }: Props) {
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>League</th>
-          <th>Points</th>
-        </tr>
-      </thead>
-      <tbody>
-        {byLeague
-          .slice()
-          .sort((a, b) => b.points - a.points)
-          .map(league => {
-            const lineup =
-              showLineups && league.starters.length > 0 ? (
-                <tr key={`${league.leagueId}-lineup`}>
-                  <td colSpan={2}>
-                    <StarterGrid
-                      starters={league.starters}
-                      startingPlayers={players}
-                      startingPlayerPoints={league.startingPlayerPoints}
-                    />
-                  </td>
-                </tr>
-              ) : null;
+  const { rows, sort } = useTableSort(
+    byLeague,
+    {
+      league: league => league.leagueName,
+      points: league => league.points,
+    },
+    { key: 'points' },
+  );
 
-            return [
-              <tr key={league.leagueId}>
-                <td>{league.leagueName}</td>
-                <td>{league.points.toFixed(2)}</td>
-              </tr>,
-              lineup,
-            ];
-          })}
-      </tbody>
-    </table>
+  return (
+    // As wide as its two columns need, not the whole row it opens in; with
+    // lineups under each league it takes the room the lineups need.
+    <Table
+      headers={['League', 'Points']}
+      numericColumns={[1]}
+      sortKeys={{ 0: 'league', 1: 'points' }}
+      sort={sort}
+      className={showLineups ? undefined : 'max-w-md'}
+    >
+      {rows.map(league => (
+        <Fragment key={league.leagueId}>
+          <tr>
+            <td>{league.leagueName}</td>
+            <td className='text-right'>{league.points.toFixed(2)}</td>
+          </tr>
+          {showLineups && league.starters.length > 0 && (
+            <tr>
+              <td colSpan={2}>
+                <StarterGrid
+                  starters={league.starters}
+                  startingPlayers={players}
+                  startingPlayerPoints={league.startingPlayerPoints}
+                />
+              </td>
+            </tr>
+          )}
+        </Fragment>
+      ))}
+    </Table>
   );
 }

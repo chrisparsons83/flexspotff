@@ -1,7 +1,4 @@
-import {
-  assertSeasonHasDataOrIsCurrent,
-  weeklyStandingsLink,
-} from './standings';
+import { assertSeasonHasDataOrIsCurrent } from './standings';
 import { describe, expect, it } from 'vitest';
 
 describe('assertSeasonHasDataOrIsCurrent', () => {
@@ -27,25 +24,5 @@ describe('assertSeasonHasDataOrIsCurrent', () => {
     expect(() =>
       assertSeasonHasDataOrIsCurrent(2026, false, undefined, 'Nothing'),
     ).toThrow(expect.objectContaining({ status: 404 }));
-  });
-});
-
-describe('weeklyStandingsLink', () => {
-  it('links to the given week', () => {
-    expect(
-      weeklyStandingsLink('/games/spread-pool/standings', 2026, 3),
-    ).toEqual([
-      {
-        name: 'Weekly Standings',
-        href: '/games/spread-pool/standings/2026/3',
-        current: false,
-      },
-    ]);
-  });
-
-  it('leaves the link out when there is no week yet', () => {
-    expect(
-      weeklyStandingsLink('/games/spread-pool/standings', 2026, undefined),
-    ).toEqual([]);
   });
 });

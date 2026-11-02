@@ -280,9 +280,9 @@ function ordinal(value: number): string {
  */
 export function finishLabelForPlace(place: number, teamCount: number): string {
   if (place === 1) return 'Champion';
-  if (place === 2) return 'Runner Up';
+  if (place === 2) return 'Runner-up';
   if (place === teamCount) return 'Sacko';
-  if (place === teamCount - 1) return 'Sacko Finalist';
+  if (place === teamCount - 1) return 'Sacko finalist';
   if (place === 3 || place === 4) return 'Semifinalist';
   if (place === 5 || place === 6) return 'Quarterfinalist';
   return ordinal(place);

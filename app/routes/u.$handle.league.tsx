@@ -6,19 +6,10 @@ import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
 import LeadContext from '~/components/layout/profile/LeadContext';
-import LeagueChip from '~/components/layout/profile/LeagueChip';
-import ProfileLink from '~/components/layout/profile/ProfileLink';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
-import RangeBar from '~/components/layout/profile/RangeBar';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import SplitBar from '~/components/layout/profile/SplitBar';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WinLoss from '~/components/layout/profile/WinLoss';
-import YearFilter from '~/components/layout/profile/YearFilter';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   ordinal,
   pct,
@@ -26,7 +17,14 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { RESULT_TEXT, TEXT } from '~/components/layout/profile/tones';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
+import { RangeBar, SplitBar } from '~/components/ui/bars';
+import { ProfileLink } from '~/components/ui/profile-link';
+import { YearFilter } from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { LeagueMark, Swatch } from '~/components/ui/swatch';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import { WinLoss } from '~/components/ui/win-loss';
 import { requireProfileMember } from '~/models/profile/access.server';
 import type {
   GameLogRow,
@@ -36,6 +34,9 @@ import type {
 } from '~/models/profile/league.server';
 import { getLeagueProfile } from '~/models/profile/league.server';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'League' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -137,7 +138,7 @@ function Highlights({
                   ties={career.medianTies}
                 />
               ) : (
-                '—'
+                '–'
               )
             }
           />
@@ -145,13 +146,13 @@ function Highlights({
             label='Win Streak'
             value={highlights.longestWinStreak}
             unit='W'
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Skid'
             value={highlights.longestLossStreak}
             unit='L'
-            tone='text-rose-300'
+            tone='text-negative'
           />
         </CareerCard>
 
@@ -176,14 +177,14 @@ function Highlights({
         >
           <MiniStat
             label='Worst Week'
-            value={worstWeek ? worstWeek.points.toFixed(2) : '—'}
-            tone='text-rose-300'
+            value={worstWeek ? worstWeek.points.toFixed(2) : '–'}
+            tone='text-negative'
             detail={worstWeek && weekLabel(worstWeek)}
           />
           <MiniStat
             label='Best Week'
-            value={bestWeek ? bestWeek.points.toFixed(2) : '—'}
-            tone='text-emerald-300'
+            value={bestWeek ? bestWeek.points.toFixed(2) : '–'}
+            tone='text-positive'
             detail={bestWeek && weekLabel(bestWeek)}
           />
         </CareerCard>
@@ -195,7 +196,7 @@ function Highlights({
               <WinLoss wins={playoffs.wins} losses={playoffs.losses} />
               {playoffs.championships > 0 && (
                 <LeadContext>
-                  🏆 {plural(playoffs.championships, 'league championship')}
+                  {plural(playoffs.championships, 'league championship')}
                 </LeadContext>
               )}
             </>
@@ -215,7 +216,7 @@ function Highlights({
               tone={playoffs.sackos > 0 ? TEXT.sacko : undefined}
               detail={
                 playoffs.sackos > 0
-                  ? `💩 ${plural(playoffs.sackos, 'sacko')}`
+                  ? plural(playoffs.sackos, 'sacko')
                   : '0 sackos'
               }
             />
@@ -247,7 +248,7 @@ function CareerByTier({
           : undefined
       }
     >
-      <ProfileTable
+      <Table
         headers={[
           'Tier',
           'Seasons',
@@ -262,7 +263,7 @@ function CareerByTier({
         numericColumns={[1, 2, 3, 4, 5, 6, 7]}
       >
         {tiers.map(tier => (
-          <tr key={tier.tier} className='border-b border-slate-700/70'>
+          <tr key={tier.tier} className='border-b border-border'>
             <td className='px-2 py-2 font-medium'>{tier.label}</td>
             <td className='px-2 py-2 text-right'>{tier.seasons}</td>
             <td className='px-2 py-2 text-right'>
@@ -283,7 +284,7 @@ function CareerByTier({
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -294,7 +295,7 @@ function CareerByTier({
  */
 function PerSeason({ value }: { value: number | null }) {
   return value === null ? (
-    <span className='text-slate-400'>—</span>
+    <span className='text-muted-foreground'>–</span>
   ) : (
     <>{value.toFixed(1)}</>
   );
@@ -360,7 +361,7 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
 
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={columns}
         numericColumns={columns
           .map((_, index) => index)
@@ -409,13 +410,13 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
         }
       >
         {seasons.map(season => (
-          <tr key={season.leagueId} className='border-b border-slate-700/70'>
+          <tr key={season.leagueId} className='border-b border-border'>
             <td className='whitespace-nowrap px-2 py-2'>
               {season.year}
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='px-2 py-2'>
-              <LeagueChip name={season.leagueName} />
+              <LeagueMark name={season.leagueName} year={season.year} />
             </td>
             <td className='px-2 py-2'>
               <Finish season={season} />
@@ -425,17 +426,17 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
             </td>
             {anyMedian && (
               <>
-                <td className='px-2 py-2 text-right text-slate-400'>
+                <td className='px-2 py-2 text-right text-muted-foreground'>
                   {record(season.wins, season.losses, season.ties)}
                 </td>
-                <td className='px-2 py-2 text-right text-slate-400'>
+                <td className='px-2 py-2 text-right text-muted-foreground'>
                   {season.hasMedianScoring
                     ? record(
                         season.medianWins,
                         season.medianLosses,
                         season.medianTies,
                       )
-                    : '—'}
+                    : '–'}
                 </td>
               </>
             )}
@@ -449,16 +450,18 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
                   {/* Named as well as coloured: the sacko bracket's record
                       is not a playoff run. */}
                   {season.playoffBracket === 'LOSERS' && (
-                    <span className='mr-1.5 text-xs text-slate-400'>Sacko</span>
+                    <span className='mr-1.5 text-sm text-muted-foreground'>
+                      Sacko
+                    </span>
                   )}
                   {season.playoffWins}-{season.playoffLosses}
                 </span>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td className='px-2 py-2 text-right'>
-              {season.pointsForRank ?? '—'}
+              {season.pointsForRank ?? '–'}
             </td>
             <td className='px-2 py-2 text-right'>
               {season.pointsFor.toFixed(1)}
@@ -467,11 +470,11 @@ function SeasonHistory({ seasons }: { seasons: SeasonRow[] }) {
               {season.pointsAgainst.toFixed(1)}
             </td>
             <td className='px-2 py-2 text-right'>
-              {season.draftPosition ?? '—'}
+              {season.draftPosition ?? '–'}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -487,28 +490,31 @@ function Finish({ season }: { season: SeasonRow }) {
     return (
       <span className={clsx('whitespace-nowrap', TEXT.live)}>
         {ordinal(season.standing.place)}
-        <span className='text-slate-400'> of {season.standing.fieldSize}</span>
+        <span className='text-muted-foreground'>
+          {' '}
+          of {season.standing.fieldSize}
+        </span>
       </span>
     );
   }
 
-  if (!season.finish) return <span className='text-slate-400'>—</span>;
+  if (!season.finish) return <span className='text-muted-foreground'>–</span>;
 
   // The two ends of the table are the ones worth spotting from across the page.
-  const { tone, emoji } =
+  const { tone, medal } =
     season.finish === 'Champion'
-      ? { tone: 'text-gold font-medium', emoji: '🏆' }
+      ? { tone: 'font-medium', medal: 'medal-gold' as const }
       : season.finish === 'Sacko'
-      ? { tone: 'text-brown-light font-medium', emoji: '💩' }
-      : season.finish === 'Sacko Finalist'
-      ? { tone: TEXT.sacko, emoji: null }
+      ? { tone: 'font-medium', medal: 'medal-sacko' as const }
+      : season.finish === 'Sacko finalist'
+      ? { tone: TEXT.sacko, medal: null }
       : season.place !== null && season.place <= 6
-      ? { tone: 'text-slate-100', emoji: null }
-      : { tone: 'text-slate-400', emoji: null };
+      ? { tone: 'text-foreground', medal: null }
+      : { tone: 'text-muted-foreground', medal: null };
 
   return (
-    <span className={clsx('inline-flex items-center gap-1', tone)}>
-      {emoji && <span aria-hidden='true'>{emoji}</span>}
+    <span className={clsx('inline-flex items-center gap-1.5', tone)}>
+      {medal && <Swatch fill={medal} />}
       {season.finish}
     </span>
   );
@@ -562,7 +568,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
 
   return (
     <ProfileSection title='Head to Head'>
-      <ProfileTable
+      <Table
         headers={['Opponent', 'Record', 'Meetings', 'When']}
         numericColumns={[1, 2]}
         mobileCards={
@@ -578,7 +584,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
                 subtitle={plural(row.meetingCount, 'meeting')}
                 value={record(row.wins, row.losses, row.ties)}
               >
-                <div className='text-xs leading-relaxed text-slate-400'>
+                <div className='text-sm leading-relaxed text-muted-foreground'>
                   <MeetingsByYear meetings={row.meetings} />
                 </div>
               </MobileCard>
@@ -587,7 +593,7 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
         }
       >
         {visible.map(row => (
-          <tr key={row.opponentUserId} className='border-b border-slate-700/70'>
+          <tr key={row.opponentUserId} className='border-b border-border'>
             <td className='px-2 py-2'>
               <ProfileLink userId={row.opponentUserId}>
                 {row.opponentName}
@@ -597,12 +603,12 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
               {record(row.wins, row.losses, row.ties)}
             </td>
             <td className='px-2 py-2 text-right'>{row.meetingCount}</td>
-            <td className='px-2 py-2 text-xs text-slate-400'>
+            <td className='px-2 py-2 text-sm text-muted-foreground'>
               <MeetingsByYear meetings={row.meetings} />
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > 15 && (
         <ShowAllButton
           total={rows.length}
@@ -622,17 +628,17 @@ function HeadToHead({ rows }: { rows: HeadToHeadRow[] }) {
  * season is either a playoff game or a sacko one - "P" said neither. A
  * postseason game with no bracket is a season Sleeper has not finished yet.
  */
-function PostseasonTag({ game }: { game: GameLogRow }) {
+function PostseasonStatus({ game }: { game: GameLogRow }) {
   if (game.isRegularSeason) return null;
 
-  const [label, tone]: [string, TagTone] =
+  const [label, tone]: [string, StatusTone] =
     game.postseasonBracket === 'WINNERS'
       ? ['Playoff', 'highlight']
       : game.postseasonBracket === 'LOSERS'
       ? ['Sacko', 'loss']
       : ['Post', 'neutral'];
 
-  return <Tag tone={tone}>{label}</Tag>;
+  return <StatusText tone={tone}>{label}</StatusText>;
 }
 
 function GameLog({ games }: { games: GameLogRow[] }) {
@@ -648,7 +654,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
       title='Game Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Year', 'Week', '', 'League', 'Opponent', 'Score', 'Result']}
         numericColumns={[1, 5]}
         mobileCards={
@@ -673,8 +679,8 @@ function GameLog({ games }: { games: GameLogRow[] }) {
                 subtitle={
                   <span className='inline-flex flex-wrap items-center gap-1.5'>
                     {weekLabel(game)}
-                    <LeagueChip name={game.leagueName} />
-                    <PostseasonTag game={game} />
+                    <LeagueMark name={game.leagueName} year={game.year} />
+                    <PostseasonStatus game={game} />
                   </span>
                 }
                 value={
@@ -701,15 +707,15 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             key={`${game.year}-${game.week}-${
               game.opponentUserId ?? game.opponentName
             }`}
-            className='border-b border-slate-700/70'
+            className='border-b border-border'
           >
             <td className='px-2 py-2'>{game.year}</td>
             <td className='px-2 py-2 text-right'>{game.week}</td>
             <td className='py-2 pr-2'>
-              <PostseasonTag game={game} />
+              <PostseasonStatus game={game} />
             </td>
             <td className='px-2 py-2'>
-              <LeagueChip name={game.leagueName} />
+              <LeagueMark name={game.leagueName} year={game.year} />
             </td>
             <td className='px-2 py-2'>
               {game.opponentUserId ? (
@@ -734,7 +740,7 @@ function GameLog({ games }: { games: GameLogRow[] }) {
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

@@ -49,6 +49,7 @@ export async function getTeamsInSeason(year: League['year']) {
       },
       user: {
         select: {
+          id: true,
           discordName: true,
           discordUsername: true,
         },

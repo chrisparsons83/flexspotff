@@ -28,7 +28,7 @@ export async function requireProfileAccess(request: Request): Promise<User> {
   });
 
   if (!(await canViewProfiles(user))) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   return user;

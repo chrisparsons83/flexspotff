@@ -1,9 +1,12 @@
-import { Link } from '@remix-run/react';
-import clsx from 'clsx';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { Fragment, useState } from 'react';
-import ProfileSection from '~/components/layout/profile/ProfileSection';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { FOCUS_RING } from '~/components/ui/styles';
+import { PositionMark } from '~/components/ui/swatch';
 import { pts } from '~/libs/guillotine/display';
 import type { LiveChopLine } from '~/libs/guillotine/live.server';
+import { cn } from '~/utils';
 
 const formatMargin = (margin: number) =>
   `${margin > 0 ? '+' : ''}${margin.toFixed(1)}`;
@@ -43,34 +46,35 @@ export default function LiveChopLinePanel({
     });
 
   return (
-    <ProfileSection
-      title={`Week ${week} Chop Line`}
-      description='Surviving teams ranked by projected total: what each starter has scored, plus the share of their projection still to be played. Tap a team for its lineup.'
+    <Section
+      // On the week's own page the week goes without saying.
+      title={showWeekLink ? `Week ${week} Chop Line` : 'Chop Line'}
       action={
         showWeekLink && (
-          <Link
-            to={`/games/guillotine/${leagueId}/week/${week}`}
-            className='text-sm'
-          >
-            Full week
+          <Link to={`/side-leagues/guillotine/${leagueId}/week/${week}`}>
+            Week {week} Scores
           </Link>
         )
       }
     >
-      <div className='overflow-x-auto'>
-        <table className='w-full text-sm'>
+      <div className='relative overflow-x-auto'>
+        <table className='w-full text-left tabular-nums'>
           <thead>
-            <tr className='text-left text-slate-400'>
-              <th className='py-1 pr-2'>#</th>
-              <th className='py-1 pr-2'>Team</th>
-              <th className='hidden py-1 pr-2 text-right sm:table-cell'>
+            <tr className='border-b border-border text-sm text-muted-foreground'>
+              <th className='px-2 py-2.5 font-semibold'>Rank</th>
+              <th className='px-2 py-2.5 font-semibold'>Team</th>
+              <th className='hidden px-2 py-2.5 text-right font-semibold sm:table-cell'>
                 Points
               </th>
-              <th className='hidden py-1 pr-2 text-right sm:table-cell'>
+              <th className='hidden px-2 py-2.5 text-right font-semibold sm:table-cell'>
                 Left
               </th>
-              <th className='py-1 pr-2 text-right'>Projected</th>
-              <th className='hidden py-1 text-right sm:table-cell'>vs. Chop</th>
+              <th className='px-2 py-2.5 text-right font-semibold'>
+                Projected
+              </th>
+              <th className='hidden px-2 py-2.5 text-right font-semibold sm:table-cell'>
+                Against the Chop
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -80,62 +84,75 @@ export default function LiveChopLinePanel({
               const blockIndex = live.findIndex(t => t.onTheBlock);
               const aboveTheLine = index === blockIndex - 1;
               const isOpen = open.has(team.rosterId);
+              const marginTone = team.onTheBlock
+                ? 'text-negative'
+                : 'text-positive';
               return (
                 <Fragment key={team.rosterId}>
                   <tr
                     onClick={() => toggle(team.rosterId)}
-                    className={clsx(
-                      'cursor-pointer border-t border-slate-700 hover:bg-slate-700/40',
-                      team.onTheBlock && 'bg-rose-900/40',
-                      aboveTheLine && !isOpen && 'border-b-2 border-b-rose-500',
+                    className={cn(
+                      'cursor-pointer border-b border-border hover:bg-secondary',
+                      team.onTheBlock && 'bg-destructive/20',
+                      aboveTheLine &&
+                        !isOpen &&
+                        'border-b-[3px] border-b-destructive',
                     )}
                   >
-                    <td className='py-1.5 pr-2 text-slate-400'>{team.rank}</td>
-                    <td className='py-1.5 pr-2 text-white'>
+                    <td className='px-2 py-2.5 text-muted-foreground'>
+                      {team.rank}
+                    </td>
+                    <td className='px-2 py-2.5'>
                       <button
                         type='button'
                         aria-expanded={isOpen}
-                        className='text-left'
+                        className={cn(
+                          'inline-flex items-center gap-1 text-left',
+                          FOCUS_RING,
+                        )}
                         onClick={e => {
                           e.stopPropagation();
                           toggle(team.rosterId);
                         }}
                       >
-                        <span className='mr-1 text-slate-500'>
-                          {isOpen ? '▾' : '▸'}
-                        </span>
+                        <ChevronDownIcon
+                          aria-hidden
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-fast',
+                            !isOpen && '-rotate-90',
+                          )}
+                        />
                         {names[team.rosterId]}
                       </button>
-                      {!team.lineupSet && (
-                        <span className='ml-2 whitespace-nowrap rounded bg-slate-600 px-1.5 py-0.5 text-xs font-semibold'>
-                          No lineup set
-                        </span>
-                      )}
                       {team.onTheBlock && (
-                        <span className='ml-2 whitespace-nowrap rounded bg-rose-600 px-1.5 py-0.5 text-xs font-bold uppercase'>
+                        <div className='font-semibold text-negative'>
                           On the block
-                        </span>
+                        </div>
                       )}
-                      {/* Phones drop the Points and Left columns for this line. */}
-                      <div className='text-xs text-slate-400 sm:hidden'>
-                        {pts(team.points)} pts · {team.playersRemaining} left
+                      {!team.lineupSet && (
+                        <div className='text-sm text-muted-foreground'>
+                          No lineup set
+                        </div>
+                      )}
+                      {/* Phones drop the Points and Left columns for these lines. */}
+                      <div className='grid text-sm text-muted-foreground sm:hidden'>
+                        <span>{pts(team.points)} points</span>
+                        <span>{team.playersRemaining} left to play</span>
                       </div>
                     </td>
-                    <td className='hidden py-1.5 pr-2 text-right tabular-nums sm:table-cell'>
+                    <td className='hidden px-2 py-2.5 text-right sm:table-cell'>
                       {pts(team.points)}
                     </td>
-                    <td className='hidden py-1.5 pr-2 text-right tabular-nums sm:table-cell'>
+                    <td className='hidden px-2 py-2.5 text-right sm:table-cell'>
                       {team.playersRemaining}
                     </td>
-                    <td className='py-1.5 pr-2 text-right font-semibold tabular-nums text-white'>
+                    <td className='px-2 py-2.5 text-right font-semibold'>
                       {pts(team.projected, 1)}
                       {team.margin !== null && (
                         <div
-                          className={clsx(
-                            'text-xs font-normal sm:hidden',
-                            team.onTheBlock
-                              ? 'text-rose-300'
-                              : 'text-emerald-300',
+                          className={cn(
+                            'text-sm font-normal sm:hidden',
+                            marginTone,
                           )}
                         >
                           {formatMargin(team.margin)}
@@ -143,49 +160,58 @@ export default function LiveChopLinePanel({
                       )}
                     </td>
                     <td
-                      className={clsx(
-                        'hidden py-1.5 text-right tabular-nums sm:table-cell',
-                        team.onTheBlock ? 'text-rose-300' : 'text-emerald-300',
+                      className={cn(
+                        'hidden px-2 py-2.5 text-right sm:table-cell',
+                        marginTone,
                       )}
                     >
-                      {team.margin === null ? '—' : formatMargin(team.margin)}
+                      {team.margin === null ? '–' : formatMargin(team.margin)}
                     </td>
                   </tr>
                   {isOpen && (
                     <tr
-                      className={clsx(
-                        team.onTheBlock && 'bg-rose-900/40',
-                        aboveTheLine && 'border-b-2 border-b-rose-500',
+                      className={cn(
+                        'border-b border-border',
+                        team.onTheBlock && 'bg-destructive/20',
+                        aboveTheLine && 'border-b-[3px] border-b-destructive',
                       )}
                     >
-                      <td colSpan={6} className='pb-2 pl-6 pr-1'>
+                      <td colSpan={6} className='px-2 pb-3 pl-8'>
                         {team.lineupSet ? (
-                          <ul className='m-0 list-none space-y-0.5 p-0 text-xs text-slate-300'>
-                            {team.starters.map((starter, i) => (
-                              <li
-                                key={`${starter.sleeperId}-${i}`}
-                                className='flex justify-between gap-3'
-                              >
-                                <span>
-                                  {starter.position && (
-                                    <span className='mr-1 text-slate-500'>
-                                      {starter.position}
-                                    </span>
-                                  )}
-                                  {starter.name}
-                                  <span className='ml-1 text-slate-500'>
+                          <table className='w-full text-sm'>
+                            <thead className='sr-only'>
+                              <tr>
+                                <th>Position</th>
+                                <th>Player</th>
+                                <th>Game</th>
+                                <th>Points</th>
+                                <th>Projected</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {team.starters.map((starter, i) => (
+                                <tr key={`${starter.sleeperId}-${i}`}>
+                                  <td className='w-14 py-0.5'>
+                                    <PositionMark
+                                      position={starter.position ?? null}
+                                    />
+                                  </td>
+                                  <td className='py-0.5'>{starter.name}</td>
+                                  <td className='py-0.5 text-muted-foreground'>
                                     {STATE_LABEL[starter.state]}
-                                  </span>
-                                </span>
-                                <span className='whitespace-nowrap tabular-nums'>
-                                  {pts(starter.points)} →{' '}
-                                  {pts(starter.projected, 1)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
+                                  </td>
+                                  <td className='py-0.5 text-right'>
+                                    {pts(starter.points)}
+                                  </td>
+                                  <td className='py-0.5 text-right text-muted-foreground'>
+                                    {pts(starter.projected, 1)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         ) : (
-                          <p className='m-0 text-xs text-slate-400'>
+                          <p className='text-sm text-muted-foreground'>
                             Sleeper has no lineup for this team this week yet.
                           </p>
                         )}
@@ -198,6 +224,6 @@ export default function LiveChopLinePanel({
           </tbody>
         </table>
       </div>
-    </ProfileSection>
+    </Section>
   );
 }

@@ -3,12 +3,14 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as locksGamePicksModel from '~/models/locksgamepicks.server';
 import * as locksWeekModel from '~/models/locksweek.server';
+import * as sideGameSeasons from '~/models/profile/sideGameSeasons.server';
 import * as seasonModel from '~/models/season.server';
 import * as userModel from '~/models/user.server';
 
 vi.mock('~/models/locksgame.server');
 vi.mock('~/models/locksgamepicks.server');
 vi.mock('~/models/locksweek.server');
+vi.mock('~/models/profile/sideGameSeasons.server');
 vi.mock('~/models/season.server');
 vi.mock('~/models/user.server');
 vi.mock('~/db.server', () => ({
@@ -30,6 +32,7 @@ describe('games.locks-challenge.standings.$year._index', () => {
     vi.mocked(seasonModel.getCurrentSeason).mockResolvedValue({
       year: 2026,
     } as Awaited<ReturnType<typeof seasonModel.getCurrentSeason>>);
+    vi.mocked(sideGameSeasons.sideGameYears).mockResolvedValue([]);
   });
 
   it('shows empty standings for a season with no weeks yet', async () => {

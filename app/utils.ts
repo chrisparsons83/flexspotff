@@ -1,8 +1,44 @@
 import { useRouteLoaderData } from '@remix-run/react';
 import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
 import type { User } from '~/models/user.server';
 import type { loader as rootLoader } from '~/root';
+
+/**
+ * tailwind-merge reads any `bg-*` it does not know as a background colour,
+ * so the depth tokens' gradients would knock out the colour under them, and
+ * it cannot tell our shadows apart from shadow colours. Naming them keeps
+ * each in its own group.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      'bg-image': [
+        {
+          bg: [
+            'accent-gradient',
+            'header-fill',
+            'primary-fill',
+            'primary-fill-hover',
+          ],
+        },
+      ],
+      shadow: [
+        {
+          shadow: [
+            'press',
+            'press-secondary',
+            'press-destructive',
+            'overlay',
+            'card-edge',
+            'card-glow',
+            'glow',
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

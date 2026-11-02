@@ -619,7 +619,7 @@ describe('aggregatePlayoffSeasons', () => {
 
     expect(seasons.get('u9')!.get('admiral-2020')!.finish).toBe('Sacko');
     expect(seasons.get('u11')!.get('admiral-2020')!.finish).toBe(
-      'Sacko Finalist',
+      'Sacko finalist',
     );
     expect(seasons.get('u12')!.get('admiral-2020')!.finish).toBe('9th');
   });

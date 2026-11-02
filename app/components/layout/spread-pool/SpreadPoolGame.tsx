@@ -1,15 +1,15 @@
-import clsx from 'clsx';
 import { useState } from 'react';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
 import type { NFLTeam } from '~/models/nflteam.server';
 import type {
   Bet,
   PoolGameByYearAndWeekElement,
 } from '~/models/poolgame.server';
 import type { PoolGamePick } from '~/models/poolgamepicks.server';
+import { cn } from '~/utils';
 
 const formatSpread = (amount: number, home: boolean) => {
-  if (amount === 0) return `Even`;
+  if (amount === 0) return 'even';
   const displayAmount = home ? amount : -1 * amount;
   const prefix = displayAmount > 0 ? '+' : '';
   return `${prefix}${displayAmount}`;
@@ -42,7 +42,7 @@ export default function SpreadPoolGameComponent({
   const [isBetReset, setIsBetReset] = useState(false);
 
   const betDisplay =
-    betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : 'No Bet';
+    betAmount !== 0 ? `${betAmount} on ${betTeam?.mascot}` : 'no bet';
   const betSliderDefault = !existingBet
     ? 0
     : existingBet.teamId === poolGame.game.awayTeamId
@@ -106,22 +106,26 @@ export default function SpreadPoolGameComponent({
 
   return (
     <div
-      className={clsx(
-        'p-4',
-        betAmount !== 0 && 'bg-slate-800',
-        wonGame && 'bg-green-900',
-        lostGame && 'bg-red-900',
+      className={cn(
+        'grid gap-4 bg-card p-5',
+        betAmount !== 0 && 'bg-secondary',
+        wonGame && 'bg-positive/20',
+        lostGame && 'bg-destructive/20',
       )}
     >
-      <div className='flex gap-2 justify-between'>
-        <div className='w-2/5'>
-          {poolGame.game.awayTeam.mascot} (
-          {formatSpread(poolGame.homeSpread, false)})
+      <div className='grid grid-cols-[1fr_auto_1fr] items-baseline gap-2'>
+        <div>
+          <span className='font-semibold'>{poolGame.game.awayTeam.mascot}</span>{' '}
+          <span className='tabular-nums text-muted-foreground'>
+            {formatSpread(poolGame.homeSpread, false)}
+          </span>
         </div>
-        <div className='text-center'>vs.</div>
-        <div className='w-2/5 text-right'>
-          {poolGame.game.homeTeam.mascot} (
-          {formatSpread(poolGame.homeSpread, true)})
+        <div className='text-muted-foreground'>at</div>
+        <div className='text-right'>
+          <span className='font-semibold'>{poolGame.game.homeTeam.mascot}</span>{' '}
+          <span className='tabular-nums text-muted-foreground'>
+            {formatSpread(poolGame.homeSpread, true)}
+          </span>
         </div>
       </div>
       {isBetReset && (
@@ -131,7 +135,7 @@ export default function SpreadPoolGameComponent({
           defaultValue={0}
         />
       )}
-      {showSlider && (
+      {showSlider ? (
         <>
           <input
             type='range'
@@ -140,31 +144,34 @@ export default function SpreadPoolGameComponent({
             step='10'
             name={`${poolGame.id}-${betTeam?.id}`}
             defaultValue={betSliderDefault}
-            className='w-full'
+            className='w-full accent-[oklch(var(--primary))]'
+            aria-label={`Bet on ${poolGame.game.awayTeam.mascot} at ${poolGame.game.homeTeam.mascot}`}
             onChange={onBetChange}
             disabled={pickLocked}
           />
-          <div className='flex justify-between'>
-            <div>Current Bet: {betDisplay}</div>
-            <div>
-              <Button type='button' onClick={resetBet} disabled={pickLocked}>
-                Reset Bet
-              </Button>
-            </div>
+          <div className='flex items-center justify-between gap-4'>
+            <div>Current bet: {betDisplay}</div>
+            <Button
+              type='button'
+              variant='secondary'
+              size='sm'
+              onClick={resetBet}
+              disabled={pickLocked}
+            >
+              Reset Bet
+            </Button>
           </div>
         </>
-      )}
-      {!showSlider && (
-        <div className='text-center'>
-          <Button
-            type='button'
-            className='w-full'
-            onClick={displayBetInput}
-            disabled={pickLocked}
-          >
-            {betAmount !== 0 ? 'Bet placed on game' : 'Place bet on game'}
-          </Button>
-        </div>
+      ) : (
+        <Button
+          type='button'
+          variant='secondary'
+          className='w-full'
+          onClick={displayBetInput}
+          disabled={pickLocked}
+        >
+          {betAmount !== 0 ? 'Bet Placed on Game' : 'Place Bet on Game'}
+        </Button>
       )}
     </div>
   );

@@ -122,6 +122,35 @@ export async function getTeamGamesByYearAndWeek(
   });
 }
 
+/** One league's games in a week, with the teams and their starters. */
+export async function getTeamGamesByLeagueAndWeek(
+  leagueId: League['id'],
+  week: TeamGame['week'],
+) {
+  return prisma.teamGame.findMany({
+    where: { week, team: { leagueId } },
+    orderBy: [{ sleeperMatchupId: 'asc' }, { pointsScored: 'desc' }],
+    include: {
+      team: { include: { user: true } },
+      startingPlayers: true,
+    },
+  });
+}
+
+/**
+ * The weeks a league has scores for, in order. Rows for a week exist from
+ * the moment it opens, so a week counts once anyone in it has scored.
+ */
+export async function getTeamGameWeeksByLeague(leagueId: League['id']) {
+  const weeks = await prisma.teamGame.findMany({
+    where: { team: { leagueId }, pointsScored: { gt: 0 } },
+    distinct: ['week'],
+    select: { week: true },
+    orderBy: { week: 'asc' },
+  });
+  return weeks.map(({ week }) => week);
+}
+
 export async function upsertTeamGame(teamGame: TeamGameUpsert) {
   if (teamGame.id) {
     return prisma.teamGame.update({

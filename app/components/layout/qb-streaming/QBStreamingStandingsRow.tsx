@@ -1,68 +1,84 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
-import { useState } from 'react';
+import type { LeaderboardEntry } from '~/components/layout/leaderboard/LeaderboardTable';
 import MemberName from '~/components/ui/MemberName';
+import { ProfileLink } from '~/components/ui/profile-link';
 
-type Props = {
-  rank?: number;
-  user: { discordName: string; discordUsername?: string | null };
+type QBPickSide = {
+  nflGame: { gameStartTime: Date };
+  player: { fullName: string };
   pointsScored: number;
-  standardPlayer: string;
-  deepPlayer?: string;
 };
 
-export default function QBStreamingStandingsRowComponent({
+export type QBPick = { standardPlayer: QBPickSide; deepPlayer: QBPickSide };
+
+/** A pick shows once its game has kicked off. */
+const started = (side: QBPickSide) => side.nflGame.gameStartTime < new Date();
+
+/**
+ * The week's two picks, each with what it scored once its game has kicked
+ * off. Side by side where there is room, one above the other on a phone.
+ */
+export function QBPicks({ pick }: { pick?: QBPick }) {
+  return (
+    <dl className='flex flex-wrap gap-x-12 gap-y-1'>
+      {(
+        [
+          ['Standard', 'standardPlayer'],
+          ['Deep', 'deepPlayer'],
+        ] as const
+      ).map(([label, key]) => {
+        const side = pick?.[key];
+        return (
+          <div key={key} className='flex gap-3'>
+            <dt className='w-16 text-muted-foreground'>{label}</dt>
+            <dd>
+              {!side ? (
+                'No pick'
+              ) : started(side) ? (
+                <>
+                  {side.player.fullName}{' '}
+                  <span className='ml-2 font-semibold tabular-nums'>
+                    {side.pointsScored.toFixed(2)}
+                  </span>
+                </>
+              ) : (
+                'Pending'
+              )}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
+}
+
+/**
+ * A QB streaming standings row: rank, member and points, opening to the week's
+ * two picks once their games have kicked off.
+ */
+export function qbStreamingStandingsEntry({
   rank,
   user,
   pointsScored,
-  standardPlayer,
-  deepPlayer,
-}: Props) {
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleAccordion = () => {
-    setShowDetails(prevState => !prevState);
+  pick,
+}: {
+  rank?: number;
+  user: {
+    userId: string;
+    discordName: string;
+    discordUsername?: string | null;
   };
-
-  return (
-    <>
-      <tr>
-        <td>{rank}</td>
-        <td className='flex items-center gap-3'>
-          <MemberName user={user} />{' '}
-          {showDetails ? (
-            <ChevronUpIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Hide Details'
-            />
-          ) : (
-            <ChevronDownIcon
-              width={20}
-              height={20}
-              onClick={handleAccordion}
-              className='cursor-pointer'
-              aria-label='Show Details'
-            />
-          )}
-        </td>
-        <td>{pointsScored.toFixed(2)}</td>
-      </tr>
-      {showDetails && (
-        <tr className='border-b-1 bg-gray-800'>
-          <td></td>
-          <td>
-            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
-              Standard: {standardPlayer}
-            </div>
-            <div className='mb-1 border-l-8 pl-4 border-gray-500'>
-              Deep: {deepPlayer}
-            </div>
-          </td>
-          <td></td>
-        </tr>
-      )}
-    </>
-  );
+  pointsScored: number;
+  pick?: QBPick;
+}): LeaderboardEntry {
+  return {
+    id: user.userId,
+    rank: rank ?? 0,
+    name: (
+      <ProfileLink userId={user.userId}>
+        <MemberName user={user} />
+      </ProfileLink>
+    ),
+    values: [pointsScored.toFixed(2)],
+    details: <QBPicks pick={pick} />,
+  };
 }

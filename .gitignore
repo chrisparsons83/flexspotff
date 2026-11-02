@@ -17,3 +17,5 @@ tsconfig.tsbuildinfo
 
 tsconfig.tsbuildinfo
 .grepai/
+
+/storybook-static

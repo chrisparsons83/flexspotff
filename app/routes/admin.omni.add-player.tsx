@@ -7,7 +7,10 @@ import {
   useTypedLoaderData,
 } from 'remix-typedjson';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input, NativeSelect } from '~/components/ui/input';
+import { Section } from '~/components/ui/section';
 import { createOmniPlayer } from '~/models/omniplayer.server';
 import { getAllOmniSeasons } from '~/models/omniseason.server';
 import { getActiveSports } from '~/models/omnisport.server';
@@ -59,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (typeof displayName !== 'string' || displayName.trim() === '') {
     return typedjson(
-      { errors: { displayName: 'Display Name is required' } },
+      { errors: { displayName: 'Display name is required' } },
       { status: 400 },
     );
   }
@@ -71,7 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   if (typeof seasonId !== 'string' || seasonId.trim() === '') {
     return typedjson(
-      { errors: { seasonId: 'Omni Season is required' } },
+      { errors: { seasonId: 'Omni season is required' } },
       { status: 400 },
     );
   }
@@ -80,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     !/^-?\d+$/.test(relativeSortString)
   ) {
     return typedjson(
-      { errors: { relativeSort: 'Relative Sort must be an integer' } },
+      { errors: { relativeSort: 'Relative sort must be an integer' } },
       { status: 400 },
     );
   }
@@ -98,10 +101,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       successMessage: `Omni player ${newPlayer.displayName} created successfully`,
     });
   } catch (error) {
-    console.error('Error creating Omni Player:', error);
+    console.error('Error creating Omni player:', error);
     // Consider more specific error handling based on Prisma errors if needed
     return typedjson(
-      { errors: { form: 'Failed to create Omni Player. Please try again.' } },
+      { errors: { form: 'Failed to create Omni player. Please try again.' } },
       { status: 500 },
     );
   }
@@ -123,145 +126,65 @@ export default function AddOmniPlayerPage() {
     }
   }, [actionData]);
 
+  const errors =
+    actionData && 'errors' in actionData ? actionData.errors : undefined;
+  const fieldError = (name: string) =>
+    errors && name in errors
+      ? (errors as Record<string, string | undefined>)[name]
+      : undefined;
+
   return (
-    <div>
-      <h2>Add Omni Player</h2>
+    <Section title='Add Omni Player'>
       {actionData &&
         'successMessage' in actionData &&
         actionData.successMessage && (
-          <Alert message={actionData.successMessage} status='success' />
-        )}
-      {actionData &&
-        'errors' in actionData &&
-        actionData.errors &&
-        'form' in actionData.errors &&
-        actionData.errors.form && (
-          <Alert message={actionData.errors.form} status='error' />
-        )}
-
-      <Form method='post' className='space-y-6'>
-        <div>
-          <label
-            htmlFor='displayName'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-          >
-            Display Name
-          </label>
-          <input
-            type='text'
-            name='displayName'
-            id='displayName'
-            ref={displayNameInputRef}
-            required
-            className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
-            aria-describedby='displayName-error'
+          <Alert
+            message={actionData.successMessage}
+            status='success'
+            className='mb-6'
           />
-          {actionData &&
-            'errors' in actionData &&
-            actionData.errors &&
-            'displayName' in actionData.errors &&
-            actionData.errors.displayName && (
-              <p className='mt-2 text-sm text-red-600' id='displayName-error'>
-                {actionData.errors.displayName}
-              </p>
-            )}
-        </div>
+        )}
+      {fieldError('form') && (
+        <Alert message={fieldError('form')!} status='error' className='mb-6' />
+      )}
 
-        <div>
-          <label
-            htmlFor='sportId'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-          >
-            Sport
-          </label>
-          <select
-            id='sportId'
-            name='sportId'
-            className='mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
-            aria-describedby='sportId-error'
-          >
+      <Form method='post' className='grid max-w-sm gap-6'>
+        <Field label='Display Name' error={fieldError('displayName')}>
+          <Input name='displayName' ref={displayNameInputRef} required />
+        </Field>
+
+        <Field label='Sport' error={fieldError('sportId')}>
+          <NativeSelect name='sportId'>
             <option value=''>Select Sport</option>
             {omniSports.map(sport => (
               <option key={sport.id} value={sport.id}>
                 {sport.name}
               </option>
             ))}
-          </select>
-          {actionData &&
-            'errors' in actionData &&
-            actionData.errors &&
-            'sportId' in actionData.errors &&
-            actionData.errors.sportId && (
-              <p className='mt-2 text-sm text-red-600' id='sportId-error'>
-                {actionData.errors.sportId}
-              </p>
-            )}
-        </div>
+          </NativeSelect>
+        </Field>
 
-        <div>
-          <label
-            htmlFor='seasonId'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-          >
-            Omni Season
-          </label>
-          <select
-            id='seasonId'
-            name='seasonId'
-            className='mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
-            aria-describedby='seasonId-error'
-          >
+        <Field label='Omni Season' error={fieldError('seasonId')}>
+          <NativeSelect name='seasonId'>
             <option value=''>Select Omni Season</option>
             {omniSeasons.map(season => (
               <option key={season.id} value={season.id}>
                 {season.year}
               </option>
             ))}
-          </select>
-          {actionData &&
-            'errors' in actionData &&
-            actionData.errors &&
-            'seasonId' in actionData.errors &&
-            actionData.errors.seasonId && (
-              <p className='mt-2 text-sm text-red-600' id='seasonId-error'>
-                {actionData.errors.seasonId}
-              </p>
-            )}
-        </div>
+          </NativeSelect>
+        </Field>
 
-        <div>
-          <label
-            htmlFor='relativeSort'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-          >
-            Relative Sort
-          </label>
-          <input
-            type='number'
-            name='relativeSort'
-            id='relativeSort'
-            required
-            defaultValue={99}
-            className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-slate-800 dark:text-white sm:text-sm'
-            aria-describedby='relativeSort-error'
-          />
-          {actionData &&
-            'errors' in actionData &&
-            actionData.errors &&
-            'relativeSort' in actionData.errors &&
-            actionData.errors.relativeSort && (
-              <p className='mt-2 text-sm text-red-600' id='relativeSort-error'>
-                {actionData.errors.relativeSort}
-              </p>
-            )}
-        </div>
+        <Field label='Relative Sort' error={fieldError('relativeSort')}>
+          <Input type='number' name='relativeSort' required defaultValue={99} />
+        </Field>
 
         <div>
           <Button type='submit' disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Omni Player'}
+            {isSubmitting ? 'Creating…' : 'Create Omni Player'}
           </Button>
         </div>
       </Form>
-    </div>
+    </Section>
   );
 }

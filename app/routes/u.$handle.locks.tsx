@@ -4,40 +4,18 @@ import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import { KeyedBar } from '~/components/layout/profile/BarKey';
 import CareerCard, { MiniStat } from '~/components/layout/profile/CareerCard';
 import ContestEmptyState from '~/components/layout/profile/ContestEmptyState';
+import { FieldBandKeys } from '~/components/layout/profile/FieldBandKeys';
 import FinishMeter from '~/components/layout/profile/FinishMeter';
-import { InfoText } from '~/components/layout/profile/InfoTip';
-import LabelledRange from '~/components/layout/profile/LabelledRange';
 import LeadContext from '~/components/layout/profile/LeadContext';
 import ProfileSection from '~/components/layout/profile/ProfileSection';
-import ProfileTable, {
-  MobileCard,
-  MobileCards,
-} from '~/components/layout/profile/ProfileTable';
 import SeasonFinish, {
   Trophies,
 } from '~/components/layout/profile/SeasonFinish';
-import SegmentedControl from '~/components/layout/profile/SegmentedControl';
-import ShowAllButton from '~/components/layout/profile/ShowAllButton';
-import Tag, { CurrentTag } from '~/components/layout/profile/Tag';
-import WeekGrid, {
-  LegendItem,
-  Swatch,
-  WeekLegend,
-  WonKey,
-} from '~/components/layout/profile/WeekGrid';
-import type { WeekGridCell } from '~/components/layout/profile/WeekGrid';
-import YearFilter from '~/components/layout/profile/YearFilter';
-import {
-  CHART,
-  ChartKey,
-  ChartKeys,
-  FieldBandKeys,
-  useChartWidth,
-  weekLabelStep,
-} from '~/components/layout/profile/chart';
+import StatusText, {
+  CurrentSeason,
+} from '~/components/layout/profile/StatusText';
 import {
   line,
   ordinal,
@@ -47,7 +25,29 @@ import {
   weekLabel,
 } from '~/components/layout/profile/format';
 import { BAR, TEXT } from '~/components/layout/profile/tones';
-import type { TagTone } from '~/components/layout/profile/tones';
+import type { StatusTone } from '~/components/layout/profile/tones';
+import { KeyedBar, LabelledRange } from '~/components/ui/bars';
+import {
+  CHART,
+  ChartKey,
+  ChartKeys,
+  useChartWidth,
+  weekLabelStep,
+} from '~/components/ui/chart';
+import {
+  SegmentedControl,
+  YearFilter,
+} from '~/components/ui/segmented-control';
+import { ShowAllButton } from '~/components/ui/show-all-button';
+import { MobileCard, MobileCards, Table } from '~/components/ui/table';
+import {
+  LegendItem,
+  LegendSwatch,
+  WeekGrid,
+  WeekLegend,
+  WonKey,
+} from '~/components/ui/week-grid';
+import type { WeekGridCell } from '~/components/ui/week-grid';
 import { requireProfileMember } from '~/models/profile/access.server';
 import { getLocksProfile } from '~/models/profile/locks.server';
 import {
@@ -66,6 +66,9 @@ import {
 } from '~/models/profile/locksProfile';
 import { settledRank } from '~/models/profile/spreadPoolProfile';
 import type { ProfileSummary } from '~/models/profile/summary.server';
+import type { RouteHandle } from '~/utils/route-handle';
+
+export const handle: RouteHandle = { title: 'Locks' };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userId = await requireProfileMember(request, params.handle);
@@ -128,7 +131,7 @@ function WeekStat({
   return (
     <MiniStat
       label={label}
-      value={week ? value(week) : '—'}
+      value={week ? value(week) : '–'}
       hint={week ? `${hint}: ${weekLabel(week)}, ${record(week.record)}` : hint}
       tone={week ? tone : undefined}
     />
@@ -140,9 +143,9 @@ function WeekStat({
  * one is the one that stings, so it gets the brightest red.
  */
 const BUST_BANDS = [
-  { key: 'one', label: 'by 1', tone: 'bg-rose-300' },
-  { key: 'two', label: 'by 2', tone: 'bg-rose-500' },
-  { key: 'more', label: 'by 3+', tone: 'bg-rose-800' },
+  { key: 'one', label: 'by 1', tone: 'sequence-6' },
+  { key: 'two', label: 'by 2', tone: 'sequence-4' },
+  { key: 'more', label: 'by 3+', tone: 'sequence-2' },
 ] as const;
 
 function Career({
@@ -204,7 +207,7 @@ function Career({
                 ? `, with ${plural(career.record.ties, 'tie')} besides`
                 : ''
             }`}
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <MiniStat
             label='Incorrect'
@@ -232,7 +235,7 @@ function Career({
             week={career.bestWeek}
             value={week => week.points}
             hint='Most points in a week'
-            tone='text-emerald-300'
+            tone='text-positive'
           />
           <WeekStat
             label='Smallest'
@@ -265,14 +268,14 @@ function Career({
             week={career.worstBust}
             value={week => record(week.record)}
             hint='The bust that wiped out the most wins'
-            tone='text-rose-300'
+            tone='text-negative'
           />
           <WeekStat
             label='Nearest Miss'
             week={career.nearMiss}
             value={week => record(week.record)}
             hint='The most wins a single loss wiped out'
-            tone='text-rose-300'
+            tone='text-negative'
           />
         </CareerCard>
 
@@ -353,7 +356,7 @@ function FinishesCard({
 function BySeason({ seasons }: { seasons: LocksSeason[] }) {
   return (
     <ProfileSection title='By Season'>
-      <ProfileTable
+      <Table
         headers={[
           'Year',
           'Finish',
@@ -368,12 +371,12 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
         primaryColumns={[1, 2]}
       >
         {seasons.map(season => (
-          <tr key={season.year} className='border-b border-slate-700/70'>
+          <tr key={season.year} className='border-b border-border'>
             <td className='px-2 py-2'>
               <Link to={`/games/locks-challenge/standings/${season.year}`}>
                 {season.year}
               </Link>
-              {season.inProgress && <CurrentTag />}
+              {season.inProgress && <CurrentSeason />}
             </td>
             <td className='whitespace-nowrap px-2 py-2'>
               <SeasonFinish finish={season.finish} champion={season.champion} />
@@ -389,31 +392,34 @@ function BySeason({ seasons }: { seasons: LocksSeason[] }) {
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.cleanWeeks}
-              <span className='text-slate-400'> of {season.weeks.length}</span>
+              <span className='text-muted-foreground'>
+                {' '}
+                of {season.weeks.length}
+              </span>
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {season.bestWeek ? (
                 <>
                   {season.bestWeek.points}
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     Week {season.bestWeek.week}
                   </span>
                 </>
               ) : (
-                '—'
+                '–'
               )}
             </td>
             <td
               className={clsx(
                 'px-2 py-2 text-right tabular-nums',
-                season.forfeited > 0 ? TEXT.bad : 'text-slate-400',
+                season.forfeited > 0 ? TEXT.bad : 'text-muted-foreground',
               )}
             >
               {season.forfeited}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -505,16 +511,16 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
       footnote={
         <ChartKeys>
           <ChartKey>
-            <span className='inline-block h-0.5 w-4 rounded bg-sky-400' />
+            <span className='inline-block h-0.5 w-4 bg-info/20' />
             Points
           </ChartKey>
           <FieldBandKeys rangeLabel='Lowest to the leader' />
           <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full bg-rose-400' />
+            <span className='inline-block h-2 w-2 bg-destructive/20' />
             Busted
           </ChartKey>
           <ChartKey>
-            <span className='inline-block h-2 w-2 rounded-full border-2 border-slate-500' />
+            <span className='inline-block h-2 w-2 border-2 border-border' />
             Sat out
           </ChartKey>
         </ChartKeys>
@@ -537,7 +543,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 y1={y(value)}
                 y2={y(value)}
                 className={
-                  value === 0 ? 'stroke-slate-400' : 'stroke-slate-700'
+                  value === 0 ? 'stroke-muted-foreground' : 'stroke-border'
                 }
                 strokeWidth={1}
               />
@@ -546,7 +552,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 y={y(value)}
                 textAnchor='end'
                 dominantBaseline='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {value}
               </text>
@@ -560,7 +566,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
                 x={x(week)}
                 y={CHART.height - 8}
                 textAnchor='middle'
-                className='fill-slate-500 text-[11px] tabular-nums'
+                className='fill-muted-foreground text-[11px] tabular-nums'
               >
                 {week}
               </text>
@@ -571,21 +577,21 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               point => point.high,
               point => point.low,
             )}
-            className='fill-slate-400/10'
+            className='fill-muted-foreground/10'
           />
           <polygon
             points={area(
               point => point.q3,
               point => point.q1,
             )}
-            className='fill-slate-400/25'
+            className='fill-muted-foreground/25'
           />
           <polyline
             points={field
               .map(point => `${x(point.week)},${y(point.median)}`)
               .join(' ')}
             fill='none'
-            className='stroke-slate-300'
+            className='stroke-foreground'
             strokeWidth={1.25}
             strokeDasharray='4 4'
           />
@@ -594,7 +600,7 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               .map(point => `${x(point.week)},${y(point.total)}`)
               .join(' ')}
             fill='none'
-            className='stroke-sky-400'
+            className='stroke-info'
             strokeWidth={2.5}
             strokeLinejoin='round'
           />
@@ -606,12 +612,12 @@ function PointsRace({ seasons }: { seasons: LocksSeason[] }) {
               r={point.entered || point.week === 0 ? 3.5 : 3}
               className={
                 point.week === 0
-                  ? 'fill-sky-400 stroke-slate-900'
+                  ? 'fill-info stroke-background'
                   : !point.entered
-                  ? 'fill-slate-900 stroke-slate-500'
+                  ? 'fill-background stroke-muted-foreground'
                   : point.entered.clean
-                  ? 'fill-sky-400 stroke-slate-900'
-                  : 'fill-rose-400 stroke-slate-900'
+                  ? 'fill-info stroke-background'
+                  : 'fill-negative stroke-background'
               }
               strokeWidth={2}
             >
@@ -649,9 +655,9 @@ function describePoint(point: RacePoint) {
  * busted week has a dashed edge, so the two never rely on hue alone and still
  * read for red-green colour blindness.
  */
-const CLEAN_TONE = 'bg-emerald-400 text-emerald-950';
+const CLEAN_TONE = 'bg-positive/20 text-positive';
 const BUSTED_TONE =
-  'border border-dashed border-rose-400/70 bg-rose-950 text-rose-300';
+  'border border-dashed border-destructive bg-destructive/20 text-negative';
 
 const RESULT_WORD = { win: 'Won', loss: 'Lost', tie: 'Tied' } as const;
 
@@ -702,8 +708,12 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
       />
       <WeekLegend>
         <WonKey sample='9' tone={CLEAN_TONE} />
-        <LegendItem swatch={<Swatch tone={CLEAN_TONE} />}>Scored</LegendItem>
-        <LegendItem swatch={<Swatch tone={BUSTED_TONE} />}>Busted</LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={CLEAN_TONE} />}>
+          Scored
+        </LegendItem>
+        <LegendItem swatch={<LegendSwatch tone={BUSTED_TONE} />}>
+          Busted
+        </LegendItem>
       </WeekLegend>
     </ProfileSection>
   );
@@ -715,7 +725,7 @@ function WeekByWeek({ seasons }: { seasons: LocksSeason[] }) {
  * above the field and red when it is below.
  */
 const FIELD_DOT =
-  'absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-slate-900 bg-sky-300';
+  'absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 border-2 border-border bg-info/20';
 
 function RateBar({
   member,
@@ -727,17 +737,17 @@ function RateBar({
   return (
     <div
       aria-hidden='true'
-      className='relative h-2 w-full min-w-[6rem] rounded-full bg-slate-700 max-sm:hidden'
+      className='relative h-2 w-full min-w-[6rem] bg-secondary max-sm:hidden'
     >
       {member !== null && (
         <div
           className={clsx(
-            'absolute inset-y-0 left-0 rounded-full',
+            'absolute inset-y-0 left-0',
             field === null
-              ? 'bg-sky-400'
+              ? 'bg-info/20'
               : member >= field
-              ? 'bg-emerald-400'
-              : 'bg-rose-400',
+              ? 'bg-positive/20'
+              : 'bg-destructive/20',
           )}
           style={{ width: `${member * 100}%` }}
         />
@@ -779,21 +789,21 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
   return (
     <ProfileSection
       title='Risk Profile'
-      footnote={<FieldKey>Field&rsquo;s performance</FieldKey>}
+      footnote={<FieldKey>Field&rsquo;s Performance</FieldKey>}
     >
-      <ProfileTable
-        headers={['Picks', 'Weeks', 'Scoring % vs field', 'Average Score']}
+      <Table
+        headers={['Picks', 'Weeks', 'Scoring % vs Field', 'Average Score']}
         numericColumns={[1, 3]}
         primaryColumns={[2, 3]}
       >
         {buckets.map(bucket => (
-          <tr key={bucket.key} className='border-b border-slate-700/70'>
-            <td className='whitespace-nowrap px-2 py-2 text-slate-100'>
+          <tr key={bucket.key} className='border-b border-border'>
+            <td className='whitespace-nowrap px-2 py-2 text-foreground'>
               {bucket.label}
             </td>
             <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
               {bucket.member.weeks}
-              <span className='ml-1.5 text-xs text-slate-400'>
+              <span className='ml-1.5 text-sm text-muted-foreground'>
                 {memberWeeks > 0
                   ? `${Math.round((bucket.member.weeks / memberWeeks) * 100)}%`
                   : ''}
@@ -809,7 +819,7 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <div className='flex items-center gap-3'>
                 <span className='shrink-0 whitespace-nowrap sm:w-24'>
                   {pct(bucket.member.cleanRate, 0)}
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {pct(bucket.field.cleanRate, 0)}
                   </span>
                 </span>
@@ -823,15 +833,15 @@ function RiskProfile({ buckets }: { buckets: RiskBucket[] }) {
               <span
                 className={clsx(
                   'font-medium',
-                  bucket === bestBucket ? TEXT.good : 'text-slate-100',
+                  bucket === bestBucket ? TEXT.good : 'text-foreground',
                 )}
               >
-                {bucket.member.pointsPerWeek?.toFixed(2) ?? '—'}
+                {bucket.member.pointsPerWeek?.toFixed(2) ?? '–'}
               </span>
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }
@@ -850,19 +860,19 @@ function SplitTable({
   const memberPicks = buckets.reduce((total, b) => total + b.member.picks, 0);
 
   return (
-    <ProfileTable
-      headers={[heading, 'Picks', 'Record', 'Win % vs field']}
+    <Table
+      headers={[heading, 'Picks', 'Record', 'Win % vs Field']}
       numericColumns={[1, 2]}
       primaryColumns={[3]}
     >
       {buckets.map(bucket => (
-        <tr key={bucket.key} className='border-b border-slate-700/70'>
-          <td className='whitespace-nowrap px-2 py-2 text-slate-100'>
+        <tr key={bucket.key} className='border-b border-border'>
+          <td className='whitespace-nowrap px-2 py-2 text-foreground'>
             {bucket.label}
           </td>
           <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums'>
             {bucket.member.picks}
-            <span className='ml-1.5 text-xs text-slate-400'>
+            <span className='ml-1.5 text-sm text-muted-foreground'>
               {memberPicks > 0
                 ? `${Math.round((bucket.member.picks / memberPicks) * 100)}%`
                 : ''}
@@ -881,7 +891,7 @@ function SplitTable({
             <div className='flex items-center gap-3'>
               <span className='shrink-0 whitespace-nowrap sm:w-24'>
                 {pct(bucket.member.winRate)}
-                <span className='ml-1.5 text-xs text-slate-400'>
+                <span className='ml-1.5 text-sm text-muted-foreground'>
                   {pct(bucket.field.winRate)}
                 </span>
               </span>
@@ -893,17 +903,17 @@ function SplitTable({
           </td>
         </tr>
       ))}
-    </ProfileTable>
+    </Table>
   );
 }
 
-const WIN_RATE_KEY = <FieldKey>Field&rsquo;s performance</FieldKey>;
+const WIN_RATE_KEY = <FieldKey>Field&rsquo;s Performance</FieldKey>;
 
 const SIDE_TONE: Record<string, string> = {
-  favorite: 'bg-amber-400',
-  underdog: 'bg-violet-400',
-  pick: 'bg-slate-400',
-  none: 'bg-slate-600',
+  favorite: 'bg-warning/20',
+  underdog: 'bg-primary',
+  pick: 'bg-muted-foreground',
+  none: 'bg-secondary',
 };
 
 /**
@@ -924,14 +934,14 @@ function ShareBar({
 
   return (
     <div className='relative'>
-      <div className='flex h-6 gap-0.5 overflow-hidden rounded'>
+      <div className='flex h-6 gap-0.5 overflow-hidden'>
         {buckets
           .filter(bucket => shareOf(bucket) > 0)
           .map(bucket => (
             <div
               key={bucket.key}
               className={clsx(
-                'flex items-center overflow-hidden whitespace-nowrap px-2 text-xs font-semibold text-slate-950',
+                'flex items-center overflow-hidden whitespace-nowrap px-2 text-sm font-semibold text-muted-foreground',
                 SIDE_TONE[bucket.key],
               )}
               style={{ width: `${shareOf(bucket) * 100}%` }}
@@ -944,7 +954,7 @@ function ShareBar({
       </div>
       {consensus !== null && (
         <div
-          className='absolute -inset-y-1 w-1 -translate-x-1/2 rounded-full bg-sky-300 shadow'
+          className='absolute -inset-y-1 w-1 -translate-x-1/2 bg-info/20'
           style={{ left: `${consensus * 100}%` }}
           title={`Field: ${Math.round(consensus * 100)}% favorites`}
         />
@@ -1015,7 +1025,7 @@ function Tendencies({ splits }: { splits: LocksSplits }) {
 type TeamSort = 'picks' | 'winRate' | 'busts';
 
 const TEAM_SORTS: { value: TeamSort; label: string }[] = [
-  { value: 'picks', label: 'Most picked' },
+  { value: 'picks', label: 'Most Picked' },
   { value: 'winRate', label: 'Win %' },
   { value: 'busts', label: 'Busts' },
 ];
@@ -1053,16 +1063,18 @@ function TeamCallout({
 }) {
   if (!row) return null;
   return (
-    <div className='rounded-md bg-slate-900/50 p-4'>
-      <h4 className='m-0 text-sm font-semibold text-slate-300'>{title}</h4>
+    <div className='bg-background/50 p-4'>
+      <h4 className='m-0 text-sm font-semibold text-foreground'>{title}</h4>
       {/* The team, then its number pushed to the far end of the same line;
           a narrow card wraps the number under the name instead. */}
       <div className='mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1'>
-        <span className='text-2xl font-bold leading-none text-white'>
+        <span className='text-2xl font-bold leading-none text-foreground'>
           {row.team}
         </span>
-        <span className='text-sm text-slate-400'>{names[row.team] ?? ''}</span>
-        <span className='ml-auto text-sm tabular-nums text-slate-300'>
+        <span className='text-sm text-muted-foreground'>
+          {names[row.team] ?? ''}
+        </span>
+        <span className='ml-auto text-sm tabular-nums text-foreground'>
           {children}
         </span>
       </div>
@@ -1101,7 +1113,7 @@ function Teams({
       title='By NFL Team'
       action={
         <SegmentedControl
-          label='Sort by'
+          label='Sort By'
           value={sort}
           onChange={setSort}
           options={TEAM_SORTS}
@@ -1128,30 +1140,25 @@ function Teams({
         <TeamCallout title='Costliest Loss' row={costliest} names={names}>
           {costliest && (
             <>
-              <InfoText
-                label={plural(costliest.pointsCost, 'point')}
-                className='font-semibold text-rose-300'
-                tip={`Lost as a week's only loss, with ${plural(
-                  costliest.busts,
-                  'bust',
-                )} in all`}
-              >
+              <span className='font-semibold text-negative'>
                 {plural(costliest.pointsCost, 'point')}
-              </InfoText>
+              </span>{' '}
+              lost as a week&rsquo;s only loss, with{' '}
+              {plural(costliest.busts, 'bust')} in all
             </>
           )}
         </TeamCallout>
       </div>
 
-      <ProfileTable
+      <Table
         headers={['Team', 'Picked', 'Win %', 'Picked Against', 'Busts']}
         numericColumns={[1, 2, 3, 4]}
         primaryColumns={[1, 2]}
       >
         {visible.map(row => (
-          <tr key={row.team} className='border-b border-slate-700/70'>
+          <tr key={row.team} className='border-b border-border'>
             <td
-              className='whitespace-nowrap px-2 py-2 font-medium text-slate-100'
+              className='whitespace-nowrap px-2 py-2 font-medium text-foreground'
               title={names[row.team]}
             >
               {row.team}
@@ -1160,17 +1167,17 @@ function Teams({
               {row.backing.picks > 0 ? (
                 record(row.backing)
               ) : (
-                <span className='text-slate-400'>—</span>
+                <span className='text-muted-foreground'>–</span>
               )}
             </td>
             <td className='px-2 py-2 text-right tabular-nums'>
               {pct(winRate(row.backing), 0)}
             </td>
-            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-slate-300'>
+            <td className='whitespace-nowrap px-2 py-2 text-right tabular-nums text-foreground'>
               {row.fading.picks > 0 ? (
                 record(row.fading)
               ) : (
-                <span className='text-slate-400'>—</span>
+                <span className='text-muted-foreground'>–</span>
               )}
             </td>
             <td
@@ -1186,20 +1193,20 @@ function Teams({
             >
               {row.busts > 0 ? (
                 <>
-                  <span className='text-rose-300'>{row.busts}</span>
+                  <span className='text-negative'>{row.busts}</span>
                   {row.pointsCost > 0 && (
-                    <span className='ml-1.5 text-xs text-slate-400'>
+                    <span className='ml-1.5 text-sm text-muted-foreground'>
                       −{row.pointsCost}
                     </span>
                   )}
                 </>
               ) : (
-                <span className='text-slate-400'>0</span>
+                <span className='text-muted-foreground'>0</span>
               )}
             </td>
           </tr>
         ))}
-      </ProfileTable>
+      </Table>
       {rows.length > TEAMS_PREVIEW && (
         <ShowAllButton
           total={rows.length}
@@ -1212,9 +1219,9 @@ function Teams({
   );
 }
 
-const RESULT_TAG: Record<
+const RESULT_STATUS: Record<
   LocksPick['result'],
-  { tone: TagTone; label: string }
+  { tone: StatusTone; label: string }
 > = {
   win: { tone: 'win', label: 'Won' },
   loss: { tone: 'loss', label: 'Lost' },
@@ -1224,17 +1231,17 @@ const RESULT_TAG: Record<
 /** How many of the others on the game took the same side, and what that makes it. */
 function FieldCell({ pick }: { pick: LocksPick }) {
   if (pick.fieldShare === null) {
-    return <span className='text-slate-400'>Only pick</span>;
+    return <span className='text-muted-foreground'>Only pick</span>;
   }
   return (
     <span className='inline-flex items-center gap-1.5'>
-      <span className='tabular-nums text-slate-300'>
+      <span className='tabular-nums text-foreground'>
         {pick.sameSide} of {pick.fieldCount}
       </span>
       {pick.fieldShare >= CHALK_SHARE ? (
-        <Tag tone='neutral'>Chalk</Tag>
+        <StatusText tone='neutral'>Chalk</StatusText>
       ) : pick.fieldShare <= 1 - CHALK_SHARE ? (
-        <Tag tone='accent'>Contrarian</Tag>
+        <StatusText tone='accent'>Contrarian</StatusText>
       ) : null}
     </span>
   );
@@ -1243,11 +1250,11 @@ function FieldCell({ pick }: { pick: LocksPick }) {
 /** A week's result for the log: the points, or that it busted. */
 function WeekResult({ week }: { week: LocksWeek }) {
   return week.clean ? (
-    <span className='font-semibold tabular-nums text-emerald-300'>
+    <span className='font-semibold tabular-nums text-positive'>
       {plural(week.points, 'point')}
     </span>
   ) : (
-    <span className='text-rose-300'>Busted</span>
+    <span className='text-negative'>Busted</span>
   );
 }
 
@@ -1265,7 +1272,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
       title='Pick Log'
       action={<YearFilter years={years} value={year} onChange={setYear} />}
     >
-      <ProfileTable
+      <Table
         headers={['Week', 'Pick', 'Final', 'Field', 'Result', 'Week Result']}
         mobileCards={
           <MobileCards>
@@ -1284,23 +1291,23 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                       key={pick.team}
                       className='flex flex-wrap items-center gap-x-2 gap-y-1'
                     >
-                      <span className='font-medium text-slate-100'>
+                      <span className='font-medium text-foreground'>
                         {pick.team}
                         {pick.spread !== null && ` ${line(pick.spread)}`}
                       </span>
-                      <span className='text-slate-400'>
+                      <span className='text-muted-foreground'>
                         {pick.isHome ? 'vs' : '@'} {pick.opponent},{' '}
                         <span className='tabular-nums'>
                           {pick.teamScore}–{pick.opponentScore}
                         </span>
                       </span>
-                      <span className='text-xs'>
+                      <span className='text-sm'>
                         <FieldCell pick={pick} />
                       </span>
                       <span className='ml-auto inline-flex gap-1'>
-                        <Tag tone={RESULT_TAG[pick.result].tone}>
-                          {RESULT_TAG[pick.result].label}
-                        </Tag>
+                        <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                          {RESULT_STATUS[pick.result].label}
+                        </StatusText>
                       </span>
                     </li>
                   ))}
@@ -1315,9 +1322,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
             <tr
               key={`${week.year}-${week.week}-${pick.team}`}
               className={clsx(
-                index === week.picks.length - 1
-                  ? 'border-b border-slate-700/70'
-                  : '',
+                index === week.picks.length - 1 ? 'border-b border-border' : '',
               )}
             >
               {index === 0 && (
@@ -1326,30 +1331,32 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                   className='whitespace-nowrap px-2 py-2 align-top tabular-nums'
                 >
                   {year === 'all' && (
-                    <span className='mr-1.5 text-slate-400'>{week.year}</span>
+                    <span className='mr-1.5 text-muted-foreground'>
+                      {week.year}
+                    </span>
                   )}
                   Week {week.week}
                 </td>
               )}
               <td className='whitespace-nowrap px-2 py-1.5'>
-                <span className='font-medium text-slate-100'>
+                <span className='font-medium text-foreground'>
                   {pick.team}
                   {pick.spread !== null && ` ${line(pick.spread)}`}
                 </span>
-                <span className='ml-1.5 text-slate-400'>
+                <span className='ml-1.5 text-muted-foreground'>
                   {pick.isHome ? 'vs' : '@'} {pick.opponent}
                 </span>
               </td>
-              <td className='whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-300'>
+              <td className='whitespace-nowrap px-2 py-1.5 tabular-nums text-foreground'>
                 {pick.teamScore}–{pick.opponentScore}
               </td>
               <td className='whitespace-nowrap px-2 py-1.5'>
                 <FieldCell pick={pick} />
               </td>
               <td className='whitespace-nowrap px-2 py-1.5'>
-                <Tag tone={RESULT_TAG[pick.result].tone}>
-                  {RESULT_TAG[pick.result].label}
-                </Tag>
+                <StatusText tone={RESULT_STATUS[pick.result].tone}>
+                  {RESULT_STATUS[pick.result].label}
+                </StatusText>
               </td>
               {index === 0 && (
                 <td
@@ -1358,7 +1365,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
                   title={`${ordinal(week.rank)} of ${week.fieldSize} that week`}
                 >
                   <WeekResult week={week} />
-                  <span className='ml-1.5 text-xs text-slate-400'>
+                  <span className='ml-1.5 text-sm text-muted-foreground'>
                     {ordinal(week.rank)} of {week.fieldSize}
                   </span>
                 </td>
@@ -1366,7 +1373,7 @@ function PickLog({ seasons }: { seasons: LocksSeason[] }) {
             </tr>
           )),
         )}
-      </ProfileTable>
+      </Table>
     </ProfileSection>
   );
 }

@@ -1,6 +1,6 @@
 export default function MemePage() {
   return (
-    <section>
+    <section className='prose'>
       <h2>
         Discord's Profane, Delusional Football Fans are Shaking up the Fantasy
         Landscape

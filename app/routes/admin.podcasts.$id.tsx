@@ -15,7 +15,11 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input, NativeSelect, Textarea } from '~/components/ui/input';
+import { ExternalLink } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
 import {
   createEpisode,
   getEpisode,
@@ -106,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     title: title.length === 0 ? 'Title has no content' : undefined,
     description:
       description.length === 0 ? 'Description has no content' : undefined,
-    showNotes: showNotes.length === 0 ? 'Show Notes has no content' : undefined,
+    showNotes: showNotes.length === 0 ? 'Show notes has no content' : undefined,
   };
 
   if (Object.values(fieldErrors).some(Boolean)) {
@@ -181,208 +185,107 @@ export default function PodcastEpisodeCreate() {
 
   const buttonText =
     navigation.state === 'submitting'
-      ? 'Submitting...'
+      ? 'Submitting…'
       : navigation.state === 'loading'
-      ? 'Submitted!'
+      ? 'Submitted'
       : 'Submit';
 
   return (
-    <>
-      <h2 className='mt-0'>Add Podcast Episode</h2>
-      <div>
-        <Form
-          method='POST'
-          className='grid grid-cols-1 gap-6'
-          encType='multipart/form-data'
+    <Section title={episode ? 'Edit Podcast Episode' : 'Add Podcast Episode'}>
+      <Form
+        method='POST'
+        className='grid max-w-2xl gap-6'
+        encType='multipart/form-data'
+      >
+        <input type='hidden' name='id' value={episode?.id} />
+        <Field label='Title' error={actionData?.fieldErrors?.title}>
+          <Input
+            required
+            defaultValue={episode?.title ?? actionData?.fields?.title}
+            name='title'
+          />
+        </Field>
+        <div className='grid grid-cols-2 gap-6'>
+          <Field label='Season'>
+            <NativeSelect
+              defaultValue={episode?.season ?? actionData?.fields?.season}
+              name='season'
+              required
+            >
+              {SEASONS.map(season => (
+                <option value={season} key={season}>
+                  {season}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field label='Episode'>
+            <Input
+              type='number'
+              required
+              min='0'
+              defaultValue={episode?.episode ?? actionData?.fields?.episode}
+              name='episode'
+            />
+          </Field>
+        </div>
+        <Field label='Description' error={actionData?.fieldErrors?.description}>
+          <Textarea
+            name='description'
+            required
+            defaultValue={
+              episode?.description ?? actionData?.fields?.description
+            }
+            rows={3}
+          />
+        </Field>
+        <Field
+          label='Long Description'
+          description='Can take HTML.'
+          error={actionData?.fieldErrors?.showNotes}
         >
-          <input type='hidden' name='id' value={episode?.id} />
-          <div>
-            <label htmlFor='title'>
-              Title:
-              <input
-                type='text'
-                required
-                defaultValue={episode?.title ?? actionData?.fields?.title}
-                name='title'
-                id='title'
-                aria-invalid={
-                  Boolean(actionData?.fieldErrors?.title) || undefined
-                }
-                aria-errormessage={
-                  actionData?.fieldErrors?.title ? 'title-error' : undefined
-                }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              />
-            </label>
-            {actionData?.fieldErrors?.title ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='title-error'
-              >
-                {actionData.fieldErrors.title}
-              </p>
-            ) : null}
-          </div>
-          <div className='flex gap-4'>
-            <div className='w-1/2 shrink'>
-              <label htmlFor='season'>
-                Season:
-                <select
-                  defaultValue={episode?.season ?? actionData?.fields?.season}
-                  name='season'
-                  required
-                  className='form-select mt-1 block w-full dark:border-0 dark:bg-slate-800'
-                >
-                  {SEASONS.map(season => {
-                    return (
-                      <option value={season} key={season}>
-                        {season}
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
-            </div>
-            <div className='w-1/2 shrink'>
-              <label htmlFor='episode'>
-                Episode:
-                <input
-                  type='number'
-                  required
-                  min='0'
-                  defaultValue={episode?.episode ?? actionData?.fields?.episode}
-                  name='episode'
-                  id='episode'
-                  className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-                />
-              </label>
-            </div>
-          </div>
-          <div>
-            <label htmlFor='description'>
-              Description:
-              <textarea
-                name='description'
-                required
-                id='description'
-                defaultValue={
-                  episode?.description ?? actionData?.fields?.description
-                }
-                aria-invalid={
-                  Boolean(actionData?.fieldErrors?.description) || undefined
-                }
-                aria-errormessage={
-                  actionData?.fieldErrors?.description
-                    ? 'description-error'
-                    : undefined
-                }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-                rows={3}
-              ></textarea>
-            </label>
-            {actionData?.fieldErrors?.description ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='description-error'
-              >
-                {actionData.fieldErrors.description}
-              </p>
-            ) : null}
-          </div>
-          <div>
-            <label htmlFor='showNotes'>
-              Long Description:{' '}
-              <span className='text-sm italic text-gray-400'>
-                (can take HTML)
-              </span>
-              <textarea
-                name='showNotes'
-                required
-                id='showNotes'
-                defaultValue={
-                  episode?.shownotes ?? actionData?.fields?.showNotes
-                }
-                aria-invalid={
-                  Boolean(actionData?.fieldErrors?.showNotes) || undefined
-                }
-                aria-errormessage={
-                  actionData?.fieldErrors?.showNotes
-                    ? 'showNotes-error'
-                    : undefined
-                }
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-                rows={3}
-              ></textarea>
-            </label>
-            {actionData?.fieldErrors?.showNotes ? (
-              <p
-                className='form-validation-error'
-                role='alert'
-                id='showNotes-error'
-              >
-                {actionData.fieldErrors.showNotes}
-              </p>
-            ) : null}
-          </div>
-          <div>
-            <label htmlFor='publishDate'>
-              Publish Date:
-              <input
-                type='date'
-                defaultValue={
-                  episode?.publishDate
-                    ? episode?.publishDate.toISOString().split('T')[0]
-                    : actionData?.fields?.publishDate
-                }
-                name='publishDate'
-                required
-                id='publishDate'
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              />
-            </label>
-          </div>
-          <div>
-            <label htmlFor='podcastFile'>
-              Podcast File:{' '}
-              {episode && (
-                <>
-                  <a href={episode.filepath}>Current File</a>
-                  <input
-                    type='hidden'
-                    name='duration'
-                    value={episode.duration}
-                  />
-                  <input
-                    type='hidden'
-                    name='filepath'
-                    value={episode.filepath}
-                  />
-                  <input
-                    type='hidden'
-                    name='filesize'
-                    value={episode.filesize}
-                  />
-                </>
-              )}
-              <input
-                type='file'
-                required={!episode}
-                defaultValue={actionData?.fields?.podcastFile}
-                name='podcastFile'
-                id='podcastFile'
-                className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              />
-            </label>
-          </div>
-          <div>
-            <Button type='submit' disabled={navigation.state !== 'idle'}>
-              {buttonText}
-            </Button>
-          </div>
-        </Form>
-      </div>
-    </>
+          <Textarea
+            name='showNotes'
+            required
+            defaultValue={episode?.shownotes ?? actionData?.fields?.showNotes}
+            rows={3}
+          />
+        </Field>
+        <Field label='Publish Date' className='max-w-xs'>
+          <Input
+            type='date'
+            defaultValue={
+              episode?.publishDate
+                ? episode?.publishDate.toISOString().split('T')[0]
+                : actionData?.fields?.publishDate
+            }
+            name='publishDate'
+            required
+          />
+        </Field>
+        {episode && (
+          <>
+            <input type='hidden' name='duration' value={episode.duration} />
+            <input type='hidden' name='filepath' value={episode.filepath} />
+            <input type='hidden' name='filesize' value={episode.filesize} />
+          </>
+        )}
+        <div className='grid gap-2'>
+          <Field label='Podcast File'>
+            <Input type='file' required={!episode} name='podcastFile' />
+          </Field>
+          {episode && (
+            <ExternalLink href={episode.filepath} className='text-sm'>
+              Current File
+            </ExternalLink>
+          )}
+        </div>
+        <div>
+          <Button type='submit' disabled={navigation.state !== 'idle'}>
+            {buttonText}
+          </Button>
+        </div>
+      </Form>
+    </Section>
   );
 }

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigate } from '@remix-run/react';
+import { Form, useNavigate } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
 import {
   typedjson,
@@ -8,7 +8,11 @@ import {
 } from 'remix-typedjson';
 import z from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input, NativeSelect } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
 import { getDraftSlot, updateDraftSlot } from '~/models/draftSlot.server';
 import { getSeasons } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -27,7 +31,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const { id } = params;
   if (!id) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const formData = await request.formData();
@@ -72,12 +76,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const { id } = params;
   if (!id) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const draftSlot = await getDraftSlot({ id });
   if (!draftSlot) {
-    throw new Response('Not Found', { status: 404 });
+    throw new Response('Not found', { status: 404 });
   }
 
   const seasons = await getSeasons();
@@ -132,99 +136,82 @@ export default function EditDraftSlot() {
   };
 
   return (
-    <>
-      <h2>Edit Draft Slot</h2>
-      <p>
-        <Link to='/admin/draft-slots'>← Back to Draft Slots</Link>
-      </p>
+    <Section
+      title='Edit Draft Slot'
+      description={<Link to='/admin/draft-slots'>Back to Draft Slots</Link>}
+    >
       {isSuccessWithMessage(actionData) && (
-        <Alert message={`${actionData.message} Redirecting...`} />
+        <Alert
+          message={`${actionData.message} Redirecting…`}
+          className='mb-6'
+        />
       )}
       {isErrorResponse(actionData) && (
         <Alert
           message={
             ('general' in actionData.error && actionData.error.general?.[0]) ||
-            'An error occurred. Please try again.'
+            'Something went wrong. Try again.'
           }
+          status='error'
+          className='mb-6'
         />
       )}
       <Form
         method='post'
         onSubmit={handleSubmit}
-        className='grid grid-cols-1 gap-6'
+        className='grid max-w-md gap-6'
       >
-        <div>
-          <label htmlFor='seasonId'>
-            Season:
-            <select
-              name='seasonId'
-              id='seasonId'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              required
-              defaultValue={draftSlot.seasonId}
-            >
-              <option value=''>Select a season...</option>
-              {seasons.map((season: any) => (
-                <option key={season.id} value={season.id}>
-                  {season.year} {season.isCurrent ? '(Current)' : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          {isErrorResponse(actionData) &&
-            'seasonId' in actionData.error &&
-            actionData.error.seasonId && (
-              <p className='form-validation-error' role='alert'>
-                {actionData.error.seasonId[0]}
-              </p>
-            )}
-        </div>
-        <div>
-          <label htmlFor='draftDateTimeLocal'>
-            Draft Date & Time (in your local timezone:{' '}
-            <span suppressHydrationWarning>
-              {Intl.DateTimeFormat().resolvedOptions().timeZone}
-            </span>
-            ):
-            <input
-              ref={dateInputRef}
-              type='datetime-local'
-              id='draftDateTimeLocal'
-              className='mt-1 block w-full dark:border-0 dark:bg-slate-800'
-              required
-            />
-          </label>
-          {/* Populated on submit with the UTC ISO string; see handleSubmit. */}
-          <input type='hidden' name='draftDateTime' />
-          {isErrorResponse(actionData) &&
-            'draftDateTime' in actionData.error &&
-            actionData.error.draftDateTime && (
-              <p className='form-validation-error' role='alert'>
-                {actionData.error.draftDateTime[0]}
-              </p>
-            )}
-          <p
-            style={{
-              fontSize: '0.875rem',
-              color: '#6b7280',
-              marginTop: '0.25rem',
-            }}
+        <Field
+          label='Season'
+          error={
+            isErrorResponse(actionData) && 'seasonId' in actionData.error
+              ? actionData.error.seasonId?.[0]
+              : undefined
+          }
+        >
+          <NativeSelect
+            name='seasonId'
+            required
+            defaultValue={draftSlot.seasonId}
           >
-            Enter the draft time in your local timezone. It will be displayed to
-            all users in their respective local timezones.
-          </p>
-        </div>
+            <option value=''>Select a Season…</option>
+            {seasons.map((season: any) => (
+              <option key={season.id} value={season.id}>
+                {season.year} {season.isCurrent ? '(current)' : ''}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+        <Field
+          label='Draft Date and Time'
+          description={
+            <>
+              Enter it in your local timezone,{' '}
+              <span suppressHydrationWarning>
+                {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              </span>
+              . Members each see it in their own.
+            </>
+          }
+          error={
+            isErrorResponse(actionData) && 'draftDateTime' in actionData.error
+              ? actionData.error.draftDateTime?.[0]
+              : undefined
+          }
+        >
+          <Input
+            ref={dateInputRef}
+            type='datetime-local'
+            id='draftDateTimeLocal'
+            required
+          />
+        </Field>
+        {/* Populated on submit with the UTC ISO string; see handleSubmit. */}
+        <input type='hidden' name='draftDateTime' />
         <div>
-          {isErrorResponse(actionData) &&
-            'general' in actionData.error &&
-            actionData.error.general && (
-              <p className='form-validation-error' role='alert'>
-                {actionData.error.general[0]}
-              </p>
-            )}
           <Button type='submit'>Update Draft Slot</Button>
         </div>
       </Form>
-    </>
+    </Section>
   );
 }

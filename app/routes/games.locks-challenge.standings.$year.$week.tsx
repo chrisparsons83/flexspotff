@@ -1,7 +1,13 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { typedjson, useTypedLoaderData } from 'remix-typedjson';
-import LocksChallengeStandingsRow from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
-import GoBox from '~/components/ui/GoBox';
+import StandingsSection from '~/components/layout/games/StandingsSection';
+import LeaderboardTable from '~/components/layout/leaderboard/LeaderboardTable';
+import {
+  LOCKS_HEADINGS,
+  locksStandingsEntry,
+} from '~/components/layout/locks-challenge/LocksChallengeStandingsRow';
+import { TallyBars } from '~/components/ui/bars';
+import { Section } from '~/components/ui/section';
 import { getLocksGamesByYearAndWeek } from '~/models/locksgame.server';
 import {
   getLocksGamePicksWonLossWeek,
@@ -12,18 +18,19 @@ import {
   getLocksWeeksByYear,
 } from '~/models/locksweek.server';
 import { locksWeekPoints } from '~/models/profile/sideGameScoring';
-import type { User } from '~/models/user.server';
+import { sideGameYears } from '~/models/profile/sideGameSeasons.server';
 import { getUsersByIds } from '~/models/user.server';
 import { getLocksWeekCutoff, isLocksWeekLocked } from '~/utils/locks';
+import type { RouteHandle } from '~/utils/route-handle';
 import { getCurrentTime } from '~/utils/time';
 
+export const handle: RouteHandle = {
+  title: ({ params }) => `Week ${params.week}`,
+};
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const yearParam = params.year;
-  const weekParam = params.week;
-  if (!yearParam) throw new Error('No year existing');
-  if (!weekParam) throw new Error('No week existing');
-  const year = +yearParam;
-  const week = +weekParam;
+  const year = Number(params.year);
+  const week = Number(params.week);
 
   // Get this week
   const currentWeek = await getLocksWeekByYearAndWeek(year, week);
@@ -41,14 +48,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     ),
     now,
   );
-  const weeklyPicks = (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
-    locksGamePick =>
-      (locksGamePick.locksGame.game.gameStartTime < now || weekLocked) &&
-      locksGamePick.isActive !== 0,
+  const activePicks = (await getLocksGamesPicksByLocksWeek(currentWeek)).filter(
+    locksGamePick => locksGamePick.isActive !== 0,
   );
-
-  // Find the max week number
-  const maxWeek = (await getLocksWeeksByYear(year))[0].weekNumber;
+  const weeklyPicks = activePicks.filter(
+    locksGamePick =>
+      locksGamePick.locksGame.game.gameStartTime < now || weekLocked,
+  );
 
   // Get users that have made bets = we can't do this in the query because prisma doesn't allow
   // including on an aggregation. I guess we could write a raw query but I want to avoid that.
@@ -105,20 +111,66 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   ];
   const users = await getUsersByIds(userIds);
 
+  // How many picked each team, from the picks already public, and how the
+  // team did.
+  const pickers = await getUsersByIds([
+    ...new Set(weeklyPicks.map(pick => pick.userId)),
+  ]);
+  const byTeam = new Map<
+    string,
+    { label: string; who: string[]; pick: (typeof weeklyPicks)[number] }
+  >();
+  for (const pick of weeklyPicks) {
+    const row = byTeam.get(pick.teamBetId) ?? {
+      label: pick.teamBet.mascot,
+      who: [],
+      pick,
+    };
+    row.who.push(
+      pickers.find(user => user.id === pick.userId)?.discordName ??
+        'Former member',
+    );
+    byTeam.set(pick.teamBetId, row);
+  }
+  const distribution = {
+    // Ties in the count go alphabetically.
+    tallies: [...byTeam.entries()]
+      .sort(([, a], [, b]) => a.label.localeCompare(b.label))
+      .map(([key, { label, who, pick }]) => ({
+        key,
+        label,
+        count: who.length,
+        who,
+        ...(pick.isWin === 1
+          ? { detail: 'Won', detailTone: 'positive' as const }
+          : pick.isLoss === 1
+          ? { detail: 'Lost', detailTone: 'negative' as const }
+          : pick.isTie === 1
+          ? { detail: 'Tied' }
+          : { detail: 'Pending' }),
+      })),
+    hidden: activePicks.length - weeklyPicks.length,
+  };
+
   return typedjson({
+    distribution,
     totalPoints,
     users,
     userIdToRankMap,
     weeklyPicks,
     userIdToPointsMap,
-    maxWeek,
+    weeks: (await getLocksWeeksByYear(year)).map(
+      locksWeek => locksWeek.weekNumber,
+    ),
+    years: await sideGameYears('locks'),
     year,
     week,
   });
 };
 
-export default function SpreadPoolStandingsYearWeekIndex() {
+export default function LocksWeekStandings() {
   const {
+    distribution,
     totalPoints,
     users,
     userIdToRankMap,
@@ -126,54 +178,64 @@ export default function SpreadPoolStandingsYearWeekIndex() {
     userIdToPointsMap,
     year,
     week,
-    maxWeek,
+    weeks,
+    years,
   } = useTypedLoaderData<typeof loader>();
 
-  const userIdToUserMap: Map<string, User> = new Map();
-  for (const user of users) {
-    userIdToUserMap.set(user.id, user);
-  }
-
-  const weekArray = Array.from({ length: maxWeek }, (_, i) => i + 1)
-    .reverse()
-    .map(weekNumber => ({
-      label: `Week ${weekNumber}`,
-      url: `/games/locks-challenge/standings/${year}/${weekNumber}`,
-    }));
+  const entries = totalPoints.flatMap(result => {
+    const user = users.find(candidate => candidate.id === result.userId);
+    return user
+      ? [
+          locksStandingsEntry({
+            rank: userIdToRankMap.get(result.userId),
+            user,
+            points: userIdToPointsMap.get(result.userId),
+            locksChallengeWonLoss: result,
+            picksLocked: weeklyPicks?.filter(
+              pick => pick.userId === result.userId,
+            ),
+          }),
+        ]
+      : [];
+  });
 
   return (
     <>
-      <h2>
-        {year} Standings for Week {week}
-      </h2>
-      <div className='float-right mb-4'>
-        <GoBox options={weekArray} buttonText='Choose Week' />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points</th>
-            <th>W-L-T</th>
-            <th>Percent</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totalPoints.map(result => (
-            <LocksChallengeStandingsRow
-              key={result.userId}
-              rank={userIdToRankMap.get(result.userId)}
-              user={userIdToUserMap.get(result.userId)}
-              points={userIdToPointsMap.get(result.userId)}
-              locksChallengeWonLoss={result}
-              picksLocked={weeklyPicks?.filter(
-                pick => pick.userId === result.userId,
-              )}
-            />
-          ))}
-        </tbody>
-      </table>
+      <StandingsSection
+        base='/games/locks-challenge/standings'
+        year={year}
+        week={week}
+        years={years}
+        weeks={weeks}
+      >
+        <LeaderboardTable
+          entries={entries}
+          nameHeading='Member'
+          valueHeadings={LOCKS_HEADINGS}
+          emptyMessage={`No picks scored yet for week ${week}.`}
+        />
+      </StandingsSection>
+      {(distribution.tallies.length > 0 || distribution.hidden > 0) && (
+        <Section
+          title='Pick Distribution'
+          footnote={
+            distribution.hidden > 0 &&
+            `${distribution.hidden} ${
+              distribution.hidden === 1 ? 'pick is' : 'picks are'
+            } hidden until their games kick off or the week locks.`
+          }
+        >
+          {distribution.tallies.length > 0 ? (
+            <div className='max-w-2xl'>
+              <TallyBars tallies={distribution.tallies} />
+            </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No games have kicked off yet.
+            </p>
+          )}
+        </Section>
+      )}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Form, Link, useNavigation } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import {
   typedjson,
   useTypedActionData,
@@ -7,8 +7,13 @@ import {
 } from 'remix-typedjson';
 import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
-import Button from '~/components/ui/FlexSpotButton';
 import MemberSelect, { toSelectableMember } from '~/components/ui/MemberSelect';
+import { Button } from '~/components/ui/button';
+import { Field } from '~/components/ui/field';
+import { Input } from '~/components/ui/input';
+import { Link } from '~/components/ui/link';
+import { Section } from '~/components/ui/section';
+import { Table } from '~/components/ui/table';
 import { prisma } from '~/db.server';
 import { suggestFromSleeperHandles } from '~/libs/survivor/suggest';
 import {
@@ -251,36 +256,31 @@ export default function AdminSurvivorIndex() {
   const hasYahoo = pools.some(pool => pool.source === 'YAHOO');
 
   return (
-    <div>
-      <h2>Survivor Pools</h2>
+    <Section title='Survivor Pools'>
       {actionData?.message && (
-        <Alert message={actionData.message} status={actionData.status} />
+        <Alert
+          message={actionData.message}
+          status={actionData.status}
+          className='mb-6'
+        />
       )}
 
-      <section className='mb-8'>
-        <h3>Add Sleeper Pool</h3>
-        <p className='text-sm'>
-          Paste the pool's Sleeper league URL or its invite link. The season and
-          name come from Sleeper, and an invite link is kept to show on the
-          Games page. Pools from the current season then sync every hour.
-        </p>
+      <Section
+        as='h3'
+        title='Add Sleeper Pool'
+        description="Paste the pool's Sleeper league URL or its invite link. The season and name come from Sleeper, and an invite link is kept to show on the Games page. Pools from the current season then sync every hour."
+      >
         <Form
           key={actionData?.message}
           method='POST'
-          className='flex flex-wrap items-end gap-2'
+          className='flex flex-wrap items-end gap-3'
         >
-          <div>
-            <label htmlFor='sleeperUrl' className='block text-sm'>
-              Sleeper URL or Invite Link
-            </label>
-            <input
-              id='sleeperUrl'
+          <Field label='Sleeper URL or Invite Link' className='w-full sm:w-96'>
+            <Input
               name='sleeperUrl'
-              type='text'
-              className='w-96 max-w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-white'
               placeholder='https://sleeper.com/i/0NLXm3e7a1Pk5'
             />
-          </div>
+          </Field>
           <Button
             type='submit'
             name='_action'
@@ -290,15 +290,13 @@ export default function AdminSurvivorIndex() {
             {submitting('addPool') ? 'Adding…' : 'Add Pool'}
           </Button>
         </Form>
-      </section>
+      </Section>
 
-      <section className='mb-8'>
-        <h3>Yahoo History</h3>
-        <p className='text-sm'>
-          The five Yahoo Survival Football pools from 2022 and 2023 ship with
-          the site. Loading them again rewrites them from that file and keeps
-          every member already matched.
-        </p>
+      <Section
+        as='h3'
+        title='Yahoo History'
+        description='The five Yahoo Survival Football pools from 2022 and 2023 ship with the site. Loading them again rewrites them from that file and keeps every member already matched.'
+      >
         <Form method='POST'>
           <Button
             type='submit'
@@ -313,165 +311,142 @@ export default function AdminSurvivorIndex() {
               : 'Load Yahoo Pools'}
           </Button>
         </Form>
-      </section>
+      </Section>
 
       {yahooAccounts.length > 0 && (
-        <section className='mb-8'>
-          <h3>Unmatched Yahoo Accounts</h3>
-          <p className='text-sm'>
-            Matching an account gives the member every Yahoo pool it played.
-            Yahoo nicknames are mostly first names, so the pick set names are
-            often the better clue. A suggestion comes from a member's Sleeper
-            handle turning up in one of them.
-          </p>
-          <table className='w-full'>
-            <thead>
-              <tr>
-                <th className='text-left'>Yahoo Account</th>
-                <th className='text-left'>Member</th>
+        <Section
+          as='h3'
+          title='Unmatched Yahoo Accounts'
+          description="Matching an account gives the member every Yahoo pool it played. Yahoo nicknames are mostly first names, so the pick set names are often the better clue. A suggestion comes from a member's Sleeper handle turning up in one of them."
+        >
+          <Table headers={['Yahoo Account', 'Member']}>
+            {yahooAccounts.map(account => (
+              <tr key={account.yahooGuid}>
+                <td>
+                  {account.nicknames.join(', ') || 'No nickname'}
+                  <div className='text-sm text-muted-foreground'>
+                    {account.entryNames.join(', ')}
+                  </div>
+                  <div className='text-sm text-muted-foreground'>
+                    {account.pools.join(', ')}
+                  </div>
+                </td>
+                <td>
+                  <Form method='POST' className='flex items-center gap-2'>
+                    <input
+                      type='hidden'
+                      name='yahooGuid'
+                      value={account.yahooGuid}
+                    />
+                    <MemberSelect
+                      name='userId'
+                      members={members}
+                      defaultValue={account.suggestedMemberId}
+                    />
+                    <Button
+                      type='submit'
+                      name='_action'
+                      value='matchYahoo'
+                      disabled={isSubmitting}
+                    >
+                      Match
+                    </Button>
+                  </Form>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {yahooAccounts.map(account => (
-                <tr key={account.yahooGuid}>
-                  <td>
-                    {account.nicknames.join(', ') || 'No nickname'}
-                    <div className='text-xs opacity-75'>
-                      {account.entryNames.join(' · ')}
-                    </div>
-                    <div className='text-xs opacity-60'>
-                      {account.pools.join(', ')}
-                    </div>
-                  </td>
-                  <td className='not-prose'>
-                    <Form method='POST' className='flex items-center gap-2'>
-                      <input
-                        type='hidden'
-                        name='yahooGuid'
-                        value={account.yahooGuid}
-                      />
-                      <MemberSelect
-                        name='userId'
-                        members={members}
-                        defaultValue={account.suggestedMemberId}
-                      />
-                      <Button
-                        type='submit'
-                        name='_action'
-                        value='matchYahoo'
-                        disabled={isSubmitting}
-                      >
-                        Match
-                      </Button>
-                    </Form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+            ))}
+          </Table>
+        </Section>
       )}
 
-      {pools.length === 0 && <p>No survivor pools added yet.</p>}
+      {pools.length === 0 && (
+        <p className='mt-16 text-muted-foreground'>
+          No survivor pools added yet.
+        </p>
+      )}
 
       {years.map(year => (
-        <section key={year} className='mb-8'>
-          <h3>{year}</h3>
-          <table className='w-full'>
-            <thead>
-              <tr>
-                <th className='text-left'>Pool</th>
-                <th className='text-left'>Status</th>
-                <th className='text-left'>Members</th>
-                <th className='text-left'>Last Synced</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {pools
-                .filter(pool => pool.year === year)
-                .map(pool => (
-                  <tr key={pool.id}>
-                    <td>
-                      <Link to={pool.id}>{pool.name}</Link>
-                      <div className='font-mono text-xs opacity-75'>
-                        {pool.source === 'YAHOO' ? 'Yahoo' : 'Sleeper'}{' '}
-                        {pool.externalId}
-                      </div>
-                    </td>
-                    <td>
-                      {pool.isComplete ? 'Decided' : 'Running'}
-                      <div className='text-xs opacity-75'>
-                        From week {pool.startWeek}
-                      </div>
-                    </td>
-                    <td>
-                      {pool.unmatchedEntries > 0 ? (
-                        <Link to={pool.id} className='text-yellow-400'>
-                          {pool.unmatchedEntries} of {pool.entryCount} unmatched
-                        </Link>
-                      ) : (
-                        `All ${pool.entryCount} matched`
-                      )}
-                    </td>
-                    <td className='text-sm'>
-                      {pool.lastSyncedAt
-                        ? pool.lastSyncedAt.toLocaleString()
-                        : 'Never'}
-                    </td>
-                    <td>
-                      <div className='flex gap-2'>
-                        {pool.source === 'SLEEPER' && (
-                          <Form method='POST'>
-                            <input
-                              type='hidden'
-                              name='poolId'
-                              value={pool.id}
-                            />
-                            <Button
-                              type='submit'
-                              name='_action'
-                              value='syncPool'
-                              disabled={isSubmitting}
-                            >
-                              Sync
-                            </Button>
-                          </Form>
-                        )}
-                        <Form
-                          method='POST'
-                          onSubmit={e => {
-                            if (
-                              !window.confirm(
-                                `Delete "${pool.name}" (${pool.year})? ${
-                                  pool.source === 'YAHOO'
-                                    ? 'Reloading the Yahoo pools brings it back.'
-                                    : 'It can be added again from its Sleeper URL.'
-                                }`,
-                              )
-                            ) {
-                              e.preventDefault();
-                            }
-                          }}
-                        >
+        <Section key={year} as='h3' title={year}>
+          <Table headers={['Pool', 'Status', 'Members', 'Last Synced', '']}>
+            {pools
+              .filter(pool => pool.year === year)
+              .map(pool => (
+                <tr key={pool.id}>
+                  <td>
+                    <Link to={pool.id}>{pool.name}</Link>
+                    <div className='font-mono text-sm text-muted-foreground'>
+                      {pool.source === 'YAHOO' ? 'Yahoo' : 'Sleeper'}{' '}
+                      {pool.externalId}
+                    </div>
+                  </td>
+                  <td>
+                    {pool.isComplete ? 'Decided' : 'Running'}
+                    <div className='text-sm text-muted-foreground'>
+                      From week {pool.startWeek}
+                    </div>
+                  </td>
+                  <td>
+                    {pool.unmatchedEntries > 0 ? (
+                      <Link to={pool.id} className='text-warning'>
+                        {pool.unmatchedEntries} of {pool.entryCount} unmatched
+                      </Link>
+                    ) : (
+                      `All ${pool.entryCount} matched`
+                    )}
+                  </td>
+                  <td className='text-sm'>
+                    {pool.lastSyncedAt
+                      ? pool.lastSyncedAt.toLocaleString()
+                      : 'Never'}
+                  </td>
+                  <td>
+                    <div className='flex gap-2'>
+                      {pool.source === 'SLEEPER' && (
+                        <Form method='POST'>
                           <input type='hidden' name='poolId' value={pool.id} />
                           <Button
                             type='submit'
                             name='_action'
-                            value='deletePool'
+                            value='syncPool'
                             disabled={isSubmitting}
                           >
-                            Delete
+                            Sync
                           </Button>
                         </Form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </section>
+                      )}
+                      <Form
+                        method='POST'
+                        onSubmit={e => {
+                          if (
+                            !window.confirm(
+                              `Delete "${pool.name}" (${pool.year})? ${
+                                pool.source === 'YAHOO'
+                                  ? 'Reloading the Yahoo pools brings it back.'
+                                  : 'It can be added again from its Sleeper URL.'
+                              }`,
+                            )
+                          ) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        <input type='hidden' name='poolId' value={pool.id} />
+                        <Button
+                          type='submit'
+                          name='_action'
+                          value='deletePool'
+                          disabled={isSubmitting}
+                        >
+                          Delete
+                        </Button>
+                      </Form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+          </Table>
+        </Section>
       ))}
-    </div>
+    </Section>
   );
 }

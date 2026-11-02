@@ -15,25 +15,3 @@ export function assertSeasonHasDataOrIsCurrent(
     throw new Response(notFoundMessage, { status: 404 });
   }
 }
-
-/**
- * The "Weekly Standings" nav link for a game, or nothing when the season has
- * no week to link to yet.
- *
- * @param basePath - the game's standings path, e.g. `/games/spread-pool/standings`
- */
-export function weeklyStandingsLink(
-  basePath: string,
-  year: number,
-  week: number | undefined,
-) {
-  return week === undefined
-    ? []
-    : [
-        {
-          name: 'Weekly Standings',
-          href: `${basePath}/${year}/${week}`,
-          current: false,
-        },
-      ];
-}

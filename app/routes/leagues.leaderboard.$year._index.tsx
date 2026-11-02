@@ -1,37 +1,34 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { typedjson, useTypedLoaderData } from 'remix-typedjson';
 import SeasonLeaderboard from '~/components/layout/leaderboard/SeasonLeaderboard';
-import { getCurrentSeason } from '~/models/season.server';
 import { getTeamsInSeason } from '~/models/team.server';
-import { getTeamGameYearlyTotals } from '~/models/teamgame.server';
+import {
+  getNewestWeekTeamGameByYear,
+  getTeamGameYearlyTotals,
+} from '~/models/teamgame.server';
+import { FIRST_YEAR } from '~/utils/constants';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  if (!params.year) {
-    throw new Error('No year param specified');
-  }
-
   const year = Number(params.year);
-
-  const currentSeason = await getCurrentSeason();
-  if (!currentSeason) {
-    throw new Error('Missing current season');
+  if (!Number.isInteger(year) || year < FIRST_YEAR) {
+    throw new Response('Season not found', { status: 404 });
   }
 
-  const leaderboard = await getTeamGameYearlyTotals(year);
-  const teams = await getTeamsInSeason(year);
+  const [leaderboard, teams, newest] = await Promise.all([
+    getTeamGameYearlyTotals(year),
+    getTeamsInSeason(year),
+    getNewestWeekTeamGameByYear(year),
+  ]);
 
-  return { leaderboard, teams, year, maxYear: currentSeason.year };
+  return typedjson({
+    year,
+    leaderboard,
+    teams,
+    newestWeek: newest._max.week,
+  });
 };
 
 export default function LeaderboardYearIndex() {
-  const { leaderboard, teams, year, maxYear } = useLoaderData<typeof loader>();
-
-  return (
-    <SeasonLeaderboard
-      heading={`${year} Season Leaderboard`}
-      leaderboard={leaderboard}
-      teams={teams}
-      maxYear={maxYear}
-    />
-  );
+  const data = useTypedLoaderData<typeof loader>();
+  return <SeasonLeaderboard {...data} />;
 }
