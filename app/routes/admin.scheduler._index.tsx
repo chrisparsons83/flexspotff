@@ -84,6 +84,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         (!run.lastSucceededAt || run.lastFailedAt > run.lastSucceededAt)
           ? run.lastError
           : null,
+      lastSleeperCalls: run?.lastSleeperCalls ?? null,
+      totalSleeperCalls: run?.totalSleeperCalls ?? 0,
     };
   });
 
@@ -157,6 +159,13 @@ export default function AdminSchedulerIndex() {
                           .join(', ')
                       : 'No runs recorded yet'}
                   </p>
+                  {job.lastSleeperCalls !== null && (
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Sleeper calls:{' '}
+                      {job.lastSleeperCalls.toLocaleString('en-US')} last run,{' '}
+                      {job.totalSleeperCalls.toLocaleString('en-US')} total
+                    </p>
+                  )}
                   {job.lastError && (
                     <p className='text-sm text-negative mt-1'>
                       {job.lastError}

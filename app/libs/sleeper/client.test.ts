@@ -1,6 +1,13 @@
-import { SleeperApiError, sleeperFetch } from './client.server';
+import { getNflScores } from './api.server';
+import {
+  SleeperApiError,
+  resetSleeperCallCount,
+  sleeperCallCount,
+  sleeperFetch,
+} from './client.server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import z from 'zod';
+import { graphQLClient } from '~/services/sleeperGraphql.server';
 
 describe('sleeperFetch', () => {
   const realFetch = globalThis.fetch;
@@ -10,10 +17,12 @@ describe('sleeperFetch', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     globalThis.fetch = mockFetch;
+    resetSleeperCallCount();
   });
 
   afterEach(() => {
     globalThis.fetch = realFetch;
+    vi.restoreAllMocks();
   });
 
   const respond = (body: unknown, ok = true, status = 200) =>
@@ -70,5 +79,52 @@ describe('sleeperFetch', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.sleeper.com/players/nfl',
     );
+  });
+
+  describe('call count', () => {
+    it('counts a successful call once', async () => {
+      mockFetch.mockResolvedValue(respond({ week: 3 }));
+
+      await sleeperFetch('/v1/state/nfl', schema);
+
+      expect(sleeperCallCount()).toBe(1);
+    });
+
+    it('counts a retried call twice', async () => {
+      mockFetch
+        .mockResolvedValueOnce(respond(null, false, 502))
+        .mockResolvedValueOnce(respond({ week: 3 }));
+
+      await sleeperFetch('/v1/state/nfl', schema);
+
+      expect(sleeperCallCount()).toBe(2);
+    });
+
+    it('counts a failed call', async () => {
+      mockFetch.mockResolvedValue(respond(null, false, 404));
+
+      await expect(sleeperFetch('/v1/league/nope', schema)).rejects.toThrow();
+
+      expect(sleeperCallCount()).toBe(1);
+    });
+
+    it('starts again from zero after a reset', async () => {
+      mockFetch.mockResolvedValue(respond({ week: 3 }));
+      await sleeperFetch('/v1/state/nfl', schema);
+      await sleeperFetch('/v1/state/nfl', schema);
+
+      resetSleeperCallCount();
+      await sleeperFetch('/v1/state/nfl', schema);
+
+      expect(sleeperCallCount()).toBe(1);
+    });
+
+    it('counts the GraphQL NFL scores call', async () => {
+      vi.spyOn(graphQLClient, 'request').mockResolvedValue({ scores: [] });
+
+      await getNflScores(2026, 1);
+
+      expect(sleeperCallCount()).toBe(1);
+    });
   });
 });

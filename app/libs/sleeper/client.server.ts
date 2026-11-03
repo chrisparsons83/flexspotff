@@ -8,6 +8,26 @@ const RETRY_DELAY_MS = 500;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * Every request made to Sleeper since the last reset, retries included. Each
+ * Bree job runs in its own worker thread, so this module-level count belongs to
+ * one job run; `runJob` resets it at the start and records it at the end.
+ */
+let sleeperCalls = 0;
+
+export function sleeperCallCount() {
+  return sleeperCalls;
+}
+
+export function resetSleeperCallCount() {
+  sleeperCalls = 0;
+}
+
+/** For the few Sleeper calls that can't go through `sleeperFetch`. */
+export function countSleeperCall() {
+  sleeperCalls++;
+}
+
 export class SleeperApiError extends Error {
   constructor(readonly status: number, readonly path: string) {
     super(`Sleeper API error ${status}: GET ${path}`);
@@ -37,6 +57,7 @@ export async function sleeperFetch<T extends z.ZodTypeAny>(
   for (let attempt = 0; attempt < 2; attempt++) {
     if (attempt > 0) await sleep(RETRY_DELAY_MS);
 
+    countSleeperCall();
     const res = await fetch(`${baseUrl}${path}`);
     if (res.ok) {
       return schema.parse(await res.json());

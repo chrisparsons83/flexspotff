@@ -1493,5 +1493,9 @@ model ScheduledJobRun {
   lastSucceededAt      DateTime?
   lastFailedAt         DateTime?
   lastError            String?
+  // Requests made to Sleeper, retries included - see sleeperCallCount() in
+  // app/libs/sleeper/client.server.ts.
+  lastSleeperCalls     Int?
+  totalSleeperCalls    Int       @default(0)
   updatedAt            DateTime  @updatedAt
 }

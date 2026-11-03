@@ -1,4 +1,5 @@
 import { classifyBracket, sleeperBracketJson } from './bracket';
+import { countSleeperCall } from '~/libs/sleeper/client.server';
 import type { League } from '~/models/league.server';
 import { upsertPlayoffGame } from '~/models/playoffgame.server';
 import { getTeams } from '~/models/team.server';
@@ -28,6 +29,8 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
   let gamesStored = 0;
 
   for (const { bracket, path } of BRACKETS) {
+    // Not `sleeperFetch`: a missing bracket is expected here, not an error.
+    countSleeperCall();
     const res = await fetch(
       `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/${path}`,
     );
