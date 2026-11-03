@@ -32,6 +32,7 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
     // Not `sleeperFetch`: a missing bracket is expected here, not an error.
     countSleeperCall();
     const res = await fetch(
+      // eslint-disable-next-line no-restricted-syntax
       `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/${path}`,
     );
 
