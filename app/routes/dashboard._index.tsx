@@ -4,7 +4,11 @@ import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { placeAndScore, type DashboardSection } from '~/libs/dashboard/week';
+import {
+  placeAndScore,
+  type DashboardRow,
+  type DashboardSection,
+} from '~/libs/dashboard/week';
 import { getMemberWeek } from '~/libs/dashboard/week.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -20,6 +24,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side Leagues'];
+
+function LabelCell({ row }: { row: DashboardRow }) {
+  return (
+    <td className='font-semibold'>
+      <Link to={row.href} variant='quiet'>
+        {row.label}
+      </Link>
+    </td>
+  );
+}
+
+/** Last Week and Season Standing, as "3rd (282.58)". */
+function ResultCells({ row }: { row: DashboardRow }) {
+  return (
+    <>
+      <td className='text-right'>
+        {placeAndScore(
+          row.lastWeekPlace,
+          row.lastWeekInBrackets ?? row.lastWeek,
+        ) ?? '–'}
+      </td>
+      <td className='text-right'>
+        {placeAndScore(row.standing, row.season) ?? '–'}
+      </td>
+    </>
+  );
+}
 
 export default function YourWeek() {
   const { rows } = useTypedLoaderData<typeof loader>();
@@ -52,11 +83,7 @@ export default function YourWeek() {
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
-                    <td className='font-semibold'>
-                      <Link to={row.href} variant='quiet'>
-                        {row.label}
-                      </Link>
-                    </td>
+                    <LabelCell row={row} />
                     <td>
                       {/* The same rule as a week still to enter: open,
                           and nothing in from them yet. */}
@@ -73,30 +100,20 @@ export default function YourWeek() {
                         </span>
                       )}
                     </td>
-                    <td className='text-right'>
-                      {placeAndScore(row.lastWeekPlace, row.lastWeek) ?? '–'}
-                    </td>
-                    <td className='text-right'>
-                      {placeAndScore(row.standing, row.season) ?? '–'}
-                    </td>
+                    <ResultCells row={row} />
                   </tr>
                 ))}
               </Table>
             ) : section === 'Side Leagues' ? (
               <Table
-                headers={['Game', 'Last Week', 'Season Standing']}
+                headers={['League', 'Last Week', 'Season Standing']}
                 numericColumns={[1, 2]}
                 primaryColumns={[2]}
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
-                    <td className='font-semibold'>
-                      <Link to={row.href} variant='quiet'>
-                        {row.label}
-                      </Link>
-                    </td>
-                    <td className='text-right'>{row.lastWeek ?? '–'}</td>
-                    <td className='text-right'>{row.thisWeek ?? '–'}</td>
+                    <LabelCell row={row} />
+                    <ResultCells row={row} />
                   </tr>
                 ))}
               </Table>
@@ -107,11 +124,7 @@ export default function YourWeek() {
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
-                    <td className='font-semibold'>
-                      <Link to={row.href} variant='quiet'>
-                        {row.label}
-                      </Link>
-                    </td>
+                    <LabelCell row={row} />
                     <td className='text-muted-foreground'>
                       {row.lastWeek ?? '–'}
                     </td>

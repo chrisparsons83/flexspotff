@@ -1,3 +1,4 @@
+import type { OpenedCupGame } from './CupGameDialog';
 import CupGameDialog from './CupGameDialog';
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import { type ReactNode, useState } from 'react';
@@ -7,8 +8,7 @@ import { FILLS, leagueFill } from '~/components/ui/fills';
 import { ProfileLink } from '~/components/ui/profile-link';
 import { FOCUS_RING } from '~/components/ui/styles';
 import type { CupBracketData } from '~/libs/cup/bracket.server';
-import type { RoundTotal } from '~/libs/cup/lineups';
-import { roundTotalKey } from '~/libs/cup/lineups';
+import type { RoundTotals } from '~/libs/cup/lineups';
 import { cn } from '~/utils';
 import { roundNameMapping } from '~/utils/constants';
 
@@ -36,12 +36,8 @@ export default function CupBracket({
   scoreArray,
   weeksByRound,
   roundTotals,
-}: Bracket & { roundTotals: Record<string, RoundTotal> }) {
-  const [opened, setOpened] = useState<{
-    game: CupGame;
-    round: string;
-    weeks: string | null;
-  } | null>(null);
+}: Bracket & { roundTotals: RoundTotals }) {
+  const [opened, setOpened] = useState<OpenedCupGame | null>(null);
   const rounds = roundNameMapping.map(round => ({
     ...round,
     games: cupGames.filter(game => game.round === round.key),
@@ -61,9 +57,7 @@ export default function CupBracket({
               entry.teamId === side?.teamId && entry.mapping === round.key,
           )?.pointsScored;
         const projected = (side: Side) =>
-          side
-            ? roundTotals[roundTotalKey(round.key, side.teamId)]?.projected
-            : null;
+          side ? roundTotals[round.key]?.[side.teamId]?.projected : null;
         const weeks = weeksLabel(weeksByRound[round.key] ?? []);
         const last = index === rounds.length - 1;
         const pairs = last
@@ -84,48 +78,48 @@ export default function CupBracket({
                 key={pair[0]!.id}
                 className='contents lg:relative lg:flex lg:flex-1 lg:flex-col'
               >
-                {pair.map(game => (
-                  <div
-                    key={game.id}
-                    className={cn(
-                      'lg:flex lg:flex-1 lg:items-center lg:py-0.5',
-                      !last && 'lg:pr-2',
-                    )}
-                  >
-                    <div className='relative w-full bg-card text-sm'>
-                      {index > 0 && (
-                        <span
-                          aria-hidden
-                          className={cn(
-                            'absolute right-full top-1/2 hidden w-2 border-t lg:block',
-                            LINE,
-                          )}
-                        />
+                {pair.map(game => {
+                  const onOpen = () =>
+                    setOpened({ game, round: round.label, weeks });
+                  return (
+                    <div
+                      key={game.id}
+                      className={cn(
+                        'lg:flex lg:flex-1 lg:items-center lg:py-0.5',
+                        !last && 'lg:pr-2',
                       )}
-                      <SideRow
-                        side={game.topTeam}
-                        score={score(game.topTeam)}
-                        projected={projected(game.topTeam)}
-                        onOpen={() =>
-                          setOpened({ game, round: round.label, weeks })
-                        }
-                        won={game.winningTeamId === game.topTeamId}
-                        lost={game.losingTeamId === game.topTeamId}
-                      />
-                      <SideRow
-                        side={game.bottomTeam}
-                        score={score(game.bottomTeam)}
-                        projected={projected(game.bottomTeam)}
-                        onOpen={() =>
-                          setOpened({ game, round: round.label, weeks })
-                        }
-                        won={game.winningTeamId === game.bottomTeamId}
-                        lost={game.losingTeamId === game.bottomTeamId}
-                        bye={game.containsBye}
-                      />
+                    >
+                      <div className='relative w-full bg-card text-sm'>
+                        {index > 0 && (
+                          <span
+                            aria-hidden
+                            className={cn(
+                              'absolute right-full top-1/2 hidden w-2 border-t lg:block',
+                              LINE,
+                            )}
+                          />
+                        )}
+                        <SideRow
+                          side={game.topTeam}
+                          score={score(game.topTeam)}
+                          projected={projected(game.topTeam)}
+                          onOpen={onOpen}
+                          won={game.winningTeamId === game.topTeamId}
+                          lost={game.losingTeamId === game.topTeamId}
+                        />
+                        <SideRow
+                          side={game.bottomTeam}
+                          score={score(game.bottomTeam)}
+                          projected={projected(game.bottomTeam)}
+                          onOpen={onOpen}
+                          won={game.winningTeamId === game.bottomTeamId}
+                          lost={game.losingTeamId === game.bottomTeamId}
+                          bye={game.containsBye}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {!last && (
                   <>
                     {/* Joins the pair's two games, from their middles. */}

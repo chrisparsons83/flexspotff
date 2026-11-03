@@ -121,6 +121,7 @@ describe('buildMemberWeek', () => {
     // A scored week stays marked open, so it is waiting on the next one.
     expect(entry({ ...openWeek(2), isScored: true })).toBe('Not Open Yet');
     expect(entry({ ...openWeek(0), isOpen: false })).toBe('Not Open Yet');
+    expect(entry({ ...openWeek(2), isOpen: false })).toBe('Entered');
     expect(entry(openWeek(2))).toBe('Entered');
     expect(entry(openWeek(0))).toBeNull();
     // Nothing follows the last week.
@@ -404,8 +405,10 @@ describe('dashboard rows for the cup, D12 and Autodraft BBM', () => {
     expect(rows.map(row => row.label)).toEqual(['D12', 'Autodraft BBM']);
     expect(rows[0]).toMatchObject({
       section: 'Side Leagues',
-      lastWeek: '2nd (142.30)',
-      thisWeek: '3rd (1040.50)',
+      lastWeekPlace: '2nd',
+      lastWeek: '142.30',
+      standing: '3rd',
+      season: '1040.50',
       href: '/side-leagues/d12',
     });
   });

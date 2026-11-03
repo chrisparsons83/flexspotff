@@ -1,5 +1,5 @@
-import type { RoundTotal, WeekFacts, WeekLineup } from './lineups';
-import { buildWeekLineup, roundTotal, roundTotalKey } from './lineups';
+import type { RoundTotals, WeekFacts } from './lineups';
+import { buildRoundLineups, cupGameTeamIds, roundTotal } from './lineups';
 import { prisma } from '~/db.server';
 import type { GameState } from '~/libs/guillotine/projection';
 import { getPlayersBySleepersIds } from '~/models/players.server';
@@ -61,7 +61,12 @@ async function getWeekFacts(
   return facts;
 }
 
-async function getLineups(year: number, weeks: number[], teamIds: string[]) {
+/** Loads these teams' weeks, and returns how to read one team's round from them. */
+async function loadRoundLineups(
+  year: number,
+  weeks: number[],
+  teamIds: string[],
+) {
   const teamGames = await prisma.teamGame.findMany({
     where: { week: { in: weeks }, teamId: { in: teamIds } },
     select: {
@@ -73,49 +78,70 @@ async function getLineups(year: number, weeks: number[], teamIds: string[]) {
     },
     orderBy: { week: 'asc' },
   });
-  const sleeperIds = [...new Set(teamGames.flatMap(game => game.starters))];
+  const planned = await prisma.teamPlannedLineup.findMany({
+    where: { week: { in: weeks }, teamId: { in: teamIds } },
+    select: { teamId: true, week: true, starters: true, isOptimal: true },
+  });
+  const sleeperIds = [
+    ...new Set([...teamGames, ...planned].flatMap(game => game.starters)),
+  ];
   const facts = await getWeekFacts(year, weeks, sleeperIds);
   const now = new Date();
 
-  return teamGames.map(game => ({
-    teamId: game.teamId,
-    lineup: buildWeekLineup(game, facts.get(game.week)!, now),
-  }));
+  return (teamId: string, roundWeeks: number[]) =>
+    buildRoundLineups(
+      {
+        teamGames: teamGames.filter(game => game.teamId === teamId),
+        planned: planned.filter(lineup => lineup.teamId === teamId),
+      },
+      roundWeeks,
+      facts,
+      now,
+    );
 }
 
 /**
- * Every cup team's total for every round it is in, keyed by roundTotalKey. A
- * team only has a total for rounds it has reached, so a team knocked out early
- * does not cost lineups for the weeks after.
+ * Every cup team's total for every round it is in. A team only has a total for
+ * rounds it has reached, so a team knocked out early does not cost lineups for
+ * the weeks after.
  */
 export async function getCupRoundTotals(
   year: number,
-  rounds: { round: string; weeks: number[]; teamIds: string[] }[],
-): Promise<Record<string, RoundTotal>> {
-  const active = rounds.filter(
-    ({ weeks, teamIds }) => weeks.length > 0 && teamIds.length > 0,
+  {
+    cupGames,
+    weeksByRound,
+  }: {
+    cupGames: ({ round: string } & Parameters<typeof cupGameTeamIds>[0])[];
+    weeksByRound: Record<string, number[]>;
+  },
+): Promise<RoundTotals> {
+  const rounds = Object.entries(weeksByRound)
+    .map(([round, roundWeeks]) => ({
+      round,
+      roundWeeks,
+      teamIds: cupGames
+        .filter(game => game.round === round)
+        .flatMap(cupGameTeamIds),
+    }))
+    .filter(
+      ({ roundWeeks, teamIds }) => roundWeeks.length > 0 && teamIds.length > 0,
+    );
+  if (rounds.length === 0) return {};
+
+  const lineupsFor = await loadRoundLineups(
+    year,
+    [...new Set(rounds.flatMap(round => round.roundWeeks))],
+    [...new Set(rounds.flatMap(round => round.teamIds))],
   );
-  const weeks = [...new Set(active.flatMap(round => round.weeks))];
-  const teamIds = [...new Set(active.flatMap(round => round.teamIds))];
-  if (weeks.length === 0) return {};
 
-  const byTeamAndWeek = new Map<string, WeekLineup>();
-  for (const { teamId, lineup } of await getLineups(year, weeks, teamIds)) {
-    byTeamAndWeek.set(`${teamId}:${lineup.week}`, lineup);
-  }
-
-  const totals: Record<string, RoundTotal> = {};
-  for (const round of active) {
-    for (const teamId of round.teamIds) {
-      const lineups = round.weeks.flatMap(week => {
-        const lineup = byTeamAndWeek.get(`${teamId}:${week}`);
-        return lineup ? [lineup] : [];
-      });
-      totals[roundTotalKey(round.round, teamId)] = roundTotal(
-        lineups,
-        round.weeks.length,
-      );
-    }
+  const totals: RoundTotals = {};
+  for (const { round, roundWeeks, teamIds } of rounds) {
+    totals[round] = Object.fromEntries(
+      teamIds.map(teamId => [
+        teamId,
+        roundTotal(lineupsFor(teamId, roundWeeks)),
+      ]),
+    );
   }
   return totals;
 }
@@ -145,21 +171,13 @@ export async function getCupGameLineups(gameId: string) {
     .filter(cupWeek => cupWeek.mapping === game.round)
     .map(cupWeek => cupWeek.week)
     .sort((a, b) => a - b);
-  const teamIds = [game.topTeam?.teamId, game.bottomTeam?.teamId].filter(
-    (teamId): teamId is string => !!teamId,
-  );
-  const lineups = await getLineups(game.cup.year, weeks, teamIds);
+  const teamIds = cupGameTeamIds(game);
+  const lineupsFor = await loadRoundLineups(game.cup.year, weeks, teamIds);
 
   return {
     sides: teamIds.map(teamId => {
-      const teamWeeks = lineups
-        .filter(entry => entry.teamId === teamId)
-        .map(entry => entry.lineup);
-      return {
-        teamId,
-        weeks: teamWeeks,
-        total: roundTotal(teamWeeks, weeks.length),
-      };
+      const teamWeeks = lineupsFor(teamId, weeks);
+      return { teamId, weeks: teamWeeks, total: roundTotal(teamWeeks) };
     }),
   };
 }

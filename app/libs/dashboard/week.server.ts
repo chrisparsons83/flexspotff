@@ -208,6 +208,7 @@ async function standingsFacts(
     const mine = week?.results.find(result => result.userId === userId);
     return {
       lastWeek: mine?.label ?? (week ? missing : null),
+      lastWeekInBrackets: mine?.inBrackets,
       lastWeekRank: mine?.rank ?? null,
     };
   };

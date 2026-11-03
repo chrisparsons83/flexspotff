@@ -24,6 +24,13 @@ const STATE_LABEL: Record<LineupStarter['state'], string> = {
   bye: 'No Game',
 };
 
+/** The game a dialog is showing, with its round's name and weeks as labels. */
+export type OpenedCupGame = {
+  game: CupGame;
+  round: string;
+  weeks: string | null;
+};
+
 /**
  * One cup game's two lineups, week by week. Mounted when a score is clicked,
  * and the lineups load then: a whole bracket's worth would be a lot to send
@@ -34,12 +41,7 @@ export default function CupGameDialog({
   round,
   weeks,
   onClose,
-}: {
-  game: CupGame;
-  round: string;
-  weeks: string | null;
-  onClose: () => void;
-}) {
+}: OpenedCupGame & { onClose: () => void }) {
   const fetcher = useFetcher<typeof loader>();
   const { load } = fetcher;
   useEffect(() => {
@@ -136,6 +138,13 @@ function Week({
             {showProjected && ` / ${week.projected!.toFixed(2)}`}
           </span>
         </h4>
+      )}
+      {week.placeholder && (
+        <p className='text-sm text-muted-foreground'>
+          {week.placeholder === 'optimal'
+            ? `Best projected lineup, until the actual one shows when week ${week.week} starts.`
+            : `As set on Sleeper so far. Locks in when week ${week.week} starts.`}
+        </p>
       )}
       {week.starters.length === 0 ? (
         <p className='text-sm text-muted-foreground'>No lineup set yet.</p>

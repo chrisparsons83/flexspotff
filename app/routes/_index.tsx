@@ -21,6 +21,7 @@ import { getCurrentSeason } from '~/models/season.server';
 import { getNewestWeekTeamGameByYear } from '~/models/teamgame.server';
 import { authenticator } from '~/services/auth.server';
 import { cn } from '~/utils';
+import { LAST_FANTASY_WEEK } from '~/utils/constants';
 
 /** How many of each table the home page shows. */
 const LEADERS = 3;
@@ -30,9 +31,6 @@ const LEADERS = 3;
  * to the last playoff spot.
  */
 const CHAMPIONS_LEADERS = 6;
-
-/** The last playoff week, from section 13 of the rules. */
-const LAST_PLAYOFF_WEEK = 17;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [season, user] = await Promise.all([
@@ -130,12 +128,12 @@ export default function Index() {
       {leagues.length > 0 && year && (
         <Section
           title={
-            week && week <= LAST_PLAYOFF_WEEK
+            week && week <= LAST_FANTASY_WEEK
               ? `Week ${scoredWeek ?? week}`
               : `${year} Leagues`
           }
           to={
-            week && week <= LAST_PLAYOFF_WEEK && scoredWeek
+            week && week <= LAST_FANTASY_WEEK && scoredWeek
               ? `/leagues/leaderboard/${year}/${scoredWeek}`
               : '/leagues'
           }
@@ -220,6 +218,11 @@ export default function Index() {
                 statusLink={game.statusLink}
                 rows={game.rows}
                 empty={game.empty}
+                footer={
+                  game.editHref ? (
+                    <Link to={game.editHref}>Your Entries</Link>
+                  ) : undefined
+                }
               />
             ))}
           </div>
@@ -234,7 +237,7 @@ export default function Index() {
                 key={summary.to}
                 title={summary.title}
                 to={summary.to}
-                status={summary.status || undefined}
+                status={summary.status}
                 rows={summary.rows}
                 empty={summary.empty}
               />

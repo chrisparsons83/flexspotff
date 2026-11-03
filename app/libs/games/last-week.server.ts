@@ -17,6 +17,8 @@ export type WeekResult = {
   score: number;
   /** As a member reads it: "30.24", "+40", "4 (5-1-0)". */
   label: string;
+  /** For a label with brackets of its own, how it reads inside others: "4, 5-1-0". */
+  inBrackets?: string;
 };
 
 /** A game's newest scored week, everyone in it best first. */
@@ -107,12 +109,12 @@ async function locks(year: number) {
     week.weekNumber,
     rows.map(({ userId, _sum: sum }) => {
       const score = locksWeekPoints(sum);
+      const record = `${sum.isWin ?? 0}-${sum.isLoss ?? 0}-${sum.isTie ?? 0}`;
       return {
         userId,
         score,
-        label: `${score}, ${sum.isWin ?? 0}-${sum.isLoss ?? 0}-${
-          sum.isTie ?? 0
-        }`,
+        label: `${score} (${record})`,
+        inBrackets: `${score}, ${record}`,
       };
     }),
   );

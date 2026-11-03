@@ -70,19 +70,7 @@ export async function loadCupPage(year: number) {
     'No cup that year',
   );
   // Kept out of getCupBracket, which the dashboard also reads for its facts.
-  const roundTotals = bracket
-    ? await getCupRoundTotals(
-        year,
-        Object.entries(bracket.weeksByRound).map(([round, weeks]) => ({
-          round,
-          weeks,
-          teamIds: bracket.cupGames
-            .filter(game => game.round === round)
-            .flatMap(game => [game.topTeam?.teamId, game.bottomTeam?.teamId])
-            .filter((teamId): teamId is string => !!teamId),
-        })),
-      )
-    : {};
+  const roundTotals = bracket ? await getCupRoundTotals(year, bracket) : {};
   return typedjson({
     year,
     bracket,

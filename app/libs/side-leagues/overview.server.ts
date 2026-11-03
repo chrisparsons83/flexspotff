@@ -2,7 +2,7 @@ import type { SummaryRow } from '~/components/ui/summary-card';
 import { prisma } from '~/db.server';
 import { buildStandings as buildBestBallStandings } from '~/libs/best-ball/views';
 import { getSeasonLeaders } from '~/libs/games/history.server';
-import { GUILLOTINE_FINAL_WEEK } from '~/libs/guillotine/chops';
+import { nextGuillotineWeek } from '~/libs/guillotine/chops';
 import { pts, teamName } from '~/libs/guillotine/display';
 import { buildLiveChopLine } from '~/libs/guillotine/live.server';
 import type { LiveChopLine } from '~/libs/guillotine/live.server';
@@ -17,7 +17,8 @@ import { d12SeasonTotals } from '~/models/profile/sideGameSeasons.server';
 export type SideLeagueSummary = {
   title: string;
   to: string;
-  status: string;
+  /** Where it stands in a line, for a card whose rows do not already say. */
+  status?: string;
   rows: SummaryRow[];
   empty: string;
 };
@@ -85,7 +86,6 @@ export function liveGuillotineSummary({
   return {
     title: weekTitle(league.name, week),
     to: `/side-leagues/guillotine/${league.id}`,
-    status: '',
     rows: live.flatMap((row, index) => {
       const team = teamByRoster.get(row.rosterId);
       if (!team) return [];
@@ -96,7 +96,7 @@ export function liveGuillotineSummary({
           ...member(team),
           value: pts(row.points),
           detail: !row.lineupSet
-            ? 'No lineup'
+            ? 'No Lineup'
             : row.playersRemaining > 0
             ? `Proj. ${pts(row.projected, 1)}`
             : undefined,
@@ -123,14 +123,13 @@ async function guillotineSummary(
     to: `/side-leagues/guillotine/${league.id}`,
   };
 
-  const liveWeek = league.lastScoredWeek + 1;
-  const isPlayingLiveWeek =
-    !league.isComplete &&
-    league.lastScoredWeek < GUILLOTINE_FINAL_WEEK &&
-    league.teams.some(team =>
-      team.weekScores.some(s => s.week === liveWeek && s.points > 0),
-    );
-  if (isPlayingLiveWeek) {
+  // From the first points rather than the first score row, as the league page
+  // has it: a card of noughts before kickoff says nothing the last week's does.
+  const liveWeek = nextGuillotineWeek(league);
+  const isPlayingLiveWeek = league.teams.some(team =>
+    team.weekScores.some(s => s.week === liveWeek && s.points > 0),
+  );
+  if (liveWeek && isPlayingLiveWeek) {
     const live = await buildLiveChopLine({
       year,
       week: liveWeek,
@@ -181,7 +180,6 @@ async function guillotineSummary(
   return {
     ...base,
     title: weekTitle(league.name, week),
-    status: '',
     rows: table.map((row, index) => ({
       key: String(row.team.rosterId),
       rank: index + 1,

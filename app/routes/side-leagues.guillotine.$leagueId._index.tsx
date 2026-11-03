@@ -5,7 +5,7 @@ import { ScoreGrid } from '~/components/layout/side-leagues/ScoreGrid';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { requireGuillotineAccess } from '~/libs/guillotine/access.server';
-import { GUILLOTINE_FINAL_WEEK } from '~/libs/guillotine/chops';
+import { nextGuillotineWeek } from '~/libs/guillotine/chops';
 import { ordinal, pts, teamName } from '~/libs/guillotine/display';
 import { buildLiveChopLine } from '~/libs/guillotine/live.server';
 import { buildChopGrid, buildStandings } from '~/libs/guillotine/views';
@@ -28,10 +28,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     })),
   );
 
-  const liveWeek =
-    !league.isComplete && league.lastScoredWeek < GUILLOTINE_FINAL_WEEK
-      ? league.lastScoredWeek + 1
-      : null;
+  const liveWeek = nextGuillotineWeek(league);
   const hasLiveScores =
     liveWeek !== null && scores.some(score => score.week === liveWeek);
 

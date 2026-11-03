@@ -2,7 +2,7 @@ import CupBracket from './CupBracket';
 import { EmptyState } from '~/components/ui/empty-state';
 import { Section } from '~/components/ui/section';
 import type { CupBracketData } from '~/libs/cup/bracket.server';
-import type { RoundTotal } from '~/libs/cup/lineups';
+import type { RoundTotals } from '~/libs/cup/lineups';
 
 /** A year's cup. The Leagues header's season picker moves between years. */
 export default function CupPage({
@@ -12,7 +12,7 @@ export default function CupPage({
 }: {
   year: number;
   bracket: CupBracketData;
-  roundTotals: Record<string, RoundTotal>;
+  roundTotals: RoundTotals;
 }) {
   return (
     <Section title={`${year} Cup`}>

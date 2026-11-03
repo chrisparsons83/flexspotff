@@ -40,7 +40,7 @@ const weekStatus = (state: WeekState | null) =>
 export type GameOverview = {
   name: string;
   to: string;
-  status: string;
+  status?: string;
   /** The reader's entry for the week, while picks are open to them. */
   statusHref?: string;
   /** The reader's entries, for a game whose status is not a link to them. */
@@ -276,7 +276,7 @@ export async function getGamesOverview(
         ? 'Entries open'
         : fSquaredWeek
         ? `Through week ${fSquaredWeek}`
-        : '',
+        : undefined,
       statusHref:
         signedIn && season?.isOpenForFSquared
           ? '/games/f-squared/entries'
@@ -295,7 +295,7 @@ export async function getGamesOverview(
       name: 'Omni',
       // Straight to the season while there is only one.
       to: omni?.onlySeason ? `/games/omni/${omni.year}` : '/games/omni',
-      status: omni ? `Final ${omni.year} standings.` : '',
+      status: omni ? `Final ${omni.year} standings.` : undefined,
       statusLink: { label: 'Omni now runs on Brackt', href: BRACKT_URL },
       rows:
         omni?.leaders.map(leader => ({
@@ -332,7 +332,9 @@ function survivorSummary(pools: SurvivorPool[], maxNames: number) {
 
   if (alive.length > 0 && alive.length <= maxNames) {
     return {
-      status: 'Managers Remaining',
+      status: `${alive.length} ${
+        alive.length === 1 ? 'manager' : 'managers'
+      } remaining`,
       rows: alive
         .map(entry => ({ entry, name: entryLabel(entry) }))
         .sort((a, b) => a.name.localeCompare(b.name))

@@ -213,7 +213,7 @@ can see more or act.
 | ------------ | ------------------------------------------ | ------------------------------------------------------- |
 | League       | Result and score of their matchup          | Their opponent                                          |
 | Cup          | Result, if they were still in it           | Their cup game, or when they went out                   |
-| Side leagues | Score and place in each league they are in | Guillotine: still alive or not                          |
+| Side leagues | Place and score in each league they are in | Season standing; Guillotine: still alive or not         |
 | QB streaming | Points and place                           | Whether they have picked, and the deadline              |
 | Spread pool  | Points and place                           | Whether they have picked, and the deadline              |
 | Locks        | Points and place                           | Whether they have picked, and the deadline              |
@@ -221,6 +221,9 @@ can see more or act.
 | Survivor     | Whether their entries survived             | Entries still alive                                     |
 | F²           |                                            | Whether they have an entry, while entries are open      |
 | Registration |                                            | Whether they are registered, while registration is open |
+
+The Games and Side leagues tables head their last column "Season Standing", with
+the member's place and season total rather than this week's.
 
 Anything the member still has to do this week comes first, above the results.
 Which deadlines and statuses the data can actually give is to be confirmed game
@@ -329,6 +332,7 @@ and `/me`.
 | `/in-a-dingy-corner-of-the-internet-is-a-message-board` | Anyone  | Unchanged, unlinked                                                 |
 | `/login`, `/logout`, `/auth/:provider/*`                | Anyone  | Unchanged                                                           |
 | `/resources/theme`                                      | Anyone  | Unchanged (theme toggle action)                                     |
+| `/resources/cup-game/:gameId`                           | Anyone  | Unchanged (a cup game's lineups, for the bracket's dialog)          |
 | `/api/sync-week-scores`                                 | Machine | Unchanged (`/healthcheck` was removed with the fly.io config)       |
 
 ### Admin

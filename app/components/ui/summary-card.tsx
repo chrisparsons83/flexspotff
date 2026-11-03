@@ -22,11 +22,8 @@ export type SummaryRow = {
   value: string;
   /** Quieter text before the value, such as a live projection. */
   detail?: string;
-  /**
-   * A line above the row: `gap` where rows in between are left out, `cut`
-   * where a guillotine's chop line falls.
-   */
-  divider?: 'gap' | 'cut';
+  /** A line above the row: `cut` is where a guillotine's chop line falls. */
+  divider?: 'cut';
   /** Colours the row, such as a team that was chopped. */
   tone?: 'negative';
 };
@@ -49,7 +46,7 @@ export function SummaryCard({
 }: {
   title: string;
   to: string;
-  /** Where the table stands, in a line: "Week 8 scored". */
+  /** Where the table stands, in a line: "Through week 8". */
   status?: string;
   /** Makes the status a link, such as to the reader's entry for the week. */
   statusHref?: string;
@@ -103,8 +100,8 @@ export function SummaryCard({
 }
 
 /**
- * A few rows of a table: rank, member (or label) and value, with the gap and
- * chop-line dividers. The body of a SummaryCard, and usable on its own.
+ * A few rows of a table: rank, member (or label) and value, with the chop-line
+ * divider. The body of a SummaryCard, and usable on its own.
  */
 export function SummaryRows({
   rows,
@@ -124,7 +121,6 @@ export function SummaryRows({
             // Their own row, as in Table.
             '[&:has([data-me])]:-mx-2 [&:has([data-me])]:bg-primary/10 [&:has([data-me])]:px-2',
             ranked ? 'grid-cols-[1.5rem_1fr_auto]' : 'grid-cols-[1fr_auto]',
-            row.divider === 'gap' && 'mt-1 border-t border-dashed pt-2',
             row.divider === 'cut' && 'mt-1 border-t-2 border-negative pt-2',
             row.tone === 'negative' && 'text-negative',
           )}

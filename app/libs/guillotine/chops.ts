@@ -7,6 +7,15 @@ import type { GuillotineFormat } from '@prisma/client';
  */
 export const GUILLOTINE_FINAL_WEEK = 17;
 
+/** The week after the last one Sleeper closed, while there is one to play. */
+export const nextGuillotineWeek = (league: {
+  isComplete: boolean;
+  lastScoredWeek: number;
+}) =>
+  !league.isComplete && league.lastScoredWeek < GUILLOTINE_FINAL_WEEK
+    ? league.lastScoredWeek + 1
+    : null;
+
 export type ChopRoster = {
   rosterId: number;
   /** Sleeper's `settings.eliminated`, which only native leagues set. */

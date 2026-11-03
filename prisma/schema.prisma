@@ -1221,11 +1221,30 @@ model Team {
   TeamGames          TeamGame[]
   CupTeam            CupTeam?
 
-  PlayoffTopTeamGames     PlayoffGame[] @relation(name: "PlayoffTopTeam")
-  PlayoffBottomTeamGames  PlayoffGame[] @relation(name: "PlayoffBottomTeam")
-  PlayoffWinningTeamGames PlayoffGame[] @relation(name: "PlayoffWinningTeam")
-  PlayoffLosingTeamGames  PlayoffGame[] @relation(name: "PlayoffLosingTeam")
-  PlayoffAdvancingGames   PlayoffGame[] @relation(name: "PlayoffAdvancingTeam")
+  PlayoffTopTeamGames     PlayoffGame[]       @relation(name: "PlayoffTopTeam")
+  PlayoffBottomTeamGames  PlayoffGame[]       @relation(name: "PlayoffBottomTeam")
+  PlayoffWinningTeamGames PlayoffGame[]       @relation(name: "PlayoffWinningTeam")
+  PlayoffLosingTeamGames  PlayoffGame[]       @relation(name: "PlayoffLosingTeam")
+  PlayoffAdvancingGames   PlayoffGame[]       @relation(name: "PlayoffAdvancingTeam")
+  PlannedLineups          TeamPlannedLineup[]
+}
+
+// A team's lineup for a cup week yet to start, for projecting the bracket.
+// Kept apart from TeamGame, whose rows the standings and leaderboards read as
+// weeks that have been played. A TeamGame for the week takes over from this.
+model TeamPlannedLineup {
+  id        String   @id @default(cuid())
+  updatedAt DateTime @updatedAt
+
+  week      Int
+  starters  String[]
+  /// Sleeper's lineup had a gap or a player on bye, so this is the best projected.
+  isOptimal Boolean
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamId String
+
+  @@unique([teamId, week])
 }
 
 model TeamGame {

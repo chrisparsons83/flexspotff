@@ -47,7 +47,7 @@ describe('liveGuillotineSummary', () => {
     });
 
     expect(summary.title).toBe('Guillotine · Week 8');
-    expect(summary.status).toBe('');
+    expect(summary.status).toBeUndefined();
     expect(
       summary.rows.map(r => [r.rank, r.value, r.detail, r.divider, r.tone]),
     ).toEqual([

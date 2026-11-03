@@ -1,5 +1,10 @@
 import type { WeekFacts, WeekLineup } from './lineups';
-import { buildWeekLineup, roundTotal } from './lineups';
+import {
+  buildRoundLineups,
+  buildWeekLineup,
+  chooseLineup,
+  roundTotal,
+} from './lineups';
 import { describe, expect, it } from 'vitest';
 
 const NOW = new Date('2026-11-01T20:00:00Z');
@@ -118,50 +123,241 @@ describe('buildWeekLineup', () => {
   });
 });
 
+describe('buildRoundLineups', () => {
+  const factsByWeek = new Map([
+    [9, facts({}, 'in_game')],
+    [10, facts()],
+  ]);
+  const plan = (week: number, isOptimal = false) => ({
+    week,
+    starters: ['1', '2'],
+    isOptimal,
+  });
+
+  it('projects a week yet to start from its planned lineup', () => {
+    const lineups = buildRoundLineups(
+      { teamGames: [teamGame([12, 3])], planned: [plan(10)] },
+      [9, 10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups.map(l => [l.week, l.points, l.placeholder])).toEqual([
+      [9, 15, null],
+      [10, 0, 'sleeper'],
+    ]);
+    expect(lineups[1]!.projected).toBe(30);
+    expect(lineups[1]!.starters[0]).toMatchObject({
+      name: 'Ann',
+      points: 0,
+      state: 'pre_game',
+    });
+    expect(roundTotal(lineups)).toEqual({ points: 15, projected: 60 });
+  });
+
+  it('projects the first week of a round before it has a score', () => {
+    const lineups = buildRoundLineups(
+      { teamGames: [], planned: [plan(9, true), plan(10, true)] },
+      [9, 10],
+      new Map([
+        [9, facts()],
+        [10, facts()],
+      ]),
+      NOW,
+    );
+
+    expect(lineups.map(l => l.placeholder)).toEqual(['optimal', 'optimal']);
+    expect(roundTotal(lineups)).toEqual({ points: 0, projected: 60 });
+  });
+
+  it('replaces the planned lineup once the week has a played one', () => {
+    const lineups = buildRoundLineups(
+      {
+        teamGames: [teamGame([12, 3]), { ...teamGame([1, 1]), week: 10 }],
+        planned: [plan(10)],
+      },
+      [9, 10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[1]).toMatchObject({ points: 2, placeholder: null });
+  });
+
+  it('keeps the planned lineup over a stored week with nothing in it', () => {
+    const emptyRow = { ...teamGame([], []), week: 10 };
+    const lineups = buildRoundLineups(
+      { teamGames: [emptyRow], planned: [plan(10)] },
+      [10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[0]).toMatchObject({ placeholder: 'sleeper', projected: 30 });
+  });
+
+  it('keeps the planned lineup over a stale row from a full resync', () => {
+    const staleRow = { ...teamGame([0, 0], ['3', '3']), week: 10 };
+    const lineups = buildRoundLineups(
+      { teamGames: [staleRow], planned: [plan(10)] },
+      [10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[0]).toMatchObject({ placeholder: 'sleeper', projected: 30 });
+  });
+
+  it('ignores a stale row with no planned lineup to replace it', () => {
+    const staleRow = { ...teamGame([0, 0]), week: 10 };
+    const lineups = buildRoundLineups(
+      { teamGames: [staleRow], planned: [] },
+      [10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[0]).toMatchObject({ starters: [], projected: null });
+  });
+
+  it('trusts a stored lineup with no points once the week is underway', () => {
+    const lineups = buildRoundLineups(
+      { teamGames: [teamGame([0, 0])], planned: [plan(9)] },
+      [9],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[0]).toMatchObject({ placeholder: null, points: 0 });
+  });
+
+  it('shows the actual lineup over an optimal one once the week starts', () => {
+    const lineups = buildRoundLineups(
+      {
+        teamGames: [teamGame([0, 0], ['1', '3'])],
+        planned: [plan(9, true)],
+      },
+      [9],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[0]!.placeholder).toBeNull();
+    expect(lineups[0]!.starters.map(s => s.name)).toEqual(['Ann', 'Cy']);
+  });
+
+  it('has no projection for a week with no lineup of either kind', () => {
+    const lineups = buildRoundLineups(
+      { teamGames: [teamGame([12, 3])], planned: [] },
+      [9, 10],
+      factsByWeek,
+      NOW,
+    );
+
+    expect(lineups[1]).toMatchObject({ starters: [], projected: null });
+    expect(roundTotal(lineups).projected).toBeNull();
+  });
+});
+
+describe('chooseLineup', () => {
+  const roster = {
+    players: ['qb1', 'qb2', 'rb1', 'rb2'],
+    rosterPositions: ['QB', 'RB', 'BN', 'BN'],
+    projectionBySleeperId: new Map([
+      ['qb1', 12],
+      ['qb2', 20],
+      ['rb1', 9],
+      ['rb2', 5],
+    ]),
+    positionBySleeperId: new Map([
+      ['qb1', 'QB'],
+      ['qb2', 'QB'],
+      ['rb1', 'RB'],
+      ['rb2', 'RB'],
+    ]),
+    hasGame: () => true,
+  };
+
+  it('keeps a full lineup with everyone playing, even if a better one exists', () => {
+    expect(chooseLineup({ ...roster, starters: ['qb1', 'rb2'] })).toEqual({
+      starters: ['qb1', 'rb2'],
+      isOptimal: false,
+    });
+  });
+
+  it('picks the best projected lineup when Sleeper has none', () => {
+    const best = { starters: ['qb2', 'rb1'], isOptimal: true };
+
+    expect(chooseLineup({ ...roster, starters: [] })).toEqual(best);
+    expect(chooseLineup({ ...roster, starters: ['0', '0'] })).toEqual(best);
+  });
+
+  it('picks the best projected lineup when a starter has a gap', () => {
+    expect(chooseLineup({ ...roster, starters: ['qb1', '0'] })).toEqual({
+      starters: ['qb2', 'rb1'],
+      isOptimal: true,
+    });
+  });
+
+  it('picks the best projected lineup when a starter is on bye, without them', () => {
+    expect(
+      chooseLineup({
+        ...roster,
+        starters: ['qb1', 'rb1'],
+        hasGame: id => id !== 'rb1',
+      }),
+    ).toEqual({ starters: ['qb2', 'rb2'], isOptimal: true });
+  });
+
+  it('keeps what Sleeper has when there are no projections to choose on', () => {
+    const none = { ...roster, projectionBySleeperId: new Map() };
+
+    expect(
+      chooseLineup({ ...none, starters: ['qb1', 'rb1'], hasGame: () => false }),
+    ).toEqual({ starters: ['qb1', 'rb1'], isOptimal: false });
+    expect(chooseLineup({ ...none, starters: [] })).toBeNull();
+  });
+});
+
 const week = (overrides: Partial<WeekLineup>): WeekLineup => ({
   week: 9,
   points: 0,
   projected: 100,
   finished: false,
+  placeholder: null,
   starters: [],
   ...overrides,
 });
 
 describe('roundTotal', () => {
   it('adds a finished week to the one still going', () => {
-    const total = roundTotal(
-      [
-        week({ week: 9, points: 130, projected: 130, finished: true }),
-        week({ week: 10, points: 40, projected: 110 }),
-      ],
-      2,
-    );
+    const total = roundTotal([
+      week({ week: 9, points: 130, projected: 130, finished: true }),
+      week({ week: 10, points: 40, projected: 110 }),
+    ]);
 
     expect(total).toEqual({ points: 170, projected: 240 });
   });
 
   it('matches the score once the whole round is over', () => {
-    const total = roundTotal(
-      [
-        week({ week: 9, points: 130, projected: 130, finished: true }),
-        week({ week: 10, points: 90, projected: 90, finished: true }),
-      ],
-      2,
-    );
+    const total = roundTotal([
+      week({ week: 9, points: 130, projected: 130, finished: true }),
+      week({ week: 10, points: 90, projected: 90, finished: true }),
+    ]);
 
     expect(total).toEqual({ points: 220, projected: 220 });
   });
 
   it('has no projection when a week has none, rather than half of one', () => {
-    const total = roundTotal(
-      [week({ week: 9 }), week({ week: 10, projected: null })],
-      2,
-    );
+    const total = roundTotal([
+      week({ week: 9 }),
+      week({ week: 10, projected: null }),
+    ]);
 
     expect(total.projected).toBeNull();
   });
 
-  it('has no projection when a week has no game for the team', () => {
-    expect(roundTotal([week({ week: 9 })], 2).projected).toBeNull();
+  it('has no projection for a round with no weeks', () => {
+    expect(roundTotal([]).projected).toBeNull();
   });
 });
