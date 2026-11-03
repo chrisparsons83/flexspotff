@@ -23,6 +23,10 @@ operations.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` /
   `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
+- **Edit a PR body**:
+  `gh api -X PATCH repos/{owner}/{repo}/pulls/<number> -F body=@<file>`.
+  `gh pr edit`, and `gh issue view`/`gh pr view` without `--json`, fail on
+  GitHub's Projects (classic) deprecation error.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run
 inside a clone.

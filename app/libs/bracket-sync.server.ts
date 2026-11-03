@@ -29,6 +29,8 @@ export async function syncLeagueBrackets(league: League): Promise<number> {
 
   for (const { bracket, path } of BRACKETS) {
     const res = await fetch(
+      // sleeperFetch throws on a 404, which here is an ordinary answer.
+      // eslint-disable-next-line no-restricted-syntax
       `https://api.sleeper.app/v1/league/${league.sleeperLeagueId}/${path}`,
     );
 
