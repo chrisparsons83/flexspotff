@@ -10,6 +10,7 @@ const team = (id: string, sleeperId: string) => ({ id, sleeperId });
 const player = (
   overrides: Partial<PickerPlayerInput> & Pick<PickerPlayerInput, 'id'>,
 ): PickerPlayerInput => ({
+  sleeperId: overrides.id,
   fullName: 'Test Player',
   position: 'WR',
   currentNFLTeamId: 'team-buf',
@@ -131,6 +132,7 @@ describe('decoratePickerPlayers', () => {
       [
         player({
           id: 'def-buf',
+          sleeperId: 'BUF',
           fullName: 'Buffalo Bills',
           position: 'DEF',
         }),
@@ -140,6 +142,40 @@ describe('decoratePickerPlayers', () => {
 
     expect(row.name).toBe('BUF');
     expect(row.position).toBe('DEF');
+  });
+
+  it('leaves out a relocated franchise defense that points at the new team', () => {
+    const lv = team('team-lv', 'LV');
+    const rows = decorate(
+      [
+        player({
+          id: 'def-lv',
+          sleeperId: 'LV',
+          fullName: 'Las Vegas Raiders',
+          position: 'DEF',
+          currentNFLTeamId: 'team-lv',
+          currentNFLTeam: lv,
+        }),
+        player({
+          id: 'def-oak',
+          sleeperId: 'OAK',
+          fullName: 'Oakland Raiders',
+          position: 'DEF',
+          currentNFLTeamId: 'team-lv',
+          currentNFLTeam: lv,
+        }),
+      ],
+      [
+        game({
+          homeTeamId: 'team-sf',
+          homeTeam: team('team-sf', 'SF'),
+          awayTeamId: 'team-lv',
+          awayTeam: lv,
+        }),
+      ],
+    );
+
+    expect(rows.map(row => row.id)).toEqual(['def-lv']);
   });
 
   it('keeps the full name for non-defense positions', () => {

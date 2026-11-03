@@ -25,6 +25,7 @@ export type PickerPlayer = {
 
 export type PickerPlayerInput = {
   id: string;
+  sleeperId: string;
   fullName: string;
   position: string | null;
   currentNFLTeamId: string | null;
@@ -45,6 +46,19 @@ export type PlayerUsage = {
   /** Until the week is scored, `points` is a placeholder zero, not a result. */
   isScored: boolean;
 };
+
+/**
+ * Sleeper keys a defense by its team abbreviation, so a defense whose key no
+ * longer matches its team is a relocated franchise's old row. The Oakland
+ * Raiders ("OAK") is kept for old drafts and points at LV, and without this it
+ * showed up as a second, never-scoring LV defense.
+ */
+export function isCurrentDefenseOrNotDefense(
+  player: Pick<PickerPlayerInput, 'position' | 'sleeperId' | 'currentNFLTeam'>,
+) {
+  if (player.position !== 'DEF') return true;
+  return player.sleeperId === player.currentNFLTeam?.sleeperId;
+}
 
 export function decoratePickerPlayers({
   players,
@@ -69,7 +83,7 @@ export function decoratePickerPlayers({
     gameByTeamId.set(game.awayTeamId, game);
   }
 
-  return players.map(player => {
+  return players.filter(isCurrentDefenseOrNotDefense).map(player => {
     const game = player.currentNFLTeamId
       ? gameByTeamId.get(player.currentNFLTeamId)
       : undefined;
