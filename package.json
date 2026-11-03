@@ -12,6 +12,7 @@
     "db:migrate": "run-p db:migrate:*",
     "db:migrate:dev": "npx prisma migrate dev",
     "db:migrate:test": "dotenv -e .env.test -- npx prisma db push --accept-data-loss",
+    "db:migration:new": "tsx scripts/new-migration.ts",
     "db-sync": "scripts/db-sync.sh",
     "db:sync-prod-to-test": "scripts/db-sync-prod-to-test.sh",
     "dev": "remix vite:dev",
