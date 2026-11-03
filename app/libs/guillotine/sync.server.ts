@@ -1,12 +1,5 @@
-import {
-  GUILLOTINE_FINAL_WEEK,
-  resolveChops,
-  resolveRosterOwners,
-  weekStarters,
-  weeksToSync,
-} from './chops';
-import type { ChopWeekRow } from './chops';
-import { scoreProjection } from './projection';
+import { departedOwners, planGuillotineSync, syncWeeks } from './plan';
+import type { GuillotineSyncPlan } from './plan';
 import type { GuillotineLeague, Prisma } from '@prisma/client';
 import { prisma } from '~/db.server';
 import {
@@ -22,7 +15,6 @@ import {
 } from '~/libs/sleeper/api.server';
 import { parseSleeperLeagueIdFromUrl } from '~/libs/sleeper/league-url';
 import { getOwnerToUserIdMap } from '~/libs/sleeper/owners.server';
-import type { SleeperMatchupJson } from '~/libs/sleeper/schemas';
 
 export type GuillotineSyncResult = {
   warnings: string[];
@@ -112,23 +104,12 @@ export async function syncGuillotineLeague(
     getLeagueDrafts(id),
     ownerToUserId ? Promise.resolve(ownerToUserId) : getOwnerToUserIdMap(),
   ]);
-
-  const lastScoredWeek = Math.min(
-    info.settings?.last_scored_leg ?? 0,
-    GUILLOTINE_FINAL_WEEK,
-  );
-  const throughWeek = weeksToSync({ status: info.status, lastScoredWeek });
-  const weekNumbers = Array.from({ length: throughWeek }, (_, i) => i + 1);
+  const { weekNumbers, liveWeek } = syncWeeks(info);
 
   // A league only ever has the one draft; take the finished one if there is
   // one, so a mock draft left lying around is never read instead.
   const draft =
     drafts.find(d => d.status === 'complete') ?? drafts[0] ?? undefined;
-
-  // The week still being played, if there is one: the only week projections
-  // mean anything for.
-  const liveWeek = throughWeek > lastScoredWeek ? throughWeek : null;
-  const scoringSettings = info.scoring_settings ?? {};
 
   let projectionError: string | null = null;
   const [matchups, transactions, picks, projections] = await Promise.all([
@@ -145,233 +126,103 @@ export async function syncGuillotineLeague(
       : Promise.resolve(null),
   ]);
 
-  const matchupsByWeek = new Map<number, SleeperMatchupJson>(
-    weekNumbers.map((week, index) => [week, matchups[index]]),
-  );
-  const chopRows = new Map<number, ChopWeekRow[]>(
-    [...matchupsByWeek].map(([week, rows]) => [
-      week,
-      rows.map(row => ({
-        rosterId: row.roster_id,
-        points: row.points ?? 0,
-        playerCount: row.players?.length ?? 0,
-      })),
-    ]),
-  );
+  const allTransactions = transactions.flat();
 
-  const chops = resolveChops({
-    format: league.format,
-    rosters: rosters.map(roster => ({
-      rosterId: roster.roster_id,
-      eliminated: roster.settings?.eliminated ?? null,
-      hasPlayers: (roster.players?.length ?? 0) > 0,
-    })),
-    weeks: chopRows,
-    lastScoredWeek,
-  });
-
-  // Two legs can carry the same transaction at the boundary; counted twice,
-  // it would weigh double in picking a roster's owner from its moves.
-  const uniqueTransactions = [
-    ...new Map(transactions.flat().map(t => [t.transaction_id, t])).values(),
-  ];
-  const ownerByRoster = resolveRosterOwners(rosters, picks, uniqueTransactions);
-  const nameByOwner = new Map(
-    users.map(user => [user.user_id, user.display_name ?? user.username]),
-  );
-  // An owner found from the draft or the transactions has usually left the
-  // league, so is not in its users list. Their name is looked up one by one;
-  // a failed lookup only costs the name.
-  const departed = [...new Set(ownerByRoster.values())].filter(
-    (owner): owner is string => !!owner && !nameByOwner.has(owner),
-  );
+  // A failed lookup of a departed owner only costs the name.
   const departedUsers = await Promise.all(
-    departed.map(owner => getSleeperUser(owner).catch(() => null)),
+    departedOwners({
+      rosters,
+      users,
+      picks,
+      transactions: allTransactions,
+    }).map(owner => getSleeperUser(owner).catch(() => null)),
   );
-  for (const user of departedUsers) {
-    if (user) {
-      nameByOwner.set(user.user_id, user.display_name ?? user.username);
-    }
-  }
-  // The draft's own slot for each roster, so the board lines up with the
-  // picks, which are filed by roster. Then the owner's slot, and the
-  // first-round pick only for a draft Sleeper has no order for: a traded first
-  // would give one roster two slots and leave another with none.
-  const rosterSlot = new Map<number, number>();
-  for (const [slot, rosterId] of Object.entries(
-    draft?.slot_to_roster_id ?? {},
-  )) {
-    if (rosterId !== null) rosterSlot.set(rosterId, Number(slot));
-  }
-  const firstRoundSlot = new Map<number, number>();
-  for (const pick of picks) {
-    if (pick.round === 1 && !firstRoundSlot.has(pick.roster_id)) {
-      firstRoundSlot.set(pick.roster_id, pick.pick_no);
-    }
-  }
-  const draftSlotFor = (rosterId: number, ownerId: string | null) =>
-    rosterSlot.get(rosterId) ??
-    (ownerId ? draft?.draft_order?.[ownerId] : undefined) ??
-    firstRoundSlot.get(rosterId) ??
-    null;
 
-  // If this sync could not load projections, keep the ones the last sync
-  // stored for the live week rather than wiping them: one failed request
-  // would otherwise project every starter yet to play at zero, and reorder
-  // the chop line around it until the next sync.
-  const keptProjections = new Map<string, number>();
-  if (liveWeek && !projections) {
-    const stored = await prisma.guillotineWeekScore.findMany({
-      where: { week: liveWeek, team: { guillotineLeagueId: league.id } },
-      select: { starters: true, starterProjections: true },
-    });
-    for (const row of stored) {
-      row.starters.forEach((starter, index) => {
-        const projection = row.starterProjections[index];
-        if (projection !== undefined) keptProjections.set(starter, projection);
-      });
-    }
-  }
-  const projectStarter = (starter: string | null) => {
-    if (!starter) return 0;
-    if (projections)
-      return scoreProjection(projections[starter], scoringSettings);
-    return keptProjections.get(starter) ?? 0;
-  };
+  const liveWeekScores =
+    liveWeek && !projections
+      ? await prisma.guillotineWeekScore.findMany({
+          where: { week: liveWeek, team: { guillotineLeagueId: league.id } },
+          select: { starters: true, starterProjections: true },
+        })
+      : [];
 
-  const teamWrites = rosters.map(roster => {
-    const ownerId = ownerByRoster.get(roster.roster_id) ?? null;
-    const choppedWeek = chops.choppedWeek.get(roster.roster_id) ?? null;
-    const teamData = {
-      sleeperOwnerId: ownerId,
-      sleeperDisplayName: ownerId ? nameByOwner.get(ownerId) ?? null : null,
-      // A roster nobody can be found for is assigned a member by hand on the
-      // admin page, and a resync must not wipe that.
-      ...(ownerId ? { userId: owners.get(ownerId) ?? null } : {}),
-      draftSlot: draftSlotFor(roster.roster_id, ownerId),
-      choppedWeek,
-      finish: chops.finish.get(roster.roster_id) ?? null,
-      waiverBudgetUsed: roster.settings?.waiver_budget_used ?? 0,
-    };
+  const plan = planGuillotineSync(
+    {
+      info,
+      rosters,
+      users,
+      departedUsers: departedUsers.filter(user => user !== null),
+      draft,
+      matchups: new Map(
+        weekNumbers.map((week, index) => [week, matchups[index]]),
+      ),
+      transactions: allTransactions,
+      picks,
+      projections,
+      projectionError,
+    },
+    { format: league.format, ownerToUserId: owners, liveWeekScores },
+  );
 
-    // Only the weeks the team was alive for: afterwards Sleeper keeps
-    // reporting an empty roster scoring zero, which is not a score.
-    const lastWeek = choppedWeek ?? throughWeek;
-    const weekScores = weekNumbers
-      .filter(week => week <= lastWeek)
-      .flatMap(week => {
-        const row = matchupsByWeek
-          .get(week)
-          ?.find(r => r.roster_id === roster.roster_id);
-        if (!row) return [];
-        const starters = weekStarters({
-          matchupStarters: row.starters,
-          rosterStarters: roster.starters,
-          isLiveWeek: week === liveWeek,
-        });
-        return [
-          {
-            week,
-            points: row.points ?? 0,
-            starters,
-            startingPlayerPoints: (row.starters_points ?? []).map(p => p ?? 0),
-            players: row.players ?? [],
-            starterProjections:
-              week === liveWeek
-                ? starters.map(s => projectStarter(s === '0' ? null : s))
-                : [],
-          },
-        ];
-      });
-
-    return prisma.guillotineTeam.upsert({
-      where: {
-        guillotineLeagueId_rosterId: {
-          guillotineLeagueId: league.id,
-          rosterId: roster.roster_id,
-        },
-      },
-      update: {
-        ...teamData,
-        weekScores: { deleteMany: {}, create: weekScores },
-      },
-      create: {
-        ...teamData,
-        rosterId: roster.roster_id,
-        guillotineLeagueId: league.id,
-        weekScores: { create: weekScores },
-      },
-    });
-  });
-
-  // One transaction, so a page never reads a league half rewritten. The live
-  // monitor and the hourly job can both sync a league in the same minute, and
-  // two rewrites interleaving would trip over each other's inserts, so the
-  // transaction first takes a lock on this league and the second one waits.
-  await prisma.$transaction([
-    prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${league.id}))`,
-    prisma.guillotineLeague.update({
-      where: { id: league.id },
-      data: {
-        name: info.name,
-        sleeperDraftId: draft?.draft_id ?? null,
-        teamCount: info.total_rosters ?? rosters.length,
-        waiverBudget: info.settings?.waiver_budget ?? 0,
-        scoringSettings: info.scoring_settings ?? undefined,
-        lastScoredWeek,
-        isComplete: chops.championRosterId !== null,
-        lastSyncedAt: new Date(),
-      },
-    }),
-    ...teamWrites,
-    prisma.guillotineTransaction.deleteMany({
-      where: { guillotineLeagueId: league.id },
-    }),
-    prisma.guillotineTransaction.createMany({
-      data: transactions.flat().map(t => ({
-        guillotineLeagueId: league.id,
-        sleeperTransactionId: t.transaction_id,
-        type: t.type,
-        status: t.status,
-        leg: t.leg,
-        rosterIds: t.roster_ids,
-        adds: (t.adds ?? undefined) as Prisma.InputJsonValue | undefined,
-        drops: (t.drops ?? undefined) as Prisma.InputJsonValue | undefined,
-        bid: t.settings?.waiver_bid ?? null,
-        seq: t.settings?.seq ?? null,
-        notes: t.metadata?.notes ?? null,
-        processedAt: new Date(t.status_updated),
-      })),
-      // Two legs can carry the same transaction at the boundary.
-      skipDuplicates: true,
-    }),
-    prisma.guillotineDraftPick.deleteMany({
-      where: { guillotineLeagueId: league.id },
-    }),
-    prisma.guillotineDraftPick.createMany({
-      data: picks.map(pick => ({
-        guillotineLeagueId: league.id,
-        pickNo: pick.pick_no,
-        round: pick.round,
-        rosterId: pick.roster_id,
-        sleeperId: pick.player_id,
-      })),
-    }),
-  ]);
+  await writeGuillotineSync(league.id, plan);
 
   // Read back rather than worked out, so rosters assigned by hand count.
   const unmatchedTeams = await prisma.guillotineTeam.count({
     where: { guillotineLeagueId: league.id, userId: null },
   });
 
-  const warnings = [...chops.warnings];
-  if (projectionError) {
-    warnings.push(
-      `Week ${liveWeek} projections could not be loaded (${projectionError}), so the chop line shows points only.`,
-    );
-  }
+  return { warnings: plan.warnings, unmatchedTeams };
+}
 
-  return { warnings, unmatchedTeams };
+/**
+ * Replaces what is stored for a league with a plan's writes.
+ *
+ * One transaction, so a page never reads a league half rewritten. The live
+ * monitor and the hourly job can both sync a league in the same minute, and
+ * two rewrites interleaving would trip over each other's inserts, so the
+ * transaction first takes a lock on this league and the second one waits.
+ */
+async function writeGuillotineSync(
+  guillotineLeagueId: string,
+  plan: GuillotineSyncPlan,
+) {
+  await prisma.$transaction([
+    prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${guillotineLeagueId}))`,
+    prisma.guillotineLeague.update({
+      where: { id: guillotineLeagueId },
+      data: { ...plan.league, lastSyncedAt: new Date() },
+    }),
+    ...plan.teams.map(({ rosterId, data, weekScores }) =>
+      prisma.guillotineTeam.upsert({
+        where: {
+          guillotineLeagueId_rosterId: { guillotineLeagueId, rosterId },
+        },
+        update: {
+          ...data,
+          weekScores: { deleteMany: {}, create: weekScores },
+        },
+        create: {
+          ...data,
+          rosterId,
+          guillotineLeagueId,
+          weekScores: { create: weekScores },
+        },
+      }),
+    ),
+    prisma.guillotineTransaction.deleteMany({ where: { guillotineLeagueId } }),
+    prisma.guillotineTransaction.createMany({
+      data: plan.transactions.map(t => ({
+        ...t,
+        guillotineLeagueId,
+        adds: t.adds as Prisma.InputJsonValue | undefined,
+        drops: t.drops as Prisma.InputJsonValue | undefined,
+      })),
+    }),
+    prisma.guillotineDraftPick.deleteMany({ where: { guillotineLeagueId } }),
+    prisma.guillotineDraftPick.createMany({
+      data: plan.draftPicks.map(pick => ({ ...pick, guillotineLeagueId })),
+    }),
+  ]);
 }
 
 /**
