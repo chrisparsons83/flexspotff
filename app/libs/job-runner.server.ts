@@ -4,6 +4,7 @@ import {
   resetSleeperCallCount,
   sleeperCallCount,
 } from '~/libs/sleeper/client.server';
+import { recordSleeperCalls } from '~/models/scheduledJobRun.server';
 
 /**
  * What a job body hands back. Everything here is posted to the scheduler as the
@@ -75,6 +76,12 @@ export async function runJob(
   }
 
   try {
+    await recordSleeperCalls(name, sleeperCalls, new Date());
+  } catch (error) {
+    console.error(`Could not record Sleeper calls of job ${name}:`, error);
+  }
+
+  try {
     await prisma.$disconnect();
   } catch (error) {
     console.error(`Job ${name} could not disconnect from the database:`, error);
@@ -96,13 +103,11 @@ async function recordJobRun(
     lastSleeperCalls?: number;
   },
 ) {
-  // Each finished run adds its count to the running total.
-  const sleeperCalls = data.lastSleeperCalls ?? 0;
   try {
     await prisma.scheduledJobRun.upsert({
       where: { name },
-      update: { ...data, totalSleeperCalls: { increment: sleeperCalls } },
-      create: { name, ...data, totalSleeperCalls: sleeperCalls },
+      update: data,
+      create: { name, ...data },
     });
   } catch (error) {
     console.error(`Could not record run of job ${name}:`, error);

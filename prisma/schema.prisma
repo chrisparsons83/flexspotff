@@ -1496,6 +1496,15 @@ model ScheduledJobRun {
   // Requests made to Sleeper, retries included - see sleeperCallCount() in
   // app/libs/sleeper/client.server.ts.
   lastSleeperCalls     Int?
-  totalSleeperCalls    Int       @default(0)
   updatedAt            DateTime  @updatedAt
+}
+
+// Sleeper requests per job per UTC day, so the admin scheduler page can show a
+// rolling week. Days older than that are deleted as new runs are recorded.
+model SleeperCallDay {
+  jobName String
+  day     DateTime @db.Date
+  calls   Int      @default(0)
+
+  @@id([jobName, day])
 }
