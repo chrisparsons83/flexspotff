@@ -12,7 +12,10 @@ import { EmptyState } from '~/components/ui/empty-state';
 import { Section } from '~/components/ui/section';
 import { prisma } from '~/db.server';
 import type { PickerPlayer, PlayerUsage } from '~/libs/dfs-survivor/picker';
-import { decoratePickerPlayers } from '~/libs/dfs-survivor/picker';
+import {
+  decoratePickerPlayers,
+  isCurrentDefenseOrNotDefense,
+} from '~/libs/dfs-survivor/picker';
 import {
   getSeasonTotalsByPlayer,
   getWeekScoresByPlayer,
@@ -219,6 +222,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!player?.currentNFLTeam) {
       return typedjson<ActionResponse>({
         error: `No current team on file for the player picked at ${slot}.`,
+      });
+    }
+
+    // A page loaded before the picker hid the old OAK defense can still post it.
+    if (!isCurrentDefenseOrNotDefense(player)) {
+      return typedjson<ActionResponse>({
+        error: `${player.fullName} is no longer a current defense. Pick ${player.currentNFLTeam.sleeperId} instead.`,
       });
     }
 

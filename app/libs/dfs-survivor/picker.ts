@@ -53,7 +53,9 @@ export type PlayerUsage = {
  * Raiders ("OAK") is kept for old drafts and points at LV, and without this it
  * showed up as a second, never-scoring LV defense.
  */
-function isCurrentDefenseOrNotDefense(player: PickerPlayerInput) {
+export function isCurrentDefenseOrNotDefense(
+  player: Pick<PickerPlayerInput, 'position' | 'sleeperId' | 'currentNFLTeam'>,
+) {
   if (player.position !== 'DEF') return true;
   return player.sleeperId === player.currentNFLTeam?.sleeperId;
 }
