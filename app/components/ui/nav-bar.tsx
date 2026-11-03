@@ -85,9 +85,10 @@ export function NavBar(props: Props) {
             className={cn('flex shrink-0 items-center', FOCUS_RING)}
           >
             {/* Centring the box would lift the name, since the box
-                includes the bubble's tail; down 2px sits it on the nav
-                labels' baseline. */}
-            <Logo className='h-7 w-auto translate-y-0.5' />
+                includes the bubble's tail. Its capitals are taller than the
+                nav labels', so down 3px centres them on the labels by eye;
+                sharing a baseline left the name looking high. */}
+            <Logo className='h-7 w-auto translate-y-[3px]' />
           </Link>
 
           <nav aria-label='Main' className='hidden md:block'>

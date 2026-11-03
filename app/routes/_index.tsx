@@ -45,16 +45,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     season ? getCurrentNflWeek(season.year, new Date()) : null,
     season ? getNewestWeekTeamGameByYear(season.year) : null,
     season ? getGamesOverview(season, { signedIn, leaders: LEADERS }) : [],
-    season
-      ? getSideLeaguesOverview({ leaders: LEADERS, guillotineEach: LEADERS })
-      : null,
+    season ? getSideLeaguesOverview({ leaders: LEADERS }) : null,
   ]);
 
   return typedjson({
     year: season?.year ?? null,
     week,
-    // The week the heading links to: the newest with scores, since the
-    // current week's board is empty until its games are played.
+    // The week the heading names and links to: the newest with scores, since
+    // the current week's board is empty until its games are played.
     scoredWeek: scored?._max.week ?? null,
     signedIn,
     // The Omni archive has no week to report.
@@ -133,7 +131,7 @@ export default function Index() {
         <Section
           title={
             week && week <= LAST_PLAYOFF_WEEK
-              ? `Week ${week}`
+              ? `Week ${scoredWeek ?? week}`
               : `${year} Leagues`
           }
           to={

@@ -1,5 +1,6 @@
 import type { SummaryRow } from '~/components/ui/summary-card';
 import { prisma } from '~/db.server';
+import { fSquaredThroughWeek } from '~/libs/f-squared/through-week';
 import { getSeasonLeaders, HISTORY_PODIUM } from '~/libs/games/history.server';
 import { getLastWeeks, type WeeklyGame } from '~/libs/games/last-week.server';
 import { entryLabel, poolTitle } from '~/libs/survivor/views';
@@ -31,7 +32,7 @@ const weekStatus = (state: WeekState | null) =>
   !state
     ? 'No weeks yet'
     : state.isScored
-    ? `Week ${state.week} scored`
+    ? `Through week ${state.week}`
     : state.isOpen
     ? `Week ${state.week} open for picks`
     : `Week ${state.week} not open yet`;
@@ -42,6 +43,8 @@ export type GameOverview = {
   status: string;
   /** The reader's entry for the week, while picks are open to them. */
   statusHref?: string;
+  /** The reader's entries, for a game whose status is not a link to them. */
+  editHref?: string;
   /** A link on another site, after the status. */
   statusLink?: { label: string; href: string };
   /** The top of this season's table, or each pool for Survivor. */
@@ -88,25 +91,35 @@ export async function getGamesOverview(
   const years = year ? [year] : [];
   const noTotals: SeasonTotals = new Map();
 
-  const [qb, pool, locks, dfs, survivor, omni, ...totals] = await Promise.all([
-    year ? getQBStreamingWeeks(year) : [],
-    year ? getPoolWeeksByYear(year) : [],
-    year ? getLocksWeeksByYear(year) : [],
-    year
-      ? prisma.dFSSurvivorUserWeek.findFirst({
-          where: { year, isScored: true },
-          orderBy: { week: 'desc' },
-          select: { week: true },
-        })
-      : null,
-    getLatestSurvivorPools(),
-    getLatestOmniPodium(),
-    year ? qbStreamingSeasonTotals(years) : noTotals,
-    year ? spreadPoolSeasonTotals(years) : noTotals,
-    year ? locksSeasonTotals(years) : noTotals,
-    year ? dfsSurvivorSeasonTotals(years) : noTotals,
-    year ? fSquaredSeasonTotals(years) : noTotals,
-  ] as const);
+  const [qb, pool, locks, dfs, survivor, omni, fSquaredTeams, ...totals] =
+    await Promise.all([
+      year ? getQBStreamingWeeks(year) : [],
+      year ? getPoolWeeksByYear(year) : [],
+      year ? getLocksWeeksByYear(year) : [],
+      year
+        ? prisma.dFSSurvivorUserWeek.findFirst({
+            where: { year, isScored: true },
+            orderBy: { week: 'desc' },
+            select: { week: true },
+          })
+        : null,
+      getLatestSurvivorPools(),
+      getLatestOmniPodium(),
+      year
+        ? prisma.team.findMany({
+            where: { league: { year } },
+            select: {
+              pointsFor: true,
+              TeamGames: { select: { week: true, pointsScored: true } },
+            },
+          })
+        : [],
+      year ? qbStreamingSeasonTotals(years) : noTotals,
+      year ? spreadPoolSeasonTotals(years) : noTotals,
+      year ? locksSeasonTotals(years) : noTotals,
+      year ? dfsSurvivorSeasonTotals(years) : noTotals,
+      year ? fSquaredSeasonTotals(years) : noTotals,
+    ] as const);
 
   const [qbLeaders, poolLeaders, locksLeaders, dfsLeaders, fSquaredLeaders] =
     year
@@ -165,6 +178,13 @@ export async function getGamesOverview(
         }),
     };
   };
+
+  const fSquaredWeek = fSquaredThroughWeek(
+    fSquaredTeams.map(team => ({
+      pointsFor: team.pointsFor,
+      games: team.TeamGames,
+    })),
+  );
 
   const qbWeek = qb[0];
   const poolWeek = pool.find(week => week.isOpen) ?? pool[0];
@@ -240,8 +260,8 @@ export async function getGamesOverview(
     {
       name: 'DFS Survivor',
       to: '/games/dfs-survivor',
-      status: dfs ? `Scored through week ${dfs.week}` : 'No weeks scored yet',
-      statusHref:
+      status: dfs ? `Through week ${dfs.week}` : 'No weeks scored yet',
+      editHref:
         signedIn && season?.isOpenForDFSSurvivor
           ? '/games/dfs-survivor/entries'
           : undefined,
@@ -252,7 +272,11 @@ export async function getGamesOverview(
     {
       name: 'F²',
       to: '/games/f-squared',
-      status: season?.isOpenForFSquared ? 'Entries open' : 'Entries closed',
+      status: season?.isOpenForFSquared
+        ? 'Entries open'
+        : fSquaredWeek
+        ? `Through week ${fSquaredWeek}`
+        : '',
       statusHref:
         signedIn && season?.isOpenForFSquared
           ? '/games/f-squared/entries'
@@ -307,10 +331,8 @@ function survivorSummary(pools: SurvivorPool[], maxNames: number) {
       : [];
 
   if (alive.length > 0 && alive.length <= maxNames) {
-    const pool = live[0]!;
     return {
-      // Only one pool runs at a time, so its name adds nothing.
-      status: `${alive.length} of ${pool.entries.length} alive.`,
+      status: 'Managers Remaining',
       rows: alive
         .map(entry => ({ entry, name: entryLabel(entry) }))
         .sort((a, b) => a.name.localeCompare(b.name))

@@ -4,6 +4,7 @@ import {
   buildMemberWeek,
   cupFacts,
   type MemberWeekFacts,
+  placeAndScore,
   pointsLeague,
 } from './week';
 import { describe, expect, it } from 'vitest';
@@ -106,6 +107,37 @@ describe('buildMemberWeek', () => {
     ]);
   });
 
+  it('says where this week’s entry stands when there is nothing to enter', () => {
+    const entry = (week: Parameters<typeof buildMemberWeek>[0]['locks']) =>
+      buildMemberWeek({ ...nothing, locks: week, standings: { locks: played } })
+        .rows[0]?.entry;
+    const played = {
+      rank: 1,
+      of: 2,
+      total: '6',
+      lastWeek: null,
+      lastWeekRank: null,
+    };
+    // A scored week stays marked open, so it is waiting on the next one.
+    expect(entry({ ...openWeek(2), isScored: true })).toBe('Not Open Yet');
+    expect(entry({ ...openWeek(0), isOpen: false })).toBe('Not Open Yet');
+    expect(entry(openWeek(2))).toBe('Entered');
+    expect(entry(openWeek(0))).toBeNull();
+    // Nothing follows the last week.
+    expect(entry({ ...openWeek(2), week: 17, isScored: true })).toBeNull();
+  });
+
+  it('calls a lone survivor pool Survivor, and names them when there are more', () => {
+    const pool = (poolId: string) => ({ poolId, name: poolId, alive: true });
+    const labels = (survivor: MemberWeekFacts['survivor']) =>
+      buildMemberWeek({ ...nothing, survivor }).rows.map(row => row.label);
+    expect(labels([pool('Part 1')])).toEqual(['Survivor']);
+    expect(labels([pool('Part 1'), pool('Part 2')])).toEqual([
+      'Part 1',
+      'Part 2',
+    ]);
+  });
+
   it('shows where the member stands in each game they have played', () => {
     const { rows } = buildMemberWeek({
       ...nothing,
@@ -113,7 +145,7 @@ describe('buildMemberWeek', () => {
         spreadPool: {
           rank: 3,
           of: 24,
-          total: '1240 bank',
+          total: '1240',
           lastWeek: '+40',
           lastWeekRank: 5,
         },
@@ -135,7 +167,7 @@ describe('buildMemberWeek', () => {
         row.lastWeekPlace,
       ]),
     ).toEqual([
-      ['Spread Pool', '3rd', '1240 bank', '+40', '5th'],
+      ['Spread Pool', '3rd', '1240', '+40', '5th'],
       ['Locks Challenge', '11th', '4', null, null],
     ]);
   });
@@ -200,6 +232,15 @@ describe('buildMemberWeek', () => {
   });
 });
 
+describe('placeAndScore', () => {
+  it('joins a place and score, or gives whichever there is', () => {
+    expect(placeAndScore('9th', '50.40')).toBe('9th (50.40)');
+    expect(placeAndScore(null, 'No Picks')).toBe('No Picks');
+    expect(placeAndScore('9th', null)).toBe('9th');
+    expect(placeAndScore(null, null)).toBeNull();
+  });
+});
+
 describe('pointsLeague', () => {
   const scores = [
     { entrant: 'me', week: 1, points: 100 },
@@ -215,7 +256,7 @@ describe('pointsLeague', () => {
 
   it('places the season on every score, and last week on finished ones', () => {
     expect(pointsLeague(scores, 'me', 3)).toEqual({
-      season: { rank: 2, of: 3 },
+      season: { rank: 2, of: 3, points: 240 },
       lastWeek: { rank: 1, of: 3, week: 2, points: 130 },
     });
   });
@@ -236,7 +277,7 @@ describe('pointsLeague', () => {
 
   it('has no last week before one is finished', () => {
     expect(pointsLeague(scores.slice(0, 3), 'me', 1)).toEqual({
-      season: { rank: 2, of: 3 },
+      season: { rank: 2, of: 3, points: 100 },
       lastWeek: null,
     });
   });
@@ -352,7 +393,7 @@ describe('dashboard rows for the cup, D12 and Autodraft BBM', () => {
 
   it('gives D12 and Autodraft BBM their week and season, in nav order', () => {
     const league = {
-      season: { rank: 3, of: 12 },
+      season: { rank: 3, of: 12, points: 1040.5 },
       lastWeek: { rank: 2, of: 12, week: 7, points: 142.3 },
     };
     const { rows } = buildMemberWeek({
@@ -363,8 +404,8 @@ describe('dashboard rows for the cup, D12 and Autodraft BBM', () => {
     expect(rows.map(row => row.label)).toEqual(['D12', 'Autodraft BBM']);
     expect(rows[0]).toMatchObject({
       section: 'Side Leagues',
-      lastWeek: 'Week 7: 142.30 pts, 2nd of 12',
-      thisWeek: '3rd of 12 for the season',
+      lastWeek: '2nd (142.30)',
+      thisWeek: '3rd (1040.50)',
       href: '/side-leagues/d12',
     });
   });

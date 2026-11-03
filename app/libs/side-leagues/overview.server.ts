@@ -2,8 +2,10 @@ import type { SummaryRow } from '~/components/ui/summary-card';
 import { prisma } from '~/db.server';
 import { buildStandings as buildBestBallStandings } from '~/libs/best-ball/views';
 import { getSeasonLeaders } from '~/libs/games/history.server';
+import { GUILLOTINE_FINAL_WEEK } from '~/libs/guillotine/chops';
 import { pts, teamName } from '~/libs/guillotine/display';
-import { cutLineForWeek } from '~/libs/guillotine/views';
+import { buildLiveChopLine } from '~/libs/guillotine/live.server';
+import type { LiveChopLine } from '~/libs/guillotine/live.server';
 import {
   getBestBallLeagueForPage,
   getLatestBestBallLeague,
@@ -26,14 +28,7 @@ const PLACES = ['Champion', 'Runner-up', 'Third'];
  * This season's side leagues at a glance: each guillotine league's survivors
  * and chop line, the D12 leaders and the Autodraft BBM leaders.
  */
-export async function getSideLeaguesOverview({
-  leaders,
-  guillotineEach = Math.ceil(leaders / 2),
-}: {
-  leaders: number;
-  /** How many rows from each end of a guillotine week. */
-  guillotineEach?: number;
-}) {
+export async function getSideLeaguesOverview({ leaders }: { leaders: number }) {
   const [guillotine, d12, bestBall] = await Promise.all([
     getLatestGuillotineLeagues(),
     getD12Summary(leaders),
@@ -43,8 +38,10 @@ export async function getSideLeaguesOverview({
   return {
     guillotine: guillotine && {
       year: guillotine.year,
-      leagues: guillotine.leagues.map(league =>
-        guillotineSummary(league, guillotineEach),
+      leagues: await Promise.all(
+        guillotine.leagues.map(league =>
+          guillotineSummary(league, guillotine.year),
+        ),
       ),
     },
     d12,
@@ -56,22 +53,91 @@ type GuillotineLeague = NonNullable<
   Awaited<ReturnType<typeof getLatestGuillotineLeagues>>
 >['leagues'][number];
 
+const member = (team: GuillotineLeague['teams'][number]) => ({
+  user: team.user,
+  label: teamName(team),
+});
+
+/** A guillotine card's title, naming the week its table is for. */
+const weekTitle = (name: string, week: number) => `${name} · Week ${week}`;
+
 /**
- * A live league: who is left, who went last and at what score, and the
- * survivors who came closest to going with them. A finished one: its podium.
+ * A week being played: every surviving team's points so far, ranked by where
+ * it is projected to finish, with the chop line above the team on course to
+ * go. Once a team's games are over its projection is just its score, so it is
+ * left out.
  */
-function guillotineSummary(
+export function liveGuillotineSummary({
+  league,
+  week,
+  live,
+}: {
+  league: Pick<GuillotineLeague, 'id' | 'name' | 'teams'>;
+  week: number;
+  live: (Pick<
+    LiveChopLine[number],
+    'rosterId' | 'points' | 'projected' | 'playersRemaining' | 'lineupSet'
+  > & { rank: number; onTheBlock: boolean })[];
+}): SideLeagueSummary {
+  const teamByRoster = new Map(league.teams.map(t => [t.rosterId, t]));
+  const onTheBlock = live.findIndex(row => row.onTheBlock);
+
+  return {
+    title: weekTitle(league.name, week),
+    to: `/side-leagues/guillotine/${league.id}`,
+    status: '',
+    rows: live.flatMap((row, index) => {
+      const team = teamByRoster.get(row.rosterId);
+      if (!team) return [];
+      return [
+        {
+          key: String(row.rosterId),
+          rank: row.rank,
+          ...member(team),
+          value: pts(row.points),
+          detail: !row.lineupSet
+            ? 'No lineup'
+            : row.playersRemaining > 0
+            ? `Proj. ${pts(row.projected, 1)}`
+            : undefined,
+          divider: index === onTheBlock ? ('cut' as const) : undefined,
+          tone: row.onTheBlock ? ('negative' as const) : undefined,
+        },
+      ];
+    }),
+    empty: 'No scores for the week yet.',
+  };
+}
+
+/**
+ * A league mid-week: the live chop line, from the first points of the week
+ * until Sleeper closes it. Between weeks: the last week's table, with whoever
+ * was chopped below the line. A finished one: its podium.
+ */
+async function guillotineSummary(
   league: GuillotineLeague,
-  each: number,
-): SideLeagueSummary {
+  year: number,
+): Promise<SideLeagueSummary> {
   const base = {
     title: league.name,
     to: `/side-leagues/guillotine/${league.id}`,
   };
-  const member = (team: GuillotineLeague['teams'][number]) => ({
-    user: team.user,
-    label: teamName(team),
-  });
+
+  const liveWeek = league.lastScoredWeek + 1;
+  const isPlayingLiveWeek =
+    !league.isComplete &&
+    league.lastScoredWeek < GUILLOTINE_FINAL_WEEK &&
+    league.teams.some(team =>
+      team.weekScores.some(s => s.week === liveWeek && s.points > 0),
+    );
+  if (isPlayingLiveWeek) {
+    const live = await buildLiveChopLine({
+      year,
+      week: liveWeek,
+      teams: league.teams,
+    });
+    return liveGuillotineSummary({ league, week: liveWeek, live });
+  }
 
   if (league.isComplete) {
     return {
@@ -97,19 +163,6 @@ function guillotineSummary(
     };
   }
 
-  const scores = league.teams.flatMap(team =>
-    team.weekScores.map(score => ({
-      rosterId: team.rosterId,
-      week: score.week,
-      points: score.points,
-      players: [],
-    })),
-  );
-  const line = cutLineForWeek(scores, week);
-  const alive = league.teams.filter(
-    team => team.choppedWeek === null && team.finish !== 1,
-  );
-
   // The week's table, best first: everyone who played it, the chopped last.
   const table = league.teams
     .filter(team => team.choppedWeek === null || team.choppedWeek >= week)
@@ -123,39 +176,18 @@ function guillotineSummary(
       a.chopped !== b.chopped ? (a.chopped ? 1 : -1) : b.points - a.points,
     );
 
-  // The top and bottom of it, split where they meet if there is a gap.
-  const shown =
-    table.length <= each * 2
-      ? table.map((row, index) => ({ ...row, rank: index + 1 }))
-      : [
-          ...table
-            .slice(0, each)
-            .map((row, index) => ({ ...row, rank: index + 1 })),
-          ...table.slice(-each).map((row, index) => ({
-            ...row,
-            rank: table.length - each + index + 1,
-          })),
-        ];
-  const firstChopped = shown.findIndex(row => row.chopped);
+  const firstChopped = table.findIndex(row => row.chopped);
 
   return {
     ...base,
-    status: `${alive.length} of ${
-      league.teams.length
-    } alive after week ${week}.${
-      line !== null ? ` The cut was ${pts(line)}.` : ''
-    }`,
-    rows: shown.map((row, index) => ({
+    title: weekTitle(league.name, week),
+    status: '',
+    rows: table.map((row, index) => ({
       key: String(row.team.rosterId),
-      rank: row.rank,
+      rank: index + 1,
       ...member(row.team),
       value: pts(row.points),
-      divider:
-        index === firstChopped
-          ? ('cut' as const)
-          : index > 0 && row.rank !== shown[index - 1]!.rank + 1
-          ? ('gap' as const)
-          : undefined,
+      divider: index === firstChopped ? ('cut' as const) : undefined,
       tone: row.chopped ? ('negative' as const) : undefined,
     })),
     empty: 'No scores for the week yet.',
@@ -179,7 +211,7 @@ async function getD12Summary(count: number): Promise<SideLeagueSummary | null> {
   return {
     title: `${year} Standings`,
     to: `/side-leagues/d12/${year}`,
-    status: week ? `Points through week ${week}.` : 'No weeks scored yet.',
+    status: week ? `Through week ${week}` : 'No weeks scored yet.',
     rows: (await getSeasonLeaders(totals, year, count)).map(row => ({
       key: row.user.id,
       rank: row.rank,
@@ -203,12 +235,19 @@ async function getBestBallSummary(
   const league = await getBestBallLeagueForPage(latest.season.year);
   if (!league) return null;
 
+  // The newest week in the totals, which includes the one being played. Sleeper
+  // only moves lastScoredWeek on once that week closes.
+  const newestWeek = Math.max(
+    0,
+    ...league.teams.flatMap(team => team.weekScores.map(score => score.week)),
+  );
+
   return {
     ...base,
     status: league.isComplete
       ? 'Final, by points for.'
-      : league.lastScoredWeek > 0
-      ? `Points for through week ${league.lastScoredWeek}.`
+      : newestWeek > 0
+      ? `Through week ${newestWeek}`
       : 'No weeks scored yet.',
     rows: buildBestBallStandings(league.teams)
       .slice(0, count)

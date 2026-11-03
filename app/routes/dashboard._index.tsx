@@ -4,7 +4,7 @@ import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import type { DashboardSection } from '~/libs/dashboard/week';
+import { placeAndScore, type DashboardSection } from '~/libs/dashboard/week';
 import { getMemberWeek } from '~/libs/dashboard/week.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -43,14 +43,12 @@ export default function YourWeek() {
               <Table
                 headers={[
                   'Game',
-                  'This Week',
-                  'Standing',
-                  'Season',
+                  'This Week’s Entry',
                   'Last Week',
-                  'Last Week Place',
+                  'Season Standing',
                 ]}
-                numericColumns={[3, 4]}
-                primaryColumns={[1, 2]}
+                numericColumns={[2, 3]}
+                primaryColumns={[1, 3]}
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
@@ -70,13 +68,35 @@ export default function YourWeek() {
                           Not Entered
                         </Link>
                       ) : (
-                        <span className='text-muted-foreground'>–</span>
+                        <span className='text-muted-foreground'>
+                          {row.entry ?? '–'}
+                        </span>
                       )}
                     </td>
-                    <td>{row.standing ?? '–'}</td>
-                    <td className='text-right'>{row.season ?? '–'}</td>
+                    <td className='text-right'>
+                      {placeAndScore(row.lastWeekPlace, row.lastWeek) ?? '–'}
+                    </td>
+                    <td className='text-right'>
+                      {placeAndScore(row.standing, row.season) ?? '–'}
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            ) : section === 'Side Leagues' ? (
+              <Table
+                headers={['Game', 'Last Week', 'Season Standing']}
+                numericColumns={[1, 2]}
+                primaryColumns={[2]}
+              >
+                {inSection.map(row => (
+                  <tr key={row.href}>
+                    <td className='font-semibold'>
+                      <Link to={row.href} variant='quiet'>
+                        {row.label}
+                      </Link>
+                    </td>
                     <td className='text-right'>{row.lastWeek ?? '–'}</td>
-                    <td>{row.lastWeekPlace ?? '–'}</td>
+                    <td className='text-right'>{row.thisWeek ?? '–'}</td>
                   </tr>
                 ))}
               </Table>

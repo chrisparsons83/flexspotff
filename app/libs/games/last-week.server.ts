@@ -110,9 +110,9 @@ async function locks(year: number) {
       return {
         userId,
         score,
-        label: `${score} (${sum.isWin ?? 0}-${sum.isLoss ?? 0}-${
+        label: `${score}, ${sum.isWin ?? 0}-${sum.isLoss ?? 0}-${
           sum.isTie ?? 0
-        })`,
+        }`,
       };
     }),
   );

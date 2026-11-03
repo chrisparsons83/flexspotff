@@ -20,6 +20,8 @@ export type SummaryRow = {
   /** Shown in place of a member: a team, pool or owner name. */
   label?: string;
   value: string;
+  /** Quieter text before the value, such as a live projection. */
+  detail?: string;
   /**
    * A line above the row: `gap` where rows in between are left out, `cut`
    * where a guillotine's chop line falls.
@@ -138,6 +140,11 @@ export function SummaryRows({
             )}
           </span>
           <span className='text-right font-semibold tabular-nums'>
+            {row.detail && (
+              <span className='mr-2 font-normal text-muted-foreground'>
+                {row.detail}
+              </span>
+            )}
             {row.value}
           </span>
         </li>
