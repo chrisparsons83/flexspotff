@@ -10,7 +10,10 @@ import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Section } from '~/components/ui/section';
-import { getScheduledJobRuns } from '~/models/scheduledJobRun.server';
+import {
+  getScheduledJobRuns,
+  getSleeperCallsPastWeek,
+} from '~/models/scheduledJobRun.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 import { getScheduler } from '~/services/scheduler.server';
 import { cronToHuman } from '~/utils/cron';
@@ -64,8 +67,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Straight from the registry - listing jobs shouldn't need to construct a
   // Bree instance inside the web server.
-  const runs = await getScheduledJobRuns();
   const now = new Date();
+  const [runs, sleeperCallsPastWeek] = await Promise.all([
+    getScheduledJobRuns(),
+    getSleeperCallsPastWeek(now),
+  ]);
 
   // Ages are worded here rather than in the component, so the server render
   // and the client hydration agree on "now".
@@ -84,6 +90,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         (!run.lastSucceededAt || run.lastFailedAt > run.lastSucceededAt)
           ? run.lastError
           : null,
+      lastSleeperCalls: run?.lastSleeperCalls ?? null,
+      sleeperCallsPastWeek: sleeperCallsPastWeek[job.name] ?? 0,
     };
   });
 
@@ -157,6 +165,14 @@ export default function AdminSchedulerIndex() {
                           .join(', ')
                       : 'No runs recorded yet'}
                   </p>
+                  {job.lastSleeperCalls !== null && (
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Sleeper calls:{' '}
+                      {job.lastSleeperCalls.toLocaleString('en-US')} last run,{' '}
+                      {job.sleeperCallsPastWeek.toLocaleString('en-US')} past 7
+                      days
+                    </p>
+                  )}
                   {job.lastError && (
                     <p className='text-sm text-negative mt-1'>
                       {job.lastError}

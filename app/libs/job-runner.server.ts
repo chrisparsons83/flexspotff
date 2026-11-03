@@ -1,5 +1,10 @@
 import { parentPort, workerData } from 'worker_threads';
 import { prisma } from '~/db.server';
+import {
+  resetSleeperCallCount,
+  sleeperCallCount,
+} from '~/libs/sleeper/client.server';
+import { recordSleeperCalls } from '~/models/scheduledJobRun.server';
 
 /**
  * What a job body hands back. Everything here is posted to the scheduler as the
@@ -26,13 +31,15 @@ export type JobResult = {
  * Each run is also recorded in `ScheduledJobRun`, so the admin scheduler page
  * can show when a job last ran and flag a scheduler that has stopped. Only runs
  * the scheduler process started count towards that heartbeat - see `JobTrigger`
- * in app/services/scheduler.server.ts.
+ * in app/services/scheduler.server.ts. The run also counts the requests it made
+ * to Sleeper, so the cost of each job is measured rather than guessed.
  */
 export async function runJob(
   name: string,
   job: () => Promise<JobResult | void>,
 ) {
   const startedAt = new Date();
+  resetSleeperCallCount();
   const scheduled = workerData?.trigger === 'scheduled';
   await recordJobRun(name, {
     lastStartedAt: startedAt,
@@ -46,13 +53,19 @@ export async function runJob(
     console.error(`Job ${name} failed:`, error);
     result = { success: false, error: errorMessage(error) };
   }
+  const sleeperCalls = sleeperCallCount();
+  result.sleeperCalls = sleeperCalls;
 
   parentPort?.postMessage(result);
 
   if (result.success) {
-    await recordJobRun(name, { lastSucceededAt: new Date() });
+    await recordJobRun(name, {
+      lastSucceededAt: new Date(),
+      lastSleeperCalls: sleeperCalls,
+    });
   } else {
     await recordJobRun(name, {
+      lastSleeperCalls: sleeperCalls,
       lastFailedAt: new Date(),
       lastError:
         typeof result.error === 'string'
@@ -60,6 +73,12 @@ export async function runJob(
           : result.message ?? 'Unknown error',
     });
     process.exitCode = 1;
+  }
+
+  try {
+    await recordSleeperCalls(name, sleeperCalls, new Date());
+  } catch (error) {
+    console.error(`Could not record Sleeper calls of job ${name}:`, error);
   }
 
   try {
@@ -81,6 +100,7 @@ async function recordJobRun(
     lastSucceededAt?: Date;
     lastFailedAt?: Date;
     lastError?: string;
+    lastSleeperCalls?: number;
   },
 ) {
   try {

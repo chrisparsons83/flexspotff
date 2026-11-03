@@ -1,4 +1,4 @@
-import { sleeperFetch } from './client.server';
+import { countSleeperCall, sleeperFetch } from './client.server';
 import {
   sleeperAdpJson,
   sleeperBestBallDraftPicksJson,
@@ -159,6 +159,7 @@ export async function getNflScores(year: number, week: number) {
             week
           }
         }`;
+  countSleeperCall();
   const result = await graphQLClient.request<SleeperGraphqlNflGames>(query);
   return sleeperGraphqlNflGames.parse(result);
 }
