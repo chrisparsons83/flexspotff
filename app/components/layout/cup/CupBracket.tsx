@@ -1,10 +1,14 @@
+import CupGameDialog from './CupGameDialog';
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import { type ReactNode, useState } from 'react';
 import MemberName from '~/components/ui/MemberName';
 import { CollapsibleTrigger } from '~/components/ui/collapsible';
 import { FILLS, leagueFill } from '~/components/ui/fills';
 import { ProfileLink } from '~/components/ui/profile-link';
+import { FOCUS_RING } from '~/components/ui/styles';
 import type { CupBracketData } from '~/libs/cup/bracket.server';
+import type { RoundTotal } from '~/libs/cup/lineups';
+import { roundTotalKey } from '~/libs/cup/lineups';
 import { cn } from '~/utils';
 import { roundNameMapping } from '~/utils/constants';
 
@@ -17,8 +21,9 @@ const LINE = 'border-border';
 
 /**
  * The cup, a column per round. Each game is two lines: seed in the team's
- * league colour, manager, and score for the round. The winner is bold and
- * the loser drops back.
+ * league colour, manager, and score for the round, with its projection under
+ * that where there is one. The winner is bold and the loser drops back. A
+ * game's scores open its lineups.
  *
  * On a wide screen lines join each pair of games to the game their winners
  * meet in. That works because games come in bracket order: games 2k and
@@ -30,7 +35,13 @@ export default function CupBracket({
   cupGames,
   scoreArray,
   weeksByRound,
-}: Bracket) {
+  roundTotals,
+}: Bracket & { roundTotals: Record<string, RoundTotal> }) {
+  const [opened, setOpened] = useState<{
+    game: CupGame;
+    round: string;
+    weeks: string | null;
+  } | null>(null);
   const rounds = roundNameMapping.map(round => ({
     ...round,
     games: cupGames.filter(game => game.round === round.key),
@@ -42,12 +53,18 @@ export default function CupBracket({
 
   return (
     <div className='grid gap-4 lg:grid-flow-col lg:auto-cols-fr'>
+      {opened && <CupGameDialog {...opened} onClose={() => setOpened(null)} />}
       {rounds.map((round, index) => {
         const score = (side: Side) =>
           scoreArray.find(
             entry =>
               entry.teamId === side?.teamId && entry.mapping === round.key,
           )?.pointsScored;
+        const projected = (side: Side) =>
+          side
+            ? roundTotals[roundTotalKey(round.key, side.teamId)]?.projected
+            : null;
+        const weeks = weeksLabel(weeksByRound[round.key] ?? []);
         const last = index === rounds.length - 1;
         const pairs = last
           ? [round.games]
@@ -59,7 +76,7 @@ export default function CupBracket({
           <Round
             key={round.key}
             label={round.label}
-            weeks={weeksLabel(weeksByRound[round.key] ?? [])}
+            weeks={weeks}
             defaultOpen={index === Math.max(current, 0)}
           >
             {pairs.map(pair => (
@@ -88,12 +105,20 @@ export default function CupBracket({
                       <SideRow
                         side={game.topTeam}
                         score={score(game.topTeam)}
+                        projected={projected(game.topTeam)}
+                        onOpen={() =>
+                          setOpened({ game, round: round.label, weeks })
+                        }
                         won={game.winningTeamId === game.topTeamId}
                         lost={game.losingTeamId === game.topTeamId}
                       />
                       <SideRow
                         side={game.bottomTeam}
                         score={score(game.bottomTeam)}
+                        projected={projected(game.bottomTeam)}
+                        onOpen={() =>
+                          setOpened({ game, round: round.label, weeks })
+                        }
                         won={game.winningTeamId === game.bottomTeamId}
                         lost={game.losingTeamId === game.bottomTeamId}
                         bye={game.containsBye}
@@ -199,21 +224,26 @@ function weeksLabel(weeks: number[]) {
 function SideRow({
   side,
   score,
+  projected,
+  onOpen,
   won,
   lost,
   bye = false,
 }: {
   side: Side;
   score: number | undefined;
+  projected: number | null | undefined;
+  onOpen: () => void;
   won: boolean;
   lost: boolean;
   bye?: boolean;
 }) {
   const fill = side ? leagueFill(side.team.league.name) : null;
+  const hasProjection = typeof projected === 'number';
   return (
     <div
       className={cn(
-        'grid min-h-8 grid-cols-[1.5rem_1fr_auto] items-center gap-2 px-1 py-0.5',
+        'grid min-h-8 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-x-2 px-1 py-0.5',
         won && 'font-bold',
         lost && 'text-muted-foreground',
       )}
@@ -239,7 +269,30 @@ function SideRow({
               </ProfileLink>
             )}
       </span>
-      <span className='tabular-nums'>{score ? score.toFixed(2) : ''}</span>
+      {score || hasProjection ? (
+        <button
+          type='button'
+          onClick={onOpen}
+          aria-haspopup='dialog'
+          className={cn(
+            'grid justify-items-end tabular-nums hover:underline',
+            FOCUS_RING,
+          )}
+        >
+          {score ? <span className='text-base'>{score.toFixed(2)}</span> : null}
+          {hasProjection && (
+            <span
+              title='Projected'
+              className='text-sm font-normal italic text-muted-foreground/90'
+            >
+              <span className='sr-only'>Projected </span>
+              {projected.toFixed(2)}
+            </span>
+          )}
+        </button>
+      ) : (
+        <span />
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { getCupRoundTotals } from './lineups.server';
 import { typedjson } from 'remix-typedjson';
 import type { ScoreArray } from '~/models/cup.server';
 import { getCupByYear } from '~/models/cup.server';
@@ -68,8 +69,23 @@ export async function loadCupPage(year: number) {
     currentSeason?.year,
     'No cup that year',
   );
+  // Kept out of getCupBracket, which the dashboard also reads for its facts.
+  const roundTotals = bracket
+    ? await getCupRoundTotals(
+        year,
+        Object.entries(bracket.weeksByRound).map(([round, weeks]) => ({
+          round,
+          weeks,
+          teamIds: bracket.cupGames
+            .filter(game => game.round === round)
+            .flatMap(game => [game.topTeam?.teamId, game.bottomTeam?.teamId])
+            .filter((teamId): teamId is string => !!teamId),
+        })),
+      )
+    : {};
   return typedjson({
     year,
     bracket,
+    roundTotals,
   });
 }
