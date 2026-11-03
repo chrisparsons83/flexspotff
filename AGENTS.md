@@ -2,8 +2,9 @@
 
 ### Issue tracker
 
-Issues live in GitHub Issues on chrisparsons83/flexspotff (via `gh`). See
-`docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues on chrisparsons83/flexspotff (via `gh`). Read one
+with `gh issue view <n> --json title,body,comments,labels`; without `--json` it
+fails. More in `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
