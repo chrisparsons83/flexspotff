@@ -74,6 +74,12 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       "Refreshes every NFL player's DFS Survivor points and Sleeper projections, which the DFS Survivor entry picker sorts on. Hourly.",
   },
   {
+    name: 'sync-cup-lineups',
+    cron: '10 * * * *',
+    description:
+      "Reads each team's lineup for cup weeks yet to start, or works out its best projected one if Sleeper's has a gap or a player on bye, so the bracket can project them. Only calls Sleeper during the cup. Hourly at :10, after sync-player-scores.",
+  },
+  {
     name: 'post-waiver-report',
     cron: '20,35,50 0 * * 3',
     timezone: 'America/Los_Angeles',

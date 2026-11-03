@@ -4,7 +4,11 @@ import { EmptyState } from '~/components/ui/empty-state';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import type { DashboardSection } from '~/libs/dashboard/week';
+import {
+  placeAndScore,
+  type DashboardRow,
+  type DashboardSection,
+} from '~/libs/dashboard/week';
 import { getMemberWeek } from '~/libs/dashboard/week.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator } from '~/services/auth.server';
@@ -20,6 +24,33 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 const SECTIONS: DashboardSection[] = ['Leagues', 'Games', 'Side Leagues'];
+
+function LabelCell({ row }: { row: DashboardRow }) {
+  return (
+    <td className='font-semibold'>
+      <Link to={row.href} variant='quiet'>
+        {row.label}
+      </Link>
+    </td>
+  );
+}
+
+/** Last Week and Season Standing, as "3rd (282.58)". */
+function ResultCells({ row }: { row: DashboardRow }) {
+  return (
+    <>
+      <td className='text-right'>
+        {placeAndScore(
+          row.lastWeekPlace,
+          row.lastWeekInBrackets ?? row.lastWeek,
+        ) ?? '–'}
+      </td>
+      <td className='text-right'>
+        {placeAndScore(row.standing, row.season) ?? '–'}
+      </td>
+    </>
+  );
+}
 
 export default function YourWeek() {
   const { rows } = useTypedLoaderData<typeof loader>();
@@ -43,22 +74,16 @@ export default function YourWeek() {
               <Table
                 headers={[
                   'Game',
-                  'This Week',
-                  'Standing',
-                  'Season',
+                  'This Week’s Entry',
                   'Last Week',
-                  'Last Week Place',
+                  'Season Standing',
                 ]}
-                numericColumns={[3, 4]}
-                primaryColumns={[1, 2]}
+                numericColumns={[2, 3]}
+                primaryColumns={[1, 3]}
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
-                    <td className='font-semibold'>
-                      <Link to={row.href} variant='quiet'>
-                        {row.label}
-                      </Link>
-                    </td>
+                    <LabelCell row={row} />
                     <td>
                       {/* The same rule as a week still to enter: open,
                           and nothing in from them yet. */}
@@ -70,13 +95,25 @@ export default function YourWeek() {
                           Not Entered
                         </Link>
                       ) : (
-                        <span className='text-muted-foreground'>–</span>
+                        <span className='text-muted-foreground'>
+                          {row.entry ?? '–'}
+                        </span>
                       )}
                     </td>
-                    <td>{row.standing ?? '–'}</td>
-                    <td className='text-right'>{row.season ?? '–'}</td>
-                    <td className='text-right'>{row.lastWeek ?? '–'}</td>
-                    <td>{row.lastWeekPlace ?? '–'}</td>
+                    <ResultCells row={row} />
+                  </tr>
+                ))}
+              </Table>
+            ) : section === 'Side Leagues' ? (
+              <Table
+                headers={['League', 'Last Week', 'Season Standing']}
+                numericColumns={[1, 2]}
+                primaryColumns={[2]}
+              >
+                {inSection.map(row => (
+                  <tr key={row.href}>
+                    <LabelCell row={row} />
+                    <ResultCells row={row} />
                   </tr>
                 ))}
               </Table>
@@ -87,11 +124,7 @@ export default function YourWeek() {
               >
                 {inSection.map(row => (
                   <tr key={row.href}>
-                    <td className='font-semibold'>
-                      <Link to={row.href} variant='quiet'>
-                        {row.label}
-                      </Link>
-                    </td>
+                    <LabelCell row={row} />
                     <td className='text-muted-foreground'>
                       {row.lastWeek ?? '–'}
                     </td>

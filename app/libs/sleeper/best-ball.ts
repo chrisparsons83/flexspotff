@@ -27,7 +27,7 @@ export const SLOT_ELIGIBILITY: Record<string, string[]> = {
 const NON_SCORING_SLOTS = new Set(['BN', 'IR', 'TAXI']);
 
 /** The empty-slot marker, matching what TeamGame.starters uses. */
-const EMPTY_SLOT = '0';
+export const EMPTY_SLOT = '0';
 
 export type BestBallLineup = {
   /** Sleeper player IDs in slot order, '0' for a slot nothing could fill. */

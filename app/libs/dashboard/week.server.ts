@@ -195,7 +195,7 @@ async function standingsFacts(
   };
 
   const qb = place(qbTotals, total => total.toFixed(2));
-  const pool = place(poolTotals, net => `${STARTING_BANK + net} bank`);
+  const pool = place(poolTotals, net => `${STARTING_BANK + net}`);
   const locks = place(locksTotals, points => `${points}`);
   const dfs = place(dfsTotals, total => total.toFixed(2));
   const fSquared = place(fSquaredTotals, total => total.toFixed(2));
@@ -208,6 +208,7 @@ async function standingsFacts(
     const mine = week?.results.find(result => result.userId === userId);
     return {
       lastWeek: mine?.label ?? (week ? missing : null),
+      lastWeekInBrackets: mine?.inBrackets,
       lastWeekRank: mine?.rank ?? null,
     };
   };

@@ -20,7 +20,7 @@ const Summary = ({ summary }: { summary: SideLeagueSummary }) => (
   <SummaryCard
     title={summary.title}
     to={summary.to}
-    status={summary.status || undefined}
+    status={summary.status}
     rows={summary.rows}
     empty={summary.empty}
   />

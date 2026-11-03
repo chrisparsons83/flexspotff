@@ -87,15 +87,16 @@ function GameRow({
 }) {
   // Open to them and not entered: the call to action. Open and entered:
   // a way back to change it.
+  const editHref = game.statusHref ?? game.editHref;
   const action = mine?.enterHref ? (
     <Button asChild size='sm'>
       <Link to={mine.enterHref} variant='quiet'>
         Make Your Picks
       </Link>
     </Button>
-  ) : game.statusHref ? (
+  ) : editHref ? (
     <Button asChild size='sm' variant='secondary'>
-      <Link to={game.statusHref} variant='quiet'>
+      <Link to={editHref} variant='quiet'>
         Edit Your Picks
       </Link>
     </Button>

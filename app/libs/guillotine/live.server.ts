@@ -1,10 +1,11 @@
 import type { GameState, StarterLine } from './projection';
 import {
   chopLine,
-  gameProgress,
   projectStarter,
   projectTeam,
+  readStarter,
 } from './projection';
+import { EMPTY_SLOT } from '~/libs/sleeper/best-ball';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getPlayersBySleepersIds } from '~/models/players.server';
 
@@ -64,7 +65,9 @@ export async function buildLiveChopLine({
 
   const starterIds = Array.from(
     new Set(
-      alive.flatMap(team => team.score.starters.filter(id => id !== '0')),
+      alive.flatMap(team =>
+        team.score.starters.filter(id => id !== EMPTY_SLOT),
+      ),
     ),
   );
   const [players, games] = await Promise.all([
@@ -87,33 +90,24 @@ export async function buildLiveChopLine({
   const rows = alive.map(({ rosterId, score }) => {
     const starters: (StarterLine & LiveStarter)[] = score.starters.map(
       (sleeperId, index) => {
-        const player = playerById.get(sleeperId);
-        // A defense's Sleeper ID is its team abbreviation.
-        const nflTeam = player?.nflTeam ?? (player ? null : sleeperId);
-        const game = nflTeam ? gameByTeam.get(nflTeam) : undefined;
+        const { progress, ...starter } = readStarter(
+          sleeperId,
+          playerById.get(sleeperId),
+          gameByTeam,
+          now,
+        );
         const points = score.startingPlayerPoints[index] ?? 0;
         const projection = score.starterProjections[index] ?? 0;
-        // No game this week is a bye, which is as finished as a final.
-        const progress =
-          sleeperId === '0' || !game
-            ? 1
-            : gameProgress({ state: game.state, kickoff: game.kickoff, now });
-
         const line = { sleeperId, points, projection, progress };
-        return {
-          ...line,
-          name: sleeperId === '0' ? 'Empty' : player?.fullName ?? sleeperId,
-          position: player?.position ?? null,
-          nflTeam,
-          projected: projectStarter(line),
-          state: sleeperId !== '0' && !game ? 'bye' : game?.state ?? 'complete',
-        };
+        return { ...line, ...starter, projected: projectStarter(line) };
       },
     );
 
     // Sleeper sends no starters for a team that has not set a lineup for the
     // week yet, which is common early in the week. Nothing to project then.
-    const lineupSet = starters.some(starter => starter.sleeperId !== '0');
+    const lineupSet = starters.some(
+      starter => starter.sleeperId !== EMPTY_SLOT,
+    );
     return { rosterId, ...projectTeam(starters), starters, lineupSet };
   });
 

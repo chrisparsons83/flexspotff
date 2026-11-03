@@ -1,3 +1,5 @@
+import { EMPTY_SLOT } from '~/libs/sleeper/best-ball';
+
 /**
  * Live projections for a guillotine week in progress: how many points each
  * surviving team is on course for, and who that puts below the chop line.
@@ -82,14 +84,49 @@ export type TeamProjection = {
   playersYetToPlay: number;
 };
 
+/**
+ * What the schedule says about one lineup slot: who is in it and how far
+ * through their game they are.
+ */
+export function readStarter(
+  sleeperId: string,
+  player:
+    | { fullName: string; position: string | null; nflTeam: string | null }
+    | undefined,
+  gameByNflTeam: Map<string, { state: GameState; kickoff: Date }>,
+  now: Date,
+): {
+  name: string;
+  position: string | null;
+  nflTeam: string | null;
+  progress: number;
+  state: GameState | 'bye';
+} {
+  const empty = sleeperId === EMPTY_SLOT;
+  // A defense's Sleeper ID is its team abbreviation.
+  const nflTeam = player?.nflTeam ?? (player ? null : sleeperId);
+  const game = nflTeam ? gameByNflTeam.get(nflTeam) : undefined;
+  return {
+    name: empty ? 'Empty' : player?.fullName ?? sleeperId,
+    position: player?.position ?? null,
+    nflTeam,
+    // No game this week is a bye, which is as finished as a final.
+    progress:
+      empty || !game
+        ? 1
+        : gameProgress({ state: game.state, kickoff: game.kickoff, now }),
+    state: !empty && !game ? 'bye' : game?.state ?? 'complete',
+  };
+}
+
 /** Empty lineup slots come through as '0' and count for nothing. */
 export function projectTeam(starters: StarterLine[]): TeamProjection {
-  const filled = starters.filter(s => s.sleeperId !== '0');
+  const filled = starters.filter(s => s.sleeperId !== EMPTY_SLOT);
   const points = filled.reduce((sum, s) => sum + s.points, 0);
   const projected = filled.reduce((sum, s) => sum + projectStarter(s), 0);
   return {
-    points: round(points),
-    projected: round(projected),
+    points: roundPoints(points),
+    projected: roundPoints(projected),
     playersRemaining: filled.filter(s => s.progress < 1).length,
     playersYetToPlay: filled.filter(s => s.progress === 0).length,
   };
@@ -129,11 +166,11 @@ export function chopLine<T extends TeamProjection>(
     let margin: number | null = null;
     if (bottom && lastSafe) {
       margin = onTheBlock
-        ? round(bottom.projected - lastSafe.projected)
-        : round(team.projected - bottom.projected);
+        ? roundPoints(bottom.projected - lastSafe.projected)
+        : roundPoints(team.projected - bottom.projected);
     }
     return { ...team, rank: index + 1, onTheBlock, margin };
   });
 }
 
-const round = (value: number) => Math.round(value * 100) / 100;
+export const roundPoints = (value: number) => Math.round(value * 100) / 100;

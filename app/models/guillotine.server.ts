@@ -134,7 +134,15 @@ export async function getLatestGuillotineLeagues() {
               choppedWeek: true,
               sleeperDisplayName: true,
               user: teamMember,
-              weekScores: { select: { week: true, points: true } },
+              weekScores: {
+                select: {
+                  week: true,
+                  points: true,
+                  starters: true,
+                  startingPlayerPoints: true,
+                  starterProjections: true,
+                },
+              },
             },
           },
         },

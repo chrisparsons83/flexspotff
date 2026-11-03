@@ -14,6 +14,7 @@ import {
   ROUND_LABEL,
   isCupRound,
 } from '~/models/profile/cupProfile';
+import { LAST_FANTASY_WEEK } from '~/utils/constants';
 import { assignCompetitionRanks } from '~/utils/rank';
 
 export type DashboardSection = 'Leagues' | 'Side Leagues' | 'Games';
@@ -22,16 +23,20 @@ export type DashboardRow = {
   section: DashboardSection;
   label: string;
   lastWeek: string | null;
-  /** Leagues and side leagues: this week's matchup or status. */
+  /** Leagues: this week's matchup or status. */
   thisWeek: string | null;
-  /** Games: their place in this season's table, "3rd". */
+  /** Games and side leagues: their place this season, "3rd", or "Still alive". */
   standing: string | null;
-  /** Games: their season total, "261.60" or "1240 bank". */
+  /** Games and side leagues: their season total, "261.60", or the Spread Pool's bank, "1240". */
   season: string | null;
-  /** Games: their place in the newest scored week, "5th". */
+  /** Games and side leagues: their place in the newest scored week, "5th". */
   lastWeekPlace: string | null;
+  /** Games: lastWeek as it reads after a place, if that differs. */
+  lastWeekInBrackets?: string;
   /** Games: where to enter this week, while it is open and they have not. */
   enterHref: string | null;
+  /** Games: this week's entry, when there is nothing to enter. */
+  entry: 'Entered' | 'Not Open Yet' | null;
   /**
    * Side leagues: they are out (chopped) or it is over for them, so the row
    * sits under the ones still being played.
@@ -55,20 +60,19 @@ export type GameStanding = {
   rank: number;
   /** How many are ranked. */
   of: number;
-  /** The season total, formatted: points bare, a bank with its unit. */
+  /** The season total, formatted. */
   total: string;
   /** Their result in the game's newest scored week, without the week. */
   lastWeek: string | null;
+  /** That result as it reads inside brackets, if that differs. */
+  lastWeekInBrackets?: string;
   /** Their place among everyone in that week. */
   lastWeekRank: number | null;
 };
 
-export type StandingGame =
-  | 'qbStreaming'
-  | 'spreadPool'
-  | 'locks'
-  | 'dfsSurvivor'
-  | 'fSquared';
+type PickGame = 'qbStreaming' | 'spreadPool' | 'locks';
+
+export type StandingGame = PickGame | 'dfsSurvivor' | 'fSquared';
 
 /** A place among the field: 3rd of 12. */
 export type Place = { rank: number; of: number };
@@ -78,7 +82,7 @@ export type Place = { rank: number; of: number };
  * place this season, and their score and place in its newest finished week.
  */
 export type PointsLeague = {
-  season: Place | null;
+  season: (Place & { points: number }) | null;
   lastWeek: (Place & { week: number; points: number }) | null;
 };
 
@@ -161,8 +165,13 @@ const blank = {
   season: null,
   lastWeekPlace: null,
   enterHref: null,
+  entry: null,
   done: false,
 };
+
+/** A place and the score behind it, or whichever of them there is: "9th (50.40)". */
+export const placeAndScore = (place: string | null, score: string | null) =>
+  place && score ? `${place} (${score})` : score ?? place;
 
 /**
  * One score in a points league: an entrant's points for one week. D12
@@ -215,7 +224,7 @@ export function pointsLeague(
   const seasonPlace = placeOf(season, entrant);
   const weekPlace = placeOf(week, entrant);
   return {
-    season: seasonPlace,
+    season: seasonPlace && { ...seasonPlace, points: season.get(entrant)! },
     lastWeek:
       weekPlace && lastWeek !== null
         ? { ...weekPlace, week: lastWeek, points: week.get(entrant)! }
@@ -231,14 +240,10 @@ const pointsLeagueRow = (
   ...blank,
   section: 'Side Leagues',
   label,
-  lastWeek: lastWeek
-    ? `Week ${lastWeek.week}: ${pts(lastWeek.points)} pts, ${ordinal(
-        lastWeek.rank,
-      )} of ${lastWeek.of}`
-    : null,
-  thisWeek: season
-    ? `${ordinal(season.rank)} of ${season.of} for the season`
-    : null,
+  lastWeek: lastWeek && pts(lastWeek.points),
+  lastWeekPlace: lastWeek && ordinal(lastWeek.rank),
+  standing: season && ordinal(season.rank),
+  season: season && pts(season.points),
   href,
 });
 
@@ -351,55 +356,83 @@ const cupThisWeek = ({ lastGame, current }: CupFacts) => {
     : `Out in the ${ROUND_LABEL[lastGame.round].toLowerCase()}`;
 };
 
+/** Where a game's week stands for the member. */
+type GameWeek = {
+  /** Where to enter, while it is open and they have not. */
+  enterHref: string | null;
+  /** They have anything in for this week. */
+  entered: boolean;
+  entry: DashboardRow['entry'];
+};
+
+/**
+ * Where a pick'em week stands when there is nothing to enter: their picks are
+ * in, or the next week has yet to open. A scored week stays marked open, so it
+ * counts as waiting on the next one, unless it was the last.
+ */
+const pickEntry = (week: PickWeek | null): DashboardRow['entry'] => {
+  if (!week) return null;
+  if (week.isScored) {
+    return week.week < LAST_FANTASY_WEEK ? 'Not Open Yet' : null;
+  }
+  if (week.picks > 0) return 'Entered';
+  return week.isOpen ? null : 'Not Open Yet';
+};
+
+const pickGame = (key: PickGame, label: string, href: string) => ({
+  key,
+  label,
+  href,
+  thisWeek: (facts: MemberWeekFacts): GameWeek => {
+    const week = facts[key];
+    return {
+      enterHref:
+        week && week.isOpen && !week.isScored && week.picks === 0
+          ? `${href}/entries/${week.id}`
+          : null,
+      entered: (week?.picks ?? 0) > 0,
+      entry: pickEntry(week),
+    };
+  },
+});
+
 /** The Games section's games, in the sitemap's order. */
-const GAMES: { key: StandingGame; label: string; href: string }[] = [
-  { key: 'qbStreaming', label: 'QB Streaming', href: '/games/qb-streaming' },
-  { key: 'spreadPool', label: 'Spread Pool', href: '/games/spread-pool' },
-  { key: 'locks', label: 'Locks Challenge', href: '/games/locks-challenge' },
-  { key: 'dfsSurvivor', label: 'DFS Survivor', href: '/games/dfs-survivor' },
-  { key: 'fSquared', label: 'F²', href: '/games/f-squared' },
+const GAMES: {
+  key: StandingGame;
+  label: string;
+  href: string;
+  thisWeek: (facts: MemberWeekFacts) => GameWeek;
+}[] = [
+  pickGame('qbStreaming', 'QB Streaming', '/games/qb-streaming'),
+  pickGame('spreadPool', 'Spread Pool', '/games/spread-pool'),
+  pickGame('locks', 'Locks Challenge', '/games/locks-challenge'),
+  {
+    key: 'dfsSurvivor',
+    label: 'DFS Survivor',
+    href: '/games/dfs-survivor',
+    thisWeek: ({ dfsSurvivor }) => {
+      const entered = (dfsSurvivor?.entries ?? 0) > 0;
+      return {
+        enterHref:
+          dfsSurvivor && !dfsSurvivor.isLocked && !entered
+            ? '/games/dfs-survivor/entries'
+            : null,
+        entered,
+        entry: entered ? 'Entered' : null,
+      };
+    },
+  },
+  {
+    key: 'fSquared',
+    label: 'F²',
+    href: '/games/f-squared',
+    thisWeek: ({ fSquared: { isOpen, hasEntry } }) => ({
+      enterHref: isOpen && !hasEntry ? '/games/f-squared/entries' : null,
+      entered: hasEntry,
+      entry: isOpen && hasEntry ? 'Entered' : null,
+    }),
+  },
 ];
-
-/** A pick'em week the member could enter now and has not. */
-const pickTodo = (week: PickWeek | null) =>
-  !!week && week.isOpen && !week.isScored && week.picks === 0;
-
-/** Where to enter a game this week, while it is open and they have not. */
-function enterHref(facts: MemberWeekFacts, game: StandingGame) {
-  switch (game) {
-    case 'qbStreaming':
-    case 'spreadPool':
-    case 'locks': {
-      const week = facts[game];
-      const href = GAMES.find(entry => entry.key === game)!.href;
-      return pickTodo(week) ? `${href}/entries/${week!.id}` : null;
-    }
-    case 'dfsSurvivor':
-      return facts.dfsSurvivor &&
-        !facts.dfsSurvivor.isLocked &&
-        facts.dfsSurvivor.entries === 0
-        ? '/games/dfs-survivor/entries'
-        : null;
-    case 'fSquared':
-      return facts.fSquared.isOpen && !facts.fSquared.hasEntry
-        ? '/games/f-squared/entries'
-        : null;
-  }
-}
-
-/** Whether the member has anything in for the game this week. */
-function enteredThisWeek(facts: MemberWeekFacts, game: StandingGame) {
-  switch (game) {
-    case 'qbStreaming':
-    case 'spreadPool':
-    case 'locks':
-      return (facts[game]?.picks ?? 0) > 0;
-    case 'dfsSurvivor':
-      return (facts.dfsSurvivor?.entries ?? 0) > 0;
-    case 'fSquared':
-      return facts.fSquared.hasEntry;
-  }
-}
 
 export function buildMemberWeek(facts: MemberWeekFacts): {
   rows: DashboardRow[];
@@ -458,7 +491,7 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
       section: 'Side Leagues',
       done: team.finish !== null || team.choppedWeek !== null,
       label: team.name,
-      thisWeek:
+      standing:
         team.finish === 1
           ? 'Champion'
           : team.choppedWeek
@@ -485,8 +518,8 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
   // could enter this week and has not.
   for (const game of GAMES) {
     const standing = facts.standings[game.key];
-    const enter = enterHref(facts, game.key);
-    if (!standing && !enteredThisWeek(facts, game.key) && !enter) continue;
+    const { enterHref, entered, entry } = game.thisWeek(facts);
+    if (!standing && !entered && !enterHref) continue;
     rows.push({
       ...blank,
       section: 'Games',
@@ -494,10 +527,12 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
       standing: standing ? ordinal(standing.rank) : null,
       season: standing?.total ?? null,
       lastWeek: standing?.lastWeek ?? null,
+      lastWeekInBrackets: standing?.lastWeekInBrackets,
       lastWeekPlace: standing?.lastWeekRank
         ? ordinal(standing.lastWeekRank)
         : null,
-      enterHref: enter,
+      enterHref,
+      entry,
       href: game.href,
     });
   }
@@ -506,7 +541,8 @@ export function buildMemberWeek(facts: MemberWeekFacts): {
     rows.push({
       ...blank,
       section: 'Games',
-      label: entry.name,
+      // A pool's name only matters when there are others to tell it from.
+      label: facts.survivor.length === 1 ? 'Survivor' : entry.name,
       standing: entry.alive ? 'Still alive' : 'Out',
       href: `/games/survivor/${entry.poolId}`,
     });
