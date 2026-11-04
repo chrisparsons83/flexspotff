@@ -20,7 +20,7 @@ import {
 } from '~/models/qbstreamingweek.server';
 import {
   createQBStreamingWeekOption,
-  deleteQBStreamingWeekOption,
+  removeQBStreamingWeekOptionByAdmin,
   restoreQBStreamingWeekOptions,
 } from '~/models/qbstreamingweekoption.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -52,7 +52,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         option => option.playerId === playerId && option.removedAt,
       );
       if (hidden) {
-        await restoreQBStreamingWeekOptions([hidden.id]);
+        await restoreQBStreamingWeekOptions([hidden.id], 'admin');
         return typedjson({ message: 'Player has been added back.' });
       }
 
@@ -75,6 +75,8 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await createQBStreamingWeekOption({
         playerId,
         isDeep: !!isDeep,
+        // Added by hand, so the sync leaves them in even at a 0 projection.
+        keptByAdmin: true,
         pointsScored: 0,
         qbStreamingWeekId,
         nflGameId: nflGame.id,
@@ -89,7 +91,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       if (typeof qbStreamingWeekOptionId !== 'string')
         throw new Error('Option does not exist');
 
-      await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
+      // Hidden rather than deleted, so members' picks of this QB survive, and
+      // marked as an admin's call so the sync doesn't add them straight back.
+      await removeQBStreamingWeekOptionByAdmin(qbStreamingWeekOptionId);
 
       return typedjson({ message: 'Player has been removed.' });
     }
@@ -206,31 +210,35 @@ export default function AdminSpreadPoolYearWeek() {
               <td>{qbStreamingWeekOption.player.nflTeam}</td>
               <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
               <td>
-                {qbStreamingWeekOption.removedAt
-                  ? 'Removed, projected at 0'
-                  : 'Yes'}
+                {!qbStreamingWeekOption.removedAt
+                  ? 'Yes'
+                  : qbStreamingWeekOption.removedBy === 'admin'
+                  ? 'Removed by an admin'
+                  : 'Removed, projected at 0'}
               </td>
               <td className='text-right'>
                 {qbStreamingWeekOption.pointsScored}
               </td>
               <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='qbStreamingWeekOptionId'
-                    value={qbStreamingWeekOption.id}
-                  />
-                  <Button
-                    type='submit'
-                    variant='secondary'
-                    size='sm'
-                    name='_action'
-                    value='removePlayer'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Remove
-                  </Button>
-                </Form>
+                {!qbStreamingWeekOption.removedAt && (
+                  <Form method='POST'>
+                    <input
+                      type='hidden'
+                      name='qbStreamingWeekOptionId'
+                      value={qbStreamingWeekOption.id}
+                    />
+                    <Button
+                      type='submit'
+                      variant='secondary'
+                      size='sm'
+                      name='_action'
+                      value='removePlayer'
+                      disabled={navigation.state !== 'idle'}
+                    >
+                      Remove
+                    </Button>
+                  </Form>
+                )}
               </td>
             </tr>
           ))}

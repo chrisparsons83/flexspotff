@@ -21,7 +21,7 @@ export type SiteSettingKey = keyof typeof SITE_SETTINGS;
 export const SITE_SETTING_KEYS = Object.keys(SITE_SETTINGS) as SiteSettingKey[];
 
 export const isSiteSettingKey = (key: unknown): key is SiteSettingKey =>
-  typeof key === 'string' && key in SITE_SETTINGS;
+  typeof key === 'string' && Object.hasOwn(SITE_SETTINGS, key);
 
 /** A Discord channel, role or user ID: a snowflake, 17 to 20 digits. */
 export const isDiscordId = (value: string) => /^\d{17,20}$/.test(value);

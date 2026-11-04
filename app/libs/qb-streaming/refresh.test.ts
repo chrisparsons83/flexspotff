@@ -25,6 +25,8 @@ const option = (
   playerId,
   sleeperId: `s-${playerId}`,
   removedAt: null,
+  removedBy: null,
+  keptByAdmin: false,
   gameStartTime: later,
   pickCount: 0,
   ...overrides,
@@ -129,7 +131,7 @@ describe('planQbStreamingRefresh', () => {
       qbs: [qb('back', 'NYG')],
       owned: { back: 40 },
       projected: { back: 14 },
-      options: [option('back', { removedAt: earlier })],
+      options: [option('back', { removedAt: earlier, removedBy: 'sync' })],
     });
 
     expect(result).toEqual({ add: [], restore: ['o-back'], remove: [] });
@@ -137,7 +139,13 @@ describe('planQbStreamingRefresh', () => {
 
   it('brings back a hidden QB somebody has picked', () => {
     const result = plan({
-      options: [option('picked', { removedAt: earlier, pickCount: 1 })],
+      options: [
+        option('picked', {
+          removedAt: earlier,
+          removedBy: 'sync',
+          pickCount: 1,
+        }),
+      ],
       projected: { picked: 0 },
     });
 
@@ -149,10 +157,30 @@ describe('planQbStreamingRefresh', () => {
       qbs: [qb('out', 'NYG')],
       owned: { out: 5 },
       projected: { out: 0 },
-      options: [option('out', { removedAt: earlier })],
+      options: [option('out', { removedAt: earlier, removedBy: 'sync' })],
     });
 
     expect(result).toEqual({ add: [], restore: [], remove: [] });
+  });
+
+  it('never adds back or re-adds a QB an admin removed', () => {
+    const result = plan({
+      qbs: [qb('benched', 'NYG')],
+      owned: { benched: 30 },
+      projected: { benched: 12 },
+      options: [option('benched', { removedAt: earlier, removedBy: 'admin' })],
+    });
+
+    expect(result).toEqual({ add: [], restore: [], remove: [] });
+  });
+
+  it('never hides a QB an admin added by hand', () => {
+    const result = plan({
+      options: [option('backup', { keptByAdmin: true })],
+      projected: { backup: 0 },
+    });
+
+    expect(result.remove).toEqual([]);
   });
 });
 

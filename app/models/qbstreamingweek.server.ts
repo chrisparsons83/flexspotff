@@ -93,3 +93,32 @@ export async function getQBStreamingWeekByYearAndWeek(
 ) {
   return prisma.qBStreamingWeek.findFirst({ where: { year, week } });
 }
+
+/**
+ * Creates a closed week unless one already exists for that year and week,
+ * returning it, or null when another run got there first. Two syncs - the
+ * scheduled run and a manual "Run Now" - can both find no week at the same
+ * moment, and the table has no unique key to stop both creating one, so the
+ * insert takes a lock and checks again inside the same transaction.
+ */
+export async function createQBStreamingWeekIfMissing(
+  year: QBStreamingWeek['year'],
+  week: QBStreamingWeek['week'],
+): Promise<QBStreamingWeek | null> {
+  const [, rows] = await prisma.$transaction([
+    prisma.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`qb-streaming-week:${year}`}))`,
+    prisma.$queryRaw<QBStreamingWeek[]>`
+      INSERT INTO "QBStreamingWeek" ("id", "year", "week", "isOpen", "isScored")
+      SELECT gen_random_uuid()::text, ${year}, ${week}, false, false
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "QBStreamingWeek" WHERE "year" = ${year} AND "week" = ${week}
+      )
+      RETURNING *`,
+  ]);
+
+  return rows[0] ?? null;
+}
+
+export async function deleteQBStreamingWeek(id: QBStreamingWeek['id']) {
+  return prisma.qBStreamingWeek.delete({ where: { id } });
+}

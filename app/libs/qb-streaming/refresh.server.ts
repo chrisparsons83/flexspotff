@@ -36,11 +36,18 @@ const matchup = (teamId: string | null, game: MatchupGame) =>
  */
 export async function refreshQbStreamingWeek(
   qbStreamingWeek: Pick<QBStreamingWeek, 'id' | 'year' | 'week'>,
-  now = new Date(),
+  {
+    now = new Date(),
+    games: weekGames,
+  }: {
+    now?: Date;
+    /** The week's games, when the caller has already loaded them. */
+    games?: Awaited<ReturnType<typeof getWeekNflGames>>;
+  } = {},
 ): Promise<RefreshChanges> {
   const { id, year, week } = qbStreamingWeek;
   const [games, qbs, rostership, projections, options] = await Promise.all([
-    getWeekNflGames(year, week),
+    weekGames ?? getWeekNflGames(year, week),
     getActivePlayersByPosition('QB'),
     getRostership(year, week),
     getProjections(year, week),
@@ -57,6 +64,8 @@ export async function refreshQbStreamingWeek(
       playerId: option.playerId,
       sleeperId: option.player.sleeperId,
       removedAt: option.removedAt,
+      removedBy: option.removedBy,
+      keptByAdmin: option.keptByAdmin,
       gameStartTime: option.nflGame.gameStartTime,
       pickCount:
         option._count.StandardQBSelections + option._count.DeepQBSelections,
@@ -67,7 +76,7 @@ export async function refreshQbStreamingWeek(
   await createQBStreamingWeekOptions(
     plan.add.map(option => ({ ...option, qbStreamingWeekId: id })),
   );
-  await restoreQBStreamingWeekOptions(plan.restore);
+  await restoreQBStreamingWeekOptions(plan.restore, 'sync');
   const hidden = new Set(await hideUnpickedQBStreamingWeekOptions(plan.remove));
 
   const qbById = new Map(qbs.map(qb => [qb.id, qb]));

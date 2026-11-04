@@ -1,5 +1,7 @@
 -- AlterTable
-ALTER TABLE "QBStreamingWeekOption" ADD COLUMN     "removedAt" TIMESTAMP(3);
+ALTER TABLE "QBStreamingWeekOption" ADD COLUMN     "keptByAdmin" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "removedAt" TIMESTAMP(3),
+ADD COLUMN     "removedBy" TEXT;
 
 -- CreateTable
 CREATE TABLE "SiteSetting" (

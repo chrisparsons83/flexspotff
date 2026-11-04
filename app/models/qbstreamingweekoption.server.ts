@@ -5,24 +5,15 @@ export type { QBStreamingWeekOption } from '@prisma/client';
 
 type QBStreamingWeekCreateInput = Omit<
   QBStreamingWeekOption,
-  'id' | 'createdAt' | 'updatedAt' | 'removedAt'
->;
+  'id' | 'createdAt' | 'updatedAt' | 'removedAt' | 'removedBy' | 'keptByAdmin'
+> &
+  Partial<Pick<QBStreamingWeekOption, 'keptByAdmin'>>;
 
 export async function createQBStreamingWeekOption(
   qbStreamingWeekOption: QBStreamingWeekCreateInput,
 ) {
   return prisma.qBStreamingWeekOption.create({
     data: qbStreamingWeekOption,
-  });
-}
-
-export async function deleteQBStreamingWeekOption(
-  id: QBStreamingWeekOption['id'],
-) {
-  return prisma.qBStreamingWeekOption.delete({
-    where: {
-      id,
-    },
   });
 }
 
@@ -94,6 +85,8 @@ export async function getQBStreamingWeekOptionsForSync(
       playerId: true,
       isDeep: true,
       removedAt: true,
+      removedBy: true,
+      keptByAdmin: true,
       player: {
         select: { sleeperId: true, fullName: true, currentNFLTeamId: true },
       },
@@ -128,20 +121,48 @@ export async function createQBStreamingWeekOptions(
   });
 }
 
-/** Brings hidden options back, in the pool they were first added to. */
+/**
+ * Brings hidden options back, in the pool they were first added to. The sync
+ * only brings back what it hid; an admin adding a QB back also keeps the sync
+ * from hiding them again.
+ */
 export async function restoreQBStreamingWeekOptions(
   ids: QBStreamingWeekOption['id'][],
+  by: 'sync' | 'admin',
 ) {
   if (ids.length === 0) return { count: 0 };
 
   return prisma.qBStreamingWeekOption.updateMany({
-    where: { id: { in: ids }, removedAt: { not: null } },
-    data: { removedAt: null },
+    where: {
+      id: { in: ids },
+      removedAt: { not: null },
+      ...(by === 'sync' ? { removedBy: { not: 'admin' } } : {}),
+    },
+    data: {
+      removedAt: null,
+      removedBy: null,
+      ...(by === 'admin' ? { keptByAdmin: true } : {}),
+    },
   });
 }
 
 /**
- * Hides options nobody has picked, and returns the ones it hid.
+ * An admin taking a QB off the week. Hidden like the sync hides them, so a
+ * member's pick is never deleted with it, and marked so the sync doesn't put
+ * the QB straight back.
+ */
+export async function removeQBStreamingWeekOptionByAdmin(
+  id: QBStreamingWeekOption['id'],
+) {
+  return prisma.qBStreamingWeekOption.update({
+    where: { id },
+    data: { removedAt: new Date(), removedBy: 'admin', keptByAdmin: false },
+  });
+}
+
+/**
+ * Hides options nobody has picked and no admin added by hand, and returns the
+ * ones it hid.
  *
  * The "nobody has picked it" check is part of the same UPDATE, so an option
  * picked since the caller looked is skipped rather than hidden from under the
@@ -155,9 +176,10 @@ export async function hideUnpickedQBStreamingWeekOptions(
 
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     UPDATE "QBStreamingWeekOption" AS o
-    SET "removedAt" = NOW()
+    SET "removedAt" = ${new Date()}, "removedBy" = 'sync'
     WHERE o."id" IN (${Prisma.join(ids)})
       AND o."removedAt" IS NULL
+      AND NOT o."keptByAdmin"
       AND NOT EXISTS (
         SELECT 1 FROM "QBSelection" AS s
         WHERE s."standardPlayerId" = o."id" OR s."deepPlayerId" = o."id"

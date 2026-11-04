@@ -29,6 +29,8 @@ export type RefreshOption = {
   playerId: string;
   sleeperId: string;
   removedAt: Date | null;
+  removedBy: string | null;
+  keptByAdmin: boolean;
   gameStartTime: Date;
   pickCount: number;
 };
@@ -48,10 +50,14 @@ export type RefreshPlan = {
  * - Add: an active QB under 50% rostered, projected over 1 point, whose game
  *   hasn't started and who isn't in the week yet. Under 25% rostered puts them
  *   in the deep pool too.
- * - Restore: a hidden QB who qualifies again, or who somebody has picked.
+ * - Restore: a QB the sync hid who qualifies again, or who somebody has
+ *   picked.
  * - Remove: a listed QB nobody has picked, whose game hasn't started, that
  *   Sleeper projects at exactly 0 - which is what it does for a QB ruled out.
  *   No projection at all is not the same thing, so it doesn't count.
+ *
+ * An admin's call wins over the rules: a QB an admin removed is never added or
+ * brought back, and one an admin added is never hidden.
  */
 export function planQbStreamingRefresh({
   qbs,
@@ -103,6 +109,7 @@ export function planQbStreamingRefresh({
     .filter(
       option =>
         option.removedAt &&
+        option.removedBy !== 'admin' &&
         (qualifying.has(option.playerId) || option.pickCount > 0),
     )
     .map(option => option.id);
@@ -111,6 +118,7 @@ export function planQbStreamingRefresh({
     .filter(
       option =>
         !option.removedAt &&
+        !option.keptByAdmin &&
         option.pickCount === 0 &&
         option.gameStartTime > now &&
         projections[option.sleeperId]?.pts_half_ppr === 0,

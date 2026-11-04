@@ -1113,10 +1113,15 @@ model QBStreamingWeekOption {
 
   isDeep       Boolean
   pointsScored Float     @default(0)
-  // Set when the QB Streaming sync takes an unpicked QB off the week (Sleeper
-  // projects them at 0). The row is hidden rather than deleted, so nothing
-  // cascades to picks, and a QB who qualifies again comes back in the same pool.
+  // Set when a QB is taken off the week: by the QB Streaming sync for an
+  // unpicked QB Sleeper projects at 0, or by an admin. The row is hidden rather
+  // than deleted, so nothing cascades to picks, and a QB the sync hid who
+  // qualifies again comes back in the same pool.
   removedAt    DateTime?
+  // "sync" or "admin". The sync never brings back a QB an admin removed.
+  removedBy    String?
+  // An admin added this QB by hand, so the sync never hides them.
+  keptByAdmin  Boolean   @default(false)
 
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   playerId String

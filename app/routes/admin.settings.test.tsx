@@ -92,11 +92,15 @@ describe('admin settings action', () => {
     );
   });
 
-  it('refuses a key that is not a known setting', async () => {
-    await expect(
-      action(post({ key: 'DATABASE_URL', value: 'x', _action: 'save' })),
-    ).rejects.toBeInstanceOf(Response);
-  });
+  it.each(['DATABASE_URL', 'constructor', 'toString'])(
+    'refuses %s, which is not a known setting',
+    async key => {
+      await expect(
+        action(post({ key, value: 'x', _action: 'save' })),
+      ).rejects.toBeInstanceOf(Response);
+      expect(settingModel.setSetting).not.toHaveBeenCalled();
+    },
+  );
 
   it('sends a test message to the channel in the box without saving it', async () => {
     vi.mocked(adminAlerts.postAdminAlert).mockResolvedValue({

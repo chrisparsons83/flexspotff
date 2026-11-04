@@ -37,7 +37,10 @@ describe('syncQbStreaming', () => {
     vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue(
       null,
     );
-    vi.mocked(qbWeekModel.createQBStreamingWeek).mockResolvedValue(week);
+    vi.mocked(qbWeekModel.createQBStreamingWeekIfMissing).mockResolvedValue({
+      ...week,
+      isOpen: false,
+    });
     vi.mocked(refresh.refreshQbStreamingWeek).mockResolvedValue(noChanges);
     vi.mocked(adminAlerts.postAdminAlert).mockResolvedValue({
       status: 'posted',
@@ -49,7 +52,7 @@ describe('syncQbStreaming', () => {
     const result = await syncQbStreaming(new Date('2026-11-11T12:59:00Z'));
 
     expect(result.message).toContain('opens at 2026-11-11T13:00:00.000Z');
-    expect(qbWeekModel.createQBStreamingWeek).not.toHaveBeenCalled();
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
     expect(refresh.refreshQbStreamingWeek).not.toHaveBeenCalled();
   });
 
@@ -61,11 +64,19 @@ describe('syncQbStreaming', () => {
 
     const result = await syncQbStreaming(new Date('2026-11-11T13:00:00Z'));
 
-    expect(qbWeekModel.createQBStreamingWeek).toHaveBeenCalledWith({
-      year: 2026,
-      week: 10,
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).toHaveBeenCalledWith(
+      2026,
+      10,
+    );
+    // Opened only after it has QBs.
+    expect(
+      vi.mocked(refresh.refreshQbStreamingWeek).mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      vi.mocked(qbWeekModel.updateQBStreamingWeek).mock.invocationCallOrder[0],
+    );
+    expect(qbWeekModel.updateQBStreamingWeek).toHaveBeenCalledWith({
+      ...week,
       isOpen: true,
-      isScored: false,
     });
     expect(result).toEqual({ message: 'Opened week 10 with 1 QBs' });
     expect(adminAlerts.postAdminAlert).toHaveBeenCalledWith(
@@ -76,7 +87,37 @@ describe('syncQbStreaming', () => {
   it('catches up on a later run if the 8am one was missed', async () => {
     await syncQbStreaming(new Date('2026-11-12T01:00:00Z'));
 
-    expect(qbWeekModel.createQBStreamingWeek).toHaveBeenCalled();
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).toHaveBeenCalled();
+  });
+
+  it('drops the closed week if filling it fails, so the next run starts over', async () => {
+    vi.mocked(refresh.refreshQbStreamingWeek).mockRejectedValue(
+      new Error('Sleeper is down'),
+    );
+
+    await expect(
+      syncQbStreaming(new Date('2026-11-11T13:00:00Z')),
+    ).rejects.toThrow('Sleeper is down');
+    expect(qbWeekModel.deleteQBStreamingWeek).toHaveBeenCalledWith('w10');
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('leaves the week to a run that created it first', async () => {
+    vi.mocked(qbWeekModel.createQBStreamingWeekIfMissing).mockResolvedValue(
+      null,
+    );
+
+    await syncQbStreaming(new Date('2026-11-11T13:00:00Z'));
+
+    expect(refresh.refreshQbStreamingWeek).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('creates nothing once the last week of the season has started', async () => {
+    await syncQbStreaming(new Date('2026-11-16T12:00:00Z'));
+
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
   });
 
   it('refreshes an existing week without reopening it', async () => {
@@ -91,7 +132,7 @@ describe('syncQbStreaming', () => {
 
     await syncQbStreaming(new Date('2026-11-12T13:00:00Z'));
 
-    expect(qbWeekModel.createQBStreamingWeek).not.toHaveBeenCalled();
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
     expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
     expect(refresh.refreshQbStreamingWeek).toHaveBeenCalled();
     expect(adminAlerts.postAdminAlert).toHaveBeenCalledWith(
@@ -138,7 +179,7 @@ describe('syncQbStreaming', () => {
 
     const result = await syncQbStreaming(new Date('2026-11-11T13:00:00Z'));
 
-    expect(qbWeekModel.createQBStreamingWeek).toHaveBeenCalled();
+    expect(qbWeekModel.updateQBStreamingWeek).toHaveBeenCalled();
     expect(result.alertError).toBe('Missing Access');
   });
 });
