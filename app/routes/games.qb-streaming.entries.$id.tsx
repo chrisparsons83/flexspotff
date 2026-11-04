@@ -77,6 +77,16 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         } QB Streaming Option not found`,
       );
     }
+    // The sync took this QB off the week after the form was loaded. Keeping
+    // the pick they already had is fine; choosing them afresh is not.
+    if (
+      qbStreamingOption.removedAt &&
+      qbStreamingOption.id !== existingPlayerId
+    ) {
+      throw new Error(
+        `${qbStreamingOption.player.fullName} is no longer available this week`,
+      );
+    }
 
     const nflGame = await getNflGameById(qbStreamingOption.nflGameId);
     if (!nflGame) throw new Error('Game not found');
@@ -159,7 +169,12 @@ export default function QBStreamingYearWeekEntry() {
 
   const options = (deep: boolean) =>
     qbStreamingWeek?.QBStreamingWeekOptions.filter(
-      qbOption => !deep || qbOption.isDeep,
+      qbOption =>
+        (!deep || qbOption.isDeep) &&
+        // Hidden by the sync, unless it is already this member's pick.
+        (!qbOption.removedAt ||
+          qbOption.id ===
+            (deep ? qbSelection?.deepPlayerId : qbSelection?.standardPlayerId)),
     ).map(qbOption => {
       const matchup =
         qbOption.player.currentNFLTeamId === qbOption.nflGame.homeTeamId

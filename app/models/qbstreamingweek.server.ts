@@ -86,3 +86,10 @@ export async function getQBStreamingYears() {
 
   return years.map(({ year }) => year);
 }
+
+export async function getQBStreamingWeekByYearAndWeek(
+  year: QBStreamingWeek['year'],
+  week: QBStreamingWeek['week'],
+) {
+  return prisma.qBStreamingWeek.findFirst({ where: { year, week } });
+}

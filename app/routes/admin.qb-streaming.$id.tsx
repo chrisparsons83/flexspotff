@@ -11,7 +11,7 @@ import { Field } from '~/components/ui/field';
 import { Checkbox, NativeSelect } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { getProjections, getRostership } from '~/libs/sleeper/api.server';
+import { refreshQbStreamingWeek } from '~/libs/qb-streaming/refresh.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
 import {
@@ -21,6 +21,7 @@ import {
 import {
   createQBStreamingWeekOption,
   deleteQBStreamingWeekOption,
+  restoreQBStreamingWeekOptions,
 } from '~/models/qbstreamingweekoption.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
@@ -45,6 +46,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         throw new Error('Player ID has been generated with an error.');
 
       const isDeep = formData.get('isDeep');
+
+      // A QB the sync hid comes back in the pool they were first added to.
+      const hidden = qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.playerId === playerId && option.removedAt,
+      );
+      if (hidden) {
+        await restoreQBStreamingWeekOptions([hidden.id]);
+        return typedjson({ message: 'Player has been added back.' });
+      }
 
       // Get NFL team ID for the QB
       const player = await getPlayer(playerId);
@@ -84,73 +94,13 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       return typedjson({ message: 'Player has been removed.' });
     }
     case 'importPlayers': {
-      // Get the list of rosterships from sleeper
-      const rostershipData = await getRostership(
-        qbStreamingWeek.year,
-        qbStreamingWeek.week,
+      const { added, restored, removed } = await refreshQbStreamingWeek(
+        qbStreamingWeek,
       );
 
-      // Filter out the non-QBs
-      const activeQBs = await getActivePlayersByPosition('QB');
-
-      // Add rostership data to active QBs
-      const activeQBsWithRostership = activeQBs.map(qb => {
-        const rostershipInfo = rostershipData[qb.sleeperId];
-        return {
-          ...qb,
-          rostership: rostershipInfo?.owned ?? 0,
-        };
+      return typedjson({
+        message: `Import done: ${added.length} added, ${restored.length} added back, ${removed.length} removed.`,
       });
-
-      // Sort by rostership and remove all above 50%
-      const topQBs = activeQBsWithRostership
-        .sort((a, b) => b.rostership - a.rostership)
-        .filter(qb => qb.rostership < 50);
-
-      // Get Projects for the QBs
-      const projectionData = await getProjections(
-        qbStreamingWeek.year,
-        qbStreamingWeek.week,
-      );
-
-      // Remove QBs from topQBs that are projected below 1 point in half ppr
-      const topQBsProjected = topQBs
-        .map(qb => {
-          const projection = projectionData[qb.sleeperId];
-          return {
-            ...qb,
-            projection,
-          };
-        })
-        .filter(qb => (qb.projection?.pts_half_ppr ?? 0) > 1);
-
-      // Add the QBs to the QB streaming week
-      for (const qb of topQBsProjected) {
-        const nflGame = await getWeekNflGames(
-          qbStreamingWeek.year,
-          qbStreamingWeek.week,
-        ).then(nflGames =>
-          nflGames.find(
-            nflGame =>
-              nflGame.awayTeamId === qb.currentNFLTeamId ||
-              nflGame.homeTeamId === qb.currentNFLTeamId,
-          ),
-        );
-
-        if (nflGame) {
-          await createQBStreamingWeekOption({
-            playerId: qb.id,
-            isDeep: qb.rostership < 25 ? true : false,
-            pointsScored: 0,
-            qbStreamingWeekId,
-            nflGameId: nflGame.id,
-          }).catch(error => {
-            console.error(`Failed to add player ${qb.id}:`, error);
-          });
-        }
-      }
-
-      return typedjson({ message: 'Players have been imported.' });
     }
     case 'updateWeek': {
       const isOpen = formData.get('isOpen');
@@ -184,11 +134,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const activeQBs = await getActivePlayersByPosition('QB');
 
-  // Filter out players in activeQBs from the qbStreamingWeek
+  // Filter out players in activeQBs from the qbStreamingWeek. A QB the sync
+  // hid stays in the list, so an admin can add them back.
   const filteredQBs = activeQBs.filter(
     qb =>
       !qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.playerId === qb.id,
+        option => option.playerId === qb.id && !option.removedAt,
       ),
   );
 
@@ -245,15 +196,20 @@ export default function AdminSpreadPoolYearWeek() {
       </Section>
       <Section as='h3' title='Available Players'>
         <Table
-          headers={['Player', 'Team', 'Both Pools', 'Points', '']}
-          numericColumns={[3]}
-          primaryColumns={[3]}
+          headers={['Player', 'Team', 'Both Pools', 'Listed', 'Points', '']}
+          numericColumns={[4]}
+          primaryColumns={[4]}
         >
           {qbStreamingWeek.QBStreamingWeekOptions.map(qbStreamingWeekOption => (
             <tr key={qbStreamingWeekOption.id}>
               <td>{qbStreamingWeekOption.player.fullName}</td>
               <td>{qbStreamingWeekOption.player.nflTeam}</td>
               <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
+              <td>
+                {qbStreamingWeekOption.removedAt
+                  ? 'Removed, projected at 0'
+                  : 'Yes'}
+              </td>
               <td className='text-right'>
                 {qbStreamingWeekOption.pointsScored}
               </td>

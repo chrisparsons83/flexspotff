@@ -80,6 +80,13 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       "Reads each team's lineup for cup weeks yet to start, or works out its best projected one if Sleeper's has a gap or a player on bye, so the bracket can project them. Only calls Sleeper during the cup. Hourly at :10, after sync-player-scores.",
   },
   {
+    name: 'sync-qb-streaming',
+    cron: '0 2,8,14,20 * * *',
+    timezone: 'America/New_York',
+    description:
+      "Opens the coming week's QB Streaming at 8am ET on the Wednesday before its first game, then adds QBs who newly qualify and hides unpicked ones Sleeper projects at 0, until the last game starts. Posts what changed to the admin alerts channel. Every 6 hours, at 2am, 8am, 2pm and 8pm ET.",
+  },
+  {
     name: 'post-waiver-report',
     cron: '20,35,50 0 * * 3',
     timezone: 'America/Los_Angeles',
