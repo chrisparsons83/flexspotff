@@ -56,7 +56,15 @@ export async function getAdminTasks(): Promise<{
     week
       ? prisma.qBStreamingWeek.findFirst({
           where: { year, week },
-          select: { _count: { select: { QBStreamingWeekOptions: true } } },
+          // Only QBs still listed: a week whose QBs were all removed has
+          // nothing to pick from.
+          select: {
+            QBStreamingWeekOptions: {
+              where: { removedAt: null },
+              select: { id: true },
+              take: 1,
+            },
+          },
         })
       : null,
     week
@@ -84,7 +92,7 @@ export async function getAdminTasks(): Promise<{
         href: '/admin/spread-pool',
       });
     }
-    if (!qbWeek || qbWeek._count.QBStreamingWeekOptions === 0) {
+    if (!qbWeek || qbWeek.QBStreamingWeekOptions.length === 0) {
       tasks.push({
         title: `QB Streaming week ${week}`,
         detail: qbWeek

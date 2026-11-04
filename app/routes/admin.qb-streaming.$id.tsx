@@ -11,7 +11,8 @@ import { Field } from '~/components/ui/field';
 import { Checkbox, NativeSelect } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { getProjections, getRostership } from '~/libs/sleeper/api.server';
+import { gameForTeam, isListed } from '~/libs/qb-streaming/options';
+import { refreshQbStreamingWeek } from '~/libs/qb-streaming/refresh.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
 import {
@@ -20,7 +21,8 @@ import {
 } from '~/models/qbstreamingweek.server';
 import {
   createQBStreamingWeekOption,
-  deleteQBStreamingWeekOption,
+  removeQBStreamingWeekOptionByAdmin,
+  restoreQBStreamingWeekOptions,
 } from '~/models/qbstreamingweekoption.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
 
@@ -46,6 +48,15 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
       const isDeep = formData.get('isDeep');
 
+      // A QB the sync hid comes back in the pool they were first added to.
+      const hidden = qbStreamingWeek.QBStreamingWeekOptions.find(
+        option => option.playerId === playerId && !isListed(option),
+      );
+      if (hidden) {
+        await restoreQBStreamingWeekOptions([hidden.id], 'admin');
+        return typedjson({ message: 'Player has been added back.' });
+      }
+
       // Get NFL team ID for the QB
       const player = await getPlayer(playerId);
       if (!player) throw new Error(`Player not found with id ${playerId}`);
@@ -55,16 +66,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         qbStreamingWeek.year,
         qbStreamingWeek.week,
       );
-      const nflGame = nflGames.find(
-        nflGame =>
-          nflGame.awayTeamId === player.currentNFLTeamId ||
-          nflGame.homeTeamId === player.currentNFLTeamId,
-      );
+      const nflGame = gameForTeam(nflGames, player.currentNFLTeamId);
       if (!nflGame) throw new Error(`Game not found for QB`);
 
       await createQBStreamingWeekOption({
         playerId,
         isDeep: !!isDeep,
+        // Added by hand, so the sync leaves them in even at a 0 projection.
+        keptByAdmin: true,
         pointsScored: 0,
         qbStreamingWeekId,
         nflGameId: nflGame.id,
@@ -79,78 +88,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       if (typeof qbStreamingWeekOptionId !== 'string')
         throw new Error('Option does not exist');
 
-      await deleteQBStreamingWeekOption(qbStreamingWeekOptionId);
+      // Hidden rather than deleted, so members' picks of this QB survive, and
+      // marked as an admin's call so the sync doesn't add them straight back.
+      await removeQBStreamingWeekOptionByAdmin(qbStreamingWeekOptionId);
 
       return typedjson({ message: 'Player has been removed.' });
     }
     case 'importPlayers': {
-      // Get the list of rosterships from sleeper
-      const rostershipData = await getRostership(
-        qbStreamingWeek.year,
-        qbStreamingWeek.week,
+      const { added, restored, removed } = await refreshQbStreamingWeek(
+        qbStreamingWeek,
       );
 
-      // Filter out the non-QBs
-      const activeQBs = await getActivePlayersByPosition('QB');
-
-      // Add rostership data to active QBs
-      const activeQBsWithRostership = activeQBs.map(qb => {
-        const rostershipInfo = rostershipData[qb.sleeperId];
-        return {
-          ...qb,
-          rostership: rostershipInfo?.owned ?? 0,
-        };
+      return typedjson({
+        message: `Import done: ${added.length} added, ${restored.length} added back, ${removed.length} removed.`,
       });
-
-      // Sort by rostership and remove all above 50%
-      const topQBs = activeQBsWithRostership
-        .sort((a, b) => b.rostership - a.rostership)
-        .filter(qb => qb.rostership < 50);
-
-      // Get Projects for the QBs
-      const projectionData = await getProjections(
-        qbStreamingWeek.year,
-        qbStreamingWeek.week,
-      );
-
-      // Remove QBs from topQBs that are projected below 1 point in half ppr
-      const topQBsProjected = topQBs
-        .map(qb => {
-          const projection = projectionData[qb.sleeperId];
-          return {
-            ...qb,
-            projection,
-          };
-        })
-        .filter(qb => (qb.projection?.pts_half_ppr ?? 0) > 1);
-
-      // Add the QBs to the QB streaming week
-      for (const qb of topQBsProjected) {
-        const nflGame = await getWeekNflGames(
-          qbStreamingWeek.year,
-          qbStreamingWeek.week,
-        ).then(nflGames =>
-          nflGames.find(
-            nflGame =>
-              nflGame.awayTeamId === qb.currentNFLTeamId ||
-              nflGame.homeTeamId === qb.currentNFLTeamId,
-          ),
-        );
-
-        if (nflGame) {
-          await createQBStreamingWeekOption({
-            playerId: qb.id,
-            isDeep: qb.rostership < 25 ? true : false,
-            pointsScored: 0,
-            qbStreamingWeekId,
-            nflGameId: nflGame.id,
-          }).catch(error => {
-            console.error(`Failed to add player ${qb.id}:`, error);
-          });
-        }
-      }
-
-      return typedjson({ message: 'Players have been imported.' });
     }
     case 'updateWeek': {
       const isOpen = formData.get('isOpen');
@@ -184,11 +135,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const activeQBs = await getActivePlayersByPosition('QB');
 
-  // Filter out players in activeQBs from the qbStreamingWeek
+  // Filter out players in activeQBs from the qbStreamingWeek. A QB the sync
+  // hid stays in the list, so an admin can add them back.
   const filteredQBs = activeQBs.filter(
     qb =>
       !qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.playerId === qb.id,
+        option => option.playerId === qb.id && isListed(option),
       ),
   );
 
@@ -245,36 +197,45 @@ export default function AdminSpreadPoolYearWeek() {
       </Section>
       <Section as='h3' title='Available Players'>
         <Table
-          headers={['Player', 'Team', 'Both Pools', 'Points', '']}
-          numericColumns={[3]}
-          primaryColumns={[3]}
+          headers={['Player', 'Team', 'Both Pools', 'Listed', 'Points', '']}
+          numericColumns={[4]}
+          primaryColumns={[4]}
         >
           {qbStreamingWeek.QBStreamingWeekOptions.map(qbStreamingWeekOption => (
             <tr key={qbStreamingWeekOption.id}>
               <td>{qbStreamingWeekOption.player.fullName}</td>
               <td>{qbStreamingWeekOption.player.nflTeam}</td>
               <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
+              <td>
+                {isListed(qbStreamingWeekOption)
+                  ? 'Yes'
+                  : qbStreamingWeekOption.removedBy === 'admin'
+                  ? 'Removed by an admin'
+                  : 'Removed, projected at 0'}
+              </td>
               <td className='text-right'>
                 {qbStreamingWeekOption.pointsScored}
               </td>
               <td>
-                <Form method='POST'>
-                  <input
-                    type='hidden'
-                    name='qbStreamingWeekOptionId'
-                    value={qbStreamingWeekOption.id}
-                  />
-                  <Button
-                    type='submit'
-                    variant='secondary'
-                    size='sm'
-                    name='_action'
-                    value='removePlayer'
-                    disabled={navigation.state !== 'idle'}
-                  >
-                    Remove
-                  </Button>
-                </Form>
+                {isListed(qbStreamingWeekOption) && (
+                  <Form method='POST'>
+                    <input
+                      type='hidden'
+                      name='qbStreamingWeekOptionId'
+                      value={qbStreamingWeekOption.id}
+                    />
+                    <Button
+                      type='submit'
+                      variant='secondary'
+                      size='sm'
+                      name='_action'
+                      value='removePlayer'
+                      disabled={navigation.state !== 'idle'}
+                    >
+                      Remove
+                    </Button>
+                  </Form>
+                )}
               </td>
             </tr>
           ))}

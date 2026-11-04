@@ -69,6 +69,7 @@ const groups: {
       { label: 'Scheduler', to: '/admin/scheduler' },
       { label: 'F² History Import', to: '/admin/f-squared/import' },
       { label: 'Bot Commands', to: '/admin/bot' },
+      { label: 'Settings', to: '/admin/settings' },
     ],
   },
   {

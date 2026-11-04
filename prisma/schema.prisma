@@ -1112,7 +1112,16 @@ model QBStreamingWeekOption {
   id String @id @default(cuid())
 
   isDeep       Boolean
-  pointsScored Float   @default(0)
+  pointsScored Float     @default(0)
+  // Set when a QB is taken off the week: by the QB Streaming sync for an
+  // unpicked QB Sleeper projects at 0, or by an admin. The row is hidden rather
+  // than deleted, so nothing cascades to picks, and a QB the sync hid who
+  // qualifies again comes back in the same pool.
+  removedAt    DateTime?
+  // "sync" or "admin". The sync never brings back a QB an admin removed.
+  removedBy    String?
+  // An admin added this QB by hand, so the sync never hides them.
+  keptByAdmin  Boolean   @default(false)
 
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   playerId String
@@ -1335,6 +1344,7 @@ model User {
   yahooUsers           YahooUser[]
   memberAliases        MemberAlias[]
   nameHistory          UserNameHistory[]
+  siteSettingsUpdated  SiteSetting[]
 
   @@index([mergedIntoId])
 }
@@ -1507,4 +1517,15 @@ model SleeperCallDay {
   calls   Int      @default(0)
 
   @@id([jobName, day])
+}
+
+// Site-wide settings an admin edits on /admin/settings, such as the Discord
+// channel admin alerts post to, so changing one doesn't need a server env edit
+// and a redeploy. The keys are a typed list in app/models/siteSetting.server.ts.
+model SiteSetting {
+  key         String   @id
+  value       String
+  updatedAt   DateTime @updatedAt
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedById String?
 }
