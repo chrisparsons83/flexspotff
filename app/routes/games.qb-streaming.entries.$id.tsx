@@ -10,6 +10,7 @@ import { Button } from '~/components/ui/button';
 import { Field } from '~/components/ui/field';
 import { NativeSelect } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
+import { isAvailableTo, matchupFor } from '~/libs/qb-streaming/options';
 import { getNflGameById } from '~/models/nflgame.server';
 import type { QBSelection } from '~/models/qbselection.server';
 import {
@@ -79,10 +80,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     // The sync took this QB off the week after the form was loaded. Keeping
     // the pick they already had is fine; choosing them afresh is not.
-    if (
-      qbStreamingOption.removedAt &&
-      qbStreamingOption.id !== existingPlayerId
-    ) {
+    if (!isAvailableTo(qbStreamingOption, existingPlayerId)) {
       throw new Error(
         `${qbStreamingOption.player.fullName} is no longer available this week`,
       );
@@ -171,15 +169,16 @@ export default function QBStreamingYearWeekEntry() {
     qbStreamingWeek?.QBStreamingWeekOptions.filter(
       qbOption =>
         (!deep || qbOption.isDeep) &&
-        // Hidden by the sync, unless it is already this member's pick.
-        (!qbOption.removedAt ||
-          qbOption.id ===
-            (deep ? qbSelection?.deepPlayerId : qbSelection?.standardPlayerId)),
+        isAvailableTo(
+          qbOption,
+          deep ? qbSelection?.deepPlayerId : qbSelection?.standardPlayerId,
+        ),
     ).map(qbOption => {
-      const matchup =
-        qbOption.player.currentNFLTeamId === qbOption.nflGame.homeTeamId
-          ? `vs ${qbOption.nflGame.awayTeam.mascot}`
-          : `at ${qbOption.nflGame.homeTeam.mascot}`;
+      const { word, opponent } = matchupFor(
+        qbOption.player.currentNFLTeamId,
+        qbOption.nflGame,
+      );
+      const matchup = `${word} ${opponent.mascot}`;
       return (
         <option
           key={qbOption.id}

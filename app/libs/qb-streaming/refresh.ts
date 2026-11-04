@@ -1,3 +1,4 @@
+import { gameForTeam } from './options';
 import { DateTime } from 'luxon';
 import type {
   SleeperProjectionsJson,
@@ -74,16 +75,9 @@ export function planQbStreamingRefresh({
   options: RefreshOption[];
   now: Date;
 }): RefreshPlan {
-  const gameByTeam = new Map<string, RefreshGame>();
-  for (const game of games) {
-    gameByTeam.set(game.homeTeamId, game);
-    gameByTeam.set(game.awayTeamId, game);
-  }
-
   const qualifying = new Map<string, { isDeep: boolean; nflGameId: string }>();
   for (const qb of qbs) {
-    if (!qb.currentNFLTeamId) continue;
-    const game = gameByTeam.get(qb.currentNFLTeamId);
+    const game = gameForTeam(games, qb.currentNFLTeamId);
     if (!game || game.gameStartTime <= now) continue;
 
     const owned = rostership[qb.sleeperId]?.owned ?? 0;

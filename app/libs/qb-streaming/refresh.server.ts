@@ -1,4 +1,5 @@
 import type { AlertQb } from './alerts';
+import { matchupFor } from './options';
 import { planQbStreamingRefresh } from './refresh';
 import { getProjections, getRostership } from '~/libs/sleeper/api.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
@@ -24,10 +25,10 @@ type MatchupGame = {
 };
 
 /** "NYG vs DAL" for a home QB, "NYG at DAL" for an away one. */
-const matchup = (teamId: string | null, game: MatchupGame) =>
-  teamId === game.homeTeamId
-    ? `${game.homeTeam.sleeperId} vs ${game.awayTeam.sleeperId}`
-    : `${game.awayTeam.sleeperId} at ${game.homeTeam.sleeperId}`;
+const matchup = (teamId: string | null, game: MatchupGame) => {
+  const { team, opponent, word } = matchupFor(teamId, game);
+  return `${team.sleeperId} ${word} ${opponent.sleeperId}`;
+};
 
 /**
  * Brings a QB Streaming week's options up to date with Sleeper - see

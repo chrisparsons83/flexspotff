@@ -11,6 +11,7 @@ import { Field } from '~/components/ui/field';
 import { Checkbox, NativeSelect } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
+import { gameForTeam, isListed } from '~/libs/qb-streaming/options';
 import { refreshQbStreamingWeek } from '~/libs/qb-streaming/refresh.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getActivePlayersByPosition, getPlayer } from '~/models/players.server';
@@ -49,7 +50,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
       // A QB the sync hid comes back in the pool they were first added to.
       const hidden = qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.playerId === playerId && option.removedAt,
+        option => option.playerId === playerId && !isListed(option),
       );
       if (hidden) {
         await restoreQBStreamingWeekOptions([hidden.id], 'admin');
@@ -65,11 +66,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         qbStreamingWeek.year,
         qbStreamingWeek.week,
       );
-      const nflGame = nflGames.find(
-        nflGame =>
-          nflGame.awayTeamId === player.currentNFLTeamId ||
-          nflGame.homeTeamId === player.currentNFLTeamId,
-      );
+      const nflGame = gameForTeam(nflGames, player.currentNFLTeamId);
       if (!nflGame) throw new Error(`Game not found for QB`);
 
       await createQBStreamingWeekOption({
@@ -143,7 +140,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const filteredQBs = activeQBs.filter(
     qb =>
       !qbStreamingWeek.QBStreamingWeekOptions.find(
-        option => option.playerId === qb.id && !option.removedAt,
+        option => option.playerId === qb.id && isListed(option),
       ),
   );
 
@@ -210,7 +207,7 @@ export default function AdminSpreadPoolYearWeek() {
               <td>{qbStreamingWeekOption.player.nflTeam}</td>
               <td>{qbStreamingWeekOption.isDeep ? 'Yes' : 'No'}</td>
               <td>
-                {!qbStreamingWeekOption.removedAt
+                {isListed(qbStreamingWeekOption)
                   ? 'Yes'
                   : qbStreamingWeekOption.removedBy === 'admin'
                   ? 'Removed by an admin'
@@ -220,7 +217,7 @@ export default function AdminSpreadPoolYearWeek() {
                 {qbStreamingWeekOption.pointsScored}
               </td>
               <td>
-                {!qbStreamingWeekOption.removedAt && (
+                {isListed(qbStreamingWeekOption) && (
                   <Form method='POST'>
                     <input
                       type='hidden'
