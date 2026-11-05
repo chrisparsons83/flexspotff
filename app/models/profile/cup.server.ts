@@ -9,9 +9,11 @@ import {
   type CupRound,
   type CupRun,
   type CupSide,
+  type LiveGame,
   type MatchLogRow,
 } from './cupProfile';
 import { prisma } from '~/db.server';
+import { getCupRoundTotals } from '~/libs/cup/lineups.server';
 import { getCurrentSeason } from '~/models/season.server';
 
 /**
@@ -185,6 +187,14 @@ export async function getCupProfile(userId: string): Promise<CupProfile> {
     })
     .sort((a, b) => b.year - a.year);
 
+  if (currentCup?.hasBracket) {
+    const current = cupTeams.find(t => t.cup.year === currentCup.year);
+    const run = runs.find(r => r.year === currentCup.year);
+    if (current && run?.status === 'alive') {
+      run.live = await getLiveGame(current);
+    }
+  }
+
   // This year's Cup gets a banner until its final is decided: the live
   // seeding table before the bracket exists, and their run once it does.
   const seeding =
@@ -198,6 +208,68 @@ export async function getCupProfile(userId: string): Promise<CupProfile> {
     runs,
     matchLog: buildMatchLog(runs),
     seeding,
+  };
+}
+
+type ProfileCupTeam = {
+  id: string;
+  teamId: string;
+  cup: { year: number; cupWeeks: { week: number; mapping: string }[] };
+  TopTeamGames: GameRow[];
+  BottomTeamGames: GameRow[];
+};
+
+type GameRow = {
+  round: string;
+  containsBye: boolean;
+  winningTeamId: string | null;
+  topTeam: SelectedSide;
+  bottomTeam: SelectedSide;
+};
+
+/**
+ * The member's undecided game in this year's Cup: both sides' points so far
+ * and their projections, read the same way the bracket page reads them.
+ */
+async function getLiveGame(cupTeam: ProfileCupTeam): Promise<LiveGame | null> {
+  const game = [...cupTeam.TopTeamGames, ...cupTeam.BottomTeamGames].find(
+    g => isCupRound(g.round) && !g.containsBye && g.winningTeamId === null,
+  );
+  if (!game) return null;
+
+  const round = game.round as CupRound;
+  const roundWeeks = cupTeam.cup.cupWeeks
+    .filter(w => w.mapping === round)
+    .map(w => w.week)
+    .sort((a, b) => a - b);
+  const opponent = toSide(
+    game.topTeam?.id === cupTeam.id ? game.bottomTeam : game.topTeam,
+  );
+
+  const totals = await getCupRoundTotals(cupTeam.cup.year, {
+    cupGames: [
+      {
+        round,
+        topTeam: { teamId: cupTeam.teamId },
+        bottomTeam: opponent ? { teamId: opponent.teamId } : null,
+      },
+    ],
+    weeksByRound: { [round]: roundWeeks },
+  });
+  const mine = totals[round]?.[cupTeam.teamId];
+  const theirs = opponent ? totals[round]?.[opponent.teamId] : undefined;
+
+  return {
+    round,
+    opponent: opponent && {
+      userId: opponent.userId,
+      name: opponent.name,
+      seed: opponent.seed,
+    },
+    points: mine?.points ?? 0,
+    projected: mine?.projected ?? null,
+    opponentPoints: theirs?.points ?? null,
+    opponentProjected: theirs?.projected ?? null,
   };
 }
 

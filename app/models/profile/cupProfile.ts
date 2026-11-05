@@ -107,6 +107,22 @@ export type CupRun = {
   status: 'champion' | 'eliminated' | 'alive';
   finish: string;
   eliminatedBy: CupOpponent | null;
+  /**
+   * The game being played now, for a run still alive in this year's Cup.
+   * Filled in by the server, since projections need lineups; null otherwise.
+   */
+  live: LiveGame | null;
+};
+
+/** Both sides of a cup game in progress: points so far and projected. */
+export type LiveGame = {
+  round: CupRound;
+  /** Null while the other side of the game is still to be decided. */
+  opponent: CupOpponent | null;
+  points: number;
+  projected: number | null;
+  opponentPoints: number | null;
+  opponentProjected: number | null;
 };
 
 export type ScoreLookup = (teamId: string, round: CupRound) => number | null;
@@ -226,6 +242,7 @@ export function buildRun({
         ? `Alive in the ${ROUND_LABEL[CUP_ROUNDS[depth]]}`
         : finishLabel(depth),
     eliminatedBy: loss?.opponent ?? null,
+    live: null,
   };
 }
 

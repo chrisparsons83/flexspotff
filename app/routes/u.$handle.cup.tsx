@@ -24,6 +24,7 @@ import type {
   CupCareer,
   CupOpponent,
   CupRun,
+  LiveGame,
   MatchLogRow,
   RoundResult,
 } from '~/models/profile/cupProfile';
@@ -64,7 +65,7 @@ export default function MemberCup() {
     <div className='space-y-8'>
       <Career career={profile.career} />
       <SeedingHistory runs={profile.runs} seeding={profile.seeding} />
-      <BracketRuns runs={profile.runs} />
+      <CupRuns runs={profile.runs} />
       <MatchLog games={profile.matchLog} />
     </div>
   );
@@ -201,13 +202,6 @@ const PILL_TONE: Record<RoundResult['status'], string> = {
   PENDING: 'border border-dotted border-warning text-warning',
 };
 
-const RUN_KEY: [string, string][] = [
-  ['Won', PILL_TONE.W],
-  ['Lost', PILL_TONE.L],
-  ['Bye', PILL_TONE.BYE],
-  ['In progress', PILL_TONE.PENDING],
-];
-
 function describeRound(result: RoundResult): string {
   const round = ROUND_LABEL[result.round];
   if (result.status === 'BYE') return `${round}: bye`;
@@ -230,21 +224,9 @@ function describeRound(result: RoundResult): string {
  * Every Cup as a row of rounds - how far each run went - so a career of
  * brackets reads at a glance.
  */
-function BracketRuns({ runs }: { runs: CupRun[] }) {
+function CupRuns({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection
-      title='Bracket Runs'
-      info={
-        <span className='flex flex-col items-start gap-1.5'>
-          {RUN_KEY.map(([label, tone]) => (
-            <span key={label} className='inline-flex items-center gap-1.5'>
-              <span className={clsx('inline-block h-3 w-4', tone)} />
-              {label}
-            </span>
-          ))}
-        </span>
-      }
-    >
+    <ProfileSection title='Cup Runs'>
       <ul className='m-0 list-none space-y-2 p-0'>
         {runs.map(run => (
           <RunRow key={run.year} run={run} />
@@ -294,21 +276,12 @@ function RunRow({ run }: { run: CupRun }) {
             </li>
           );
         })}
-        {/* The slot is kept either way so every row's finish lines up. */}
-        <li className='flex h-6 w-6 items-center justify-center'>
-          {run.status === 'champion' && (
-            <span className='inline-flex items-center gap-1.5'>
-              <Swatch fill='medal-gold' />
-              Champion
-            </span>
-          )}
-        </li>
       </ol>
 
       {/* Its own line on a phone, where squeezing it beside the rounds
           left a column a word wide. */}
       <div className='flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:basis-0'>
-        <Finish run={run} />
+        {run.live ? <LiveMatchup game={run.live} /> : <Finish run={run} />}
         {run.eliminatedBy && (
           <span className='text-muted-foreground'>
             lost to <OpponentLink opponent={run.eliminatedBy} />
@@ -321,6 +294,37 @@ function RunRow({ run }: { run: CupRun }) {
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * The game a live run is in: who against, the score so far, and where both
+ * sides are projected to finish.
+ */
+function LiveMatchup({ game }: { game: LiveGame }) {
+  return (
+    <>
+      <span className='font-medium text-warning'>
+        {ROUND_LABEL[game.round]}
+      </span>
+      <span className='text-muted-foreground'>
+        {game.opponent ? (
+          <>
+            vs <OpponentLink opponent={game.opponent} />
+          </>
+        ) : (
+          'opponent to be decided'
+        )}
+      </span>
+      <span className='tabular-nums text-foreground'>
+        {game.points.toFixed(2)} – {pts(game.opponentPoints)}
+      </span>
+      {(game.projected !== null || game.opponentProjected !== null) && (
+        <span className='tabular-nums text-muted-foreground'>
+          Projected {pts(game.projected)} – {pts(game.opponentProjected)}
+        </span>
+      )}
+    </>
   );
 }
 
