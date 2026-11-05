@@ -235,7 +235,7 @@ function BracketRuns({ runs }: { runs: CupRun[] }) {
     <ProfileSection
       title='Bracket Runs'
       info={
-        <span className='flex flex-col items-start gap-1.5'>
+        <span className='flex flex-wrap items-center gap-x-5 gap-y-1.5'>
           {RUN_KEY.map(([label, tone]) => (
             <span key={label} className='inline-flex items-center gap-1.5'>
               <span className={clsx('inline-block h-3 w-4', tone)} />
@@ -294,14 +294,14 @@ function RunRow({ run }: { run: CupRun }) {
             </li>
           );
         })}
-        {/* The slot is kept either way so every row's finish lines up. */}
-        <li className='flex h-6 w-6 items-center justify-center'>
-          {run.status === 'champion' && (
-            <span className='inline-flex items-center gap-1.5'>
-              <Swatch fill='medal-gold' />
-              Champion
-            </span>
-          )}
+        {/* The slot is kept either way so every row's finish lines up. The
+            finish beside it already says Champion, so the slot holds the
+            medal alone. */}
+        <li
+          aria-hidden='true'
+          className='flex h-6 w-4 items-center justify-center'
+        >
+          {run.status === 'champion' && <Swatch fill='medal-gold' />}
         </li>
       </ol>
 
