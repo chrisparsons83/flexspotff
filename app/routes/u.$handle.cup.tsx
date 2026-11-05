@@ -24,6 +24,7 @@ import type {
   CupCareer,
   CupOpponent,
   CupRun,
+  LiveGame,
   MatchLogRow,
   RoundResult,
 } from '~/models/profile/cupProfile';
@@ -280,7 +281,7 @@ function RunRow({ run }: { run: CupRun }) {
       {/* Its own line on a phone, where squeezing it beside the rounds
           left a column a word wide. */}
       <div className='flex min-w-0 flex-1 basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm sm:basis-0'>
-        <Finish run={run} />
+        {run.live ? <LiveMatchup game={run.live} /> : <Finish run={run} />}
         {run.eliminatedBy && (
           <span className='text-muted-foreground'>
             lost to <OpponentLink opponent={run.eliminatedBy} />
@@ -293,6 +294,37 @@ function RunRow({ run }: { run: CupRun }) {
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * The game a live run is in: who against, the score so far, and where both
+ * sides are projected to finish.
+ */
+function LiveMatchup({ game }: { game: LiveGame }) {
+  return (
+    <>
+      <span className='font-medium text-warning'>
+        {ROUND_LABEL[game.round]}
+      </span>
+      <span className='text-muted-foreground'>
+        {game.opponent ? (
+          <>
+            vs <OpponentLink opponent={game.opponent} />
+          </>
+        ) : (
+          'opponent to be decided'
+        )}
+      </span>
+      <span className='tabular-nums text-foreground'>
+        {game.points.toFixed(2)} – {pts(game.opponentPoints)}
+      </span>
+      {(game.projected !== null || game.opponentProjected !== null) && (
+        <span className='tabular-nums text-muted-foreground'>
+          Projected {pts(game.projected)} – {pts(game.opponentProjected)}
+        </span>
+      )}
+    </>
   );
 }
 
