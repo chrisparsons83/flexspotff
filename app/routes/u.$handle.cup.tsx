@@ -64,7 +64,7 @@ export default function MemberCup() {
     <div className='space-y-8'>
       <Career career={profile.career} />
       <SeedingHistory runs={profile.runs} seeding={profile.seeding} />
-      <BracketRuns runs={profile.runs} />
+      <CupRuns runs={profile.runs} />
       <MatchLog games={profile.matchLog} />
     </div>
   );
@@ -201,13 +201,6 @@ const PILL_TONE: Record<RoundResult['status'], string> = {
   PENDING: 'border border-dotted border-warning text-warning',
 };
 
-const RUN_KEY: [string, string][] = [
-  ['Won', PILL_TONE.W],
-  ['Lost', PILL_TONE.L],
-  ['Bye', PILL_TONE.BYE],
-  ['In progress', PILL_TONE.PENDING],
-];
-
 function describeRound(result: RoundResult): string {
   const round = ROUND_LABEL[result.round];
   if (result.status === 'BYE') return `${round}: bye`;
@@ -230,21 +223,9 @@ function describeRound(result: RoundResult): string {
  * Every Cup as a row of rounds - how far each run went - so a career of
  * brackets reads at a glance.
  */
-function BracketRuns({ runs }: { runs: CupRun[] }) {
+function CupRuns({ runs }: { runs: CupRun[] }) {
   return (
-    <ProfileSection
-      title='Bracket Runs'
-      info={
-        <span className='flex flex-wrap items-center gap-x-5 gap-y-1.5'>
-          {RUN_KEY.map(([label, tone]) => (
-            <span key={label} className='inline-flex items-center gap-1.5'>
-              <span className={clsx('inline-block h-3 w-4', tone)} />
-              {label}
-            </span>
-          ))}
-        </span>
-      }
-    >
+    <ProfileSection title='Cup Runs'>
       <ul className='m-0 list-none space-y-2 p-0'>
         {runs.map(run => (
           <RunRow key={run.year} run={run} />
@@ -294,15 +275,6 @@ function RunRow({ run }: { run: CupRun }) {
             </li>
           );
         })}
-        {/* The slot is kept either way so every row's finish lines up. The
-            finish beside it already says Champion, so the slot holds the
-            medal alone. */}
-        <li
-          aria-hidden='true'
-          className='flex h-6 w-4 items-center justify-center'
-        >
-          {run.status === 'champion' && <Swatch fill='medal-gold' />}
-        </li>
       </ol>
 
       {/* Its own line on a phone, where squeezing it beside the rounds
