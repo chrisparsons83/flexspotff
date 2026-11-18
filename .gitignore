@@ -19,3 +19,6 @@ tsconfig.tsbuildinfo
 .grepai/
 
 /storybook-static
+
+# Agent ticket worktrees
+.worktrees/

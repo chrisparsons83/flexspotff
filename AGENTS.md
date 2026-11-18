@@ -15,3 +15,13 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`,
 
 Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See
 `docs/agents/domain.md`.
+
+### Local environment
+
+Sandboxed git fallback, stale generated Prisma clients and ticket-worktree
+placement: see `docs/agents/environment.md`.
+
+### Implementing a spec
+
+Delegation briefs for implementer and merger subagents: see
+`docs/agents/spec-implementation.md`.

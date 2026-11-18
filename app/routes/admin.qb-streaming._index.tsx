@@ -10,20 +10,14 @@ import { Button } from '~/components/ui/button';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { scoreQbStats } from '~/libs/qb-streaming/scoring';
-import { getWeeklyStats } from '~/libs/sleeper/api.server';
-import { syncNflGameWeek } from '~/libs/syncs.server';
+import { scoreQbStreamingWeek } from '~/libs/side-games/qb-streaming.server';
 import {
   createQBStreamingWeek,
   getQBStreamingWeek,
   getQBStreamingWeeks,
-  updateQBStreamingWeek,
 } from '~/models/qbstreamingweek.server';
-import type { QBStreamingWeekOption } from '~/models/qbstreamingweekoption.server';
-import { updateQBStreamingWeekOptionScore } from '~/models/qbstreamingweekoption.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { areAllNflGamesComplete } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   // The admin layout only requires an editor, and layout loaders do not guard
@@ -76,38 +70,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const year = Number(yearString);
       const weekNumber = Number(weekNumberString);
 
-      // Update NFL scores for the week, dropping any game Sleeper no longer
-      // lists for it (a game that never kicks off would block scoring)
-      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
-
-      // Check if all NFL games for the week are completed
-      const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
-      if (!allGamesCompleted) {
-        return typedjson({
-          message: 'Not all games have been completed, scoring cannot proceed',
-        });
-      }
-
-      const sleeperJson = await getWeeklyStats(year, weekNumber, ['QB']);
-      const promises: Promise<QBStreamingWeekOption>[] = [];
-      for (const qbStreamingOption of qbStreamingWeek.QBStreamingWeekOptions) {
-        const stats = sleeperJson[qbStreamingOption.player.sleeperId] || {};
-        const score = scoreQbStats(stats);
-        promises.push(
-          updateQBStreamingWeekOptionScore(qbStreamingOption.id, score),
-        );
-      }
-      await Promise.all(promises);
-
-      await updateQBStreamingWeek({
-        id: qbStreamingWeek.id,
-        isOpen: qbStreamingWeek.isOpen,
-        isScored: true,
-        year: qbStreamingWeek.year,
-        week: qbStreamingWeek.week,
+      // The same shared scorer the Monday-night automation runs. The admin
+      // button keeps its stale-game cleanup, which the automation does not do.
+      const { message } = await scoreQbStreamingWeek(year, weekNumber, {
+        removeStaleGames: true,
       });
 
-      return typedjson({ message: 'Week has been scored.' });
+      return typedjson({ message });
     }
   }
 

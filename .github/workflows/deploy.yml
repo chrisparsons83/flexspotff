@@ -5,6 +5,11 @@ on:
       - main
       - dev
   pull_request: {}
+  schedule:
+    # Weekly canary on the default branch. Runner-image drift has already broken
+    # the Prisma jobs (the engine is tied to the runner's OpenSSL), and main can
+    # go weeks between merges, so without this the first sign is a red PR.
+    - cron: '0 6 * * 1'
 permissions:
   actions: write
   contents: read
@@ -54,7 +59,10 @@ jobs:
 
   typecheck:
     name: ʦ TypeScript
-    runs-on: ubuntu-latest
+    # Prisma 3.15.2 has no engine for the newer ubuntu-latest OpenSSL, so its
+    # client never generates and every typed query fails. Pin until Prisma is
+    # upgraded.
+    runs-on: ubuntu-22.04
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -117,7 +125,9 @@ jobs:
 
   vitest:
     name: ⚡ Vitest
-    runs-on: ubuntu-latest
+    # Pinned with the other Prisma jobs: the database push and Prisma client
+    # need an OpenSSL version Prisma 3.15.2 ships an engine for.
+    runs-on: ubuntu-22.04
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -145,7 +155,9 @@ jobs:
 
   migrations:
     name: 🗃️ Migration drift
-    runs-on: ubuntu-latest
+    # Pinned with the other Prisma jobs: `migrate deploy` needs an engine for
+    # this runner's OpenSSL, which Prisma 3.15.2 predates.
+    runs-on: ubuntu-22.04
     env:
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/flexspotff_test'
     steps:

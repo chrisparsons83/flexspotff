@@ -26,12 +26,14 @@
     "generate:tokens": "tsx scripts/generate-tokens.ts",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "postinstall": "patch-package",
+    "prepare": "node scripts/setup-git-hooks.mjs",
     "setup": "prisma migrate dev && prisma db seed",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "check-storybook": "tsx scripts/check-storybook.ts",
     "render:social-preview": "tsx scripts/render-social-preview.ts",
     "check:patterns": "tsx scripts/check-patterns.ts",
+    "ci:failures": "scripts/ci-failures.sh",
     "start": "remix-serve ./build/server/index.js",
     "start:bot": "node ./build/bot/server.cjs",
     "start:scheduler": "node ./build/scheduler/server.cjs",
@@ -39,7 +41,8 @@
     "test": "run-s db:migrate:test test:unit",
     "test:unit": "dotenv -e .env.test -- vitest --no-threads --coverage",
     "typecheck": "tsc -b",
-    "validate": "run-p \"test -- --run\" lint typecheck"
+    "preflight": "prisma generate && tsc -b",
+    "validate": "run-p \"test -- --run\" lint typecheck format check:patterns"
   },
   "eslintIgnore": [
     "/node_modules",

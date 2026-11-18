@@ -10,6 +10,7 @@ import {
   updateQBStreamingWeek,
 } from '~/models/qbstreamingweek.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 
 export type QbStreamingSyncResult = {
   message: string;
@@ -29,6 +30,9 @@ export type QbStreamingSyncResult = {
  *
  * A week an admin created by hand is refreshed the same way, but the sync only
  * opens weeks it creates, so a week an admin closed stays closed.
+ *
+ * Weeks numbered above 17 are left to an admin: the automation never creates,
+ * opens or refreshes one.
  */
 export async function syncQbStreaming(
   now = new Date(),
@@ -38,6 +42,14 @@ export async function syncQbStreaming(
 
   const week = await getCurrentNflWeek(season.year, now);
   if (!week) return { message: `No NFL games for ${season.year}` };
+
+  // Week 18 and the playoffs are left to an admin, and standing down here means
+  // a stray 18th week is never created, opened or refreshed.
+  if (week > LAST_AUTOMATED_WEEK) {
+    return {
+      message: `Week ${week} is past the last automated week (${LAST_AUTOMATED_WEEK})`,
+    };
+  }
 
   const games = await getWeekNflGames(season.year, week);
   if (games.length === 0) return { message: `No NFL games in week ${week}` };

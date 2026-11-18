@@ -6,12 +6,12 @@ import {
   useTypedActionData,
   useTypedLoaderData,
 } from 'remix-typedjson';
-import { z } from 'zod';
 import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
 import { Checkbox, Input } from '~/components/ui/input';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
+import { fetchSpreadLines } from '~/libs/side-games/pool-odds.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { PoolGame, PoolGameCreate } from '~/models/poolgame.server';
 import {
@@ -24,36 +24,6 @@ import {
 } from '~/models/poolweek.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-
-const oddsApiData = z.array(
-  z.object({
-    id: z.string(),
-    sport_key: z.string(),
-    sport_title: z.string(),
-    commence_time: z.string(),
-    home_team: z.string(),
-    away_team: z.string(),
-    bookmakers: z.array(
-      z.object({
-        key: z.string(),
-        title: z.string(),
-        last_update: z.string(),
-        markets: z.array(
-          z.object({
-            key: z.string(),
-            outcomes: z.array(
-              z.object({
-                name: z.string(),
-                price: z.number().optional(),
-                point: z.number().optional(),
-              }),
-            ),
-          }),
-        ),
-      }),
-    ),
-  }),
-);
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -103,6 +73,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         await updatePoolWeek({
           ...poolWeek,
           isOpen,
+          autoManaged: false,
         });
       }
 
@@ -112,65 +83,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       });
 
     case 'getSpreads': {
-      //Call the API to get the spreads for each game
-      const apiKey = process.env.SPREADS_API_KEY;
-      const sportKey = 'americanfootball_nfl';
-      const regions = 'us';
-      const markets = 'spreads';
-      const oddsFormat = 'american';
-      const dateFormat = 'iso';
-      const bookmakers = 'draftkings';
-
-      if (!apiKey) {
-        throw new Error(`SPREADS_API_KEY is missing.`);
-      }
-
       // Get Nfl Games for the current year and week
       const nflGames = await getWeekNflGames(year, weekNumber);
 
-      // Find the earliest starting game in nflGames and latest starting game
-      const earliestGame = nflGames.reduce((prev, current) =>
-        prev.gameStartTime < current.gameStartTime ? prev : current,
-      );
-      let latestGame = nflGames.reduce((prev, current) =>
-        prev.gameStartTime > current.gameStartTime ? prev : current,
-      );
-
-      // Add an hour to the latest game start time cause the API is weird
-      const gameStartTime = new Date(latestGame.gameStartTime);
-      gameStartTime.setHours(gameStartTime.getHours() + 1);
-
-      // Get the start and end dates for the API call
-      const commenceTimeFrom =
-        earliestGame.gameStartTime.toISOString().slice(0, -5) + 'Z';
-      const commenceTimeTo = gameStartTime.toISOString().slice(0, -5) + 'Z';
-
-      let spreadMapping = new Map<string, number>();
-
-      const newFetch = await fetch(
-        `https://api.the-odds-api.com/v4/sports/${sportKey}/odds?` +
-          new URLSearchParams({
-            apiKey,
-            regions,
-            markets,
-            oddsFormat,
-            dateFormat,
-            bookmakers,
-            commenceTimeFrom,
-            commenceTimeTo,
-          }).toString(),
-      );
-      const odds = oddsApiData.parse(await newFetch.json());
-
-      // Create a map of team names to their spread points
-      odds.forEach(game => {
-        const draftkings = game.bookmakers.find(b => b.key === 'draftkings');
-        if (draftkings) {
-          draftkings.markets[0].outcomes.forEach(outcome => {
-            spreadMapping.set(outcome.name, outcome.point || 0);
-          });
-        }
-      });
+      // The same fetch the automation uses; a missing key still throws the
+      // message this page has always shown.
+      const spreadMapping = await fetchSpreadLines(nflGames);
 
       return typedjson({
         message: 'Game spreads have been populated.',
