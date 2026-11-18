@@ -55,6 +55,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         weekNumber: newWeek,
         isOpen: false,
         isWeekScored: false,
+        autoManaged: false,
       });
 
       return typedjson({ message: 'Week has been created' });
@@ -121,6 +122,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await updatePoolWeek({
         ...poolWeek,
         isWeekScored: true,
+        autoManaged: false,
       });
 
       return typedjson({ message: 'Week has been scored' });
@@ -171,14 +173,22 @@ export default function SpreadPoolList() {
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Table
-        headers={['Week', 'Published', 'Scored', 'Edit', 'Score']}
-        primaryColumns={[3, 4]}
+        headers={[
+          'Week',
+          'Published',
+          'Scored',
+          'Auto-managed',
+          'Edit',
+          'Score',
+        ]}
+        primaryColumns={[4, 5]}
       >
         {poolWeeks.map(poolWeek => (
           <tr key={poolWeek.id}>
             <td>{poolWeek.weekNumber}</td>
             <td>{poolWeek.isOpen ? 'Yes' : 'No'}</td>
             <td>{poolWeek.isWeekScored ? 'Yes' : 'No'}</td>
+            <td>{poolWeek.autoManaged ? 'Yes' : 'No'}</td>
             <td>
               <Link to={`./${currentSeason.year}/${poolWeek.weekNumber}`}>
                 Edit Week

@@ -103,6 +103,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
         await updatePoolWeek({
           ...poolWeek,
           isOpen,
+          autoManaged: false,
         });
       }
 
