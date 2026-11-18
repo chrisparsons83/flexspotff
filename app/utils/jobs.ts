@@ -87,6 +87,13 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       "Opens the coming week's QB Streaming at 8am ET on the Wednesday before its first game, then adds QBs who newly qualify and hides unpicked ones Sleeper projects at 0, until the last game starts. Posts what changed to the admin alerts channel. Every 6 hours, at 2am, 8am, 2pm and 8pm ET.",
   },
   {
+    name: 'score-side-game-weeks',
+    cron: '*/15 17-23 * * 1',
+    timezone: 'America/Los_Angeles',
+    description:
+      "Scores every weekly side game once all of an NFL week's games are complete, which the stored schedule puts on Monday night, and posts one admin alert per scored week. Every 15 minutes from 5pm to 11:45pm PT on Mondays, covering the last kickoff through the final whistle.",
+  },
+  {
     name: 'post-waiver-report',
     cron: '20,35,50 0 * * 3',
     timezone: 'America/Los_Angeles',
