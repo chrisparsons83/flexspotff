@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { getWeekNflGames } from '~/models/nflgame.server';
 
+/**
+ * The last NFL week any weekly side game's automation touches. Week 18 and the
+ * playoffs stay manual, and a stray 18th week must never be created.
+ */
+export const LAST_AUTOMATED_WEEK = 17;
+
 const envSchema = z.object({
   AWS_BUCKET: z.string().min(1),
   AWS_REGION: z.string().min(1),
