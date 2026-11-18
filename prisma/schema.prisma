@@ -763,11 +763,12 @@ model LocksWeek {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  year         Int
-  weekNumber   Int
-  isOpen       Boolean @default(false)
-  isWeekScored Boolean @default(false)
-  autoManaged  Boolean @default(true)
+  year          Int
+  weekNumber    Int
+  isOpen        Boolean   @default(false)
+  isWeekScored  Boolean   @default(false)
+  autoManaged   Boolean   @default(true)
+  openAlertedAt DateTime?
 
   locksGames LocksGame[]
 
@@ -987,11 +988,12 @@ model PoolWeek {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  year         Int
-  weekNumber   Int
-  isOpen       Boolean @default(false)
-  isWeekScored Boolean @default(false)
-  autoManaged  Boolean @default(true)
+  year          Int
+  weekNumber    Int
+  isOpen        Boolean   @default(false)
+  isWeekScored  Boolean   @default(false)
+  autoManaged   Boolean   @default(true)
+  openAlertedAt DateTime?
 
   poolGames       PoolGame[]
   poolWeeksMissed PoolWeekMissed[]

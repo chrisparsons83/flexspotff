@@ -43,8 +43,15 @@ export type SideGameScorer = {
 };
 
 export type SideGameOpenOutcome =
-  | { status: 'opened'; detail?: string }
-  | { status: 'skipped' };
+  | { status: 'opened'; detail?: string; warning?: string }
+  | {
+      status: 'skipped';
+      /**
+       * A problem worth reporting that must not undo a write, such as a
+       * first-failure alert that could not be posted.
+       */
+      warning?: string;
+    };
 
 /**
  * One game's opening half: decides whether the coming week is due, and creates
