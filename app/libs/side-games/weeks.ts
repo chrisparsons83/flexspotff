@@ -23,6 +23,43 @@ export function sideGameWeekOpensAt(firstGameStart: Date): Date {
 export const FIRST_AUTOMATED_WEEK = 1;
 
 /**
+ * The ownership fields both openers read: a week is already open, already
+ * scored, or an admin has taken it over. A null week means it does not exist
+ * yet.
+ */
+export type SideGameWeekState = {
+  isOpen: boolean;
+  isWeekScored: boolean;
+  autoManaged: boolean;
+};
+
+/**
+ * Whether the automation must leave a week alone. Any admin action clears
+ * `autoManaged`, and an open or scored week is past the point of opening.
+ */
+export function automationLeavesWeekAlone(
+  week: SideGameWeekState | null,
+): boolean {
+  return (
+    week !== null && (week.isOpen || week.isWeekScored || !week.autoManaged)
+  );
+}
+
+/**
+ * Whether the coming week is due to open: inside the automated range, before
+ * its first kickoff, and past 8am Eastern on the Tuesday before that kickoff.
+ */
+export function sideGameWeekIsDue(
+  week: number,
+  firstGameStart: Date,
+  now: Date,
+): boolean {
+  if (week > LAST_AUTOMATED_WEEK) return false;
+  if (firstGameStart <= now) return false;
+  return now >= sideGameWeekOpensAt(firstGameStart);
+}
+
+/**
  * The weeks the scoring phase considers: this NFL week and the one before,
  * deduplicated and newest first.
  *

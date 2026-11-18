@@ -5,6 +5,7 @@ import * as syncs from '~/libs/syncs.server';
 import * as poolGameModel from '~/models/poolgame.server';
 import * as poolGamePickModel from '~/models/poolgamepicks.server';
 import * as poolWeekModel from '~/models/poolweek.server';
+import * as poolWeekMissedModel from '~/models/poolweekmissed.server';
 import * as seasonModel from '~/models/season.server';
 import * as auth from '~/services/auth.server';
 import * as helpers from '~/utils/helpers';
@@ -106,5 +107,26 @@ describe('admin.spread-pool action', () => {
         autoManaged: false,
       }),
     );
+  });
+
+  it('hands an incomplete week to the admin when they press Score', async () => {
+    vi.mocked(helpers.areAllNflGamesComplete).mockResolvedValue(false);
+
+    await postForm({
+      _action: 'scoreWeek',
+      weekNumber: '3',
+      year: '2025',
+    });
+
+    // Scoring cannot proceed, but the week must stop being automation-owned so
+    // the automation cannot score it later.
+    expect(poolWeekModel.updatePoolWeek).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'pool-week-3',
+        isWeekScored: false,
+        autoManaged: false,
+      }),
+    );
+    expect(poolWeekMissedModel.createPoolWeekMissed).not.toHaveBeenCalled();
   });
 });

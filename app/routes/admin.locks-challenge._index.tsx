@@ -164,14 +164,7 @@ export default function SpreadLocksList() {
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Table
-        headers={[
-          'Week',
-          'Published',
-          'Scored',
-          'Auto-managed',
-          'Publish',
-          'Score',
-        ]}
+        headers={['Week', 'Open', 'Scored', 'Auto-managed', 'Publish', 'Score']}
         primaryColumns={[4, 5]}
       >
         {locksWeeks.map(locksWeek => (

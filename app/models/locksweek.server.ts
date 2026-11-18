@@ -105,7 +105,8 @@ export async function createAndOpenLocksWeek(
 /**
  * Links every NFL game of an automation-owned closed Locks week and opens it in
  * one transaction, so a crash cannot leave the week half-linked or reopened
- * without its slate.
+ * without its slate. Opening clears any first-failure marker so a later failure
+ * this season can alert again.
  */
 export async function openLocksWeekWithGames(
   locksWeek: LocksWeek,
@@ -121,9 +122,23 @@ export async function openLocksWeekWithGames(
     ),
     prisma.locksWeek.update({
       where: { id: locksWeek.id },
-      data: { isOpen: true },
+      data: { isOpen: true, openAlertedAt: null },
     }),
   ]);
 
   return results[results.length - 1];
+}
+
+/**
+ * Records that the first failed open for a week has been alerted. Later runs
+ * see this and stay quiet; opening the week clears it.
+ */
+export async function markLocksWeekOpenAlerted(
+  locksWeek: LocksWeek,
+  alertedAt = new Date(),
+) {
+  return prisma.locksWeek.update({
+    where: { id: locksWeek.id },
+    data: { openAlertedAt: alertedAt },
+  });
 }

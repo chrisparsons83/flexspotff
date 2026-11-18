@@ -86,7 +86,7 @@ describe('admin.locks-challenge action', () => {
     });
   });
 
-  it('takes the week from the automation when an admin publishes it', async () => {
+  it('takes the week from the automation when an admin opens it', async () => {
     await postForm({
       _action: 'publishWeek',
       weekNumber: '3',
@@ -119,5 +119,26 @@ describe('admin.locks-challenge action', () => {
         autoManaged: false,
       }),
     );
+  });
+
+  it('hands an incomplete week to the admin when they press Score', async () => {
+    vi.mocked(helpers.areAllNflGamesComplete).mockResolvedValue(false);
+
+    await postForm({
+      _action: 'scoreWeek',
+      weekNumber: '3',
+      year: '2025',
+    });
+
+    // Scoring cannot proceed, but the week must stop being automation-owned so
+    // the automation cannot score it later.
+    expect(locksWeekModel.updateLocksWeek).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'locks-week-3',
+        isWeekScored: false,
+        autoManaged: false,
+      }),
+    );
+    expect(locksGameModel.getLocksGamesByYearAndWeek).not.toHaveBeenCalled();
   });
 });
