@@ -120,6 +120,37 @@ describe('syncQbStreaming', () => {
     expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
   });
 
+  it('never creates or opens a week numbered above 17', async () => {
+    vi.mocked(nflGameModel.getCurrentNflWeek).mockResolvedValue(18);
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      { id: 'g1', gameStartTime: new Date('2027-01-08T01:15:00Z') },
+    ] as never);
+
+    const result = await syncQbStreaming(new Date('2026-12-30T13:00:00Z'));
+
+    expect(result.message).toContain('17');
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(refresh.refreshQbStreamingWeek).not.toHaveBeenCalled();
+  });
+
+  it('leaves a stored week above 17 unrefreshed', async () => {
+    vi.mocked(nflGameModel.getCurrentNflWeek).mockResolvedValue(18);
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      { id: 'g1', gameStartTime: new Date('2027-01-08T01:15:00Z') },
+    ] as never);
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue({
+      ...week,
+      week: 18,
+    });
+
+    await syncQbStreaming(new Date('2026-12-30T13:00:00Z'));
+
+    expect(qbWeekModel.createQBStreamingWeekIfMissing).not.toHaveBeenCalled();
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(refresh.refreshQbStreamingWeek).not.toHaveBeenCalled();
+  });
+
   it('refreshes an existing week without reopening it', async () => {
     vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue({
       ...week,
