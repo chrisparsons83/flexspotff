@@ -1,6 +1,16 @@
+import type {
+  DFSSurvivorUserEntry,
+  DFSSurvivorUserWeek,
+  Player,
+} from '@prisma/client';
 import { prisma } from '~/db.server';
 
 export type { DFSSurvivorUserWeek } from '@prisma/client';
+
+/** One user's week with every entry it holds, player included. */
+export type DfsSurvivorWeekWithEntries = DFSSurvivorUserWeek & {
+  entries: (DFSSurvivorUserEntry & { player: Player })[];
+};
 
 export async function getDfsSurvivorWeeksByYear(year: number) {
   return prisma.dFSSurvivorUserWeek.findMany({
@@ -22,6 +32,35 @@ export async function getDfsSurvivorWeekByYearAndWeek(
       year,
       week,
     },
+  });
+}
+
+/** Every user's week row for one NFL week, with the entries to score. */
+export async function getDfsSurvivorWeeksWithEntries(
+  year: number,
+  week: number,
+): Promise<DfsSurvivorWeekWithEntries[]> {
+  return prisma.dFSSurvivorUserWeek.findMany({
+    where: { year, week },
+    include: {
+      entries: {
+        include: {
+          player: true,
+        },
+      },
+    },
+  });
+}
+
+/** Marks every user's row for one NFL week scored, or unscored. */
+export async function updateDfsSurvivorWeekScored(
+  year: number,
+  week: number,
+  isScored: boolean,
+) {
+  return prisma.dFSSurvivorUserWeek.updateMany({
+    where: { year, week },
+    data: { isScored },
   });
 }
 

@@ -1,7 +1,9 @@
+import { dfsSurvivorScorer } from './dfs-survivor.server';
 import { locksChallengeOpener } from './locks-opening.server';
 import { locksChallengeScorer } from './locks.server';
 import { spreadPoolOpener } from './pool-opening.server';
 import { poolScorer } from './pool.server';
+import { qbStreamingScorer } from './qb-streaming.server';
 import type {
   SideGameAction,
   SideGameOpener,
@@ -16,11 +18,15 @@ import { getCurrentSeason } from '~/models/season.server';
 import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 
 /**
- * The scoring phase's per-game modules, one line per game. #259 adds QB
- * Streaming and DFS Survivor here; each module owns its own eligibility rule
- * and writes.
+ * The scoring phase's per-game modules, one line per game. Each module owns its
+ * own eligibility rule and writes.
  */
-const SCORING_GAMES: SideGameScorer[] = [locksChallengeScorer, poolScorer];
+const SCORING_GAMES: SideGameScorer[] = [
+  locksChallengeScorer,
+  poolScorer,
+  qbStreamingScorer,
+  dfsSurvivorScorer,
+];
 
 /**
  * The opening phase's per-game modules, one line per game. Each module owns
@@ -78,18 +84,23 @@ async function scoreDueWeeks(
   for (const week of weeks) {
     for (const game of SCORING_GAMES) {
       let action: SideGameAction;
+      let warning: string | undefined;
       try {
         const outcome = await game.scoreWeek(year, week);
         if (outcome.status !== 'scored') continue;
 
         action = { game: game.game, week };
         if (outcome.detail) action.detail = outcome.detail;
+        warning = outcome.warning;
       } catch (error) {
         report.errors.push(`${game.game} week ${week}: ${errorMessage(error)}`);
         continue;
       }
 
       report.scored.push(action);
+      if (warning) {
+        report.warnings.push(`${game.game} week ${week}: ${warning}`);
+      }
       await alertScored(action, report);
     }
   }

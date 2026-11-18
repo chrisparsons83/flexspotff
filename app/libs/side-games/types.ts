@@ -24,7 +24,12 @@ export type SideGameSyncReport = {
 };
 
 export type SideGameScoreOutcome =
-  | { status: 'scored'; detail?: string }
+  | {
+      status: 'scored';
+      detail?: string;
+      /** A non-fatal problem after the score landed, e.g. a refresh failure. */
+      warning?: string;
+    }
   | { status: 'skipped' };
 
 /**

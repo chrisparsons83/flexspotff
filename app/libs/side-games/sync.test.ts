@@ -1,7 +1,10 @@
 import { syncSideGameWeeks } from './sync.server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as adminAlerts from '~/libs/admin-alerts.server';
+import * as playerWeekScores from '~/libs/dfs-survivor/player-week-scores.server';
+import * as sleeper from '~/libs/sleeper/api.server';
 import * as syncs from '~/libs/syncs.server';
+import * as dfsEntryModel from '~/models/dfssurvivoruserentry.server';
 import * as dfsWeekModel from '~/models/dfssurvivorweek.server';
 import * as locksGameModel from '~/models/locksgame.server';
 import * as locksPickModel from '~/models/locksgamepicks.server';
@@ -12,12 +15,16 @@ import * as poolGamePickModel from '~/models/poolgamepicks.server';
 import * as poolWeekModel from '~/models/poolweek.server';
 import * as poolWeekMissedModel from '~/models/poolweekmissed.server';
 import * as qbWeekModel from '~/models/qbstreamingweek.server';
+import * as qbOptionModel from '~/models/qbstreamingweekoption.server';
 import * as seasonModel from '~/models/season.server';
 
 vi.mock('~/libs/admin-alerts.server', () => ({
   postAdminAlert: vi.fn(),
 }));
+vi.mock('~/libs/dfs-survivor/player-week-scores.server');
+vi.mock('~/libs/sleeper/api.server');
 vi.mock('~/libs/syncs.server');
+vi.mock('~/models/dfssurvivoruserentry.server');
 vi.mock('~/models/locksgame.server');
 vi.mock('~/models/locksgamepicks.server');
 vi.mock('~/models/locksweek.server');
@@ -28,6 +35,7 @@ vi.mock('~/models/poolgame.server');
 vi.mock('~/models/poolgamepicks.server');
 vi.mock('~/models/poolweek.server');
 vi.mock('~/models/poolweekmissed.server');
+vi.mock('~/models/qbstreamingweekoption.server');
 vi.mock('~/models/qbstreamingweek.server');
 vi.mock('~/db.server', () => ({ prisma: {} }));
 
@@ -64,6 +72,32 @@ const completeGames = [
     gameStartTime: new Date('2026-11-24T01:15:00Z'),
   },
 ];
+const qbWeek = {
+  id: 'qb-week-12',
+  year: 2026,
+  week: 12,
+  isOpen: true,
+  isScored: false,
+};
+const qbOption = {
+  id: 'qb-option-1',
+  player: { sleeperId: 'sleeper-qb-1' },
+};
+const dfsWeek = {
+  id: 'dfs-week-12',
+  year: 2026,
+  week: 12,
+  isScored: false,
+};
+const dfsWeekWithEntries = {
+  ...dfsWeek,
+  entries: [
+    {
+      id: 'dfs-entry-1',
+      player: { sleeperId: 'sleeper-rb-1', position: 'RB' },
+    },
+  ],
+};
 
 // A stored coming week: week 13 kicks off on Sunday 29 November 2026 and so
 // opens at 8am EST on Tuesday 24 November: 13:00 UTC.
@@ -170,6 +204,22 @@ describe('syncSideGameWeeks', () => {
     );
     vi.mocked(poolGamePickModel.getPoolGamePicksWonLoss).mockResolvedValue([]);
     vi.mocked(poolGameModel.getPoolGamesByYearAndWeek).mockResolvedValue([]);
+    vi.mocked(sleeper.getWeeklyStats).mockResolvedValue({} as never);
+    vi.mocked(playerWeekScores.syncPlayerWeekScores).mockResolvedValue(
+      {} as never,
+    );
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue(
+      null,
+    );
+    vi.mocked(qbOptionModel.getQBStreamingWeekOptionsForSync).mockResolvedValue(
+      [],
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockResolvedValue(
+      null,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue(
+      [],
+    );
     vi.mocked(adminAlerts.postAdminAlert).mockResolvedValue({
       status: 'posted',
       messages: 1,
@@ -471,18 +521,249 @@ describe('syncSideGameWeeks', () => {
     expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
   });
 
-  it('leaves QB Streaming and DFS Survivor untouched', async () => {
+  it('scores a completed QB Streaming week and alerts it', async () => {
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (qbWeek as never) : null,
+    );
+    vi.mocked(qbOptionModel.getQBStreamingWeekOptionsForSync).mockResolvedValue(
+      [qbOption] as never,
+    );
+    vi.mocked(sleeper.getWeeklyStats).mockResolvedValue({
+      'sleeper-qb-1': { pass_yd: 300, pass_td: 2 },
+    } as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([{ game: 'QB Streaming', week: 12 }]);
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [12], {
+      removeStaleGames: false,
+    });
+    expect(sleeper.getWeeklyStats).toHaveBeenCalledWith(2026, 12, ['QB']);
+    expect(qbOptionModel.updateQBStreamingWeekOptionScore).toHaveBeenCalledWith(
+      'qb-option-1',
+      20,
+    );
+    expect(qbWeekModel.updateQBStreamingWeek).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'qb-week-12', isScored: true }),
+    );
+    expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+    const alert = vi.mocked(adminAlerts.postAdminAlert).mock.calls[0][0];
+    expect(alert).toContain('QB Streaming');
+    expect(alert).toContain('week 12');
+    expect(alert).toContain('has been scored');
+  });
+
+  it('leaves a QB Streaming week alone while any of its games is still to play', async () => {
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue(
+      qbWeek as never,
+    );
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      {
+        id: 'game-1',
+        status: 'complete',
+        gameStartTime: new Date('2026-11-22T18:00:00Z'),
+      },
+      {
+        id: 'game-2',
+        status: 'in_game',
+        gameStartTime: new Date('2026-11-24T01:15:00Z'),
+      },
+    ] as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(
+      qbOptionModel.updateQBStreamingWeekOptionScore,
+    ).not.toHaveBeenCalled();
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('leaves a closed QB Streaming week alone, because nothing could have been entered', async () => {
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue({
+      ...qbWeek,
+      isOpen: false,
+    } as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(syncs.syncNflGameWeek).not.toHaveBeenCalledWith(2026, [12], {
+      removeStaleGames: false,
+    });
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('scores a completed DFS Survivor week and refreshes player scores', async () => {
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (dfsWeek as never) : null,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue([
+      dfsWeekWithEntries,
+    ] as never);
+    vi.mocked(sleeper.getWeeklyStats).mockResolvedValue({
+      'sleeper-rb-1': { rush_yd: 100, rush_td: 1 },
+    } as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([{ game: 'DFS Survivor', week: 12 }]);
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [12]);
+    expect(dfsEntryModel.updateDfsSurvivorEntryPoints).toHaveBeenCalledWith(
+      'dfs-entry-1',
+      16,
+    );
+    expect(dfsWeekModel.updateDfsSurvivorWeekScored).toHaveBeenCalledWith(
+      2026,
+      12,
+      true,
+    );
+    expect(playerWeekScores.syncPlayerWeekScores).toHaveBeenCalledWith(
+      2026,
+      12,
+    );
+    expect(report.warnings).toEqual([]);
+    expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+    const alert = vi.mocked(adminAlerts.postAdminAlert).mock.calls[0][0];
+    expect(alert).toContain('DFS Survivor');
+    expect(alert).toContain('week 12');
+    expect(alert).toContain('has been scored');
+  });
+
+  it('leaves a DFS Survivor week alone while any of its games is still to play', async () => {
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockResolvedValue(
+      dfsWeek as never,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue([
+      dfsWeekWithEntries,
+    ] as never);
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      {
+        id: 'game-1',
+        status: 'complete',
+        gameStartTime: new Date('2026-11-22T18:00:00Z'),
+      },
+      {
+        id: 'game-2',
+        status: 'in_game',
+        gameStartTime: new Date('2026-11-24T01:15:00Z'),
+      },
+    ] as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [12]);
+    expect(dfsEntryModel.updateDfsSurvivorEntryPoints).not.toHaveBeenCalled();
+    expect(dfsWeekModel.updateDfsSurvivorWeekScored).not.toHaveBeenCalled();
+    expect(playerWeekScores.syncPlayerWeekScores).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('leaves a DFS Survivor week alone when it has no week rows', async () => {
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(dfsWeekModel.getDfsSurvivorWeeksWithEntries).not.toHaveBeenCalled();
+    expect(sleeper.getWeeklyStats).not.toHaveBeenCalled();
+    expect(playerWeekScores.syncPlayerWeekScores).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('leaves an already scored QB Streaming or DFS Survivor week alone', async () => {
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockResolvedValue({
+      ...qbWeek,
+      isScored: true,
+    } as never);
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockResolvedValue({
+      ...dfsWeek,
+      isScored: true,
+    } as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(syncs.syncNflGameWeek).not.toHaveBeenCalledWith(2026, [12], {
+      removeStaleGames: false,
+    });
+    expect(
+      qbOptionModel.updateQBStreamingWeekOptionScore,
+    ).not.toHaveBeenCalled();
+    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
+    expect(dfsWeekModel.getDfsSurvivorWeeksWithEntries).not.toHaveBeenCalled();
+    expect(dfsEntryModel.updateDfsSurvivorEntryPoints).not.toHaveBeenCalled();
+    expect(dfsWeekModel.updateDfsSurvivorWeekScored).not.toHaveBeenCalled();
+    expect(playerWeekScores.syncPlayerWeekScores).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
+  });
+
+  it('scores all four side games in one run', async () => {
     vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
       async (_year, weekNumber) => (weekNumber === 12 ? (week as never) : null),
+    );
+    vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (poolWeek as never) : null,
+    );
+    vi.mocked(qbWeekModel.getQBStreamingWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (qbWeek as never) : null,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (dfsWeek as never) : null,
+    );
+    vi.mocked(qbOptionModel.getQBStreamingWeekOptionsForSync).mockResolvedValue(
+      [qbOption] as never,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue([
+      dfsWeekWithEntries,
+    ] as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([
+      { game: 'Locks Challenge', week: 12 },
+      {
+        game: 'Spread Pool',
+        week: 12,
+        detail: '0 missed-week penalties written',
+      },
+      { game: 'QB Streaming', week: 12 },
+      { game: 'DFS Survivor', week: 12 },
+    ]);
+    expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(4);
+  });
+
+  it('reports a failed DFS player-score refresh as a warning and keeps the week scored', async () => {
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 12 ? (dfsWeek as never) : null,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue([
+      dfsWeekWithEntries,
+    ] as never);
+    vi.mocked(playerWeekScores.syncPlayerWeekScores).mockRejectedValue(
+      new Error('Sleeper is down'),
     );
 
     const report = await syncSideGameWeeks(now);
 
-    expect(report.scored).toEqual([{ game: 'Locks Challenge', week: 12 }]);
-    expect(qbWeekModel.getQBStreamingWeekByYearAndWeek).not.toHaveBeenCalled();
-    expect(qbWeekModel.updateQBStreamingWeek).not.toHaveBeenCalled();
-    expect(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).not.toHaveBeenCalled();
-    expect(dfsWeekModel.updateDfsSurvivorEntryGame).not.toHaveBeenCalled();
+    expect(report.scored).toEqual([{ game: 'DFS Survivor', week: 12 }]);
+    expect(report.errors).toEqual([]);
+    expect(report.warnings).toEqual([
+      'DFS Survivor week 12: Player score refresh failed: Sleeper is down',
+    ]);
+    expect(dfsWeekModel.updateDfsSurvivorWeekScored).toHaveBeenCalledWith(
+      2026,
+      12,
+      true,
+    );
+    expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
   });
 
   it('reports a failed alert without undoing the score', async () => {
