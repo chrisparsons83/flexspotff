@@ -1,5 +1,6 @@
 import { locksChallengeOpener } from './locks-opening.server';
 import { locksChallengeScorer } from './locks.server';
+import { poolScorer } from './pool.server';
 import type {
   SideGameAction,
   SideGameOpener,
@@ -14,11 +15,11 @@ import { getCurrentSeason } from '~/models/season.server';
 import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 
 /**
- * The scoring phase's per-game modules, one line per game. #258 and #259 add
- * Spread Pool, QB Streaming and DFS Survivor here; each module owns its own
- * eligibility rule and writes.
+ * The scoring phase's per-game modules, one line per game. #259 adds QB
+ * Streaming and DFS Survivor here; each module owns its own eligibility rule
+ * and writes.
  */
-const SCORING_GAMES: SideGameScorer[] = [locksChallengeScorer];
+const SCORING_GAMES: SideGameScorer[] = [locksChallengeScorer, poolScorer];
 
 /**
  * The opening phase's per-game modules, one line per game. #261 adds the
