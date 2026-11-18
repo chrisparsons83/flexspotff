@@ -124,14 +124,7 @@ export default function SpreadPoolList() {
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Table
-        headers={[
-          'Week',
-          'Published',
-          'Scored',
-          'Auto-managed',
-          'Edit',
-          'Score',
-        ]}
+        headers={['Week', 'Open', 'Scored', 'Auto-managed', 'Edit', 'Score']}
         primaryColumns={[4, 5]}
       >
         {poolWeeks.map(poolWeek => (

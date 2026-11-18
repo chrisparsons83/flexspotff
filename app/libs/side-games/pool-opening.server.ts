@@ -1,7 +1,7 @@
 import { fetchSpreadLinesResult } from './pool-odds.server';
 import type { SpreadLinesFailureReason } from './pool-odds.server';
 import type { SideGameOpener, SideGameOpenOutcome } from './types';
-import { sideGameWeekOpensAt } from './weeks';
+import { automationLeavesWeekAlone, sideGameWeekIsDue } from './weeks';
 import { postAdminAlert } from '~/libs/admin-alerts.server';
 import { getWeekNflGames } from '~/models/nflgame.server';
 import type { PoolLine, PoolWeek } from '~/models/poolweek.server';
@@ -13,7 +13,6 @@ import {
   openPoolWeekWithLines,
   writeClosedPoolWeekLines,
 } from '~/models/poolweek.server';
-import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 
 /**
  * The Spread Pool half of the opening phase.
@@ -24,26 +23,20 @@ import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
  * the next run, so an admin can see the partial week and finish it by hand.
  *
  * The first failed attempt posts one admin alert naming the reason and records
- * `openAlertedAt`; later retries stay quiet. Opening the week clears the
- * marker, so a failure later in the same season can alert again. A week an
- * admin owns is left completely alone: no odds call, no writes.
+ * `openAlertedAt`; later retries stay quiet. A failed post leaves the marker
+ * unset so the next run retries the alert. Opening the week clears the marker,
+ * so a failure later in the same season can alert again. A week an admin owns
+ * is left completely alone: no odds call, no writes.
  */
 export const spreadPoolOpener: SideGameOpener = {
   game: 'Spread Pool',
   async openWeek(year, week, firstGameStart, now) {
-    if (week > LAST_AUTOMATED_WEEK) return { status: 'skipped' };
-    if (firstGameStart <= now) return { status: 'skipped' };
-    if (now < sideGameWeekOpensAt(firstGameStart)) {
+    if (!sideGameWeekIsDue(week, firstGameStart, now)) {
       return { status: 'skipped' };
     }
 
     const existing = await getPoolWeekByYearAndWeek(year, week);
-    if (
-      existing &&
-      (existing.isOpen || existing.isWeekScored || !existing.autoManaged)
-    ) {
-      return { status: 'skipped' };
-    }
+    if (automationLeavesWeekAlone(existing)) return { status: 'skipped' };
 
     const nflGames = await getWeekNflGames(year, week);
     if (nflGames.length === 0) return { status: 'skipped' };
@@ -90,8 +83,9 @@ export const spreadPoolOpener: SideGameOpener = {
 
 /**
  * Posts the one first-failure alert and records it. The alert comes after the
- * week's write, and a failed post only becomes a warning: the partial week and
- * the marker must survive a Discord outage.
+ * week's write, and a failed post only becomes a warning: the marker is set
+ * only when the post returned, so a Discord outage leaves it unset and the next
+ * run retries the alert.
  */
 async function failOpen(
   poolWeek: PoolWeek,
@@ -100,19 +94,21 @@ async function failOpen(
 ): Promise<SideGameOpenOutcome> {
   if (poolWeek.openAlertedAt) return { status: 'skipped' };
 
+  let posted = false;
   let warning: string | undefined;
   try {
     const result = await postAdminAlert(
       `**Spread Pool** week ${week} failed to open: ${reason}`,
     );
     if (result.status === 'skipped') console.warn(result.reason);
+    posted = true;
   } catch (error) {
     warning = `Admin alert failed for Spread Pool week ${week}: ${
       error instanceof Error ? error.message : String(error)
     }`;
   }
 
-  await markPoolWeekOpenAlerted(poolWeek);
+  if (posted) await markPoolWeekOpenAlerted(poolWeek);
   return warning ? { status: 'skipped', warning } : { status: 'skipped' };
 }
 

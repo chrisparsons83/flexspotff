@@ -914,6 +914,25 @@ describe('syncSideGameWeeks', () => {
       );
     });
 
+    it('opens on the Tuesday before a Saturday kickoff', async () => {
+      mockOpeningWeek(13, [
+        {
+          id: 'saturday-game',
+          status: 'pre_game',
+          gameStartTime: new Date('2026-11-28T18:00:00Z'),
+        },
+      ]);
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(locksWeekModel.createAndOpenLocksWeek).toHaveBeenCalledWith(
+        2026,
+        13,
+        ['saturday-game'],
+      );
+    });
+
     it('opens at 8am Eastern on the Tuesday before the fall DST change', async () => {
       mockOpeningWeek(9, [
         {
@@ -1014,6 +1033,70 @@ describe('syncSideGameWeeks', () => {
       expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
     });
 
+    it('alerts once when an existing closed week fails to open, then retries quietly', async () => {
+      mockOpeningWeek(13, week13Games);
+      let openAlertedAt: Date | null = null;
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({
+                ...week,
+                weekNumber: 13,
+                isOpen: false,
+                openAlertedAt,
+              } as never)
+            : null,
+      );
+      vi.mocked(locksWeekModel.openLocksWeekWithGames).mockRejectedValue(
+        new Error('transaction failed'),
+      );
+      vi.mocked(locksWeekModel.markLocksWeekOpenAlerted).mockImplementation(
+        async locksWeek => {
+          openAlertedAt = new Date();
+          return { ...locksWeek, openAlertedAt } as never;
+        },
+      );
+
+      const first = await syncSideGameWeeks(tuesdayOpen);
+      const second = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(first.opened).toEqual([]);
+      expect(first.errors).toEqual([]);
+      expect(second.opened).toEqual([]);
+      expect(second.errors).toEqual([]);
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+      const alert = vi.mocked(adminAlerts.postAdminAlert).mock.calls[0][0];
+      expect(alert).toContain('Locks Challenge');
+      expect(alert).toContain('week 13');
+      expect(alert).toContain('transaction failed');
+      expect(locksWeekModel.markLocksWeekOpenAlerted).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the Locks failure marker unset when the alert cannot post', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({ ...week, weekNumber: 13, isOpen: false } as never)
+            : null,
+      );
+      vi.mocked(locksWeekModel.openLocksWeekWithGames).mockRejectedValue(
+        new Error('transaction failed'),
+      );
+      vi.mocked(adminAlerts.postAdminAlert).mockRejectedValue(
+        new Error('Missing Access'),
+      );
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([]);
+      expect(report.errors).toEqual([]);
+      expect(report.warnings).toEqual([
+        'Admin alert failed for Locks Challenge week 13: Missing Access',
+      ]);
+      expect(locksWeekModel.markLocksWeekOpenAlerted).not.toHaveBeenCalled();
+    });
+
     it('reports a failed open alert as a warning without undoing the open', async () => {
       mockOpeningWeek(13, week13Games);
       vi.mocked(adminAlerts.postAdminAlert).mockRejectedValue(
@@ -1102,6 +1185,56 @@ describe('syncSideGameWeeks', () => {
       expect(failureAlert).toContain('Spread Pool');
       expect(failureAlert).toContain('week 13');
       expect(failureAlert).toContain('1 game has no line');
+    });
+
+    it('stays closed when an outcome has no point, rather than opening on a zero line', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      // The home team has no point yet, so it has no line: the week must stay
+      // closed with only the line the away team does have.
+      const noPointOdds = [
+        {
+          ...week13Odds[0],
+          bookmakers: [
+            {
+              ...week13Odds[0].bookmakers[0],
+              markets: [
+                {
+                  key: 'spreads',
+                  outcomes: [
+                    { name: 'Kansas City Chiefs', price: -110 },
+                    { name: 'Buffalo Bills', price: -110, point: 3.5 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        week13Odds[1],
+      ];
+      globalThis.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => noPointOdds,
+      })) as unknown as typeof fetch;
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalledWith(
+        2026,
+        13,
+        [{ gameId: 'week-13-game-2', homeSpread: -3.5 }],
+      );
+      expect(poolWeekModel.createAndOpenPoolWeek).not.toHaveBeenCalled();
     });
 
     it('alerts once naming a missing API key and creates the week to hold it', async () => {
@@ -1294,7 +1427,7 @@ describe('syncSideGameWeeks', () => {
       expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
     });
 
-    it('reports a failed failure alert as a warning without undoing the write', async () => {
+    it('reports a failed failure alert as a warning and leaves the marker unset', async () => {
       mockOpeningWeek(13, week13Games);
       vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
         async (_year, weekNumber) =>
@@ -1328,9 +1461,45 @@ describe('syncSideGameWeeks', () => {
         'Admin alert failed for Spread Pool week 13: Missing Access',
       ]);
       expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalled();
-      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledWith(
-        closedWeek,
+      // The marker must stay unset so the next run retries the alert.
+      expect(poolWeekModel.markPoolWeekOpenAlerted).not.toHaveBeenCalled();
+    });
+
+    it('retries the failure alert after a failed post', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({ ...week, weekNumber: 13, isOpen: true } as never)
+            : null,
       );
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      globalThis.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => [week13Odds[0]],
+      })) as unknown as typeof fetch;
+      vi.mocked(adminAlerts.postAdminAlert)
+        .mockRejectedValueOnce(new Error('Missing Access'))
+        .mockResolvedValueOnce({ status: 'posted', messages: 1 });
+
+      const first = await syncSideGameWeeks(tuesdayOpen);
+      const second = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(first.warnings).toEqual([
+        'Admin alert failed for Spread Pool week 13: Missing Access',
+      ]);
+      expect(second.warnings).toEqual([]);
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
+      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledTimes(1);
     });
   });
 });

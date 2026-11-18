@@ -101,23 +101,23 @@ async function scoreDueWeeks(
       if (warning) {
         report.warnings.push(`${game.game} week ${week}: ${warning}`);
       }
-      await alertScored(action, report);
+      await alertWeek(action, report, 'scored');
     }
   }
 }
 
 /**
- * The opening phase runs after scoring, so a Tuesday-morning run settles the
+ * The opening phase runs after scoring, so a Tuesday-morning run scores the
  * week just finished before opening the next one.
  *
  * Only the coming NFL week is considered, within weeks 1-17. The stored
  * schedule decides which week that is: normally `getCurrentNflWeek` already
- * points at the next week, but on the Tuesday morning before its slate has been
- * stored it still points at the finished week, and every one of those games has
- * kicked off. Then the next week is the coming one, because NFL weeks are
- * contiguous.
+ * points at the next week, but on the Tuesday morning before its games have
+ * been stored it still points at the finished week, and every one of those
+ * games has kicked off. Then the next week is the coming one, because NFL weeks
+ * are contiguous.
  *
- * That week's slate is synced before it is opened and then re-read, so the
+ * That week's games are synced before it is opened and then re-read, so the
  * opener does not depend on anyone having pressed "Resync NFL Games". A game
  * that throws is reported without stopping the others, mirroring scoring.
  */
@@ -155,7 +155,7 @@ async function openDueWeeks(
     }
 
     report.opened.push(action);
-    await alertOpened(action, report);
+    await alertWeek(action, report, 'opened');
   }
 }
 
@@ -177,38 +177,20 @@ async function comingNflWeek(
 }
 
 /**
- * Posts one alert per opened week. The week is already written by then, so a
- * Discord outage is a warning in the report rather than a failure that would
- * undo the open.
+ * Posts one alert per opened or scored week. The week is already written by
+ * then, so a Discord outage is a warning in the report rather than a failure
+ * that would undo the write.
  */
-async function alertOpened(action: SideGameAction, report: SideGameSyncReport) {
+async function alertWeek(
+  action: SideGameAction,
+  report: SideGameSyncReport,
+  verb: 'opened' | 'scored',
+) {
   const detail = action.detail ? ` ${action.detail}` : '';
 
   try {
     const result = await postAdminAlert(
-      `**${action.game}** week ${action.week} has been opened.${detail}`,
-    );
-    if (result.status === 'skipped') console.warn(result.reason);
-  } catch (error) {
-    report.warnings.push(
-      `Admin alert failed for ${action.game} week ${
-        action.week
-      }: ${errorMessage(error)}`,
-    );
-  }
-}
-
-/**
- * Posts one alert per scored week. The week is already written by then, so a
- * Discord outage is a warning in the report rather than a failure that would
- * undo the score.
- */
-async function alertScored(action: SideGameAction, report: SideGameSyncReport) {
-  const detail = action.detail ? ` ${action.detail}` : '';
-
-  try {
-    const result = await postAdminAlert(
-      `**${action.game}** week ${action.week} has been scored.${detail}`,
+      `**${action.game}** week ${action.week} has been ${verb}.${detail}`,
     );
     if (result.status === 'skipped') console.warn(result.reason);
   } catch (error) {

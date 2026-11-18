@@ -22,11 +22,15 @@ export type ScoreDfsSurvivorWeekResult = {
  * Scores one DFS Survivor week, shared by the admin Score Week button and the
  * weekly automation so the two cannot drift apart.
  *
- * Every user's week row is loaded with its entries, each entry is scored from
- * its player's Sleeper stat line, and all the rows are marked scored. The
- * player-week scores are then refreshed for the entry picker's season-to-date
- * column; that refresh is derived data, so its failure is a warning rather than
- * a failed score - the week stays scored and can be refreshed on its own.
+ * The stored games are synced first, because a game that has since moved or
+ * finished cannot be judged from a stale row. Scoring then refuses until every
+ * game of the week is complete, so the admin button cannot freeze an in-progress
+ * game's players at zero. Every user's week row is loaded with its entries, each
+ * entry is scored from its player's Sleeper stat line, and all the rows are
+ * marked scored. The player-week scores are then refreshed for the entry
+ * picker's season-to-date column; that refresh is derived data, so its failure
+ * is a warning rather than a failed score - the week stays scored and can be
+ * refreshed on its own.
  */
 export async function scoreDfsSurvivorWeek(
   year: number,
@@ -37,6 +41,14 @@ export async function scoreDfsSurvivorWeek(
     return {
       scored: false,
       message: 'No DFS survivor week records found for this week',
+    };
+  }
+
+  await syncNflGameWeek(year, [weekNumber]);
+  if (!(await areAllNflGamesComplete(year, weekNumber))) {
+    return {
+      scored: false,
+      message: 'Not all games have been completed, scoring cannot proceed',
     };
   }
 
@@ -102,20 +114,14 @@ export async function revertDfsSurvivorWeek(year: number, weekNumber: number) {
  * "first row is scored" rule. DFS Survivor has no `autoManaged` column: a
  * scored week is its ownership signal, and a reverted one may be scored again.
  *
- * The admin button deliberately has no completeness guard, but the automation
- * does: it syncs the week's slate and refuses until every game is complete, so
- * the Monday-evening window cannot freeze an in-progress game's players at zero.
+ * The completeness guard lives in the shared score function, so the admin
+ * button refuses an incomplete week too.
  */
 export const dfsSurvivorScorer: SideGameScorer = {
   game: 'DFS Survivor',
   async scoreWeek(year: number, week: number) {
     const dfsWeek = await getDfsSurvivorWeekByYearAndWeek(year, week);
     if (!dfsWeek || dfsWeek.isScored) return { status: 'skipped' };
-
-    await syncNflGameWeek(year, [week]);
-    if (!(await areAllNflGamesComplete(year, week))) {
-      return { status: 'skipped' };
-    }
 
     const { scored, warning } = await scoreDfsSurvivorWeek(year, week);
     if (!scored) return { status: 'skipped' };

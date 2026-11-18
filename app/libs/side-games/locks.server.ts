@@ -52,6 +52,11 @@ export async function scoreLocksWeek(
 
   const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
   if (!allGamesCompleted) {
+    // An admin pressing Score on an incomplete week takes it over even though
+    // scoring cannot proceed, so the automation cannot score it later.
+    if (byAdmin) {
+      await updateLocksWeek({ ...locksWeek, autoManaged: false });
+    }
     return {
       scored: false,
       message: 'Not all games have been completed, scoring cannot proceed',

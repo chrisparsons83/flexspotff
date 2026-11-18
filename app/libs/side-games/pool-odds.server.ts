@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 /**
  * The subset of a stored NFL game the odds fetch needs: the kickoff window is
- * derived from the slate's first and last starts.
+ * derived from the games' first and last starts.
  */
 export type OddsGame = Pick<NFLGame, 'gameStartTime'>;
 
@@ -60,7 +60,7 @@ export type SpreadLinesResult =
   | { ok: false; reason: SpreadLinesFailureReason };
 
 /**
- * Fetches DraftKings spreads for the given slate. This is the admin page's
+ * Fetches DraftKings spreads for the given games. This is the admin page's
  * path: a missing key throws the same message the page has always shown, and
  * an API failure throws rather than being swallowed.
  */
@@ -102,20 +102,60 @@ export async function fetchSpreadLines(
         commenceTimeTo,
       }).toString(),
   );
+  if (!response.ok) {
+    throw new Error(
+      `The Odds API returned ${response.status}: ${await responseErrorDetail(
+        response,
+      )}`,
+    );
+  }
   const odds = oddsApiData.parse(await response.json());
 
-  // Create a map of team names to their spread points
+  // Create a map of team names to their spread points. A team with no point
+  // has no line yet, so it is left out rather than recorded as a 0-point line
+  // the pool would open on.
   const spreadMapping: SpreadLinesByTeam = new Map();
   odds.forEach(game => {
     const draftkings = game.bookmakers.find(b => b.key === 'draftkings');
     if (draftkings) {
       draftkings.markets[0].outcomes.forEach(outcome => {
-        spreadMapping.set(outcome.name, outcome.point || 0);
+        if (typeof outcome.point === 'number') {
+          spreadMapping.set(outcome.name, outcome.point);
+        }
       });
     }
   });
 
   return spreadMapping;
+}
+
+const MAX_ERROR_DETAIL = 200;
+
+/**
+ * The concrete reason an Odds API call failed, preferring the API's own
+ * `message` and falling back to the raw body, truncated so an HTML error page
+ * does not swamp the alert.
+ */
+async function responseErrorDetail(response: Response) {
+  let body: string;
+  try {
+    body = await response.text();
+  } catch {
+    return 'no response body';
+  }
+
+  let detail = body.trim();
+  try {
+    const parsed = JSON.parse(detail) as { message?: unknown };
+    if (typeof parsed.message === 'string') detail = parsed.message;
+  } catch {
+    // Keep the raw body.
+  }
+
+  if (!detail) return 'no response body';
+  return detail.length > MAX_ERROR_DETAIL
+    ? `${detail.slice(0, MAX_ERROR_DETAIL)}...`
+    : detail;
 }
 
 /**
