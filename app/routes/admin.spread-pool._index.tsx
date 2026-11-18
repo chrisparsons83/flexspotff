@@ -10,24 +10,15 @@ import { Button } from '~/components/ui/button';
 import { Link } from '~/components/ui/link';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { syncNflGameWeek } from '~/libs/syncs.server';
-import { getPoolGamesByYearAndWeek } from '~/models/poolgame.server';
-import {
-  getPoolGamePicksWonLoss,
-  getPoolGamesPicksByPoolWeek,
-  updatePoolGamePicksWithResults,
-} from '~/models/poolgamepicks.server';
+import { scorePoolWeek } from '~/libs/side-games/pool.server';
 import {
   createPoolWeek,
   getNewestPoolWeekForYear,
   getPoolWeekByYearAndWeek,
   getPoolWeeksByYear,
-  updatePoolWeek,
 } from '~/models/poolweek.server';
-import { createPoolWeekMissed } from '~/models/poolweekmissed.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { areAllNflGamesComplete } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -77,55 +68,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const poolWeek = await getPoolWeekByYearAndWeek(+year, +weekNumber);
       if (!poolWeek) throw new Error(`There's no pool week here`);
 
-      // Read who bet before the sync below, which drops picks on games that
-      // are no longer in this week. A bet on one of those still counts as
-      // having entered the week, so it can't earn a missed-week penalty.
-      const poolGamePicks = await getPoolGamesPicksByPoolWeek(poolWeek);
-
-      // Update NFL scores for the week
-      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
-
-      // Check if all NFL games for the week are completed
-      const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
-      if (!allGamesCompleted) {
-        return typedjson({
-          message: 'Not all games have been completed, scoring cannot proceed',
-        });
-      }
-
-      // Add people that did not put in a bet to penalties
-      const userIdsThatBet = [
-        ...new Set(
-          poolGamePicks
-            .filter(poolGamePick => poolGamePick.amountBet > 0)
-            .map(poolGamePick => poolGamePick.userId),
-        ),
-      ];
-      const existingUserIdsThatDidNotBet = (await getPoolGamePicksWonLoss(year))
-        .map(result => result.userId)
-        .filter(userId => !userIdsThatBet.includes(userId));
-
-      const poolGameMissedPromises: Promise<any>[] = [];
-      for (const userId of existingUserIdsThatDidNotBet) {
-        poolGameMissedPromises.push(createPoolWeekMissed(userId, poolWeek.id));
-      }
-      await Promise.all(poolGameMissedPromises);
-
-      // Loop through each game and process
-      const poolGames = await getPoolGamesByYearAndWeek(year, weekNumber);
-      const poolGamePickPromises: Promise<number | [number, number]>[] = [];
-      for (const poolGame of poolGames) {
-        poolGamePickPromises.push(updatePoolGamePicksWithResults(poolGame));
-      }
-      await Promise.all(poolGamePickPromises);
-
-      await updatePoolWeek({
-        ...poolWeek,
-        isWeekScored: true,
-        autoManaged: false,
+      // The same code the Monday-night automation runs, with the admin-only
+      // safety of dropping games Sleeper no longer lists for the week.
+      const { message } = await scorePoolWeek(year, weekNumber, {
+        removeStaleGames: true,
+        byAdmin: true,
       });
 
-      return typedjson({ message: 'Week has been scored' });
+      return typedjson({ message });
     }
   }
 
