@@ -5,6 +5,11 @@ on:
       - main
       - dev
   pull_request: {}
+  schedule:
+    # Weekly canary on the default branch. Runner-image drift has already broken
+    # the Prisma jobs (the engine is tied to the runner's OpenSSL), and main can
+    # go weeks between merges, so without this the first sign is a red PR.
+    - cron: '0 6 * * 1'
 permissions:
   actions: write
   contents: read
