@@ -1,14 +1,18 @@
+import { locksChallengeOpener } from './locks-opening.server';
 import { locksChallengeScorer } from './locks.server';
 import { poolScorer } from './pool.server';
 import type {
   SideGameAction,
+  SideGameOpener,
   SideGameScorer,
   SideGameSyncReport,
 } from './types';
 import { scoringCandidateWeeks } from './weeks';
 import { postAdminAlert } from '~/libs/admin-alerts.server';
-import { getCurrentNflWeek } from '~/models/nflgame.server';
+import { syncNflGameWeek } from '~/libs/syncs.server';
+import { getCurrentNflWeek, getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
+import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 
 /**
  * The scoring phase's per-game modules, one line per game. #259 adds QB
@@ -16,6 +20,12 @@ import { getCurrentSeason } from '~/models/season.server';
  * and writes.
  */
 const SCORING_GAMES: SideGameScorer[] = [locksChallengeScorer, poolScorer];
+
+/**
+ * The opening phase's per-game modules, one line per game. #261 adds the
+ * Spread Pool here; each module owns its own eligibility rule and writes.
+ */
+const OPENING_GAMES: SideGameOpener[] = [locksChallengeOpener];
 
 /**
  * Converges the weekly side games on `now`: scores what is due, then opens what
@@ -85,17 +95,89 @@ async function scoreDueWeeks(
  * The opening phase runs after scoring, so a Tuesday-morning run settles the
  * week just finished before opening the next one.
  *
- * Opening ships in #260: it adds the per-game opening modules and opens only the
- * current NFL week, within weeks 1-17, once the clock passes 8am Eastern on the
- * Tuesday before that week's first kickoff.
+ * Only the coming NFL week is considered, within weeks 1-17. The stored
+ * schedule decides which week that is: normally `getCurrentNflWeek` already
+ * points at the next week, but on the Tuesday morning before its slate has been
+ * stored it still points at the finished week, and every one of those games has
+ * kicked off. Then the next week is the coming one, because NFL weeks are
+ * contiguous.
+ *
+ * That week's slate is synced before it is opened and then re-read, so the
+ * opener does not depend on anyone having pressed "Resync NFL Games". A game
+ * that throws is reported without stopping the others, mirroring scoring.
  */
 async function openDueWeeks(
-  _year: number,
-  _currentWeek: number | null,
-  _now: Date,
-  _report: SideGameSyncReport,
+  year: number,
+  currentWeek: number | null,
+  now: Date,
+  report: SideGameSyncReport,
 ) {
-  // No-op until #260.
+  if (currentWeek === null || currentWeek > LAST_AUTOMATED_WEEK) return;
+
+  const week = await comingNflWeek(year, currentWeek, now);
+  if (week === null || week > LAST_AUTOMATED_WEEK) return;
+
+  await syncNflGameWeek(year, [week]);
+  const games = await getWeekNflGames(year, week);
+  if (games.length === 0) return;
+
+  const firstGameStart = games[0].gameStartTime;
+
+  for (const game of OPENING_GAMES) {
+    let action: SideGameAction;
+    try {
+      const outcome = await game.openWeek(year, week, firstGameStart, now);
+      if (outcome.status !== 'opened') continue;
+
+      action = { game: game.game, week };
+      if (outcome.detail) action.detail = outcome.detail;
+    } catch (error) {
+      report.errors.push(`${game.game} week ${week}: ${errorMessage(error)}`);
+      continue;
+    }
+
+    report.opened.push(action);
+    await alertOpened(action, report);
+  }
+}
+
+/**
+ * The week the opener should consider: normally the current NFL week, or the
+ * one after it when the current week has no stored games or has entirely
+ * kicked off.
+ */
+async function comingNflWeek(
+  year: number,
+  currentWeek: number,
+  now: Date,
+): Promise<number | null> {
+  const games = await getWeekNflGames(year, currentWeek);
+  const finished =
+    games.length === 0 || games.every(game => game.gameStartTime <= now);
+
+  return finished ? currentWeek + 1 : currentWeek;
+}
+
+/**
+ * Posts one alert per opened week. The week is already written by then, so a
+ * Discord outage is a warning in the report rather than a failure that would
+ * undo the open.
+ */
+async function alertOpened(action: SideGameAction, report: SideGameSyncReport) {
+  const detail = action.detail ? ` ${action.detail}` : '';
+
+  try {
+    const result = await postAdminAlert(
+      `**${action.game}** week ${action.week} has been opened.${detail}`,
+    );
+    if (result.status === 'skipped') console.warn(result.reason);
+  } catch (error) {
+    report.warnings.push(
+      `Admin alert failed for ${action.game} week ${
+        action.week
+      }: ${errorMessage(error)}`,
+    );
+  }
 }
 
 /**

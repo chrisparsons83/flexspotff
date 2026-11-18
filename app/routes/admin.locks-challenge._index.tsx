@@ -193,7 +193,7 @@ export default function SpreadLocksList() {
                   value='publishWeek'
                   disabled={navigation.state !== 'idle'}
                 >
-                  Publish Week
+                  Open Week
                 </Button>
               </Form>
             </td>
