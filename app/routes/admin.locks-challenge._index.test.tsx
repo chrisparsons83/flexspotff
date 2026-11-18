@@ -1,6 +1,7 @@
 import { action } from './admin.locks-challenge._index';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as syncs from '~/libs/syncs.server';
 import * as locksGameModel from '~/models/locksgame.server';
 import * as locksWeekModel from '~/models/locksweek.server';
 import * as nflGameModel from '~/models/nflgame.server';
@@ -106,6 +107,9 @@ describe('admin.locks-challenge action', () => {
       year: '2025',
     });
 
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2025, [3], {
+      removeStaleGames: true,
+    });
     expect(locksWeekModel.updateLocksWeek).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'locks-week-3',

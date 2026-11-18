@@ -9,16 +9,9 @@ import Alert from '~/components/ui/Alert';
 import { Button } from '~/components/ui/button';
 import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
-import { syncNflGameWeek } from '~/libs/syncs.server';
+import { scoreLocksWeek } from '~/libs/side-games/locks.server';
 import type { LocksGameCreate } from '~/models/locksgame.server';
-import {
-  getLocksGamesByYearAndWeek,
-  upsertLocksGame,
-} from '~/models/locksgame.server';
-import {
-  deleteLocksGamePicksNotActive,
-  updateLocksGamePicksWithResults,
-} from '~/models/locksgamepicks.server';
+import { upsertLocksGame } from '~/models/locksgame.server';
 import {
   createLocksWeek,
   getLocksWeekByYearAndWeek,
@@ -29,7 +22,6 @@ import {
 import { getWeekNflGames } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
-import { areAllNflGamesComplete } from '~/utils/helpers';
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request, {
@@ -79,39 +71,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const locksWeek = await getLocksWeekByYearAndWeek(+year, +weekNumber);
       if (!locksWeek) throw new Error(`There's no locks week here`);
 
-      // Update NFL scores for the week, dropping any game Sleeper no longer
-      // lists for it so its picks are never scored
-      await syncNflGameWeek(year, [weekNumber], { removeStaleGames: true });
-
-      // Check if all NFL games for the week are completed
-      const allGamesCompleted = await areAllNflGamesComplete(year, weekNumber);
-      if (!allGamesCompleted) {
-        return typedjson({
-          message: 'Not all games have been completed, scoring cannot proceed',
-        });
-      }
-
-      // Loop through each game and process
-      const locksGames = await getLocksGamesByYearAndWeek(year, weekNumber);
-      const locksGamePickPromises: Promise<number | [number, number]>[] = [];
-      for (const locksGame of locksGames) {
-        locksGamePickPromises.push(updateLocksGamePicksWithResults(locksGame));
-      }
-      await Promise.all(locksGamePickPromises);
-
-      const locksGameDeletePromises: Promise<any>[] = [];
-      for (const locksGame of locksGames) {
-        locksGameDeletePromises.push(deleteLocksGamePicksNotActive(locksGame));
-      }
-      await Promise.all(locksGameDeletePromises);
-
-      await updateLocksWeek({
-        ...locksWeek,
-        isWeekScored: true,
-        autoManaged: false,
+      // The same code the Monday-night automation runs, with the admin-only
+      // safety of dropping games Sleeper no longer lists for the week.
+      const { message } = await scoreLocksWeek(year, weekNumber, {
+        removeStaleGames: true,
+        byAdmin: true,
       });
 
-      return typedjson({ message: 'Week has been scored' });
+      return typedjson({ message });
     }
     case 'publishWeek': {
       const weekNumberString = formData.get('weekNumber');
