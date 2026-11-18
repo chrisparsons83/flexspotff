@@ -767,6 +767,7 @@ model LocksWeek {
   weekNumber   Int
   isOpen       Boolean @default(false)
   isWeekScored Boolean @default(false)
+  autoManaged  Boolean @default(true)
 
   locksGames LocksGame[]
 
@@ -990,6 +991,7 @@ model PoolWeek {
   weekNumber   Int
   isOpen       Boolean @default(false)
   isWeekScored Boolean @default(false)
+  autoManaged  Boolean @default(true)
 
   poolGames       PoolGame[]
   poolWeeksMissed PoolWeekMissed[]

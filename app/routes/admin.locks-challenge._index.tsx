@@ -57,6 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         weekNumber: newWeek,
         isOpen: false,
         isWeekScored: false,
+        autoManaged: false,
       });
 
       return typedjson({ message: 'Week has been created' });
@@ -107,6 +108,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await updateLocksWeek({
         ...locksWeek,
         isWeekScored: true,
+        autoManaged: false,
       });
 
       return typedjson({ message: 'Week has been scored' });
@@ -143,6 +145,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await updateLocksWeek({
         ...locksWeek,
         isOpen: true,
+        autoManaged: false,
       });
 
       return typedjson({ message: 'Week has been published' });
@@ -193,14 +196,22 @@ export default function SpreadLocksList() {
         <Alert message={actionData.message} className='mb-6' />
       )}
       <Table
-        headers={['Week', 'Published', 'Scored', 'Publish', 'Score']}
-        primaryColumns={[3, 4]}
+        headers={[
+          'Week',
+          'Published',
+          'Scored',
+          'Auto-managed',
+          'Publish',
+          'Score',
+        ]}
+        primaryColumns={[4, 5]}
       >
         {locksWeeks.map(locksWeek => (
           <tr key={locksWeek.id}>
             <td>{locksWeek.weekNumber}</td>
             <td>{locksWeek.isOpen ? 'Yes' : 'No'}</td>
             <td>{locksWeek.isWeekScored ? 'Yes' : 'No'}</td>
+            <td>{locksWeek.autoManaged ? 'Yes' : 'No'}</td>
             <td>
               <Form method='POST'>
                 <input
