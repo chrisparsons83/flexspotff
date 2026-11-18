@@ -2,12 +2,14 @@ import type { SideGameScorer } from './types';
 import { syncPlayerWeekScores } from '~/libs/dfs-survivor/player-week-scores.server';
 import { scoreDfsSurvivorPlayer } from '~/libs/dfs-survivor/scoring';
 import { getWeeklyStats } from '~/libs/sleeper/api.server';
+import { syncNflGameWeek } from '~/libs/syncs.server';
 import { updateDfsSurvivorEntryPoints } from '~/models/dfssurvivoruserentry.server';
 import {
   getDfsSurvivorWeekByYearAndWeek,
   getDfsSurvivorWeeksWithEntries,
   updateDfsSurvivorWeekScored,
 } from '~/models/dfssurvivorweek.server';
+import { areAllNflGamesComplete } from '~/utils/helpers';
 
 export type ScoreDfsSurvivorWeekResult = {
   scored: boolean;
@@ -99,12 +101,21 @@ export async function revertDfsSurvivorWeek(year: number, weekNumber: number) {
  * first row says it is already scored, is skipped; the admin route uses the same
  * "first row is scored" rule. DFS Survivor has no `autoManaged` column: a
  * scored week is its ownership signal, and a reverted one may be scored again.
+ *
+ * The admin button deliberately has no completeness guard, but the automation
+ * does: it syncs the week's slate and refuses until every game is complete, so
+ * the Monday-evening window cannot freeze an in-progress game's players at zero.
  */
 export const dfsSurvivorScorer: SideGameScorer = {
   game: 'DFS Survivor',
   async scoreWeek(year: number, week: number) {
     const dfsWeek = await getDfsSurvivorWeekByYearAndWeek(year, week);
     if (!dfsWeek || dfsWeek.isScored) return { status: 'skipped' };
+
+    await syncNflGameWeek(year, [week]);
+    if (!(await areAllNflGamesComplete(year, week))) {
+      return { status: 'skipped' };
+    }
 
     const { scored, warning } = await scoreDfsSurvivorWeek(year, week);
     if (!scored) return { status: 'skipped' };

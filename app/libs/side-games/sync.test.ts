@@ -548,6 +548,7 @@ describe('syncSideGameWeeks', () => {
     const report = await syncSideGameWeeks(now);
 
     expect(report.scored).toEqual([{ game: 'DFS Survivor', week: 12 }]);
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [12]);
     expect(dfsEntryModel.updateDfsSurvivorEntryPoints).toHaveBeenCalledWith(
       'dfs-entry-1',
       16,
@@ -567,6 +568,36 @@ describe('syncSideGameWeeks', () => {
     expect(alert).toContain('DFS Survivor');
     expect(alert).toContain('week 12');
     expect(alert).toContain('has been scored');
+  });
+
+  it('leaves a DFS Survivor week alone while any of its games is still to play', async () => {
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeekByYearAndWeek).mockResolvedValue(
+      dfsWeek as never,
+    );
+    vi.mocked(dfsWeekModel.getDfsSurvivorWeeksWithEntries).mockResolvedValue([
+      dfsWeekWithEntries,
+    ] as never);
+    vi.mocked(nflGameModel.getWeekNflGames).mockResolvedValue([
+      {
+        id: 'game-1',
+        status: 'complete',
+        gameStartTime: new Date('2026-11-22T18:00:00Z'),
+      },
+      {
+        id: 'game-2',
+        status: 'in_game',
+        gameStartTime: new Date('2026-11-24T01:15:00Z'),
+      },
+    ] as never);
+
+    const report = await syncSideGameWeeks(now);
+
+    expect(report.scored).toEqual([]);
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2026, [12]);
+    expect(dfsEntryModel.updateDfsSurvivorEntryPoints).not.toHaveBeenCalled();
+    expect(dfsWeekModel.updateDfsSurvivorWeekScored).not.toHaveBeenCalled();
+    expect(playerWeekScores.syncPlayerWeekScores).not.toHaveBeenCalled();
+    expect(adminAlerts.postAdminAlert).not.toHaveBeenCalled();
   });
 
   it('leaves a DFS Survivor week alone when it has no week rows', async () => {
