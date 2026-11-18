@@ -17,9 +17,12 @@ import { Section } from '~/components/ui/section';
 import { Table } from '~/components/ui/table';
 import { prisma } from '~/db.server';
 import { syncPlayerWeekScores } from '~/libs/dfs-survivor/player-week-scores.server';
-import { scoreDfsSurvivorPlayer } from '~/libs/dfs-survivor/scoring';
 import { DFS_SURVIVOR_LAST_WEEK } from '~/libs/dfs-survivor/slots';
-import { getWeeklyStats } from '~/libs/sleeper/api.server';
+import {
+  revertDfsSurvivorWeek,
+  scoreDfsSurvivorWeek,
+} from '~/libs/side-games/dfs-survivor.server';
+import { getDfsSurvivorWeekByYearAndWeek } from '~/models/dfssurvivorweek.server';
 import { getCurrentNflWeek } from '~/models/nflgame.server';
 import { getCurrentSeason } from '~/models/season.server';
 import { authenticator, requireAdmin } from '~/services/auth.server';
@@ -66,116 +69,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const year = Number(yearString);
     const weekNumber = Number(weekNumberString);
 
-    // Get ALL week records for this NFL week (all users)
-    const allWeekRecords = await prisma.dFSSurvivorUserWeek.findMany({
-      where: {
-        year,
-        week: weekNumber,
-      },
-      include: {
-        entries: {
-          include: {
-            player: true,
-          },
-        },
-      },
-    });
-
-    if (allWeekRecords.length === 0) {
+    // The same shared functions the Monday-night automation runs. The admin
+    // button keeps its revert escape hatch: a scored week flips back to unscored.
+    const dfsWeek = await getDfsSurvivorWeekByYearAndWeek(year, weekNumber);
+    if (!dfsWeek) {
       throw new Error('No DFS survivor week records found for this week');
     }
 
-    // Check if the week is already scored
-    const isCurrentlyScored = allWeekRecords[0]?.isScored || false;
+    const { message } = dfsWeek.isScored
+      ? await revertDfsSurvivorWeek(year, weekNumber)
+      : await scoreDfsSurvivorWeek(year, weekNumber);
 
-    if (isCurrentlyScored) {
-      // UNSCORE: Reset all entry points to 0 and mark week as unscored
-      const promises: Promise<any>[] = [];
-
-      for (const weekRecord of allWeekRecords) {
-        for (const entry of weekRecord.entries) {
-          promises.push(
-            prisma.dFSSurvivorUserEntry.update({
-              where: {
-                id: entry.id,
-              },
-              data: {
-                points: 0,
-              },
-            }),
-          );
-        }
-      }
-
-      await Promise.all(promises);
-
-      // Mark ALL week records for this NFL week as unscored
-      await prisma.dFSSurvivorUserWeek.updateMany({
-        where: {
-          year,
-          week: weekNumber,
-        },
-        data: {
-          isScored: false,
-        },
-      });
-
-      return typedjson({ message: 'Week scoring has been reverted.' });
-    } else {
-      // SCORE: Calculate points and mark week as scored
-      // Fetch stats from Sleeper API
-      const sleeperJson = await getWeeklyStats(year, weekNumber);
-
-      const promises: Promise<any>[] = [];
-
-      // Score ALL entries from ALL users for this week
-      for (const weekRecord of allWeekRecords) {
-        for (const entry of weekRecord.entries) {
-          const stats = sleeperJson[entry.player.sleeperId] || {};
-          const score = scoreDfsSurvivorPlayer(entry.player.position, stats);
-
-          promises.push(
-            prisma.dFSSurvivorUserEntry.update({
-              where: {
-                id: entry.id,
-              },
-              data: {
-                points: score,
-              },
-            }),
-          );
-        }
-      }
-
-      await Promise.all(promises);
-
-      // Mark ALL week records for this NFL week as scored
-      await prisma.dFSSurvivorUserWeek.updateMany({
-        where: {
-          year,
-          week: weekNumber,
-        },
-        data: {
-          isScored: true,
-        },
-      });
-
-      // Keep PlayerWeekScore in step, so the entry picker's season-to-date
-      // column agrees with what entries were just scored on. Scoring is already
-      // committed at this point, so a Sleeper outage here must not surface as a
-      // failed scoring run - it would invite a pointless re-score.
-      try {
-        await syncPlayerWeekScores(year, weekNumber);
-      } catch (error) {
-        console.error('Player score sync after scoring failed:', error);
-        return typedjson({
-          message:
-            'Week has been scored, but refreshing player scores failed. Use Sync player scores to retry.',
-        });
-      }
-
-      return typedjson({ message: 'Week has been scored.' });
-    }
+    return typedjson({ message });
   } else if (_action === 'syncPlayerScores') {
     const currentSeason = await getCurrentSeason();
     if (!currentSeason) {
