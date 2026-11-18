@@ -94,6 +94,13 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
       "Scores every weekly side game once all of an NFL week's games are complete, which the stored schedule puts on Monday night, and posts one admin alert per scored week. Every 15 minutes from 5pm to 11:45pm PT on Mondays, covering the last kickoff through the final whistle.",
   },
   {
+    name: 'open-side-game-weeks',
+    cron: '0 2,8,14,20 * * *',
+    timezone: 'America/New_York',
+    description:
+      "Opens each weekly side game at 8am ET on the Tuesday before its week's first kickoff, retrying not-ready weeks every six hours. The Tuesday-morning run scores the week just finished before opening the next, so it is also the backstop for a scheduler that was down on Monday night. Every 6 hours, at 2am, 8am, 2pm and 8pm ET.",
+  },
+  {
     name: 'post-waiver-report',
     cron: '20,35,50 0 * * 3',
     timezone: 'America/Los_Angeles',

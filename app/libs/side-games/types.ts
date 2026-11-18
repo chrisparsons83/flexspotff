@@ -36,3 +36,23 @@ export type SideGameScorer = {
   game: SideGame;
   scoreWeek(year: number, week: number): Promise<SideGameScoreOutcome>;
 };
+
+export type SideGameOpenOutcome =
+  | { status: 'opened'; detail?: string }
+  | { status: 'skipped' };
+
+/**
+ * One game's opening half: decides whether the coming week is due, and creates
+ * and opens it if so. A module owns its own eligibility and writes; the
+ * orchestrator only finds the coming week, syncs its slate and reports what
+ * happened.
+ */
+export type SideGameOpener = {
+  game: SideGame;
+  openWeek(
+    year: number,
+    week: number,
+    firstGameStart: Date,
+    now: Date,
+  ): Promise<SideGameOpenOutcome>;
+};
