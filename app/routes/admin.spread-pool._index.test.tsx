@@ -1,6 +1,7 @@
 import { action } from './admin.spread-pool._index';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as syncs from '~/libs/syncs.server';
 import * as poolGameModel from '~/models/poolgame.server';
 import * as poolGamePickModel from '~/models/poolgamepicks.server';
 import * as poolWeekModel from '~/models/poolweek.server';
@@ -93,6 +94,9 @@ describe('admin.spread-pool action', () => {
       year: '2025',
     });
 
+    expect(syncs.syncNflGameWeek).toHaveBeenCalledWith(2025, [3], {
+      removeStaleGames: true,
+    });
     expect(poolWeekModel.updatePoolWeek).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'pool-week-3',
