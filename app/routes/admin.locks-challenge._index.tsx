@@ -50,6 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         isOpen: false,
         isWeekScored: false,
         autoManaged: false,
+        openAlertedAt: null,
       });
 
       return typedjson({ message: 'Week has been created' });

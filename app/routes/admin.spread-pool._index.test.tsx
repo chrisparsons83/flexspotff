@@ -37,6 +37,7 @@ const mockWeek = {
   isOpen: true,
   isWeekScored: false,
   autoManaged: true,
+  openAlertedAt: null,
 };
 
 const postForm = (fields: Record<string, string>) => {
@@ -84,6 +85,7 @@ describe('admin.spread-pool action', () => {
       isOpen: false,
       isWeekScored: false,
       autoManaged: false,
+      openAlertedAt: null,
     });
   });
 

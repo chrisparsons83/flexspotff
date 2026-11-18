@@ -1,5 +1,6 @@
 import { locksChallengeOpener } from './locks-opening.server';
 import { locksChallengeScorer } from './locks.server';
+import { spreadPoolOpener } from './pool-opening.server';
 import { poolScorer } from './pool.server';
 import type {
   SideGameAction,
@@ -22,10 +23,13 @@ import { LAST_AUTOMATED_WEEK } from '~/utils/helpers';
 const SCORING_GAMES: SideGameScorer[] = [locksChallengeScorer, poolScorer];
 
 /**
- * The opening phase's per-game modules, one line per game. #261 adds the
- * Spread Pool here; each module owns its own eligibility rule and writes.
+ * The opening phase's per-game modules, one line per game. Each module owns
+ * its own eligibility rule and writes.
  */
-const OPENING_GAMES: SideGameOpener[] = [locksChallengeOpener];
+const OPENING_GAMES: SideGameOpener[] = [
+  locksChallengeOpener,
+  spreadPoolOpener,
+];
 
 /**
  * Converges the weekly side games on `now`: scores what is due, then opens what
@@ -127,6 +131,9 @@ async function openDueWeeks(
     let action: SideGameAction;
     try {
       const outcome = await game.openWeek(year, week, firstGameStart, now);
+      // A module reports non-fatal trouble itself, such as a first-failure
+      // alert it could not post; the writes it made must still stand.
+      if (outcome.warning) report.warnings.push(outcome.warning);
       if (outcome.status !== 'opened') continue;
 
       action = { game: game.game, week };

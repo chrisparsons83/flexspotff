@@ -1,5 +1,5 @@
 import { syncSideGameWeeks } from './sync.server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as adminAlerts from '~/libs/admin-alerts.server';
 import * as syncs from '~/libs/syncs.server';
 import * as dfsWeekModel from '~/models/dfssurvivorweek.server';
@@ -73,13 +73,59 @@ const week13Games = [
     id: 'week-13-game-1',
     status: 'pre_game',
     gameStartTime: new Date('2026-11-29T18:00:00Z'),
+    homeTeam: { name: 'Kansas City Chiefs' },
+    awayTeam: { name: 'Buffalo Bills' },
   },
   {
     id: 'week-13-game-2',
     status: 'pre_game',
     gameStartTime: new Date('2026-11-30T01:15:00Z'),
+    homeTeam: { name: 'San Francisco 49ers' },
+    awayTeam: { name: 'Seattle Seahawks' },
   },
 ];
+
+// The Odds API answers with one game per matchup; DraftKings carries the line
+// for each team, keyed by the team name the pool page pre-fills from.
+function oddsFor(
+  games: { home: string; away: string }[],
+  { draftkings = true } = {},
+) {
+  return games.map(({ home, away }, index) => ({
+    id: `odds-${index}`,
+    sport_key: 'americanfootball_nfl',
+    sport_title: 'NFL',
+    commence_time: '2026-11-29T18:00:00Z',
+    home_team: home,
+    away_team: away,
+    bookmakers: draftkings
+      ? [
+          {
+            key: 'draftkings',
+            title: 'DraftKings',
+            last_update: '2026-11-24T13:00:00Z',
+            markets: [
+              {
+                key: 'spreads',
+                outcomes: [
+                  { name: home, price: -110, point: -3.5 },
+                  { name: away, price: -110, point: 3.5 },
+                ],
+              },
+            ],
+          },
+        ]
+      : [],
+  }));
+}
+
+const week13Odds = oddsFor([
+  { home: 'Kansas City Chiefs', away: 'Buffalo Bills' },
+  { home: 'San Francisco 49ers', away: 'Seattle Seahawks' },
+]);
+
+const realFetch = globalThis.fetch;
+const realSpreadsApiKey = process.env.SPREADS_API_KEY;
 
 function mockOpeningWeek(weekNumber: number, games: unknown[]) {
   vi.mocked(nflGameModel.getCurrentNflWeek).mockResolvedValue(weekNumber);
@@ -89,6 +135,11 @@ function mockOpeningWeek(weekNumber: number, games: unknown[]) {
 describe('syncSideGameWeeks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.SPREADS_API_KEY = 'test-key';
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => week13Odds,
+    })) as unknown as typeof fetch;
     vi.mocked(seasonModel.getCurrentSeason).mockResolvedValue({
       year: 2026,
     } as never);
@@ -106,7 +157,14 @@ describe('syncSideGameWeeks', () => {
     vi.mocked(locksWeekModel.updateLocksWeek).mockResolvedValue({} as never);
     vi.mocked(syncs.syncNflGameWeek).mockResolvedValue(true as never);
     vi.mocked(locksGameModel.getLocksGamesByYearAndWeek).mockResolvedValue([]);
-    vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+    // The Locks-opening tests start with the coming pool week already open,
+    // so the pool's own opener skips; the pool-opening tests override this.
+    vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockImplementation(
+      async (_year, weekNumber) =>
+        weekNumber === 13
+          ? ({ ...poolWeek, weekNumber: 13, isOpen: true } as never)
+          : null,
+    );
     vi.mocked(poolGamePickModel.getPoolGamesPicksByPoolWeek).mockResolvedValue(
       [],
     );
@@ -116,6 +174,12 @@ describe('syncSideGameWeeks', () => {
       status: 'posted',
       messages: 1,
     });
+  });
+
+  afterEach(() => {
+    if (realSpreadsApiKey === undefined) delete process.env.SPREADS_API_KEY;
+    else process.env.SPREADS_API_KEY = realSpreadsApiKey;
+    globalThis.fetch = realFetch;
   });
 
   it('does nothing without a current season', async () => {
@@ -682,6 +746,310 @@ describe('syncSideGameWeeks', () => {
       expect(report.warnings).toEqual([
         'Admin alert failed for Locks Challenge week 13: Missing Access',
       ]);
+    });
+  });
+
+  describe('opening the Spread Pool', () => {
+    it('opens the week when every game has a line, writing every line', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([
+        { game: 'Locks Challenge', week: 13 },
+        { game: 'Spread Pool', week: 13, detail: '2 games have lines' },
+      ]);
+      expect(poolWeekModel.createAndOpenPoolWeek).toHaveBeenCalledWith(
+        2026,
+        13,
+        [
+          { gameId: 'week-13-game-1', homeSpread: -3.5 },
+          { gameId: 'week-13-game-2', homeSpread: -3.5 },
+        ],
+      );
+      expect(poolWeekModel.writeClosedPoolWeekLines).not.toHaveBeenCalled();
+      expect(poolWeekModel.openPoolWeekWithLines).not.toHaveBeenCalled();
+      expect(report.warnings).toEqual([]);
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
+      const poolAlert = vi
+        .mocked(adminAlerts.postAdminAlert)
+        .mock.calls.find(([message]) => message.includes('Spread Pool'))?.[0];
+      expect(poolAlert).toContain('Spread Pool');
+      expect(poolAlert).toContain('week 13');
+      expect(poolAlert).toContain('has been opened');
+      expect(poolAlert).toContain('2 games have lines');
+    });
+
+    it('leaves the week closed while writing the lines it has, alerting once', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      // Only the first matchup has a DraftKings line.
+      globalThis.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => [week13Odds[0]],
+      })) as unknown as typeof fetch;
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(report.errors).toEqual([]);
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalledWith(
+        2026,
+        13,
+        [{ gameId: 'week-13-game-1', homeSpread: -3.5 }],
+      );
+      expect(poolWeekModel.createAndOpenPoolWeek).not.toHaveBeenCalled();
+      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledWith(
+        closedWeek,
+      );
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
+      const failureAlert = vi
+        .mocked(adminAlerts.postAdminAlert)
+        .mock.calls.find(([message]) =>
+          message.includes('failed to open'),
+        )?.[0];
+      expect(failureAlert).toContain('Spread Pool');
+      expect(failureAlert).toContain('week 13');
+      expect(failureAlert).toContain('1 game has no line');
+    });
+
+    it('alerts once naming a missing API key and creates the week to hold it', async () => {
+      mockOpeningWeek(13, week13Games);
+      delete process.env.SPREADS_API_KEY;
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalledWith(
+        2026,
+        13,
+        [],
+      );
+      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledWith(
+        closedWeek,
+      );
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
+      const failureAlert = vi
+        .mocked(adminAlerts.postAdminAlert)
+        .mock.calls.find(([message]) =>
+          message.includes('failed to open'),
+        )?.[0];
+      expect(failureAlert).toContain('SPREADS_API_KEY is missing.');
+    });
+
+    it('alerts once naming an API error', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      globalThis.fetch = vi.fn(async () => {
+        throw new Error('The Odds API is down');
+      }) as unknown as typeof fetch;
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalledWith(
+        2026,
+        13,
+        [],
+      );
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(2);
+      const failureAlert = vi
+        .mocked(adminAlerts.postAdminAlert)
+        .mock.calls.find(([message]) =>
+          message.includes('failed to open'),
+        )?.[0];
+      expect(failureAlert).toContain('The Odds API is down');
+    });
+
+    it('posts nothing on a retry after the first failed open', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({ ...week, weekNumber: 13, isOpen: true } as never)
+            : null,
+      );
+      let poolRow: Record<string, unknown> | null = null;
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          (weekNumber === 13 ? poolRow : null) as never,
+      );
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockImplementation(
+        async (_year, weekNumber) => {
+          poolRow = {
+            ...poolWeek,
+            weekNumber,
+            isOpen: false,
+            openAlertedAt: null,
+          };
+          return poolRow as never;
+        },
+      );
+      vi.mocked(poolWeekModel.writeClosedPoolWeekLines).mockImplementation(
+        async existing => existing,
+      );
+      vi.mocked(poolWeekModel.markPoolWeekOpenAlerted).mockImplementation(
+        async existing => {
+          poolRow = { ...existing, openAlertedAt: new Date() };
+          return poolRow as never;
+        },
+      );
+      globalThis.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => [week13Odds[0]],
+      })) as unknown as typeof fetch;
+
+      const first = await syncSideGameWeeks(tuesdayOpen);
+      const second = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(first.opened).toEqual([]);
+      expect(second.opened).toEqual([]);
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledTimes(1);
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(poolWeekModel.writeClosedPoolWeekLines).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens a week that failed before, clearing the failure marker', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({ ...week, weekNumber: 13, isOpen: true } as never)
+            : null,
+      );
+      const markedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: new Date('2026-11-20T13:00:00Z'),
+      };
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(
+        markedWeek as never,
+      );
+      vi.mocked(poolWeekModel.openPoolWeekWithLines).mockResolvedValue({
+        ...markedWeek,
+        isOpen: true,
+        openAlertedAt: null,
+      } as never);
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([
+        { game: 'Spread Pool', week: 13, detail: '2 games have lines' },
+      ]);
+      expect(poolWeekModel.openPoolWeekWithLines).toHaveBeenCalledWith(
+        markedWeek,
+        [
+          { gameId: 'week-13-game-1', homeSpread: -3.5 },
+          { gameId: 'week-13-game-2', homeSpread: -3.5 },
+        ],
+      );
+      expect(poolWeekModel.createAndOpenPoolWeek).not.toHaveBeenCalled();
+      expect(poolWeekModel.markPoolWeekOpenAlerted).not.toHaveBeenCalled();
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(adminAlerts.postAdminAlert).mock.calls[0][0]).toContain(
+        'has been opened',
+      );
+    });
+
+    it('leaves an admin-owned week closed, empty and its odds unfetched', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue({
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        autoManaged: false,
+        openAlertedAt: null,
+      } as never);
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([{ game: 'Locks Challenge', week: 13 }]);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(
+        poolWeekModel.createClosedPoolWeekWithLines,
+      ).not.toHaveBeenCalled();
+      expect(poolWeekModel.createAndOpenPoolWeek).not.toHaveBeenCalled();
+      expect(poolWeekModel.writeClosedPoolWeekLines).not.toHaveBeenCalled();
+      expect(poolWeekModel.openPoolWeekWithLines).not.toHaveBeenCalled();
+      expect(poolWeekModel.markPoolWeekOpenAlerted).not.toHaveBeenCalled();
+      expect(adminAlerts.postAdminAlert).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a failed failure alert as a warning without undoing the write', async () => {
+      mockOpeningWeek(13, week13Games);
+      vi.mocked(locksWeekModel.getLocksWeekByYearAndWeek).mockImplementation(
+        async (_year, weekNumber) =>
+          weekNumber === 13
+            ? ({ ...week, weekNumber: 13, isOpen: true } as never)
+            : null,
+      );
+      vi.mocked(poolWeekModel.getPoolWeekByYearAndWeek).mockResolvedValue(null);
+      const closedWeek = {
+        ...poolWeek,
+        weekNumber: 13,
+        isOpen: false,
+        openAlertedAt: null,
+      };
+      vi.mocked(poolWeekModel.createClosedPoolWeekWithLines).mockResolvedValue(
+        closedWeek as never,
+      );
+      globalThis.fetch = vi.fn(async () => ({
+        ok: true,
+        json: async () => [week13Odds[0]],
+      })) as unknown as typeof fetch;
+      vi.mocked(adminAlerts.postAdminAlert).mockRejectedValue(
+        new Error('Missing Access'),
+      );
+
+      const report = await syncSideGameWeeks(tuesdayOpen);
+
+      expect(report.opened).toEqual([]);
+      expect(report.errors).toEqual([]);
+      expect(report.warnings).toEqual([
+        'Admin alert failed for Spread Pool week 13: Missing Access',
+      ]);
+      expect(poolWeekModel.createClosedPoolWeekWithLines).toHaveBeenCalled();
+      expect(poolWeekModel.markPoolWeekOpenAlerted).toHaveBeenCalledWith(
+        closedWeek,
+      );
     });
   });
 });
