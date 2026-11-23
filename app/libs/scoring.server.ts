@@ -1,5 +1,6 @@
 import { syncActiveBestBallLeagues } from '~/libs/best-ball/sync.server';
 import { syncD12Week } from '~/libs/d12-sync.server';
+import { syncPlayerWeekPoints } from '~/libs/dfs-survivor/player-week-scores.server';
 import { syncActiveGuillotineLeagues } from '~/libs/guillotine/sync.server';
 import {
   getNflState,
@@ -25,6 +26,8 @@ export type SyncReport = {
   guillotineErrors?: string[];
   /** Failures and warnings from the best ball sync. */
   bestBallErrors?: string[];
+  /** Why the DFS Survivor player points refresh failed, if it did. */
+  dfsSurvivorError?: string;
 };
 
 /**
@@ -73,6 +76,7 @@ export async function syncCurrentWeekScores({
   let d12Errors: string[] = [];
   let guillotineErrors: string[] = [];
   let bestBallErrors: string[] = [];
+  let dfsSurvivorError: string | undefined;
   if (scoresResynced) {
     await syncSleeperWeeklyScores(year, week);
 
@@ -98,6 +102,14 @@ export async function syncCurrentWeekScores({
     } catch (e) {
       bestBallErrors = [e instanceof Error ? e.message : String(e)];
     }
+
+    // DFS Survivor's projected score reads each player's points, so they are
+    // rescored from one stats call. Projections stay with the hourly sync.
+    try {
+      await syncPlayerWeekPoints(year, week);
+    } catch (e) {
+      dfsSurvivorError = e instanceof Error ? e.message : String(e);
+    }
   }
 
   return {
@@ -113,5 +125,6 @@ export async function syncCurrentWeekScores({
     d12Errors,
     guillotineErrors,
     bestBallErrors,
+    dfsSurvivorError,
   };
 }

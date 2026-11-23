@@ -21,8 +21,9 @@ type Props = {
 
 /**
  * The season strip across the top of the entry page. Each chip carries enough
- * state - slots filled, points once scored, a lock once the week is over - to
- * find the week that still needs work without opening any of them.
+ * state - slots filled, the projected score while it is played, points once
+ * scored, a lock once the week is over - to find the week that still needs
+ * work without opening any of them.
  */
 export default function DfsSurvivorWeekRail({
   weeks,
@@ -88,14 +89,29 @@ export default function DfsSurvivorWeekRail({
                   ? undefined
                   : week.isScored
                   ? 'text-foreground'
+                  : week.projectedScore
+                  ? 'text-muted-foreground'
                   : isComplete
                   ? 'text-positive'
                   : 'text-muted-foreground',
               )}
             >
-              {week.isScored
-                ? week.points.toFixed(1)
-                : `${week.filledSlots}/11`}
+              {week.isScored ? (
+                week.points.toFixed(1)
+              ) : week.projectedScore ? (
+                <span
+                  title={`${week.projectedScore.points.toFixed(
+                    2,
+                  )} points, projected ${week.projectedScore.projected.toFixed(
+                    2,
+                  )}`}
+                >
+                  {week.projectedScore.projected.toFixed(1)}
+                  <span className='sr-only'> projected</span>
+                </span>
+              ) : (
+                `${week.filledSlots}/11`
+              )}
             </div>
           </button>
         );

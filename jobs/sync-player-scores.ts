@@ -1,7 +1,13 @@
-import { syncPlayerWeekScores } from '../app/libs/dfs-survivor/player-week-scores.server.js';
+import {
+  syncPlayerWeekProjections,
+  syncPlayerWeekScores,
+} from '../app/libs/dfs-survivor/player-week-scores.server.js';
 import { DFS_SURVIVOR_LAST_WEEK } from '../app/libs/dfs-survivor/slots.js';
 import { runJob } from '../app/libs/job-runner.server.js';
-import { getCurrentNflWeek } from '../app/models/nflgame.server.js';
+import {
+  getCurrentNflWeek,
+  getLiveNflWeeks,
+} from '../app/models/nflgame.server.js';
 import { getCurrentSeason } from '../app/models/season.server.js';
 
 /**
@@ -13,6 +19,9 @@ import { getCurrentSeason } from '../app/models/season.server.js';
  * projections for the next. It used to rewrite every week since week 1 each
  * hour, a load that grew all season; older weeks can still be backfilled with
  * Sync Player Scores on the DFS Survivor admin page.
+ *
+ * A week with a game in progress only has its projections refreshed: the live
+ * score monitor already rescores its points every five minutes.
  */
 runJob('sync-player-scores', async () => {
   console.log('Starting player week scores sync job...');
@@ -32,9 +41,13 @@ runJob('sync-player-scores', async () => {
   // such week and the error would take the whole job down.
   const from = Math.max(currentWeek - 1, 1);
   const through = Math.min(currentWeek + 1, DFS_SURVIVOR_LAST_WEEK);
+  const liveWeeks = await getLiveNflWeeks(currentSeason.year);
   const weeksSynced: number[] = [];
   for (let week = from; week <= through; week++) {
-    const result = await syncPlayerWeekScores(currentSeason.year, week);
+    // The live monitor has the points of a week being played.
+    const result = liveWeeks.has(week)
+      ? await syncPlayerWeekProjections(currentSeason.year, week)
+      : await syncPlayerWeekScores(currentSeason.year, week);
     weeksSynced.push(week);
     console.log(`Week ${week}: wrote ${result.playersWritten} player scores.`);
   }

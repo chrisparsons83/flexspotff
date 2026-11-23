@@ -9,6 +9,7 @@ import {
 } from './week';
 import { prisma } from '~/db.server';
 import { getCupBracket } from '~/libs/cup/bracket.server';
+import { projectDfsWeeks } from '~/libs/dfs-survivor/projection.server';
 import { getLastWeeks, type WeeklyGame } from '~/libs/games/last-week.server';
 import { poolTitle } from '~/libs/survivor/views';
 import { getEntryByUserAndYear } from '~/models/fsquared.server';
@@ -144,17 +145,39 @@ async function dfsSurvivorFacts(
   userId: string,
   year: number,
   week: number | null,
+  now: Date,
 ) {
   const userYear = await prisma.dFSSurvivorUserYear.findFirst({
     where: { userId, year },
-    include: { weeks: { include: { entries: { select: { points: true } } } } },
+    include: {
+      weeks: {
+        include: {
+          entries: {
+            select: { position: true, playerId: true, nflGameId: true },
+          },
+        },
+      },
+    },
   });
   if (!userYear || !week) return null;
   const thisWeek = userYear.weeks.find(userWeek => userWeek.week === week);
+  // The current week moves on once the last game of the old one kicks off, so
+  // Monday night's week is still in progress, and unscored, behind it.
+  const projections = await projectDfsWeeks(
+    year,
+    userYear.weeks.filter(
+      userWeek => userWeek.week === week || userWeek.week === week - 1,
+    ),
+    now,
+  );
+  const live = [week, week - 1]
+    .map(candidate => projections.get(candidate))
+    .find(projection => projection?.hasKickedOff);
   return {
     week,
     entries: thisWeek?.entries.length ?? 0,
     isLocked: thisWeek?.isLocked ?? false,
+    projectedScore: live?.total ?? null,
   };
 }
 
@@ -307,7 +330,8 @@ export async function getMemberWeek(
   options: { lastWeeks?: Awaited<ReturnType<typeof getLastWeeks>> } = {},
 ) {
   const { year } = season;
-  const week = await getCurrentNflWeek(year, new Date());
+  const now = new Date();
+  const week = await getCurrentNflWeek(year, now);
 
   const [
     league,
@@ -332,7 +356,7 @@ export async function getMemberWeek(
     qbStreamingFacts(userId, year),
     spreadPoolFacts(userId, year),
     locksFacts(userId, year),
-    dfsSurvivorFacts(userId, year, week),
+    dfsSurvivorFacts(userId, year, week, now),
     prisma.survivorEntry.findMany({
       where: { userId, pool: { year } },
       include: { pool: true },

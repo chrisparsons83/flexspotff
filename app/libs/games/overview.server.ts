@@ -1,10 +1,12 @@
 import type { SummaryRow } from '~/components/ui/summary-card';
 import { prisma } from '~/db.server';
+import { DFS_SURVIVOR_LAST_WEEK } from '~/libs/dfs-survivor/slots';
 import { fSquaredThroughWeek } from '~/libs/f-squared/through-week';
 import { getSeasonLeaders, HISTORY_PODIUM } from '~/libs/games/history.server';
 import { getLastWeeks, type WeeklyGame } from '~/libs/games/last-week.server';
 import { entryLabel, poolTitle } from '~/libs/survivor/views';
 import { getLocksWeeksByYear } from '~/models/locksweek.server';
+import { getCurrentNflWeek } from '~/models/nflgame.server';
 import {
   getAllOmniSeasons,
   getOmniSeason,
@@ -36,6 +38,22 @@ const weekStatus = (state: WeekState | null) =>
     : state.isOpen
     ? `Week ${state.week} open for picks`
     : `Week ${state.week} not open yet`;
+
+/**
+ * DFS Survivor's week, as the other weekly games have one. Every week of its
+ * season can be entered at once, so its week is the current NFL week, up to
+ * the last one it runs to.
+ */
+async function dfsSurvivorWeek(year: number) {
+  const current = await getCurrentNflWeek(year, new Date());
+  if (!current) return null;
+  const week = Math.min(current, DFS_SURVIVOR_LAST_WEEK);
+  const scored = await prisma.dFSSurvivorUserWeek.findFirst({
+    where: { year, week, isScored: true },
+    select: { id: true },
+  });
+  return { week, isScored: !!scored };
+}
 
 export type GameOverview = {
   name: string;
@@ -96,13 +114,7 @@ export async function getGamesOverview(
       year ? getQBStreamingWeeks(year) : [],
       year ? getPoolWeeksByYear(year) : [],
       year ? getLocksWeeksByYear(year) : [],
-      year
-        ? prisma.dFSSurvivorUserWeek.findFirst({
-            where: { year, isScored: true },
-            orderBy: { week: 'desc' },
-            select: { week: true },
-          })
-        : null,
+      year ? dfsSurvivorWeek(year) : null,
       getLatestSurvivorPools(),
       getLatestOmniPodium(),
       year
@@ -260,7 +272,13 @@ export async function getGamesOverview(
     {
       name: 'DFS Survivor',
       to: '/games/dfs-survivor',
-      status: dfs ? `Through week ${dfs.week}` : 'No weeks scored yet',
+      status: weekStatus(
+        dfs && { ...dfs, isOpen: !!season?.isOpenForDFSSurvivor },
+      ),
+      statusHref:
+        signedIn && dfs && season?.isOpenForDFSSurvivor && !dfs.isScored
+          ? `/games/dfs-survivor/entries?week=${dfs.week}`
+          : undefined,
       editHref:
         signedIn && season?.isOpenForDFSSurvivor
           ? '/games/dfs-survivor/entries'

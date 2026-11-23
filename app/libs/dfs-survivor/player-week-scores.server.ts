@@ -1,6 +1,10 @@
 import { scoreDfsSurvivorPlayer } from './scoring';
 import { prisma } from '~/db.server';
 import { getProjections, getWeeklyStats } from '~/libs/sleeper/api.server';
+import type {
+  SleeperProjectionsJson,
+  SleeperStatsJson,
+} from '~/libs/sleeper/schemas';
 
 /**
  * Keeps `PlayerWeekScore` in step with Sleeper.
@@ -33,10 +37,40 @@ export async function syncPlayerWeekScores(year: number, week: number) {
     getWeeklyStats(year, week),
     getProjections(year, week),
   ]);
+  return writePlayerWeekScores(year, week, { stats, projections });
+}
 
+/**
+ * The stats half of `syncPlayerWeekScores`: one Sleeper call, rescored into
+ * each player's points, projections left alone. The live score monitor runs
+ * this every few minutes while games are on.
+ */
+export async function syncPlayerWeekPoints(year: number, week: number) {
+  const stats = await getWeeklyStats(year, week);
+  return writePlayerWeekScores(year, week, { stats });
+}
+
+/**
+ * The projections half of `syncPlayerWeekScores`, for a week the live score
+ * monitor is already keeping the points of.
+ */
+export async function syncPlayerWeekProjections(year: number, week: number) {
+  const projections = await getProjections(year, week);
+  return writePlayerWeekScores(year, week, { projections });
+}
+
+/** Writes whichever of points and projections it is given, and only those. */
+async function writePlayerWeekScores(
+  year: number,
+  week: number,
+  {
+    stats,
+    projections,
+  }: { stats?: SleeperStatsJson; projections?: SleeperProjectionsJson },
+) {
   const sleeperIds = new Set([
-    ...Object.keys(stats),
-    ...Object.keys(projections),
+    ...Object.keys(stats ?? {}),
+    ...Object.keys(projections ?? {}),
   ]);
 
   const players = await prisma.player.findMany({
@@ -45,17 +79,19 @@ export async function syncPlayerWeekScores(year: number, week: number) {
   });
 
   const upserts = players.flatMap(player => {
-    const statLine = stats[player.sleeperId];
-    const projection = projections[player.sleeperId]?.pts_half_ppr ?? null;
-
-    const points = statLine
-      ? scoreDfsSurvivorPlayer(player.position, statLine)
-      : null;
+    const statLine = stats?.[player.sleeperId];
+    const data: { points?: number | null; projection?: number | null } = {};
+    if (stats) {
+      data.points = statLine
+        ? scoreDfsSurvivorPlayer(player.position, statLine)
+        : null;
+    }
+    if (projections) {
+      data.projection = projections[player.sleeperId]?.pts_half_ppr ?? null;
+    }
 
     // Nothing worth storing for a player Sleeper listed but has no numbers for.
-    if (points === null && projection === null) return [];
-
-    const data = { points, projection };
+    if (Object.values(data).every(value => value == null)) return [];
 
     return prisma.playerWeekScore.upsert({
       where: {
@@ -88,27 +124,14 @@ export async function getSeasonTotalsByPlayer(year: number) {
 }
 
 /**
- * One week's stored numbers, as two playerId maps: `projections` holds Sleeper's
- * projection and `actuals` the scored stat line. A player is absent from
- * `actuals` until Sleeper has a stat line for them, so a missing key means "no
- * stat line stored yet" rather than a zero.
- *
- * Both maps come off a single query - this runs on every entry page load.
+ * One week's stored Sleeper projections, as a playerId map. This runs on every
+ * entry page load.
  */
-export async function getWeekScoresByPlayer(year: number, week: number) {
+export async function getWeekProjectionsByPlayer(year: number, week: number) {
   const scores = await prisma.playerWeekScore.findMany({
-    where: { year, week },
-    select: { playerId: true, projection: true, points: true },
+    where: { year, week, projection: { not: null } },
+    select: { playerId: true, projection: true },
   });
 
-  const projections = new Map<string, number>();
-  const actuals = new Map<string, number>();
-
-  for (const score of scores) {
-    if (score.projection !== null)
-      projections.set(score.playerId, score.projection);
-    if (score.points !== null) actuals.set(score.playerId, score.points);
-  }
-
-  return { projections, actuals };
+  return new Map(scores.map(score => [score.playerId, score.projection!]));
 }

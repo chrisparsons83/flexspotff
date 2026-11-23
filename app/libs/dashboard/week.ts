@@ -7,6 +7,7 @@
  * Built from facts the server has already gathered, so the rules can be
  * tested without a database.
  */
+import type { ProjectedScore } from '~/libs/dfs-survivor/projection';
 import { pts } from '~/libs/guillotine/display';
 import {
   CUP_ROUNDS,
@@ -35,8 +36,11 @@ export type DashboardRow = {
   lastWeekInBrackets?: string;
   /** Games: where to enter this week, while it is open and they have not. */
   enterHref: string | null;
-  /** Games: this week's entry, when there is nothing to enter. */
-  entry: 'Entered' | 'Not Open Yet' | null;
+  /**
+   * Games: this week's entry, when there is nothing to enter, or DFS
+   * Survivor's projected score while its week is played, "42.30 / 98.1".
+   */
+  entry: 'Entered' | 'Not Open Yet' | `${string} / ${string}` | null;
   /**
    * Side leagues: they are out (chopped) or it is over for them, so the row
    * sits under the ones still being played.
@@ -135,6 +139,11 @@ export type MemberWeekFacts = {
     week: number;
     entries: number;
     isLocked: boolean;
+    /**
+     * The projected score of the week being played, once a pick has kicked off
+     * and until it is scored. On Monday night that is the week before `week`.
+     */
+    projectedScore: ProjectedScore | null;
   } | null;
   /** Only the games the member has a scored week in this season. */
   standings: Partial<Record<StandingGame, GameStanding>>;
@@ -412,13 +421,20 @@ const GAMES: {
     href: '/games/dfs-survivor',
     thisWeek: ({ dfsSurvivor }) => {
       const entered = (dfsSurvivor?.entries ?? 0) > 0;
+      const score = dfsSurvivor?.projectedScore;
       return {
+        // A week being played comes first: the next one has days to go.
         enterHref:
-          dfsSurvivor && !dfsSurvivor.isLocked && !entered
-            ? '/games/dfs-survivor/entries'
+          dfsSurvivor && !dfsSurvivor.isLocked && !entered && !score
+            ? `/games/dfs-survivor/entries?week=${dfsSurvivor.week}`
             : null,
-        entered,
-        entry: entered ? 'Entered' : null,
+        // A week being played is a lineup in, even before the next is entered.
+        entered: entered || !!score,
+        entry: score
+          ? `${score.points.toFixed(2)} / ${score.projected.toFixed(1)}`
+          : entered
+          ? 'Entered'
+          : null,
       };
     },
   },

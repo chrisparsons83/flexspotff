@@ -1,6 +1,7 @@
 import { syncCurrentWeekScores } from './scoring.server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as d12Sync from '~/libs/d12-sync.server';
+import * as playerWeekScores from '~/libs/dfs-survivor/player-week-scores.server';
 import * as guillotineSync from '~/libs/guillotine/sync.server';
 import * as syncs from '~/libs/syncs.server';
 import * as d12SeasonModel from '~/models/d12season.server';
@@ -10,6 +11,7 @@ import * as seasonModel from '~/models/season.server';
 
 vi.mock('~/libs/syncs.server');
 vi.mock('~/libs/d12-sync.server');
+vi.mock('~/libs/dfs-survivor/player-week-scores.server');
 vi.mock('~/libs/guillotine/sync.server');
 vi.mock('~/models/d12season.server');
 vi.mock('~/models/nflgame.server');
@@ -36,6 +38,11 @@ describe('syncCurrentWeekScores', () => {
     vi.mocked(syncs.syncSleeperWeeklyScores).mockResolvedValue(undefined);
     vi.mocked(d12Sync.syncD12Week).mockResolvedValue([]);
     vi.mocked(guillotineSync.syncActiveGuillotineLeagues).mockResolvedValue([]);
+    vi.mocked(playerWeekScores.syncPlayerWeekPoints).mockResolvedValue({
+      year: 2026,
+      week: 3,
+      playersWritten: 0,
+    });
     vi.mocked(d12SeasonModel.getD12SeasonByYear).mockResolvedValue({
       id: 'season-1',
     } as never);
@@ -58,6 +65,7 @@ describe('syncCurrentWeekScores', () => {
     expect(syncs.syncSleeperWeeklyScores).not.toHaveBeenCalled();
     expect(d12Sync.syncD12Week).not.toHaveBeenCalled();
     expect(guillotineSync.syncActiveGuillotineLeagues).not.toHaveBeenCalled();
+    expect(playerWeekScores.syncPlayerWeekPoints).not.toHaveBeenCalled();
     expect(report.scoresResynced).toBe(false);
     expect(report.message).toContain('left alone');
   });
@@ -117,5 +125,27 @@ describe('syncCurrentWeekScores', () => {
     expect(report.synced).toBe(true);
     expect(d12Sync.syncD12Week).toHaveBeenCalled();
     expect(report.guillotineErrors).toEqual(['database is down']);
+  });
+
+  // DFS Survivor's projected score reads these points, so they move with
+  // everything else while games are on.
+  it('refreshes DFS Survivor player points while games are in progress', async () => {
+    setActiveGames(1);
+
+    await syncCurrentWeekScores();
+
+    expect(playerWeekScores.syncPlayerWeekPoints).toHaveBeenCalledWith(2026, 3);
+  });
+
+  it('reports a DFS Survivor points failure without failing the run', async () => {
+    setActiveGames(1);
+    vi.mocked(playerWeekScores.syncPlayerWeekPoints).mockRejectedValue(
+      new Error('Sleeper is down'),
+    );
+
+    const report = await syncCurrentWeekScores();
+
+    expect(report.synced).toBe(true);
+    expect(report.dfsSurvivorError).toBe('Sleeper is down');
   });
 });

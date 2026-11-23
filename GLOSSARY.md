@@ -25,6 +25,10 @@ longer be entered or changed. _Avoid_: finalized, settled, closed, complete
 admin has acted on it. Any admin action hands the week to a human and ends the
 automation's involvement. _Avoid_: automated, automatic, unmanaged
 
+**Projected score** (of a side game week): Points already scored plus what the
+rest of each unfinished game is expected to add. It gives way to the real score
+once the week is scored. _Avoid_: live score, estimate
+
 **Kickoff**: The moment an NFL game starts, when picks on that game lock.
 _Avoid_: game start, game time, launch
 
