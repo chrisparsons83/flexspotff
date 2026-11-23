@@ -812,19 +812,21 @@ export default function GamesDfsSurvivorMyEntry() {
               <h3 className='m-0 text-sm font-semibold text-foreground'>
                 Week {selectedWeek} Lineup
               </h3>
-              <span className='text-sm tabular-nums text-muted-foreground'>
-                {lineupPlayerIds.size < 11 && `${lineupPlayerIds.size}/11`}
-                {lineupPlayerIds.size < 11 && lineupScore && ' · '}
+              <span className='flex gap-3 text-sm tabular-nums text-muted-foreground'>
+                {(lineupPlayerIds.size < 11 || !lineupScore) && (
+                  <span>{lineupPlayerIds.size}/11</span>
+                )}
                 {lineupScore && (
                   <>
-                    Points{' '}
-                    <span className='font-semibold text-foreground'>
-                      {lineupScore.points.toFixed(2)}
+                    <span>
+                      Points{' '}
+                      <span className='font-semibold text-foreground'>
+                        {lineupScore.points.toFixed(2)}
+                      </span>
                     </span>
-                    {' · '}Proj {lineupScore.projected.toFixed(1)}
+                    <span>Proj {lineupScore.projected.toFixed(1)}</span>
                   </>
                 )}
-                {lineupPlayerIds.size === 11 && !lineupScore && '11/11'}
               </span>
             </header>
 
