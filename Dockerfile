@@ -16,6 +16,9 @@ FROM base AS deps
 WORKDIR /myapp
 
 ADD package.json package-lock.json ./
+# npm's `prepare` runs this on install. With no .git in the image it exits
+# without setting up hooks, but the file has to be there to run at all.
+ADD scripts/setup-git-hooks.mjs ./scripts/
 RUN npm install --production=false
 
 # Setup production node_modules
