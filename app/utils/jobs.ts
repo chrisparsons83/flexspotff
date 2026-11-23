@@ -41,7 +41,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     name: 'monitor-scores',
     cron: '*/5 * * * *',
     description:
-      'Syncs NFL game state every 5 minutes, and resyncs league, D12, guillotine and best ball scores whenever games are in progress.',
+      'Syncs NFL game state every 5 minutes, and resyncs league, D12, guillotine and best ball scores, and DFS Survivor player points, whenever games are in progress.',
   },
   {
     name: 'sync-d12-scores',
@@ -71,7 +71,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
     name: 'sync-player-scores',
     cron: '0 * * * *',
     description:
-      "Refreshes every NFL player's DFS Survivor points and Sleeper projections, which the DFS Survivor entry picker sorts on. Hourly.",
+      "Refreshes every NFL player's DFS Survivor points and Sleeper projections, which the DFS Survivor entry picker sorts on. Only refreshes projections for a week with a game in progress, whose points the score monitor keeps up. Hourly.",
   },
   {
     name: 'sync-cup-lineups',

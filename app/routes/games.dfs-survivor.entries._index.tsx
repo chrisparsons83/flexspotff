@@ -18,8 +18,13 @@ import {
 } from '~/libs/dfs-survivor/picker';
 import {
   getSeasonTotalsByPlayer,
-  getWeekScoresByPlayer,
+  getWeekProjectionsByPlayer,
 } from '~/libs/dfs-survivor/player-week-scores.server';
+import type {
+  DfsSlotProjection,
+  ProjectedScore,
+} from '~/libs/dfs-survivor/projection';
+import { projectDfsWeeks } from '~/libs/dfs-survivor/projection.server';
 import type { DfsSurvivorSlot } from '~/libs/dfs-survivor/slots';
 import {
   DFS_SURVIVOR_LAST_WEEK,
@@ -28,6 +33,7 @@ import {
   SLOT_POSITIONS,
   isDfsSurvivorSlot,
 } from '~/libs/dfs-survivor/slots';
+import { roundPoints } from '~/libs/guillotine/projection';
 import {
   createDfsSurvivorYear,
   getDfsSurvivorYearByUserAndYear,
@@ -49,6 +55,8 @@ export type WeekSummary = {
   isScored: boolean;
   /** Every game of the week has kicked off. */
   isLocked: boolean;
+  /** The projected score, once a pick has kicked off and until the week is scored. */
+  projectedScore: ProjectedScore | null;
 };
 
 /**
@@ -66,10 +74,11 @@ export type SlotEntry = {
   isHome: boolean;
   projection: number | null;
   /**
-   * What they actually scored, once their game is final. Null while the game is
-   * still to come or in progress, which is when the projection is shown instead.
+   * Where the pick stands in a week not yet scored: final, live with points so
+   * far and a projected finish, or still projected. Null once the week is scored,
+   * when `points` is the real score.
    */
-  actualPoints: number | null;
+  standing: DfsSlotProjection | null;
   /** Their game has kicked off, so the slot can no longer be edited. */
   isLocked: boolean;
 };
@@ -89,9 +98,6 @@ type LoaderData =
   | { isOpen: false; currentSeason: Season | null };
 
 type ActionResponse = { message?: string; error?: string };
-
-/** Sleeper's terminal game status: its stat lines will not change again. */
-const GAME_COMPLETE = 'complete';
 
 /**
  * Reads the eleven slots off a form submission, rejecting anything that isn't a
@@ -396,20 +402,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const weeks = yearWithEntries?.weeks ?? [];
 
-  const [players, games, weekScores, seasonTotals] = await Promise.all([
-    prisma.player.findMany({
-      where: {
-        position: { in: DFS_SURVIVOR_POSITIONS },
-        currentNFLTeamId: { not: null },
-      },
-      include: { currentNFLTeam: true },
-    }),
-    getWeekNflGames(currentSeason.year, selectedWeek),
-    getWeekScoresByPlayer(currentSeason.year, selectedWeek),
-    getSeasonTotalsByPlayer(currentSeason.year),
-  ]);
-
-  const { projections, actuals } = weekScores;
+  const [players, games, projections, seasonTotals, weekProjections] =
+    await Promise.all([
+      prisma.player.findMany({
+        where: {
+          position: { in: DFS_SURVIVOR_POSITIONS },
+          currentNFLTeamId: { not: null },
+        },
+        include: { currentNFLTeam: true },
+      }),
+      getWeekNflGames(currentSeason.year, selectedWeek),
+      getWeekProjectionsByPlayer(currentSeason.year, selectedWeek),
+      getSeasonTotalsByPlayer(currentSeason.year),
+      projectDfsWeeks(currentSeason.year, weeks, currentTime),
+    ]);
 
   // Which week (if any) each player is already banked in, across the season.
   const usage = new Map<string, PlayerUsage>();
@@ -447,18 +453,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   for (let week = 1; week <= DFS_SURVIVOR_LAST_WEEK; week++) {
     const record = weeks.find(candidate => candidate.week === week);
     const last = lastKickoff.get(week);
+    const projection = weekProjections.get(week);
     weekSummaries.push({
       week,
       filledSlots: record?.entries.length ?? 0,
       points: record?.entries.reduce((sum, e) => sum + e.points, 0) ?? 0,
       isScored: record?.isScored ?? false,
       isLocked: last ? last <= currentTime : false,
+      projectedScore: projection?.hasKickedOff ? projection.total : null,
     });
   }
 
   const gameById = new Map(games.map(game => [game.id, game]));
 
   const selected = weeks.find(week => week.week === selectedWeek);
+  const selectedProjection = weekProjections.get(selectedWeek);
   const entries: Partial<Record<DfsSurvivorSlot, SlotEntry>> = {};
   for (const entry of selected?.entries ?? []) {
     if (!isDfsSurvivorSlot(entry.position)) continue;
@@ -480,15 +489,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       opponentAbbr: opponent?.sleeperId ?? null,
       isHome,
       projection: projections.get(entry.playerId) ?? null,
-      // Only trusted once the game is final: a live stat line would otherwise
-      // read as a finished score while the player is still on the field.
-      // A player with no stored stat line stays null rather than falling back
-      // to 0 - the sync is a manual admin job, so a finished game can easily
-      // have no row yet, and a stale 0 would read as a real final score.
-      actualPoints:
-        game?.status === GAME_COMPLETE
-          ? actuals.get(entry.playerId) ?? null
-          : null,
+      standing: selectedProjection?.bySlot.get(entry.position) ?? null,
       isLocked: game ? game.gameStartTime <= currentTime : false,
     };
   }
@@ -722,6 +723,32 @@ export default function GamesDfsSurvivorMyEntry() {
     );
   }
 
+  // The lineup as shown, not as saved: a saved pick counts its standing and a
+  // pick not saved yet its projection, so an unsaved swap moves the total.
+  const lineupScore = data.weekSummaries.find(
+    week => week.week === selectedWeek,
+  )?.projectedScore
+    ? DFS_SURVIVOR_SLOTS.reduce(
+        (score, slot) => {
+          const playerId = lineup[slot];
+          if (!playerId) return score;
+          const standing =
+            entries[slot]?.playerId === playerId
+              ? entries[slot]?.standing
+              : null;
+          return {
+            points: roundPoints(score.points + (standing?.points ?? 0)),
+            projected: roundPoints(
+              score.projected +
+                (standing
+                  ? standing.projected
+                  : playersById.get(playerId)?.projection ?? 0),
+            ),
+          };
+        },
+        { points: 0, projected: 0 },
+      )
+    : null;
   const isSaving = fetcher.state !== 'idle';
   const message = fetcher.data?.error ?? notice ?? fetcher.data?.message;
   const isError = !!(fetcher.data?.error || notice);
@@ -786,7 +813,18 @@ export default function GamesDfsSurvivorMyEntry() {
                 Week {selectedWeek} Lineup
               </h3>
               <span className='text-sm tabular-nums text-muted-foreground'>
-                {lineupPlayerIds.size}/11
+                {lineupPlayerIds.size < 11 && `${lineupPlayerIds.size}/11`}
+                {lineupPlayerIds.size < 11 && lineupScore && ' · '}
+                {lineupScore && (
+                  <>
+                    Points{' '}
+                    <span className='font-semibold text-foreground'>
+                      {lineupScore.points.toFixed(2)}
+                    </span>
+                    {' · '}Proj {lineupScore.projected.toFixed(1)}
+                  </>
+                )}
+                {lineupPlayerIds.size === 11 && !lineupScore && '11/11'}
               </span>
             </header>
 

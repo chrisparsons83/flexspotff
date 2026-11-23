@@ -76,6 +76,16 @@ export async function getActiveNflGames() {
   });
 }
 
+/** The weeks of a season with a game in progress right now. */
+export async function getLiveNflWeeks(year: NFLGame['year']) {
+  const games = await prisma.nFLGame.findMany({
+    where: { year, status: NFLGameStatus.InGame },
+    select: { week: true },
+    distinct: ['week'],
+  });
+  return new Set(games.map(game => game.week));
+}
+
 export async function upsertNflGame(game: GameCreate) {
   return prisma.nFLGame.upsert({
     where: {

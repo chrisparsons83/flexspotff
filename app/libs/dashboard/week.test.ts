@@ -8,6 +8,7 @@ import {
   pointsLeague,
 } from './week';
 import { describe, expect, it } from 'vitest';
+import type { ProjectedScore } from '~/libs/dfs-survivor/projection';
 
 const nothing: MemberWeekFacts = {
   year: 2026,
@@ -171,6 +172,48 @@ describe('buildMemberWeek', () => {
       ['Spread Pool', '3rd', '1240', '+40', '5th'],
       ['Locks Challenge', '11th', '4', null, null],
     ]);
+  });
+
+  it('shows a DFS Survivor week’s projected score once a pick kicks off', () => {
+    const entry = (projectedScore: ProjectedScore | null) =>
+      buildMemberWeek({
+        ...nothing,
+        dfsSurvivor: { week: 11, entries: 11, isLocked: false, projectedScore },
+      }).rows[0]?.entry;
+
+    expect(entry(null)).toBe('Entered');
+    expect(entry({ points: 42.3, projected: 98.14 })).toBe('42.30 / 98.1');
+  });
+
+  // Once Monday night's game kicks off the current week is the next one, but
+  // the week still being played is what they want to see.
+  it('keeps the DFS Survivor week in progress ahead of the next one to enter', () => {
+    const [row] = buildMemberWeek({
+      ...nothing,
+      dfsSurvivor: {
+        week: 12,
+        entries: 0,
+        isLocked: false,
+        projectedScore: { points: 80, projected: 91.2 },
+      },
+    }).rows;
+
+    expect(row?.entry).toBe('80.00 / 91.2');
+    expect(row?.enterHref).toBeNull();
+  });
+
+  it('links a DFS Survivor week to enter straight to that week', () => {
+    const [row] = buildMemberWeek({
+      ...nothing,
+      dfsSurvivor: {
+        week: 12,
+        entries: 0,
+        isLocked: false,
+        projectedScore: null,
+      },
+    }).rows;
+
+    expect(row?.enterHref).toBe('/games/dfs-survivor/entries?week=12');
   });
 
   it('shows a game entered this week before any week is scored', () => {

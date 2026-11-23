@@ -33,5 +33,11 @@ runJob('monitor-scores', async () => {
     }
   }
 
+  if (report.dfsSurvivorError) {
+    console.error(
+      `DFS Survivor points refresh failed: ${report.dfsSurvivorError}`,
+    );
+  }
+
   return report;
 });
