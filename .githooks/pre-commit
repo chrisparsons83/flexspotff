@@ -1,11 +1,15 @@
 #!/bin/sh
-# Formats staged files before they are committed. The CI format job still checks
-# the whole tree, so a commit that bypasses this hook is caught there.
+# Checks for the patterns we do not use, then formats staged files before they
+# are committed. CI runs both over the whole tree, so a commit that bypasses
+# this hook is caught there.
 set -e
 
 # Nothing to format without an install, and a hook must not block a commit in a
 # checkout that has not run npm yet.
 [ -x node_modules/.bin/prettier ] || exit 0
+
+# Whole tree, well under a second: CI's "Patterns we do not use" job, here.
+node_modules/.bin/tsx scripts/check-patterns.ts
 
 files=$(git diff --cached --name-only --diff-filter=ACM |
   grep -E '\.(ts|tsx|js|jsx|mjs|cjs|json|md|yml|yaml|css|scss|prisma)$' || true)

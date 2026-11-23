@@ -187,6 +187,28 @@ jobs:
           npx prisma migrate diff --from-url "$DATABASE_URL"
           --to-schema-datamodel prisma/schema.prisma --exit-code
 
+  docker-check:
+    name: 🐳 Docker build check
+    # The real build only runs on a push to main or dev, so check the image
+    # everywhere else: a PR checks the install stage, which is where package.json
+    # changes break (#263's prepare script did, for five days), and the weekly
+    # canary builds the whole image without pushing it.
+    if: ${{ github.event_name != 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build without pushing
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          target: ${{ github.event_name == 'pull_request' && 'deps' || '' }}
+          cache-from: type=gha
+
   build:
     name: 🐳 Build
     # only build/deploy main branch on pushes
@@ -242,3 +264,41 @@ jobs:
           envs: VULTR_USERNAME, VULTR_API_KEY
           script: |
             docker login sjc.vultrcr.com/chrisparsons -u $VULTR_USERNAME -p $VULTR_API_KEY && cd flexspotff && docker compose pull && docker compose up -d
+
+  alert:
+    name: 🚨 Alert on failure
+    # A red main, dev or canary run is otherwise only seen by whoever looks.
+    needs:
+      [
+        lint,
+        typecheck,
+        format,
+        patterns,
+        storybook,
+        vitest,
+        migrations,
+        docker-check,
+        build,
+        deploy,
+      ]
+    if: ${{ failure() && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚨 Post to the admin alerts channel
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_ALERTS_WEBHOOK_URL }}
+          RUN_URL:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{
+            github.run_id }}
+          REF: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "DISCORD_ALERTS_WEBHOOK_URL is not set, so no alert was posted."
+            exit 0
+          fi
+          content="The $EVENT run on $REF failed: $RUN_URL"
+          jq -n --arg content "$content" \
+            '{content: $content, allowed_mentions: {parse: []}}' |
+            curl --fail --silent --show-error --max-time 10 \
+              -H 'Content-Type: application/json' -d @- "$WEBHOOK_URL"
